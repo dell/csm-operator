@@ -1,0 +1,107 @@
+apiVersion: storage.dell.com/v1
+kind: CSM
+metadata:
+  name: test-unity
+  namespace: test-unity
+spec:
+  driver:
+    csiDriverType: "unity"
+    k8sVersion: v1.22
+
+    # Config version for CSI Unity v2.0 driver
+    configVersion: v2.0.0
+
+    # volumeNamePrefix: defines a string prepended to each volume created by the CSI driver.
+    # Allowed values: string
+    # Default value: None
+    volumeNamePrefix: csivol
+    
+    # controllerCount: defines the number of csi-powerscale controller pods to deploy to
+    # the Kubernetes release.
+    # Allowed values: n, where n > 0
+    # Default value: None
+    replicas: 2
+    dnsPolicy: ClusterFirstWithHostNet
+    common:
+      image: "dellemc/csi-unity:v1.6.0"
+      imagePullPolicy: IfNotPresent
+      envs:
+        - name: X_CSI_UNITY_DEBUG
+          value: "true"
+        
+        # allowRWOMultiPodAccess - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
+        # Allowed values: boolean
+        # Default value: 15
+        # Examples : "true" , "false"
+        - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
+          value: "false"
+
+        # maxUnityVolumesPerNode - Maximum number of volumes that controller can publish to the node.
+        # Allowed values: integer
+        # Default value: 0
+        # Examples : 0 , 1
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: 0
+            
+        # syncNodeInfoInterval - Time interval to add node info to array. Default 15 minutes. Minimum value should be 1.
+        # Allowed values: integer
+        # Default value: 15
+        # Examples : 0 , 2
+        - name: X_CSI_UNITY_SYNC_NODEINFO_INTERVAL
+          value: 15
+        
+        # CSI driver log level
+        # Allowed values: "error", "warn"/"warning", "info", "debug"
+        # Default value: "debug"
+        - name: "CSI_LOG_LEVEL"
+          value: "debug"
+    sideCars:
+      - name: provisioner
+        args: ["--volume-name-prefix=csiunity","--default-fstype=ext4"]
+      - name: snapshotter
+        args: ["--snapshot-name-prefix=csiunitysnap"]
+
+  modules:
+    # Podmon is an optional feature under development and tech preview.
+    # Enable this feature only after contact support for additional information
+    - name: podmon
+      enabled: false
+      configVersion: v1.0.0
+      components:
+      - name: common
+        image: dellemc/podmon:v1.0.0
+        envs:
+          # Allowed values: "error", "warn"/"warning", "info", "debug"
+          # Default value: "debug"
+          - name: "PODMON_CONTROLLER_LOG_LEVEL"
+            value: "info"
+          
+          # Allowed values: "TEXT" or "JSON"
+          # Default value: "TEXT"
+          - name: "PODMON_CONTROLLER_LOG_FORMAT"
+            value: "TEXT"
+          
+          # Allowed values: "error", "warn"/"warning", "info", "debug"
+          # Default value: "debug"
+          - name: "PODMON_NODE_LOG_LEVEL"
+            value: "info"
+          
+          # Allowed values: "TEXT" or "JSON"
+          # Default value: "TEXT"
+          - name: "PODMON_NODE_LOG_FORMAT"
+            value: "TEXT"
+      - name: controller
+        args:
+          - "--csisock=unix:/var/run/csi/csi.sock"
+          - "--labelvalue=csi-unity"
+          - "--driverPath=csi-unity.dellemc.com"
+          - "--mode=controller"
+          - "--driver-config-params=/unity-config/driver-config-params.yaml"
+      - name: node
+        args:
+          - "--csisock=unix:/var/lib/kubelet/plugins/unity.emc.dell.com/csi_sock"
+          - "--labelvalue=csi-unity"
+          - "--driverPath=csi-unity.dellemc.com"
+          - "--mode=node"
+          - "--leaderelection=false"
+          - "--driver-config-params=/unity-config/driver-config-params.yaml"
