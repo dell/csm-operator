@@ -1,0 +1,149 @@
+apiVersion: storage.dell.com/v1
+kind: CSM
+metadata:
+  name: test-csm-observability
+  namespace: test-csm-observability
+spec:
+  modules:    
+    # Observability
+    - name: observability
+      enabled: true
+      configVersion: v2.0.0
+      components:
+      - name: CSMTopology
+        image: dellemc/csm-topology:v1.0.0
+        enabled: true
+        envs:
+          - name: "SERVICE_TYPE"
+            value: ClusterIP
+          #! comma separated list of provisioner names (ex: csi-vxflexos.dellemc.com)
+          - name: "PROVISIONER_NAMES"
+            value: "csi-vxflexos.dellemc.com,csi-powerstore.dellemc.com"
+          - name: "ZIPKIN_URI"
+            value: ""
+          - name: "ZIPKIN_SERVICE_NAME"
+            value: karavi-topology
+          - name: "ZIPKIN_PROBABILITY"
+            value: 0.0
+          - name: "LOG_LEVEL"
+            value: "INFO"
+          - name: "LOG_FORMAT"
+            value: "text"
+
+      - name: karaviMetricsPowerflex
+        image: dellemc/csm-metrics-powerflex:v1.0.0
+        enabled: false
+        envs:
+          - name: "SERVICE_TYPE"
+            value: ClusterIP
+
+          # set the default endpoint for PowerFlex service
+          - name: "ENDPOINT"
+            value: karavi-metrics-powerflex
+          - name: "COLLECTOR_ADDR"
+            value: "otel-collector:55680"
+          - name: "PROVISIONER_NAMES"
+            value: csi-vxflexos.dellemc.com
+          
+          # set sdcMetricsEnabled to "false" to disable collection of SDC metrics
+          - name: "POWERFLEX_SDC_METRICS_ENABLED"
+            value: true
+          # set polling frequency to the PowerFlex array to get metrics data
+          - name: "POWERFLEX_SDC_IO_POLL_FREQUENCY"
+            value: 10
+          - name: "POWERFLEX_VOLUME_IO_POLL_FREQUENCY"
+            value: 10
+
+          # set volumeMetricsEnabled to "false" to disable collection of Volume metrics
+          - name: "POWERFLEX_VOLUME_METRICS_ENABLED"
+            value: true
+          
+          # set storageClassPoolMetricsEnabled to "false" to disable collection of storage class/pool metrics
+          - name: "POWERFLEX_STORAGE_POOL_METRICS_ENABLED"
+            value: true
+          # set the polling frequency to configure the interval which storage class/pool metrics are gathered
+          - name: "POWERFLEX_STORAGE_POOL_POLL_FREQUENCY"
+            value: 10
+          
+          # set the the default max concurrent queries to PowerFlex
+          - name: "POWERFLEX_MAX_CONCURRENT_QUERIES"
+            value: 10
+          - name: "LOG_LEVEL"
+            value: "INFO"
+          - name: "LOG_FORMAT"
+            value: "text"
+      
+      - name: CSMMetricsPowerstore
+        image: dellemc/csm-metrics-powerstore:v1.0.0
+        enabled: false
+        envs:
+          - name: "SERVICE_TYPE"
+            value: ClusterIP
+          
+          # set the default endpoint for PowerStore service
+          - name: "ENDPOINT"
+            value: karavi-metrics-powerstore
+          - name: "COLLECTOR_ADDR"
+            value: otel-collector:55680
+          - name: "PROVISIONER_NAMES"
+            value: csi-powerstore.dellemc.com
+          
+           # set volumeMetricsEnabled to "false" to disable collection of Volume metrics
+          - name: "POWERSTORE_VOLUME_METRICS_ENABLED"
+            value: true
+
+           # set polling frequency to the PowerStore array to get metrics data
+          - name: "POWERSTORE_VOLUME_IO_POLL_FREQUENCY"
+            value: 20
+          - name: "POWERSTORE_SPACE_POLL_FREQUENCY"
+            value: 300
+          - name: "POWERSTORE_ARRAY_POLL_FREQUENCY"
+            value: 300
+          - name: "POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
+            value: 20
+          
+          # set the the default max concurrent queries to PowerStore
+          - name: "POWERSTORE_MAX_CONCURRENT_QUERIES"
+            value: 10
+          - name: "ZIPKIN_URI"
+            value: ""
+          - name: "ZIPKIN_SERVICE_NAME"
+            value: metrics-powerstore
+          - name: "ZIPKIN_PROBABILITY"
+            value: 0.0
+          - name: "LOG_LEVEL"
+            value: "INFO"
+          - name: "LOG_FORMAT"
+            value: "text"
+  
+      - name: otelCollector
+        image: otel/opentelemetry-collector:0.9.0
+        enabled: true
+        envs:
+          - name: "SERVICE_TYPE"
+            value: ClusterIP
+          - name: "NGINX_PROXY_IMAGE"
+            value: "nginxinc/nginx-unprivileged:1.18"
+  
+      - name: certManager
+        envs:
+          - name: "STARTUP_API_CHECK_ENABLED"
+            value:  false
+          - name: "SERVICE_ACCOUNT_CREATE"
+            value: false
+    
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      configVersion: v2.0.0
+      components:
+      - image: dellemc/csm-authorization-sidecar:v1.0.0
+        envs:
+          # proxyHost: hostname of the csm-authorization server
+          - name: "PROXY_HOST"
+            value: ""
+        
+          # insecure: Enable/Disable certificate validation of the csm-authorization server       
+          - name: "INSECURE"
+            value: true

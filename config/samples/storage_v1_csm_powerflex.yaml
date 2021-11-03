@@ -1,0 +1,242 @@
+apiVersion: storage.dell.com/v1
+kind: CSM
+metadata:
+  name: vxflexos
+  namespace: test-vxflexos
+spec:
+  driver:
+    csiDriverType: "powerflex"
+    configVersion: v2.0.0
+    k8sVersion: v1.21
+
+    # "volumeNamePrefix" defines a string prepended to each volume created by the CSI driver.
+    volumeNamePrefix: k8s
+
+    # openshift tells the operator that the installation is being done on a Red Hat OpenShift cluster
+    # Don't modify this value as this value is overridden by the api controller
+    isOpenShift: false
+    
+    # "replicas" defines the number of VxFlex controller nodes to deploy to
+    # the Kubernetes release
+    replicas: 1
+    
+    dnsPolicy: ClusterFirstWithHostNet
+    forceUpdate: false
+    common:
+      # "image" defines the container image, used for the driver container.
+      # image: dellemc/csi-vxflexos:v2.0.0
+      # IT IS RECOMMENDED YOU DO NOT CHANGE THE IMAGES TO BE USED.
+      image: "dellemc/csi-vxflexos:v2.0.0"
+      
+      # The default pull policy is IfNotPresent which causes the Kubelet to skip pulling an image
+      # if it already exists. If you would like to always force a pull, use "Always"
+      imagePullPolicy: IfNotPresent
+      envs:
+          # Enable list volume operation to include snapshots (since creating a volume
+          # from a snap actually results in a new snap)
+          # It is recommend this be false unless instructed otherwise.
+        - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
+          value: "false"
+
+          # Enable this to automatically delete all snapshots in a consistency group
+          # when a snap in the group is deleted
+        - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
+          value: "false"
+        - name: X_CSI_DEBUG
+          value: "true"
+
+          # Setting X_CSI_ALLOW_RWO_MULTI_POD_ACCESS to "true" will allow multiple pods on the same node
+          # to access the same RWO volume. This behavior conflicts with the CSI specification version 1.3
+          # NodePublishVolume descrition that requires an error to be returned in this case.
+          # However some other CSI drivers support this behavior and some customers desire this behavior.
+          # Kubernetes could make a change at their discretion that would preclude our ability to support this option.
+          # Customers use this option at their own risk.
+          # You should leave this set as "false" unless instructed to change it by Dell support.
+        - name: X_CSI_ALLOW_RWO_MULTI_POD_ACCESS
+          value: "false"
+          
+          # CSI driver log level
+          # Allowed values: "error", "warn"/"warning", "info", "debug"
+          # Default value: "debug"
+        - name: CSI_LOG_LEVEL
+          value: "debug"
+          
+          # CSI driver log format
+          # Allowed values: "TEXT" or "JSON"
+          # Default value: "TEXT"
+        - name: CSI_LOG_FORMAT
+          value: "TEXT"
+        
+        - name: MDM
+          value: "10.x.x.x,10.x.x.x"  #provide MDM value
+    sideCars:
+      # monitoring pod details
+      # These options control the running of the monitoring container
+      # This container gather diagnostic information in case of failure
+      - name: sdc-monitor
+        # enabled allows the usage of te monitoring pod to be disabled
+        enabled: false
+        envs:
+          # HOST_PID determines if the monitor pod should run in the host namespace
+          - name: HOST_PID
+            value: "true"
+          
+          # HOST_NET determines if the monitor pod should run on the host network or not
+          - name: HOST_NET
+            value: "true"
+    initContainers:
+      #! "image" defines the SDC image for init container.
+      # IT IS RECOMMENDED YOU DO NOT CHANGE THE IMAGES TO BE USED.
+      - image: dellemc/sdc:3.6
+        imagePullPolicy: IfNotPresent
+        name: sdc
+
+  modules:
+    # Podmon is an optional feature under development and tech preview.
+    # Enable this feature only after contact support for additional information
+    - name: podmon
+      enabled: false
+      configVersion: v2.0.0
+      components:
+      - name: common
+        image: dellemc/podmon:v1.0.0
+        envs:
+          # Allowed values: "error", "warn"/"warning", "info", "debug"
+          # Default value: "debug"
+          - name: "PODMON_CONTROLLER_LOG_LEVEL"
+            value: "info"
+          
+          # Allowed values: "TEXT" or "JSON"
+          # Default value: "TEXT"
+          - name: "PODMON_CONTROLLER_LOG_FORMAT"
+            value: "TEXT"
+          
+          # Allowed values: "error", "warn"/"warning", "info", "debug"
+          # Default value: "debug"
+          - name: "PODMON_NODE_LOG_LEVEL"
+            value: "info"
+          
+          # Allowed values: "TEXT" or "JSON"
+          # Default value: "TEXT"
+          - name: "PODMON_NODE_LOG_FORMAT"
+            value: "TEXT"
+      - name: controller
+        args:
+          - "--csisock=unix:/var/run/csi/csi.sock"
+          - "--labelvalue=csi-vxflexos"
+          - "--mode=controller"
+          - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+      - name: node
+        args:
+          - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
+          - "--labelvalue=csi-vxflexos"
+          - "--mode=node"
+          - "--leaderelection=false"
+          - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+    
+    # Volume Group Snapshotter module
+    - name: vgsnapshotter
+      enabled: false
+      configVersion: v2.0.0
+      components:
+        - image: dellemc/csi-volumegroup-snapshotter:v1.0.0 
+    
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      configVersion: v2.0.0
+      components:
+      - image: dellemc/csm-authorization-sidecar:v1.0.0
+        envs:
+          # proxyHost: hostname of the csm-authorization server
+          - name: "PROXY_HOST"
+            value: ""
+        
+          # insecure: Enable/Disable certificate validation of the csm-authorization server       
+          - name: "INSECURE"
+            value: true
+    
+    # Observability
+    - name: observability
+      enabled: false
+      configVersion: v2.0.0
+      components:
+      - name: CSMTopology
+        image: dellemc/csm-topology:v1.0.0
+        enabled: true
+        envs:
+          - name: "SERVICE_TYPE"
+            value: ClusterIP
+          #! comma separated list of provisioner names (ex: csi-vxflexos.dellemc.com)
+          - name: "PROVISIONER_NAMES"
+            value: "csi-vxflexos.dellemc.com,csi-powerstore.dellemc.com"
+          - name: "ZIPKIN_URI"
+            value: ""
+          - name: "ZIPKIN_SERVICE_NAME"
+            value: karavi-topology
+          - name: "ZIPKIN_PROBABILITY"
+            value: 0.0
+          - name: "LOG_LEVEL"
+            value: "INFO"
+          - name: "LOG_FORMAT"
+            value: "text"
+
+      - name: karaviMetricsPowerflex
+        image: dellemc/csm-metrics-powerflex:v1.0.0
+        enabled: false
+        envs:
+          - name: "SERVICE_TYPE"
+            value: ClusterIP
+
+          # set the default endpoint for PowerFlex service
+          - name: "ENDPOINT"
+            value: karavi-metrics-powerflex
+          - name: "COLLECTOR_ADDR"
+            value: "otel-collector:55680"
+          - name: "PROVISIONER_NAMES"
+            value: csi-vxflexos.dellemc.com
+          
+          # set sdcMetricsEnabled to "false" to disable collection of SDC metrics
+          - name: "POWERFLEX_SDC_METRICS_ENABLED"
+            value: true
+          # set polling frequency to the PowerFlex array to get metrics data
+          - name: "POWERFLEX_SDC_IO_POLL_FREQUENCY"
+            value: 10
+          - name: "POWERFLEX_VOLUME_IO_POLL_FREQUENCY"
+            value: 10
+
+          # set volumeMetricsEnabled to "false" to disable collection of Volume metrics
+          - name: "POWERFLEX_VOLUME_METRICS_ENABLED"
+            value: true
+          
+          # set storageClassPoolMetricsEnabled to "false" to disable collection of storage class/pool metrics
+          - name: "POWERFLEX_STORAGE_POOL_METRICS_ENABLED"
+            value: true
+          # set the polling frequency to configure the interval which storage class/pool metrics are gathered
+          - name: "POWERFLEX_STORAGE_POOL_POLL_FREQUENCY"
+            value: 10
+          
+          # set the the default max concurrent queries to PowerFlex
+          - name: "POWERFLEX_MAX_CONCURRENT_QUERIES"
+            value: 10
+          - name: "LOG_LEVEL"
+            value: "INFO"
+          - name: "LOG_FORMAT"
+            value: "text"
+
+      - name: otelCollector
+        image: otel/opentelemetry-collector:0.9.0
+        enabled: true
+        envs:
+          - name: "SERVICE_TYPE"
+            value: ClusterIP
+          - name: "NGINX_PROXY_IMAGE"
+            value: "nginxinc/nginx-unprivileged:1.18"
+      
+      - name: certManager
+        envs:
+          - name: "STARTUP_API_CHECK_ENABLED"
+            value:  false
+          - name: "SERVICE_ACCOUNT_CREATE"
+            value: false
