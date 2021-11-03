@@ -182,7 +182,7 @@ spec:
           - name: "LOG_FORMAT"
             value: "text"
 
-      - name: karaviMetricsPowerflex
+      - name: CSMMetricsPowerflex
         image: dellemc/csm-metrics-powerflex:v1.0.0
         enabled: false
         envs:
