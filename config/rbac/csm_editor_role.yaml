@@ -1,0 +1,24 @@
+# permissions for end users to edit csms.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: csm-editor-role
+rules:
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - csms
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - csms/status
+  verbs:
+  - get
