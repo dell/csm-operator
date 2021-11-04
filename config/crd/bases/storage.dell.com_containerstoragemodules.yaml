@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
-  name: csms.storage.dell.com
+  name: containerstoragemodules.storage.dell.com
 spec:
   group: storage.dell.com
   names:
-    kind: CSM
-    listKind: CSMList
-    plural: csms
-    singular: csm
+    kind: ContainerStorageModule
+    listKind: ContainerStorageModuleList
+    plural: containerstoragemodules
+    singular: containerstoragemodule
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: CSM is the Schema for the csms API
+        description: ContainerStorageModule is the Schema for the csms API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +34,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: CSMSpec defines the desired state of CSM
+            description: ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
             properties:
               driver:
                 description: Driver is a CSI Drivers for Dell EMC
@@ -636,8 +636,7 @@ spec:
                       is intended for openshift
                     type: boolean
                   k8sVersion:
-                    description: VolumeNamePrefix is a string prepended to each volume
-                      created by the CSI driver
+                    description: K8sVersion is the k8s varsion
                     type: string
                   node:
                     description: Node is the specification for Node plugin only
@@ -1045,6 +1044,10 @@ spec:
                   tlsCertSecret:
                     description: TLSCertSecret is the name of the TLS Cert secret
                     type: string
+                  volumeNamePrefix:
+                    description: VolumeNamePrefix is a string prepended to each volume
+                      created by the CSI driver
+                    type: string
                 required:
                 - common
                 - configVersion
@@ -1052,11 +1055,14 @@ spec:
                 - isOpenShift
                 - k8sVersion
                 - replicas
+                - volumeNamePrefix
                 type: object
               modules:
-                description: CSMModules is list of CSM Modules you want to deploy
+                description: ContainerStorageModuleModules is list of ContainerStorageModule
+                  Modules you want to deploy
                 items:
-                  description: CSMModule defines the desired state of a CSMModules
+                  description: ContainerStorageModuleModule defines the desired state
+                    of a ContainerStorageModuleModules
                   properties:
                     components:
                       description: Components is the specification for SM components
@@ -1263,7 +1269,7 @@ spec:
                         a module
                       type: boolean
                     name:
-                      description: Name is name of CSM modules
+                      description: Name is name of ContainerStorageModule modules
                       type: string
                     revProxyConfig:
                       description: ReverseProxyConfig is the configuration for reverse
@@ -1418,7 +1424,8 @@ spec:
                 type: array
             type: object
           status:
-            description: CSMStatus defines the observed state of CSM
+            description: ContainerStorageModuleStatus defines the observed state of
+              ContainerStorageModule
             properties:
               controllerStatus:
                 description: ControllerStatus is the status of Controller pods
@@ -1441,15 +1448,15 @@ spec:
                     type: array
                 type: object
               csmHash:
-                description: CSMHash is a hash of the driver specification
+                description: ContainerStorageModuleHash is a hash of the driver specification
                 format: int64
                 type: integer
               lastUpdate:
                 description: LastUpdate is the last updated state of the driver
                 properties:
-                  CSMOperatorCondition:
-                    description: CSMOperatorCondition is the last known condition
-                      of the Custom Resource
+                  ContainerStorageModuleOperatorCondition:
+                    description: ContainerStorageModuleOperatorCondition is the last
+                      known condition of the Custom Resource
                     type: string
                   errorMessage:
                     description: ErrorMessage is the last error message associated

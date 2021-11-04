@@ -16,11 +16,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// CSMStateType - type representing the state of the CSM (in status)
-type CSMStateType string
+// ContainerStorageModuleStateType - type representing the state of the ContainerStorageModule (in status)
+type ContainerStorageModuleStateType string
 
-// CSMOperatorConditionType  defines the type of the last status update
-type CSMOperatorConditionType string
+// ContainerStorageModuleOperatorConditionType  defines the type of the last status update
+type ContainerStorageModuleOperatorConditionType string
 
 // ImageType - represents type of image
 type ImageType string
@@ -66,9 +66,9 @@ const (
 	PowerStore DriverType = "powerstore"
 )
 
-// CSMModule defines the desired state of a CSMModules
-type CSMModule struct {
-	// Name is name of CSM modules
+// ContainerStorageModuleModule defines the desired state of a ContainerStorageModuleModules
+type ContainerStorageModuleModule struct {
+	// Name is name of ContainerStorageModule modules
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
 	Name ModuleType `json:"name" yaml:"name"`
 
@@ -81,7 +81,7 @@ type CSMModule struct {
 	ConfigVersion string `json:"configVersion" yaml:"configVersion"`
 
 	// Components is the specification for SM components containers
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSM components specification"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule components specification"
 	Components []ContainerTemplate `json:"components,omitempty" yaml:"components,omitempty"`
 
 	// ReverseProxyConfig is the configuration for reverse proxy
@@ -97,11 +97,11 @@ type PodStatus struct {
 	Stopped   []string `json:"stopped,omitempty"`
 }
 
-// LastUpdate - Stores the last update condition for the CSM status
+// LastUpdate - Stores the last update condition for the ContainerStorageModule status
 type LastUpdate struct {
 
-	// CSMOperatorCondition is the last known condition of the Custom Resource
-	CSMOperatorCondition CSMOperatorConditionType `json:"CSMOperatorCondition,omitempty"`
+	// ContainerStorageModuleOperatorCondition is the last known condition of the Custom Resource
+	ContainerStorageModuleOperatorCondition ContainerStorageModuleOperatorConditionType `json:"ContainerStorageModuleOperatorCondition,omitempty"`
 
 	// Time is the time stamp for the last condition update
 	Time metav1.Time `json:"time,omitempty" yaml:"time"`
@@ -123,7 +123,7 @@ type Driver struct {
 
 	// VolumeNamePrefix is a string prepended to each volume created by the CSI driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Volume Name Prefix"
-	VolumeNamePrefix string `json:"k8sVersion" yaml:"k8sVersion"`
+	VolumeNamePrefix string `json:"volumeNamePrefix" yaml:"volumeNamePrefix"`
 
 	// IsOpenShift a boolean to check if the deployment is intended for openshift
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Is OpenShift"

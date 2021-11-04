@@ -13,7 +13,7 @@ resources:
   controller: true
   domain: dell.com
   group: storage
-  kind: CSM
+  kind: ContainerStorageModule
   path: github.com/dell/csm-operator/api/v1
   version: v1
 version: "3"
