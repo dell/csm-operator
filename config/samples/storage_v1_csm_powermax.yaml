@@ -1,5 +1,5 @@
 apiVersion:  storage.dell.com/v1
-kind: CSM
+kind: ContainerStorageModule
 metadata:
   name: test-powermax
   namespace: test-powermax
@@ -156,7 +156,7 @@ spec:
           - name: "INSECURE"
             value: true
 
-    # CSM module attributes
+    # ContainerStorageModule module attributes
     # Set this to true to enable replication
     # Replication CRDs must be installed before installing driver
     - name: replication
