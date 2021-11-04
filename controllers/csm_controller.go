@@ -22,8 +22,8 @@ import (
 	storagev1 "github.com/dell/csm-operator/api/v1"
 )
 
-// CSMReconciler reconciles a CSM object
-type CSMReconciler struct {
+// ContainerStorageModuleReconciler reconciles a ContainerStorageModule object
+type ContainerStorageModuleReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -35,13 +35,13 @@ type CSMReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the CSM object against the actual cluster state, and then
+// the ContainerStorageModule object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
-func (r *CSMReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
 	// your logic here
@@ -50,8 +50,8 @@ func (r *CSMReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CSMReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&storagev1.CSM{}).
+		For(&storagev1.ContainerStorageModule{}).
 		Complete(r)
 }
