@@ -1,5 +1,5 @@
 apiVersion: storage.dell.com/v1
-kind: CSM
+kind: ContainerStorageModule
 metadata:
   name: test-csm-observability
   namespace: test-csm-observability
@@ -30,7 +30,7 @@ spec:
           - name: "LOG_FORMAT"
             value: "text"
 
-      - name: CSMMetricsPowerflex
+      - name: CSMModuleMetricsPowerflex
         image: dellemc/csm-metrics-powerflex:v1.0.0
         enabled: false
         envs:
