@@ -179,4 +179,3 @@ This project is adhering to [Semantic Versioning](https://semver.org/).
 Dell EMC Container Storage Modules (CSM) Operator is 100% open source and community-driven. All components are available
 under [Apache 2 License](https://www.apache.org/licenses/LICENSE-2.0.html) on
 GitHub.
-
