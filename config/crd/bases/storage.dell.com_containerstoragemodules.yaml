@@ -19,7 +19,8 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: ContainerStorageModule is the Schema for the csms API
+        description: ContainerStorageModule is the Schema for the containerstoragemodules
+          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -230,8 +231,6 @@ spec:
                               type: string
                           type: object
                         type: array
-                    required:
-                    - enabled
                     type: object
                   configVersion:
                     description: ConfigVersion is the configuration version of the
@@ -424,8 +423,6 @@ spec:
                               type: string
                           type: object
                         type: array
-                    required:
-                    - enabled
                     type: object
                   csiDriverType:
                     description: CSIDriverType is the CSI Driver type for Dell EMC
@@ -627,17 +624,8 @@ spec:
                                 type: string
                             type: object
                           type: array
-                      required:
-                      - enabled
                       type: object
                     type: array
-                  isOpenShift:
-                    description: IsOpenShift a boolean to check if the deployment
-                      is intended for openshift
-                    type: boolean
-                  k8sVersion:
-                    description: K8sVersion is the k8s varsion
-                    type: string
                   node:
                     description: Node is the specification for Node plugin only
                     properties:
@@ -824,8 +812,6 @@ spec:
                               type: string
                           type: object
                         type: array
-                    required:
-                    - enabled
                     type: object
                   replicas:
                     description: Replicas is the count of controllers for Controller
@@ -1020,8 +1006,6 @@ spec:
                                 type: string
                             type: object
                           type: array
-                      required:
-                      - enabled
                       type: object
                     type: array
                   snapshotClass:
@@ -1044,25 +1028,17 @@ spec:
                   tlsCertSecret:
                     description: TLSCertSecret is the name of the TLS Cert secret
                     type: string
-                  volumeNamePrefix:
-                    description: VolumeNamePrefix is a string prepended to each volume
-                      created by the CSI driver
-                    type: string
                 required:
                 - common
                 - configVersion
                 - csiDriverType
-                - isOpenShift
-                - k8sVersion
                 - replicas
-                - volumeNamePrefix
                 type: object
               modules:
-                description: ContainerStorageModuleModules is list of ContainerStorageModule
-                  Modules you want to deploy
+                description: Modules is list of Container Storage Module modules you
+                  want to deploy
                 items:
-                  description: ContainerStorageModuleModule defines the desired state
-                    of a ContainerStorageModuleModules
+                  description: Module defines the desired state of a ContainerStorageModuleModules
                   properties:
                     components:
                       description: Components is the specification for SM components
@@ -1256,8 +1232,6 @@ spec:
                                   type: string
                               type: object
                             type: array
-                        required:
-                        - enabled
                         type: object
                       type: array
                     configVersion:
@@ -1417,7 +1391,6 @@ spec:
                           type: object
                       type: object
                   required:
-                  - configVersion
                   - enabled
                   - name
                   type: object
@@ -1454,9 +1427,9 @@ spec:
               lastUpdate:
                 description: LastUpdate is the last updated state of the driver
                 properties:
-                  ContainerStorageModuleOperatorCondition:
-                    description: ContainerStorageModuleOperatorCondition is the last
-                      known condition of the Custom Resource
+                  condition:
+                    description: Condition is the last known condition of the Custom
+                      Resource
                     type: string
                   errorMessage:
                     description: ErrorMessage is the last error message associated
