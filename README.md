@@ -82,7 +82,7 @@ This includes:
 * DaemonSet
 * Deployment and Service (only for Reverse Proxy for PowerMax Driver)
 
-Note - There is one controller for a Custom Resource type and each controller runs a single worker 
+> __Note__: - There is one controller for a Custom Resource type and each controller runs a single worker 
 
 
 ### How to Build Container Storage Modules (CSM) Operator

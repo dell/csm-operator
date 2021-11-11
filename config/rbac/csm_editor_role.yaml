@@ -1,13 +1,13 @@
-# permissions for end users to edit csms.
+# permissions for end users to edit containerstoragemodules.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: csm-editor-role
+  name: containerstoragemodule-editor-role
 rules:
 - apiGroups:
   - storage.dell.com
   resources:
-  - csms
+  - containerstoragemodules
   verbs:
   - create
   - delete
@@ -19,6 +19,6 @@ rules:
 - apiGroups:
   - storage.dell.com
   resources:
-  - csms/status
+  - containerstoragemodules/status
   verbs:
   - get

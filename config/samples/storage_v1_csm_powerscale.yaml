@@ -148,12 +148,12 @@ spec:
       enabled: false
       configVersion: v2.0.0
       components:
-      - image: dellemc/csm-authorization-sidecar:v1.0.0
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: ""
-        
-          # insecure: Enable/Disable certificate validation of the csm-authorization server       
-          - name: "INSECURE"
-            value: true
+        - image: dellemc/csm-authorization-sidecar:v1.0.0
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: ""
+          
+            # insecure: Enable/Disable certificate validation of the csm-authorization server       
+            - name: "INSECURE"
+              value: true
