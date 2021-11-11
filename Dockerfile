@@ -13,15 +13,28 @@ RUN go mod download
 COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
+COPY core/ core/
+COPY pkg/ pkg/
+COPY k8s/ k8s/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
+
+ENV USER_UID=1001 \
+    USER_NAME=dell-csi-operator \
+    X_CSM_OPERATOR_CONFIG_DIR="/etc/config/csm-operator"
 WORKDIR /
 COPY --from=builder /workspace/manager .
-USER 65532:65532
+COPY operatorconfig/ /etc/config/local/csm-operator
+LABEL vendor="Dell Inc." \
+    name="csm-operator" \
+    summary="Operator for installing Dell EMC CSM Modules" \
+    description="Common Operator for installing various Dell EMC Container Storage Modules" \
+    version="1.5.0" \
+    license="Dell CSI Operator Apache License"
 
 ENTRYPOINT ["/manager"]
+USER ${USER_UID}
+

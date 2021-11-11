@@ -16,11 +16,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// ContainerStorageModuleStateType - type representing the state of the ContainerStorageModule (in status)
-type ContainerStorageModuleStateType string
+// CSMStateType - type representing the state of the ContainerStorageModule (in status)
+type CSMStateType string
 
-// ContainerStorageModuleOperatorConditionType  defines the type of the last status update
-type ContainerStorageModuleOperatorConditionType string
+// CSMOperatorConditionType  defines the type of the last status update
+type CSMOperatorConditionType string
 
 // ImageType - represents type of image
 type ImageType string
@@ -57,17 +57,31 @@ const (
 	PowerMax DriverType = "powermax"
 
 	// PowerScale - placeholder for constant PowerScale
-	PowerScale DriverType = "powerscale"
+	PowerScale DriverType = "isilon"
 
 	// Unity - placeholder for constant unity
 	Unity DriverType = "unity"
 
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
+
+	Provisioner = "provisioner"
+	Attacher    = "attacher"
+	Snapshotter = "snapshotter"
+	Registrar   = "registrar"
+	Resizer     = "resizer"
+	Sdcmonitor  = "sdc-monitor"
+
+	Succeeded     CSMOperatorConditionType = "Succeeded"
+	InvalidConfig CSMOperatorConditionType = "InvalidConfig"
+	Running       CSMOperatorConditionType = "Running"
+	Error         CSMOperatorConditionType = "Error"
+	Updating      CSMOperatorConditionType = "Updating"
+	Failed        CSMOperatorConditionType = "Failed"
 )
 
-// ContainerStorageModuleModule defines the desired state of a ContainerStorageModuleModules
-type ContainerStorageModuleModule struct {
+// Module defines the desired state of a ContainerStorageModuleModules
+type Module struct {
 	// Name is name of ContainerStorageModule modules
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
 	Name ModuleType `json:"name" yaml:"name"`
@@ -78,7 +92,7 @@ type ContainerStorageModuleModule struct {
 
 	// ConfigVersion is the configuration version of the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
-	ConfigVersion string `json:"configVersion" yaml:"configVersion"`
+	ConfigVersion string `json:"configVersion,omitempty" yaml:"configVersion,omitempty"`
 
 	// Components is the specification for SM components containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule components specification"
@@ -100,8 +114,8 @@ type PodStatus struct {
 // LastUpdate - Stores the last update condition for the ContainerStorageModule status
 type LastUpdate struct {
 
-	// ContainerStorageModuleOperatorCondition is the last known condition of the Custom Resource
-	ContainerStorageModuleOperatorCondition ContainerStorageModuleOperatorConditionType `json:"ContainerStorageModuleOperatorCondition,omitempty"`
+	// Condition is the last known condition of the Custom Resource
+	Condition CSMOperatorConditionType `json:"condition,omitempty"`
 
 	// Time is the time stamp for the last condition update
 	Time metav1.Time `json:"time,omitempty" yaml:"time"`
@@ -116,18 +130,6 @@ type Driver struct {
 	// CSIDriverType is the CSI Driver type for Dell EMC - e.g, powermax, powerflex,...
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Type"
 	CSIDriverType DriverType `json:"csiDriverType" yaml:"csiDriverType"`
-
-	// K8sVersion is the k8s varsion
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="k8s Version"
-	K8sVersion string `json:"k8sVersion" yaml:"k8sVersion"`
-
-	// VolumeNamePrefix is a string prepended to each volume created by the CSI driver
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Volume Name Prefix"
-	VolumeNamePrefix string `json:"volumeNamePrefix" yaml:"volumeNamePrefix"`
-
-	// IsOpenShift a boolean to check if the deployment is intended for openshift
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Is OpenShift"
-	IsOpenShift bool `json:"isOpenShift" yaml:"isOpenShift"`
 
 	// ConfigVersion is the configuration version of the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
@@ -183,19 +185,19 @@ type ContainerTemplate struct {
 
 	// Name is the name of Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Name"
-	Name ImageType `json:"name,omitempty" yaml:"name,omitempty"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	// Enabled is used to indicate wether or not to deploy a module
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enabled"
-	Enabled bool `json:"enabled" yaml:"enabled"`
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 
 	// Image is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Image"
-	Image string `json:"image,omitempty" yaml:"image,omitempty"`
+	Image ImageType `json:"image,omitempty" yaml:"image,omitempty"`
 
 	// ImagePullPolicy is the image pull policy for the image
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Image Pull Policy",xDescriptors="urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
-	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty" yaml:"imagePullPolicy,omitempty"`
 
 	// Args is the set of arguments for the container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Arguments"
