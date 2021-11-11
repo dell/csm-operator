@@ -6,8 +6,6 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerstore"
-    k8sVersion: v1.22
-
     # Config version for CSI PowerStore v2.0 driver
     configVersion: v2.0.0
 

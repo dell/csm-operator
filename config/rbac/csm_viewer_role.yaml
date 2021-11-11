@@ -1,13 +1,13 @@
-# permissions for end users to view csms.
+# permissions for end users to view containerstoragemodules.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: csm-viewer-role
+  name: containerstoragemodule-viewer-role
 rules:
 - apiGroups:
   - storage.dell.com
   resources:
-  - csms
+  - containerstoragemodules
   verbs:
   - get
   - list
@@ -15,6 +15,6 @@ rules:
 - apiGroups:
   - storage.dell.com
   resources:
-  - csms/status
+  - containerstoragemodules/status
   verbs:
   - get

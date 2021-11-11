@@ -6,7 +6,6 @@ metadata:
 spec:
   driver:
     csiDriverType: "unity"
-    k8sVersion: v1.22
 
     # Config version for CSI Unity v2.0 driver
     configVersion: v2.0.0

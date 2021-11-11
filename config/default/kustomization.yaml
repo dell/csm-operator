@@ -1,5 +1,5 @@
 # Adds namespace to all resources.
-namespace: csm-operator-system
+namespace: csm-operator
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
@@ -14,6 +14,7 @@ namePrefix: csm-operator-
 
 bases:
 - ../crd
+- ../serviceaccount
 - ../rbac
 - ../manager
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in

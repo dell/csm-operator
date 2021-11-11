@@ -12,6 +12,8 @@ You may obtain a copy of the License at
 package v1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,8 +28,8 @@ type ContainerStorageModuleSpec struct {
 	// Driver is a CSI Drivers for Dell EMC
 	Driver Driver `json:"driver,omitempty" yaml:"driver,omitempty"`
 
-	// ContainerStorageModuleModules is list of ContainerStorageModule Modules you want to deploy
-	Modules []ContainerStorageModuleModule `json:"modules,omitempty" yaml:"modules,omitempty"`
+	// Modules is list of Container Storage Module modules you want to deploy
+	Modules []Module `json:"modules,omitempty" yaml:"modules,omitempty"`
 }
 
 // ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
@@ -46,7 +48,7 @@ type ContainerStorageModuleStatus struct {
 
 	// State is the state of the driver installation
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="State",xDescriptors="urn:alm:descriptor:text"
-	State ContainerStorageModuleStateType `json:"state,omitempty" yaml:"state"`
+	State CSMStateType `json:"state,omitempty" yaml:"state"`
 
 	// LastUpdate is the last updated state of the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="LastUpdate"
@@ -56,7 +58,7 @@ type ContainerStorageModuleStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// ContainerStorageModule is the Schema for the csms API
+// ContainerStorageModule is the Schema for the containerstoragemodules API
 type ContainerStorageModule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -76,4 +78,28 @@ type ContainerStorageModuleList struct {
 
 func init() {
 	SchemeBuilder.Register(&ContainerStorageModule{}, &ContainerStorageModuleList{})
+}
+
+// GetCSMStatus - Returns a pointer to the driver instance
+func (cr *ContainerStorageModule) GetCSMStatus() *ContainerStorageModuleStatus {
+	return &cr.Status
+}
+
+func (cr *ContainerStorageModule) GetControllerName() string {
+	return fmt.Sprintf("%s-controller", cr.Name)
+}
+
+// GetDaemonSetName - Returns the name of the daemonset for the driver
+func (cr *ContainerStorageModule) GetNodeName() string {
+	return fmt.Sprintf("%s-node", cr.Name)
+}
+
+// GetContainerStorageModuleSpec - Returns a pointer to the GetContainerStorageModuleSpec instance
+func (cr *ContainerStorageModule) GetContainerStorageModuleSpec() *ContainerStorageModuleSpec {
+	return &cr.Spec
+}
+
+// GetDriverType - Returns the driver type
+func (cr *ContainerStorageModule) GetDriverType() DriverType {
+	return cr.Spec.Driver.CSIDriverType
 }
