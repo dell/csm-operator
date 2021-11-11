@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"hash/fnv"
 	"io"
+	"io/ioutil"
 
 	"fmt"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// K8sImagesConfig -
 type K8sImagesConfig struct {
 	K8sVersion string `json:"kubeversion" yaml:"kubeversion"`
 	Images     struct {
@@ -32,23 +34,27 @@ type K8sImagesConfig struct {
 	} `json:"images" yaml:"images"`
 }
 
+// OperatorConfig -
 type OperatorConfig struct {
 	IsOpenShift     bool
 	K8sVersion      K8sImagesConfig
 	ConfigDirectory string
 }
 
+// RbacYAML -
 type RbacYAML struct {
 	ServiceAccount     corev1.ServiceAccount
 	ClusterRole        rbacv1.ClusterRole
 	ClusterRoleBinding rbacv1.ClusterRoleBinding
 }
 
+// ControllerYAML -
 type ControllerYAML struct {
 	Deployment appsv1.Deployment
 	Rbac       RbacYAML
 }
 
+// NodeYAML -
 type NodeYAML struct {
 	DaemonSet appsv1.DaemonSet
 	Rbac      RbacYAML
@@ -85,6 +91,7 @@ func SplitYAML(gaintYAML []byte) ([][]byte, error) {
 	return res, nil
 }
 
+// UpdateSideCar -
 func UpdateSideCar(sideCars []csmv1.ContainerTemplate, c corev1.Container) corev1.Container {
 	for _, side := range sideCars {
 		if c.Name == side.Name {
@@ -102,6 +109,7 @@ func UpdateSideCar(sideCars []csmv1.ContainerTemplate, c corev1.Container) corev
 	return c
 }
 
+// ReplaceALLContainerImage -
 func ReplaceALLContainerImage(img K8sImagesConfig, c corev1.Container) corev1.Container {
 	switch c.Name {
 	case csmv1.Provisioner:
@@ -118,6 +126,7 @@ func ReplaceALLContainerImage(img K8sImagesConfig, c corev1.Container) corev1.Co
 	return c
 }
 
+// ReplaceAllEnvs -
 func ReplaceAllEnvs(defaultEnv, crEnv []corev1.EnvVar) []corev1.EnvVar {
 	merge := []corev1.EnvVar{}
 	for _, old := range crEnv {
@@ -137,6 +146,7 @@ func ReplaceAllEnvs(defaultEnv, crEnv []corev1.EnvVar) []corev1.EnvVar {
 	return defaultEnv
 }
 
+// ReplaceAllArgs -
 func ReplaceAllArgs(defaultArgs, crArgs []string) []string {
 	merge := []string{}
 	for _, old := range crArgs {
@@ -157,6 +167,7 @@ func ReplaceAllArgs(defaultArgs, crArgs []string) []string {
 	return defaultArgs
 }
 
+// ModifyCommonCR -
 func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	if cr.Name != "" {
 		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseName, cr.Name)
@@ -170,6 +181,7 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	return YamlString
 }
 
+// GetDriverYAML -
 func GetDriverYAML(YamlString, kind string) (interface{}, error) {
 	bufs, err := SplitYAML([]byte(YamlString))
 	if err != nil {
@@ -254,4 +266,39 @@ func HashContainerStorageModule(instance *csmv1.ContainerStorageModule) uint64 {
 func CSMHashChanged(instance *csmv1.ContainerStorageModule) (uint64, uint64, bool) {
 	expectedHash := HashContainerStorageModule(instance)
 	return expectedHash, instance.GetCSMStatus().ContainerStorageModuleHash, instance.GetCSMStatus().ContainerStorageModuleHash != expectedHash
+}
+
+// GetModuleDefaultVersion -
+func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.DriverType, moduleType csmv1.ModuleType, path string) (string, error) {
+	/* TODO(Michal): review with Team */
+	configMapPath := fmt.Sprintf("%s/moduleconfig/common/version-values.yaml", path)
+	buf, err := ioutil.ReadFile(configMapPath)
+	if err != nil {
+		return "", err
+	}
+
+	suppport := map[csmv1.DriverType]map[string]map[csmv1.ModuleType]string{}
+	err = yaml.Unmarshal(buf, &suppport)
+	if err != nil {
+		return "", err
+	}
+
+	dType := driverType
+	if driverType == "isilon" {
+		dType = "powerscale"
+	}
+
+	if driver, ok := suppport[dType]; ok {
+		if modules, ok := driver[driverConfigVersion]; ok {
+			if moduleVer, ok := modules[moduleType]; ok {
+				return moduleVer, nil
+			}
+			return "", fmt.Errorf(" %s module for %s driver  does not exist in file %s", moduleType, dType, configMapPath)
+		}
+		return "", fmt.Errorf("version %s of %s driver does not exist in file %s", driverConfigVersion, dType, configMapPath)
+
+	}
+
+	return "", fmt.Errorf("%s driver does not exist in file %s", dType, configMapPath)
+
 }
