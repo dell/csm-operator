@@ -26,7 +26,8 @@ var SupportedDrivers = map[string]string{
 	"powerscale": "powerscale", "isilon": "powerscale", // either powerscale or isilon are valid types
 }
 
-func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, string, error) {
+func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *corev1.Container, error) {
+	var err error
 	configMapName := map[string]string{
 		"powerscale": "csi-isilon",
 		"isilon":     "csi-isilon",
@@ -39,16 +40,18 @@ func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1
 		}
 	}
 
-	/* TODO(Michal): replace with a mapping from driver to module */
-	authConfigVersion := "v1.0.0"
-	if authModule.ConfigVersion != "" {
-		authConfigVersion = authModule.ConfigVersion
+	authConfigVersion := authModule.ConfigVersion
+	if authConfigVersion == "" {
+		authConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/container.yaml", op.ConfigDirectory, authConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
 	YamlString := string(buf)
@@ -62,12 +65,41 @@ func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1
 
 	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)])
 
-	return &authModule, YamlString, nil
+	var container corev1.Container
+	err = yaml.Unmarshal([]byte(YamlString), &container)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	skipCertValid := false
+	for _, env := range authModule.Components[0].Envs {
+		if env.Name == "INSECURE" {
+			skipCertValid, _ = strconv.ParseBool(env.Value)
+		}
+	}
+
+	if skipCertValid { // do not mount proxy-server-root-certificate
+		for i, c := range container.VolumeMounts {
+			if c.Name == "proxy-server-root-certificate" {
+				container.VolumeMounts[i] = container.VolumeMounts[len(container.VolumeMounts)-1]
+				container.VolumeMounts = container.VolumeMounts[:len(container.VolumeMounts)-1]
+			}
+
+		}
+
+	}
+
+	return &authModule, &container, nil
 
 }
 
-func getAuthVolumes(path, version string) ([]corev1.Volume, error) {
-	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", path, version)
+func getAuthVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, auth csmv1.ContainerTemplate) ([]corev1.Volume, error) {
+	version, err := utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+	if err != nil {
+		return nil, err
+	}
+
+	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", op.ConfigDirectory, version)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		return nil, err
@@ -78,24 +110,38 @@ func getAuthVolumes(path, version string) ([]corev1.Volume, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	skipCertValid := false
+	for _, env := range auth.Envs {
+		if env.Name == "INSECURE" {
+			skipCertValid, _ = strconv.ParseBool(env.Value)
+		}
+	}
+
+	if skipCertValid { // do not mount proxy-server-root-certificate
+		for i, c := range vols {
+			if c.Name == "proxy-server-root-certificate" {
+				vols[i] = vols[len(vols)-1]
+				return vols[:len(vols)-1], nil
+
+			}
+
+		}
+
+	}
 	return vols, nil
 }
 
-func InjectDeamonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.DaemonSet, error) {
-	authModule, YamlString, err := getAuthCR(cr, op)
+func AuthInjectDaemonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.DaemonSet, error) {
+	authModule, containerPtr, err := getAuthCR(cr, op)
 	if err != nil {
 		return nil, err
 	}
 
-	var container corev1.Container
-	err = yaml.Unmarshal([]byte(YamlString), &container)
-	if err != nil {
-		return nil, err
-	}
-
+	container := *containerPtr
 	container = utils.UpdateSideCar(authModule.Components, container)
 
-	vols, err := getAuthVolumes(op.ConfigDirectory, authModule.ConfigVersion)
+	vols, err := getAuthVolumes(cr, op, authModule.Components[0])
 	if err != nil {
 		return nil, err
 	}
@@ -113,21 +159,16 @@ func InjectDeamonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, op ut
 	return &ds, nil
 }
 
-func InjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.Deployment, error) {
-	authModule, YamlString, err := getAuthCR(cr, op)
+func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.Deployment, error) {
+	authModule, containerPtr, err := getAuthCR(cr, op)
 	if err != nil {
 		return nil, err
 	}
 
-	var container corev1.Container
-	err = yaml.Unmarshal([]byte(YamlString), &container)
-	if err != nil {
-		return nil, err
-	}
-
+	container := *containerPtr
 	container = utils.UpdateSideCar(authModule.Components, container)
 
-	vols, err := getAuthVolumes(op.ConfigDirectory, authModule.ConfigVersion)
+	vols, err := getAuthVolumes(cr, op, authModule.Components[0])
 	if err != nil {
 		return nil, err
 	}
