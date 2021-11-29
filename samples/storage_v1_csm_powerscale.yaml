@@ -162,7 +162,7 @@ spec:
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
-            value: "lglbg060.lss.emc.com"
+            value: ""
         
           # insecure: Enable/Disable certificate validation of the csm-authorization server       
           - name: "INSECURE"
