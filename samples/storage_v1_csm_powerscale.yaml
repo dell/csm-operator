@@ -10,6 +10,8 @@ spec:
     # Config version for CSI PowerScale v2.0.0 driver
     configVersion: v2.0.0
 
+    authSecret: test-isilon-creds 
+
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -160,7 +162,7 @@ spec:
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
-            value: "localhost"
+            value: "lglbg060.lss.emc.com"
         
           # insecure: Enable/Disable certificate validation of the csm-authorization server       
           - name: "INSECURE"
