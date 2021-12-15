@@ -1,0 +1,6 @@
+- username: "admin"
+  password: "Password123"
+  systemID: "4d4a2e5a36080e0f"
+  endpoint: "https://10.247.38.47"
+  skipCertificateValidation: true 
+  mdm: "10.247.38.41,10.247.38.44"

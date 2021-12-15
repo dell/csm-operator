@@ -129,12 +129,16 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	// Add finalizer
-	csm.SetFinalizers([]string{"finalizer.dell.emc.com"})
-	// Update CR
-	err = r.Client.Update(ctx, csm)
-	if err != nil {
-		reqLogger.Error(err, "Failed to update CR with finalizer")
-		return reconcile.Result{}, err
+	csm = new(csmv1.ContainerStorageModule)
+	r.Client.Get(ctx, req.NamespacedName, csm)
+	if !containString(csm.GetFinalizers(), "finalizer.dell.emc.com") {
+		csm.SetFinalizers([]string{"finalizer.dell.emc.com"})
+
+		// Update CR
+		if err = r.Client.Update(ctx, csm); err != nil {
+			reqLogger.Error(err, "Failed to update CR with finalizer")
+			return reconcile.Result{}, err
+		}
 	}
 
 	driverConfig := &utils.OperatorConfig{
@@ -408,6 +412,29 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			return fmt.Errorf("getting %s controller: %v", csmv1.PowerScale, err)
 		}
 
+	case csmv1.PowerFlex:
+		reqLogger.Info("Getting PowerFlex CSI Driver for Dell EMC")
+
+		configMap, err = drivers.GetPowerFlexConfigMap(cr, operatorConfig)
+		if err != nil {
+			return fmt.Errorf("getting %s configMap: %v", csmv1.PowerFlex, err)
+		}
+
+		driver, err = drivers.GetPowerFlexCSIDriver(cr, operatorConfig)
+		if err != nil {
+			return fmt.Errorf("getting %s configMap: %v", csmv1.PowerFlex, err)
+		}
+
+		node, err = drivers.GetPowerFlexNode(cr, operatorConfig)
+		if err != nil {
+			return fmt.Errorf("getting %s node: %v", csmv1.PowerFlex, err)
+		}
+
+		controller, err = drivers.GetPowerFlexController(cr, operatorConfig)
+		if err != nil {
+			return fmt.Errorf("getting %s controller: %v", csmv1.PowerFlex, err)
+		}
+
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
@@ -440,6 +467,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update ServiceAccount
+	reqLogger.Info("rbac is ", "rbac", node.Rbac)
 	err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, r.Client, reqLogger)
 	if err != nil {
 		return err
@@ -514,6 +542,10 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
 
+	case csmv1.PowerFlex:
+		// TODO: implement precheck for PowerFlex
+		return nil
+
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
@@ -587,4 +619,13 @@ func (r *ContainerStorageModuleReconciler) IncrUpdateCount() {
 // GetUpdateCount - Returns the current update count
 func (r *ContainerStorageModuleReconciler) GetUpdateCount() int32 {
 	return r.updateCount
+}
+
+func containString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
 }
