@@ -15,11 +15,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// ProxyLimits represents proxy limits
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // ProxyLimits is used for storing the various types of limits
 // applied for a particular proxy instance
-// ProxyLimits represents proxy limits
 type ProxyLimits struct {
 	MaxActiveRead       int `json:"maxActiveRead,omitempty" yaml:"maxActiveRead,omitempty"`
 	MaxActiveWrite      int `json:"maxActiveWrite,omitempty" yaml:"maxActiveWrite,omitempty"`

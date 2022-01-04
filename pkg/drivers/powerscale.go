@@ -17,7 +17,7 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
-// GetPowerScaleController
+// GetPowerScaleController get configmap
 func GetPowerScaleController(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*utils.ControllerYAML, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/controller.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
@@ -77,7 +77,7 @@ func GetPowerScaleController(cr csmv1.ContainerStorageModule, operatorConfig uti
 
 }
 
-// GetPowerScaleNode
+// GetPowerScaleNode read file
 func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*utils.NodeYAML, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/node.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
@@ -141,7 +141,7 @@ func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.Ope
 
 }
 
-// GetPowerScaleConfigMap
+// GetPowerScaleConfigMap configmap
 func GetPowerScaleConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*corev1.ConfigMap, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
@@ -170,7 +170,7 @@ func GetPowerScaleConfigMap(cr csmv1.ContainerStorageModule, operatorConfig util
 
 }
 
-// GetPowerScaleCSIDriver
+// GetPowerScaleCSIDriver read file
 func GetPowerScaleCSIDriver(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*storagev1.CSIDriver, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/csidriver.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
@@ -188,7 +188,7 @@ func GetPowerScaleCSIDriver(cr csmv1.ContainerStorageModule, operatorConfig util
 
 }
 
-// PrecheckPowerScale
+// PrecheckPowerScale get spec
 func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r utils.ReconcileCSM, log logr.Logger) error {
 	// Check for secrete only
 	config := cr.Name + "-creds"
@@ -241,7 +241,7 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 	return nil
 }
 
-// getCertVolume
+// getCertVolume get env
 func getCertVolume(cr csmv1.ContainerStorageModule) (*corev1.Volume, error) {
 	skipCertValid := false
 	certCount := 1

@@ -266,6 +266,7 @@ func HashContainerStorageModule(instance *csmv1.ContainerStorageModule) uint64 {
 	return uint64(hash.Sum32())
 }
 
+// CSMHashChanged returns hash diff bool
 func CSMHashChanged(instance *csmv1.ContainerStorageModule) (uint64, uint64, bool) {
 	expectedHash := HashContainerStorageModule(instance)
 	return expectedHash, instance.GetCSMStatus().ContainerStorageModuleHash, instance.GetCSMStatus().ContainerStorageModuleHash != expectedHash

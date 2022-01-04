@@ -67,22 +67,28 @@ const (
 
 	// Provisioner - placeholder for constant provisioner
 	Provisioner = "provisioner"
-	//Attacher - placeholder for constant attacher
+	// Attacher - placeholder for constant attacher
 	Attacher = "attacher"
 	// Snapshotter - placeholder for constant snapshotter
 	Snapshotter = "snapshotter"
-	// Regisrar - placeholder for constant registrar
+	// Registrar - placeholder for constant registrar
 	Registrar = "registrar"
 	// Resizer - placeholder for resizer
 	Resizer = "resizer"
 	// Sdcmonitor - placeholder for sdcmonitor
 	Sdcmonitor = "sdc-monitor"
 
+	// Succeeded 
 	Succeeded     CSMOperatorConditionType = "Succeeded"
+	// InvalidConfig
 	InvalidConfig CSMOperatorConditionType = "InvalidConfig"
+	// Running
 	Running       CSMOperatorConditionType = "Running"
+	// Error
 	Error         CSMOperatorConditionType = "Error"
+	// Updating
 	Updating      CSMOperatorConditionType = "Updating"
+	// Failed
 	Failed        CSMOperatorConditionType = "Failed"
 )
 
