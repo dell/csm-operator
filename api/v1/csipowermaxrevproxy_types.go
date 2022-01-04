@@ -19,6 +19,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // ProxyLimits is used for storing the various types of limits
 // applied for a particular proxy instance
+// ProxyLimits represents proxy limits
 type ProxyLimits struct {
 	MaxActiveRead       int `json:"maxActiveRead,omitempty" yaml:"maxActiveRead,omitempty"`
 	MaxActiveWrite      int `json:"maxActiveWrite,omitempty" yaml:"maxActiveWrite,omitempty"`

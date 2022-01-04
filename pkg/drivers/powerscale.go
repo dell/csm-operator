@@ -17,6 +17,7 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
+// GetPowerScaleController
 func GetPowerScaleController(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*utils.ControllerYAML, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/controller.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
@@ -76,6 +77,7 @@ func GetPowerScaleController(cr csmv1.ContainerStorageModule, operatorConfig uti
 
 }
 
+// GetPowerScaleNode
 func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*utils.NodeYAML, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/node.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
@@ -139,6 +141,7 @@ func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.Ope
 
 }
 
+// GetPowerScaleConfigMap
 func GetPowerScaleConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*corev1.ConfigMap, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
@@ -167,6 +170,7 @@ func GetPowerScaleConfigMap(cr csmv1.ContainerStorageModule, operatorConfig util
 
 }
 
+// GetPowerScaleCSIDriver
 func GetPowerScaleCSIDriver(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*storagev1.CSIDriver, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/csidriver.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
@@ -184,6 +188,7 @@ func GetPowerScaleCSIDriver(cr csmv1.ContainerStorageModule, operatorConfig util
 
 }
 
+// PrecheckPowerScale
 func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r utils.ReconcileCSM, log logr.Logger) error {
 	// Check for secrete only
 	config := cr.Name + "-creds"
@@ -236,6 +241,7 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 	return nil
 }
 
+// getCertVolume
 func getCertVolume(cr csmv1.ContainerStorageModule) (*corev1.Volume, error) {
 	skipCertValid := false
 	certCount := 1

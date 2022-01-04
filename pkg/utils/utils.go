@@ -61,9 +61,12 @@ type NodeYAML struct {
 }
 
 const (
-	DefaultReleaseName      = "<DriverDefaultReleaseName>"
+	// DefaultReleaseName constant
+	DefaultReleaseName = "<DriverDefaultReleaseName>"
+	// DefaultReleaseNamespace constant
 	DefaultReleaseNamespace = "<DriverDefaultReleaseNamespace>"
-	DefaultImagePullPolicy  = "IfNotPresent"
+	// DefaultImagePullPolicy constant
+	DefaultImagePullPolicy = "IfNotPresent"
 )
 
 // SplitYAML divides a big bytes of yaml files in individual yaml files.

@@ -65,12 +65,18 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// Provisioner - placeholder for constant provisioner
 	Provisioner = "provisioner"
-	Attacher    = "attacher"
+	//Attacher - placeholder for constant attacher
+	Attacher = "attacher"
+	// Snapshotter - placeholder for constant snapshotter
 	Snapshotter = "snapshotter"
-	Registrar   = "registrar"
-	Resizer     = "resizer"
-	Sdcmonitor  = "sdc-monitor"
+	// Regisrar - placeholder for constant registrar
+	Registrar = "registrar"
+	// Resizer - placeholder for resizer
+	Resizer = "resizer"
+	// Sdcmonitor - placeholder for sdcmonitor
+	Sdcmonitor = "sdc-monitor"
 
 	Succeeded     CSMOperatorConditionType = "Succeeded"
 	InvalidConfig CSMOperatorConditionType = "InvalidConfig"
@@ -181,6 +187,7 @@ type Driver struct {
 	TLSCertSecret string `json:"tlsCertSecret,omitempty" yaml:"tlsCertSecret"`
 }
 
+// ContainerTemplate members
 type ContainerTemplate struct {
 
 	// Name is the name of Container
@@ -217,6 +224,7 @@ type ContainerTemplate struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty" yaml:"nodeSelector"`
 }
 
+// SnapshotClass members
 type SnapshotClass struct {
 	// Name is the name of the Snapshot Class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Name"
