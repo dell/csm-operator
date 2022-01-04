@@ -116,6 +116,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	}, nil
 }
 
+// CalculateState of pods
 func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	running := false
 	controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
@@ -143,6 +144,7 @@ func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	return running, err
 }
 
+// SetStatus of csm
 func SetStatus(instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
 	instance.GetCSMStatus().State = newStatus.State
 	instance.GetCSMStatus().LastUpdate.ErrorMessage = newStatus.LastUpdate.ErrorMessage
@@ -153,6 +155,7 @@ func SetStatus(instance *csmv1.ContainerStorageModule, newStatus *csmv1.Containe
 	instance.GetCSMStatus().ContainerStorageModuleHash = newStatus.ContainerStorageModuleHash
 }
 
+// SetLastStatusUpdate of csm
 func SetLastStatusUpdate(status *csmv1.ContainerStorageModuleStatus, conditionType csmv1.CSMOperatorConditionType, errorMsg string) csmv1.LastUpdate {
 	// If the condition has not changed, then don't update the time
 	if status.LastUpdate.Condition == conditionType && status.LastUpdate.ErrorMessage == errorMsg {
@@ -169,6 +172,7 @@ func SetLastStatusUpdate(status *csmv1.ContainerStorageModuleStatus, conditionTy
 	}
 }
 
+// UpdateStatus of csm
 func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, reqLogger logr.Logger, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus) error {
 	//running := calculateState(ctx, instance, r, newStatus)
 	if !reflect.DeepEqual(oldStatus, newStatus) {
@@ -191,6 +195,7 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	return nil
 }
 
+// HandleValidationError for csm
 func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, reqLogger logr.Logger,
 	validationError error) (reconcile.Result, error) {
 	reqLogger.Error(validationError, "Validation error")
@@ -225,6 +230,7 @@ func GetOperatorConditionTypeFromState(state csmv1.CSMStateType) csmv1.CSMOperat
 	return csmv1.Error
 }
 
+// HandleSuccess for csm
 func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, reqLogger logr.Logger, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus) (reconcile.Result, error) {
 	errorMsg := ""
 	running, err := CalculateState(ctx, instance, r, newStatus)

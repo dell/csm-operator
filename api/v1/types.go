@@ -65,19 +65,31 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// Provisioner - placeholder for constant provisioner
 	Provisioner = "provisioner"
-	Attacher    = "attacher"
+	// Attacher - placeholder for constant attacher
+	Attacher = "attacher"
+	// Snapshotter - placeholder for constant snapshotter
 	Snapshotter = "snapshotter"
-	Registrar   = "registrar"
-	Resizer     = "resizer"
-	Sdcmonitor  = "sdc-monitor"
+	// Registrar - placeholder for constant registrar
+	Registrar = "registrar"
+	// Resizer - placeholder for resizer
+	Resizer = "resizer"
+	// Sdcmonitor - placeholder for sdcmonitor
+	Sdcmonitor = "sdc-monitor"
 
-	Succeeded     CSMOperatorConditionType = "Succeeded"
+	// Succeeded - placeholder for success
+	Succeeded CSMOperatorConditionType = "Succeeded"
+	// InvalidConfig - placeholder for invalidConfig
 	InvalidConfig CSMOperatorConditionType = "InvalidConfig"
-	Running       CSMOperatorConditionType = "Running"
-	Error         CSMOperatorConditionType = "Error"
-	Updating      CSMOperatorConditionType = "Updating"
-	Failed        CSMOperatorConditionType = "Failed"
+	// Running - placeholder for running
+	Running CSMOperatorConditionType = "Running"
+	// Error - placeholder for error
+	Error CSMOperatorConditionType = "Error"
+	// Updating - placeholder for updating
+	Updating CSMOperatorConditionType = "Updating"
+	// Failed - placeholder for failed
+	Failed CSMOperatorConditionType = "Failed"
 )
 
 // Module defines the desired state of a ContainerStorageModuleModules
@@ -181,6 +193,7 @@ type Driver struct {
 	TLSCertSecret string `json:"tlsCertSecret,omitempty" yaml:"tlsCertSecret"`
 }
 
+// ContainerTemplate members
 type ContainerTemplate struct {
 
 	// Name is the name of Container
@@ -217,6 +230,7 @@ type ContainerTemplate struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty" yaml:"nodeSelector"`
 }
 
+// SnapshotClass members
 type SnapshotClass struct {
 	// Name is the name of the Snapshot Class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Name"
