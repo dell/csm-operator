@@ -78,17 +78,17 @@ const (
 	// Sdcmonitor - placeholder for sdcmonitor
 	Sdcmonitor = "sdc-monitor"
 
-	// Succeeded 
+	// Succeeded - placeholder for success 
 	Succeeded     CSMOperatorConditionType = "Succeeded"
-	// InvalidConfig
+	// InvalidConfig - placeholder for invalidConfig 
 	InvalidConfig CSMOperatorConditionType = "InvalidConfig"
-	// Running
+	// Running - placeholder for running 
 	Running       CSMOperatorConditionType = "Running"
-	// Error
+	// Error - placeholder for error
 	Error         CSMOperatorConditionType = "Error"
-	// Updating
+	// Updating - placeholder for updating
 	Updating      CSMOperatorConditionType = "Updating"
-	// Failed
+	// Failed - placeholder for failed
 	Failed        CSMOperatorConditionType = "Failed"
 )
 

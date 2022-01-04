@@ -133,7 +133,7 @@ func getAuthVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, au
 	return vols, nil
 }
 
-// AuthInjectDaemonset
+// AuthInjectDaemonset for workload
 func AuthInjectDaemonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.DaemonSet, error) {
 	authModule, containerPtr, err := getAuthCR(cr, op)
 	if err != nil {
@@ -161,7 +161,7 @@ func AuthInjectDaemonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, o
 	return &ds, nil
 }
 
-// AuthInjectDeployment
+// AuthInjectDeployment for workload
 func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.Deployment, error) {
 	authModule, containerPtr, err := getAuthCR(cr, op)
 	if err != nil {
@@ -190,7 +190,7 @@ func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule,
 
 }
 
-// AuthorizationPrecheck
+// AuthorizationPrecheck pre checks
 func AuthorizationPrecheck(ctx context.Context, cr *csmv1.ContainerStorageModule, auth csmv1.Module, r utils.ReconcileCSM, log logr.Logger) error {
 	if _, ok := SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
 		return fmt.Errorf("csm authorization does not support %s driver", string(cr.Spec.Driver.CSIDriverType))
