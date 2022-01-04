@@ -78,18 +78,18 @@ const (
 	// Sdcmonitor - placeholder for sdcmonitor
 	Sdcmonitor = "sdc-monitor"
 
-	// Succeeded - placeholder for success 
-	Succeeded     CSMOperatorConditionType = "Succeeded"
-	// InvalidConfig - placeholder for invalidConfig 
+	// Succeeded - placeholder for success
+	Succeeded CSMOperatorConditionType = "Succeeded"
+	// InvalidConfig - placeholder for invalidConfig
 	InvalidConfig CSMOperatorConditionType = "InvalidConfig"
-	// Running - placeholder for running 
-	Running       CSMOperatorConditionType = "Running"
+	// Running - placeholder for running
+	Running CSMOperatorConditionType = "Running"
 	// Error - placeholder for error
-	Error         CSMOperatorConditionType = "Error"
+	Error CSMOperatorConditionType = "Error"
 	// Updating - placeholder for updating
-	Updating      CSMOperatorConditionType = "Updating"
+	Updating CSMOperatorConditionType = "Updating"
 	// Failed - placeholder for failed
-	Failed        CSMOperatorConditionType = "Failed"
+	Failed CSMOperatorConditionType = "Failed"
 )
 
 // Module defines the desired state of a ContainerStorageModuleModules
