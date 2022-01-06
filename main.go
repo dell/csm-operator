@@ -44,13 +44,13 @@ import (
 
 const (
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
-	K8sMinimumSupportedVersion = "1.19"
+	K8sMinimumSupportedVersion = "1.21"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.22"
+	K8sMaximumSupportedVersion = "1.23"
 	// OpenshiftMinimumSupportedVersion is the minimum supported version for openshift
-	OpenshiftMinimumSupportedVersion = "4.6"
+	OpenshiftMinimumSupportedVersion = "4.8"
 	// OpenshiftMaximumSupportedVersion is the maximum supported version for openshift
-	OpenshiftMaximumSupportedVersion = "4.7"
+	OpenshiftMaximumSupportedVersion = "4.9"
 )
 
 var (
