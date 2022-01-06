@@ -118,7 +118,7 @@ func getOperatorConfig() utils.OperatorConfig {
 		panic(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
 	}
 	if currentVersion > maxVersion {
-		panic(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
+		panic(fmt.Sprintf("version %s is greater than maximum supported version of %f", kubeVersion, maxVersion))
 	}
 
 	// Get the environment variSable config dir
