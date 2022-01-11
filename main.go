@@ -38,6 +38,7 @@ import (
 	k8sClient "github.com/dell/csm-operator/k8s"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/kubernetes-csi/external-snapshotter/client/v3/apis/volumesnapshot/v1beta1"
+	"k8s.io/client-go/util/workqueue"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	//+kubebuilder:scaffold:imports
 )
@@ -46,7 +47,7 @@ const (
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
 	K8sMinimumSupportedVersion = "1.19"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.22"
+	K8sMaximumSupportedVersion = "1.23"
 	// OpenshiftMinimumSupportedVersion is the minimum supported version for openshift
 	OpenshiftMinimumSupportedVersion = "4.6"
 	// OpenshiftMaximumSupportedVersion is the maximum supported version for openshift
@@ -115,10 +116,11 @@ func getOperatorConfig() utils.OperatorConfig {
 		panic(err.Error())
 	}
 	if currentVersion < minVersion {
-		panic(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
+		fmt.Printf("version %s is less than minimum supported version of %f", kubeVersion, minVersion)
 	}
 	if currentVersion > maxVersion {
-		panic(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
+		fmt.Printf("version %s is greater than maximum supported version of %f", kubeVersion, maxVersion)
+
 	}
 
 	// Get the environment variSable config dir
@@ -190,12 +192,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	var retryIntervalStart time.Duration = 5 * time.Second
+	var retryIntervalMax time.Duration = 10 * time.Minute
+	expRateLimiter := workqueue.NewItemFastSlowRateLimiter(retryIntervalStart, retryIntervalMax, 1)
 	if err = (&controllers.ContainerStorageModuleReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("ContainerStorageModule"),
 		Scheme: mgr.GetScheme(),
 		Config: operatorConfig,
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, expRateLimiter, 1); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ContainerStorageModule")
 		os.Exit(1)
 	}

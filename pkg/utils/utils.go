@@ -2,7 +2,7 @@ package utils
 
 import (
 	"bytes"
-	"encoding/json"
+	//"encoding/json"
 	"hash/fnv"
 	"io"
 	"io/ioutil"
@@ -17,7 +17,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	hashutil "k8s.io/kubernetes/pkg/util/hash"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	//hashutil "k8s.io/kubernetes/pkg/util/hash"
+	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 )
@@ -56,7 +58,8 @@ type ControllerYAML struct {
 
 // NodeYAML -
 type NodeYAML struct {
-	DaemonSet appsv1.DaemonSet
+	//DaemonSet appsv1.DaemonSet
+	DaemonSet confv1.DaemonSetApplyConfiguration
 	Rbac      RbacYAML
 }
 
@@ -95,6 +98,24 @@ func SplitYAML(gaintYAML []byte) ([][]byte, error) {
 }
 
 // UpdateSideCar -
+func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c acorev1.ContainerApplyConfiguration) acorev1.ContainerApplyConfiguration {
+	for _, side := range sideCars {
+		if *c.Name == side.Name {
+			if side.Image != "" {
+				*c.Image = string(side.Image)
+			}
+			if side.ImagePullPolicy != "" {
+				*c.Image = string(side.ImagePullPolicy)
+			}
+
+			//c.Env = ReplaceAllEnvs(c.Env, side.Envs)
+			//c.Args = ReplaceAllArgs(c.Args, side.Args)
+		}
+	}
+	return c
+}
+
+// UpdateSideCar -
 func UpdateSideCar(sideCars []csmv1.ContainerTemplate, c corev1.Container) corev1.Container {
 	for _, side := range sideCars {
 		if c.Name == side.Name {
@@ -105,9 +126,26 @@ func UpdateSideCar(sideCars []csmv1.ContainerTemplate, c corev1.Container) corev
 				c.Image = string(side.ImagePullPolicy)
 			}
 
-			c.Env = ReplaceAllEnvs(c.Env, side.Envs)
-			c.Args = ReplaceAllArgs(c.Args, side.Args)
+			//c.Env = ReplaceAllEnvs(c.Env, side.Envs)
+			//c.Args = ReplaceAllArgs(c.Args, side.Args)
 		}
+	}
+	return c
+}
+
+// ReplaceALLContainerImage -
+func ReplaceALLContainerImageApply(img K8sImagesConfig, c acorev1.ContainerApplyConfiguration) acorev1.ContainerApplyConfiguration {
+	switch *c.Name {
+	case csmv1.Provisioner:
+		*c.Image = img.Images.Provisioner
+	case csmv1.Attacher:
+		*c.Image = img.Images.Attacher
+	case csmv1.Snapshotter:
+		*c.Image = img.Images.Snapshotter
+	case csmv1.Registrar:
+		*c.Image = img.Images.Registrar
+	case csmv1.Resizer:
+		*c.Image = img.Images.Resizer
 	}
 	return c
 }
@@ -127,6 +165,70 @@ func ReplaceALLContainerImage(img K8sImagesConfig, c corev1.Container) corev1.Co
 		c.Image = img.Images.Resizer
 	}
 	return c
+}
+
+// EnvVarApplyConfiguration
+// ReplaceAllEnvs -
+func ReplaceAllApplyEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
+	crEnv []corev1.EnvVar,
+	nrEnv []corev1.EnvVar, log logr.Logger) []acorev1.EnvVarApplyConfiguration {
+	newEnv := make([]acorev1.EnvVarApplyConfiguration, 0)
+	temp := make(map[string]string)
+	for _, update := range crEnv {
+		if update.Value == "" {
+			update.Value = "NA"
+		}
+		temp[update.Name] = update.Value
+	}
+	for _, update := range nrEnv {
+		if update.Value == "" {
+			update.Value = "NA"
+		}
+		temp[update.Name] = update.Value
+	}
+	for _, old := range driverEnv {
+		if temp[*old.Name] != "" {
+			val := temp[*old.Name]
+			if val == "NA" {
+				val = ""
+			}
+			log.Info("debug overwrite ", "name", *old.Name, "value", val)
+			e := acorev1.EnvVarApplyConfiguration{
+				Name:  old.Name,
+				Value: &val,
+			}
+			newEnv = append(newEnv, e)
+		} else {
+			e := acorev1.EnvVarApplyConfiguration{
+				Name:  old.Name,
+				Value: old.Value,
+			}
+			if old.Value != nil {
+				log.Info("debug existing ", "name", *old.Name, "value", old.Value)
+			} else {
+				log.Info("debug existing ", "name", *old.Name, "value", "")
+			}
+			newEnv = append(newEnv, e)
+		}
+	}
+	/*
+		//var keyRef *acorev1.EnvVarSourceApplyConfiguration
+		key := ""
+		if update.ValueFrom != nil {
+			keyRef := update.ValueFrom.SecretKeyRef
+			key = keyRef.Key
+			e = acorev1.EnvVarApplyConfiguration{
+				Name:  &update.Name,
+				Value: &update.Value,
+				ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+					SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+						Key: &key,
+					},
+				},
+			}
+		}
+	*/
+	return newEnv
 }
 
 // ReplaceAllEnvs -
@@ -237,11 +339,14 @@ func GetDriverYAML(YamlString, kind string) (interface{}, error) {
 			Rbac:       rbac,
 		}, nil
 	} else if kind == "DaemonSet" {
-		var ds appsv1.DaemonSet
+		//var ds appsv1.DaemonSet
+		var ds confv1.DaemonSetApplyConfiguration
+
 		err := yaml.Unmarshal(podBuf, &ds)
 		if err != nil {
 			return nil, err
 		}
+		fmt.Printf("Debug daemonset is %s\n", *ds.TypeMetaApplyConfiguration.Kind)
 		return NodeYAML{
 			DaemonSet: ds,
 			Rbac:      rbac,
@@ -261,8 +366,9 @@ func LogBannerAndReturn(result reconcile.Result, err error, reqLogger logr.Logge
 // This is used to detect if the CSM spec has changed and any updates are required
 func HashContainerStorageModule(instance *csmv1.ContainerStorageModule) uint64 {
 	hash := fnv.New32a()
-	driverJSON, _ := json.Marshal(instance.GetContainerStorageModuleSpec())
-	hashutil.DeepHashObject(hash, driverJSON)
+	//driverJSON, _ := json.Marshal(instance.GetContainerStorageModuleSpec())
+	//hashutil.DeepHashObject(hash, driverJSON)
+	//fmt.Printf("debug hash %#v \n", driverJSON)
 	return uint64(hash.Sum32())
 }
 

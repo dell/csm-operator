@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	//"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -15,7 +16,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
+	//podutil "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -99,13 +100,16 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 			return node.Status.DesiredNumberScheduled, csmv1.PodStatus{}, err
 		}
 		for _, pod := range podList.Items {
-			if podutil.IsPodAvailable(&pod, node.Spec.MinReadySeconds, metav1.Now()) {
-				available = append(available, pod.Name)
-			} else if podutil.IsPodReady(&pod) {
-				ready = append(ready, pod.Name)
-			} else {
-				starting = append(starting, pod.Name)
-			}
+			fmt.Printf("debug pod status %s \n", pod.Status.Phase)
+			/*
+				if podutil.IsPodAvailable(&pod, node.Spec.MinReadySeconds, metav1.Now()) {
+					available = append(available, pod.Name)
+				} else if podutil.IsPodReady(&pod) {
+					ready = append(ready, pod.Name)
+				} else {
+					starting = append(starting, pod.Name)
+				}
+			*/
 		}
 	}
 	return node.Status.DesiredNumberScheduled, csmv1.PodStatus{
@@ -175,7 +179,7 @@ func SetLastStatusUpdate(status *csmv1.ContainerStorageModuleStatus, conditionTy
 // UpdateStatus of csm
 func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, reqLogger logr.Logger, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus) error {
 	//running := calculateState(ctx, instance, r, newStatus)
-	if !reflect.DeepEqual(oldStatus, newStatus) {
+	if reflect.DeepEqual(oldStatus, newStatus) {
 		statusString := fmt.Sprintf("Status: (State - %s, Error Message - %s, Driver Hash - %d)",
 			newStatus.State, newStatus.LastUpdate.ErrorMessage, newStatus.ContainerStorageModuleHash)
 		reqLogger.Info(statusString)
@@ -191,6 +195,8 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		reqLogger.Info("Successfully updated CR status")
 	} else {
 		reqLogger.Info("No change to status. No updates will be applied to CR status")
+		// fix this later
+		//return errors.New("apply change")
 	}
 	return nil
 }
@@ -261,7 +267,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		} else if oldStatus.State == constants.Succeeded {
 			timeSinceLastConditionChange := metav1.Now().Sub(oldStatus.LastUpdate.Time.Time).Round(time.Millisecond)
 			reqLogger.Info(fmt.Sprintf("Time since last condition change: %v", timeSinceLastConditionChange))
-			if timeSinceLastConditionChange >= constants.MaxRetryDuration {
+			if timeSinceLastConditionChange == constants.MaxRetryDuration {
 				// Don't requeue again
 				requeue = false
 				reqLogger.Info("Time elapsed since last condition change is more than max limit. Not going to reconcile")

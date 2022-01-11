@@ -38,6 +38,7 @@ import (
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/ratelimiter"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
@@ -219,7 +220,8 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	// Check if CSM is in running state (only if the status was previously set to Succeeded or Running)
 	if checkStateOnly {
-		return utils.HandleSuccess(ctx, csm, r, reqLogger, newStatus, oldStatus)
+		// fix this later
+		//return utils.HandleSuccess(ctx, csm, r, reqLogger, newStatus, oldStatus)
 	}
 	// Remove the force update field if set
 	// The assumption is that we will not have a spec with Running/Succeeded state
@@ -329,8 +331,9 @@ func (r *ContainerStorageModuleReconciler) updateInstance(ctx context.Context, i
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	c, err := controller.New("ContainerStorageModule", mgr, controller.Options{Reconciler: r})
+func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter ratelimiter.RateLimiter, maxReconcilers int) error {
+	c, err := controller.New("ContainerStorageModule", mgr, controller.Options{Reconciler: r,
+		RateLimiter: limiter, MaxConcurrentReconciles: maxReconcilers})
 	if err != nil {
 		r.Log.Error(err, "Unable to setup ContainerStorageModule controller")
 		os.Exit(1)
@@ -361,6 +364,13 @@ func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager) er
 	}
 	return nil
 }
+
+/*
+			WithOptions(reconcile.Options{
+                        RateLimiter:             limiter,
+                        MaxConcurrentReconciles: maxReconcilers,
+                }).
+*/
 
 func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule, log logr.Logger) (reconcile.Result, error) {
 	// Remove the finalizers
@@ -426,12 +436,12 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
-				ds, err := modules.AuthInjectDaemonset(node.DaemonSet, cr, operatorConfig)
+				//ds, err := modules.AuthInjectDaemonset(node.DaemonSet, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deamonset: %v", err)
 				}
 
-				node.DaemonSet = *ds
+				//node.DaemonSet = *ds
 
 			default:
 				return fmt.Errorf("unsupported module type %s", m.Name)
@@ -490,10 +500,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update DeamonSet
+
+	reqLogger.Info("=========== DeamonSet =================")
+	reqLogger.Info("debug sync daemonset", "name", node.DaemonSet.Name)
 	err = daemonset.SyncDaemonset(ctx, &node.DaemonSet, r.Client, reqLogger)
 	if err != nil {
 		return err
 	}
+	reqLogger.Info("=========== DeamonSet =================")
 
 	return nil
 }
