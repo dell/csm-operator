@@ -65,19 +65,31 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// Provisioner - placeholder for constant
 	Provisioner = "provisioner"
-	Attacher    = "attacher"
+	// Attacher - placeholder for constant
+	Attacher = "attacher"
+	// Snapshotter - placeholder for constant
 	Snapshotter = "snapshotter"
-	Registrar   = "registrar"
-	Resizer     = "resizer"
-	Sdcmonitor  = "sdc-monitor"
+	// Registrar - placeholder for constant
+	Registrar = "registrar"
+	// Resizer - placeholder for constant
+	Resizer = "resizer"
+	// Sdcmonitor - placeholder for constant
+	Sdcmonitor = "sdc-monitor"
 
-	Succeeded     CSMOperatorConditionType = "Succeeded"
+	// Succeeded - constant
+	Succeeded CSMOperatorConditionType = "Succeeded"
+	// InvalidConfig - constant
 	InvalidConfig CSMOperatorConditionType = "InvalidConfig"
-	Running       CSMOperatorConditionType = "Running"
-	Error         CSMOperatorConditionType = "Error"
-	Updating      CSMOperatorConditionType = "Updating"
-	Failed        CSMOperatorConditionType = "Failed"
+	// Running - Constant
+	Running CSMOperatorConditionType = "Running"
+	// Error - Constant
+	Error CSMOperatorConditionType = "Error"
+	// Updating - Constant
+	Updating CSMOperatorConditionType = "Updating"
+	// Failed - Constant
+	Failed CSMOperatorConditionType = "Failed"
 )
 
 // Module defines the desired state of a ContainerStorageModuleModules
@@ -181,6 +193,7 @@ type Driver struct {
 	TLSCertSecret string `json:"tlsCertSecret,omitempty" yaml:"tlsCertSecret"`
 }
 
+//ContainerTemplate template
 type ContainerTemplate struct {
 
 	// Name is the name of Container
@@ -217,6 +230,7 @@ type ContainerTemplate struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty" yaml:"nodeSelector"`
 }
 
+//SnapshotClass struct
 type SnapshotClass struct {
 	// Name is the name of the Snapshot Class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Name"
