@@ -61,9 +61,12 @@ type NodeYAML struct {
 }
 
 const (
-	DefaultReleaseName      = "<DriverDefaultReleaseName>"
+	// DefaultReleaseName const
+	DefaultReleaseName = "<DriverDefaultReleaseName>"
+	// DefaultReleaseNamespace const
 	DefaultReleaseNamespace = "<DriverDefaultReleaseNamespace>"
-	DefaultImagePullPolicy  = "IfNotPresent"
+	// DefaultImagePullPolicy const
+	DefaultImagePullPolicy = "IfNotPresent"
 )
 
 // SplitYAML divides a big bytes of yaml files in individual yaml files.
@@ -263,6 +266,7 @@ func HashContainerStorageModule(instance *csmv1.ContainerStorageModule) uint64 {
 	return uint64(hash.Sum32())
 }
 
+// CSMHashChanged for cr
 func CSMHashChanged(instance *csmv1.ContainerStorageModule) (uint64, uint64, bool) {
 	expectedHash := HashContainerStorageModule(instance)
 	return expectedHash, instance.GetCSMStatus().ContainerStorageModuleHash, instance.GetCSMStatus().ContainerStorageModuleHash != expectedHash
