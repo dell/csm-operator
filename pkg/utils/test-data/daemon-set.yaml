@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: DaemonSet
+metadata:
+  name: daemon-set
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: service-account
+
+---
+
+apiVersion: v1
+kind: ClusterRole
+metadata:
+  name: cluster-role
+  
+---
+
+apiVersion: v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-role-binding
