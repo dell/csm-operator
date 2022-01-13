@@ -59,16 +59,16 @@ jobs:
         with:
           directories: .
           options: -ri
-   image_security_scan:
+  image_security_scan:
     name: Image Scanner
     runs-on: ubuntu-latest
     env:
       BASE_IMG : ubuntu:latest
     steps:
-      - name: Set up Go 1.16+
+      - name: Set up Go 1.17+
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ^1.17
         id: go
       - name: Checkout the code
         uses: actions/checkout@v2
