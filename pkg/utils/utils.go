@@ -102,7 +102,7 @@ func UpdateSideCar(sideCars []csmv1.ContainerTemplate, c corev1.Container) corev
 				c.Image = string(side.Image)
 			}
 			if side.ImagePullPolicy != "" {
-				c.Image = string(side.ImagePullPolicy)
+				c.ImagePullPolicy = side.ImagePullPolicy
 			}
 
 			c.Env = ReplaceAllEnvs(c.Env, side.Envs)

@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -141,6 +142,63 @@ func Test_GetDriverYAML(t *testing.T) {
 			result, err := utils.GetDriverYAML(yaml, kind)
 			for _, checkFn := range checkFns {
 				checkFn(t, result, err)
+			}
+		})
+	}
+}
+
+func Test_UpdateSideCar(t *testing.T) {
+	type checkFn func(*testing.T, corev1.Container)
+	check := func(fns ...checkFn) []checkFn { return fns }
+
+	checkExpectedOutput := func(expectedOutput corev1.Container) func(t *testing.T, c corev1.Container) {
+		return func(t *testing.T, result corev1.Container) {
+			assert.Equal(t, expectedOutput, result)
+		}
+	}
+
+	tests := map[string]func(t *testing.T) ([]csmv1.ContainerTemplate, corev1.Container, []checkFn){
+
+		"deployment": func(*testing.T) ([]csmv1.ContainerTemplate, corev1.Container, []checkFn) {
+
+			sidecars := []csmv1.ContainerTemplate{
+				{
+					Name:            "my-sidecar-1",
+					Image:           "my-image-1",
+					ImagePullPolicy: "my-pull-policy-1",
+				},
+				{
+					Name:            "my-sidecar-2",
+					Image:           "my-image-2",
+					ImagePullPolicy: "my-pull-policy-2",
+				},
+				{
+					Name:            "my-sidecar-3",
+					Image:           "my-image-3",
+					ImagePullPolicy: "my-pull-policy-3",
+				},
+			}
+
+			container := corev1.Container{
+				Name: "my-sidecar-2",
+			}
+
+			c := corev1.Container{
+				Name:            "my-sidecar-2",
+				Image:           "my-image-2",
+				ImagePullPolicy: "my-pull-policy-2",
+			}
+
+			return sidecars, container, check(checkExpectedOutput(c))
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			sidecars, container, checkFns := tc(t)
+			result := utils.UpdateSideCar(sidecars, container)
+			for _, checkFn := range checkFns {
+				checkFn(t, result)
 			}
 		})
 	}
