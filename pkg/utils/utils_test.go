@@ -171,6 +171,17 @@ func Test_UpdateSideCar(t *testing.T) {
 					Name:            "my-sidecar-2",
 					Image:           "my-image-2",
 					ImagePullPolicy: "my-pull-policy-2",
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "name-1",
+							Value: "value-1",
+						},
+						{
+							Name:  "name-2",
+							Value: "value-2",
+						},
+					},
+					Args: []string{"arg1=val1", "arg2=val2"},
 				},
 				{
 					Name:            "my-sidecar-3",
@@ -181,15 +192,32 @@ func Test_UpdateSideCar(t *testing.T) {
 
 			container := corev1.Container{
 				Name: "my-sidecar-2",
+				Env: []corev1.EnvVar{
+					{
+						Name:  "name-2",
+						Value: "old-value-2",
+					},
+				},
+				Args: []string{"arg1=oldval1"},
 			}
 
-			c := corev1.Container{
+			expectedResult := corev1.Container{
 				Name:            "my-sidecar-2",
 				Image:           "my-image-2",
 				ImagePullPolicy: "my-pull-policy-2",
+				Env: []corev1.EnvVar{
+					{
+						Name:  "name-2",
+						Value: "value-2",
+					},
+					{
+						Name:  "name-1",
+						Value: "value-1",
+					},
+				},
+				Args: []string{"arg1=val1", "arg2=val2"},
 			}
-
-			return sidecars, container, check(checkExpectedOutput(c))
+			return sidecars, container, check(checkExpectedOutput(expectedResult))
 		},
 	}
 
