@@ -1,0 +1,18 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+spec:
+  selector:
+    matchLabels:
+      app: <DriverDefaultReleaseName>-node
+  template:
+    metadata:
+      labels:
+        app: <DriverDefaultReleaseName>-node
+    spec:
+      serviceAccount: <DriverDefaultReleaseName>-node
+      containers:
+        - name: driver
+          imagePullPolicy: IfNotPresent

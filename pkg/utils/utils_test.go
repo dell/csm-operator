@@ -323,3 +323,60 @@ func Test_ReplaceALLContainerImage(t *testing.T) {
 		})
 	}
 }
+
+func Test_ModifyCommonCR(t *testing.T) {
+	type checkFn func(*testing.T, string)
+	check := func(fns ...checkFn) []checkFn { return fns }
+
+	checkExpectedOutput := func(expectedOutput string) func(t *testing.T, c string) {
+		return func(t *testing.T, result string) {
+			assert.Equal(t, expectedOutput, result)
+		}
+	}
+
+	tests := map[string]func(t *testing.T) (string, csmv1.ContainerStorageModule, []checkFn){
+
+		"success": func(*testing.T) (string, csmv1.ContainerStorageModule, []checkFn) {
+
+			data, err := os.ReadFile("test-data/sample-template-in.yaml")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			yaml := string(data)
+
+			cr := csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-csm",
+					Namespace: "my-namespace",
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: csmv1.ContainerTemplate{
+							ImagePullPolicy: "Always",
+						},
+					},
+				},
+			}
+
+			data, err = os.ReadFile("test-data/sample-template-out.yaml")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			expectedResult := string(data)
+
+			return yaml, cr, check(checkExpectedOutput(expectedResult))
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			sidecars, container, checkFns := tc(t)
+			result := utils.ModifyCommonCR(sidecars, container)
+			for _, checkFn := range checkFns {
+				checkFn(t, result)
+			}
+		})
+	}
+}

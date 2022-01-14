@@ -1,0 +1,18 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: my-csm-node
+  namespace: my-namespace
+spec:
+  selector:
+    matchLabels:
+      app: my-csm-node
+  template:
+    metadata:
+      labels:
+        app: my-csm-node
+    spec:
+      serviceAccount: my-csm-node
+      containers:
+        - name: driver
+          imagePullPolicy: Always
