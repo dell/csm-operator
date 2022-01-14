@@ -380,3 +380,84 @@ func Test_ModifyCommonCR(t *testing.T) {
 		})
 	}
 }
+
+func Test_GetModuleDefaultVersion(t *testing.T) {
+	type checkFn func(*testing.T, string, error)
+	check := func(fns ...checkFn) []checkFn { return fns }
+
+	checkExpectedOutput := func(expectedOutput string) func(t *testing.T, c string, err error) {
+		return func(t *testing.T, result string, err error) {
+			assert.Equal(t, expectedOutput, result)
+		}
+	}
+
+	hasNoError := func(t *testing.T, c string, err error) {
+		if err != nil {
+			t.Fatalf("expected no error but found %v", err)
+		}
+	}
+
+	hasError := func(t *testing.T, c string, err error) {
+		if err == nil {
+			t.Fatalf("expected error")
+		}
+	}
+
+	tests := map[string]func(t *testing.T) (string, csmv1.DriverType, csmv1.ModuleType, string, []checkFn){
+
+		"success": func(*testing.T) (string, csmv1.DriverType, csmv1.ModuleType, string, []checkFn) {
+
+			driverConfigVersion := "v2.0.0"
+			driverType := csmv1.PowerScale
+			moduleType := csmv1.Authorization
+			path := "../../operatorconfig"
+
+			expectedResult := "v1.0.0"
+
+			return driverConfigVersion, driverType, moduleType, path, check(hasNoError, checkExpectedOutput(expectedResult))
+		},
+		"invalid driver version": func(*testing.T) (string, csmv1.DriverType, csmv1.ModuleType, string, []checkFn) {
+
+			driverConfigVersion := "v0.0.0"
+			driverType := csmv1.PowerScale
+			moduleType := csmv1.Authorization
+			path := "../../operatorconfig"
+
+			expectedResult := ""
+
+			return driverConfigVersion, driverType, moduleType, path, check(hasError, checkExpectedOutput(expectedResult))
+		},
+		"module doesn't exist for driver": func(*testing.T) (string, csmv1.DriverType, csmv1.ModuleType, string, []checkFn) {
+
+			driverConfigVersion := "v2.0.0"
+			driverType := csmv1.PowerScale
+			moduleType := csmv1.Observability
+			path := "../../operatorconfig"
+
+			expectedResult := ""
+
+			return driverConfigVersion, driverType, moduleType, path, check(hasError, checkExpectedOutput(expectedResult))
+		},
+		"driver does not exist": func(*testing.T) (string, csmv1.DriverType, csmv1.ModuleType, string, []checkFn) {
+
+			driverConfigVersion := "v2.0.0"
+			driverType := csmv1.PowerFlex
+			moduleType := csmv1.Observability
+			path := "../../operatorconfig"
+
+			expectedResult := ""
+
+			return driverConfigVersion, driverType, moduleType, path, check(hasError, checkExpectedOutput(expectedResult))
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			driverConfigVersion, driverType, moduleType, path, checkFns := tc(t)
+			result, err := utils.GetModuleDefaultVersion(driverConfigVersion, driverType, moduleType, path)
+			for _, checkFn := range checkFns {
+				checkFn(t, result, err)
+			}
+		})
+	}
+}
