@@ -403,6 +403,8 @@ func Test_GetModuleDefaultVersion(t *testing.T) {
 		}
 	}
 
+	path := "./test-data/"
+
 	tests := map[string]func(t *testing.T) (string, csmv1.DriverType, csmv1.ModuleType, string, []checkFn){
 
 		"success": func(*testing.T) (string, csmv1.DriverType, csmv1.ModuleType, string, []checkFn) {
@@ -410,7 +412,6 @@ func Test_GetModuleDefaultVersion(t *testing.T) {
 			driverConfigVersion := "v2.0.0"
 			driverType := csmv1.PowerScale
 			moduleType := csmv1.Authorization
-			path := "../../operatorconfig"
 
 			expectedResult := "v1.0.0"
 
@@ -421,7 +422,6 @@ func Test_GetModuleDefaultVersion(t *testing.T) {
 			driverConfigVersion := "v0.0.0"
 			driverType := csmv1.PowerScale
 			moduleType := csmv1.Authorization
-			path := "../../operatorconfig"
 
 			expectedResult := ""
 
@@ -432,7 +432,6 @@ func Test_GetModuleDefaultVersion(t *testing.T) {
 			driverConfigVersion := "v2.0.0"
 			driverType := csmv1.PowerScale
 			moduleType := csmv1.Observability
-			path := "../../operatorconfig"
 
 			expectedResult := ""
 
@@ -443,7 +442,6 @@ func Test_GetModuleDefaultVersion(t *testing.T) {
 			driverConfigVersion := "v2.0.0"
 			driverType := csmv1.PowerFlex
 			moduleType := csmv1.Observability
-			path := "../../operatorconfig"
 
 			expectedResult := ""
 
