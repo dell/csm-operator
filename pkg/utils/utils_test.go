@@ -231,3 +231,95 @@ func Test_UpdateSideCar(t *testing.T) {
 		})
 	}
 }
+
+func Test_ReplaceALLContainerImage(t *testing.T) {
+	type checkFn func(*testing.T, corev1.Container)
+	check := func(fns ...checkFn) []checkFn { return fns }
+
+	checkExpectedOutput := func(expectedOutput corev1.Container) func(t *testing.T, c corev1.Container) {
+		return func(t *testing.T, result corev1.Container) {
+			assert.Equal(t, expectedOutput, result)
+		}
+	}
+
+	img := utils.K8sImagesConfig{}
+	img.Images.Provisioner = "provisioner-image"
+	img.Images.Attacher = "attacher-image"
+	img.Images.Registrar = "registrar-image"
+	img.Images.Resizer = "resizer-image"
+	img.Images.Snapshotter = "snapshotter-image"
+
+	tests := map[string]func(t *testing.T) (utils.K8sImagesConfig, corev1.Container, []checkFn){
+
+		"provisioner": func(*testing.T) (utils.K8sImagesConfig, corev1.Container, []checkFn) {
+
+			container := corev1.Container{
+				Name: csmv1.Provisioner,
+			}
+
+			expectedResult := corev1.Container{
+				Name:  csmv1.Provisioner,
+				Image: "provisioner-image",
+			}
+			return img, container, check(checkExpectedOutput(expectedResult))
+		},
+		"attacher": func(*testing.T) (utils.K8sImagesConfig, corev1.Container, []checkFn) {
+
+			container := corev1.Container{
+				Name: csmv1.Attacher,
+			}
+
+			expectedResult := corev1.Container{
+				Name:  csmv1.Attacher,
+				Image: "attacher-image",
+			}
+			return img, container, check(checkExpectedOutput(expectedResult))
+		},
+		"registrar": func(*testing.T) (utils.K8sImagesConfig, corev1.Container, []checkFn) {
+
+			container := corev1.Container{
+				Name: csmv1.Registrar,
+			}
+
+			expectedResult := corev1.Container{
+				Name:  csmv1.Registrar,
+				Image: "registrar-image",
+			}
+			return img, container, check(checkExpectedOutput(expectedResult))
+		},
+		"resizer": func(*testing.T) (utils.K8sImagesConfig, corev1.Container, []checkFn) {
+
+			container := corev1.Container{
+				Name: csmv1.Resizer,
+			}
+
+			expectedResult := corev1.Container{
+				Name:  csmv1.Resizer,
+				Image: "resizer-image",
+			}
+			return img, container, check(checkExpectedOutput(expectedResult))
+		},
+		"snapshotter": func(*testing.T) (utils.K8sImagesConfig, corev1.Container, []checkFn) {
+
+			container := corev1.Container{
+				Name: csmv1.Snapshotter,
+			}
+
+			expectedResult := corev1.Container{
+				Name:  csmv1.Snapshotter,
+				Image: "snapshotter-image",
+			}
+			return img, container, check(checkExpectedOutput(expectedResult))
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			sidecars, container, checkFns := tc(t)
+			result := utils.ReplaceALLContainerImage(sidecars, container)
+			for _, checkFn := range checkFns {
+				checkFn(t, result)
+			}
+		})
+	}
+}
