@@ -8,9 +8,15 @@ import (
 
 // ReconcileCSM is the interface which extends each of the respective Reconcile interfaces
 // for drivers
+//go:generate mockery --name=ReconcileCSM
 type ReconcileCSM interface {
 	reconcile.Reconciler
-	GetClient() crclient.Client
+	GetClient() CRClient
 	GetUpdateCount() int32
 	IncrUpdateCount()
+}
+
+//go:generate mockery --name=CRClient
+type CRClient interface {
+	crclient.Client
 }

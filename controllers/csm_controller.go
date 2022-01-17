@@ -577,7 +577,7 @@ func checkAndApplyConfigVersionAnnotations(instance csmv1.ContainerStorageModule
 }
 
 // GetClient - returns the split client
-func (r *ContainerStorageModuleReconciler) GetClient() client.Client {
+func (r *ContainerStorageModuleReconciler) GetClient() utils.CRClient {
 	return r.Client
 }
 
