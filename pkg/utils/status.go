@@ -43,7 +43,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		podList := &v1.PodList{}
 		opts := []client.ListOption{
 			client.InNamespace(instance.GetNamespace()),
-			client.MatchingLabels{"app": instance.GetNodeName()},
+			client.MatchingLabels{"app": instance.GetControllerName()},
 		}
 		err = r.GetClient().List(ctx, podList, opts...)
 		if err != nil {

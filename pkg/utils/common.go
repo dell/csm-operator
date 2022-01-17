@@ -11,12 +11,7 @@ import (
 //go:generate mockery --name=ReconcileCSM
 type ReconcileCSM interface {
 	reconcile.Reconciler
-	GetClient() CRClient
+	GetClient() crclient.Client
 	GetUpdateCount() int32
 	IncrUpdateCount()
-}
-
-//go:generate mockery --name=CRClient
-type CRClient interface {
-	crclient.Client
 }
