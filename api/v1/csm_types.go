@@ -85,11 +85,12 @@ func (cr *ContainerStorageModule) GetCSMStatus() *ContainerStorageModuleStatus {
 	return &cr.Status
 }
 
+// GetControllerName - Returns a controller
 func (cr *ContainerStorageModule) GetControllerName() string {
 	return fmt.Sprintf("%s-controller", cr.Name)
 }
 
-// GetDaemonSetName - Returns the name of the daemonset for the driver
+// GetNodeName - Returns the name of the daemonset for the driver
 func (cr *ContainerStorageModule) GetNodeName() string {
 	return fmt.Sprintf("%s-node", cr.Name)
 }

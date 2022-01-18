@@ -46,7 +46,7 @@ const (
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
 	K8sMinimumSupportedVersion = "1.19"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.22"
+	K8sMaximumSupportedVersion = "1.23"
 	// OpenshiftMinimumSupportedVersion is the minimum supported version for openshift
 	OpenshiftMinimumSupportedVersion = "4.6"
 	// OpenshiftMaximumSupportedVersion is the maximum supported version for openshift
