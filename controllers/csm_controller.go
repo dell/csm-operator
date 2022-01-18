@@ -19,8 +19,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	crclient "sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -579,7 +577,7 @@ func checkAndApplyConfigVersionAnnotations(instance csmv1.ContainerStorageModule
 }
 
 // GetClient - returns the split client
-func (r *ContainerStorageModuleReconciler) GetClient() crclient.Client {
+func (r *ContainerStorageModuleReconciler) GetClient() client.Client {
 	return r.Client
 }
 
