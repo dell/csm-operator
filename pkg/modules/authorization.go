@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -28,10 +29,6 @@ var SupportedDrivers = map[string]string{
 
 func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *corev1.Container, error) {
 	var err error
-	configMapName := map[string]string{
-		"powerscale": "csi-isilon",
-		"isilon":     "csi-isilon",
-	}
 	authModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.Authorization {
@@ -54,10 +51,7 @@ func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1
 		return nil, nil, err
 	}
 
-	YamlString := string(buf)
-	if cr.Name != "" {
-		YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseName, configMapName[string(cr.Spec.Driver.CSIDriverType)])
-	}
+	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
 	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
 		YamlString = strings.ReplaceAll(YamlString, utils.DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
@@ -187,9 +181,29 @@ func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule,
 
 }
 
-func AuthorizationPrecheck(ctx context.Context, cr *csmv1.ContainerStorageModule, auth csmv1.Module, r utils.ReconcileCSM, log logr.Logger) error {
-	if _, ok := SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
-		return fmt.Errorf("csm authorization does not support %s driver", string(cr.Spec.Driver.CSIDriverType))
+func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op utils.OperatorConfig, auth csmv1.Module, ctrlClient crclient.Client, log logr.Logger) error {
+	if _, ok := SupportedDrivers[driverType]; !ok {
+		return fmt.Errorf("CSM Authorization does not support %s driver", driverType)
+	}
+
+	// check if provided version is supported
+	if auth.ConfigVersion != "" {
+		files, err := ioutil.ReadDir(fmt.Sprintf("%s/moduleconfig/authorization/", op.ConfigDirectory))
+		if err != nil {
+			return err
+		}
+		found := false
+		authVersions := ""
+		for _, file := range files {
+			authVersions += (file.Name() + ",")
+			if file.Name() == auth.ConfigVersion {
+				found = true
+			}
+		}
+		if !found {
+			return fmt.Errorf("CSM Authorization does not have %s version. The following are supported versions: %s", auth.ConfigVersion, authVersions[:len(authVersions)-1])
+		}
+
 	}
 
 	// Check for secrets
@@ -215,8 +229,8 @@ func AuthorizationPrecheck(ctx context.Context, cr *csmv1.ContainerStorageModule
 
 	for _, name := range secrets {
 		found := &corev1.Secret{}
-		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name,
-			Namespace: cr.GetNamespace()}, found)
+		err := ctrlClient.Get(ctx, types.NamespacedName{Name: name,
+			Namespace: namespace}, found)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
@@ -224,8 +238,6 @@ func AuthorizationPrecheck(ctx context.Context, cr *csmv1.ContainerStorageModule
 			log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
 		}
 	}
-
-	// TODO(Michael): Do Other configuration checks if needed
 
 	return nil
 }
