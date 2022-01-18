@@ -19,6 +19,7 @@ import (
 )
 
 const (
+	// DefaultPluginIdentifier - spring placeholder for driver plugin
 	DefaultPluginIdentifier = "<DriverPluginIdentifier>"
 )
 
@@ -126,6 +127,7 @@ func getAuthVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, au
 	return vols, nil
 }
 
+// AuthInjectDaemonset  - inject authorization into daemonset
 func AuthInjectDaemonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.DaemonSet, error) {
 	authModule, containerPtr, err := getAuthCR(cr, op)
 	if err != nil {
@@ -153,6 +155,7 @@ func AuthInjectDaemonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, o
 	return &ds, nil
 }
 
+// AuthInjectDeployment  - inject authorization into deployment
 func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.Deployment, error) {
 	authModule, containerPtr, err := getAuthCR(cr, op)
 	if err != nil {
@@ -181,6 +184,7 @@ func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule,
 
 }
 
+// AuthorizationPrecheck  - runs precheck for CSM Authorization
 func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op utils.OperatorConfig, auth csmv1.Module, ctrlClient crclient.Client, log logr.Logger) error {
 	if _, ok := SupportedDrivers[driverType]; !ok {
 		return fmt.Errorf("CSM Authorization does not support %s driver", driverType)
