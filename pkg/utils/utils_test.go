@@ -324,6 +324,92 @@ func Test_ReplaceALLContainerImage(t *testing.T) {
 	}
 }
 
+func Test_HashContainerStorageModule(t *testing.T) {
+	type checkFn func(*testing.T, uint64)
+	check := func(fns ...checkFn) []checkFn { return fns }
+
+	checkExpectedOutput := func(expectedOutput uint64) func(t *testing.T, c uint64) {
+		return func(t *testing.T, result uint64) {
+			assert.Equal(t, expectedOutput, result)
+		}
+	}
+
+	tests := map[string]func(t *testing.T) (csmv1.ContainerStorageModule, []checkFn){
+
+		"success with empty struct": func(*testing.T) (csmv1.ContainerStorageModule, []checkFn) {
+			csm := csmv1.ContainerStorageModule{}
+
+			expectedResult := uint64(0x2d81db33)
+			return csm, check(checkExpectedOutput(expectedResult))
+		},
+		"success with values in struct": func(*testing.T) (csmv1.ContainerStorageModule, []checkFn) {
+			csm := csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						ConfigVersion: "1.0.0",
+					},
+				},
+			}
+
+			expectedResult := uint64(0x6ee9aac8)
+			return csm, check(checkExpectedOutput(expectedResult))
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			csm, checkFns := tc(t)
+			result := utils.HashContainerStorageModule(&csm)
+			for _, checkFn := range checkFns {
+				checkFn(t, result)
+			}
+		})
+	}
+}
+
+func Test_CSMHashChanged(t *testing.T) {
+	type checkFn func(*testing.T, bool)
+	check := func(fns ...checkFn) []checkFn { return fns }
+
+	checkExpectedOutput := func(expectedOutput bool) func(t *testing.T, changed bool) {
+		return func(t *testing.T, result bool) {
+			assert.Equal(t, expectedOutput, result)
+		}
+	}
+
+	tests := map[string]func(t *testing.T) (csmv1.ContainerStorageModule, []checkFn){
+
+		"success with no change": func(*testing.T) (csmv1.ContainerStorageModule, []checkFn) {
+			csm := csmv1.ContainerStorageModule{
+				Status: csmv1.ContainerStorageModuleStatus{
+					ContainerStorageModuleHash: uint64(0x2d81db33),
+				},
+			}
+
+			return csm, check(checkExpectedOutput(false))
+		},
+		"success with change": func(*testing.T) (csmv1.ContainerStorageModule, []checkFn) {
+			csm := csmv1.ContainerStorageModule{
+				Status: csmv1.ContainerStorageModuleStatus{
+					ContainerStorageModuleHash: uint64(1),
+				},
+			}
+
+			return csm, check(checkExpectedOutput(true))
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			csm, checkFns := tc(t)
+			_, _, changed := utils.CSMHashChanged(&csm)
+			for _, checkFn := range checkFns {
+				checkFn(t, changed)
+			}
+		})
+	}
+}
+
 func Test_ModifyCommonCR(t *testing.T) {
 	type checkFn func(*testing.T, string)
 	check := func(fns ...checkFn) []checkFn { return fns }
