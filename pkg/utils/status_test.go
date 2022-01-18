@@ -39,12 +39,6 @@ func Test_HandleSuccess(t *testing.T) {
 		}
 	}
 
-	// hasError := func(t *testing.T, result interface{}, err error) {
-	// 	if err == nil {
-	// 		t.Fatalf("expected error")
-	// 	}
-	// }
-
 	tests := map[string]func(t *testing.T) (context.Context, *csmv1.ContainerStorageModule, utils.ReconcileCSM, logr.Logger, *csmv1.ContainerStorageModuleStatus, *csmv1.ContainerStorageModuleStatus, []checkFn){
 
 		"success all in running state": func(*testing.T) (context.Context, *csmv1.ContainerStorageModule, utils.ReconcileCSM, logr.Logger, *csmv1.ContainerStorageModuleStatus, *csmv1.ContainerStorageModuleStatus, []checkFn) {
@@ -174,6 +168,265 @@ func Test_HandleSuccess(t *testing.T) {
 			log := zap.New()
 
 			return ctx, &instance, &reconciler, log, &newStatus, &oldStatus, check(hasNoError, checkExpectedOutput(reconcile.Result{Requeue: false, RequeueAfter: 0}))
+		},
+		"state is succeeded, requeue": func(*testing.T) (context.Context, *csmv1.ContainerStorageModule, utils.ReconcileCSM, logr.Logger, *csmv1.ContainerStorageModuleStatus, *csmv1.ContainerStorageModuleStatus, []checkFn) {
+
+			reconciler := mocks.ReconcileCSM{}
+
+			clientBuilder := fake.NewClientBuilder()
+
+			s := scheme.Scheme
+			appsv1.SchemeBuilder.AddToScheme(s)
+			csmv1.SchemeBuilder.AddToScheme(s)
+			v1.SchemeBuilder.AddToScheme(s)
+			clientBuilder.WithScheme(s)
+
+			replicas := int32(1)
+			clientBuilder.WithObjects(
+				&appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm-controller",
+						Namespace: "csm-namespace",
+					},
+					Spec: appsv1.DeploymentSpec{
+						Replicas: &replicas,
+					},
+					Status: appsv1.DeploymentStatus{
+						ReadyReplicas: 1,
+					},
+				},
+				&v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm-controller",
+						Namespace: "csm-namespace",
+						Labels:    map[string]string{"app": "test-csm-controller"},
+					},
+					Status: v1.PodStatus{
+						Phase: corev1.PodRunning,
+						ContainerStatuses: []v1.ContainerStatus{
+							{
+								State: v1.ContainerState{
+									Waiting: &v1.ContainerStateWaiting{},
+								},
+							},
+						},
+					},
+				},
+				&appsv1.DaemonSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm-node",
+						Namespace: "csm-namespace",
+					},
+					Spec: appsv1.DaemonSetSpec{
+						MinReadySeconds: 0,
+					},
+					Status: appsv1.DaemonSetStatus{
+						DesiredNumberScheduled: 1,
+						NumberReady:            1,
+					},
+				},
+				&v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm-node",
+						Labels:    map[string]string{"app": "test-csm-node"},
+						Namespace: "csm-namespace",
+					},
+					Status: v1.PodStatus{
+						Conditions: []v1.PodCondition{
+							{
+								Type:   v1.PodReady,
+								Status: v1.ConditionTrue,
+								LastTransitionTime: metav1.Time{
+									Time: time.Now(),
+								},
+							},
+						},
+						Phase: corev1.PodRunning,
+						ContainerStatuses: []v1.ContainerStatus{
+							{
+								State: v1.ContainerState{
+									Running: &v1.ContainerStateRunning{},
+								},
+							},
+						},
+					},
+				},
+				&csmv1.ContainerStorageModule{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm",
+						Namespace: "csm-namespace",
+					},
+					Status: csmv1.ContainerStorageModuleStatus{
+						ControllerStatus: csmv1.PodStatus{
+							Available: []string{"test-csm-controller"},
+						},
+						NodeStatus: csmv1.PodStatus{
+							Available: []string{"test-csm-node"},
+						},
+						State: csmv1.CSMStateType(csmv1.Succeeded),
+					},
+				},
+			)
+
+			fakeClient := clientBuilder.Build()
+
+			reconciler.On("GetClient").Return(fakeClient)
+
+			ctx := context.Background()
+			instance := csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: "csm-namespace",
+				},
+			}
+			newStatus := csmv1.ContainerStorageModuleStatus{}
+			oldStatus := csmv1.ContainerStorageModuleStatus{
+				ControllerStatus: csmv1.PodStatus{
+					Available: []string{"test-csm-controller"},
+				},
+				NodeStatus: csmv1.PodStatus{
+					Available: []string{"test-csm-node"},
+				},
+				LastUpdate: csmv1.LastUpdate{
+					Condition: csmv1.Succeeded,
+				},
+				State: constants.Succeeded,
+			}
+
+			log := zap.New()
+
+			return ctx, &instance, &reconciler, log, &newStatus, &oldStatus, check(hasNoError, checkExpectedOutput(reconcile.Result{Requeue: true, RequeueAfter: 5000000000}))
+		},
+		"state is succeeded, requeue based on latest reconcile": func(*testing.T) (context.Context, *csmv1.ContainerStorageModule, utils.ReconcileCSM, logr.Logger, *csmv1.ContainerStorageModuleStatus, *csmv1.ContainerStorageModuleStatus, []checkFn) {
+
+			reconciler := mocks.ReconcileCSM{}
+
+			clientBuilder := fake.NewClientBuilder()
+
+			s := scheme.Scheme
+			appsv1.SchemeBuilder.AddToScheme(s)
+			csmv1.SchemeBuilder.AddToScheme(s)
+			v1.SchemeBuilder.AddToScheme(s)
+			clientBuilder.WithScheme(s)
+
+			replicas := int32(1)
+			clientBuilder.WithObjects(
+				&appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm-controller",
+						Namespace: "csm-namespace",
+					},
+					Spec: appsv1.DeploymentSpec{
+						Replicas: &replicas,
+					},
+					Status: appsv1.DeploymentStatus{
+						ReadyReplicas: 1,
+					},
+				},
+				&v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm-controller",
+						Namespace: "csm-namespace",
+						Labels:    map[string]string{"app": "test-csm-controller"},
+					},
+					Status: v1.PodStatus{
+						Phase: corev1.PodRunning,
+						ContainerStatuses: []v1.ContainerStatus{
+							{
+								State: v1.ContainerState{
+									Waiting: &v1.ContainerStateWaiting{},
+								},
+							},
+						},
+					},
+				},
+				&appsv1.DaemonSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm-node",
+						Namespace: "csm-namespace",
+					},
+					Spec: appsv1.DaemonSetSpec{
+						MinReadySeconds: 0,
+					},
+					Status: appsv1.DaemonSetStatus{
+						DesiredNumberScheduled: 1,
+						NumberReady:            1,
+					},
+				},
+				&v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm-node",
+						Labels:    map[string]string{"app": "test-csm-node"},
+						Namespace: "csm-namespace",
+					},
+					Status: v1.PodStatus{
+						Conditions: []v1.PodCondition{
+							{
+								Type:   v1.PodReady,
+								Status: v1.ConditionTrue,
+								LastTransitionTime: metav1.Time{
+									Time: time.Now(),
+								},
+							},
+						},
+						Phase: corev1.PodRunning,
+						ContainerStatuses: []v1.ContainerStatus{
+							{
+								State: v1.ContainerState{
+									Running: &v1.ContainerStateRunning{},
+								},
+							},
+						},
+					},
+				},
+				&csmv1.ContainerStorageModule{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-csm",
+						Namespace: "csm-namespace",
+					},
+					Status: csmv1.ContainerStorageModuleStatus{
+						ControllerStatus: csmv1.PodStatus{
+							Available: []string{"test-csm-controller"},
+						},
+						NodeStatus: csmv1.PodStatus{
+							Available: []string{"test-csm-node"},
+						},
+						State: csmv1.CSMStateType(csmv1.Succeeded),
+					},
+				},
+			)
+
+			fakeClient := clientBuilder.Build()
+
+			reconciler.On("GetClient").Return(fakeClient)
+
+			ctx := context.Background()
+			instance := csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: "csm-namespace",
+				},
+			}
+			newStatus := csmv1.ContainerStorageModuleStatus{}
+			oldStatus := csmv1.ContainerStorageModuleStatus{
+				ControllerStatus: csmv1.PodStatus{
+					Available: []string{"test-csm-controller"},
+				},
+				NodeStatus: csmv1.PodStatus{
+					Available: []string{"test-csm-node"},
+				},
+				LastUpdate: csmv1.LastUpdate{
+					Condition: csmv1.Succeeded,
+					Time: metav1.Time{
+						Time: time.Now().Add(-time.Second * 1),
+					},
+				},
+				State: constants.Succeeded,
+			}
+
+			log := zap.New()
+
+			return ctx, &instance, &reconciler, log, &newStatus, &oldStatus, check(hasNoError, checkExpectedOutput(reconcile.Result{Requeue: true, RequeueAfter: 5000000000}))
 		},
 		"requeue due to controller not found": func(*testing.T) (context.Context, *csmv1.ContainerStorageModule, utils.ReconcileCSM, logr.Logger, *csmv1.ContainerStorageModuleStatus, *csmv1.ContainerStorageModuleStatus, []checkFn) {
 
@@ -318,12 +571,6 @@ func Test_HandleValidationError(t *testing.T) {
 			assert.Equal(t, expectedOutput, result)
 		}
 	}
-
-	// hasError := func(t *testing.T, result interface{}, err error) {
-	// 	if err == nil {
-	// 		t.Fatalf("expected error")
-	// 	}
-	// }
 
 	tests := map[string]func(t *testing.T) (context.Context, *csmv1.ContainerStorageModule, utils.ReconcileCSM, logr.Logger, error, []checkFn){
 
