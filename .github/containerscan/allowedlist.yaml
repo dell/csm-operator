@@ -1,4 +1,11 @@
 general:
   vulnerabilities:
     # list of CVEs that are currently unfixed
+    - CVE-2021-3121
+    - CVE-2020-29652
+  bestPracticeViolations:
+    # list of best practies violatied that needs a fix
+    - DKL-DI-0006
+    - CIS-DI-0005
+    - CIS-DI-0006
 
