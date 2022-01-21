@@ -155,7 +155,7 @@ func AuthInjectDaemonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, o
 	return &ds, nil
 }
 
-// AuthInjectDeployment  - inject authorization into deployment
+// AuthInjectDeployment - inject authorization into deployment
 func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.Deployment, error) {
 	authModule, containerPtr, err := getAuthCR(cr, op)
 	if err != nil {
