@@ -78,6 +78,7 @@ var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIDriverConfigVers
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=storageclasses,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments,verbs=get;list;watch;create;update;patch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csinodes,verbs=get;list;watch;create;update
+// +kubebuilder:rbac:groups="csi.storage.k8s.io",resources=csinodeinfos,verbs=get;list;watch
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotclasses;volumesnapshotcontents,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotcontents/status,verbs=update
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots;volumesnapshots/status,verbs=get;list;watch;update
@@ -145,7 +146,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	// Before doing anything else, check for config version and apply annotation if not set
-	isUpdated, err := checkAndApplyConfigVersionAnnotations(*csm, log, false)
+	isUpdated, err := checkAndApplyConfigVersionAnnotations(csm, log, false)
 	if err != nil {
 		return utils.HandleValidationError(ctx, csm, r, reqLogger, err)
 	} else if isUpdated {
@@ -525,7 +526,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if m.Enabled {
 			switch m.Name {
 			case csmv1.Authorization:
-				err := modules.AuthorizationPrecheck(ctx, cr, m, r, reqLogger)
+				err := modules.AuthorizationPrecheck(ctx, cr.GetNamespace(), string(cr.Spec.Driver.CSIDriverType), operatorConfig, m, r.GetClient(), reqLogger)
 				if err != nil {
 					return fmt.Errorf("failed authorization validation: %v", err)
 				}
@@ -542,7 +543,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 }
 
-func checkAndApplyConfigVersionAnnotations(instance csmv1.ContainerStorageModule, log logr.Logger, update bool) (bool, error) {
+func checkAndApplyConfigVersionAnnotations(instance *csmv1.ContainerStorageModule, log logr.Logger, update bool) (bool, error) {
 	if instance.Spec.Driver.ConfigVersion == "" {
 		// fail immediately
 		return false, fmt.Errorf("mandatory argument: ConfigVersion missing")

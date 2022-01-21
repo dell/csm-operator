@@ -1,48 +1,23 @@
-package k8s_test
+package k8s
 
-/*import (
-	"context"
-	"encoding/json"
+import (
 	"errors"
 	"fmt"
-	"reflect"
 	"testing"
-	"time"
 
-	"github.com/dell/csm-deployment/utils"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
-	k8stesting "k8s.io/client-go/testing"
 
 	"k8s.io/apimachinery/pkg/version"
 	discoveryfake "k8s.io/client-go/discovery/fake"
-	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 type testOverrides struct {
 	getClientSetWrapper func() (kubernetes.Interface, error)
+	ignoreError         bool
 }
-
-var (
-	namespace        = "csm"
-	csmDataCollector = "csm-data-collector"
-	secretName       = "testing-secret"
-	configMapName    = "testing-configMap"
-)
 
 func Test_IsOpenShift(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, testOverrides){
@@ -65,6 +40,9 @@ func Test_IsOpenShift(t *testing.T) {
 					return fakeClientSet, nil
 				},
 			}
+		},
+		"bad config data ": func(*testing.T) (bool, testOverrides) {
+			return false, testOverrides{ignoreError: true}
 		},
 		"fail - not found ": func(*testing.T) (bool, testOverrides) {
 			return false, testOverrides{
@@ -106,9 +84,6 @@ func Test_IsOpenShift(t *testing.T) {
 				},
 			}
 		},
-		"bad config data ": func(*testing.T) (bool, testOverrides) {
-			return false, testOverrides{}
-		},
 		"fail - to get client set": func(*testing.T) (bool, testOverrides) {
 			return false, testOverrides{
 				getClientSetWrapper: func() (kubernetes.Interface, error) {
@@ -129,7 +104,9 @@ func Test_IsOpenShift(t *testing.T) {
 			}
 
 			isOpenshift, err := IsOpenShift()
-			if !success {
+			if patch.ignoreError {
+				t.Log("cover  real Openshift setup")
+			} else if !success {
 				assert.False(t, isOpenshift)
 			} else {
 				assert.NoError(t, err)
@@ -138,8 +115,8 @@ func Test_IsOpenShift(t *testing.T) {
 
 		})
 	}
-
 }
+
 func Test_GetVersion(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, string, string, testOverrides){
 		"success ": func(*testing.T) (bool, string, string, testOverrides) {
@@ -163,7 +140,6 @@ func Test_GetVersion(t *testing.T) {
 					return fake.NewSimpleClientset(), errors.New(" error listing pods")
 				},
 			}
-
 		},
 	}
 	for name, tc := range tests {
@@ -176,7 +152,7 @@ func Test_GetVersion(t *testing.T) {
 				GetClientSetWrapper = patch.getClientSetWrapper
 			}
 
-			out, err := GetVersion([]byte(""))
+			out, err := GetVersion()
 			if !success {
 				assert.Error(t, err)
 			} else {
@@ -187,4 +163,3 @@ func Test_GetVersion(t *testing.T) {
 		})
 	}
 }
-*/
