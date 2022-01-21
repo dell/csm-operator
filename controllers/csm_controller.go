@@ -476,7 +476,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if m.Enabled {
 			switch m.Name {
 			case csmv1.Authorization:
-				err := modules.AuthorizationPrecheck(ctx, cr, m, r, reqLogger)
+				err := modules.AuthorizationPrecheck(ctx, cr.GetNamespace(), string(cr.Spec.Driver.CSIDriverType), operatorConfig, m, r.GetClient(), reqLogger)
 				if err != nil {
 					return fmt.Errorf("failed authorization validation: %v", err)
 				}
