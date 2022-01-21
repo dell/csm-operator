@@ -376,12 +376,12 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
-				//ds, err := modules.AuthInjectDaemonset(node.DaemonSet, cr, operatorConfig)
+				ds, err := modules.AuthInjectDaemonset(node.DaemonSet, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deamonset: %v", err)
 				}
 
-				//node.DaemonSet = *ds
+				node.DaemonSet = *ds
 
 			default:
 				return fmt.Errorf("unsupported module type %s", m.Name)

@@ -14,6 +14,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -73,9 +75,71 @@ func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1
 		}
 	}
 
+	certString := "proxy-server-root-certificate"
 	if skipCertValid { // do not mount proxy-server-root-certificate
 		for i, c := range container.VolumeMounts {
-			if c.Name == "proxy-server-root-certificate" {
+			if c.Name == certString {
+				container.VolumeMounts[i] = container.VolumeMounts[len(container.VolumeMounts)-1]
+				container.VolumeMounts = container.VolumeMounts[:len(container.VolumeMounts)-1]
+			}
+
+		}
+
+	}
+
+	return &authModule, &container, nil
+
+}
+
+func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+	var err error
+	authModule := csmv1.Module{}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Authorization {
+			authModule = m
+			break
+		}
+	}
+
+	authConfigVersion := authModule.ConfigVersion
+	if authConfigVersion == "" {
+		authConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/container.yaml", op.ConfigDirectory, authConfigVersion)
+	buf, err := ioutil.ReadFile(configMapPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	YamlString := utils.ModifyCommonCR(string(buf), cr)
+
+	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
+		YamlString = strings.ReplaceAll(YamlString, utils.DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
+	}
+
+	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)])
+
+	var container acorev1.ContainerApplyConfiguration
+	err = yaml.Unmarshal([]byte(YamlString), &container)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	skipCertValid := false
+	for _, env := range authModule.Components[0].Envs {
+		if env.Name == "INSECURE" {
+			skipCertValid, _ = strconv.ParseBool(env.Value)
+		}
+	}
+
+	certString := "proxy-server-root-certificate"
+	if skipCertValid { // do not mount proxy-server-root-certificate
+		for i, c := range container.VolumeMounts {
+			if c.Name == &certString {
 				container.VolumeMounts[i] = container.VolumeMounts[len(container.VolumeMounts)-1]
 				container.VolumeMounts = container.VolumeMounts[:len(container.VolumeMounts)-1]
 			}
@@ -113,9 +177,50 @@ func getAuthVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, au
 		}
 	}
 
+	certString := "proxy-server-root-certificate"
 	if skipCertValid { // do not mount proxy-server-root-certificate
 		for i, c := range vols {
-			if c.Name == "proxy-server-root-certificate" {
+			if c.Name == certString {
+				vols[i] = vols[len(vols)-1]
+				return vols[:len(vols)-1], nil
+
+			}
+
+		}
+
+	}
+	return vols, nil
+}
+
+func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, auth csmv1.ContainerTemplate) ([]acorev1.VolumeApplyConfiguration, error) {
+	version, err := utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+	if err != nil {
+		return nil, err
+	}
+
+	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", op.ConfigDirectory, version)
+	buf, err := ioutil.ReadFile(configMapPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var vols []acorev1.VolumeApplyConfiguration
+	err = yaml.Unmarshal(buf, &vols)
+	if err != nil {
+		return nil, err
+	}
+
+	skipCertValid := false
+	for _, env := range auth.Envs {
+		if env.Name == "INSECURE" {
+			skipCertValid, _ = strconv.ParseBool(env.Value)
+		}
+	}
+
+	certString := "proxy-server-root-certificate"
+	if skipCertValid { // do not mount proxy-server-root-certificate
+		for i, c := range vols {
+			if c.Name == &certString {
 				vols[i] = vols[len(vols)-1]
 				return vols[:len(vols)-1], nil
 
@@ -128,16 +233,16 @@ func getAuthVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, au
 }
 
 // AuthInjectDaemonset  - inject authorization into daemonset
-func AuthInjectDaemonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.DaemonSet, error) {
-	authModule, containerPtr, err := getAuthCR(cr, op)
+func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DaemonSetApplyConfiguration, error) {
+	authModule, containerPtr, err := getAuthApplyCR(cr, op)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
-	container = utils.UpdateSideCar(authModule.Components, container)
+	container = utils.UpdateSideCarApply(authModule.Components, container)
 
-	vols, err := getAuthVolumes(cr, op, authModule.Components[0])
+	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
 	if err != nil {
 		return nil, err
 	}
