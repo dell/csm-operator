@@ -37,7 +37,6 @@ import (
 	"github.com/dell/csm-operator/core"
 	k8sClient "github.com/dell/csm-operator/k8s"
 	utils "github.com/dell/csm-operator/pkg/utils"
-	"github.com/kubernetes-csi/external-snapshotter/client/v3/apis/volumesnapshot/v1beta1"
 	"k8s.io/client-go/util/workqueue"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	//+kubebuilder:scaffold:imports
@@ -64,7 +63,6 @@ func init() {
 
 	utilruntime.Must(csmv1.AddToScheme(scheme))
 
-	utilruntime.Must(v1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
