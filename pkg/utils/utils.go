@@ -104,9 +104,9 @@ func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c acorev1.ContainerA
 			if side.ImagePullPolicy != "" {
 				*c.Image = string(side.ImagePullPolicy)
 			}
-
-			//c.Env = ReplaceAllEnvs(c.Env, side.Envs)
-			//c.Args = ReplaceAllArgs(c.Args, side.Args)
+			emptyEnv := make([]corev1.EnvVar, 0)
+			c.Env = ReplaceAllApplyCustomEnvs(c.Env, side.Envs, emptyEnv)
+			c.Args = ReplaceAllArgs(c.Args, side.Args)
 		}
 	}
 	return c
@@ -123,8 +123,8 @@ func UpdateSideCar(sideCars []csmv1.ContainerTemplate, c corev1.Container) corev
 				c.Image = string(side.ImagePullPolicy)
 			}
 
-			//c.Env = ReplaceAllEnvs(c.Env, side.Envs)
-			//c.Args = ReplaceAllArgs(c.Args, side.Args)
+			c.Env = ReplaceAllEnvs(c.Env, side.Envs)
+			c.Args = ReplaceAllArgs(c.Args, side.Args)
 		}
 	}
 	return c
@@ -187,7 +187,7 @@ func ReplaceAllEnvs(defaultEnv, crEnv []corev1.EnvVar) []corev1.EnvVar {
 // ReplaceAllApplyCustomEnvs resolve env
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 	crEnv []corev1.EnvVar,
-	nrEnv []corev1.EnvVar, log logr.Logger) []acorev1.EnvVarApplyConfiguration {
+	nrEnv []corev1.EnvVar) []acorev1.EnvVarApplyConfiguration {
 	newEnv := make([]acorev1.EnvVarApplyConfiguration, 0)
 	temp := make(map[string]string)
 	for _, update := range crEnv {

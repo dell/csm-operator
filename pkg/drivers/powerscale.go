@@ -125,7 +125,7 @@ func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.Ope
 	containers := nodeYaml.DaemonSet.Spec.Template.Spec.Containers
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
-			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs, Log)
+			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
 			for _, e := range containers[i].Env {
 				if e.Value != nil {
 					//Log.Info("resolved 2 ", "env", *e.Name, "value", *e.Value)
