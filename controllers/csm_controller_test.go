@@ -7,44 +7,33 @@ import (
 	"strings"
 	"testing"
 
-	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/test/shared"
-	"github.com/dell/csm-operator/test/shared/clientgoClient"
-	"github.com/dell/csm-operator/test/shared/crClient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// CSMContrllerTestSuite implements testify suite
-// opeartorClient is the client for controller runtime
-// k8sClient is the client for client go kubernetes, which
-// is responsible for creating daemonset/deployment Interface and apply operations
-// It also implements ErrorInjector interface so that we can force error
 type CSMControllerTestSuite struct {
 	suite.Suite
 	operatorClient client.Client
-	k8sClient      kubernetes.Interface
 	namespace      string
 }
 
 // init every test
 func (suite *CSMControllerTestSuite) SetupTest() {
 	fmt.Println("Init test suite...")
-	csmv1.AddToScheme(scheme.Scheme)
+	csmv1.AddToScheme(shared.Scheme)
 
-	objects := map[shared.StorageKey]runtime.Object{}
-	suite.operatorClient = crClient.NewFakeClient(objects, suite)
-	suite.k8sClient = clientgoClient.NewFakeClient(suite.operatorClient)
+	suite.operatorClient = fake.NewClientBuilder().Build()
+	csmv1.AddToScheme(suite.operatorClient.Scheme())
 
 	suite.namespace = "test"
 }
@@ -75,12 +64,10 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 	}
 
 	reconciler = &ContainerStorageModuleReconciler{
-		Client:        suite.operatorClient,
-		K8sClient:     suite.k8sClient,
-		Scheme:        scheme.Scheme,
-		Log:           ctrl.Log.WithName("controllers").WithName("unit-test"),
-		Config:        operatorConfig,
-		EventRecorder: record.NewFakeRecorder(100),
+		Client: suite.operatorClient,
+		Scheme: scheme.Scheme,
+		Log:    ctrl.Log.WithName("controllers").WithName("unit-test"),
+		Config: operatorConfig,
 	}
 
 	return reconciler
@@ -88,6 +75,15 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 
 func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr string) {
 	reconciler := suite.createReconciler()
+
+	mgr, _ := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:             shared.Scheme,
+		MetricsBindAddress: ":8080",
+		Port:               9443,
+		LeaderElection:     false,
+	})
+
+	reconciler.SetupWithManager(mgr)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -114,17 +110,11 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
-	configVersion := "v2.0.0"
-	csm := shared.MakeCSM(name, ns, configVersion)
+	csm := shared.MakeCSM(name, ns)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
-	csm.Annotations[configVersionKey] = configVersion
+	csm.Status.ContainerStorageModuleHash = 1
 
 	err := suite.operatorClient.Create(context.Background(), &csm)
 	assert.Nil(suite.T(), err)
-}
-
-func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Object) error {
-	// Needs to implement based on need
-	return nil
 }
