@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -144,7 +146,12 @@ func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.Ope
 // GetPowerScaleConfigMap configmap
 func GetPowerScaleConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*corev1.ConfigMap, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
-	buf, err := ioutil.ReadFile(configMapPath)
+
+	if _, err := os.Stat(configMapPath); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return nil, err
 	}
@@ -222,17 +229,17 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 		for i := 0; i < certCount; i++ {
 			secrets = append(secrets, fmt.Sprintf("%s-certs-%d", cr.Name, i))
 		}
-	}
 
-	for _, name := range secrets {
-		found := &corev1.Secret{}
-		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name,
-			Namespace: cr.GetNamespace()}, found)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
+		for _, name := range secrets {
+			found := &corev1.Secret{}
+			err := r.GetClient().Get(ctx, types.NamespacedName{Name: name,
+				Namespace: cr.GetNamespace()}, found)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
+				}
+				log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
 			}
-			log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
 		}
 	}
 
