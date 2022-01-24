@@ -70,14 +70,15 @@ spec:
                               type: string
                             value:
                               description: 'Variable references $(VAR_NAME) are expanded
-                                using the previous defined environment variables in
-                                the container and any service environment variables.
+                                using the previously defined environment variables
+                                in the container and any service environment variables.
                                 If a variable cannot be resolved, the reference in
-                                the input string will be unchanged. The $(VAR_NAME)
-                                syntax can be escaped with a double $$, ie: $$(VAR_NAME).
-                                Escaped references will never be expanded, regardless
-                                of whether the variable exists or not. Defaults to
-                                "".'
+                                the input string will be unchanged. Double $$ are
+                                reduced to a single $, which allows for escaping the
+                                $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce
+                                the string literal "$(VAR_NAME)". Escaped references
+                                will never be expanded, regardless of whether the
+                                variable exists or not. Defaults to "".'
                               type: string
                             valueFrom:
                               description: Source for the environment variable's value.
@@ -262,14 +263,15 @@ spec:
                               type: string
                             value:
                               description: 'Variable references $(VAR_NAME) are expanded
-                                using the previous defined environment variables in
-                                the container and any service environment variables.
+                                using the previously defined environment variables
+                                in the container and any service environment variables.
                                 If a variable cannot be resolved, the reference in
-                                the input string will be unchanged. The $(VAR_NAME)
-                                syntax can be escaped with a double $$, ie: $$(VAR_NAME).
-                                Escaped references will never be expanded, regardless
-                                of whether the variable exists or not. Defaults to
-                                "".'
+                                the input string will be unchanged. Double $$ are
+                                reduced to a single $, which allows for escaping the
+                                $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce
+                                the string literal "$(VAR_NAME)". Escaped references
+                                will never be expanded, regardless of whether the
+                                variable exists or not. Defaults to "".'
                               type: string
                             valueFrom:
                               description: Source for the environment variable's value.
@@ -439,6 +441,7 @@ spec:
                   initContainers:
                     description: InitContainers is the specification for Driver InitContainers
                     items:
+                      description: ContainerTemplate template
                       properties:
                         args:
                           description: Args is the set of arguments for the container
@@ -462,14 +465,16 @@ spec:
                                 type: string
                               value:
                                 description: 'Variable references $(VAR_NAME) are
-                                  expanded using the previous defined environment
+                                  expanded using the previously defined environment
                                   variables in the container and any service environment
                                   variables. If a variable cannot be resolved, the
                                   reference in the input string will be unchanged.
-                                  The $(VAR_NAME) syntax can be escaped with a double
-                                  $$, ie: $$(VAR_NAME). Escaped references will never
-                                  be expanded, regardless of whether the variable
-                                  exists or not. Defaults to "".'
+                                  Double $$ are reduced to a single $, which allows
+                                  for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)"
+                                  will produce the string literal "$(VAR_NAME)". Escaped
+                                  references will never be expanded, regardless of
+                                  whether the variable exists or not. Defaults to
+                                  "".'
                                 type: string
                               valueFrom:
                                 description: Source for the environment variable's
@@ -651,14 +656,15 @@ spec:
                               type: string
                             value:
                               description: 'Variable references $(VAR_NAME) are expanded
-                                using the previous defined environment variables in
-                                the container and any service environment variables.
+                                using the previously defined environment variables
+                                in the container and any service environment variables.
                                 If a variable cannot be resolved, the reference in
-                                the input string will be unchanged. The $(VAR_NAME)
-                                syntax can be escaped with a double $$, ie: $$(VAR_NAME).
-                                Escaped references will never be expanded, regardless
-                                of whether the variable exists or not. Defaults to
-                                "".'
+                                the input string will be unchanged. Double $$ are
+                                reduced to a single $, which allows for escaping the
+                                $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce
+                                the string literal "$(VAR_NAME)". Escaped references
+                                will never be expanded, regardless of whether the
+                                variable exists or not. Defaults to "".'
                               type: string
                             valueFrom:
                               description: Source for the environment variable's value.
@@ -821,6 +827,7 @@ spec:
                   sideCars:
                     description: SideCars is the specification for CSI sidecar containers
                     items:
+                      description: ContainerTemplate template
                       properties:
                         args:
                           description: Args is the set of arguments for the container
@@ -844,14 +851,16 @@ spec:
                                 type: string
                               value:
                                 description: 'Variable references $(VAR_NAME) are
-                                  expanded using the previous defined environment
+                                  expanded using the previously defined environment
                                   variables in the container and any service environment
                                   variables. If a variable cannot be resolved, the
                                   reference in the input string will be unchanged.
-                                  The $(VAR_NAME) syntax can be escaped with a double
-                                  $$, ie: $$(VAR_NAME). Escaped references will never
-                                  be expanded, regardless of whether the variable
-                                  exists or not. Defaults to "".'
+                                  Double $$ are reduced to a single $, which allows
+                                  for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)"
+                                  will produce the string literal "$(VAR_NAME)". Escaped
+                                  references will never be expanded, regardless of
+                                  whether the variable exists or not. Defaults to
+                                  "".'
                                 type: string
                               valueFrom:
                                 description: Source for the environment variable's
@@ -1011,6 +1020,7 @@ spec:
                   snapshotClass:
                     description: SnapshotClass is the specification for Snapshot Classes
                     items:
+                      description: SnapshotClass struct
                       properties:
                         name:
                           description: Name is the name of the Snapshot Class
@@ -1044,6 +1054,7 @@ spec:
                       description: Components is the specification for SM components
                         containers
                       items:
+                        description: ContainerTemplate template
                         properties:
                           args:
                             description: Args is the set of arguments for the container
@@ -1067,14 +1078,16 @@ spec:
                                   type: string
                                 value:
                                   description: 'Variable references $(VAR_NAME) are
-                                    expanded using the previous defined environment
+                                    expanded using the previously defined environment
                                     variables in the container and any service environment
                                     variables. If a variable cannot be resolved, the
                                     reference in the input string will be unchanged.
-                                    The $(VAR_NAME) syntax can be escaped with a double
-                                    $$, ie: $$(VAR_NAME). Escaped references will
-                                    never be expanded, regardless of whether the variable
-                                    exists or not. Defaults to "".'
+                                    Double $$ are reduced to a single $, which allows
+                                    for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)"
+                                    will produce the string literal "$(VAR_NAME)".
+                                    Escaped references will never be expanded, regardless
+                                    of whether the variable exists or not. Defaults
+                                    to "".'
                                   type: string
                                 valueFrom:
                                   description: Source for the environment variable's
@@ -1262,12 +1275,12 @@ spec:
                                 certSecret:
                                   type: string
                                 limits:
-                                  description: 'EDIT THIS FILE!  THIS IS SCAFFOLDING
-                                    FOR YOU TO OWN! NOTE: json tags are required.  Any
-                                    new fields you add must have json tags for the
-                                    fields to be serialized. ProxyLimits is used for
-                                    storing the various types of limits applied for
-                                    a particular proxy instance'
+                                  description: 'ProxyLimits max limits EDIT THIS FILE!  THIS
+                                    IS SCAFFOLDING FOR YOU TO OWN! NOTE: json tags
+                                    are required.  Any new fields you add must have
+                                    json tags for the fields to be serialized. ProxyLimits
+                                    is used for storing the various types of limits
+                                    applied for a particular proxy instance'
                                   properties:
                                     maxActiveRead:
                                       type: integer
@@ -1294,12 +1307,12 @@ spec:
                                 certSecret:
                                   type: string
                                 limits:
-                                  description: 'EDIT THIS FILE!  THIS IS SCAFFOLDING
-                                    FOR YOU TO OWN! NOTE: json tags are required.  Any
-                                    new fields you add must have json tags for the
-                                    fields to be serialized. ProxyLimits is used for
-                                    storing the various types of limits applied for
-                                    a particular proxy instance'
+                                  description: 'ProxyLimits max limits EDIT THIS FILE!  THIS
+                                    IS SCAFFOLDING FOR YOU TO OWN! NOTE: json tags
+                                    are required.  Any new fields you add must have
+                                    json tags for the fields to be serialized. ProxyLimits
+                                    is used for storing the various types of limits
+                                    applied for a particular proxy instance'
                                   properties:
                                     maxActiveRead:
                                       type: integer
@@ -1340,12 +1353,13 @@ spec:
                                   certSecret:
                                     type: string
                                   limits:
-                                    description: 'EDIT THIS FILE!  THIS IS SCAFFOLDING
-                                      FOR YOU TO OWN! NOTE: json tags are required.  Any
-                                      new fields you add must have json tags for the
-                                      fields to be serialized. ProxyLimits is used
-                                      for storing the various types of limits applied
-                                      for a particular proxy instance'
+                                    description: 'ProxyLimits max limits EDIT THIS
+                                      FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN! NOTE:
+                                      json tags are required.  Any new fields you
+                                      add must have json tags for the fields to be
+                                      serialized. ProxyLimits is used for storing
+                                      the various types of limits applied for a particular
+                                      proxy instance'
                                     properties:
                                       maxActiveRead:
                                         type: integer
@@ -1419,26 +1433,6 @@ spec:
                     items:
                       type: string
                     type: array
-                type: object
-              csmHash:
-                description: ContainerStorageModuleHash is a hash of the driver specification
-                format: int64
-                type: integer
-              lastUpdate:
-                description: LastUpdate is the last updated state of the driver
-                properties:
-                  condition:
-                    description: Condition is the last known condition of the Custom
-                      Resource
-                    type: string
-                  errorMessage:
-                    description: ErrorMessage is the last error message associated
-                      with the condition
-                    type: string
-                  time:
-                    description: Time is the time stamp for the last condition update
-                    format: date-time
-                    type: string
                 type: object
               nodeStatus:
                 description: NodeStatus is the status of Controller pods
