@@ -13,7 +13,6 @@ package v1
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // CSMStateType - type representing the state of the ContainerStorageModule (in status)
@@ -121,19 +120,6 @@ type PodStatus struct {
 	Ready     []string `json:"ready,omitempty"`
 	Starting  []string `json:"starting,omitempty"`
 	Stopped   []string `json:"stopped,omitempty"`
-}
-
-// LastUpdate - Stores the last update condition for the ContainerStorageModule status
-type LastUpdate struct {
-
-	// Condition is the last known condition of the Custom Resource
-	Condition CSMOperatorConditionType `json:"condition,omitempty"`
-
-	// Time is the time stamp for the last condition update
-	Time metav1.Time `json:"time,omitempty" yaml:"time"`
-
-	// ErrorMessage is the last error message associated with the condition
-	ErrorMessage string `json:"errorMessage,omitempty" yaml:"errorMessage"`
 }
 
 // Driver of CSIDriver

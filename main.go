@@ -37,7 +37,7 @@ import (
 	"github.com/dell/csm-operator/core"
 	k8sClient "github.com/dell/csm-operator/k8s"
 	utils "github.com/dell/csm-operator/pkg/utils"
-	"github.com/kubernetes-csi/external-snapshotter/client/v3/apis/volumesnapshot/v1beta1"
+	"k8s.io/client-go/util/workqueue"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	//+kubebuilder:scaffold:imports
 )
@@ -63,7 +63,6 @@ func init() {
 
 	utilruntime.Must(csmv1.AddToScheme(scheme))
 
-	utilruntime.Must(v1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -73,7 +72,6 @@ func printVersion() {
 	log.Info("Operator Version", "Version", core.SemVer, "Commit ID", core.CommitSha32, "Commit SHA", string(core.CommitTime.Format(time.RFC1123)))
 	log.Info(fmt.Sprintf("Go Version: %s", osruntime.Version()))
 	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH))
-	//log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
 func getOperatorConfig() utils.OperatorConfig {
@@ -115,10 +113,11 @@ func getOperatorConfig() utils.OperatorConfig {
 		panic(err.Error())
 	}
 	if currentVersion < minVersion {
-		panic(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
+		log.Info(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
 	}
 	if currentVersion > maxVersion {
-		panic(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
+		log.Info(fmt.Sprintf("version %s is greater than maximum supported version of %f", kubeVersion, maxVersion))
+
 	}
 
 	// Get the environment variSable config dir
@@ -161,7 +160,7 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8082", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
@@ -190,12 +189,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	if err = (&controllers.ContainerStorageModuleReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ContainerStorageModule"),
-		Scheme: mgr.GetScheme(),
-		Config: operatorConfig,
-	}).SetupWithManager(mgr); err != nil {
+		Client:        mgr.GetClient(),
+		Log:           ctrl.Log.WithName("controllers").WithName("ContainerStorageModule"),
+		Scheme:        mgr.GetScheme(),
+		EventRecorder: mgr.GetEventRecorderFor("csm"),
+		Config:        operatorConfig,
+	}).SetupWithManager(mgr, expRateLimiter, 1); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ContainerStorageModule")
 		os.Exit(1)
 	}

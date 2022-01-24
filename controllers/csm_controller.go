@@ -13,12 +13,12 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"math"
-	"os"
 	"sync/atomic"
 	"time"
 
+	k8sClient "github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/resources/configmap"
 	"github.com/dell/csm-operator/pkg/resources/csidriver"
 	"github.com/dell/csm-operator/pkg/resources/daemonset"
@@ -36,24 +35,30 @@ import (
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/go-logr/logr"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
+	t1 "k8s.io/apimachinery/pkg/types"
+	sinformer "k8s.io/client-go/informers"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/ratelimiter"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ContainerStorageModuleReconciler reconciles a ContainerStorageModule object
 type ContainerStorageModuleReconciler struct {
 	client.Client
-	Scheme      *runtime.Scheme
-	Log         logr.Logger
-	Config      utils.OperatorConfig
-	updateCount int32
+	Scheme        *runtime.Scheme
+	Log           logr.Logger
+	Config        utils.OperatorConfig
+	updateCount   int32
+	EventRecorder record.EventRecorder
 }
 
 // MetadataPrefix - prefix for all labels & annotations
@@ -97,7 +102,7 @@ var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIDriverConfigVers
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 
-//Reconcile - main loop
+// Reconcile - main loop
 func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("csm", req.NamespacedName)
 	// your logic here
@@ -108,7 +113,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	reqLogger = reqLogger.WithValues("Attempt", r.updateCount)
 	reqLogger.Info(fmt.Sprintf("Reconciling %s ", "csm"), "request", req.String())
 
-	retryInterval := constants.DefaultRetryInterval
 	reqLogger.Info("################Starting Reconcile##############")
 	r.IncrUpdateCount()
 
@@ -131,6 +135,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	// Add finalizer
+	err = r.Client.Get(ctx, req.NamespacedName, csm)
 	csm.SetFinalizers([]string{"finalizer.dell.emc.com"})
 	// Update CR
 	err = r.Client.Update(ctx, csm)
@@ -149,104 +154,10 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	isUpdated, err := checkAndApplyConfigVersionAnnotations(csm, log, false)
 	if err != nil {
 		return utils.HandleValidationError(ctx, csm, r, reqLogger, err)
-	} else if isUpdated {
+	}
+	if isUpdated {
 		_ = r.GetClient().Update(ctx, csm)
 		return reconcile.Result{Requeue: true}, nil
-	}
-
-	status := csm.GetCSMStatus()
-	// newStatus is the status object which is modified and finally used to update the Status
-	// in case the instance or the status is updated
-	newStatus := status.DeepCopy()
-	// oldStatus is the previous status of the CR instance
-	// This is used to compare if there is a need to update the status
-	oldStatus := status.DeepCopy()
-	oldState := oldStatus.State
-	reqLogger.Info(fmt.Sprintf("CSM was previously in (%s) state", string(oldState)))
-
-	// Check if the driver has changed
-	expectedHash, actualHash, changed := utils.CSMHashChanged(csm)
-	if changed {
-		message := fmt.Sprintf("CSM spec has changed (%d vs %d)", actualHash, expectedHash)
-		newStatus.ContainerStorageModuleHash = expectedHash
-		reqLogger.Info(message)
-	} else {
-		reqLogger.Info("No changes detected in the driver spec")
-	}
-
-	// Check if force update was requested
-	forceUpdate := csm.Spec.Driver.ForceUpdate
-	checkStateOnly := false
-	switch oldState {
-	case constants.Running:
-		fallthrough
-	case constants.Succeeded:
-		if changed {
-			// If the driver hash has changed, we need to update the driver again
-			newStatus.State = constants.Updating
-			reqLogger.Info("Changed state to Updating as CSM spec changed")
-		} else {
-			// Just check the state of the driver and update status accordingly
-			reqLogger.Info("Recalculating CSM state(only) as there is no change in driver spec")
-			checkStateOnly = true
-		}
-	case constants.InvalidConfig:
-		fallthrough
-	case constants.Failed:
-		// Check if force update was requested
-		if forceUpdate {
-			reqLogger.Info("Force update requested")
-			newStatus.State = constants.Updating
-		} else {
-			if changed {
-				// Do a reconcile as we detected a change
-				newStatus.State = constants.Updating
-			} else {
-				reqLogger.Info(fmt.Sprintf("CR is in (%s) state. Reconcile request won't be requeued",
-					newStatus.State))
-				return utils.LogBannerAndReturn(reconcile.Result{}, nil, reqLogger)
-			}
-		}
-	case constants.NoState:
-		newStatus.State = constants.Updating
-	case constants.Updating:
-		reqLogger.Info("CSM already in Updating state")
-	}
-
-	// Always initialize the spec
-	// TODO(Michael): maybe always intiailize spec)
-	isUpdated = true
-
-	// Check if CSM is in running state (only if the status was previously set to Succeeded or Running)
-	if checkStateOnly {
-		return utils.HandleSuccess(ctx, csm, r, reqLogger, newStatus, oldStatus)
-	}
-	// Remove the force update field if set
-	// The assumption is that we will not have a spec with Running/Succeeded state
-	// and the forceUpdate field set
-	if forceUpdate {
-		csm.Spec.Driver.ForceUpdate = false
-		isUpdated = true
-	}
-	if changed {
-		isUpdated = true
-	}
-	// Update the instance
-	if isUpdated {
-		updateInstanceError := r.updateInstance(ctx, csm, reqLogger, isUpdated)
-		if updateInstanceError != nil {
-			newStatus.LastUpdate.ErrorMessage = updateInstanceError.Error()
-			return utils.LogBannerAndReturn(reconcile.Result{
-				Requeue: true, RequeueAfter: retryInterval}, updateInstanceError, reqLogger)
-		}
-		// Also update the status as we calculate the hash every time
-		newStatus.LastUpdate = utils.SetLastStatusUpdate(oldStatus, csmv1.Updating, "")
-		updateStatusError := utils.UpdateStatus(ctx, csm, r, reqLogger, newStatus, oldStatus)
-		if updateStatusError != nil {
-			newStatus.LastUpdate.ErrorMessage = updateStatusError.Error()
-			reqLogger.Info(fmt.Sprintf("\n################End Reconcile %s %s##############\n", csm.Spec.Driver.CSIDriverType, req))
-			return utils.LogBannerAndReturn(reconcile.Result{Requeue: true, RequeueAfter: retryInterval}, updateStatusError, reqLogger)
-		}
 	}
 
 	// perfrom prechecks
@@ -254,63 +165,28 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	if err != nil {
 		return utils.HandleValidationError(ctx, csm, r, reqLogger, err)
 	}
+	r.EventRecorder.Eventf(csm, "Normal", "Updated", "PreChecks ok: %s", csm.Name)
 
 	// Set the driver status to updating
-	newStatus.State = constants.Updating
+
+	oldStatus := csm.GetCSMStatus()
+	newStatus := oldStatus
+	utils.HandleSuccess(ctx, csm, r, reqLogger, newStatus, oldStatus)
+
 	// Update the driver
+	r.EventRecorder.Eventf(csm, "Normal", "Updated", "Call install/update driver: %s", csm.Name)
 	syncErr := r.SyncCSM(ctx, *csm, *driverConfig, reqLogger)
+	_, _ = utils.CalculateState(ctx, csm, r, newStatus)
 	if syncErr == nil {
-		// Mark the driver state as succeeded
-		newStatus.State = constants.Succeeded
-		errorMsg := ""
-		running, err := utils.CalculateState(ctx, csm, r, newStatus)
-		if err != nil {
-			errorMsg = err.Error()
-		}
-		if running {
-			newStatus.State = constants.Running
-		}
-		newStatus.LastUpdate = utils.SetLastStatusUpdate(oldStatus,
-			utils.GetOperatorConditionTypeFromState(newStatus.State), errorMsg)
-		updateStatusError := utils.UpdateStatus(ctx, csm, r, reqLogger, newStatus, oldStatus)
-		if updateStatusError != nil {
-			return reconcile.Result{Requeue: true, RequeueAfter: retryInterval}, updateStatusError
-		}
-		if newStatus.State != constants.Running {
-			return utils.LogBannerAndReturn(reconcile.Result{Requeue: true, RequeueAfter: retryInterval}, nil, reqLogger)
-		}
-		return utils.LogBannerAndReturn(reconcile.Result{}, nil, reqLogger)
+		// driver state is succeeded
+		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Driver install OK: reconcile count=%d name=%s", r.updateCount, csm.Name)
+		return utils.LogBannerAndReturn(reconcile.Result{}, err, reqLogger)
 	}
 
 	// Failed to sync driver deployment
-	// Look at the last condition
-	_, _ = utils.CalculateState(ctx, csm, r, newStatus)
-	newStatus.LastUpdate = utils.SetLastStatusUpdate(oldStatus, csmv1.Error, syncErr.Error())
-	// Check the last condition
-	if oldStatus.LastUpdate.Condition == csmv1.Error {
-		reqLogger.Info(" Driver previously encountered an error")
-		timeSinceLastConditionChange := metav1.Now().Sub(oldStatus.LastUpdate.Time.Time).Round(time.Second)
-		reqLogger.Info(fmt.Sprintf("Time since last condition change :%v", timeSinceLastConditionChange))
-		if timeSinceLastConditionChange >= constants.MaxRetryDuration {
-			// Mark the driver as failed and update the condition
-			newStatus.State = constants.Failed
-			newStatus.LastUpdate = utils.SetLastStatusUpdate(oldStatus,
-				utils.GetOperatorConditionTypeFromState(newStatus.State), syncErr.Error())
-			// This will trigger a reconcile again
-			_ = utils.UpdateStatus(ctx, csm, r, reqLogger, newStatus, oldStatus)
-			return utils.LogBannerAndReturn(reconcile.Result{Requeue: false}, nil, reqLogger)
-		}
-		retryInterval = time.Duration(math.Min(float64(timeSinceLastConditionChange.Nanoseconds()*2),
-			float64(constants.MaxRetryInterval.Nanoseconds())))
-	} else {
-		_ = utils.UpdateStatus(ctx, csm, r, reqLogger, newStatus, oldStatus)
-	}
-	reqLogger.Info(fmt.Sprintf("Retry Interval: %v", retryInterval))
+	r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed  install: %s", syncErr.Error())
 
-	// Don't return an error here. Controller runtime will immediately requeue the request
-	// Also the requeueAfter setting only is effective after an amount of time
-
-	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true, RequeueAfter: retryInterval}, nil, reqLogger)
+	return utils.LogBannerAndReturn(reconcile.Result{Requeue: false}, syncErr, reqLogger)
 }
 
 func (r *ContainerStorageModuleReconciler) updateInstance(ctx context.Context, instance *csmv1.ContainerStorageModule, reqLogger logr.Logger, isUpdated bool) error {
@@ -328,38 +204,112 @@ func (r *ContainerStorageModuleReconciler) updateInstance(ctx context.Context, i
 	return nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	c, err := controller.New("ContainerStorageModule", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		r.Log.Error(err, "Unable to setup ContainerStorageModule controller")
-		os.Exit(1)
+func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Ignore updates to status in which case metadata.Generation does not change
+			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been confirmed deleted.
+			return !e.DeleteStateUnknown
+		},
+	}
+}
+
+func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interface{}, obj interface{}) {
+	old, _ := oldObj.(*appsv1.DaemonSet)
+	d, _ := obj.(*appsv1.DaemonSet)
+	name := d.Spec.Template.Labels["csm"]
+	if name == "" {
+		r.Log.Info("daemonset not ours return", "name", d.Name)
+		return
 	}
 
-	err = c.Watch(
-		&source.Kind{Type: &csmv1.ContainerStorageModule{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		r.Log.Error(err, "Unable to watch ContainerStorageModule Driver")
-		os.Exit(1)
+	r.Log.Info("daemonset modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+	desired := d.Status.DesiredNumberScheduled
+	available := d.Status.NumberAvailable
+	ready := d.Status.NumberReady
+
+	r.Log.Info("daemonset csm", "desired", desired)
+	r.Log.Info("daemonset csm", "numberReady", ready)
+	r.Log.Info("daemonset csm", "available", available)
+
+	ns := d.Namespace
+	r.Log.Info("daemonset ", "ns", ns, "name", name)
+	namespacedName := t1.NamespacedName{
+		Name:      name,
+		Namespace: ns,
 	}
 
-	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &csmv1.ContainerStorageModule{},
-	})
+	csm := new(csmv1.ContainerStorageModule)
+	ctx := context.Background()
+	err := r.Client.Get(ctx, namespacedName, csm)
 	if err != nil {
-		r.Log.Error(err, "Unable to watch Deployment")
-		os.Exit(1)
+		r.Log.Info("daemonset get csm", "error", err.Error())
 	}
-	err = c.Watch(&source.Kind{Type: &appsv1.DaemonSet{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &csmv1.ContainerStorageModule{},
-	})
+	// get status and update csm
+
+	r.Log.Info("csm prev status ", "state", csm.Status)
+
+	state, err := utils.CalculateState(ctx, csm, r, csm.GetCSMStatus())
+	r.Log.Info("daemonset status", "state", state)
+
+	if !state {
+		errorMsg := errors.New("daemonset in error")
+		if err != nil {
+			errorMsg = err
+		}
+		_ = utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		r.Log.Info("daemonset in err", "err", errorMsg)
+
+		nodestart := len(csm.Status.NodeStatus.Starting)
+		nodestop := len(csm.Status.NodeStatus.Stopped)
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Daemonset status check csm, node pod count starting:%d, stopped:%d", nodestart, nodestop)
+
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Daemonset status check Error ,node pod desired:%d, available:%d", desired, available)
+	} else {
+		r.Log.Info("csm status", "curent state", csm.Status.State)
+		_ = utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Daemonset status check OK : %s desired pods %d, ready pods %d", d.Name, desired, ready)
+	}
+	return
+}
+
+// ContentWatch -watch
+func (r *ContainerStorageModuleReconciler) ContentWatch() error {
+
+	clientset, err := k8sClient.GetClientSetWrapper()
 	if err != nil {
-		r.Log.Error(err, "Unable to watch Daemonset")
-		os.Exit(1)
+		r.Log.Info(err.Error(), "setup snapWatch", "test mode")
 	}
+
+	sharedInformerFactory := sinformer.NewSharedInformerFactory(clientset, time.Duration(time.Hour))
+
+	contentInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
+	contentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: r.handleDaemonsetUpdate,
+	})
+
+	stop := make(chan struct{})
+	sharedInformerFactory.Start(stop)
+
 	return nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter ratelimiter.RateLimiter, maxReconcilers int) error {
+
+	go r.ContentWatch()
+
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&csmv1.ContainerStorageModule{}).
+		WithEventFilter(r.ignoreUpdatePredicate()).
+		WithOptions(controller.Options{
+			RateLimiter:             limiter,
+			MaxConcurrentReconciles: maxReconcilers,
+		}).
+		Complete(r)
 }
 
 func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule, log logr.Logger) (reconcile.Result, error) {
@@ -490,15 +440,15 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update DeamonSet
-	err = daemonset.SyncDaemonset(ctx, &node.DaemonSet, r.Client, reqLogger)
+
+	err = daemonset.SyncDaemonset(ctx, &node.DaemonSet, r.Client, reqLogger, cr.Name)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
-// PreChecks - validate inputs
+// PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
 	reqLogger logr.Logger) error {
 	if cr.Spec.Driver.Common.Image == "" {
@@ -550,31 +500,28 @@ func checkAndApplyConfigVersionAnnotations(instance *csmv1.ContainerStorageModul
 	}
 	// If driver has not been initialized yet, we first annotate the driver with the config version annotation
 
-	if instance.Status.ContainerStorageModuleHash == 0 || update {
-		annotations := instance.GetAnnotations()
-		isUpdated := false
-		if annotations == nil {
-			annotations = make(map[string]string)
-			isUpdated = true
-		}
-		if configVersion, ok := annotations[configVersionKey]; !ok {
+	annotations := instance.GetAnnotations()
+	isUpdated := false
+	if annotations == nil {
+		annotations = make(map[string]string)
+		isUpdated = true
+	}
+	if configVersion, ok := annotations[configVersionKey]; !ok {
+		annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
+		isUpdated = true
+		instance.SetAnnotations(annotations)
+		log.Info(fmt.Sprintf("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
+			instance.GetName(), instance.Spec.Driver.ConfigVersion))
+	} else {
+		if configVersion != instance.Spec.Driver.ConfigVersion {
 			annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
 			isUpdated = true
 			instance.SetAnnotations(annotations)
-			log.Info(fmt.Sprintf("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
-				instance.GetName(), instance.Spec.Driver.ConfigVersion))
-		} else {
-			if configVersion != instance.Spec.Driver.ConfigVersion {
-				annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
-				isUpdated = true
-				instance.SetAnnotations(annotations)
-				log.Info(fmt.Sprintf("Config Version changed from %s to %s. Updating Annotations",
-					configVersion, instance.Spec.Driver.ConfigVersion))
-			}
+			log.Info(fmt.Sprintf("Config Version changed from %s to %s. Updating Annotations",
+				configVersion, instance.Spec.Driver.ConfigVersion))
 		}
-		return isUpdated, nil
 	}
-	return false, nil
+	return isUpdated, nil
 }
 
 // GetClient - returns the split client
