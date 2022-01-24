@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
@@ -182,7 +184,12 @@ func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.Ope
 // GetPowerScaleConfigMap get configmap
 func GetPowerScaleConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*corev1.ConfigMap, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
-	buf, err := ioutil.ReadFile(configMapPath)
+
+	if _, err := os.Stat(configMapPath); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return nil, err
 	}
