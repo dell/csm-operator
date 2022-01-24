@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     siDriverType: "powerscale"
-    k8sVersion: v1.22
+    k8sVersion: v1.23
     
     # Config version for CSI PowerScale v2.0.0 driver
     configVersion: v2.0.0
