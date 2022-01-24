@@ -24,6 +24,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/yaml"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -79,6 +81,22 @@ func checkAnnotation(annotation map[string]string) error {
 	return nil
 }
 
+func checkApplyVolumes(volumes []acorev1.VolumeApplyConfiguration) error {
+	// Volume
+	volumeNames := []string{"karavi-authorization-config"}
+NAME_LOOP:
+	for _, volName := range volumeNames {
+		for _, vol := range volumes {
+			if vol.Name == &volName {
+				continue NAME_LOOP
+			}
+		}
+		return fmt.Errorf("missing the following volume %s", volName)
+	}
+
+	return nil
+}
+
 func checkVolumes(volumes []corev1.Volume) error {
 	// Volume
 	volumeNames := []string{"karavi-authorization-config"}
@@ -93,6 +111,27 @@ NAME_LOOP:
 	}
 
 	return nil
+}
+
+func checkApplyContainers(contianers []acorev1.ContainerApplyConfiguration) error {
+	authString := "karavi-authorization-proxy"
+	for _, cnt := range contianers {
+		if cnt.Name == &authString {
+			volumeMounts := []string{"karavi-authorization-config", "test-isilon-config-params"}
+		MOUNT_NAME_LOOP:
+			for _, volName := range volumeMounts {
+				for _, vol := range cnt.VolumeMounts {
+					if vol.Name == &volName {
+						continue MOUNT_NAME_LOOP
+					}
+				}
+				return fmt.Errorf("missing the following volume mount %s", volName)
+			}
+			return nil
+		}
+
+	}
+	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
 
 func checkContainers(contianers []corev1.Container) error {
@@ -116,24 +155,24 @@ func checkContainers(contianers []corev1.Container) error {
 }
 
 func TestAuthInjectDaemonset(t *testing.T) {
-	correctlyInjected := func(ds appsv1.DaemonSet) error {
+	correctlyInjected := func(ds applyv1.DaemonSetApplyConfiguration) error {
 		err := checkAnnotation(ds.Annotations)
 		if err != nil {
 			return err
 		}
-		err = checkVolumes(ds.Spec.Template.Spec.Volumes)
+		err = checkApplyVolumes(ds.Spec.Template.Spec.Volumes)
 		if err != nil {
 			return err
 		}
-		err = checkContainers(ds.Spec.Template.Spec.Containers)
+		err = checkApplyContainers(ds.Spec.Template.Spec.Containers)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	//*appsv1.DaemonSet
-	tests := map[string]func(t *testing.T) (bool, appsv1.DaemonSet, utils.OperatorConfig){
-		"success - greenfield injection": func(*testing.T) (bool, appsv1.DaemonSet, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig){
+		"success - greenfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
 			customResource, err := getCustomResource()
 			if err != nil {
 				panic(err)
@@ -144,7 +183,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			}
 			return true, nodeYAML.DaemonSet, operatorConfig
 		},
-		"success - brownfiled injection": func(*testing.T) (bool, appsv1.DaemonSet, utils.OperatorConfig) {
+		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
 			customResource, err := getCustomResource()
 			if err != nil {
 				panic(err)
@@ -160,7 +199,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 
 			return true, *newDaemonSet, operatorConfig
 		},
-		"fail - bad config path": func(*testing.T) (bool, appsv1.DaemonSet, utils.OperatorConfig) {
+		"fail - bad config path": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
 			customResource, err := getCustomResource()
 			if err != nil {
 				panic(err)
