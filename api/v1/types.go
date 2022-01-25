@@ -13,7 +13,6 @@ package v1
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // CSMStateType - type representing the state of the ContainerStorageModule (in status)
@@ -65,19 +64,31 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// Provisioner - placeholder for constant
 	Provisioner = "provisioner"
-	Attacher    = "attacher"
+	// Attacher - placeholder for constant
+	Attacher = "attacher"
+	// Snapshotter - placeholder for constant
 	Snapshotter = "snapshotter"
-	Registrar   = "registrar"
-	Resizer     = "resizer"
-	Sdcmonitor  = "sdc-monitor"
+	// Registrar - placeholder for constant
+	Registrar = "registrar"
+	// Resizer - placeholder for constant
+	Resizer = "resizer"
+	// Sdcmonitor - placeholder for constant
+	Sdcmonitor = "sdc-monitor"
 
-	Succeeded     CSMOperatorConditionType = "Succeeded"
+	// Succeeded - constant
+	Succeeded CSMOperatorConditionType = "Succeeded"
+	// InvalidConfig - constant
 	InvalidConfig CSMOperatorConditionType = "InvalidConfig"
-	Running       CSMOperatorConditionType = "Running"
-	Error         CSMOperatorConditionType = "Error"
-	Updating      CSMOperatorConditionType = "Updating"
-	Failed        CSMOperatorConditionType = "Failed"
+	// Running - Constant
+	Running CSMOperatorConditionType = "Running"
+	// Error - Constant
+	Error CSMOperatorConditionType = "Error"
+	// Updating - Constant
+	Updating CSMOperatorConditionType = "Updating"
+	// Failed - Constant
+	Failed CSMOperatorConditionType = "Failed"
 )
 
 // Module defines the desired state of a ContainerStorageModuleModules
@@ -109,19 +120,6 @@ type PodStatus struct {
 	Ready     []string `json:"ready,omitempty"`
 	Starting  []string `json:"starting,omitempty"`
 	Stopped   []string `json:"stopped,omitempty"`
-}
-
-// LastUpdate - Stores the last update condition for the ContainerStorageModule status
-type LastUpdate struct {
-
-	// Condition is the last known condition of the Custom Resource
-	Condition CSMOperatorConditionType `json:"condition,omitempty"`
-
-	// Time is the time stamp for the last condition update
-	Time metav1.Time `json:"time,omitempty" yaml:"time"`
-
-	// ErrorMessage is the last error message associated with the condition
-	ErrorMessage string `json:"errorMessage,omitempty" yaml:"errorMessage"`
 }
 
 // Driver of CSIDriver
@@ -181,6 +179,7 @@ type Driver struct {
 	TLSCertSecret string `json:"tlsCertSecret,omitempty" yaml:"tlsCertSecret"`
 }
 
+//ContainerTemplate template
 type ContainerTemplate struct {
 
 	// Name is the name of Container
@@ -217,6 +216,7 @@ type ContainerTemplate struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty" yaml:"nodeSelector"`
 }
 
+//SnapshotClass struct
 type SnapshotClass struct {
 	// Name is the name of the Snapshot Class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Name"

@@ -14,10 +14,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
 const (
+	// DefaultPluginIdentifier - spring placeholder for driver plugin
 	DefaultPluginIdentifier = "<DriverPluginIdentifier>"
 )
 
@@ -28,10 +32,6 @@ var SupportedDrivers = map[string]string{
 
 func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *corev1.Container, error) {
 	var err error
-	configMapName := map[string]string{
-		"powerscale": "csi-isilon",
-		"isilon":     "csi-isilon",
-	}
 	authModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.Authorization {
@@ -54,10 +54,7 @@ func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1
 		return nil, nil, err
 	}
 
-	YamlString := string(buf)
-	if cr.Name != "" {
-		YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseName, configMapName[string(cr.Spec.Driver.CSIDriverType)])
-	}
+	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
 	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
 		YamlString = strings.ReplaceAll(YamlString, utils.DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
@@ -78,9 +75,71 @@ func getAuthCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1
 		}
 	}
 
+	certString := "proxy-server-root-certificate"
 	if skipCertValid { // do not mount proxy-server-root-certificate
 		for i, c := range container.VolumeMounts {
-			if c.Name == "proxy-server-root-certificate" {
+			if c.Name == certString {
+				container.VolumeMounts[i] = container.VolumeMounts[len(container.VolumeMounts)-1]
+				container.VolumeMounts = container.VolumeMounts[:len(container.VolumeMounts)-1]
+			}
+
+		}
+
+	}
+
+	return &authModule, &container, nil
+
+}
+
+func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+	var err error
+	authModule := csmv1.Module{}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Authorization {
+			authModule = m
+			break
+		}
+	}
+
+	authConfigVersion := authModule.ConfigVersion
+	if authConfigVersion == "" {
+		authConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/container.yaml", op.ConfigDirectory, authConfigVersion)
+	buf, err := ioutil.ReadFile(configMapPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	YamlString := utils.ModifyCommonCR(string(buf), cr)
+
+	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
+		YamlString = strings.ReplaceAll(YamlString, utils.DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
+	}
+
+	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)])
+
+	var container acorev1.ContainerApplyConfiguration
+	err = yaml.Unmarshal([]byte(YamlString), &container)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	skipCertValid := false
+	for _, env := range authModule.Components[0].Envs {
+		if env.Name == "INSECURE" {
+			skipCertValid, _ = strconv.ParseBool(env.Value)
+		}
+	}
+
+	certString := "proxy-server-root-certificate"
+	if skipCertValid { // do not mount proxy-server-root-certificate
+		for i, c := range container.VolumeMounts {
+			if c.Name == &certString {
 				container.VolumeMounts[i] = container.VolumeMounts[len(container.VolumeMounts)-1]
 				container.VolumeMounts = container.VolumeMounts[:len(container.VolumeMounts)-1]
 			}
@@ -118,9 +177,10 @@ func getAuthVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, au
 		}
 	}
 
+	certString := "proxy-server-root-certificate"
 	if skipCertValid { // do not mount proxy-server-root-certificate
 		for i, c := range vols {
-			if c.Name == "proxy-server-root-certificate" {
+			if c.Name == certString {
 				vols[i] = vols[len(vols)-1]
 				return vols[:len(vols)-1], nil
 
@@ -132,16 +192,57 @@ func getAuthVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, au
 	return vols, nil
 }
 
-func AuthInjectDaemonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.DaemonSet, error) {
-	authModule, containerPtr, err := getAuthCR(cr, op)
+func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, auth csmv1.ContainerTemplate) ([]acorev1.VolumeApplyConfiguration, error) {
+	version, err := utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+	if err != nil {
+		return nil, err
+	}
+
+	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", op.ConfigDirectory, version)
+	buf, err := ioutil.ReadFile(configMapPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var vols []acorev1.VolumeApplyConfiguration
+	err = yaml.Unmarshal(buf, &vols)
+	if err != nil {
+		return nil, err
+	}
+
+	skipCertValid := false
+	for _, env := range auth.Envs {
+		if env.Name == "INSECURE" {
+			skipCertValid, _ = strconv.ParseBool(env.Value)
+		}
+	}
+
+	certString := "proxy-server-root-certificate"
+	if skipCertValid { // do not mount proxy-server-root-certificate
+		for i, c := range vols {
+			if c.Name == &certString {
+				vols[i] = vols[len(vols)-1]
+				return vols[:len(vols)-1], nil
+
+			}
+
+		}
+
+	}
+	return vols, nil
+}
+
+// AuthInjectDaemonset  - inject authorization into daemonset
+func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DaemonSetApplyConfiguration, error) {
+	authModule, containerPtr, err := getAuthApplyCR(cr, op)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
-	container = utils.UpdateSideCar(authModule.Components, container)
+	container = utils.UpdateSideCarApply(authModule.Components, container)
 
-	vols, err := getAuthVolumes(cr, op, authModule.Components[0])
+	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +260,7 @@ func AuthInjectDaemonset(ds appsv1.DaemonSet, cr csmv1.ContainerStorageModule, o
 	return &ds, nil
 }
 
+// AuthInjectDeployment - inject authorization into deployment
 func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.Deployment, error) {
 	authModule, containerPtr, err := getAuthCR(cr, op)
 	if err != nil {
@@ -187,9 +289,29 @@ func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule,
 
 }
 
-func AuthorizationPrecheck(ctx context.Context, cr *csmv1.ContainerStorageModule, auth csmv1.Module, r utils.ReconcileCSM, log logr.Logger) error {
-	if _, ok := SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
-		return fmt.Errorf("csm authorization does not support %s driver", string(cr.Spec.Driver.CSIDriverType))
+// AuthorizationPrecheck  - runs precheck for CSM Authorization
+func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op utils.OperatorConfig, auth csmv1.Module, ctrlClient crclient.Client, log logr.Logger) error {
+	if _, ok := SupportedDrivers[driverType]; !ok {
+		return fmt.Errorf("CSM Authorization does not support %s driver", driverType)
+	}
+
+	// check if provided version is supported
+	if auth.ConfigVersion != "" {
+		files, err := ioutil.ReadDir(fmt.Sprintf("%s/moduleconfig/authorization/", op.ConfigDirectory))
+		if err != nil {
+			return err
+		}
+		found := false
+		authVersions := ""
+		for _, file := range files {
+			authVersions += (file.Name() + ",")
+			if file.Name() == auth.ConfigVersion {
+				found = true
+			}
+		}
+		if !found {
+			return fmt.Errorf("CSM Authorization does not have %s version. The following are supported versions: %s", auth.ConfigVersion, authVersions[:len(authVersions)-1])
+		}
 	}
 
 	// Check for secrets
@@ -215,8 +337,8 @@ func AuthorizationPrecheck(ctx context.Context, cr *csmv1.ContainerStorageModule
 
 	for _, name := range secrets {
 		found := &corev1.Secret{}
-		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name,
-			Namespace: cr.GetNamespace()}, found)
+		err := ctrlClient.Get(ctx, types.NamespacedName{Name: name,
+			Namespace: namespace}, found)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
@@ -224,8 +346,6 @@ func AuthorizationPrecheck(ctx context.Context, cr *csmv1.ContainerStorageModule
 			log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
 		}
 	}
-
-	// TODO(Michael): Do Other configuration checks if needed
 
 	return nil
 }

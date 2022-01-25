@@ -12,7 +12,7 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v2
       - name: Run the formatter, linter, and vetter
-        uses: dell/common-github-actions/go-code-formatter-linter-vetter@main
+        uses: dell/common-github-actions/go-code-formatter-linter-vetter@update-go-version
         with:
           directories: ./...
   sanitize:
@@ -25,6 +25,21 @@ jobs:
         uses: dell/common-github-actions/code-sanitizer@main
         with:
           args: /github/workspace
+  test:
+    name: Run Go unit tests and check package coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Checkout csm-operator
+        uses: actions/checkout@v2
+        with:
+          repository: 'dell/csm-operator'
+          path: 'csm-operator'
+      - name: Run unit tests and check package coverage
+        uses: dell/common-github-actions/go-code-tester@main
+        with:
+          threshold: 90
   go_security_scan:
     name: Go security
     runs-on: ubuntu-latest
@@ -44,3 +59,27 @@ jobs:
         with:
           directories: .
           options: -ri
+  image_security_scan:
+    name: Image Scanner
+    runs-on: ubuntu-latest
+    env:
+      BASE_IMG : ubuntu:latest
+    steps:
+      - name: Set up Go 1.17+
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.17
+        id: go
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Install Mockgen
+        run: go get github.com/golang/mock/mockgen@v1.4.4
+      - name: Get dependencies
+        run: go mod download
+      - name: Build Docker Images
+        run: make docker-build
+      - name: Scan controller Image
+        uses: Azure/container-scan@v0
+        with:
+          image-name: controller:latest
+          severity-threshold: HIGH

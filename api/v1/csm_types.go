@@ -42,17 +42,9 @@ type ContainerStorageModuleStatus struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="NodeStatus",xDescriptors="urn:alm:descriptor:com.tectonic.ui:podStatuses"
 	NodeStatus PodStatus `json:"nodeStatus,omitempty"`
 
-	// ContainerStorageModuleHash is a hash of the driver specification
-	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="ContainerStorageModuleHash",xDescriptors="urn:alm:descriptor:text"
-	ContainerStorageModuleHash uint64 `json:"csmHash,omitempty" yaml:"csmHash"`
-
 	// State is the state of the driver installation
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="State",xDescriptors="urn:alm:descriptor:text"
 	State CSMStateType `json:"state,omitempty" yaml:"state"`
-
-	// LastUpdate is the last updated state of the driver
-	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="LastUpdate"
-	LastUpdate LastUpdate `json:"lastUpdate,omitempty" yaml:"lastUpdate"`
 }
 
 //+kubebuilder:object:root=true
@@ -85,11 +77,12 @@ func (cr *ContainerStorageModule) GetCSMStatus() *ContainerStorageModuleStatus {
 	return &cr.Status
 }
 
+// GetControllerName - Returns a controller
 func (cr *ContainerStorageModule) GetControllerName() string {
 	return fmt.Sprintf("%s-controller", cr.Name)
 }
 
-// GetDaemonSetName - Returns the name of the daemonset for the driver
+// GetNodeName - Returns the name of the daemonset for the driver
 func (cr *ContainerStorageModule) GetNodeName() string {
 	return fmt.Sprintf("%s-node", cr.Name)
 }
