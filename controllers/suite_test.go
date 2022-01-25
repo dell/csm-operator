@@ -25,7 +25,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
