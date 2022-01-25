@@ -220,14 +220,16 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 			}
 			if old.ValueFrom != nil {
 				pRef := old.ValueFrom.FieldRef
-				path := *pRef.FieldPath
-				e = acorev1.EnvVarApplyConfiguration{
-					Name: old.Name,
-					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
-						FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
-							FieldPath: &path,
+				if pRef != nil {
+					path := *pRef.FieldPath
+					e = acorev1.EnvVarApplyConfiguration{
+						Name: old.Name,
+						ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+							FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
+								FieldPath: &path,
+							},
 						},
-					},
+					}
 				}
 			}
 			newEnv = append(newEnv, e)
