@@ -88,7 +88,7 @@ NAME_LOOP:
 	for _, volName := range volumeNames {
 		for _, vol := range volumes {
 			if *vol.Name == volName {
-				 continue NAME_LOOP
+				continue NAME_LOOP
 			}
 		}
 		return fmt.Errorf("missing the following volume %s", volName)
@@ -122,7 +122,7 @@ func checkApplyContainers(contianers []acorev1.ContainerApplyConfiguration) erro
 			for _, volName := range volumeMounts {
 				for _, vol := range cnt.VolumeMounts {
 					if *vol.Name == volName {
-						continue MOUNT_NAME_LOOP 
+						continue MOUNT_NAME_LOOP
 					}
 				}
 				return fmt.Errorf("missing the following volume mount %s", volName)
