@@ -9,7 +9,7 @@ import (
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	//corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,55 +25,41 @@ func getInt32(pointer *int32) int32 {
 
 func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
 	var available, ready, starting, stopped []string
-	deployment := &appsv1.Deployment{}
+	controller := &appsv1.Deployment{}
 	err := r.GetClient().Get(ctx, types.NamespacedName{Name: instance.GetControllerName(),
-		Namespace: instance.GetNamespace()}, deployment)
+		Namespace: instance.GetNamespace()}, controller)
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
 	}
-	replicas := getInt32(deployment.Spec.Replicas)
-	readyCount := deployment.Status.ReadyReplicas
-	if replicas == 0 || readyCount == 0 {
+	if controller.Status.UpdatedReplicas == 0 || controller.Status.ReadyReplicas == 0 {
 		stopped = append(stopped, instance.GetControllerName())
+		err = errors.New("Pod stopped")
 	} else {
-		//app=test-isilon-controller
-		label := instance.GetNamespace() + "-controller"
 		podList := &v1.PodList{}
 		opts := []client.ListOption{
 			client.InNamespace(instance.GetNamespace()),
-			client.MatchingLabels{"app": label},
+			client.MatchingLabels{"app": instance.GetControllerName()},
 		}
 		err = r.GetClient().List(ctx, podList, opts...)
 		if err != nil {
-			return replicas, csmv1.PodStatus{}, err
+			return controller.Status.UpdatedReplicas, csmv1.PodStatus{}, err
 		}
 		for _, pod := range podList.Items {
-			if pod.Status.Phase == corev1.PodRunning {
-				running := true
-				for _, containerStatus := range pod.Status.ContainerStatuses {
-					if containerStatus.State.Running == nil {
-						running = false
-						break
-					}
-				}
-				if running {
-					available = append(available, pod.Name)
-				} else {
-					ready = append(ready, pod.Name)
-				}
-			} else if pod.Status.Phase == corev1.PodPending || pod.Status.Phase == corev1.PodUnknown || pod.Status.Phase == corev1.PodRunning {
+			if pod.Status.Phase == "Pending" {
 				starting = append(starting, pod.Name)
-			} else if pod.Status.Phase == corev1.PodFailed {
-				stopped = append(stopped, pod.Name)
+				err = errors.New("Pod starting ")
+			} else {
+				available = append(available, pod.Name)
 			}
 		}
 	}
-	return replicas, csmv1.PodStatus{
+
+	return controller.Status.UpdatedReplicas, csmv1.PodStatus{
 		Available: available,
 		Stopped:   stopped,
 		Starting:  starting,
 		Ready:     ready,
-	}, nil
+	}, err
 }
 
 func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {

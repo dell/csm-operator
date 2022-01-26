@@ -21,7 +21,7 @@ import (
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
-	appsv1 "k8s.io/api/apps/v1"
+	//appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
@@ -235,24 +235,24 @@ func TestAuthInjectDaemonset(t *testing.T) {
 	}
 }
 func TestAuthInjectDeployment(t *testing.T) {
-	correctlyInjected := func(dp appsv1.Deployment) error {
+	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration) error {
 		err := checkAnnotation(dp.Annotations)
 		if err != nil {
 			return err
 		}
-		err = checkVolumes(dp.Spec.Template.Spec.Volumes)
+		err = checkApplyVolumes(dp.Spec.Template.Spec.Volumes)
 		if err != nil {
 			return err
 		}
-		err = checkContainers(dp.Spec.Template.Spec.Containers)
+		err = checkApplyContainers(dp.Spec.Template.Spec.Containers)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	tests := map[string]func(t *testing.T) (bool, appsv1.Deployment, utils.OperatorConfig, csmv1.ContainerStorageModule){
-		"success - greenfield injection": func(*testing.T) (bool, appsv1.Deployment, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource()
 			if err != nil {
 				panic(err)
@@ -263,7 +263,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			}
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - brownfiled injection": func(*testing.T) (bool, appsv1.Deployment, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource()
 			if err != nil {
 				panic(err)
@@ -280,7 +280,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 
 			return true, *newDeployment, operatorConfig, customResource
 		},
-		"fail - bad config path": func(*testing.T) (bool, appsv1.Deployment, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource()
 			if err != nil {
 				panic(err)

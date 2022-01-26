@@ -40,7 +40,18 @@ func GetPowerScaleController(cr csmv1.ContainerStorageModule, operatorConfig uti
 	controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
 
 	if len(cr.Spec.Driver.Controller.Tolerations) != 0 {
-		controllerYAML.Deployment.Spec.Template.Spec.Tolerations = cr.Spec.Driver.Controller.Tolerations
+		tols := make([]acorev1.TolerationApplyConfiguration, 0)
+		for _, t := range cr.Spec.Driver.Controller.Tolerations {
+			toleration := acorev1.Toleration()
+			toleration.WithEffect(t.Effect)
+			toleration.WithKey(t.Key)
+			toleration.WithValue(t.Value)
+			toleration.WithOperator(t.Operator)
+			toleration.WithTolerationSeconds(*t.TolerationSeconds)
+			tols = append(tols, *toleration)
+		}
+
+		controllerYAML.Deployment.Spec.Template.Spec.Tolerations = tols
 	}
 
 	if cr.Spec.Driver.Controller.NodeSelector != nil {
@@ -49,30 +60,36 @@ func GetPowerScaleController(cr csmv1.ContainerStorageModule, operatorConfig uti
 
 	containers := controllerYAML.Deployment.Spec.Template.Spec.Containers
 	for i, c := range containers {
-		if string(c.Name) == "driver" {
-			env := utils.ReplaceAllEnvs(c.Env, cr.Spec.Driver.Common.Envs)
-			containers[i].Env = utils.ReplaceAllEnvs(env, cr.Spec.Driver.Controller.Envs)
+		if string(*c.Name) == "driver" {
+			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Controller.Envs)
+			for _, e := range containers[i].Env {
+				if e.Value != nil {
+					//Log.Info("resolved 2 ", "env", *e.Name, "value", *e.Value)
+				}
+			}
 			if string(cr.Spec.Driver.Common.Image) != "" {
-				containers[i].Image = string(cr.Spec.Driver.Common.Image)
+				image := string(cr.Spec.Driver.Common.Image)
+				containers[i].Image = &image
 			}
 		}
 
-		c = utils.ReplaceALLContainerImage(operatorConfig.K8sVersion, c)
-		containers[i] = utils.UpdateSideCar(cr.Spec.Driver.SideCars, c)
+		tmp := utils.ReplaceALLContainerImageApply(operatorConfig.K8sVersion, containers[i])
+		containers[i] = utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, tmp)
+
 	}
 
 	controllerYAML.Deployment.Spec.Template.Spec.Containers = containers
 	// Update volumes
 	for i, v := range controllerYAML.Deployment.Spec.Template.Spec.Volumes {
-		if v.Name == "certs" {
-			newV, err := getCertVolume(cr)
+		if *v.Name == "certs" {
+			newV, err := getApplyCertVolume(cr)
 			if err != nil {
 				return nil, err
 			}
 			controllerYAML.Deployment.Spec.Template.Spec.Volumes[i] = *newV
 		}
-		if v.Name == cr.Name+"-creds" && cr.Spec.Driver.AuthSecret != "" {
-			controllerYAML.Deployment.Spec.Template.Spec.Volumes[i].Secret.SecretName = cr.Spec.Driver.AuthSecret
+		if *v.Name == cr.Name+"-creds" && cr.Spec.Driver.AuthSecret != "" {
+			controllerYAML.Deployment.Spec.Template.Spec.Volumes[i].Secret.SecretName = &cr.Spec.Driver.AuthSecret
 		}
 
 	}
@@ -260,54 +277,6 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 	// TODO(Michael): Do Other configuration checks
 
 	return nil
-}
-
-func getCertVolume(cr csmv1.ContainerStorageModule) (*corev1.Volume, error) {
-	skipCertValid := false
-	certCount := 1
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION" {
-			b, err := strconv.ParseBool(env.Value)
-			if err != nil {
-				return nil, fmt.Errorf("%s is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
-			}
-			skipCertValid = b
-		}
-		if env.Name == "CERT_SECRET_COUNT" {
-			d, err := strconv.ParseInt(env.Value, 0, 8)
-			if err != nil {
-				return nil, fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
-			}
-			certCount = int(d)
-		}
-	}
-
-	volume := corev1.Volume{
-		Name: "certs",
-		VolumeSource: corev1.VolumeSource{
-			Projected: &corev1.ProjectedVolumeSource{
-				Sources: []corev1.VolumeProjection{},
-			},
-		},
-	}
-
-	if !skipCertValid {
-		for i := 0; i < certCount; i++ {
-			source := corev1.SecretProjection{
-				LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-certs-%d", cr.Name, i)},
-				Items: []corev1.KeyToPath{
-					{
-						Key:  fmt.Sprintf("cert-%d", i),
-						Path: fmt.Sprintf("cert-%d", i),
-					},
-				},
-			}
-			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{Secret: &source})
-
-		}
-	}
-
-	return &volume, nil
 }
 
 func getApplyCertVolume(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {
