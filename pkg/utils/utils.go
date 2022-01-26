@@ -97,7 +97,7 @@ func SplitYAML(gaintYAML []byte) ([][]byte, error) {
 	return res, nil
 }
 
-// UpdateSideCar -
+// UpdateSideCarApply -
 func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c acorev1.ContainerApplyConfiguration) acorev1.ContainerApplyConfiguration {
 	for _, side := range sideCars {
 		if *c.Name == side.Name {
@@ -115,7 +115,7 @@ func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c acorev1.ContainerA
 	return c
 }
 
-// ReplaceALLContainerImage -
+// ReplaceALLContainerImageApply -
 func ReplaceALLContainerImageApply(img K8sImagesConfig, c acorev1.ContainerApplyConfiguration) acorev1.ContainerApplyConfiguration {
 	switch *c.Name {
 	case csmv1.Provisioner:
@@ -175,7 +175,7 @@ func ReplaceALLContainerImageApply(img K8sImagesConfig, c acorev1.ContainerApply
 	return defaultEnv
 }*/
 
-// ReplaceAllApplyCustomEnvs
+// ReplaceAllApplyCustomEnvs -
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 	crEnv []corev1.EnvVar,
 	nrEnv []corev1.EnvVar) []acorev1.EnvVarApplyConfiguration {
