@@ -38,6 +38,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	csmv1.AddToScheme(suite.operatorClient.Scheme())
 
 	suite.namespace = "test"
+	fmt.Println("Init done")
 }
 
 func (suite *CSMControllerTestSuite) TestReconcile() {
