@@ -135,7 +135,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	// Add finalizer
-	err = r.Client.Get(ctx, req.NamespacedName, csm)
+	_ = r.Client.Get(ctx, req.NamespacedName, csm)
 	csm.SetFinalizers([]string{"finalizer.dell.emc.com"})
 	// Update CR
 	err = r.Client.Update(ctx, csm)
