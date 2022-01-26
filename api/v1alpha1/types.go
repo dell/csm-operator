@@ -9,7 +9,7 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 */
 
-package v1
+package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -108,10 +108,6 @@ type Module struct {
 	// Components is the specification for SM components containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule components specification"
 	Components []ContainerTemplate `json:"components,omitempty" yaml:"components,omitempty"`
-
-	// ReverseProxyConfig is the configuration for reverse proxy
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Reverse Proxy Configuration"
-	RevProxy RevProxyConfig `json:"revProxyConfig,omitempty" yaml:"revProxyConfig,omitempty"`
 }
 
 // PodStatus - Represents a list of PodStatus
