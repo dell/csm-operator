@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"

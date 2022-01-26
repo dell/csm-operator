@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
