@@ -134,47 +134,6 @@ func ReplaceALLContainerImageApply(img K8sImagesConfig, c acorev1.ContainerApply
 	return c
 }
 
-// ReplaceAllApplyEnvs - does not work , duplicates occur use ReplaceAllApplyCustomEnvs
-/*func ReplaceAllApplyEnvs(defaultEnv []acorev1.EnvVarApplyConfiguration,
-	crEnv []corev1.EnvVar,
-	log logr.Logger) []acorev1.EnvVarApplyConfiguration {
-	merge := []acorev1.EnvVarApplyConfiguration{}
-	for _, old := range crEnv {
-		found := false
-		for i, new := range defaultEnv {
-			if old.Name == *new.Name {
-				log.Info("debug cr env ", "name", *new.Name)
-				defaultEnv[i].Value = &old.Value
-				found = true
-			}
-		}
-		if !found {
-			log.Info("debug not found", old.Name, old.Value)
-			e := acorev1.EnvVarApplyConfiguration{
-				Name:  &old.Name,
-				Value: &old.Value,
-			}
-			if old.ValueFrom != nil {
-				pRef := old.ValueFrom.FieldRef
-				path := pRef.FieldPath
-				log.Info("debug PATH ", "path", path)
-				e = acorev1.EnvVarApplyConfiguration{
-					Name: &old.Name,
-					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
-						FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
-							FieldPath: &path,
-						},
-					},
-				}
-			}
-			merge = append(merge, e)
-		}
-	}
-
-	defaultEnv = append(defaultEnv, merge...)
-	return defaultEnv
-}*/
-
 // ReplaceAllApplyCustomEnvs -
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 	crEnv []corev1.EnvVar,
