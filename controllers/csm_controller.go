@@ -223,7 +223,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	d, _ := obj.(*appsv1.Deployment)
 	name := d.Spec.Template.Labels["csm"]
 	if name == "" {
-		r.Log.Info("deployment not ours return", "name", d.Name)
+		r.Log.Info("deployment not found", "name", d.Name)
 		return
 	}
 
@@ -283,7 +283,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	d, _ := obj.(*appsv1.DaemonSet)
 	name := d.Spec.Template.Labels["csm"]
 	if name == "" {
-		r.Log.Info("daemonset not ours return", "name", d.Name)
+		r.Log.Info("daemonset not found", "name", d.Name)
 		return
 	}
 
