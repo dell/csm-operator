@@ -3,7 +3,7 @@ package shared
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
