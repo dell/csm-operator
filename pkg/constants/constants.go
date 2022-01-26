@@ -3,7 +3,7 @@ package constants
 import (
 	"time"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
