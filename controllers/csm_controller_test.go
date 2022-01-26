@@ -34,10 +34,11 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	fmt.Println("Init test suite...")
 	csmv1.AddToScheme(shared.Scheme)
 
-	suite.operatorClient = fake.NewFakeClient()
+	suite.operatorClient = fake.NewClientBuilder().Build()
 	csmv1.AddToScheme(suite.operatorClient.Scheme())
 
 	suite.namespace = "test"
+	fmt.Printf("done SetUp...")
 }
 
 func (suite *CSMControllerTestSuite) TestReconcile() {
