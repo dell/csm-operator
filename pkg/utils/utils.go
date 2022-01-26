@@ -183,11 +183,6 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 					}
 				}
 			}
-			if old.Value != nil {
-				//log.Info("debug existing ", "name", *old.Name, "value", old.Value)
-			} else {
-				//log.Info("debug existing ", "name", *old.Name, "value", "")
-			}
 			newEnv = append(newEnv, e)
 		}
 	}
@@ -215,7 +210,7 @@ func ReplaceAllArgs(defaultArgs, crArgs []string) []string {
 	return defaultArgs
 }
 
-// ModifyCommonCR - need to
+// ModifyCommonCR - 
 func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	if cr.Name != "" {
 		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseName, cr.Name)
