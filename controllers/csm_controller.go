@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/resources/configmap"
 	"github.com/dell/csm-operator/pkg/resources/csidriver"
 	"github.com/dell/csm-operator/pkg/resources/daemonset"
@@ -144,6 +145,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		return reconcile.Result{}, err
 	}
 
+	oldStatus := csm.GetCSMStatus()
 	driverConfig := &utils.OperatorConfig{
 		IsOpenShift:     r.Config.IsOpenShift,
 		K8sVersion:      r.Config.K8sVersion,
@@ -153,40 +155,50 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	// Before doing anything else, check for config version and apply annotation if not set
 	isUpdated, err := checkAndApplyConfigVersionAnnotations(csm, log, false)
 	if err != nil {
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed check install: %s", err.Error())
 		return utils.HandleValidationError(ctx, csm, r, reqLogger, err)
 	}
 	if isUpdated {
-		_ = r.GetClient().Update(ctx, csm)
-		return reconcile.Result{Requeue: true}, nil
+		err = r.GetClient().Update(ctx, csm)
+		if err != nil {
+			reqLogger.Error(err, "Failed to update CR with finalizer")
+			return reconcile.Result{}, err
+		}
 	}
 
 	// perfrom prechecks
 	err = r.PreChecks(ctx, csm, *driverConfig, reqLogger)
 	if err != nil {
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed check install: %s", err.Error())
 		return utils.HandleValidationError(ctx, csm, r, reqLogger, err)
 	}
 	r.EventRecorder.Eventf(csm, "Normal", "Updated", "PreChecks ok: %s", csm.Name)
 
-	// Set the driver status to updating
-
-	oldStatus := csm.GetCSMStatus()
-	newStatus := oldStatus
-	utils.HandleSuccess(ctx, csm, r, reqLogger, newStatus, oldStatus)
-
-	// Update the driver
-	r.EventRecorder.Eventf(csm, "Normal", "Updated", "Call install/update driver: %s", csm.Name)
-	syncErr := r.SyncCSM(ctx, *csm, *driverConfig, reqLogger)
-	_, _ = utils.CalculateState(ctx, csm, r, newStatus)
-	if syncErr == nil {
-		// driver state is succeeded
-		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Driver install OK: reconcile count=%d name=%s", r.updateCount, csm.Name)
-		return utils.LogBannerAndReturn(reconcile.Result{}, err, reqLogger)
+	// install or create driver
+	csm = new(csmv1.ContainerStorageModule)
+	err = r.Client.Get(ctx, req.NamespacedName, csm)
+	if err != nil {
+		reqLogger.Error(err, "Failed to get CR")
+		return reconcile.Result{}, err
 	}
+	newStatus := csm.GetCSMStatus()
+	_, err = utils.HandleSuccess(ctx, csm, r, reqLogger, newStatus, oldStatus)
+	if err == nil {
+		// Update the driver
+		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Call install/update driver: %s", csm.Name)
+		syncErr := r.SyncCSM(ctx, *csm, *driverConfig, reqLogger)
+		if syncErr == nil {
+			r.EventRecorder.Eventf(csm, "Normal", "Updated", "Driver install completed: reconcile count=%d name=%s", r.updateCount, csm.Name)
+			return utils.LogBannerAndReturn(reconcile.Result{}, err, reqLogger)
+		}
+		// Failed to sync driver deployment
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed  install: %s", syncErr.Error())
 
-	// Failed to sync driver deployment
-	r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed  install: %s", syncErr.Error())
-
-	return utils.LogBannerAndReturn(reconcile.Result{Requeue: false}, syncErr, reqLogger)
+		return utils.LogBannerAndReturn(reconcile.Result{Requeue: false}, syncErr, reqLogger)
+	} else {
+		reqLogger.Info("HandleSuccess error", "error", err.Error())
+	}
+	return reconcile.Result{}, nil
 }
 
 func (r *ContainerStorageModuleReconciler) updateInstance(ctx context.Context, instance *csmv1.ContainerStorageModule, reqLogger logr.Logger, isUpdated bool) error {
@@ -230,13 +242,19 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	desired := d.Status.DesiredNumberScheduled
 	available := d.Status.NumberAvailable
 	ready := d.Status.NumberReady
+	numberUnavailable := d.Status.NumberUnavailable
 
-	r.Log.Info("daemonset csm", "desired", desired)
-	r.Log.Info("daemonset csm", "numberReady", ready)
-	r.Log.Info("daemonset csm", "available", available)
+	r.Log.Info("daemonset ", "name", d.Name, "namespace", d.Namespace)
+	r.Log.Info("daemonset ", "desired", desired)
+	r.Log.Info("daemonset ", "numberReady", ready)
+	r.Log.Info("daemonset ", "available", available)
+	r.Log.Info("daemonset ", "numberUnavailable", numberUnavailable)
 
+	state := false
+	if desired == ready {
+		state = true
+	}
 	ns := d.Namespace
-	r.Log.Info("daemonset ", "ns", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
 		Namespace: ns,
@@ -250,28 +268,34 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	}
 	// get status and update csm
 
-	r.Log.Info("csm prev status ", "state", csm.Status)
-
-	state, err := utils.CalculateState(ctx, csm, r, csm.GetCSMStatus())
 	r.Log.Info("daemonset status", "state", state)
+	r.Log.Info("daemonset status", "modified daemonset status", d.Status)
 
+	stamp := fmt.Sprintf("at %s", time.Now().Format("2006-01-02 15:04:05"))
 	if !state {
-		errorMsg := errors.New("daemonset in error")
-		if err != nil {
-			errorMsg = err
+		err = errors.New("daemonset in error")
+		newStatus := csm.GetCSMStatus()
+		newStatus.State = constants.Failed
+		//newStatus.ControllerStatus = csmv1.PodStatus{}
+		newStatus.NodeStatus = csmv1.PodStatus{
+			Available: "available=" + fmt.Sprintf("%d", available),
+			Failed:    "failed=" + fmt.Sprintf("%d", numberUnavailable),
+			Desired:   "desired=" + fmt.Sprintf("%d", desired),
 		}
-		_ = utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
-		r.Log.Info("daemonset in err", "err", errorMsg)
-
-		nodestart := len(csm.Status.NodeStatus.Starting)
-		nodestop := len(csm.Status.NodeStatus.Stopped)
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Daemonset status check csm, node pod count starting:%d, stopped:%d", nodestart, nodestop)
-
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Daemonset status check Error ,node pod desired:%d, available:%d", desired, available)
+		_ = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Daemonset status check Error ,node pod desired:%d, unavailable:%d %s", desired, numberUnavailable, stamp)
 	} else {
-		r.Log.Info("csm status", "curent state", csm.Status.State)
-		_ = utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
-		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Daemonset status check OK : %s desired pods %d, ready pods %d", d.Name, desired, ready)
+		r.Log.Info("csm status", "prev state", csm.Status.State)
+		newStatus := csm.GetCSMStatus()
+		newStatus.State = constants.Succeeded
+		//newStatus.ControllerStatus = csmv1.PodStatus{}
+		newStatus.NodeStatus = csmv1.PodStatus{
+			Available: "available=" + fmt.Sprintf("%d", available),
+			Failed:    "failed=" + fmt.Sprintf("%d", numberUnavailable),
+			Desired:   "desired=" + fmt.Sprintf("%d", desired),
+		}
+		_ = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
+		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Daemonset status check OK : %s desired pods %d, ready pods %d %s", d.Name, desired, ready, stamp)
 	}
 	return
 }

@@ -65,19 +65,23 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 				starting = append(starting, pod.Name)
 			} else if pod.Status.Phase == corev1.PodFailed {
 				stopped = append(stopped, pod.Name)
+
 			}
 		}
 	}
+	failedCount := 0
+	if len(ready) != len(available) {
+		failedCount = len(stopped)
+	}
 	return replicas, csmv1.PodStatus{
-		Available: available,
-		Stopped:   stopped,
-		Starting:  starting,
-		Ready:     ready,
+		Available: "available=" + fmt.Sprintf("%d", readyCount),
+		Desired:   "desired=" + fmt.Sprintf("%d", replicas),
+		Failed:    "failed=" + fmt.Sprintf("%d", failedCount),
 	}, nil
 }
 
 func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
-	var available, ready, starting, stopped []string
+	var available, starting, stopped []string
 	node := &appsv1.DaemonSet{}
 	err := r.GetClient().Get(ctx, types.NamespacedName{Name: instance.GetNodeName(),
 		Namespace: instance.GetNamespace()}, node)
@@ -108,10 +112,9 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	}
 
 	return node.Status.DesiredNumberScheduled, csmv1.PodStatus{
-		Available: available,
-		Stopped:   stopped,
-		Starting:  starting,
-		Ready:     ready,
+		Available: "available=" + fmt.Sprintf("%d", node.Status.NumberAvailable),
+		Desired:   "desired=" + fmt.Sprintf("%d", node.Status.DesiredNumberScheduled),
+		Failed:    "failed=" + fmt.Sprintf("%d", len(starting)),
 	}, err
 }
 
@@ -124,7 +127,7 @@ func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	newStatus.NodeStatus = nodeStatus
 
 	newStatus.State = constants.Failed
-	if ((controllerReplicas != 0) && (controllerReplicas == int32(len(controllerStatus.Available)))) && ((expected != 0) && (expected == int32(len(nodeStatus.Available)))) {
+	if ((controllerReplicas != 0) && (string(controllerReplicas) == controllerStatus.Available)) && ((expected != 0) && (string(expected) == nodeStatus.Available)) {
 		running = true
 		newStatus.State = constants.Succeeded
 	}
@@ -142,13 +145,17 @@ func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 			err = nil
 		}
 	}
-	SetStatus(instance, newStatus)
+	SetStatus(instance, newStatus, nil)
 	return running, err
 }
 
 // SetStatus of csm
-func SetStatus(instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
+func SetStatus(instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus, reqLogger logr.Logger) {
 	instance.GetCSMStatus().State = newStatus.State
+	if reqLogger != nil {
+		reqLogger.Info("State", "Controller",
+			newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
+	}
 	instance.GetCSMStatus().ControllerStatus = newStatus.ControllerStatus
 	instance.GetCSMStatus().NodeStatus = newStatus.NodeStatus
 }
@@ -160,7 +167,7 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	reqLogger.Info(statusString)
 	reqLogger.Info("State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
-	SetStatus(instance, newStatus)
+	SetStatus(instance, newStatus, reqLogger)
 	reqLogger.Info("Attempting to update CR status", "status", instance.Status.State)
 	err := r.GetClient().Status().Update(ctx, instance)
 	if err != nil {
@@ -175,11 +182,10 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, reqLogger logr.Logger,
 	validationError error) (reconcile.Result, error) {
 	reqLogger.Error(validationError, "Validation error")
-	status := instance.GetCSMStatus()
-	newStatus := status.DeepCopy()
+	newStatus := instance.GetCSMStatus()
 	// Update the status
 	reqLogger.Info("Marking the driver status as InvalidConfig")
-	_, _ = CalculateState(ctx, instance, r, newStatus)
+	newStatus.State = constants.Failed
 	_ = UpdateStatus(ctx, instance, r, reqLogger, newStatus)
 	reqLogger.Error(validationError, fmt.Sprintf("*************Create/Update %s failed ********",
 		instance.GetDriverType()))
@@ -204,6 +210,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		if oldStatus.State == constants.Running {
 			reqLogger.Info("Driver state didn't change from Running")
 		}
+		return LogBannerAndReturn(reconcile.Result{}, nil, reqLogger)
 	}
 	updateStatusError := UpdateStatus(ctx, instance, r, reqLogger, newStatus)
 	if updateStatusError != nil {
