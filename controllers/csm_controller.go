@@ -195,7 +195,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed  install: %s", syncErr.Error())
 
 		return utils.LogBannerAndReturn(reconcile.Result{Requeue: false}, syncErr, reqLogger)
-	} 
+	}
 	reqLogger.Info("HandleSuccess error", "error", err.Error())
 	return reconcile.Result{}, nil
 }
