@@ -17,7 +17,7 @@ import (
 	"os"
 	"testing"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
@@ -87,7 +87,7 @@ func checkApplyVolumes(volumes []acorev1.VolumeApplyConfiguration) error {
 NAME_LOOP:
 	for _, volName := range volumeNames {
 		for _, vol := range volumes {
-			if vol.Name == &volName {
+			if *vol.Name == volName {
 				continue NAME_LOOP
 			}
 		}
@@ -116,20 +116,19 @@ NAME_LOOP:
 func checkApplyContainers(contianers []acorev1.ContainerApplyConfiguration) error {
 	authString := "karavi-authorization-proxy"
 	for _, cnt := range contianers {
-		if cnt.Name == &authString {
+		if *cnt.Name == authString {
 			volumeMounts := []string{"karavi-authorization-config", "test-isilon-config-params"}
 		MOUNT_NAME_LOOP:
 			for _, volName := range volumeMounts {
 				for _, vol := range cnt.VolumeMounts {
-					if vol.Name == &volName {
+					if *vol.Name == volName {
 						continue MOUNT_NAME_LOOP
 					}
 				}
 				return fmt.Errorf("missing the following volume mount %s", volName)
 			}
-			return nil
 		}
-
+		return nil
 	}
 	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
