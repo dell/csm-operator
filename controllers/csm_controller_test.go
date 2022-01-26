@@ -6,14 +6,16 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/test/shared"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -83,7 +85,8 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 		LeaderElection:     false,
 	})
 
-	reconciler.SetupWithManager(mgr)
+	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
+	reconciler.SetupWithManager(mgr, expRateLimiter, 1)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -113,7 +116,6 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
 	csm := shared.MakeCSM(name, ns)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
-	csm.Status.ContainerStorageModuleHash = 1
 
 	err := suite.operatorClient.Create(context.Background(), &csm)
 	assert.Nil(suite.T(), err)
