@@ -12,7 +12,7 @@ spec:
 
     authSecret: test-isilon-creds 
 
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     common:
