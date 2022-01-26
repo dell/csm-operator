@@ -8,8 +8,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// new runtime scheme to be used by tests
 var Scheme = runtime.NewScheme()
 
+// MakeCSM returns a csm from given params
 func MakeCSM(name, ns string) csmv1.ContainerStorageModule {
 
 	driverObj := MakeDriver("v2.0.0", "true")
@@ -28,6 +30,7 @@ func MakeCSM(name, ns string) csmv1.ContainerStorageModule {
 	return csmObj
 }
 
+// MakeDriver returns a driver object from given params
 func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 	driverObj := csmv1.Driver{
 		ConfigVersion: configVersion,
