@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// new runtime scheme to be used by tests
+// Scheme is the new runtime scheme to be used by tests
 var Scheme = runtime.NewScheme()
 
 // MakeCSM returns a csm from given params
