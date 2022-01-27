@@ -92,7 +92,7 @@ spec:
         # Allowed values: n, where n > 0
         # Default value: None
         - name: "CERT_SECRET_COUNT"
-          value: "2"
+          value: "1"
 
         # CSI driver log level
         # Allowed values: "error", "warn"/"warning", "info", "debug"
