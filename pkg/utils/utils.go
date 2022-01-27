@@ -210,7 +210,7 @@ func ReplaceAllArgs(defaultArgs, crArgs []string) []string {
 	return defaultArgs
 }
 
-// ModifyCommonCR - 
+// ModifyCommonCR -
 func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	if cr.Name != "" {
 		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseName, cr.Name)
