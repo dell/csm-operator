@@ -255,6 +255,9 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	r.Log.Info("csm prev status", "state", csm.Status)
 
 	state, err := utils.CalculateState(ctx, csm, r, csm.GetCSMStatus())
+	if err != nil {
+		r.Log.Info("Failed to update Deployment status", "error", err.Error())
+	}
 	r.Log.Info("deployment status", "state", state)
 
 	if !state {
@@ -262,7 +265,10 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		if err != nil {
 			errorMsg = err
 		}
-		_ = utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		err := utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		if err != nil {
+			r.Log.Info("Failed to update Deployment status", "error", err.Error())
+		}
 		r.Log.Info("deployment in err", "err", errorMsg)
 
 		controllerstart := len(csm.Status.ControllerStatus.Starting)
@@ -272,7 +278,10 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Deployment status check Error ,controller pod desired:%d, available:%d", desired, available)
 	} else {
 		r.Log.Info("csm status", "curent state", csm.Status.State)
-		_ = utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		err := utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		if err != nil {
+			r.Log.Info("Failed to update Deployment status", "error", err.Error())
+		}
 		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Deployment status check OK : %s desired pods %d, ready pods %d", d.Name, desired, ready)
 	}
 	return
@@ -314,6 +323,9 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	r.Log.Info("csm prev status ", "state", csm.Status)
 
 	state, err := utils.CalculateState(ctx, csm, r, csm.GetCSMStatus())
+	if err != nil {
+		r.Log.Info("Failed to update Deployment status", "error", err.Error())
+	}
 	r.Log.Info("daemonset status", "state", state)
 
 	if !state {
@@ -321,7 +333,10 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 		if err != nil {
 			errorMsg = err
 		}
-		_ = utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		err := utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		if err != nil {
+			r.Log.Info("Failed to update Daemonset status", "error", err.Error())
+		}
 		r.Log.Info("daemonset in err", "err", errorMsg)
 
 		nodestart := len(csm.Status.NodeStatus.Starting)
@@ -331,7 +346,10 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Daemonset status check Error ,node pod desired:%d, available:%d", desired, available)
 	} else {
 		r.Log.Info("csm status", "curent state", csm.Status.State)
-		_ = utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		err := utils.UpdateStatus(ctx, csm, r, r.Log, csm.GetCSMStatus())
+		if err != nil {
+			r.Log.Info("Failed to update Daemonset status", "error", err.Error())
+		}
 		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Daemonset status check OK : %s desired pods %d, ready pods %d", d.Name, desired, ready)
 	}
 	return
