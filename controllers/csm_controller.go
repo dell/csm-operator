@@ -179,7 +179,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	newStatus := csm.GetCSMStatus()
 	_, err = utils.HandleSuccess(ctx, csm, r, reqLogger, newStatus, oldStatus)
-	if err == nil {
+	if err != nil {
 		reqLogger.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
