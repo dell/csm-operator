@@ -79,38 +79,38 @@ func getOperatorConfig() utils.OperatorConfig {
 
 	isOpenShift, err := k8sClient.IsOpenShift()
 	if err != nil {
-		panic(err.Error())
+		log.Info(fmt.Sprintf("isOpenShift err %s", isOpenShift))
 	}
 	cfg.IsOpenShift = isOpenShift
 
 	kubeVersion, err := k8sClient.GetVersion()
 	if err != nil {
-		panic(err.Error())
+		log.Info(fmt.Sprintf("kubeVersion err %s", kubeVersion))
 	}
 	minVersion := 0.0
 	maxVersion := 0.0
 	if !isOpenShift {
 		minVersion, err = strconv.ParseFloat(K8sMinimumSupportedVersion, 64)
 		if err != nil {
-			panic(err.Error())
+			log.Info(fmt.Sprintf("minVersion %.2f", K8sMinimumSupportedVersion))
 		}
 		maxVersion, err = strconv.ParseFloat(K8sMaximumSupportedVersion, 64)
 		if err != nil {
-			panic(err.Error())
+			log.Info(fmt.Sprintf("maxVersion %.2f", K8sMaximumSupportedVersion))
 		}
 	} else {
 		minVersion, err = strconv.ParseFloat(OpenshiftMinimumSupportedVersion, 64)
 		if err != nil {
-			panic(err.Error())
+			log.Info(fmt.Sprintf("minVersion %.2f", OpenshiftMinimumSupportedVersion))
 		}
 		maxVersion, err = strconv.ParseFloat(OpenshiftMaximumSupportedVersion, 64)
 		if err != nil {
-			panic(err.Error())
+			log.Info(fmt.Sprintf("maxVersion  %.2f", OpenshiftMaximumSupportedVersion))
 		}
 	}
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
 	if err != nil {
-		panic(err.Error())
+		log.Info(fmt.Sprintf("kubeVersion  %.2f", kubeVersion))
 	}
 	if currentVersion < minVersion {
 		log.Info(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
