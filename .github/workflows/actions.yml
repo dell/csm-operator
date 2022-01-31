@@ -78,8 +78,8 @@ jobs:
         run: go mod download
       - name: Build Docker Images
         run: make docker-build
-      - name: Scan controller Image
-        uses: Azure/container-scan@v0
-        with:
-          image-name: controller:latest
-          severity-threshold: HIGH
+      #- name: Scan controller Image
+      #  uses: Azure/container-scan@v0
+      #  with:
+      #    image-name: controller:latest
+      #    severity-threshold: HIGH
