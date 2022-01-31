@@ -94,12 +94,12 @@ If you wish to clone and build the Container Storage Modules (CSM) Operator, a L
 | Docker          | v19+      | [Docker installation](https://docs.docker.com/engine/install/)                                                                                                    |
 | Docker Registry |           | Access to a local/corporate [Docker registry](https://docs.docker.com/registry/)                                                           |
 | Golang          | v1.14+    | [Golang installation](https://github.com/travis-ci/gimme)                                                                                                         |
-| operator-sdk          | v1.7.1+   |[Operator SDK installation](https://github.com/operator-framework/operator-sdk/releases/download/v1.7.1/operator-sdk_linux_amd64)                                                                                                          |
+| operator-sdk          | v1.15.0   |[Operator SDK installation](https://github.com/operator-framework/operator-sdk/releases/download/v1.15.0/operator-sdk_linux_amd64)                                                                                                          |
 | OLM            |     | Run ```operator-sdk olm install```                                                                                                       |
 | OPM           |   v1.14+  | [OPM installation](https://github.com/operator-framework/operator-registry/releases/download/v1.14.0/linux-amd64-opm)                                                              |
 | git             | latest    | [Git installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)                                                                              |
 | gcc             |           | Run ```sudo apt install build-essential```                                                                                                 |
-| kubectl         | 1.18-1.20 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
+| kubectl         | 1.21-1.23 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
 
 > __Note__: While installing `operator-sdk` & `opm`, make sure they are available in your PATH & the binaries have the right names and permissions.
 
