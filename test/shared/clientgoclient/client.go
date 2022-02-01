@@ -55,6 +55,7 @@ type K8sClient struct {
 	FakeClient client.Client
 }
 
+// NewFakeClient returns a new K8sClient
 func NewFakeClient(c client.Client) *K8sClient {
 	return &K8sClient{
 		FakeClient: c,
@@ -278,6 +279,7 @@ func (c *K8sClient) StorageV1alpha1() storagev1alpha1.StorageV1alpha1Interface {
 	panic("implement me")
 }
 
+// Discovery retrieves DiscoveryInterface
 func (c *K8sClient) Discovery() discovery.DiscoveryInterface {
 	panic("implement me")
 }
