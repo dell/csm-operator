@@ -10,7 +10,6 @@ import (
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -38,7 +37,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	} else {
 		//app=test-isilon-controller
 		label := instance.GetNamespace() + "-controller"
-		podList := &v1.PodList{}
+		podList := &corev1.PodList{}
 		opts := []client.ListOption{
 			client.InNamespace(instance.GetNamespace()),
 			client.MatchingLabels{"app": label},
@@ -86,9 +85,9 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	}
 	if node.Status.DesiredNumberScheduled == 0 || node.Status.NumberReady == 0 {
 		stopped = append(stopped, instance.GetNodeName())
-		err = errors.New("Pod stopped")
+		err = errors.New("pod stopped")
 	} else {
-		podList := &v1.PodList{}
+		podList := &corev1.PodList{}
 		opts := []client.ListOption{
 			client.InNamespace(instance.GetNamespace()),
 			client.MatchingLabels{"app": instance.GetNodeName()},
@@ -100,7 +99,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		for _, pod := range podList.Items {
 			if pod.Status.Phase == "Pending" {
 				starting = append(starting, pod.Name)
-				err = errors.New("Pod starting ")
+				err = errors.New("pod starting ")
 			} else {
 				available = append(available, pod.Name)
 			}
