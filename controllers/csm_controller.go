@@ -54,7 +54,7 @@ import (
 
 // ContainerStorageModuleReconciler reconciles a ContainerStorageModule object
 type ContainerStorageModuleReconciler struct {
-	// controller runtime client, responsible for creating, delete, update, get etc.
+	// controller runtime client, responsible for create, delete, update, get etc.
 	client.Client
 	// k8s client, implements client-go/kubernetes interface, responsible for apply, which
 	// client.Client does not provides

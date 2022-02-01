@@ -10,8 +10,8 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/test/shared"
-	"github.com/dell/csm-operator/test/shared/clientgoClient"
-	"github.com/dell/csm-operator/test/shared/crClient"
+	"github.com/dell/csm-operator/test/shared/clientgoclient"
+	"github.com/dell/csm-operator/test/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,8 +43,8 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	csmv1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
-	suite.fakeClient = crClient.NewFakeClient(objects, suite)
-	suite.k8sClient = clientgoClient.NewFakeClient(suite.fakeClient)
+	suite.fakeClient = crclient.NewFakeClient(objects, suite)
+	suite.k8sClient = clientgoclient.NewFakeClient(suite.fakeClient)
 
 	suite.namespace = "test"
 }

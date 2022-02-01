@@ -1,4 +1,4 @@
-package clientgoClient
+package clientgoclient
 
 import (
 	"context"
