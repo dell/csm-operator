@@ -32,7 +32,7 @@ import (
 // It also implements ErrorInjector interface so that we can force error
 type CSMControllerTestSuite struct {
 	suite.Suite
-	operatorClient client.Client
+	fakeClient client.Client
 	k8sClient      kubernetes.Interface
 	namespace      string
 }
@@ -43,8 +43,8 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	csmv1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
-	suite.operatorClient = crClient.NewFakeClient(objects, suite)
-	suite.k8sClient = clientgoClient.NewFakeClient(suite.operatorClient)
+	suite.fakeClient = crClient.NewFakeClient(objects, suite)
+	suite.k8sClient = clientgoClient.NewFakeClient(suite.fakeClient)
 
 	suite.namespace = "test"
 }
@@ -75,7 +75,7 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 	}
 
 	reconciler = &ContainerStorageModuleReconciler{
-		Client:        suite.operatorClient,
+		Client:        suite.fakeClient,
 		K8sClient:     suite.k8sClient,
 		Scheme:        scheme.Scheme,
 		Log:           ctrl.Log.WithName("controllers").WithName("unit-test"),
@@ -120,7 +120,7 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	csm.Annotations[configVersionKey] = configVersion
 
-	err := suite.operatorClient.Create(context.Background(), &csm)
+	err := suite.fakeClient.Create(context.Background(), &csm)
 	assert.Nil(suite.T(), err)
 }
 

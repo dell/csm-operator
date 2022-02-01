@@ -15,13 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func getInt32(pointer *int32) int32 {
-	if pointer == nil {
-		return 0
-	}
-	return *pointer
-}
-
 func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
 	var available, ready, starting, stopped []string
 	controller := &appsv1.Deployment{}
@@ -32,7 +25,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	}
 	if controller.Status.UpdatedReplicas == 0 || controller.Status.ReadyReplicas == 0 {
 		stopped = append(stopped, instance.GetControllerName())
-		err = errors.New("Pod stopped")
+		err = errors.New("pod stopped")
 	} else {
 		podList := &corev1.PodList{}
 		opts := []client.ListOption{
@@ -46,7 +39,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		for _, pod := range podList.Items {
 			if pod.Status.Phase == "Pending" {
 				starting = append(starting, pod.Name)
-				err = errors.New("Pod starting ")
+				err = errors.New("pod starting ")
 			} else {
 				available = append(available, pod.Name)
 			}

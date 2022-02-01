@@ -15,7 +15,7 @@ import (
 
 // FakeDaemonSets implements DaemonSetInterface
 type FakeDaemonSets struct {
-	OperatorClient client.Client
+	FakeClient client.Client
 	Namespace      string
 }
 
@@ -39,7 +39,7 @@ func (c *FakeDaemonSets) Apply(ctx context.Context, daemonSet *applyconfiguratio
 	}
 
 	// otherwise we update it
-	err = c.OperatorClient.Update(ctx, result)
+	err = c.FakeClient.Update(ctx, result)
 
 	return result, err
 }
@@ -53,13 +53,13 @@ func (c *FakeDaemonSets) Get(ctx context.Context, name string, options v1.GetOpt
 		Namespace: c.Namespace,
 	}
 
-	err = c.OperatorClient.Get(ctx, k, result)
+	err = c.FakeClient.Get(ctx, k, result)
 	return
 }
 
 // Create takes the representation of a daemonSet and creates it.  Returns the server's representation of the daemonSet, and an error, if there is any.
 func (c *FakeDaemonSets) Create(ctx context.Context, daemonSet *appsv1.DaemonSet, opts v1.CreateOptions) (result *appsv1.DaemonSet, err error) {
-	err = c.OperatorClient.Create(ctx, daemonSet)
+	err = c.FakeClient.Create(ctx, daemonSet)
 	return daemonSet, err
 }
 
