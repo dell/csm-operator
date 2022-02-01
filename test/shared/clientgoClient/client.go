@@ -49,21 +49,22 @@ import (
 )
 
 // K8sClient implements client-go kubernetes interface
-// It's a wrapper around operator client since they are doing the same thing
+// Internally it's calling the FakeClient to apply/get/create/delete etc.
+// as they need to shared the same map in memory
 type K8sClient struct {
-	OperatorClient client.Client
+	FakeClient client.Client
 }
 
 func NewFakeClient(c client.Client) *K8sClient {
 	return &K8sClient{
-		OperatorClient: c,
+		FakeClient: c,
 	}
 }
 
-// only appsv1 is needed for our use
+// AppsV1 returns an fake AppsV1Interface implementation from the given client
 func (c *K8sClient) AppsV1() appsv1.AppsV1Interface {
 	return &FakeAppsV1{
-		OperatorClient: c.OperatorClient,
+		FakeClient: c.FakeClient,
 	}
 }
 

@@ -7,12 +7,19 @@ import (
 )
 
 type FakeAppsV1 struct {
-	OperatorClient client.Client
+	FakeClient client.Client
 }
 
 func (c *FakeAppsV1) DaemonSets(namespace string) v1.DaemonSetInterface {
 	return &FakeDaemonSets{
-		OperatorClient: c.OperatorClient,
+		FakeClient: c.FakeClient,
+		Namespace:      namespace,
+	}
+}
+
+func (c *FakeAppsV1) Deployments(namespace string) v1.DeploymentInterface {
+	return &FakeDeployments{
+		FakeClient: c.FakeClient,
 		Namespace:      namespace,
 	}
 }
@@ -25,10 +32,6 @@ func (c *FakeAppsV1) RESTClient() rest.Interface {
 }
 
 func (c *FakeAppsV1) ControllerRevisions(namespace string) v1.ControllerRevisionInterface {
-	panic("implement me")
-}
-
-func (c *FakeAppsV1) Deployments(namespace string) v1.DeploymentInterface {
 	panic("implement me")
 }
 

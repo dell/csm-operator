@@ -270,7 +270,6 @@ func GetDriverYAML(YamlString, kind string) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("Debug deployment is %s\n", *dp.TypeMetaApplyConfiguration.Kind)
 		return ControllerYAML{
 			Deployment: dp,
 			Rbac:       rbac,

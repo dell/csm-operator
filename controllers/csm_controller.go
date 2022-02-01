@@ -54,7 +54,10 @@ import (
 
 // ContainerStorageModuleReconciler reconciles a ContainerStorageModule object
 type ContainerStorageModuleReconciler struct {
+	// controller runtime client, responsible for creating, delete, update, get etc.
 	client.Client
+	// k8s client, implements client-go/kubernetes interface, responsible for apply, which
+	// client.Client does not provides
 	K8sClient     kubernetes.Interface
 	Scheme        *runtime.Scheme
 	Log           logr.Logger
@@ -271,7 +274,6 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		}
 		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Deployment status check OK : %s desired pods %d, ready pods %d", d.Name, desired, ready)
 	}
-	return
 }
 
 func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interface{}, obj interface{}) {
@@ -502,7 +504,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update Deployment
-	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.Client, reqLogger, cr.Name)
+	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, reqLogger, cr.Name)
 	if err != nil {
 		return err
 	}
