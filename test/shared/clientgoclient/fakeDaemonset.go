@@ -16,7 +16,7 @@ import (
 // FakeDaemonSets implements DaemonSetInterface
 type FakeDaemonSets struct {
 	FakeClient client.Client
-	Namespace      string
+	Namespace  string
 }
 
 // Apply takes the given apply declarative configuration, applies it and returns the applied daemonSet.
@@ -35,7 +35,7 @@ func (c *FakeDaemonSets) Apply(ctx context.Context, daemonSet *applyconfiguratio
 		// if not found, we create it
 		return c.Create(ctx, result, v1.CreateOptions{})
 	} else if err != nil {
-		return 
+		return
 	}
 
 	// otherwise we update it

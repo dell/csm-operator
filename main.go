@@ -195,7 +195,7 @@ func main() {
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	if err = (&controllers.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),
-		K8sClient: 	   kubernetes.NewForConfigOrDie(restConfig),
+		K8sClient:     kubernetes.NewForConfigOrDie(restConfig),
 		Log:           ctrl.Log.WithName("controllers").WithName("ContainerStorageModule"),
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("csm"),
