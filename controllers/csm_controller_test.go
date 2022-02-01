@@ -33,8 +33,8 @@ import (
 type CSMControllerTestSuite struct {
 	suite.Suite
 	fakeClient client.Client
-	k8sClient      kubernetes.Interface
-	namespace      string
+	k8sClient  kubernetes.Interface
+	namespace  string
 }
 
 // init every test

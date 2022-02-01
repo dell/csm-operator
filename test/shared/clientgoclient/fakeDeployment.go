@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// FakeDeployments implements DeploymentInterface
 type FakeDeployments struct {
 	FakeClient client.Client
 	Namespace  string
