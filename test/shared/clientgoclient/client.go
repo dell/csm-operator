@@ -1,4 +1,4 @@
-package clientgoClient
+package clientgoclient
 
 import (
 	"k8s.io/client-go/discovery"

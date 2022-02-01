@@ -1,4 +1,4 @@
-package clientgoClient
+package clientgoclient
 
 import (
 	v1 "k8s.io/client-go/kubernetes/typed/apps/v1"

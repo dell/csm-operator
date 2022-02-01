@@ -1,4 +1,4 @@
-package crClient
+package crclient
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/dell/csm-operator/test/shared"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -27,6 +27,7 @@ type Client struct {
 	ErrorInjector shared.ErrorInjector
 }
 
+// NewFakeClient creates a new client
 func NewFakeClient(objectMap map[shared.StorageKey]runtime.Object, errorInjector shared.ErrorInjector) *Client {
 	return &Client{
 		Objects:       objectMap,
@@ -34,6 +35,7 @@ func NewFakeClient(objectMap map[shared.StorageKey]runtime.Object, errorInjector
 	}
 }
 
+// Get implements client.Client.
 func (f Client) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("Get", obj); err != nil {
@@ -68,6 +70,7 @@ func (f Client) Get(ctx context.Context, key client.ObjectKey, obj client.Object
 	return err
 }
 
+// List implements client.Client.
 func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("List", list); err != nil {
@@ -82,6 +85,7 @@ func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client
 	}
 }
 
+// Create implements client.Client.
 func (f Client) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("Create", obj); err != nil {
@@ -108,6 +112,7 @@ func (f Client) Create(ctx context.Context, obj client.Object, opts ...client.Cr
 	return nil
 }
 
+// Delete implements client.Client.
 func (f Client) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	if len(opts) > 0 {
 		return fmt.Errorf("delete options are not supported")
@@ -144,7 +149,7 @@ func (f Client) Delete(ctx context.Context, obj client.Object, opts ...client.De
 	return nil
 }
 
-// set deletion timestamp so that reconcile can go into deletion part of code
+// SetDeletionTimeStamp so that reconcile can go into deletion part of code
 func (f Client) SetDeletionTimeStamp(ctx context.Context, obj client.Object) error {
 	k, err := shared.GetKey(obj)
 	if err != nil {
@@ -152,7 +157,7 @@ func (f Client) SetDeletionTimeStamp(ctx context.Context, obj client.Object) err
 	}
 
 	if len(obj.GetFinalizers()) > 0 {
-		obj.SetDeletionTimestamp(&v1.Time{Time: time.Now()})
+		obj.SetDeletionTimestamp(&metav1.Time{Time: time.Now()})
 		f.Objects[k] = obj
 		return nil
 	}
@@ -160,6 +165,7 @@ func (f Client) SetDeletionTimeStamp(ctx context.Context, obj client.Object) err
 	return fmt.Errorf("failed to set timestamp")
 }
 
+// Update implements client.StatusWriter.
 func (f Client) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("Update", obj); err != nil {
@@ -186,22 +192,27 @@ func (f Client) Update(ctx context.Context, obj client.Object, opts ...client.Up
 	return nil
 }
 
+// Patch implements client.Client.
 func (f Client) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 	panic("implement me")
 }
 
+// DeleteAllOf implements client.Client.
 func (f Client) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
 	panic("implement me")
 }
 
+// Status implements client.StatusClient.
 func (f Client) Status() client.StatusWriter {
 	return f
 }
 
+// Scheme returns the scheme this client is using.
 func (f Client) Scheme() *runtime.Scheme {
 	return scheme.Scheme
 }
 
+// RESTMapper returns the scheme this client is using.
 func (f Client) RESTMapper() meta.RESTMapper {
 	panic("implement me")
 }
