@@ -6,28 +6,24 @@ import (
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apps "k8s.io/client-go/applyconfigurations/apps/v1"
-	v1 "k8s.io/client-go/kubernetes/typed/apps/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"k8s.io/client-go/kubernetes"
 )
 
 // SyncDaemonset - Syncs a daemonset object
-func SyncDaemonset(ctx context.Context, daemonset *apps.DaemonSetApplyConfiguration, client client.Client, reqLogger logr.Logger, csmName string) error {
+func SyncDaemonset(ctx context.Context, daemonset *apps.DaemonSetApplyConfiguration, k8sClient kubernetes.Interface, reqLogger logr.Logger, csmName string) error {
 	reqLogger.Info("Sync DaemonSet:", "name", *daemonset.ObjectMetaApplyConfiguration.Name)
 
 	// Get a config to talk to the apiserver
-	cfg, err := config.GetConfig()
-	clientset, err := v1.NewForConfig(cfg)
-	daemonsets := clientset.DaemonSets(*daemonset.ObjectMetaApplyConfiguration.Namespace)
+	daemonsets := k8sClient.AppsV1().DaemonSets(*daemonset.ObjectMetaApplyConfiguration.Namespace)
 
 	found, err := daemonsets.Get(ctx, *daemonset.ObjectMetaApplyConfiguration.Name, metav1.GetOptions{})
 	if err != nil {
 		reqLogger.Info("get SyncDaemonset error", "Error", err.Error())
 	}
-	opts := metav1.ApplyOptions{FieldManager: "application/apply-patch"}
-	if found.Name == "" {
-		reqLogger.Info("No existing DaemonSet", "Name:", found.Name)
 
+	opts := metav1.ApplyOptions{FieldManager: "application/apply-patch"}
+	if found == nil || found.Name == "" {
+		reqLogger.Info("No existing DaemonSet", "Name:", daemonset.Name)
 	} else {
 		reqLogger.Info("found daemonset", "image", found.Spec.Template.Spec.Containers[0].Image)
 	}

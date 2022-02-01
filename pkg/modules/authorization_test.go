@@ -179,7 +179,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			return true, nodeYAML.DaemonSet, operatorConfig
+			return true, nodeYAML.DaemonSetApplyConfig, operatorConfig
 		},
 		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
 			customResource, err := getCustomResource()
@@ -190,7 +190,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(nodeYAML.DaemonSet, customResource, operatorConfig)
+			newDaemonSet, err := AuthInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
@@ -209,7 +209,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			tmpOperatorConfig := operatorConfig
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
 
-			return false, nodeYAML.DaemonSet, tmpOperatorConfig
+			return false, nodeYAML.DaemonSetApplyConfig, tmpOperatorConfig
 		},
 	}
 	for name, tc := range tests {
