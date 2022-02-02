@@ -9,7 +9,7 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 */
 
-package v1
+package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -108,18 +108,13 @@ type Module struct {
 	// Components is the specification for SM components containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule components specification"
 	Components []ContainerTemplate `json:"components,omitempty" yaml:"components,omitempty"`
-
-	// ReverseProxyConfig is the configuration for reverse proxy
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Reverse Proxy Configuration"
-	RevProxy RevProxyConfig `json:"revProxyConfig,omitempty" yaml:"revProxyConfig,omitempty"`
 }
 
-// PodStatus - Represents a list of PodStatus
+// PodStatus - Represents PodStatus in a daemonset or deployment
 type PodStatus struct {
-	Available []string `json:"available,omitempty"`
-	Ready     []string `json:"ready,omitempty"`
-	Starting  []string `json:"starting,omitempty"`
-	Stopped   []string `json:"stopped,omitempty"`
+	Available string `json:"available,omitempty"`
+	Desired   string `json:"desired,omitempty"`
+	Failed    string `json:"failed,omitempty"`
 }
 
 // Driver of CSIDriver

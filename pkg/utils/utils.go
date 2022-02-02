@@ -2,16 +2,17 @@ package utils
 
 import (
 	"bytes"
+	//"encoding/json"
 	"io"
 	"io/ioutil"
 
 	"fmt"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
 	goYAML "github.com/go-yaml/yaml"
-	appsv1 "k8s.io/api/apps/v1"
+	//appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,11 +27,12 @@ import (
 type K8sImagesConfig struct {
 	K8sVersion string `json:"kubeversion" yaml:"kubeversion"`
 	Images     struct {
-		Attacher    string `json:"attacher" yaml:"attacher"`
-		Provisioner string `json:"provisioner" yaml:"provisioner"`
-		Snapshotter string `json:"snapshotter" yaml:"snapshotter"`
-		Registrar   string `json:"registrar" yaml:"registrar"`
-		Resizer     string `json:"resizer" yaml:"resizer"`
+		Attacher              string `json:"attacher" yaml:"attacher"`
+		Provisioner           string `json:"provisioner" yaml:"provisioner"`
+		Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
+		Registrar             string `json:"registrar" yaml:"registrar"`
+		Resizer               string `json:"resizer" yaml:"resizer"`
+		Externalhealthmonitor string `json:"external-health-monitor" yaml:"external-health-monitor"`
 	} `json:"images" yaml:"images"`
 }
 
@@ -50,12 +52,13 @@ type RbacYAML struct {
 
 // ControllerYAML -
 type ControllerYAML struct {
-	Deployment appsv1.Deployment
+	Deployment confv1.DeploymentApplyConfiguration
 	Rbac       RbacYAML
 }
 
 // NodeYAML -
 type NodeYAML struct {
+	//DaemonSet appsv1.DaemonSet
 	DaemonSet confv1.DaemonSetApplyConfiguration
 	Rbac      RbacYAML
 }
@@ -94,7 +97,7 @@ func SplitYAML(gaintYAML []byte) ([][]byte, error) {
 	return res, nil
 }
 
-// UpdateSideCarApply resolve sidecar
+// UpdateSideCarApply -
 func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c acorev1.ContainerApplyConfiguration) acorev1.ContainerApplyConfiguration {
 	for _, side := range sideCars {
 		if *c.Name == side.Name {
@@ -104,33 +107,15 @@ func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c acorev1.ContainerA
 			if side.ImagePullPolicy != "" {
 				*c.Image = string(side.ImagePullPolicy)
 			}
-			emptyEnv := make([]corev1.EnvVar, 0)
-			c.Env = ReplaceAllApplyCustomEnvs(c.Env, side.Envs, emptyEnv)
-			c.Args = ReplaceAllArgs(c.Args, side.Args)
+
+			//c.Env = ReplaceAllEnvs(c.Env, side.Envs)
+			//c.Args = ReplaceAllArgs(c.Args, side.Args)
 		}
 	}
 	return c
 }
 
-// UpdateSideCar resolve sidecar
-func UpdateSideCar(sideCars []csmv1.ContainerTemplate, c corev1.Container) corev1.Container {
-	for _, side := range sideCars {
-		if c.Name == side.Name {
-			if side.Image != "" {
-				c.Image = string(side.Image)
-			}
-			if side.ImagePullPolicy != "" {
-				c.Image = string(side.ImagePullPolicy)
-			}
-
-			c.Env = ReplaceAllEnvs(c.Env, side.Envs)
-			c.Args = ReplaceAllArgs(c.Args, side.Args)
-		}
-	}
-	return c
-}
-
-// ReplaceALLContainerImageApply  get image values
+// ReplaceALLContainerImageApply -
 func ReplaceALLContainerImageApply(img K8sImagesConfig, c acorev1.ContainerApplyConfiguration) acorev1.ContainerApplyConfiguration {
 	switch *c.Name {
 	case csmv1.Provisioner:
@@ -143,48 +128,13 @@ func ReplaceALLContainerImageApply(img K8sImagesConfig, c acorev1.ContainerApply
 		*c.Image = img.Images.Registrar
 	case csmv1.Resizer:
 		*c.Image = img.Images.Resizer
+		//case csmv1.Externalhealthmonitor:
+		//	*c.Image = img.Images.Externalhealthmonitor
 	}
 	return c
 }
 
-// ReplaceALLContainerImage get images
-func ReplaceALLContainerImage(img K8sImagesConfig, c corev1.Container) corev1.Container {
-	switch c.Name {
-	case csmv1.Provisioner:
-		c.Image = img.Images.Provisioner
-	case csmv1.Attacher:
-		c.Image = img.Images.Attacher
-	case csmv1.Snapshotter:
-		c.Image = img.Images.Snapshotter
-	case csmv1.Registrar:
-		c.Image = img.Images.Registrar
-	case csmv1.Resizer:
-		c.Image = img.Images.Resizer
-	}
-	return c
-}
-
-// ReplaceAllEnvs -
-func ReplaceAllEnvs(defaultEnv, crEnv []corev1.EnvVar) []corev1.EnvVar {
-	merge := []corev1.EnvVar{}
-	for _, old := range crEnv {
-		found := false
-		for i, new := range defaultEnv {
-			if old.Name == new.Name {
-				defaultEnv[i].Value = old.Value
-				found = true
-			}
-		}
-		if !found {
-			merge = append(merge, old)
-		}
-	}
-
-	defaultEnv = append(defaultEnv, merge...)
-	return defaultEnv
-}
-
-// ReplaceAllApplyCustomEnvs resolve env
+// ReplaceAllApplyCustomEnvs -
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 	crEnv []corev1.EnvVar,
 	nrEnv []corev1.EnvVar) []acorev1.EnvVarApplyConfiguration {
@@ -208,6 +158,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 			if val == "NA" {
 				val = ""
 			}
+			//log.Info("debug overwrite ", "name", *old.Name, "value", val)
 			e := acorev1.EnvVarApplyConfiguration{
 				Name:  old.Name,
 				Value: &val,
@@ -220,14 +171,16 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 			}
 			if old.ValueFrom != nil {
 				pRef := old.ValueFrom.FieldRef
-				path := *pRef.FieldPath
-				e = acorev1.EnvVarApplyConfiguration{
-					Name: old.Name,
-					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
-						FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
-							FieldPath: &path,
+				if pRef != nil {
+					path := *pRef.FieldPath
+					e = acorev1.EnvVarApplyConfiguration{
+						Name: old.Name,
+						ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+							FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
+								FieldPath: &path,
+							},
 						},
-					},
+					}
 				}
 			}
 			newEnv = append(newEnv, e)
@@ -314,7 +267,7 @@ func GetDriverYAML(YamlString, kind string) (interface{}, error) {
 	}
 
 	if kind == "Deployment" {
-		var dp appsv1.Deployment
+		var dp confv1.DeploymentApplyConfiguration
 		err := yaml.Unmarshal(podBuf, &dp)
 		if err != nil {
 			return nil, err
@@ -324,13 +277,13 @@ func GetDriverYAML(YamlString, kind string) (interface{}, error) {
 			Rbac:       rbac,
 		}, nil
 	} else if kind == "DaemonSet" {
+		//var ds appsv1.DaemonSet
 		var ds confv1.DaemonSetApplyConfiguration
 
 		err := yaml.Unmarshal(podBuf, &ds)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("Debug daemonset is %s\n", *ds.TypeMetaApplyConfiguration.Kind)
 		return NodeYAML{
 			DaemonSet: ds,
 			Rbac:      rbac,

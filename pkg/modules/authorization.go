@@ -7,10 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/go-logr/logr"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -261,16 +260,16 @@ func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.Contai
 }
 
 // AuthInjectDeployment - inject authorization into deployment
-func AuthInjectDeployment(dp appsv1.Deployment, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*appsv1.Deployment, error) {
-	authModule, containerPtr, err := getAuthCR(cr, op)
+func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
+	authModule, containerPtr, err := getAuthApplyCR(cr, op)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
-	container = utils.UpdateSideCar(authModule.Components, container)
+	container = utils.UpdateSideCarApply(authModule.Components, container)
 
-	vols, err := getAuthVolumes(cr, op, authModule.Components[0])
+	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
 	if err != nil {
 		return nil, err
 	}
