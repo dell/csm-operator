@@ -235,16 +235,17 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	}
 
 	r.Log.Info("deployment modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
-	desired := d.Status.UpdatedReplicas
+	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
 	ready := d.Status.ReadyReplicas
+	numberUnavailable := d.Status.UnavailableReplicas
 
 	//Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
 
-	numberUnavailable := desired - available
 	r.Log.Info("deployment", "desired", desired)
 	r.Log.Info("deployment", "numberReady", ready)
 	r.Log.Info("deployment", "available", available)
+	r.Log.Info("deployment", "numberUnavailable", numberUnavailable)
 
 	ns := d.Namespace
 	r.Log.Info("deployment", "namespace", ns, "name", name)
@@ -281,8 +282,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		if err != nil {
 			r.Log.Info("Failed to update Deployment status", "error", err.Error())
 		}
-
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Deployment status check Error ,pod desired:%d, unavailable:%d %s", desired, numberUnavailable, stamp)
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Deployment status check Error ,pod desired:%d, unavailable:%d", stamp, desired, numberUnavailable)
 
 	} else {
 		r.Log.Info("csm status", "prev state", csm.Status.State)
@@ -293,11 +293,11 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 			Failed:    fmt.Sprintf("%d", numberUnavailable),
 			Desired:   fmt.Sprintf("%d", desired),
 		}
-		_ = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
+		err = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
 		if err != nil {
 			r.Log.Info("Failed to update Deployment status", "error", err.Error())
 		}
-		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Deployment status check OK : %s desired pods %d, ready pods %d %s", d.Name, desired, available, stamp)
+		r.EventRecorder.Eventf(csm, "Normal", "Updated", "%s Deployment status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, available)
 
 	}
 	return
@@ -360,8 +360,11 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 		}
 
 		r.Log.Info("daemonset in err", "err", err.Error())
-		_ = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Daemonset status check Error ,node pod desired:%d, unavailable:%d %s", desired, numberUnavailable, stamp)
+		err = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
+		if err != nil {
+			r.Log.Info("Failed to update Daemonset status", "error", err.Error())
+		}
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Daemonset status check Error ,node pod desired:%d, unavailable:%d", stamp, desired, numberUnavailable)
 	} else {
 		if err != nil {
 			r.Log.Info("Failed to update Daemonset status", "error", err.Error())
@@ -375,11 +378,11 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 			Failed:    fmt.Sprintf("%d", numberUnavailable),
 			Desired:   fmt.Sprintf("%d", desired),
 		}
-		_ = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
+		err = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
 		if err != nil {
 			r.Log.Info("Failed to update Daemonset status", "error", err.Error())
 		}
-		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Daemonset status check OK : %s desired pods %d, ready pods %d %s", d.Name, desired, ready, stamp)
+		r.EventRecorder.Eventf(csm, "Normal", "Updated", "%s Daemonset status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, ready)
 
 	}
 	return
