@@ -79,40 +79,36 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 }
 
 func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
-	var available, starting, stopped []string
-	node := &appsv1.DaemonSet{}
+	ds := &appsv1.DaemonSet{}
 	err := r.GetClient().Get(ctx, types.NamespacedName{Name: instance.GetNodeName(),
-		Namespace: instance.GetNamespace()}, node)
+		Namespace: instance.GetNamespace()}, ds)
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
 	}
-	if node.Status.DesiredNumberScheduled == 0 || node.Status.NumberReady == 0 {
-		stopped = append(stopped, instance.GetNodeName())
-		err = errors.New("Pod stopped")
-	} else {
-		podList := &v1.PodList{}
-		opts := []client.ListOption{
-			client.InNamespace(instance.GetNamespace()),
-			client.MatchingLabels{"app": instance.GetNodeName()},
-		}
-		err = r.GetClient().List(ctx, podList, opts...)
-		if err != nil {
-			return node.Status.DesiredNumberScheduled, csmv1.PodStatus{}, err
-		}
-		for _, pod := range podList.Items {
-			if pod.Status.Phase == "Pending" {
-				starting = append(starting, pod.Name)
-				err = errors.New("Pod starting ")
-			} else {
-				available = append(available, pod.Name)
-			}
+	faliedCount := 0
+	podList := &v1.PodList{}
+	opts := []client.ListOption{
+		client.InNamespace(instance.GetNamespace()),
+		client.MatchingLabels{"app": instance.GetNodeName()},
+	}
+	err = r.GetClient().List(ctx, podList, opts...)
+	if err != nil {
+		return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{}, err
+	}
+	msg := "Pods ok"
+	for _, pod := range podList.Items {
+		if pod.Status.Phase != corev1.PodRunning {
+			faliedCount++
+			msg += "Pod not running " + pod.Name
 		}
 	}
-
-	return node.Status.DesiredNumberScheduled, csmv1.PodStatus{
-		Available: fmt.Sprintf("%d", node.Status.NumberAvailable),
-		Desired:   fmt.Sprintf("%d", node.Status.DesiredNumberScheduled),
-		Failed:    fmt.Sprintf("%d", len(starting)),
+	if faliedCount > 0 {
+		err = errors.New(msg)
+	}
+	return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{
+		Available: fmt.Sprintf("%d", ds.Status.NumberAvailable),
+		Desired:   fmt.Sprintf("%d", ds.Status.DesiredNumberScheduled),
+		Failed:    fmt.Sprintf("%d", faliedCount),
 	}, err
 }
 
@@ -138,29 +134,23 @@ func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	reqLogger.Info("csm", "calculate state", newStatus.State)
 	var err error
 	if controllerErr != nil {
-		if daemonSetErr != nil {
-			err = fmt.Errorf("controllerError: %s, daemonseterror: %s", controllerErr.Error(), daemonSetErr.Error())
-		} else {
-			err = controllerErr
-		}
-	} else {
-		if daemonSetErr != nil {
-			err = daemonSetErr
-		} else {
-			err = nil
-		}
+		err = controllerErr
 	}
-	SetStatus(instance, newStatus, nil)
+	if daemonSetErr != nil {
+		err = daemonSetErr
+	}
+	if daemonSetErr != nil && controllerErr != nil {
+		err = fmt.Errorf("controllerError: %s, daemonseterror: %s", controllerErr.Error(), daemonSetErr.Error())
+	}
+	SetStatus(instance, newStatus, reqLogger)
 	return running, err
 }
 
 // SetStatus of csm
 func SetStatus(instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus, reqLogger logr.Logger) {
 	instance.GetCSMStatus().State = newStatus.State
-	if reqLogger != nil {
-		reqLogger.Info("State", "Controller",
-			newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
-	}
+	reqLogger.Info("State", "Controller",
+		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 	instance.GetCSMStatus().ControllerStatus = newStatus.ControllerStatus
 	instance.GetCSMStatus().NodeStatus = newStatus.NodeStatus
 }
@@ -168,15 +158,12 @@ func SetStatus(instance *csmv1.ContainerStorageModule, newStatus *csmv1.Containe
 // UpdateStatus of csm
 func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, reqLogger logr.Logger, newStatus *csmv1.ContainerStorageModuleStatus) error {
 	dMutex.Lock()
+	defer dMutex.Unlock()
 	reqLogger.Info("current csm status", "status", instance.Status.State)
-
-	statusString := fmt.Sprintf("new Status: (State - %s)",
-		newStatus.State)
-	reqLogger.Info(statusString)
-	reqLogger.Info("State", "Controller",
-		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
+	reqLogger.Info("new status", "state", newStatus.State)
 
 	SetStatus(instance, newStatus, reqLogger)
+
 	if newStatus.State == constants.Succeeded {
 		running, err := CalculateState(ctx, instance, r, newStatus)
 		if err != nil {
@@ -186,7 +173,6 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		reqLogger.Info("Attempting to update CR status", "running", running)
 	}
 	err := r.GetClient().Status().Update(ctx, instance)
-	dMutex.Unlock()
 	if err != nil {
 		reqLogger.Error(err, "Failed to update CR status")
 		return err
@@ -203,7 +189,10 @@ func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorage
 	// Update the status
 	reqLogger.Info("Marking the driver status as InvalidConfig")
 	newStatus.State = constants.Failed
-	_ = UpdateStatus(ctx, instance, r, reqLogger, newStatus)
+	err := UpdateStatus(ctx, instance, r, reqLogger, newStatus)
+	if err != nil {
+		reqLogger.Error(err, "Failed to update CR status")
+	}
 	reqLogger.Error(validationError, fmt.Sprintf("*************Create/Update %s failed ********",
 		instance.GetDriverType()))
 	return LogBannerAndReturn(reconcile.Result{Requeue: false}, nil, reqLogger)
