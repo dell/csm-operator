@@ -46,7 +46,6 @@ func TestMain(m *testing.M) {
 		status = st
 	}
 
-	fmt.Printf("status %d\n", status)
 	os.Exit(status)
 }
 
