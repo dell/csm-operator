@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -39,7 +38,15 @@ type CSMControllerTestSuite struct {
 
 // init every test
 func (suite *CSMControllerTestSuite) SetupTest() {
-	fmt.Println("Init test suite...")
+	opts := zap.Options{
+		Development: true,
+	}
+
+	logger := zap.New(zap.UseFlagOptions(&opts)).WithName("controllers").WithName("unit-test")
+	ctrl.SetLogger(logger)
+
+	logger.Info("Init unit test...")
+
 	csmv1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
@@ -47,6 +54,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	suite.k8sClient = clientgoclient.NewFakeClient(suite.fakeClient)
 
 	suite.namespace = "test"
+
 }
 
 func (suite *CSMControllerTestSuite) TestReconcile() {
@@ -62,12 +70,6 @@ func TestCustom(t *testing.T) {
 
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {
 
-	opts := zap.Options{
-		Development: true,
-	}
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
 	configDir, err := filepath.Abs("../operatorconfig")
 	assert.NoError(suite.T(), err)
 	operatorConfig := utils.OperatorConfig{
@@ -78,7 +80,7 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 		Client:        suite.fakeClient,
 		K8sClient:     suite.k8sClient,
 		Scheme:        scheme.Scheme,
-		Log:           ctrl.Log.WithName("controllers").WithName("unit-test"),
+		Log:           ctrl.Log,
 		Config:        operatorConfig,
 		EventRecorder: record.NewFakeRecorder(100),
 	}
@@ -99,14 +101,14 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
 	res, err := reconciler.Reconcile(context.Background(), req)
 
-	fmt.Printf("reconcile response res=%#v\n", res)
+	ctrl.Log.Info("reconcile response", "res is: ", res)
 
 	if expectedErr == "" {
 		assert.NoError(suite.T(), err)
 	}
 
 	if err != nil {
-		fmt.Printf("Error returned is: %s", err.Error())
+		ctrl.Log.Error(err, "Error returned")
 		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
 	}
 
