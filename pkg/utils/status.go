@@ -33,6 +33,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
 	}
+
 	replicas := getInt32(deployment.Spec.Replicas)
 	readyPods := 0
 	failedCount := 0
@@ -85,6 +86,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
 	}
+
 	faliedCount := 0
 	podList := &v1.PodList{}
 	opts := []client.ListOption{

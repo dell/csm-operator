@@ -5,11 +5,10 @@ import (
 	//"fmt"
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	applv1 "k8s.io/client-go/applyconfigurations/apps/v1"
-	v1 "k8s.io/client-go/kubernetes/typed/apps/v1"
+	appsv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	"k8s.io/client-go/kubernetes"
+
 	//"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"time"
 )
 
@@ -17,13 +16,11 @@ import (
 var SleepTime = 10 * time.Second
 
 // SyncDeployment - Syncs a Deployment for controller
-func SyncDeployment(ctx context.Context, deployment *applv1.DeploymentApplyConfiguration, client client.Client, reqLogger logr.Logger, csmName string) error {
+func SyncDeployment(ctx context.Context, deployment *appsv1.DeploymentApplyConfiguration, k8sClient kubernetes.Interface, reqLogger logr.Logger, csmName string) error {
 	reqLogger.Info("Sync Deployment:", "name", *deployment.ObjectMetaApplyConfiguration.Name)
 
 	// Get a config to talk to the apiserver
-	cfg, err := config.GetConfig()
-	clientset, err := v1.NewForConfig(cfg)
-	deployments := clientset.Deployments(*deployment.ObjectMetaApplyConfiguration.Namespace)
+	deployments := k8sClient.AppsV1().Deployments(*deployment.ObjectMetaApplyConfiguration.Namespace)
 
 	found, err := deployments.Get(ctx, *deployment.ObjectMetaApplyConfiguration.Name, metav1.GetOptions{})
 	if err != nil {

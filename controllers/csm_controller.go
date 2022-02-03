@@ -38,6 +38,7 @@ import (
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	t1 "k8s.io/apimachinery/pkg/types"
 	sinformer "k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -54,7 +55,11 @@ import (
 
 // ContainerStorageModuleReconciler reconciles a ContainerStorageModule object
 type ContainerStorageModuleReconciler struct {
+	// controller runtime client, responsible for create, delete, update, get etc.
 	client.Client
+	// k8s client, implements client-go/kubernetes interface, responsible for apply, which
+	// client.Client does not provides
+	K8sClient     kubernetes.Interface
 	Scheme        *runtime.Scheme
 	Log           logr.Logger
 	Config        utils.OperatorConfig
@@ -196,21 +201,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	return utils.LogBannerAndReturn(reconcile.Result{Requeue: false}, syncErr, reqLogger)
 }
 
-func (r *ContainerStorageModuleReconciler) updateInstance(ctx context.Context, instance *csmv1.ContainerStorageModule, reqLogger logr.Logger, isUpdated bool) error {
-	if isUpdated {
-		reqLogger.Info("Attempting to update CR instance")
-		err := r.GetClient().Update(ctx, instance)
-		if err != nil {
-			reqLogger.Error(err, "Failed to update CR instance")
-		} else {
-			reqLogger.Info("Successfully updated CR instance")
-		}
-		return err
-	}
-	reqLogger.Info("No updates to instance at this point")
-	return nil
-}
-
 func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Predicate {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
@@ -300,7 +290,6 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		r.EventRecorder.Eventf(csm, "Normal", "Updated", "%s Deployment status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, available)
 
 	}
-	return
 }
 
 func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interface{}, obj interface{}) {
@@ -385,7 +374,6 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 		r.EventRecorder.Eventf(csm, "Normal", "Updated", "%s Daemonset status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, ready)
 
 	}
-	return
 }
 
 // ContentWatch -watch
@@ -492,18 +480,17 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
-				ds, err := modules.AuthInjectDaemonset(node.DaemonSet, cr, operatorConfig)
+				ds, err := modules.AuthInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deamonset: %v", err)
 				}
 
-				node.DaemonSet = *ds
+				node.DaemonSetApplyConfig = *ds
 
 			default:
 				return fmt.Errorf("unsupported module type %s", m.Name)
 
 			}
-
 		}
 	}
 
@@ -550,14 +537,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update Deployment
-	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.Client, reqLogger, cr.Name)
+	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, reqLogger, cr.Name)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update DeamonSet
-
-	err = daemonset.SyncDaemonset(ctx, &node.DaemonSet, r.Client, reqLogger, cr.Name)
+	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.K8sClient, reqLogger, cr.Name)
 	if err != nil {
 		return err
 	}
