@@ -110,12 +110,11 @@ type Module struct {
 	Components []ContainerTemplate `json:"components,omitempty" yaml:"components,omitempty"`
 }
 
-// PodStatus - Represents a list of PodStatus
+// PodStatus - Represents PodStatus in a daemonset or deployment
 type PodStatus struct {
-	Available []string `json:"available,omitempty"`
-	Ready     []string `json:"ready,omitempty"`
-	Starting  []string `json:"starting,omitempty"`
-	Stopped   []string `json:"stopped,omitempty"`
+	Available string `json:"available,omitempty"`
+	Desired   string `json:"desired,omitempty"`
+	Failed    string `json:"failed,omitempty"`
 }
 
 // Driver of CSIDriver
