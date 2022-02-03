@@ -5,12 +5,12 @@ import (
 
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apps "k8s.io/client-go/applyconfigurations/apps/v1"
+	appsv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 // SyncDaemonset - Syncs a daemonset object
-func SyncDaemonset(ctx context.Context, daemonset *apps.DaemonSetApplyConfiguration, k8sClient kubernetes.Interface, reqLogger logr.Logger, csmName string) error {
+func SyncDaemonset(ctx context.Context, daemonset *appsv1.DaemonSetApplyConfiguration, k8sClient kubernetes.Interface, reqLogger logr.Logger, csmName string) error {
 	reqLogger.Info("Sync DaemonSet:", "name", *daemonset.ObjectMetaApplyConfiguration.Name)
 
 	// Get a config to talk to the apiserver

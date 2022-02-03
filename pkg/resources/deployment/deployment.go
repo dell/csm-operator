@@ -5,7 +5,7 @@ import (
 	//"fmt"
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apps "k8s.io/client-go/applyconfigurations/apps/v1"
+	appsv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
 
 	//"reflect"
@@ -16,7 +16,7 @@ import (
 var SleepTime = 10 * time.Second
 
 // SyncDeployment - Syncs a Deployment for controller
-func SyncDeployment(ctx context.Context, deployment *apps.DeploymentApplyConfiguration, k8sClient kubernetes.Interface, reqLogger logr.Logger, csmName string) error {
+func SyncDeployment(ctx context.Context, deployment *appsv1.DeploymentApplyConfiguration, k8sClient kubernetes.Interface, reqLogger logr.Logger, csmName string) error {
 	reqLogger.Info("Sync Deployment:", "name", *deployment.ObjectMetaApplyConfiguration.Name)
 
 	// Get a config to talk to the apiserver
