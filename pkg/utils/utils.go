@@ -16,9 +16,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	//hashutil "k8s.io/kubernetes/pkg/util/hash"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 )
@@ -58,9 +57,8 @@ type ControllerYAML struct {
 
 // NodeYAML -
 type NodeYAML struct {
-	//DaemonSet appsv1.DaemonSet
-	DaemonSet confv1.DaemonSetApplyConfiguration
-	Rbac      RbacYAML
+	DaemonSetApplyConfig confv1.DaemonSetApplyConfiguration
+	Rbac                 RbacYAML
 }
 
 const (
@@ -277,16 +275,16 @@ func GetDriverYAML(YamlString, kind string) (interface{}, error) {
 			Rbac:       rbac,
 		}, nil
 	} else if kind == "DaemonSet" {
-		//var ds appsv1.DaemonSet
-		var ds confv1.DaemonSetApplyConfiguration
+		var dsac confv1.DaemonSetApplyConfiguration
 
-		err := yaml.Unmarshal(podBuf, &ds)
+		err := yaml.Unmarshal(podBuf, &dsac)
 		if err != nil {
 			return nil, err
 		}
+
 		return NodeYAML{
-			DaemonSet: ds,
-			Rbac:      rbac,
+			DaemonSetApplyConfig: dsac,
+			Rbac:                 rbac,
 		}, nil
 	}
 
