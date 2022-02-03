@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
@@ -117,7 +119,7 @@ func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.Ope
 
 	if cr.Spec.Driver.DNSPolicy != "" {
 		dnspolicy := corev1.DNSPolicy(cr.Spec.Driver.DNSPolicy)
-		nodeYaml.DaemonSet.Spec.Template.Spec.DNSPolicy = &dnspolicy
+		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &dnspolicy
 	}
 
 	if len(cr.Spec.Driver.Node.Tolerations) != 0 {
@@ -132,14 +134,14 @@ func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.Ope
 			tols = append(tols, *toleration)
 		}
 
-		nodeYaml.DaemonSet.Spec.Template.Spec.Tolerations = tols
+		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Tolerations = tols
 	}
 
 	if cr.Spec.Driver.Node.NodeSelector != nil {
-		nodeYaml.DaemonSet.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Node.NodeSelector
+		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Node.NodeSelector
 	}
 
-	containers := nodeYaml.DaemonSet.Spec.Template.Spec.Containers
+	containers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
@@ -158,19 +160,19 @@ func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.Ope
 		containers[i] = utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, tmp)
 	}
 
-	nodeYaml.DaemonSet.Spec.Template.Spec.Containers = containers
+	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = containers
 
 	// Update volumes
-	for i, v := range nodeYaml.DaemonSet.Spec.Template.Spec.Volumes {
+	for i, v := range nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes {
 		if *v.Name == "certs" {
 			newV, err := getApplyCertVolume(cr)
 			if err != nil {
 				return nil, err
 			}
-			nodeYaml.DaemonSet.Spec.Template.Spec.Volumes[i] = *newV
+			nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes[i] = *newV
 		}
 		if *v.Name == cr.Name+"-creds" && cr.Spec.Driver.AuthSecret != "" {
-			nodeYaml.DaemonSet.Spec.Template.Spec.Volumes[i].Secret.SecretName = &cr.Spec.Driver.AuthSecret
+			nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes[i].Secret.SecretName = &cr.Spec.Driver.AuthSecret
 		}
 
 	}
@@ -182,7 +184,12 @@ func GetPowerScaleNode(cr csmv1.ContainerStorageModule, operatorConfig utils.Ope
 // GetPowerScaleConfigMap get configmap
 func GetPowerScaleConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*corev1.ConfigMap, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/powerscale/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
-	buf, err := ioutil.ReadFile(configMapPath)
+
+	if _, err := os.Stat(configMapPath); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return nil, err
 	}
