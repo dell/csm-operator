@@ -31,11 +31,6 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
-      - name: Checkout csm-operator
-        uses: actions/checkout@v2
-        with:
-          repository: 'dell/csm-operator'
-          path: 'csm-operator'
       - name: Run unit tests and check package coverage
         uses: dell/common-github-actions/go-code-tester@main
         with:
