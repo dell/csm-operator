@@ -14,7 +14,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-
 // GetController get controller yaml
 func GetController(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
@@ -207,7 +206,7 @@ func GetConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.Operator
 
 }
 
-// GetPowerScaleCSIDriver get driver
+// GetCSIDriver get driver
 func GetCSIDriver(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
