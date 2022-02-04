@@ -55,8 +55,11 @@ const (
 	// PowerMax - placeholder for constant powermax
 	PowerMax DriverType = "powermax"
 
-	// PowerScale - placeholder for constant PowerScale
+	// PowerScale - placeholder for constant isilon
 	PowerScale DriverType = "isilon"
+
+	// PowerScaleName - placeholder for constant PowerScale
+	PowerScaleName DriverType = "powerscale"
 
 	// Unity - placeholder for constant unity
 	Unity DriverType = "unity"

@@ -444,22 +444,22 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	case csmv1.PowerScale:
 		reqLogger.Info("Getting Powerscale CSI Driver for Dell EMC")
 
-		configMap, err = drivers.GetPowerScaleConfigMap(cr, operatorConfig)
+		configMap, err = drivers.GetConfigMap(cr, operatorConfig, csmv1.PowerScaleName)
 		if err != nil {
 			return fmt.Errorf("getting %s configMap: %v", csmv1.PowerScale, err)
 		}
 
-		driver, err = drivers.GetPowerScaleCSIDriver(cr, operatorConfig)
+		driver, err = drivers.GetCSIDriver(cr, operatorConfig, csmv1.PowerScaleName)
 		if err != nil {
 			return fmt.Errorf("getting %s configMap: %v", csmv1.PowerScale, err)
 		}
 
-		node, err = drivers.GetPowerScaleNode(cr, operatorConfig)
+		node, err = drivers.GetNode(cr, operatorConfig, csmv1.PowerScaleName)
 		if err != nil {
 			return fmt.Errorf("getting %s node: %v", csmv1.PowerScale, err)
 		}
 
-		controller, err = drivers.GetPowerScaleController(cr, operatorConfig)
+		controller, err = drivers.GetController(cr, operatorConfig, csmv1.PowerScaleName)
 		if err != nil {
 			return fmt.Errorf("getting %s controller: %v", csmv1.PowerScale, err)
 		}
