@@ -1,0 +1,17 @@
+# Adds namespace to all resources.
+namespace: dell-csm-operator
+namePrefix: dell-csm-operator-
+
+# Labels to add to all resources and selectors.
+#commonLabels:
+#  someName: someValue
+
+bases:
+- ../serviceaccount
+- ../rbac
+- ../manager
+
+images:
+  - name: controller
+    newName: dellemc/dell-csm-operator
+    newTag: v0.1.0

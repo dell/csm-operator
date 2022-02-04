@@ -135,7 +135,7 @@ func getOperatorConfig() utils.OperatorConfig {
 			log.Error(err, "Error reading file from the configmap mount")
 			log.Info("Falling back to local copy of config files")
 
-			configDir = "/etc/config/local/csm-operator"
+			configDir = "/etc/config/local/dell-csm-operator"
 		}
 	}
 	cfg.ConfigDirectory = configDir
