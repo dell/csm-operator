@@ -77,7 +77,7 @@ rules:
 - apiGroups:
   - apps
   resourceNames:
-  - dell-csi-operator-controller-manager
+  - dell-csm-operator-controller-manager
   resources:
   - deployments/finalizers
   verbs:

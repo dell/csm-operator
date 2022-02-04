@@ -109,13 +109,21 @@ docker-push: ## Push docker image with the manager.
 
 ##@ Deployment
 
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+static-crd: manifests kustomize ## Copies CRDs to deploy folder.
+	$(KUSTOMIZE) build config/crd > deploy/crds/storage.dell.com_containerstoragemodules.yaml
+
+static-manager: manifests kustomize ## Creates the operator manifests in deploy folder.
+	$(KUSTOMIZE) build config/install > deploy/operator.yaml
+
+static-manifests: static-crd static-manager
+
+install: static-crd ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: static-manager ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 

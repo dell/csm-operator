@@ -4,7 +4,7 @@ layout:
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
-projectName: csm-operator
+projectName: dell-csm-operator
 repo: github.com/dell/csm-operator
 resources:
 - api:
@@ -14,6 +14,6 @@ resources:
   domain: dell.com
   group: storage
   kind: ContainerStorageModule
-  path: github.com/dell/csm-operator/api/v1
-  version: v1
+  path: github.com/dell/csm-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"
