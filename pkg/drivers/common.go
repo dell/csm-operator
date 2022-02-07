@@ -94,11 +94,6 @@ func GetController(cr csmv1.ContainerStorageModule, operatorConfig utils.Operato
 // GetNode get node yaml
 func GetNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string) (*utils.NodeYAML, error) {
 
-	if (driverType == csmv1.PowerScale) {
-		// use powerscale instead of isilon as the folder name is powerscale
-		driverType = csmv1.PowerScaleName
-	}
-
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {

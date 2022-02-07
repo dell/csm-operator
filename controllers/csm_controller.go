@@ -71,6 +71,7 @@ const (
 	// MetadataPrefix - prefix for all labels & annotations
 	MetadataPrefix = "storage.dell.com"
 
+	// NodeYaml - yaml file name for node
 	NodeYaml = "node.yaml"
 )
 
@@ -446,6 +447,11 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	// Get Driver resources
 	reqLogger.Info(fmt.Sprintf("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType))
 	driverType := cr.Spec.Driver.CSIDriverType
+
+	if (driverType == csmv1.PowerScale) {
+		// use powerscale instead of isilon as the folder name is powerscale
+		driverType = csmv1.PowerScaleName
+	}
 
 	configMap, err = drivers.GetConfigMap(cr, operatorConfig, driverType)
 	if err != nil {
