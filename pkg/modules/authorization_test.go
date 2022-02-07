@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
-	"github.com/dell/csm-operator/controllers"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
@@ -175,7 +174,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(customResource, operatorConfig, csmv1.PowerScaleName, controllers.NodeYaml)
+			nodeYAML, err := drivers.GetNode(customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -186,7 +185,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(customResource, operatorConfig, csmv1.PowerScaleName, controllers.NodeYaml)
+			nodeYAML, err := drivers.GetNode(customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -202,7 +201,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(customResource, operatorConfig, csmv1.PowerScaleName, controllers.NodeYaml)
+			nodeYAML, err := drivers.GetNode(customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
 			if err != nil {
 				panic(err)
 			}
