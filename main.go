@@ -22,7 +22,6 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
-	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,13 +44,13 @@ import (
 
 const (
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
-	K8sMinimumSupportedVersion = "1.19"
+	K8sMinimumSupportedVersion = "1.21"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
 	K8sMaximumSupportedVersion = "1.23"
 	// OpenshiftMinimumSupportedVersion is the minimum supported version for openshift
-	OpenshiftMinimumSupportedVersion = "4.6"
+	OpenshiftMinimumSupportedVersion = "4.8"
 	// OpenshiftMaximumSupportedVersion is the maximum supported version for openshift
-	OpenshiftMaximumSupportedVersion = "4.7"
+	OpenshiftMaximumSupportedVersion = "4.9"
 )
 
 var (
@@ -80,67 +79,71 @@ func getOperatorConfig() utils.OperatorConfig {
 
 	isOpenShift, err := k8sClient.IsOpenShift()
 	if err != nil {
-		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
+		panic(err.Error())
 	}
 	cfg.IsOpenShift = isOpenShift
 
 	kubeVersion, err := k8sClient.GetVersion()
 	if err != nil {
-		log.Info(fmt.Sprintf("kubeVersion err %s", kubeVersion))
+		panic(err.Error())
 	}
 	minVersion := 0.0
 	maxVersion := 0.0
 	if !isOpenShift {
 		minVersion, err = strconv.ParseFloat(K8sMinimumSupportedVersion, 64)
 		if err != nil {
-			log.Info(fmt.Sprintf("minVersion %s", K8sMinimumSupportedVersion))
+			panic(err.Error())
 		}
 		maxVersion, err = strconv.ParseFloat(K8sMaximumSupportedVersion, 64)
 		if err != nil {
-			log.Info(fmt.Sprintf("maxVersion %s", K8sMaximumSupportedVersion))
+			panic(err.Error())
 		}
 	} else {
 		minVersion, err = strconv.ParseFloat(OpenshiftMinimumSupportedVersion, 64)
 		if err != nil {
-			log.Info(fmt.Sprintf("minVersion %s", OpenshiftMinimumSupportedVersion))
+			panic(err.Error())
 		}
 		maxVersion, err = strconv.ParseFloat(OpenshiftMaximumSupportedVersion, 64)
 		if err != nil {
-			log.Info(fmt.Sprintf("maxVersion  %s", OpenshiftMaximumSupportedVersion))
+			panic(err.Error())
 		}
 	}
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
 	if err != nil {
-		log.Info(fmt.Sprintf("kubeVersion  %s", kubeVersion))
+		panic(err.Error())
 	}
+	// intialise variable
+	k8sPath := ""
 	if currentVersion < minVersion {
-		log.Info(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
+		log.Info(fmt.Sprintf("Installed k8s version %s is less than the minimum supported k8s version %f , hence using the default configurations", kubeVersion, minVersion))
+		k8sPath = fmt.Sprintf("/driverconfig/common/default.yaml")
+	} else if currentVersion > maxVersion {
+		log.Info(fmt.Sprintf("Installed k8s version %s is greater than the maximum supported k8s version %f , hence using the latest available configurations", kubeVersion, maxVersion))
+		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
+	} else {
+		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
 	}
-	if currentVersion > maxVersion {
-		log.Info(fmt.Sprintf("version %s is greater than maximum supported version of %f", kubeVersion, maxVersion))
 
-	}
-
-	// Get the environment variSable config dir
+	// Get the environment variable config dir
 	configDir := os.Getenv("X_CSM_OPERATOR_CONFIG_DIR")
 	if configDir == "" {
 		// Set the config dir to the folder pkg/config
-		configDir = "operatorconfig/"
+		configDir = "operatorconfig"
+		k8sPath = fmt.Sprintf("%s%s", configDir, k8sPath)
 	} else {
-		k8sPath := fmt.Sprintf("%s/driverconfig/common/k8s-%s-values.yaml", configDir, kubeVersion)
+		k8sPath = fmt.Sprintf("%s%s", configDir, k8sPath)
 		_, err := ioutil.ReadFile(k8sPath)
 		if err != nil {
 			// This means that the configmap is not mounted
 			// fall back to the local copy
 			log.Error(err, "Error reading file from the configmap mount")
 			log.Info("Falling back to local copy of config files")
-
-			configDir = "/etc/config/local/dell-csm-operator"
+			configDir = "/etc/config/local/csm-operator"
+			k8sPath = fmt.Sprintf("%s%s", configDir, k8sPath)
 		}
+
 	}
 	cfg.ConfigDirectory = configDir
-
-	k8sPath := fmt.Sprintf("%s/driverconfig/common/k8s-%s-values.yaml", cfg.ConfigDirectory, kubeVersion)
 	buf, err := ioutil.ReadFile(k8sPath)
 	if err != nil {
 		panic(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
@@ -177,9 +180,7 @@ func main() {
 	printVersion()
 	operatorConfig := getOperatorConfig()
 
-	restConfig := ctrl.GetConfigOrDie()
-
-	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   9443,
@@ -195,7 +196,6 @@ func main() {
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	if err = (&controllers.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),
-		K8sClient:     kubernetes.NewForConfigOrDie(restConfig),
 		Log:           ctrl.Log.WithName("controllers").WithName("ContainerStorageModule"),
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("csm"),
