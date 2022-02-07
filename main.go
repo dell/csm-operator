@@ -45,13 +45,13 @@ import (
 
 const (
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
-	K8sMinimumSupportedVersion = "1.19"
+	K8sMinimumSupportedVersion = "1.21"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
 	K8sMaximumSupportedVersion = "1.23"
 	// OpenshiftMinimumSupportedVersion is the minimum supported version for openshift
-	OpenshiftMinimumSupportedVersion = "4.6"
+	OpenshiftMinimumSupportedVersion = "4.8"
 	// OpenshiftMaximumSupportedVersion is the maximum supported version for openshift
-	OpenshiftMaximumSupportedVersion = "4.7"
+	OpenshiftMaximumSupportedVersion = "4.9"
 )
 
 var (
@@ -113,34 +113,38 @@ func getOperatorConfig() utils.OperatorConfig {
 	if err != nil {
 		log.Info(fmt.Sprintf("kubeVersion  %s", kubeVersion))
 	}
+	// intialise variable
+	k8sPath := ""
 	if currentVersion < minVersion {
-		log.Info(fmt.Sprintf("version %s is less than minimum supported version of %f", kubeVersion, minVersion))
+		log.Info(fmt.Sprintf("Installed k8s version %s is less than the minimum supported k8s version %f , hence using the default configurations", kubeVersion, minVersion))
+		k8sPath = fmt.Sprintf("/driverconfig/common/default.yaml")
+	} else if currentVersion > maxVersion {
+		log.Info(fmt.Sprintf("Installed k8s version %s is greater than the maximum supported k8s version %f , hence using the latest available configurations", kubeVersion, maxVersion))
+		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
+	} else {
+		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
 	}
-	if currentVersion > maxVersion {
-		log.Info(fmt.Sprintf("version %s is greater than maximum supported version of %f", kubeVersion, maxVersion))
 
-	}
-
-	// Get the environment variSable config dir
+	// Get the environment variable config dir
 	configDir := os.Getenv("X_CSM_OPERATOR_CONFIG_DIR")
 	if configDir == "" {
 		// Set the config dir to the folder pkg/config
-		configDir = "operatorconfig/"
+		configDir = "operatorconfig"
+		k8sPath = fmt.Sprintf("%s%s", configDir, k8sPath)
 	} else {
-		k8sPath := fmt.Sprintf("%s/driverconfig/common/k8s-%s-values.yaml", configDir, kubeVersion)
+		k8sPath = fmt.Sprintf("%s%s", configDir, k8sPath)
 		_, err := ioutil.ReadFile(k8sPath)
 		if err != nil {
 			// This means that the configmap is not mounted
 			// fall back to the local copy
 			log.Error(err, "Error reading file from the configmap mount")
 			log.Info("Falling back to local copy of config files")
-
 			configDir = "/etc/config/local/dell-csm-operator"
+			k8sPath = fmt.Sprintf("%s%s", configDir, k8sPath)
 		}
+
 	}
 	cfg.ConfigDirectory = configDir
-
-	k8sPath := fmt.Sprintf("%s/driverconfig/common/k8s-%s-values.yaml", cfg.ConfigDirectory, kubeVersion)
 	buf, err := ioutil.ReadFile(k8sPath)
 	if err != nil {
 		panic(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
