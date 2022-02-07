@@ -448,7 +448,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	reqLogger.Info(fmt.Sprintf("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType))
 	driverType := cr.Spec.Driver.CSIDriverType
 
-	if (driverType == csmv1.PowerScale) {
+	if driverType == csmv1.PowerScale {
 		// use powerscale instead of isilon as the folder name is powerscale
 		driverType = csmv1.PowerScaleName
 	}
