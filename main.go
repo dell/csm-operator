@@ -22,6 +22,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,38 +80,38 @@ func getOperatorConfig() utils.OperatorConfig {
 
 	isOpenShift, err := k8sClient.IsOpenShift()
 	if err != nil {
-		panic(err.Error())
+		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
 	}
 	cfg.IsOpenShift = isOpenShift
 
 	kubeVersion, err := k8sClient.GetVersion()
 	if err != nil {
-		panic(err.Error())
+		log.Info(fmt.Sprintf("kubeVersion err %s", kubeVersion))
 	}
 	minVersion := 0.0
 	maxVersion := 0.0
 	if !isOpenShift {
 		minVersion, err = strconv.ParseFloat(K8sMinimumSupportedVersion, 64)
 		if err != nil {
-			panic(err.Error())
+			log.Info(fmt.Sprintf("minVersion %s", K8sMinimumSupportedVersion))
 		}
 		maxVersion, err = strconv.ParseFloat(K8sMaximumSupportedVersion, 64)
 		if err != nil {
-			panic(err.Error())
+			log.Info(fmt.Sprintf("maxVersion %s", K8sMaximumSupportedVersion))
 		}
 	} else {
 		minVersion, err = strconv.ParseFloat(OpenshiftMinimumSupportedVersion, 64)
 		if err != nil {
-			panic(err.Error())
+			log.Info(fmt.Sprintf("minVersion %s", OpenshiftMinimumSupportedVersion))
 		}
 		maxVersion, err = strconv.ParseFloat(OpenshiftMaximumSupportedVersion, 64)
 		if err != nil {
-			panic(err.Error())
+			log.Info(fmt.Sprintf("maxVersion  %s", OpenshiftMaximumSupportedVersion))
 		}
 	}
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
 	if err != nil {
-		panic(err.Error())
+		log.Info(fmt.Sprintf("kubeVersion  %s", kubeVersion))
 	}
 	// intialise variable
 	k8sPath := ""
@@ -180,7 +181,9 @@ func main() {
 	printVersion()
 	operatorConfig := getOperatorConfig()
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restConfig := ctrl.GetConfigOrDie()
+
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   9443,
@@ -196,6 +199,7 @@ func main() {
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	if err = (&controllers.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),
+		K8sClient:     kubernetes.NewForConfigOrDie(restConfig),
 		Log:           ctrl.Log.WithName("controllers").WithName("ContainerStorageModule"),
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("csm"),
