@@ -40,7 +40,7 @@ IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.21
+ENVTEST_K8S_VERSION = 1.23
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -90,6 +90,9 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
+unit-test:
+	go clean -cache && go test -v -coverprofile=c.out ./controllers/csm*
+
 ##@ Build
 
 build: generate fmt vet ## Build manager binary.
@@ -106,13 +109,21 @@ docker-push: ## Push docker image with the manager.
 
 ##@ Deployment
 
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+static-crd: manifests kustomize ## Copies CRDs to deploy folder.
+	$(KUSTOMIZE) build config/crd > deploy/crds/storage.dell.com_containerstoragemodules.yaml
+
+static-manager: manifests kustomize ## Creates the operator manifests in deploy folder.
+	$(KUSTOMIZE) build config/install > deploy/operator.yaml
+
+static-manifests: static-crd static-manager
+
+install: static-crd ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: static-manager ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 

@@ -23,17 +23,17 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 FROM gcr.io/distroless/static:nonroot
 
 ENV USER_UID=1001 \
-    USER_NAME=dell-csi-operator \
-    X_CSM_OPERATOR_CONFIG_DIR="/etc/config/csm-operator"
+    USER_NAME=dell-csm-operator \
+    X_CSM_OPERATOR_CONFIG_DIR="/etc/config/dell-csm-operator"
 WORKDIR /
 COPY --from=builder /workspace/manager .
-COPY operatorconfig/ /etc/config/local/csm-operator
+COPY operatorconfig/ /etc/config/local/dell-csm-operator
 LABEL vendor="Dell Inc." \
-    name="csm-operator" \
+    name="dell-csm-operator" \
     summary="Operator for installing Dell EMC CSM Modules" \
     description="Common Operator for installing various Dell EMC Container Storage Modules" \
-    version="1.5.0" \
-    license="Dell CSI Operator Apache License"
+    version="0.1.0" \
+    license="Dell CSM Operator Apache License"
 
 ENTRYPOINT ["/manager"]
 USER ${USER_UID}
