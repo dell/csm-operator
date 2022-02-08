@@ -67,8 +67,13 @@ type ContainerStorageModuleReconciler struct {
 	EventRecorder record.EventRecorder
 }
 
-// MetadataPrefix - prefix for all labels & annotations
-const MetadataPrefix = "storage.dell.com"
+const (
+	// MetadataPrefix - prefix for all labels & annotations
+	MetadataPrefix = "storage.dell.com"
+
+	// NodeYaml - yaml file name for node
+	NodeYaml = "node.yaml"
+)
 
 var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIDriverConfigVersion")
 
@@ -440,32 +445,32 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	)
 
 	// Get Driver resources
-	switch cr.Spec.Driver.CSIDriverType {
-	case csmv1.PowerScale:
-		reqLogger.Info("Getting Powerscale CSI Driver for Dell EMC")
+	reqLogger.Info(fmt.Sprintf("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType))
+	driverType := cr.Spec.Driver.CSIDriverType
 
-		configMap, err = drivers.GetPowerScaleConfigMap(cr, operatorConfig)
-		if err != nil {
-			return fmt.Errorf("getting %s configMap: %v", csmv1.PowerScale, err)
-		}
+	if driverType == csmv1.PowerScale {
+		// use powerscale instead of isilon as the folder name is powerscale
+		driverType = csmv1.PowerScaleName
+	}
 
-		driver, err = drivers.GetPowerScaleCSIDriver(cr, operatorConfig)
-		if err != nil {
-			return fmt.Errorf("getting %s configMap: %v", csmv1.PowerScale, err)
-		}
+	configMap, err = drivers.GetConfigMap(cr, operatorConfig, driverType)
+	if err != nil {
+		return fmt.Errorf("getting %s configMap: %v", driverType, err)
+	}
 
-		node, err = drivers.GetPowerScaleNode(cr, operatorConfig)
-		if err != nil {
-			return fmt.Errorf("getting %s node: %v", csmv1.PowerScale, err)
-		}
+	driver, err = drivers.GetCSIDriver(cr, operatorConfig, driverType)
+	if err != nil {
+		return fmt.Errorf("getting %s configMap: %v", driverType, err)
+	}
 
-		controller, err = drivers.GetPowerScaleController(cr, operatorConfig)
-		if err != nil {
-			return fmt.Errorf("getting %s controller: %v", csmv1.PowerScale, err)
-		}
+	node, err = drivers.GetNode(cr, operatorConfig, driverType, NodeYaml)
+	if err != nil {
+		return fmt.Errorf("getting %s node: %v", driverType, err)
+	}
 
-	default:
-		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
+	controller, err = drivers.GetController(cr, operatorConfig, driverType)
+	if err != nil {
+		return fmt.Errorf("getting %s controller: %v", driverType, err)
 	}
 
 	// Add module resources

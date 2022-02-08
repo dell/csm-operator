@@ -174,7 +174,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetPowerScaleNode(customResource, operatorConfig)
+			nodeYAML, err := drivers.GetNode(customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -185,7 +185,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetPowerScaleNode(customResource, operatorConfig)
+			nodeYAML, err := drivers.GetNode(customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -201,7 +201,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetPowerScaleNode(customResource, operatorConfig)
+			nodeYAML, err := drivers.GetNode(customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -254,7 +254,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetPowerScaleController(customResource, operatorConfig)
+			controllerYAML, err := drivers.GetController(customResource, operatorConfig, csmv1.PowerScaleName)
 			if err != nil {
 				panic(err)
 			}
@@ -266,7 +266,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 			tmpCR := customResource
-			controllerYAML, err := drivers.GetPowerScaleController(tmpCR, operatorConfig)
+			controllerYAML, err := drivers.GetController(tmpCR, operatorConfig, csmv1.PowerScaleName)
 			if err != nil {
 				panic(err)
 			}
@@ -282,7 +282,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetPowerScaleController(customResource, operatorConfig)
+			controllerYAML, err := drivers.GetController(customResource, operatorConfig, csmv1.PowerScaleName)
 			if err != nil {
 				panic(err)
 			}
