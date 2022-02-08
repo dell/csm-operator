@@ -70,7 +70,7 @@ const (
 	DefaultImagePullPolicy = "IfNotPresent"
 )
 
-// SplitYAML divides a big bytes of yaml files in individual yaml files.
+// SplitYaml divides a big bytes of yaml files in individual yaml files.
 func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 	decoder := goYAML.NewDecoder(bytes.NewReader(gaintYAML))
 	nullByte := []byte{110, 117, 108, 108, 10} // byte returned by  goYAML when yaml is empty
@@ -239,7 +239,7 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	return YamlString
 }
 
-// GetDriverYAML -
+// GetDriverYaml -
 func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 	bufs, err := SplitYaml([]byte(YamlString))
 	if err != nil {

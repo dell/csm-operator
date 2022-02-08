@@ -79,7 +79,7 @@ const (
 	Resizer = "resizer"
 	// Sdcmonitor - placeholder for constant
 	Sdcmonitor = "sdc-monitor"
-	// External-health-monitor - placeholder for constant
+	// Externalhealthmonitor - placeholder for constant
 	Externalhealthmonitor = "external-health-monitor"
 
 	// Succeeded - constant
