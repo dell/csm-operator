@@ -530,7 +530,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update CSIDriver
-	err = csidriver.SyncCSIDriver(ctx, driver, r.Client, reqLogger)
+	err = csidriver.SyncCsiDriver(ctx, driver, r.Client, reqLogger)
 	if err != nil {
 		return err
 	}
