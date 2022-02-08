@@ -116,7 +116,7 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
-	configVersion := "v2.0.0"
+	configVersion := shared.ConfigVersion
 	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
