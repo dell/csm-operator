@@ -11,6 +11,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+
+const (
+	// ConfigVersion - used in all unit test
+	ConfigVersion string = "v2.0.0"
+)
+
+
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
 type StorageKey struct {
 	Namespace string
