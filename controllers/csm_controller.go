@@ -89,7 +89,7 @@ var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIDriverConfigVers
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles/finalizers,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="monitoring.coreos.com",resources=servicemonitors,verbs=get;create
-// +kubebuilder:rbac:groups="apps",resources=deployments/finalizers,resourceNames=dell-csi-operator-controller-manager,verbs=update
+// +kubebuilder:rbac:groups="apps",resources=deployments/finalizers,resourceNames=dell-csm-operator-controller-manager,verbs=update
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csidrivers,verbs=get;list;watch;create;update;delete;patch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=storageclasses,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments,verbs=get;list;watch;create;update;patch
