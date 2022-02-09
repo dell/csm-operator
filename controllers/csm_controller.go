@@ -34,7 +34,10 @@ import (
 	"github.com/dell/csm-operator/pkg/resources/rbac"
 	"github.com/dell/csm-operator/pkg/resources/serviceaccount"
 	"github.com/dell/csm-operator/pkg/utils"
-	"github.com/go-logr/logr"
+	//"github.com/go-logr/logr"
+	"github.com/dell/csm-operator/pkg/logger"
+	"go.uber.org/zap"
+
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	t1 "k8s.io/apimachinery/pkg/types"
 	sinformer "k8s.io/client-go/informers"
@@ -61,9 +64,10 @@ type ContainerStorageModuleReconciler struct {
 	// client.Client does not provides
 	K8sClient     kubernetes.Interface
 	Scheme        *runtime.Scheme
-	Log           logr.Logger
+	Log           *zap.SugaredLogger
 	Config        utils.OperatorConfig
 	updateCount   int32
+	trcId         string
 	EventRecorder record.EventRecorder
 }
 
@@ -115,17 +119,16 @@ var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIDriverConfigVers
 
 // Reconcile - main loop
 func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("csm", req.NamespacedName)
-	// your logic here
+	r.IncrUpdateCount()
+	r.trcId = fmt.Sprintf("%d", r.GetUpdateCount())
+	name := req.Name + "-" + r.trcId
+	_, log := logger.GetNewContextWithLogger(name)
+	log.Info("################Starting Reconcile##############")
+	//log := logger.GetLogger(ctx)
 	csm := new(csmv1.ContainerStorageModule)
 
-	reqLogger := log.WithValues("Namespace", req.Namespace)
-	reqLogger = reqLogger.WithValues("Name", req.Name)
-	reqLogger = reqLogger.WithValues("Attempt", r.updateCount)
-	reqLogger.Info(fmt.Sprintf("Reconciling %s ", "csm"), "request", req.String())
-
-	reqLogger.Info("################Starting Reconcile##############")
-	r.IncrUpdateCount()
+	log.Infow("Namespace", req.Namespace, "Name", req.Name, "Attempt", r.GetUpdateCount())
+	log.Infow(fmt.Sprintf("Reconciling %s ", "csm"), "request", req.String())
 
 	// Fetch the ContainerStorageModuleReconciler instance
 	err := r.Client.Get(ctx, req.NamespacedName, csm)
@@ -142,7 +145,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	isCustomResourceMarkedForDeletion := csm.GetDeletionTimestamp() != nil
 	if isCustomResourceMarkedForDeletion {
-		return r.removeFinalizer(ctx, csm, reqLogger)
+		return r.removeFinalizer(ctx, csm)
 	}
 
 	// Add finalizer
@@ -152,7 +155,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		// Update CR
 		err = r.Client.Update(ctx, csm)
 		if err != nil {
-			reqLogger.Error(err, "Failed to update CR with finalizer")
+			log.Error(err, "Failed to update CR with finalizer")
 			return reconcile.Result{}, err
 		}
 	}
@@ -165,45 +168,45 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	// Before doing anything else, check for config version and apply annotation if not set
-	isUpdated, err := checkAndApplyConfigVersionAnnotations(csm, log, false)
+	isUpdated, err := checkAndApplyConfigVersionAnnotations(csm, false)
 	if err != nil {
 		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed add annotation during install: %s", err.Error())
-		return utils.HandleValidationError(ctx, csm, r, reqLogger, err)
+		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 	if isUpdated {
 		err = r.GetClient().Update(ctx, csm)
 		if err != nil {
-			reqLogger.Error(err, "Failed to update CR with finalizer")
+			log.Error(err, "Failed to update CR with finalizer")
 			return reconcile.Result{}, err
 		}
 	}
 
 	// perfrom prechecks
-	err = r.PreChecks(ctx, csm, *driverConfig, reqLogger)
+	err = r.PreChecks(ctx, csm, *driverConfig)
 	if err != nil {
-		return utils.HandleValidationError(ctx, csm, r, reqLogger, err)
+		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 	r.EventRecorder.Eventf(csm, "Normal", "Updated", "PreChecks ok: %s", csm.Name)
 
 	// Set the driver status to updating
 
 	newStatus := csm.GetCSMStatus()
-	_, err = utils.HandleSuccess(ctx, csm, r, reqLogger, newStatus, oldStatus)
-	if err != nil {
-		reqLogger.Error(err, "Failed to update CR status")
+	_, err = utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
+	if err == nil {
+		log.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
 	r.EventRecorder.Eventf(csm, "Normal", "Updated", "Call install/update driver: %s", csm.Name)
-	syncErr := r.SyncCSM(ctx, *csm, *driverConfig, reqLogger)
+	syncErr := r.SyncCSM(ctx, *csm, *driverConfig)
 	if syncErr == nil {
 		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Driver install completed: reconcile count=%d name=%s", r.updateCount, csm.Name)
-		return utils.LogBannerAndReturn(reconcile.Result{}, err, reqLogger)
+		return utils.LogBannerAndReturn(reconcile.Result{}, err)
 	}
 
 	// Failed to sync driver deployment
 	r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed install: %s", syncErr.Error())
 
-	return utils.LogBannerAndReturn(reconcile.Result{Requeue: false}, syncErr, reqLogger)
+	return utils.LogBannerAndReturn(reconcile.Result{Requeue: false}, syncErr)
 }
 
 func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Predicate {
@@ -220,16 +223,20 @@ func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Pre
 }
 
 func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interface{}, obj interface{}) {
+	//log := logger.GetLogger(ctx)
 
 	old, _ := oldObj.(*appsv1.Deployment)
 	d, _ := obj.(*appsv1.Deployment)
 	name := d.Spec.Template.Labels["csm"]
+
+	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	ctx, log := logger.GetNewContextWithLogger(key)
 	if name == "" {
-		r.Log.Info("ignore deployment not labeled for csm", "name", d.Name)
+		log.Infow("ignore deployment not labeled for csm", "name", d.Name)
 		return
 	}
 
-	r.Log.Info("deployment modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+	log.Infow("deployment modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
 	ready := d.Status.ReadyReplicas
@@ -237,30 +244,29 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 
 	//Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
 
-	r.Log.Info("deployment", "desired", desired)
-	r.Log.Info("deployment", "numberReady", ready)
-	r.Log.Info("deployment", "available", available)
-	r.Log.Info("deployment", "numberUnavailable", numberUnavailable)
+	log.Infow("deployment", "desired", desired)
+	log.Infow("deployment", "numberReady", ready)
+	log.Infow("deployment", "available", available)
+	log.Infow("deployment", "numberUnavailable", numberUnavailable)
 
 	ns := d.Namespace
-	r.Log.Info("deployment", "namespace", ns, "name", name)
+	log.Infow("deployment", "namespace", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
 		Namespace: ns,
 	}
 
 	csm := new(csmv1.ContainerStorageModule)
-	ctx := context.Background()
 	err := r.Client.Get(ctx, namespacedName, csm)
 	if err != nil {
-		r.Log.Info("deployment get csm", "error", err.Error())
+		log.Error("deployment get csm", "error", err.Error())
 	}
-	r.Log.Info("csm prev status", "state", csm.Status)
+	log.Infow("csm prev status", "state", csm.Status)
 	state := false
 	if desired == available {
 		state = true
 	}
-	r.Log.Info("deployment status", "state", state)
+	log.Infow("deployment status", "state", state)
 	stamp := fmt.Sprintf("at %s", time.Now().Format("2006-01-02 15:04:05"))
 	if !state {
 		err = errors.New("deployment in error")
@@ -272,15 +278,15 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 			Desired:   fmt.Sprintf("%d", desired),
 		}
 
-		r.Log.Info("deployment in err", "err", err.Error())
-		err = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
+		log.Infow("deployment in err", "err", err.Error())
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil {
-			r.Log.Info("Failed to update Deployment status", "error", err.Error())
+			log.Error("Failed to update Deployment status", "error", err.Error())
 		}
 		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Deployment status check Error ,pod desired:%d, unavailable:%d", stamp, desired, numberUnavailable)
 
 	} else {
-		r.Log.Info("csm status", "prev state", csm.Status.State)
+		log.Infow("csm status", "prev state", csm.Status.State)
 		newStatus := csm.GetCSMStatus()
 		newStatus.State = constants.Succeeded
 		newStatus.ControllerStatus = csmv1.PodStatus{
@@ -288,13 +294,14 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 			Failed:    fmt.Sprintf("%d", numberUnavailable),
 			Desired:   fmt.Sprintf("%d", desired),
 		}
-		err = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil {
-			r.Log.Info("Failed to update Deployment status", "error", err.Error())
+			log.Error("Failed to update Deployment status", "error", err.Error())
 		}
 		r.EventRecorder.Eventf(csm, "Normal", "Updated", "%s Deployment status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, available)
 
 	}
+	return
 }
 
 func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interface{}, obj interface{}) {
@@ -302,21 +309,24 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	d, _ := obj.(*appsv1.DaemonSet)
 	name := d.Spec.Template.Labels["csm"]
 	if name == "" {
-		r.Log.Info("ignore daemonset not labeled for csm", "name", d.Name)
+		r.Log.Infow("ignore daemonset not labeled for csm", "name", d.Name)
 		return
 	}
 
-	r.Log.Info("daemonset modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	ctx, log := logger.GetNewContextWithLogger(key)
+
+	log.Infow("daemonset modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
 	desired := d.Status.DesiredNumberScheduled
 	available := d.Status.NumberAvailable
 	ready := d.Status.NumberReady
 	numberUnavailable := d.Status.NumberUnavailable
 
-	r.Log.Info("daemonset ", "name", d.Name, "namespace", d.Namespace)
-	r.Log.Info("daemonset ", "desired", desired)
-	r.Log.Info("daemonset ", "numberReady", ready)
-	r.Log.Info("daemonset ", "available", available)
-	r.Log.Info("daemonset ", "numberUnavailable", numberUnavailable)
+	log.Infow("daemonset ", "name", d.Name, "namespace", d.Namespace)
+	log.Infow("daemonset ", "desired", desired)
+	log.Infow("daemonset ", "numberReady", ready)
+	log.Infow("daemonset ", "available", available)
+	log.Infow("daemonset ", "numberUnavailable", numberUnavailable)
 
 	state := false
 	if desired == ready {
@@ -324,22 +334,21 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	}
 
 	ns := d.Namespace
-	r.Log.Info("daemonset ", "ns", ns, "name", name)
+	r.Log.Infow("daemonset ", "ns", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
 		Namespace: ns,
 	}
 
 	csm := new(csmv1.ContainerStorageModule)
-	ctx := context.Background()
 	err := r.Client.Get(ctx, namespacedName, csm)
 	if err != nil {
-		r.Log.Info("daemonset get csm", "error", err.Error())
+		r.Log.Error("daemonset get csm", "error", err.Error())
 	}
 	// get status and update csm
 
-	r.Log.Info("csm prev status ", "state", csm.Status)
-	r.Log.Info("daemonset status", "state", state)
+	log.Infow("csm prev status ", "state", csm.Status)
+	log.Infow("daemonset status", "state", state)
 
 	stamp := fmt.Sprintf("at %s", time.Now().Format("2006-01-02 15:04:05"))
 	if !state {
@@ -353,18 +362,15 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 			Desired:   fmt.Sprintf("%d", desired),
 		}
 
-		r.Log.Info("daemonset in err", "err", err.Error())
-		err = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
-		if err != nil {
-			r.Log.Info("Failed to update Daemonset status", "error", err.Error())
-		}
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Daemonset status check Error ,node pod desired:%d, unavailable:%d", stamp, desired, numberUnavailable)
+		log.Infow("daemonset in err", "err", err.Error())
+		_ = utils.UpdateStatus(ctx, csm, r, newStatus)
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Daemonset status check Error ,node pod desired:%d, unavailable:%d %s", desired, numberUnavailable, stamp)
 	} else {
 		if err != nil {
-			r.Log.Info("Failed to update Daemonset status", "error", err.Error())
+			log.Infow("Failed to update Daemonset status", "error", err.Error())
 		}
 
-		r.Log.Info("csm status", "prev state", csm.Status.State)
+		log.Infow("csm status", "prev state", csm.Status.State)
 		newStatus := csm.GetCSMStatus()
 		newStatus.State = constants.Succeeded
 		newStatus.NodeStatus = csmv1.PodStatus{
@@ -372,13 +378,14 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 			Failed:    fmt.Sprintf("%d", numberUnavailable),
 			Desired:   fmt.Sprintf("%d", desired),
 		}
-		err = utils.UpdateStatus(ctx, csm, r, r.Log, newStatus)
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil {
-			r.Log.Info("Failed to update Daemonset status", "error", err.Error())
+			log.Infow("Failed to update Daemonset status", "error", err.Error())
 		}
 		r.EventRecorder.Eventf(csm, "Normal", "Updated", "%s Daemonset status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, ready)
 
 	}
+	return
 }
 
 // ContentWatch -watch
@@ -421,7 +428,7 @@ func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, li
 		Complete(r)
 }
 
-func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule, log logr.Logger) (reconcile.Result, error) {
+func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule) (reconcile.Result, error) {
 	// Remove the finalizers
 	instance.SetFinalizers(nil)
 	// Update the object
@@ -433,8 +440,11 @@ func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, 
 }
 
 // SyncCSM - Sync the current installation - this can lead to a create or update
-func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
-	reqLogger logr.Logger) error {
+func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+
+	//log := logger.GetLogger(ctx)
+	name := cr.Name + "-" + r.trcId
+	_, log := logger.GetNewContextWithLogger(name)
 
 	var (
 		err        error
@@ -445,7 +455,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	)
 
 	// Get Driver resources
-	reqLogger.Info(fmt.Sprintf("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType))
+	log.Infof("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType)
 	driverType := cr.Spec.Driver.CSIDriverType
 
 	if driverType == csmv1.PowerScale {
@@ -478,7 +488,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		if m.Enabled {
 			switch m.Name {
 			case csmv1.Authorization:
-				reqLogger.Info("Injecting CSM Authorization")
+				log.Info("Injecting CSM Authorization")
 				dp, err := modules.AuthInjectDeployment(controller.Deployment, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deployment: %v", err)
@@ -496,59 +506,61 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				return fmt.Errorf("unsupported module type %s", m.Name)
 
 			}
+
 		}
 	}
 
 	// Create/Update ServiceAccount
-	err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, r.Client, reqLogger)
+	err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, r.Client)
 	if err != nil {
 		return err
 	}
-	err = serviceaccount.SyncServiceAccount(ctx, &controller.Rbac.ServiceAccount, r.Client, reqLogger)
+	err = serviceaccount.SyncServiceAccount(ctx, &controller.Rbac.ServiceAccount, r.Client)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update ClusterRoles
-	_, err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, r.Client, reqLogger)
+	_, err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, r.Client)
 	if err != nil {
 		return err
 	}
-	_, err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, r.Client, reqLogger)
+	_, err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, r.Client)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update ClusterRoleBinding
-	err = rbac.SyncClusterRoleBindings(ctx, &node.Rbac.ClusterRoleBinding, r.Client, reqLogger)
+	err = rbac.SyncClusterRoleBindings(ctx, &node.Rbac.ClusterRoleBinding, r.Client)
 	if err != nil {
 		return err
 	}
-	err = rbac.SyncClusterRoleBindings(ctx, &controller.Rbac.ClusterRoleBinding, r.Client, reqLogger)
+	err = rbac.SyncClusterRoleBindings(ctx, &controller.Rbac.ClusterRoleBinding, r.Client)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update CSIDriver
-	err = csidriver.SyncCSIDriver(ctx, driver, r.Client, reqLogger)
+	err = csidriver.SyncCSIDriver(ctx, driver, r.Client)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update ConfigMap
-	err = configmap.SyncConfigMap(ctx, configMap, r.Client, reqLogger)
+	err = configmap.SyncConfigMap(ctx, configMap, r.Client)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update Deployment
-	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, reqLogger, cr.Name)
+	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.Client, cr.Name, r.trcId)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update DeamonSet
-	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.K8sClient, reqLogger, cr.Name)
+
+	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.Client, cr.Name, r.trcId)
 	if err != nil {
 		return err
 	}
@@ -556,8 +568,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 }
 
 // PreChecks - validate input values
-func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
-	reqLogger logr.Logger) error {
+func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	if cr.Spec.Driver.Common.Image == "" {
 		return fmt.Errorf("driver image not specified in spec")
 	}
@@ -569,7 +580,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
 
-		err := drivers.PrecheckPowerScale(ctx, cr, r, reqLogger)
+		err := drivers.PrecheckPowerScale(ctx, cr, r, nil)
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
@@ -583,7 +594,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if m.Enabled {
 			switch m.Name {
 			case csmv1.Authorization:
-				err := modules.AuthorizationPrecheck(ctx, cr.GetNamespace(), string(cr.Spec.Driver.CSIDriverType), operatorConfig, m, r.GetClient(), reqLogger)
+				err := modules.AuthorizationPrecheck(ctx, cr.GetNamespace(), string(cr.Spec.Driver.CSIDriverType), operatorConfig, m, r.GetClient(), nil)
 				if err != nil {
 					return fmt.Errorf("failed authorization validation: %v", err)
 				}
@@ -600,7 +611,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 }
 
-func checkAndApplyConfigVersionAnnotations(instance *csmv1.ContainerStorageModule, log logr.Logger, update bool) (bool, error) {
+func checkAndApplyConfigVersionAnnotations(instance *csmv1.ContainerStorageModule, update bool) (bool, error) {
 	if instance.Spec.Driver.ConfigVersion == "" {
 		// fail immediately
 		return false, fmt.Errorf("mandatory argument: ConfigVersion missing")
@@ -617,14 +628,14 @@ func checkAndApplyConfigVersionAnnotations(instance *csmv1.ContainerStorageModul
 		annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
 		isUpdated = true
 		instance.SetAnnotations(annotations)
-		log.Info(fmt.Sprintf("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
+		fmt.Println(fmt.Sprintf("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
 			instance.GetName(), instance.Spec.Driver.ConfigVersion))
 	} else {
 		if configVersion != instance.Spec.Driver.ConfigVersion {
 			annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
 			isUpdated = true
 			instance.SetAnnotations(annotations)
-			log.Info(fmt.Sprintf("Config Version changed from %s to %s. Updating Annotations",
+			fmt.Println(fmt.Sprintf("Config Version changed from %s to %s. Updating Annotations",
 				configVersion, instance.Spec.Driver.ConfigVersion))
 		}
 	}

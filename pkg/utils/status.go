@@ -6,7 +6,7 @@ import (
 	"fmt"
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/constants"
-	"github.com/go-logr/logr"
+	"github.com/dell/csm-operator/pkg/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -16,8 +16,8 @@ import (
 	"sync"
 )
 
-var reqLogger logr.Logger
 var dMutex sync.RWMutex
+var sMutex sync.RWMutex
 
 func getInt32(pointer *int32) int32 {
 	if pointer == nil {
@@ -28,18 +28,18 @@ func getInt32(pointer *int32) int32 {
 
 func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
 	deployment := &appsv1.Deployment{}
+	//log := logger.GetLogger(ctx)
+	name := instance.Name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	_, log := logger.GetNewContextWithLogger(name)
+
 	err := r.GetClient().Get(ctx, types.NamespacedName{Name: instance.GetControllerName(),
 		Namespace: instance.GetNamespace()}, deployment)
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
 	}
-
 	replicas := getInt32(deployment.Spec.Replicas)
 	readyPods := 0
 	failedCount := 0
-	reqLogger.Info("==============")
-	reqLogger.Info("deployment", "status", deployment.Status)
-	reqLogger.Info("==============")
 
 	//app=test-isilon-controller
 	label := instance.GetNamespace() + "-controller"
@@ -54,9 +54,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	}
 	for _, pod := range podList.Items {
 
-		reqLogger.Info("==============")
-		reqLogger.Info("deployment pod", "count", readyPods, "name", pod.Name, "status", pod.Status.Phase)
-		reqLogger.Info("==============")
+		log.Infof("deployment pod count %d name %s status %s \n", readyPods, pod.Name, pod.Status.Phase)
 
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
@@ -80,6 +78,10 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 }
 
 func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
+	//log := logger.GetLogger(ctx)
+	name := instance.Name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	_, log := logger.GetNewContextWithLogger(name)
+
 	ds := &appsv1.DaemonSet{}
 	err := r.GetClient().Get(ctx, types.NamespacedName{Name: instance.GetNodeName(),
 		Namespace: instance.GetNamespace()}, ds)
@@ -104,6 +106,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 			msg += "Pod not running " + pod.Name
 		}
 	}
+	log.Infof("daemonset status %d", ds.Status.NumberAvailable)
 	if faliedCount > 0 {
 		err = errors.New(msg)
 	}
@@ -116,6 +119,10 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 
 // CalculateState of pods
 func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+	//log := logger.GetLogger(ctx)
+	name := instance.Name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	_, log := logger.GetNewContextWithLogger(name)
+
 	running := false
 	controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
 	newStatus.ControllerStatus = controllerStatus
@@ -123,17 +130,17 @@ func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	newStatus.NodeStatus = nodeStatus
 
 	newStatus.State = constants.Failed
-	reqLogger.Info("controller", "replicas count", controllerReplicas)
-	reqLogger.Info("controller", "controllerStatus.Available", controllerStatus.Available)
+	log.Infof("controllerReplicas [%d]\n", controllerReplicas)
+	log.Infof("controllerStatus.Available [%s]\n", controllerStatus.Available)
 
-	reqLogger.Info("node pods", "expected", expected)
-	reqLogger.Info("node pods", "nodeStatus.Available", nodeStatus.Available)
+	log.Infof("expected [%d]\n", expected)
+	log.Infof("nodeStatus.Available [%s]\n", nodeStatus.Available)
 
 	if (fmt.Sprintf("%d", controllerReplicas) == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
 		running = true
 		newStatus.State = constants.Succeeded
 	}
-	reqLogger.Info("csm", "calculate state", newStatus.State)
+	log.Infof("calculate state [%s]\n", newStatus.State)
 	var err error
 	if controllerErr != nil {
 		err = controllerErr
@@ -144,68 +151,90 @@ func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	if daemonSetErr != nil && controllerErr != nil {
 		err = fmt.Errorf("controllerError: %s, daemonseterror: %s", controllerErr.Error(), daemonSetErr.Error())
 	}
-	SetStatus(instance, newStatus, reqLogger)
+	SetStatus(ctx, r, instance, newStatus)
 	return running, err
 }
 
 // SetStatus of csm
-func SetStatus(instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus, reqLogger logr.Logger) {
+func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
+	//log := logger.GetLogger(ctx)
+	sMutex.Lock()
+	defer sMutex.Unlock()
+
+	name := instance.Name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	_, log := logger.GetNewContextWithLogger(name)
+
 	instance.GetCSMStatus().State = newStatus.State
-	reqLogger.Info("State", "Controller",
+	log.Infow("State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 	instance.GetCSMStatus().ControllerStatus = newStatus.ControllerStatus
 	instance.GetCSMStatus().NodeStatus = newStatus.NodeStatus
 }
 
 // UpdateStatus of csm
-func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, reqLogger logr.Logger, newStatus *csmv1.ContainerStorageModuleStatus) error {
+func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) error {
+	//log := logger.GetLogger(ctx)
+	name := instance.Name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	_, log := logger.GetNewContextWithLogger(name)
+
 	dMutex.Lock()
 	defer dMutex.Unlock()
-	reqLogger.Info("current csm status", "status", instance.Status.State)
-	reqLogger.Info("new status", "state", newStatus.State)
+	log.Infow("current csm status", "status", instance.Status.State)
 
-	SetStatus(instance, newStatus, reqLogger)
+	statusString := fmt.Sprintf("new Status: (State - %s)",
+		newStatus.State)
+	log.Info(statusString)
+	log.Infow("State", "Controller",
+		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
+	//SetStatus(ctx, r, instance, newStatus)
 	if newStatus.State == constants.Succeeded {
 		running, err := CalculateState(ctx, instance, r, newStatus)
 		if err != nil {
-			reqLogger.Info("Driver status ", "error", err.Error())
+			log.Errorw("Driver status ", "error", err.Error())
 			newStatus.State = constants.Failed
 		}
-		reqLogger.Info("Attempting to update CR status", "running", running)
+		log.Infow("Attempting to update CR status", "running", running)
 	}
 	err := r.GetClient().Status().Update(ctx, instance)
 	if err != nil {
-		reqLogger.Error(err, "Failed to update CR status")
+		log.Error(err, "Failed to update CR status UpdateStatus ")
 		return err
 	}
-	reqLogger.Info("updated CR status ok")
+	log.Info("updated CR status ok")
 	return nil
 }
 
 // HandleValidationError for csm
-func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, reqLogger logr.Logger,
+func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM,
 	validationError error) (reconcile.Result, error) {
-	reqLogger.Error(validationError, "Validation error")
+	//log := logger.GetLogger(ctx)
+	name := instance.Name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	_, log := logger.GetNewContextWithLogger(name)
+
+	log.Error(validationError, "Validation error")
 	newStatus := instance.GetCSMStatus()
 	// Update the status
-	reqLogger.Info("Marking the driver status as InvalidConfig")
+	log.Info("Marking the driver status as InvalidConfig")
 	newStatus.State = constants.Failed
-	err := UpdateStatus(ctx, instance, r, reqLogger, newStatus)
+	err := UpdateStatus(ctx, instance, r, newStatus)
 	if err != nil {
-		reqLogger.Error(err, "Failed to update CR status")
+		log.Error(err, "Failed to update CR status HandleValidationError")
 	}
-	reqLogger.Error(validationError, fmt.Sprintf("*************Create/Update %s failed ********",
+	log.Error(validationError, fmt.Sprintf("*************Create/Update %s failed ********",
 		instance.GetDriverType()))
-	return LogBannerAndReturn(reconcile.Result{Requeue: false}, nil, reqLogger)
+	return LogBannerAndReturn(reconcile.Result{Requeue: false}, nil)
 }
 
 // HandleSuccess for csm
-func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, log logr.Logger, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus) (reconcile.Result, error) {
-	reqLogger = log
+func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus) (reconcile.Result, error) {
+	//log := logger.GetLogger(ctx)
+	name := instance.Name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	_, log := logger.GetNewContextWithLogger(name)
+
 	running, err := CalculateState(ctx, instance, r, newStatus)
 	if err != nil {
-		reqLogger.Info("Driver status ", "error", err.Error())
+		log.Error("Driver status ", "error", err.Error())
 	}
 	if running {
 		newStatus.State = constants.Running
@@ -213,18 +242,18 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 	if err != nil {
 		newStatus.State = constants.Failed
 	}
-	reqLogger.Info("Driver state ", "newStatus.State", newStatus.State)
+	log.Infow("Driver state ", "newStatus.State", newStatus.State)
 	if newStatus.State == constants.Running {
 		// If previously we were in running state
 		if oldStatus.State == constants.Running {
-			reqLogger.Info("Driver state didn't change from Running")
+			log.Info("Driver state didn't change from Running")
 		}
-		return LogBannerAndReturn(reconcile.Result{}, nil, reqLogger)
+		return LogBannerAndReturn(reconcile.Result{}, nil)
 	}
-	updateStatusError := UpdateStatus(ctx, instance, r, reqLogger, newStatus)
+	updateStatusError := UpdateStatus(ctx, instance, r, newStatus)
 	if updateStatusError != nil {
-		reqLogger.Error(updateStatusError, "failed to update the status")
-		return LogBannerAndReturn(reconcile.Result{Requeue: true}, updateStatusError, reqLogger)
+		log.Error(updateStatusError, "failed to update the status")
+		return LogBannerAndReturn(reconcile.Result{Requeue: true}, updateStatusError)
 	}
-	return LogBannerAndReturn(reconcile.Result{}, nil, reqLogger)
+	return LogBannerAndReturn(reconcile.Result{}, nil)
 }
