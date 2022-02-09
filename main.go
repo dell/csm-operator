@@ -70,9 +70,9 @@ func init() {
 }
 
 func printVersion(log *zap.SugaredLogger) {
-	log.Info("Operator Version", "Version", core.SemVer, "Commit ID", core.CommitSha32, "Commit SHA", string(core.CommitTime.Format(time.RFC1123)))
-	log.Info(fmt.Sprintf("Go Version: %s", osruntime.Version()))
-	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH))
+	log.Debugw("Operator Version", "Version", core.SemVer, "Commit ID", core.CommitSha32, "Commit SHA", string(core.CommitTime.Format(time.RFC1123)))
+	log.Debugf("Go Version: %s", osruntime.Version())
+	log.Debugf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH)
 }
 
 func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {

@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/resources/configmap"
 	"github.com/dell/csm-operator/pkg/resources/csidriver"
 	"github.com/dell/csm-operator/pkg/resources/daemonset"
@@ -34,8 +35,6 @@ import (
 	"github.com/dell/csm-operator/pkg/resources/rbac"
 	"github.com/dell/csm-operator/pkg/resources/serviceaccount"
 	"github.com/dell/csm-operator/pkg/utils"
-	//"github.com/go-logr/logr"
-	"github.com/dell/csm-operator/pkg/logger"
 	"go.uber.org/zap"
 
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
@@ -123,12 +122,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	r.trcId = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcId
 	_, log := logger.GetNewContextWithLogger(name)
+
 	log.Info("################Starting Reconcile##############")
-	//log := logger.GetLogger(ctx)
 	csm := new(csmv1.ContainerStorageModule)
 
 	log.Infow("Namespace", req.Namespace, "Name", req.Name, "Attempt", r.GetUpdateCount())
-	log.Infow(fmt.Sprintf("Reconciling %s ", "csm"), "request", req.String())
+	log.Debugw(fmt.Sprintf("Reconciling %s ", "csm"), "request", req.String())
 
 	// Fetch the ContainerStorageModuleReconciler instance
 	err := r.Client.Get(ctx, req.NamespacedName, csm)
@@ -192,7 +191,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	newStatus := csm.GetCSMStatus()
 	_, err = utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
-	if err == nil {
+	if err != nil {
 		log.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
@@ -223,20 +222,19 @@ func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Pre
 }
 
 func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interface{}, obj interface{}) {
-	//log := logger.GetLogger(ctx)
-
 	old, _ := oldObj.(*appsv1.Deployment)
 	d, _ := obj.(*appsv1.Deployment)
 	name := d.Spec.Template.Labels["csm"]
 
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+
 	ctx, log := logger.GetNewContextWithLogger(key)
 	if name == "" {
-		log.Infow("ignore deployment not labeled for csm", "name", d.Name)
+		log.Debugw("ignore deployment not labeled for csm", "name", d.Name)
 		return
 	}
 
-	log.Infow("deployment modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+	log.Debugw("deployment modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
 	ready := d.Status.ReadyReplicas
@@ -250,7 +248,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	log.Infow("deployment", "numberUnavailable", numberUnavailable)
 
 	ns := d.Namespace
-	log.Infow("deployment", "namespace", ns, "name", name)
+	log.Debugw("deployment", "namespace", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
 		Namespace: ns,
@@ -309,14 +307,14 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	d, _ := obj.(*appsv1.DaemonSet)
 	name := d.Spec.Template.Labels["csm"]
 	if name == "" {
-		r.Log.Infow("ignore daemonset not labeled for csm", "name", d.Name)
+		r.Log.Debugw("ignore daemonset not labeled for csm", "name", d.Name)
 		return
 	}
 
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
-	log.Infow("daemonset modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+	log.Debugw("daemonset modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
 	desired := d.Status.DesiredNumberScheduled
 	available := d.Status.NumberAvailable
 	ready := d.Status.NumberReady
@@ -334,7 +332,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	}
 
 	ns := d.Namespace
-	r.Log.Infow("daemonset ", "ns", ns, "name", name)
+	r.Log.Debugw("daemonset ", "ns", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
 		Namespace: ns,
@@ -442,7 +440,6 @@ func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, 
 // SyncCSM - Sync the current installation - this can lead to a create or update
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 
-	//log := logger.GetLogger(ctx)
 	name := cr.Name + "-" + r.trcId
 	_, log := logger.GetNewContextWithLogger(name)
 
