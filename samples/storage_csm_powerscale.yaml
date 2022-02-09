@@ -126,6 +126,15 @@ spec:
       - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
         value: "0777"
 
+      # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
+      # Install the 'external-health-monitor' sidecar accordingly.
+      # Allowed values:
+      #   true: enable checking of health condition of CSI volumes
+      #   false: disable checking of health condition of CSI volumes
+      # Default value: false
+      - name: X_CSI_HEALTH_MONITOR_ENABLED
+        value: "false"
+
     node:
       envs:
       # X_CSI_MAX_VOLUMES_PER_NODE: Specify default value for maximum number of volumes that controller can publish to the node.
@@ -146,9 +155,21 @@ spec:
       - name: X_CSI_ALLOWED_NETWORKS
         value: ""
 
+      # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
+      # Install the 'external-health-monitor' sidecar accordingly.
+      # Allowed values:
+      #   true: enable checking of health condition of CSI volumes
+      #   false: disable checking of health condition of CSI volumes
+      # Default value: false
+      - name: X_CSI_HEALTH_MONITOR_ENABLED
+        value: "false"
+
     sideCars:
       - name: provisioner
         args: ["--volume-name-prefix=csipscale"]
+      - name: external-health-monitor
+        enabled: false
+        args: ["--monitor-interval=60s"]
 
   modules:
     # Authorization: enable csm-authorization for RBAC

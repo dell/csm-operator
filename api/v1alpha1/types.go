@@ -79,6 +79,8 @@ const (
 	Resizer = "resizer"
 	// Sdcmonitor - placeholder for constant
 	Sdcmonitor = "sdc-monitor"
+	// Externalhealthmonitor - placeholder for constant
+	Externalhealthmonitor = "external-health-monitor"
 
 	// Succeeded - constant
 	Succeeded CSMOperatorConditionType = "Succeeded"
@@ -186,7 +188,7 @@ type ContainerTemplate struct {
 
 	// Enabled is used to indicate wether or not to deploy a module
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enabled"
-	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Enabled *bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 
 	// Image is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Image"
