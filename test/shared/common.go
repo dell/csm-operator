@@ -84,6 +84,7 @@ func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 	return driverObj
 }
 
+// MakeSecret  returns a driver pre-req secret array-config
 func MakeSecret(name, ns, configVersion string) *corev1.Secret {
 	data := map[string][]byte{
 		"config": []byte("csm"),
