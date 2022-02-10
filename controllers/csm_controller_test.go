@@ -124,11 +124,14 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
 	configVersion := shared.ConfigVersion
 	csm := shared.MakeCSM(name, ns, configVersion)
+	sec := shared.MakeSecret(name, ns, configVersion)
+	err := suite.fakeClient.Create(context.Background(), sec)
+	assert.Nil(suite.T(), err)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	csm.Annotations[configVersionKey] = configVersion
 
-	err := suite.fakeClient.Create(context.Background(), &csm)
+	err = suite.fakeClient.Create(context.Background(), &csm)
 	assert.Nil(suite.T(), err)
 }
 

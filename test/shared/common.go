@@ -83,3 +83,12 @@ func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 
 	return driverObj
 }
+
+func MakeSecret(name, ns, configVersion string) *corev1.Secret {
+	data := map[string][]byte{
+		"config": []byte("csm"),
+	}
+	object := metav1.ObjectMeta{Name: name + "-creds", Namespace: ns}
+	secret := &corev1.Secret{Data: data, ObjectMeta: object}
+	return secret
+}
