@@ -536,26 +536,26 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update CSIDriver
-	err = csidriver.SyncCSIDriver(ctx, driver, r.Client)
+	err = csidriver.SyncCSIDriver(ctx, driver, r.Client, cr.Name, r.trcID)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update ConfigMap
-	err = configmap.SyncConfigMap(ctx, configMap, r.Client)
+	err = configmap.SyncConfigMap(ctx, configMap, r.Client, cr.Name, r.trcID)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update Deployment
-	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.Client, cr.Name, r.trcID)
+	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, cr.Name, r.trcID)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update DeamonSet
 
-	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.Client, cr.Name, r.trcID)
+	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.K8sClient, cr.Name, r.trcID)
 	if err != nil {
 		return err
 	}

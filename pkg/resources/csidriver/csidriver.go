@@ -12,18 +12,21 @@ import (
 )
 
 // SyncCSIDriver - Syncs a CSI Driver object
-func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.Client) error {
-	log := logger.GetLogger(ctx)
+func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.Client, csmName string, trcID string) error {
+	//log := logger.GetLogger(ctx)
+	name := csmName + "-" + trcID
+	_, log := logger.GetNewContextWithLogger(name)
+
 	found := &storagev1.CSIDriver{}
 	err := client.Get(ctx, types.NamespacedName{Name: csi.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new CSIDriver", "Name:", csi.Name)
+		log.Infow("Creating a new CSIDriver", "Name:", csi.Name)
 		err = client.Create(ctx, csi)
 		if err != nil {
 			return err
 		}
 	} else if err != nil {
-		log.Info("Unknown error.", "Error", err.Error())
+		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
 	} else {
 		isUpdateRequired := false
@@ -41,7 +44,7 @@ func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.
 			if err != nil {
 				log.Error(err, "Failed to update CSIDriver object")
 			} else {
-				log.Info("Successfully updated CSIDriver object", "Name:", csi.Name)
+				log.Infow("Successfully updated CSIDriver object", "Name:", csi.Name)
 			}
 		}
 	}
