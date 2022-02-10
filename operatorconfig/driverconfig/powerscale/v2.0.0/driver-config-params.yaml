@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test-isilon-config-params
-  namespace: test-isilon
-data:
-  driver-config-params.yaml: |
-    CSI_LOG_LEVEL: debug
