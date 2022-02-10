@@ -1,7 +1,7 @@
 # Test for CSM Operator
 This is the test directory for CSM operator. 
 
-`config` directory includes yaml files consumed by testing cases. For example `driverconfig/powerscale/v2.0.0/node.yaml` is consumed by `pkg/drivers/commonconfig_test.go`.
+`config` directory includes yaml files consumed by testing cases. For example `driverconfig/powerscale/v2.1.0/node.yaml` is consumed by `pkg/drivers/commonconfig_test.go`.
 
 `shared/clientgoclient` implements kubernetes client from client-go package. It has a getter function for each API version like `AppsV1Interface` or `CoreV1Interface`. `AppsV1Interface` is the one that we need as it has getter function for `daemonsetInterface`. Then this `daemonsetInterface` has all `Create`, `Apply`, `Delete` etc. methods that we will be using to manipulate Kubernetes runtime objects.
 
