@@ -37,6 +37,7 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 				return fmt.Errorf("%s is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
 			}
 			skipCertValid = b
+			fmt.Printf("debug skipCertValid 1 %t\n", skipCertValid)
 		}
 		if env.Name == "CERT_SECRET_COUNT" {
 			d, err := strconv.ParseInt(env.Value, 0, 8)
@@ -48,21 +49,26 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 	}
 
 	secrets := []string{config}
+
+	fmt.Printf("debug skipCertValid  2 %t\n", skipCertValid)
+	fmt.Printf("debug certCount %d\n", certCount)
+	fmt.Printf("debug secrets %d\n", len(secrets))
+
 	if !skipCertValid {
 		for i := 0; i < certCount; i++ {
 			secrets = append(secrets, fmt.Sprintf("%s-certs-%d", cr.Name, i))
 		}
+	}
 
-		for _, name := range secrets {
-			found := &corev1.Secret{}
-			err := r.GetClient().Get(ctx, types.NamespacedName{Name: name,
-				Namespace: cr.GetNamespace()}, found)
-			if err != nil {
-				if errors.IsNotFound(err) {
-					return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
-				}
-				log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
+	for _, name := range secrets {
+		found := &corev1.Secret{}
+		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name,
+			Namespace: cr.GetNamespace()}, found)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("failed to find secret %s", name)
 			}
+			log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
 		}
 	}
 

@@ -12,9 +12,9 @@ import (
 )
 
 // SyncDaemonset - Syncs a daemonset object
-func SyncDaemonset(ctx context.Context, daemonset *applyv1.DaemonSetApplyConfiguration, client client.Client, csmName string, trcId string) error {
+func SyncDaemonset(ctx context.Context, daemonset *applyv1.DaemonSetApplyConfiguration, client client.Client, csmName string, trcID string) error {
 	//log := logger.GetLogger(ctx)
-	name := csmName + "-" + trcId
+	name := csmName + "-" + trcID
 	_, log := logger.GetNewContextWithLogger(name)
 
 	log.Infow("Sync DaemonSet:", "name", *daemonset.ObjectMetaApplyConfiguration.Name)

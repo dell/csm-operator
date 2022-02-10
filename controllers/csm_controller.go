@@ -66,7 +66,7 @@ type ContainerStorageModuleReconciler struct {
 	Log           *zap.SugaredLogger
 	Config        utils.OperatorConfig
 	updateCount   int32
-	trcId         string
+	trcID         string
 	EventRecorder record.EventRecorder
 }
 
@@ -119,8 +119,8 @@ var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIDriverConfigVers
 // Reconcile - main loop
 func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.IncrUpdateCount()
-	r.trcId = fmt.Sprintf("%d", r.GetUpdateCount())
-	name := req.Name + "-" + r.trcId
+	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
+	name := req.Name + "-" + r.trcID
 	_, log := logger.GetNewContextWithLogger(name)
 
 	log.Info("################Starting Reconcile##############")
@@ -225,12 +225,10 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	old, _ := oldObj.(*appsv1.Deployment)
 	d, _ := obj.(*appsv1.Deployment)
 	name := d.Spec.Template.Labels["csm"]
-
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
-
 	ctx, log := logger.GetNewContextWithLogger(key)
 	if name == "" {
-		log.Debugw("ignore deployment not labeled for csm", "name", d.Name)
+		r.Log.Info("ignore deployment not labeled for csm", "name", d.Name)
 		return
 	}
 
@@ -440,7 +438,7 @@ func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, 
 // SyncCSM - Sync the current installation - this can lead to a create or update
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 
-	name := cr.Name + "-" + r.trcId
+	name := cr.Name + "-" + r.trcID
 	_, log := logger.GetNewContextWithLogger(name)
 
 	var (
@@ -550,14 +548,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update Deployment
-	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.Client, cr.Name, r.trcId)
+	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.Client, cr.Name, r.trcID)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update DeamonSet
 
-	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.Client, cr.Name, r.trcId)
+	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.Client, cr.Name, r.trcID)
 	if err != nil {
 		return err
 	}

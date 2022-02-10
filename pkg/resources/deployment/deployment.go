@@ -18,9 +18,9 @@ import (
 var SleepTime = 10 * time.Second
 
 // SyncDeployment - Syncs a Deployment for controller
-func SyncDeployment(ctx context.Context, deployment *applyv1.DeploymentApplyConfiguration, client client.Client, csmName string, trcId string) error {
+func SyncDeployment(ctx context.Context, deployment *applyv1.DeploymentApplyConfiguration, client client.Client, csmName string, trcID string) error {
 	//log := logger.GetLogger(ctx)
-	name := csmName + "-" + trcId
+	name := csmName + "-" + trcID
 	_, log := logger.GetNewContextWithLogger(name)
 
 	log.Infow("Sync Deployment:", "name", *deployment.ObjectMetaApplyConfiguration.Name)

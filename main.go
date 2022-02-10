@@ -180,7 +180,7 @@ func main() {
 
 	logType := logger.DevelopmentLogLevel
 	logger.SetLoggerLevel(logType)
-	_, log := logger.GetNewContextWithLogger("0")
+	_, log := logger.GetNewContextWithLogger("main")
 	log.Infof("Version : %s", logType)
 
 	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
