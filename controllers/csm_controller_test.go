@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/test/shared"
 	"github.com/dell/csm-operator/test/shared/clientgoclient"
@@ -76,11 +77,16 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 		ConfigDirectory: configDir,
 	}
 
+	logType := logger.DevelopmentLogLevel
+	logger.SetLoggerLevel(logType)
+	_, log := logger.GetNewContextWithLogger("0")
+	log.Infof("Version : %s", logType)
+
 	reconciler = &ContainerStorageModuleReconciler{
 		Client:        suite.fakeClient,
 		K8sClient:     suite.k8sClient,
 		Scheme:        scheme.Scheme,
-		Log:           ctrl.Log,
+		Log:           log,
 		Config:        operatorConfig,
 		EventRecorder: record.NewFakeRecorder(100),
 	}
@@ -118,11 +124,14 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
 	configVersion := shared.ConfigVersion
 	csm := shared.MakeCSM(name, ns, configVersion)
+	sec := shared.MakeSecret(name, ns, configVersion)
+	err := suite.fakeClient.Create(context.Background(), sec)
+	assert.Nil(suite.T(), err)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	csm.Annotations[configVersionKey] = configVersion
 
-	err := suite.fakeClient.Create(context.Background(), &csm)
+	err = suite.fakeClient.Create(context.Background(), &csm)
 	assert.Nil(suite.T(), err)
 }
 

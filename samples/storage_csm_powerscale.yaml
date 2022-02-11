@@ -167,6 +167,7 @@ spec:
     sideCars:
       - name: provisioner
         args: ["--volume-name-prefix=csipscale"]
+      # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
