@@ -12,6 +12,7 @@ You may obtain a copy of the License at
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -30,16 +31,17 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/controllers"
 	"github.com/dell/csm-operator/core"
 	k8sClient "github.com/dell/csm-operator/k8s"
+	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	"go.uber.org/zap"
 	"k8s.io/client-go/util/workqueue"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -65,17 +67,16 @@ func init() {
 	utilruntime.Must(csmv1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
+
 }
 
-var log = logf.Log.WithName("cmd")
-
-func printVersion() {
-	log.Info("Operator Version", "Version", core.SemVer, "Commit ID", core.CommitSha32, "Commit SHA", string(core.CommitTime.Format(time.RFC1123)))
-	log.Info(fmt.Sprintf("Go Version: %s", osruntime.Version()))
-	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH))
+func printVersion(log *zap.SugaredLogger) {
+	log.Debugw("Operator Version", "Version", core.SemVer, "Commit ID", core.CommitSha32, "Commit SHA", string(core.CommitTime.Format(time.RFC1123)))
+	log.Debugf("Go Version: %s", osruntime.Version())
+	log.Debugf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH)
 }
 
-func getOperatorConfig() utils.OperatorConfig {
+func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	cfg := utils.OperatorConfig{}
 
 	isOpenShift, err := k8sClient.IsOpenShift()
@@ -111,7 +112,7 @@ func getOperatorConfig() utils.OperatorConfig {
 	}
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
 	if err != nil {
-		log.Info(fmt.Sprintf("kubeVersion  %s", kubeVersion))
+		log.Info(fmt.Sprintf("currentVersion is %f", currentVersion))
 	}
 	// intialise variable
 	k8sPath := ""
@@ -120,9 +121,9 @@ func getOperatorConfig() utils.OperatorConfig {
 		k8sPath = fmt.Sprintf("/driverconfig/common/default.yaml")
 	} else if currentVersion > maxVersion {
 		log.Info(fmt.Sprintf("Installed k8s version %s is greater than the maximum supported k8s version %f , hence using the latest available configurations", kubeVersion, maxVersion))
-		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
 	} else {
 		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
+		log.Infof("version %s supported version is %f", kubeVersion, minVersion)
 	}
 
 	// Get the environment variable config dir
@@ -147,7 +148,7 @@ func getOperatorConfig() utils.OperatorConfig {
 	cfg.ConfigDirectory = configDir
 	buf, err := ioutil.ReadFile(k8sPath)
 	if err != nil {
-		panic(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
+		log.Info(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
 	}
 
 	var imageConfig utils.K8sImagesConfig
@@ -170,17 +171,21 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	opts := zap.Options{
+	opts := crzap.Options{
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	//logType := logger.DevelopmentLogLevel
+	//logger.SetLoggerLevel(logType)
+	//_, log := logger.GetNewContextWithLogger("main")
+	log := logger.GetLogger(context.Background())
 
-	printVersion()
-	operatorConfig := getOperatorConfig()
+	//ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
 
+	printVersion(log)
+	operatorConfig := getOperatorConfig(log)
 	restConfig := ctrl.GetConfigOrDie()
 
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
@@ -200,7 +205,7 @@ func main() {
 	if err = (&controllers.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),
 		K8sClient:     kubernetes.NewForConfigOrDie(restConfig),
-		Log:           ctrl.Log.WithName("controllers").WithName("ContainerStorageModule"),
+		Log:           log,
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("csm"),
 		Config:        operatorConfig,

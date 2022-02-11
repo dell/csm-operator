@@ -3,7 +3,7 @@ package rbac
 import (
 	"context"
 
-	"github.com/go-logr/logr"
+	"github.com/dell/csm-operator/pkg/logger"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -11,11 +11,12 @@ import (
 )
 
 // SyncClusterRole - Syncs a ClusterRole
-func SyncClusterRole(ctx context.Context, clusterRole *rbacv1.ClusterRole, client client.Client, reqLogger logr.Logger) (*rbacv1.ClusterRole, error) {
+func SyncClusterRole(ctx context.Context, clusterRole *rbacv1.ClusterRole, client client.Client) (*rbacv1.ClusterRole, error) {
+	log := logger.GetLogger(ctx)
 	found := &rbacv1.ClusterRole{}
 	err := client.Get(ctx, types.NamespacedName{Name: clusterRole.Name, Namespace: clusterRole.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new ClusterRole", "Name", clusterRole.Name)
+		log.Info("Creating a new ClusterRole", "Name", clusterRole.Name)
 		err = client.Create(ctx, clusterRole)
 		if err != nil {
 			return nil, err
@@ -26,10 +27,10 @@ func SyncClusterRole(ctx context.Context, clusterRole *rbacv1.ClusterRole, clien
 			return nil, err
 		}
 	} else if err != nil {
-		reqLogger.Info("Unknown error.", "Error", err.Error())
+		log.Info("Unknown error.", "Error", err.Error())
 		return nil, err
 	} else {
-		reqLogger.Info("Updating ClusterRole", "Name:", clusterRole.Name)
+		log.Info("Updating ClusterRole", "Name:", clusterRole.Name)
 		err = client.Update(ctx, clusterRole)
 		if err != nil {
 			return nil, err

@@ -118,13 +118,23 @@ spec:
 
       containers:
         - name: resizer
+<<<<<<< HEAD
           image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
+=======
+          image: k8s.gcr.io/sig-storage/csi-resizer:v1.3.0
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
             - "--leader-election"
             - "--timeout=120s"
             - "--v=5"
+<<<<<<< HEAD
+=======
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
@@ -139,6 +149,32 @@ spec:
             - "--v=5"
             - "--leader-election"
             - "--timeout=180s"
+<<<<<<< HEAD
+=======
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
+        - name: external-health-monitor
+          image: k8s.gcr.io/sig-storage/csi-external-health-monitor-controller:v0.4.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=5"
+            - "--leader-election"
+            - "--enable-node-watcher=false"
+            - "--monitor-interval=60s"
+            - "--timeout=180s"
+            - "--http-endpoint=:8080"
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
@@ -146,7 +182,11 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
+<<<<<<< HEAD
           image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
+=======
+          image: k8s.gcr.io/sig-storage/csi-provisioner:v3.0.0
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -158,6 +198,12 @@ spec:
             - "--feature-gates=Topology=true"
             - "--leader-election"
             - "--extra-create-metadata"
+<<<<<<< HEAD
+=======
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
@@ -166,7 +212,11 @@ spec:
               mountPath: /var/run/csi
         - name: snapshotter
           #image: quay.io/k8scsi/csi-snapshotter:v1.0.0
+<<<<<<< HEAD
           image: k8s.gcr.io/sig-storage/csi-snapshotter:v4.1.1
+=======
+          image: k8s.gcr.io/sig-storage/csi-snapshotter:v4.2.1
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -174,6 +224,12 @@ spec:
             - "--v=5"
             - "--snapshot-name-prefix=snapshot"
             - "--leader-election"
+<<<<<<< HEAD
+=======
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
@@ -181,11 +237,21 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
+<<<<<<< HEAD
           image: dellemc/csi-isilon:v2.0.0
+=======
+          image: dellemc/csi-isilon:v2.1.0
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
           imagePullPolicy: IfNotPresent
           command: [ "/csi-isilon" ]
           args:
             - "--leader-election"
+<<<<<<< HEAD
+=======
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
           env:
             - name: CSI_ENDPOINT
@@ -194,6 +260,11 @@ spec:
               value: controller
             - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
               value: "true"
+<<<<<<< HEAD
+=======
+            - name: X_CSI_ISI_AUTH_TYPE
+              value: "0"
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
             - name: X_CSI_VERBOSE
               value: "1"
             - name: X_CSI_ISI_PORT
@@ -211,7 +282,13 @@ spec:
             - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
               value: "0777"
             - name: X_CSI_ISI_NO_PROBE_ON_START
+<<<<<<< HEAD
               value: "false"    
+=======
+              value: "false"
+            - name: X_CSI_HEALTH_MONITOR_ENABLED
+              value: "false"
+>>>>>>> 84b4ffc23432dbc72969b58faada3870df017c7e
             - name: X_CSI_NODE_NAME
               valueFrom:
                 fieldRef:

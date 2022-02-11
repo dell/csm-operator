@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"context"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
@@ -84,10 +85,10 @@ func TestGetController(t *testing.T) {
 }
 
 func TestGetNode(t *testing.T) {
-
+	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetNode(tt.csm, config, tt.driverName, tt.filename)
+			_, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {

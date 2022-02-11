@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
-	"github.com/go-logr/logr"
 	goYAML "github.com/go-yaml/yaml"
 	//appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -70,8 +69,8 @@ const (
 	DefaultImagePullPolicy = "IfNotPresent"
 )
 
-// SplitYAML divides a big bytes of yaml files in individual yaml files.
-func SplitYAML(gaintYAML []byte) ([][]byte, error) {
+// SplitYaml divides a big bytes of yaml files in individual yaml files.
+func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 	decoder := goYAML.NewDecoder(bytes.NewReader(gaintYAML))
 	nullByte := []byte{110, 117, 108, 108, 10} // byte returned by  goYAML when yaml is empty
 
@@ -96,25 +95,25 @@ func SplitYAML(gaintYAML []byte) ([][]byte, error) {
 }
 
 // UpdateSideCarApply -
-func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c acorev1.ContainerApplyConfiguration) acorev1.ContainerApplyConfiguration {
+func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
 	for _, side := range sideCars {
 		if *c.Name == side.Name {
 			if side.Image != "" {
 				*c.Image = string(side.Image)
 			}
 			if side.ImagePullPolicy != "" {
-				*c.Image = string(side.ImagePullPolicy)
+				*c.ImagePullPolicy = side.ImagePullPolicy
 			}
-
-			//c.Env = ReplaceAllEnvs(c.Env, side.Envs)
-			//c.Args = ReplaceAllArgs(c.Args, side.Args)
+			emptyEnv := make([]corev1.EnvVar, 0)
+			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, side.Envs)
+			c.Args = ReplaceAllArgs(c.Args, side.Args)
 		}
 	}
-	return c
+	return
 }
 
-// ReplaceALLContainerImageApply -
-func ReplaceALLContainerImageApply(img K8sImagesConfig, c acorev1.ContainerApplyConfiguration) acorev1.ContainerApplyConfiguration {
+// ReplaceAllContainerImageApply -
+func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerApplyConfiguration) {
 	switch *c.Name {
 	case csmv1.Provisioner:
 		*c.Image = img.Images.Provisioner
@@ -126,19 +125,19 @@ func ReplaceALLContainerImageApply(img K8sImagesConfig, c acorev1.ContainerApply
 		*c.Image = img.Images.Registrar
 	case csmv1.Resizer:
 		*c.Image = img.Images.Resizer
-		//case csmv1.Externalhealthmonitor:
-		//	*c.Image = img.Images.Externalhealthmonitor
+	case csmv1.Externalhealthmonitor:
+		*c.Image = img.Images.Externalhealthmonitor
 	}
-	return c
+	return
 }
 
 // ReplaceAllApplyCustomEnvs -
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
-	crEnv []corev1.EnvVar,
+	commonEnv []corev1.EnvVar,
 	nrEnv []corev1.EnvVar) []acorev1.EnvVarApplyConfiguration {
 	newEnv := make([]acorev1.EnvVarApplyConfiguration, 0)
 	temp := make(map[string]string)
-	for _, update := range crEnv {
+	for _, update := range commonEnv {
 		if update.Value == "" {
 			update.Value = "NA"
 		}
@@ -164,8 +163,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 			newEnv = append(newEnv, e)
 		} else {
 			e := acorev1.EnvVarApplyConfiguration{
-				Name:  old.Name,
-				Value: old.Value,
+				Name: old.Name,
 			}
 			if old.ValueFrom != nil {
 				pRef := old.ValueFrom.FieldRef
@@ -180,7 +178,25 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 						},
 					}
 				}
+				sRef := old.ValueFrom.SecretKeyRef
+				if sRef != nil {
+					key := *sRef.Key
+					e = acorev1.EnvVarApplyConfiguration{
+						Name: old.Name,
+						ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+							SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+								Key: &key,
+							},
+						},
+					}
+				}
+			} else {
+				e = acorev1.EnvVarApplyConfiguration{
+					Name:  old.Name,
+					Value: old.Value,
+				}
 			}
+
 			newEnv = append(newEnv, e)
 		}
 	}
@@ -222,9 +238,9 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	return YamlString
 }
 
-// GetDriverYAML -
-func GetDriverYAML(YamlString, kind string) (interface{}, error) {
-	bufs, err := SplitYAML([]byte(YamlString))
+// GetDriverYaml -
+func GetDriverYaml(YamlString, kind string) (interface{}, error) {
+	bufs, err := SplitYaml([]byte(YamlString))
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +297,6 @@ func GetDriverYAML(YamlString, kind string) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		return NodeYAML{
 			DaemonSetApplyConfig: dsac,
 			Rbac:                 rbac,
@@ -292,8 +307,8 @@ func GetDriverYAML(YamlString, kind string) (interface{}, error) {
 }
 
 // LogBannerAndReturn -
-func LogBannerAndReturn(result reconcile.Result, err error, reqLogger logr.Logger) (reconcile.Result, error) {
-	reqLogger.Info("################End Reconcile##############")
+func LogBannerAndReturn(result reconcile.Result, err error) (reconcile.Result, error) {
+	fmt.Println("################End Reconcile##############")
 	return result, err
 }
 

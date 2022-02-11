@@ -13,7 +13,7 @@ import (
 
 const (
 	// ConfigVersion - used in all unit test
-	ConfigVersion string = "v2.0.0"
+	ConfigVersion string = "v2.1.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
@@ -82,4 +82,14 @@ func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 	}
 
 	return driverObj
+}
+
+// MakeSecret  returns a driver pre-req secret array-config
+func MakeSecret(name, ns, configVersion string) *corev1.Secret {
+	data := map[string][]byte{
+		"config": []byte("csm"),
+	}
+	object := metav1.ObjectMeta{Name: name + "-creds", Namespace: ns}
+	secret := &corev1.Secret{Data: data, ObjectMeta: object}
+	return secret
 }

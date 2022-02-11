@@ -13,7 +13,7 @@ rules:
     resources: ["persistentvolumes"]
     verbs: ["create", "delete", "get", "list", "watch", "update"]
   - apiGroups: [""]
-    resources: ["persistentvolumeclaims"]
+    resources: ["persistentvolumesclaims"]
     verbs: ["get", "list", "watch", "update"]
   - apiGroups: [""]
     resources: ["events"]
@@ -63,6 +63,8 @@ spec:
         app: <DriverDefaultReleaseName>-node
     spec:
       serviceAccount: <DriverDefaultReleaseName>-node
+      #nodeSelector:
+      #tolerations:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       containers:
@@ -75,7 +77,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-isilon:v2.0.0
+          image: dellemc/csi-isilon:v2.1.0
           imagePullPolicy: IfNotPresent
           env:
             - name: CSI_ENDPOINT
@@ -116,6 +118,8 @@ spec:
               value: /isilon-configs/config
             - name: X_CSI_MAX_VOLUMES_PER_NODE
               value: "0"
+            - name: X_CSI_HEALTH_MONITOR_ENABLED
+              value: "false"
           volumeMounts:
             - name: driver-path
               mountPath: /var/lib/kubelet/plugins/csi-isilon
@@ -134,7 +138,7 @@ spec:
             - name: csi-isilon-config-params
               mountPath: /csi-isilon-config-params
         - name: registrar
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.3.0
+          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.4.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
