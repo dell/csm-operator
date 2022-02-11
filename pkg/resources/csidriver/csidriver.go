@@ -5,24 +5,25 @@ import (
 
 	storagev1 "k8s.io/api/storage/v1"
 
-	"github.com/go-logr/logr"
+	"github.com/dell/csm-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// SyncCsiDriver - Syncs a CSI Driver object
-func SyncCsiDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.Client, reqLogger logr.Logger) error {
+// SyncCSIDriver - Syncs a CSI Driver object
+func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.Client) error {
+	log := logger.GetLogger(ctx)
 	found := &storagev1.CSIDriver{}
 	err := client.Get(ctx, types.NamespacedName{Name: csi.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new CSIDriver", "Name:", csi.Name)
+		log.Infow("Creating a new CSIDriver", "Name:", csi.Name)
 		err = client.Create(ctx, csi)
 		if err != nil {
 			return err
 		}
 	} else if err != nil {
-		reqLogger.Info("Unknown error.", "Error", err.Error())
+		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
 	} else {
 		isUpdateRequired := false
@@ -38,9 +39,9 @@ func SyncCsiDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.
 			found.OwnerReferences = csi.OwnerReferences
 			err = client.Update(ctx, found)
 			if err != nil {
-				reqLogger.Error(err, "Failed to update CSIDriver object")
+				log.Error(err, "Failed to update CSIDriver object")
 			} else {
-				reqLogger.Info("Successfully updated CSIDriver object", "Name:", csi.Name)
+				log.Infow("Successfully updated CSIDriver object", "Name:", csi.Name)
 			}
 		}
 	}

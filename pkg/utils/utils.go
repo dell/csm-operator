@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
-	"github.com/go-logr/logr"
 	goYAML "github.com/go-yaml/yaml"
 	//appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -298,7 +297,6 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		return NodeYAML{
 			DaemonSetApplyConfig: dsac,
 			Rbac:                 rbac,
@@ -309,8 +307,8 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 }
 
 // LogBannerAndReturn -
-func LogBannerAndReturn(result reconcile.Result, err error, reqLogger logr.Logger) (reconcile.Result, error) {
-	reqLogger.Info("################End Reconcile##############")
+func LogBannerAndReturn(result reconcile.Result, err error) (reconcile.Result, error) {
+	fmt.Println("################End Reconcile##############")
 	return result, err
 }
 
