@@ -1,12 +1,14 @@
 package drivers
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -15,10 +17,12 @@ import (
 )
 
 // GetController get controller yaml
-func GetController(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
+func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
+	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
+		log.Errorw("GetController failed", "Error", err.Error())
 		return nil, err
 	}
 
@@ -26,6 +30,7 @@ func GetController(cr csmv1.ContainerStorageModule, operatorConfig utils.Operato
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "Deployment")
 	if err != nil {
+		log.Errorw("GetController get Deployment failed", "Error", err.Error())
 		return nil, err
 	}
 
@@ -93,6 +98,7 @@ func GetController(cr csmv1.ContainerStorageModule, operatorConfig utils.Operato
 		if *v.Name == "certs" {
 			newV, err := getApplyCertVolume(cr)
 			if err != nil {
+				log.Errorw("GetController spec template volumes", "Error", err.Error())
 				return nil, err
 			}
 			controllerYAML.Deployment.Spec.Template.Spec.Volumes[i] = *newV
@@ -108,11 +114,12 @@ func GetController(cr csmv1.ContainerStorageModule, operatorConfig utils.Operato
 }
 
 // GetNode get node yaml
-func GetNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string) (*utils.NodeYAML, error) {
-
+func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string) (*utils.NodeYAML, error) {
+	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
+		log.Errorw("GetNode failed", "Error", err.Error())
 		return nil, err
 	}
 
@@ -120,6 +127,7 @@ func GetNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfi
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
 	if err != nil {
+		log.Errorw("GetNode Daemonset failed", "Error", err.Error())
 		return nil, err
 	}
 
@@ -153,11 +161,6 @@ func GetNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfi
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
-			// for _, e := range containers[i].Env {
-			// 	if e.Value != nil {
-			// 		//Log.Info("resolved 2 ", "env", *e.Name, "value", *e.Value)
-			// 	}
-			// }
 			if string(cr.Spec.Driver.Common.Image) != "" {
 				image := string(cr.Spec.Driver.Common.Image)
 				containers[i].Image = &image
@@ -176,6 +179,7 @@ func GetNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfi
 		if *v.Name == "certs" {
 			newV, err := getApplyCertVolume(cr)
 			if err != nil {
+				log.Errorw("GetNode apply cert Volume failed", "Error", err.Error())
 				return nil, err
 			}
 			nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes[i] = *newV
@@ -191,15 +195,18 @@ func GetNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfi
 }
 
 // GetConfigMap get configmap
-func GetConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
+func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
+	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 
 	if _, err := os.Stat(configMapPath); os.IsNotExist(err) {
+		log.Errorw("GetConfigMap failed", "Error", err.Error())
 		return nil, err
 	}
 
 	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
+		log.Errorw("GetConfigMap failed", "Error", err.Error())
 		return nil, err
 	}
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
@@ -207,6 +214,7 @@ func GetConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.Operator
 	var configMap corev1.ConfigMap
 	err = yaml.Unmarshal([]byte(YamlString), &configMap)
 	if err != nil {
+		log.Errorw("GetConfigMap yaml marshall failed", "Error", err.Error())
 		return nil, err
 	}
 
@@ -217,24 +225,25 @@ func GetConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.Operator
 			}
 			break
 		}
-
 	}
-
 	return &configMap, nil
 
 }
 
 // GetCSIDriver get driver
-func GetCSIDriver(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
+func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
+	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
+		log.Errorw("GetCSIDriver failed", "Error", err.Error())
 		return nil, err
 	}
 
 	var csidriver storagev1.CSIDriver
 	err = yaml.Unmarshal(buf, &csidriver)
 	if err != nil {
+		log.Errorw("GetCSIDriver yaml marshall failed", "Error", err.Error())
 		return nil, err
 	}
 
