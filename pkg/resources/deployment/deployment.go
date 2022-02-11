@@ -17,10 +17,8 @@ import (
 var SleepTime = 10 * time.Second
 
 // SyncDeployment - Syncs a Deployment for controller
-func SyncDeployment(ctx context.Context, deployment *appsv1.DeploymentApplyConfiguration, k8sClient kubernetes.Interface, csmName string, trcID string) error {
-	//log := logger.GetLogger(ctx)
-	name := csmName + "-" + trcID
-	_, log := logger.GetNewContextWithLogger(name)
+func SyncDeployment(ctx context.Context, deployment *appsv1.DeploymentApplyConfiguration, k8sClient kubernetes.Interface, csmName string) error {
+	log := logger.GetLogger(ctx)
 
 	log.Infow("Sync Deployment:", "name", *deployment.ObjectMetaApplyConfiguration.Name)
 

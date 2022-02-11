@@ -12,6 +12,7 @@ You may obtain a copy of the License at
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -118,12 +119,12 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	if currentVersion < minVersion {
 		log.Info(fmt.Sprintf("Installed k8s version %s is less than the minimum supported k8s version %f , hence using the default configurations", kubeVersion, minVersion))
 		k8sPath = fmt.Sprintf("/driverconfig/common/default.yaml")
-	} else if currentVersion > maxVersion {
-		log.Info(fmt.Sprintf("Installed k8s version %s is greater than the maximum supported k8s version %f , hence using the latest available configurations", kubeVersion, maxVersion))
+	} else if currentVersion >= maxVersion {
+		log.Info(fmt.Sprintf("Installed k8s version %s is equal/greater than the maximum supported k8s version %f , hence using the latest available configurations", kubeVersion, maxVersion))
 		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
 	} else {
 		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
-		log.Infof("version %s is less than minimum supported version of %f", kubeVersion, minVersion)
+		log.Infof("version %s supported version is %f", kubeVersion, minVersion)
 	}
 
 	// Get the environment variable config dir
@@ -175,15 +176,14 @@ func main() {
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
-
 	flag.Parse()
 
-	logType := logger.DevelopmentLogLevel
-	logger.SetLoggerLevel(logType)
-	_, log := logger.GetNewContextWithLogger("main")
-	log.Infof("Version : %s", logType)
+	//logType := logger.DevelopmentLogLevel
+	//logger.SetLoggerLevel(logType)
+	//_, log := logger.GetNewContextWithLogger("main")
+	log := logger.GetLogger(context.Background())
 
-	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
+	//ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
 
 	printVersion(log)
 	operatorConfig := getOperatorConfig(log)
@@ -202,7 +202,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	//Log:           ctrl.Log.WithName("controllers").WithName("ContainerStorageModule"),
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	if err = (&controllers.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),

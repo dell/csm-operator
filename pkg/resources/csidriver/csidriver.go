@@ -12,10 +12,8 @@ import (
 )
 
 // SyncCSIDriver - Syncs a CSI Driver object
-func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.Client, csmName string, trcID string) error {
-	//log := logger.GetLogger(ctx)
-	name := csmName + "-" + trcID
-	_, log := logger.GetNewContextWithLogger(name)
+func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.Client) error {
+	log := logger.GetLogger(ctx)
 
 	found := &storagev1.CSIDriver{}
 	err := client.Get(ctx, types.NamespacedName{Name: csi.Name}, found)

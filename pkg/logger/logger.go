@@ -2,8 +2,6 @@ package logger
 
 import (
 	"context"
-	//"errors"
-	//"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
@@ -35,7 +33,6 @@ func SetLoggerLevel(logLevel LogLevel) {
 	if logLevel != ProductionLogLevel && logLevel != DevelopmentLogLevel {
 		defaultLogLevel = ProductionLogLevel
 	}
-	//GetLoggerWithNoContext().Infof("Setting default log level to :%q", defaultLogLevel)
 }
 
 /*
@@ -68,8 +65,7 @@ func GetLogger(ctx context.Context) *zap.SugaredLogger {
 	return getLogger(ctx).Sugar()
 }
 
-// NewContextWithLogger returns a new child context with context UUID set
-// using key CtxId.
+// NewContextWithLogger returns a new child context with context ID set
 func NewContextWithLogger(ctx context.Context, key string) context.Context {
 	newCtx := withFields(ctx, zap.String(LogCtxIDKey, key))
 	return newCtx
@@ -90,13 +86,9 @@ func withFields(ctx context.Context, fields ...zapcore.Field) context.Context {
 
 // newLogger creates and return a new logger depending logLevel set.
 func newLogger() *zap.Logger {
-
 	pe := zap.NewProductionEncoderConfig()
 	pe.EncodeTime = zapcore.ISO8601TimeEncoder
 	pe.EncodeLevel = zapcore.CapitalLevelEncoder
-
-	//fileEncoder := zapcore.NewJSONEncoder(pe)
-	fileEncoder := zapcore.NewConsoleEncoder(pe)
 
 	pe.EncodeTime = zapcore.ISO8601TimeEncoder
 	consoleEncoder := zapcore.NewConsoleEncoder(pe)
@@ -104,14 +96,9 @@ func newLogger() *zap.Logger {
 	level := zap.InfoLevel
 	level = zap.DebugLevel
 
-	stdoutSyncer := zapcore.Lock(os.Stdout)
-	core := zapcore.NewTee(
-		zapcore.NewCore(fileEncoder, stdoutSyncer, level),
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level),
-	)
+	core := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stderr), level)
 
 	l := zap.New(core)
-
 	return l
 }
 

@@ -10,10 +10,8 @@ import (
 )
 
 // SyncDaemonset - Syncs a daemonset object
-func SyncDaemonset(ctx context.Context, daemonset *appsv1.DaemonSetApplyConfiguration, k8sClient kubernetes.Interface, csmName string, trcID string) error {
-	//log := logger.GetLogger(ctx)
-	name := csmName + "-" + trcID
-	_, log := logger.GetNewContextWithLogger(name)
+func SyncDaemonset(ctx context.Context, daemonset *appsv1.DaemonSetApplyConfiguration, k8sClient kubernetes.Interface, csmName string) error {
+	log := logger.GetLogger(ctx)
 
 	log.Infow("Sync DaemonSet:", "name", *daemonset.ObjectMetaApplyConfiguration.Name)
 
@@ -33,11 +31,10 @@ func SyncDaemonset(ctx context.Context, daemonset *appsv1.DaemonSetApplyConfigur
 	}
 
 	daemonset.Spec.Template.Labels["csm"] = csmName
-	set, err := daemonsets.Apply(ctx, daemonset, opts)
+	_, err = daemonsets.Apply(ctx, daemonset, opts)
 	if err != nil {
 		log.Errorw("Apply DaemonSet error", "set", err.Error())
 		return err
 	}
-	log.Errorw("daemonset apply done", "name", set.Name)
 	return nil
 }

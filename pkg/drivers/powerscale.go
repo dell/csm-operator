@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +20,8 @@ import (
 var Log logr.Logger
 
 // PrecheckPowerScale do input validation
-func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r utils.ReconcileCSM, log logr.Logger) error {
+func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+	log := logger.GetLogger(ctx)
 	// Check for secrete only
 	config := cr.Name + "-creds"
 
@@ -50,9 +52,7 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 
 	secrets := []string{config}
 
-	fmt.Printf("debug skipCertValid  2 %t\n", skipCertValid)
-	fmt.Printf("debug certCount %d\n", certCount)
-	fmt.Printf("debug secrets %d\n", len(secrets))
+	log.Debugw("preCheck", "skipCertValid", skipCertValid, "certCount", certCount, "secrets", len(secrets))
 
 	if !skipCertValid {
 		for i := 0; i < certCount; i++ {

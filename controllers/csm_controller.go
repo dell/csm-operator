@@ -121,12 +121,11 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	r.IncrUpdateCount()
 	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcID
-	_, log := logger.GetNewContextWithLogger(name)
-
+	ctx, log := logger.GetNewContextWithLogger(name)
 	log.Info("################Starting Reconcile##############")
 	csm := new(csmv1.ContainerStorageModule)
 
-	log.Infow("Namespace", req.Namespace, "Name", req.Name, "Attempt", r.GetUpdateCount())
+	log.Infow("reconcile for", "Namespace", req.Namespace, "Name", req.Name, "Attempt", r.GetUpdateCount())
 	log.Debugw(fmt.Sprintf("Reconciling %s ", "csm"), "request", req.String())
 
 	// Fetch the ContainerStorageModuleReconciler instance
@@ -211,6 +210,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Predicate {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
+			r.Log.Info("ignore Csm UpdateEvent")
 			// Ignore updates to status in which case metadata.Generation does not change
 			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
 		},
@@ -384,16 +384,15 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	return
 }
 
-// ContentWatch -watch
+// ContentWatch - watch updates on deployment and deamonset
 func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
 	clientset, err := k8sClient.GetClientSetWrapper()
 	if err != nil {
-		r.Log.Info(err.Error(), "setup snapWatch", "test mode")
+		r.Log.Error(err, err.Error())
 	}
 
 	sharedInformerFactory := sinformer.NewSharedInformerFactory(clientset, time.Duration(time.Hour))
-
 	contentInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
 	contentdeploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
 	contentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -420,8 +419,7 @@ func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, li
 		WithOptions(controller.Options{
 			RateLimiter:             limiter,
 			MaxConcurrentReconciles: maxReconcilers,
-		}).
-		Complete(r)
+		}).Complete(r)
 }
 
 func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule) (reconcile.Result, error) {
@@ -437,9 +435,7 @@ func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, 
 
 // SyncCSM - Sync the current installation - this can lead to a create or update
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
-
-	name := cr.Name + "-" + r.trcID
-	_, log := logger.GetNewContextWithLogger(name)
+	log := logger.GetLogger(ctx)
 
 	var (
 		err        error
@@ -458,22 +454,22 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		driverType = csmv1.PowerScaleName
 	}
 
-	configMap, err = drivers.GetConfigMap(cr, operatorConfig, driverType)
+	configMap, err = drivers.GetConfigMap(ctx, cr, operatorConfig, driverType)
 	if err != nil {
 		return fmt.Errorf("getting %s configMap: %v", driverType, err)
 	}
 
-	driver, err = drivers.GetCSIDriver(cr, operatorConfig, driverType)
+	driver, err = drivers.GetCSIDriver(ctx, cr, operatorConfig, driverType)
 	if err != nil {
 		return fmt.Errorf("getting %s configMap: %v", driverType, err)
 	}
 
-	node, err = drivers.GetNode(cr, operatorConfig, driverType, NodeYaml)
+	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml)
 	if err != nil {
 		return fmt.Errorf("getting %s node: %v", driverType, err)
 	}
 
-	controller, err = drivers.GetController(cr, operatorConfig, driverType)
+	controller, err = drivers.GetController(ctx, cr, operatorConfig, driverType)
 	if err != nil {
 		return fmt.Errorf("getting %s controller: %v", driverType, err)
 	}
@@ -536,26 +532,26 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update CSIDriver
-	err = csidriver.SyncCSIDriver(ctx, driver, r.Client, cr.Name, r.trcID)
+	err = csidriver.SyncCSIDriver(ctx, driver, r.Client)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update ConfigMap
-	err = configmap.SyncConfigMap(ctx, configMap, r.Client, cr.Name, r.trcID)
+	err = configmap.SyncConfigMap(ctx, configMap, r.Client)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update Deployment
-	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, cr.Name, r.trcID)
+	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, cr.Name)
 	if err != nil {
 		return err
 	}
 
 	// Create/Update DeamonSet
 
-	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.K8sClient, cr.Name, r.trcID)
+	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.K8sClient, cr.Name)
 	if err != nil {
 		return err
 	}
@@ -575,7 +571,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
 
-		err := drivers.PrecheckPowerScale(ctx, cr, r, nil)
+		err := drivers.PrecheckPowerScale(ctx, cr, r)
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}

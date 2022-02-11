@@ -12,10 +12,8 @@ import (
 )
 
 // SyncConfigMap - Creates/Updates a config map
-func SyncConfigMap(ctx context.Context, configMap *corev1.ConfigMap, client client.Client, csmName string, trcID string) error {
-	//log := logger.GetLogger(ctx)
-	name := csmName + "-" + trcID
-	_, log := logger.GetNewContextWithLogger(name)
+func SyncConfigMap(ctx context.Context, configMap *corev1.ConfigMap, client client.Client) error {
+	log := logger.GetLogger(ctx)
 
 	found := &corev1.ConfigMap{}
 	err := client.Get(ctx, types.NamespacedName{Name: configMap.Name, Namespace: configMap.Namespace}, found)
