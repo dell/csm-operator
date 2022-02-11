@@ -359,12 +359,12 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 		}
 
 		log.Infow("daemonset in err", "err", err.Error())
-		_ = utils.UpdateStatus(ctx, csm, r, newStatus)
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Daemonset status check Error ,node pod desired:%d, unavailable:%d %s", desired, numberUnavailable, stamp)
-	} else {
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil {
 			log.Infow("Failed to update Daemonset status", "error", err.Error())
 		}
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s DaemonSet status check Error ,node pod desired:%d, unavailable:%d", stamp, desired, numberUnavailable)
+	} else {
 
 		log.Infow("csm status", "prev state", csm.Status.State)
 		newStatus := csm.GetCSMStatus()
@@ -563,9 +563,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	if cr.Spec.Driver.Common.Image == "" {
 		return fmt.Errorf("driver image not specified in spec")
 	}
-	if cr.Spec.Driver.ConfigVersion == "" {
-		return fmt.Errorf("driver version not specified in spec")
+	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.1.0" {
+		return fmt.Errorf("driver version not specified in spec or driver version is not valid")
 	}
+
+	// add check for version
 
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {

@@ -119,9 +119,8 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	if currentVersion < minVersion {
 		log.Info(fmt.Sprintf("Installed k8s version %s is less than the minimum supported k8s version %f , hence using the default configurations", kubeVersion, minVersion))
 		k8sPath = fmt.Sprintf("/driverconfig/common/default.yaml")
-	} else if currentVersion >= maxVersion {
-		log.Info(fmt.Sprintf("Installed k8s version %s is equal/greater than the maximum supported k8s version %f , hence using the latest available configurations", kubeVersion, maxVersion))
-		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
+	} else if currentVersion > maxVersion {
+		log.Info(fmt.Sprintf("Installed k8s version %s is greater than the maximum supported k8s version %f , hence using the latest available configurations", kubeVersion, maxVersion))
 	} else {
 		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
 		log.Infof("version %s supported version is %f", kubeVersion, minVersion)

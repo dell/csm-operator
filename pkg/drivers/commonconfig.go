@@ -28,7 +28,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
-	driverYAML, err := utils.GetDriverYAML(YamlString, "Deployment")
+	driverYAML, err := utils.GetDriverYaml(YamlString, "Deployment")
 	if err != nil {
 		log.Errorw("GetController get Deployment failed", "Error", err.Error())
 		return nil, err
@@ -57,21 +57,42 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	}
 
 	containers := controllerYAML.Deployment.Spec.Template.Spec.Containers
+	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Controller.Envs)
+			c.Env = containers[i].Env
 			if string(cr.Spec.Driver.Common.Image) != "" {
 				image := string(cr.Spec.Driver.Common.Image)
-				containers[i].Image = &image
+				c.Image = &image
 			}
 		}
 
-		tmp := utils.ReplaceALLContainerImageApply(operatorConfig.K8sVersion, containers[i])
-		containers[i] = utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, tmp)
+		removeContainer := false
+		for _, s := range cr.Spec.Driver.SideCars {
+			if s.Name == *c.Name {
+				if s.Enabled == nil {
+					fmt.Printf("Container  to be enabled : %s\n", *c.Name)
+					break
+
+				} else if !*s.Enabled {
+					removeContainer = true
+					fmt.Printf("Container to be removed : %s\n", *c.Name)
+				} else {
+					fmt.Printf("Container to be enabled : %s\n", *c.Name)
+				}
+				break
+			}
+		}
+		if !removeContainer {
+			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
+			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
+			newcontainers = append(newcontainers, c)
+		}
 
 	}
 
-	controllerYAML.Deployment.Spec.Template.Spec.Containers = containers
+	controllerYAML.Deployment.Spec.Template.Spec.Containers = newcontainers
 	// Update volumes
 	for i, v := range controllerYAML.Deployment.Spec.Template.Spec.Volumes {
 		if *v.Name == "certs" {
@@ -104,7 +125,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
-	driverYAML, err := utils.GetDriverYAML(YamlString, "DaemonSet")
+	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
 	if err != nil {
 		log.Errorw("GetNode Daemonset failed", "Error", err.Error())
 		return nil, err
@@ -146,8 +167,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 		}
 
-		tmp := utils.ReplaceALLContainerImageApply(operatorConfig.K8sVersion, containers[i])
-		containers[i] = utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, tmp)
+		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
+		utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
+
 	}
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = containers
