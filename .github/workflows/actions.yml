@@ -40,7 +40,7 @@ jobs:
         uses: dell/common-github-actions/go-code-tester@main
         with:
           # lower to 29 until we add more unit test for controller.go
-          threshold: 29
+          threshold: 27
   go_security_scan:
     name: Go security
     runs-on: ubuntu-latest
