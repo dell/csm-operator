@@ -11,8 +11,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// SyncCSIDriver - Syncs a CSI Driver object
-func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.Client, reqLogger logr.Logger) error {
+// SyncCsiDriver - Syncs a CSI Driver object
+func SyncCsiDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.Client, reqLogger logr.Logger) error {
 	found := &storagev1.CSIDriver{}
 	err := client.Get(ctx, types.NamespacedName{Name: csi.Name}, found)
 	if err != nil && errors.IsNotFound(err) {

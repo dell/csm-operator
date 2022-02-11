@@ -239,7 +239,7 @@ func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.Contai
 	}
 
 	container := *containerPtr
-	container = utils.UpdateSideCarApply(authModule.Components, container)
+	utils.UpdateSideCarApply(authModule.Components, &container)
 
 	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
 	if err != nil {
@@ -267,7 +267,7 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 	}
 
 	container := *containerPtr
-	container = utils.UpdateSideCarApply(authModule.Components, container)
+	utils.UpdateSideCarApply(authModule.Components, &container)
 
 	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
 	if err != nil {
