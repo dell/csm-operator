@@ -10,7 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
+	t1 "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sync"
@@ -28,7 +28,7 @@ func getInt32(pointer *int32) int32 {
 
 func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
 	deployment := &appsv1.Deployment{}
-	err := r.GetClient().Get(ctx, types.NamespacedName{Name: instance.GetControllerName(),
+	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
 		Namespace: instance.GetNamespace()}, deployment)
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
@@ -81,7 +81,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 
 func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
 	ds := &appsv1.DaemonSet{}
-	err := r.GetClient().Get(ctx, types.NamespacedName{Name: instance.GetNodeName(),
+	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.GetNodeName(),
 		Namespace: instance.GetNamespace()}, ds)
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
@@ -174,7 +174,18 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		}
 		reqLogger.Info("Attempting to update CR status", "running", running)
 	}
-	err := r.GetClient().Status().Update(ctx, instance)
+	namespacedName := t1.NamespacedName{
+		Name:      instance.Name,
+		Namespace: instance.Namespace,
+	}
+	csm := new(csmv1.ContainerStorageModule)
+	err := r.GetClient().Get(ctx, namespacedName, csm)
+	if err != nil {
+		reqLogger.Info("Get CSM failed", "error", err.Error())
+		return err
+	}
+	csm.Status = *instance.GetCSMStatus()
+	err = r.GetClient().Status().Update(ctx, csm)
 	if err != nil {
 		reqLogger.Error(err, "Failed to update CR status")
 		return err
@@ -206,12 +217,10 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 	running, err := CalculateState(ctx, instance, r, newStatus)
 	if err != nil {
 		reqLogger.Info("Driver status ", "error", err.Error())
+		newStatus.State = constants.Failed
 	}
 	if running {
 		newStatus.State = constants.Running
-	}
-	if err != nil {
-		newStatus.State = constants.Failed
 	}
 	reqLogger.Info("Driver state ", "newStatus.State", newStatus.State)
 	if newStatus.State == constants.Running {
@@ -220,11 +229,6 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 			reqLogger.Info("Driver state didn't change from Running")
 		}
 		return LogBannerAndReturn(reconcile.Result{}, nil, reqLogger)
-	}
-	updateStatusError := UpdateStatus(ctx, instance, r, reqLogger, newStatus)
-	if updateStatusError != nil {
-		reqLogger.Error(updateStatusError, "failed to update the status")
-		return LogBannerAndReturn(reconcile.Result{Requeue: true}, updateStatusError, reqLogger)
 	}
 	return LogBannerAndReturn(reconcile.Result{}, nil, reqLogger)
 }
