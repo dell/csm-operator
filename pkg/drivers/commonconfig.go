@@ -17,6 +17,7 @@ import (
 // GetController get controller yaml
 func GetController(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	fmt.Printf("GetController configMapPath: %+v\n", configMapPath)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		return nil, err
@@ -95,6 +96,7 @@ func GetController(cr csmv1.ContainerStorageModule, operatorConfig utils.Operato
 func GetNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string) (*utils.NodeYAML, error) {
 
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
+	fmt.Printf("GetNode configMapPath: %+v\n", configMapPath)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		return nil, err
@@ -176,6 +178,7 @@ func GetNode(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfi
 // GetConfigMap get configmap
 func GetConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	fmt.Printf("GetConfigMap configMapPath: %+v\n", configMapPath)
 
 	if _, err := os.Stat(configMapPath); os.IsNotExist(err) {
 		return nil, err
@@ -210,6 +213,7 @@ func GetConfigMap(cr csmv1.ContainerStorageModule, operatorConfig utils.Operator
 // GetCSIDriver get driver
 func GetCSIDriver(cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	fmt.Printf("GetCSIDriver configMapPath: %+v\n", configMapPath)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		return nil, err

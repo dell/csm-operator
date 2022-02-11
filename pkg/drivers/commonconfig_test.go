@@ -9,11 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"fmt"
 )
 
 var (
 	//
 	csm = csmWithTolerations()
+	fakeDriver csmv1.DriverType = "fakeDriver"
+	badDriver csmv1.DriverType = "badDriver"
 
 	// where to find all the yaml files
 	config = utils.OperatorConfig{
@@ -33,7 +36,8 @@ var (
 		expectedErr string
 	}{
 		{"happy path", csm, csmv1.PowerScaleName, "node.yaml", ""},
-		{"file does not exist", csm, csmv1.PowerScaleName, "NonExist.yaml", "no such file or directory"},
+		{"file does not exist", csm, fakeDriver, "NonExist.yaml", "no such file or directory"},
+		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
 	}
 
 	opts = zap.Options{
@@ -42,6 +46,42 @@ var (
 
 	// logger = zap.New(zap.UseFlagOptions(&opts)).WithName("pkg/drivers").WithName("unit-test")
 )
+
+func TestGetCsiDriver(t *testing.T) {
+	fmt.Printf("entering TestGetCsiDriver function\n")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := GetCSIDriver(tt.csm, config, tt.driverName)
+			//fmt.Printf("tt.driverName: %+v\n\n", tt.driverName)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				//fmt.Printf("t = %+v\n\n", t)
+				//fmt.Printf("tt.expectedErr = %+v\n\n", tt.expectedErr)
+				//fmt.Printf("err = %+v\n\n", err)
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
+	}
+}
+
+func TestGetController(t *testing.T) {
+	fmt.Printf("entering TestGetController function\n")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := GetController(tt.csm, config, tt.driverName)
+			//fmt.Printf("tt.driverName: %+v\n\n", tt.driverName)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				//fmt.Printf("Address of t = %+v\n\n", t)
+				//fmt.Printf("Address of tt.expectedErr = %+v\n\n", tt.expectedErr)
+				//fmt.Printf("Address of err = %+v\n\n", err)
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
+	}
+}
 
 func TestGetNode(t *testing.T) {
 
