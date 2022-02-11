@@ -358,7 +358,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 		if err != nil {
 			r.Log.Info("Failed to update Daemonset status", "error", err.Error())
 		}
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Daemonset status check Error ,node pod desired:%d, unavailable:%d", stamp, desired, numberUnavailable)
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s DaemonSet status check Error ,node pod desired:%d, unavailable:%d", stamp, desired, numberUnavailable)
 	} else {
 
 		r.Log.Info("csm status", "prev state", csm.Status.State)
