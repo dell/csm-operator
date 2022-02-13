@@ -41,7 +41,7 @@ func InitLogger() {
     encoder := getEncoder()
     core := zapcore.NewCore(encoder, writeSyncer, zapcore.DebugLevel)
 
-    logger := zap.New(core)
+    logger := zap.New(core, zap.AddCaller())
     sugarLogger = logger.Sugar()
 }
 */
@@ -98,7 +98,13 @@ func newLogger() *zap.Logger {
 
 	core := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stderr), level)
 
-	l := zap.New(core)
+	l := zap.New(core, zap.AddCaller())
+	config := zap.NewDevelopmentConfig()
+	// if you're using console encoding, the FunctionKey value can be any
+	// non-empty string because console encoding does not print the key.
+	config.EncoderConfig.FunctionKey = "F"
+	logger, _ := config.Build()
+	logger.Info("Test Logging")
 	return l
 }
 
