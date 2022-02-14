@@ -99,12 +99,6 @@ func newLogger() *zap.Logger {
 	core := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stderr), level)
 
 	l := zap.New(core, zap.AddCaller())
-	config := zap.NewDevelopmentConfig()
-	// if you're using console encoding, the FunctionKey value can be any
-	// non-empty string because console encoding does not print the key.
-	config.EncoderConfig.FunctionKey = "F"
-	logger, _ := config.Build()
-	logger.Info("Test Logging")
 	return l
 }
 

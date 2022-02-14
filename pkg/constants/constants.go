@@ -45,3 +45,12 @@ const DriverMountName = "socket-dir"
 
 // TerminationGracePeriodSeconds - grace period in seconds
 var TerminationGracePeriodSeconds = int64(30)
+
+// Reason - pod status
+var Reason = "Reason"
+
+// ContainerCreating - pod container
+var ContainerCreating = "ContainerCreating"
+
+// PendingCreate - pod pending
+var PendingCreate = "Pending create"

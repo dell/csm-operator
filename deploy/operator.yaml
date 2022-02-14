@@ -73,6 +73,14 @@ rules:
   - '*'
 - apiGroups:
   - ""
+  resourceNames:
+  - dell-csm-operator-controller-manager
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
   resources:
   - nodes
   verbs:
@@ -122,16 +130,9 @@ rules:
   - delete
   - get
   - list
+  - patch
   - update
   - watch
-- apiGroups:
-  - apps
-  resourceNames:
-  - dell-csm-operator-controller-manager
-  resources:
-  - deployments/finalizers
-  verbs:
-  - update
 - apiGroups:
   - coordination.k8s.io
   resources:
