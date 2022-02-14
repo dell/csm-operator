@@ -101,4 +101,3 @@ func (cr *ContainerStorageModule) GetContainerStorageModuleSpec() *ContainerStor
 func (cr *ContainerStorageModule) GetDriverType() DriverType {
 	return cr.Spec.Driver.CSIDriverType
 }
-
