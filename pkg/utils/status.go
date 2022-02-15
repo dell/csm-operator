@@ -14,6 +14,7 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"strings"
 	"sync"
 )
 
@@ -65,12 +66,13 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 			for _, cs := range pod.Status.ContainerStatuses {
 				if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
 					log.Infow("container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
-					errMap[cs.State.Waiting.Reason] = cs.State.Waiting.Message
+					shortMsg := strings.Replace(cs.State.Waiting.Message,
+						"rpc error: code = Unknown desc = Error response from daemon:", "", 1)
+					errMap[cs.State.Waiting.Reason] = shortMsg
 				}
 				if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
 					errMap[cs.State.Waiting.Reason] = constants.PendingCreate
 				}
-
 			}
 			for k, v := range errMap {
 				msg += k + "=" + v
@@ -114,18 +116,20 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	var msg string
 	errMap := make(map[string]string)
 	for _, pod := range podList.Items {
-		log.Debugf("daemonset pod %s : %s", pod.Name, pod.Status.Phase)
+		log.Infof("daemonset pod %s : %s", pod.Name, pod.Status.Phase)
 		if pod.Status.Phase == corev1.PodPending {
 			failedCount++
-			errMap := make(map[string]string)
 			for _, cs := range pod.Status.ContainerStatuses {
 				if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
 					//message: Back-off pulling image "dellec/csi-isilon:v2.1.0"
 					//reason: ImagePullBackOff
-					log.Infow("container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
-					errMap[cs.State.Waiting.Reason] = cs.State.Waiting.Message
+					log.Infow("daemonset pod container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
+					shortMsg := strings.Replace(cs.State.Waiting.Message,
+						"rpc error: code = Unknown desc = Error response from daemon:", "", 1)
+					errMap[cs.State.Waiting.Reason] = shortMsg
 				}
 				if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
+					log.Infof("daemonset pod container %s : %s", pod.Name, pod.Status.Phase)
 					errMap[cs.State.Waiting.Reason] = constants.PendingCreate
 				}
 			}
@@ -178,6 +182,7 @@ func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	}
 	if daemonSetErr != nil && controllerErr != nil {
 		err = fmt.Errorf("ControllerError: %s, Daemonseterror: %s", controllerErr.Error(), daemonSetErr.Error())
+		log.Infof("calculate overall error msg [%s]", err.Error())
 	}
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err

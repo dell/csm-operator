@@ -239,7 +239,6 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	available := d.Status.AvailableReplicas
 	ready := d.Status.ReadyReplicas
 	numberUnavailable := d.Status.UnavailableReplicas
-	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 
 	//Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
 
@@ -262,11 +261,8 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	}
 	newStatus := csm.GetCSMStatus()
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
-	state := csm.GetCSMStatus().ControllerStatus.Failed
-	if state != "0" && err != nil {
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Deployment details %s", stamp, err.Error())
-	} else {
-		r.EventRecorder.Eventf(csm, "Normal", "Done", "%s Deployment status OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, available)
+	if err != nil {
+		log.Debugw("deployment status ", "pods", err.Error())
 	}
 	return
 }
@@ -307,7 +303,6 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Pod error details %s", stamp, err.Error())
 	} else {
 		r.EventRecorder.Eventf(csm, "Normal", "Complete", "%s Driver pods running OK", stamp)
-
 	}
 	return
 }
@@ -333,7 +328,6 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	available := d.Status.NumberAvailable
 	ready := d.Status.NumberReady
 	numberUnavailable := d.Status.NumberUnavailable
-	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 
 	log.Infow("daemonset ", "name", d.Name, "namespace", d.Namespace)
 	log.Infow("daemonset ", "desired", desired)
@@ -357,11 +351,8 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	log.Infow("csm prev status ", "state", csm.Status)
 	newStatus := csm.GetCSMStatus()
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
-	state := csm.GetCSMStatus().NodeStatus.Failed
-	if state != "0" && err != nil {
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s DaemonSet details %s", stamp, err.Error())
-	} else {
-		r.EventRecorder.Eventf(csm, "Normal", "Complete", "%s Daemonset status OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, ready)
+	if err != nil {
+		log.Debugw("daemonset status ", "pods", err.Error())
 	}
 	return
 }
