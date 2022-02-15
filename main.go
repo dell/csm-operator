@@ -112,11 +112,16 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	}
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
 	if err != nil {
+<<<<<<< HEAD
 		log.Info(fmt.Sprintf("currentVersion is %f", currentVersion))
+=======
+		log.Info(fmt.Sprintf("currentVersion is %s", kubeVersion))
+>>>>>>> 04a7a29 (added changes)
 	}
 	// intialise variable
 	k8sPath := ""
 	if currentVersion < minVersion {
+<<<<<<< HEAD
 		log.Info(fmt.Sprintf("Installed k8s version %s is less than the minimum supported k8s version %f , hence using the default configurations", kubeVersion, minVersion))
 		k8sPath = fmt.Sprintf("/driverconfig/common/default.yaml")
 	} else if currentVersion > maxVersion {
@@ -124,6 +129,17 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	} else {
 		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
 		log.Infof("version %s supported version is %f", kubeVersion, minVersion)
+=======
+		log.Info(fmt.Sprintf("Installed k8s version %s is less than the minimum supported k8s version %s , hence using the default configurations", kubeVersion, K8sMinimumSupportedVersion))
+		k8sPath = fmt.Sprintf("/driverconfig/common/default.yaml")
+	} else if currentVersion > maxVersion {
+		log.Info(fmt.Sprintf("Installed k8s version %s is greater than the maximum supported k8s version %s , hence using the latest available configurations", kubeVersion, K8sMaximumSupportedVersion))
+		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
+	} else {
+		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
+		log.Infof("Current kubernetes version is %s which is a supported version ", kubeVersion)
+
+>>>>>>> 04a7a29 (added changes)
 	}
 
 	// Get the environment variable config dir
