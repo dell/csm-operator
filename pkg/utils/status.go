@@ -67,7 +67,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 				if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
 					log.Infow("container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
 					shortMsg := strings.Replace(cs.State.Waiting.Message,
-						"rpc error: code = Unknown desc = Error response from daemon:", "", 1)
+						constants.PodStatusRemoveString, "", 1)
 					errMap[cs.State.Waiting.Reason] = shortMsg
 				}
 				if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
@@ -125,7 +125,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 					//reason: ImagePullBackOff
 					log.Infow("daemonset pod container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
 					shortMsg := strings.Replace(cs.State.Waiting.Message,
-						"rpc error: code = Unknown desc = Error response from daemon:", "", 1)
+						constants.PodStatusRemoveString, "", 1)
 					errMap[cs.State.Waiting.Reason] = shortMsg
 				}
 				if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
