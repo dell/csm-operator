@@ -15,7 +15,7 @@ function usage() {
   echo "Usage: $PROG options..."
   echo "Options:"
   echo "  Optional"
-  echo "  --upgrade                                Perform an upgrade of the specified driver, default is false"
+  echo "  --upgrade                                Perform an upgrade of the Operator, default is false"
   echo "  -h                                       Help"
   echo
 
