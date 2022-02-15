@@ -49,17 +49,27 @@ var (
 )
 
 func TestGetCsiDriver(t *testing.T) {
-	fmt.Printf("entering TestGetCsiDriver function\n")
+	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetCSIDriver(tt.csm, config, tt.driverName)
-			//fmt.Printf("tt.driverName: %+v\n\n", tt.driverName)
+			_, err := GetCSIDriver(ctx, tt.csm, config, tt.driverName)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
-				//fmt.Printf("t = %+v\n\n", t)
-				//fmt.Printf("tt.expectedErr = %+v\n\n", tt.expectedErr)
-				//fmt.Printf("err = %+v\n\n", err)
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
+	}
+}
+
+func TestGetConfigMap(t *testing.T) {
+	ctx := context.Background()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := GetConfigMap(ctx, tt.csm, config, tt.driverName)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
@@ -67,17 +77,13 @@ func TestGetCsiDriver(t *testing.T) {
 }
 
 func TestGetController(t *testing.T) {
-	fmt.Printf("entering TestGetController function\n")
+	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetController(tt.csm, config, tt.driverName)
-			//fmt.Printf("tt.driverName: %+v\n\n", tt.driverName)
+			_, err := GetController(ctx, tt.csm, config, tt.driverName)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
-				//fmt.Printf("Address of t = %+v\n\n", t)
-				//fmt.Printf("Address of tt.expectedErr = %+v\n\n", tt.expectedErr)
-				//fmt.Printf("Address of err = %+v\n\n", err)
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
