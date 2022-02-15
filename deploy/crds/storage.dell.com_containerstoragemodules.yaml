@@ -11,10 +11,24 @@ spec:
     kind: ContainerStorageModule
     listKind: ContainerStorageModuleList
     plural: containerstoragemodules
+    shortNames:
+    - csm
     singular: containerstoragemodule
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: CreationTime
+      type: date
+    - description: Type of CSIDriver
+      jsonPath: .spec.driver.csiDriverType
+      name: CSIDriverType
+      type: string
+    - description: Version of CSIDriver
+      jsonPath: .spec.driver.configVersion
+      name: CONFIGVERSION
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ContainerStorageModule is the Schema for the containerstoragemodules API
@@ -716,18 +730,11 @@ spec:
                             type: string
                           description: Parameters is a map of driver specific parameters for snapshot class
                           type: object
-                      required:
-                      - name
                       type: object
                     type: array
                   tlsCertSecret:
                     description: TLSCertSecret is the name of the TLS Cert secret
                     type: string
-                required:
-                - common
-                - configVersion
-                - csiDriverType
-                - replicas
                 type: object
               modules:
                 description: Modules is list of Container Storage Module modules you want to deploy
@@ -875,9 +882,6 @@ spec:
                     name:
                       description: Name is name of ContainerStorageModule modules
                       type: string
-                  required:
-                  - enabled
-                  - name
                   type: object
                 type: array
             type: object
