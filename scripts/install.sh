@@ -122,7 +122,7 @@ function check_for_operator() {
        echo "Attempting to upgrade the Operator as --upgrade option was specified"
     else
        log step_failure
-       log error "Operator is not found in dell-csm-operator namespace to upgrade.Install the operator without the upgrade option."
+       log error "Operator is not found in '$NAMESPACE' namespace to upgrade.Install the operator without the upgrade option."
     fi
   else
   	if [ "$operator_in_namespace" = true ]; then
