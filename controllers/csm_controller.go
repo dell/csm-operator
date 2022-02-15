@@ -51,7 +51,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sync"
 )
+
+var dMutex sync.RWMutex
 
 // ContainerStorageModuleReconciler reconciles a ContainerStorageModule object
 type ContainerStorageModuleReconciler struct {
@@ -217,6 +220,8 @@ func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Pre
 }
 
 func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interface{}, obj interface{}) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
 
 	old, _ := oldObj.(*appsv1.Deployment)
 	d, _ := obj.(*appsv1.Deployment)
@@ -234,6 +239,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	available := d.Status.AvailableReplicas
 	ready := d.Status.ReadyReplicas
 	numberUnavailable := d.Status.UnavailableReplicas
+	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 
 	//Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
 
@@ -257,16 +263,17 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	newStatus := csm.GetCSMStatus()
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
 	state := csm.GetCSMStatus().ControllerStatus.Failed
-	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 	if state != "0" && err != nil {
 		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Deployment details %s", stamp, err.Error())
 	} else {
-		r.EventRecorder.Eventf(csm, "Normal", "Done", "%s Deployment status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, available)
+		r.EventRecorder.Eventf(csm, "Normal", "Done", "%s Deployment status OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, available)
 	}
 	return
 }
 
 func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, obj interface{}) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
 
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()["csm"]
@@ -294,14 +301,20 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
 	state := csm.GetCSMStatus().NodeStatus.Failed
+	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 	if state != "0" && err != nil {
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Pod error details %s", err.Error())
-	}
+		log.Infow("pod status ", "state", err.Error())
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Pod error details %s", stamp, err.Error())
+	} else {
+		r.EventRecorder.Eventf(csm, "Normal", "Complete", "%s Driver pods running OK", stamp)
 
+	}
 	return
 }
 
 func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interface{}, obj interface{}) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
 
 	old, _ := oldObj.(*appsv1.DaemonSet)
 	d, _ := obj.(*appsv1.DaemonSet)
@@ -320,6 +333,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	available := d.Status.NumberAvailable
 	ready := d.Status.NumberReady
 	numberUnavailable := d.Status.NumberUnavailable
+	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 
 	log.Infow("daemonset ", "name", d.Name, "namespace", d.Namespace)
 	log.Infow("daemonset ", "desired", desired)
@@ -341,14 +355,13 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	}
 
 	log.Infow("csm prev status ", "state", csm.Status)
-	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 	newStatus := csm.GetCSMStatus()
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
 	state := csm.GetCSMStatus().NodeStatus.Failed
 	if state != "0" && err != nil {
 		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s DaemonSet details %s", stamp, err.Error())
 	} else {
-		r.EventRecorder.Eventf(csm, "Normal", "Complete", "%s Daemonset status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, ready)
+		r.EventRecorder.Eventf(csm, "Normal", "Complete", "%s Daemonset status OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, ready)
 	}
 	return
 }

@@ -52,7 +52,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		return deployment.Status.ReadyReplicas, csmv1.PodStatus{}, err
 	}
 
-	msg := ""
+	var msg string
 	for _, pod := range podList.Items {
 
 		log.Infof("deployment pod count %d name %s status %s", readyPods, pod.Name, pod.Status.Phase)
@@ -111,7 +111,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{}, err
 	}
 
-	msg := ""
+	var msg string
 	errMap := make(map[string]string)
 	for _, pod := range podList.Items {
 		log.Debugf("daemonset pod %s : %s", pod.Name, pod.Status.Phase)
@@ -208,7 +208,14 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
 	_, merr := CalculateState(ctx, instance, r, newStatus)
-	err := r.GetClient().Status().Update(ctx, instance)
+	csm := new(csmv1.ContainerStorageModule)
+	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,
+		Namespace: instance.GetNamespace()}, csm)
+	if err != nil {
+		return err
+	}
+	csm.Status = instance.Status
+	err = r.GetClient().Status().Update(ctx, csm)
 	if err != nil {
 		log.Error(err, " Failed to update CR status")
 		return err
