@@ -128,7 +128,7 @@ function check_for_operator() {
   	if [ "$operator_in_namespace" = true ]; then
        log step_failure
        log warning "Found existing installation of dell-csm-operator in '$NAMESPACE' namespace"
-       log error "Remove the existing installation manually or use uninstall.sh script, and then proceed with installation"
+       log error "Remove the existing installation using uninstall.sh script, or use the --upgrade option to upgrade the Operator"
        exit 1
     else
        log step_success
