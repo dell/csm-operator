@@ -9,6 +9,7 @@ import (
 	"reflect"
 
 	"github.com/dell/csm-operator/test/shared"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,11 +79,20 @@ func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client
 		}
 	}
 	switch list.(type) {
-	// case *storagev1alpha2.DellCsiVolumeGroupSnapshotList:
-	// 	return f.listVG(list.(*storagev1alpha2.DellCsiVolumeGroupSnapshotList))
+	case *corev1.PodList:
+		return f.listPodList(list.(*corev1.PodList))
 	default:
 		return fmt.Errorf("fake client unknown type: %s", reflect.TypeOf(list))
 	}
+}
+
+func (f Client) listPodList(list *corev1.PodList) error {
+	for k, v := range f.Objects {
+		if k.Kind == "Pod" {
+			list.Items = append(list.Items, *v.(*corev1.Pod))
+		}
+	}
+	return nil
 }
 
 // Create implements client.Client.
