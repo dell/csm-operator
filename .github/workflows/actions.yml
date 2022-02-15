@@ -50,7 +50,7 @@ jobs:
       - name: Run Go Security
         uses: securego/gosec@master
         with:
-          args: -exclude=G304 ./...
+          args: -exclude=G304,G307 ./...
   malware_security_scan:
     name: Malware Scanner
     runs-on: ubuntu-latest
