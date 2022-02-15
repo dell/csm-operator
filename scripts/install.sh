@@ -14,11 +14,8 @@ function usage() {
   echo
   echo "Usage: $PROG options..."
   echo "Options:"
-<<<<<<< HEAD
-=======
   echo "  Optional"
   echo "  --upgrade                                Perform an upgrade of the specified driver, default is false"
->>>>>>> 04a7a29 (added changes)
   echo "  -h                                       Help"
   echo
 
@@ -47,17 +44,12 @@ function warning() {
 
 # print header information
 function header() {
-<<<<<<< HEAD
-  echo "******"
-  echo "Installing Dell CSM Operator"
-=======
   if [ "$MODE" == "upgrade" ]; then
     echo "Upgrading Dell CSM Operator"
   else
     echo "Installing Dell CSM Operator"
   fi
 
->>>>>>> 04a7a29 (added changes)
   echo
 }
 
@@ -103,13 +95,9 @@ function check_or_create_namespace() {
       exit 1
     fi
   else
-<<<<<<< HEAD
-    echo "Namespace '$1' already exists"
-=======
     log separator
     echo "Namespace '$1' already exists"
     echo
->>>>>>> 04a7a29 (added changes)
   fi
 }
 
@@ -126,47 +114,34 @@ function check_for_operator() {
   if [ $? -eq 0 ]; then
     operator_in_namespace=true
   fi
-<<<<<<< HEAD
-  if [ "$operator_in_namespace" = true ]; then
-    log step_failure
-    log warning "Found existing installation of dell-csm-operator in '$NAMESPACE' namespace"
-    log error "Remove the existing installation manually or use uninstall.sh script, and then proceed with installation"
-    exit 1
-  else
-    log step_success
-=======
+
   if [ "$MODE" == "upgrade" ]; then
   	if  [ "$operator_in_namespace" = true ]; then
        log step_success
        echo "Found existing installation of log error in '$NAMESPACE' namespace"
        echo "Attempting to upgrade the Operator as --upgrade option was specified"
-     else
+    else
        log step_failure
        log error "Operator is not found in dell-csm-operator namespace to upgrade.Install the operator without the upgrade option."
-     fi
-   else
+    fi
+  else
   	if [ "$operator_in_namespace" = true ]; then
        log step_failure
        log warning "Found existing installation of dell-csm-operator in '$NAMESPACE' namespace"
        log error "Remove the existing installation manually or use uninstall.sh script, and then proceed with installation"
        exit 1
-     else
+    else
        log step_success
-     fi
->>>>>>> 04a7a29 (added changes)
+    fi
   fi
 }
 
 function install_or_update_crd() {
-<<<<<<< HEAD
-  log step "Install/Update CRDs"
-=======
   if [ "$MODE" == "upgrade" ]; then
     log step "Update CRD"
   else
     log step "Install/Update CRD"
   fi
->>>>>>> 04a7a29 (added changes)
   kubectl apply -f ${DEPLOYDIR}/crds/storage.dell.com_containerstoragemodules.yaml 2>&1 >/dev/null
   if [ $? -ne 0 ]; then
     log error "Failed to install/update CRD"
@@ -175,15 +150,11 @@ function install_or_update_crd() {
 }
 
 function create_operator_deployment() {
-<<<<<<< HEAD
-  log step "Install Operator"
-=======
   if [ "$MODE" == "upgrade" ]; then
     log step "Upgrade Operator"
   else
     log step "Install Operator"
   fi
->>>>>>> 04a7a29 (added changes)
   kubectl apply -f ${DEPLOYDIR}/operator.yaml 2>&1 >/dev/null
   if [ $? -ne 0 ]; then
     log error "Failed to deploy operator"
@@ -192,15 +163,6 @@ function create_operator_deployment() {
 }
 
 function install_operator() {
-<<<<<<< HEAD
-  log separator
-  echo "Installing Operator"
-  log separator
-  install_or_update_crd
-  log separator
-  create_operator_deployment $NAMESPACE
-  log separator
-=======
   if [ "$MODE" == "upgrade" ]; then
     log separator
     echo "Upgrading Operator"
@@ -211,26 +173,16 @@ function install_operator() {
   install_or_update_crd
   create_operator_deployment $NAMESPACE
 
-
->>>>>>> 04a7a29 (added changes)
 }
 
 function check_progress() {
   # find out the deployment name
   # wait for the deployment to finish, use the default timeout
-<<<<<<< HEAD
-  waitOnRunning "${NAMESPACE}" "deployment dell-csm-operator-controller-manager"
-  if [ $? -eq 1 ]; then
-    warning "Timed out waiting for installation of the operator to complete." \
-      "This does not indicate a fatal error, pods may take a while to start." \
-      "Progress can be checked by running \"kubectl get pods\""
-=======
   waitOnRunning "${NAMESPACE}" "deployment dell-csm-operator-controller-manager."
   if [ $? -eq 1 ]; then
     warning "Timed out waiting for installation of the operator to complete." \
       "This does not indicate a fatal error, pods may take a while to start." \
       "Progress can be checked by running \"kubectl get pods -n dell-csm-operator\"."
->>>>>>> 04a7a29 (added changes)
   fi
 }
 
@@ -249,8 +201,6 @@ ASSUMEYES="false"
 
 while getopts ":h-:" optchar; do
   case "${optchar}" in
-<<<<<<< HEAD
-=======
   -)
     case "${OPTARG}" in
     upgrade)
@@ -263,7 +213,7 @@ while getopts ":h-:" optchar; do
       ;;
     esac
     ;;
->>>>>>> 04a7a29 (added changes)
+
   h)
     usage
     ;;
@@ -278,10 +228,7 @@ done
 source "$SCRIPTDIR"/common.bash
 
 header
-<<<<<<< HEAD
-=======
 log separator
->>>>>>> 04a7a29 (added changes)
 check_for_kubectl
 check_for_operator
 verify_prerequisites
