@@ -47,6 +47,11 @@ type ContainerStorageModuleStatus struct {
 	State CSMStateType `json:"state,omitempty" yaml:"state"`
 }
 
+// +kubebuilder:validation:Optional
+// +kubebuilder:resource:scope=Namespaced,shortName={"csm"}
+// +kubebuilder:printcolumn:name="CreationTime",type=date,JSONPath=`.metadata.creationTimestamp`
+// +kubebuilder:printcolumn:name="CSIDriverType",type=string,JSONPath=`.spec.driver.csiDriverType`,description="Type of CSIDriver"
+// +kubebuilder:printcolumn:name="ConfigVersion",type=string,JSONPath=`.spec.driver.configVersion`,description="Version of CSIDriver"
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
