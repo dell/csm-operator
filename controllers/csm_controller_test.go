@@ -60,7 +60,6 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	suite.k8sClient = clientgoclient.NewFakeClient(suite.fakeClient)
 
 	suite.namespace = "test"
-
 }
 
 func (suite *CSMControllerTestSuite) TestReconcile() {
