@@ -12,7 +12,6 @@ You may obtain a copy of the License at
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -41,6 +40,9 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	//+kubebuilder:scaffold:imports
 )
@@ -177,12 +179,13 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	//logType := logger.DevelopmentLogLevel
-	//logger.SetLoggerLevel(logType)
-	//_, log := logger.GetNewContextWithLogger("main")
-	log := logger.GetLogger(context.Background())
+	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
 
-	//ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
+	logType := logger.DevelopmentLogLevel
+	logger.SetLoggerLevel(logType)
+	_, log := logger.GetNewContextWithLogger("main")
+
+	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
 
 	printVersion(log)
 	operatorConfig := getOperatorConfig(log)
@@ -201,13 +204,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster.StartLogging(log.Infof)
+	k8sClient := kubernetes.NewForConfigOrDie(restConfig)
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: k8sClient.CoreV1().Events("")})
+	recorder := eventBroadcaster.NewRecorder(clientgoscheme.Scheme, corev1.EventSource{Component: "csm"})
+
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	if err = (&controllers.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),
-		K8sClient:     kubernetes.NewForConfigOrDie(restConfig),
+		K8sClient:     k8sClient,
 		Log:           log,
 		Scheme:        mgr.GetScheme(),
-		EventRecorder: mgr.GetEventRecorderFor("csm"),
+		EventRecorder: recorder,
 		Config:        operatorConfig,
 	}).SetupWithManager(mgr, expRateLimiter, 1); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ContainerStorageModule")
