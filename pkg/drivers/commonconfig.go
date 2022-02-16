@@ -75,7 +75,6 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 				if s.Enabled == nil {
 					fmt.Printf("Container  to be enabled : %s\n", *c.Name)
 					break
-
 				} else if !*s.Enabled {
 					removeContainer = true
 					fmt.Printf("Container to be removed : %s\n", *c.Name)

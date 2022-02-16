@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"fmt"
 )
 
 var (
@@ -46,6 +45,9 @@ var (
 	}
 
 	// logger = zap.New(zap.UseFlagOptions(&opts)).WithName("pkg/drivers").WithName("unit-test")
+
+	trueBool bool = true
+	falseBool bool = false
 )
 
 func TestGetCsiDriver(t *testing.T) {
@@ -107,6 +109,8 @@ func TestGetNode(t *testing.T) {
 // makes a csm object with tolerations
 func csmWithTolerations() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add tolerations to controller and node
 	res.Spec.Driver.Node.Tolerations = []corev1.Toleration{
 		{
 			Key:               "123",
@@ -114,6 +118,40 @@ func csmWithTolerations() csmv1.ContainerStorageModule {
 			TolerationSeconds: new(int64),
 		},
 	}
+	res.Spec.Driver.Controller.Tolerations = []corev1.Toleration{
+		{
+			Key:               "123",
+			Value:             "123",
+			TolerationSeconds: new(int64),
+		},
+	}
+
+	// Add DNS Policy for GetNode test
+	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
+
+	// Add NodeSelector to node and controller
+	res.Spec.Driver.Node.NodeSelector = map[string]string{"bro" : "bruh"}
+	res.Spec.Driver.Controller.NodeSelector = map[string]string{"bro" : "bruh"}
+
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel}
+
+	// Add sidecars to trigger code in controller
+	sideCarObjEnabledNil := csmv1.ContainerTemplate {
+		Name:		"driver",
+		Enabled:	nil,
+	}
+	sideCarObjEnabledFalse := csmv1.ContainerTemplate {
+		Name:		"resizer",
+		Enabled:	&falseBool,
+	}
+	sideCarObjEnabledTrue := csmv1.ContainerTemplate {
+		Name:		"provisioner",
+		Enabled:	&trueBool,
+	}
+	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
+	res.Spec.Driver.SideCars = sideCarList
 
 	return res
 }
