@@ -112,15 +112,15 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	}
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
 	if err != nil {
-		log.Info(fmt.Sprintf("currentVersion is %s", kubeVersion))
+		log.Infof("currentVersion is %s", kubeVersion)
 	}
 	// intialise variable
 	k8sPath := ""
 	if currentVersion < minVersion {
-		log.Info(fmt.Sprintf("Installed k8s version %s is less than the minimum supported k8s version %s , hence using the default configurations", kubeVersion, K8sMinimumSupportedVersion))
+		log.Infof("Installed k8s version %s is less than the minimum supported k8s version %s , hence using the default configurations", kubeVersion, K8sMinimumSupportedVersion)
 		k8sPath = fmt.Sprintf("/driverconfig/common/default.yaml")
 	} else if currentVersion > maxVersion {
-		log.Info(fmt.Sprintf("Installed k8s version %s is greater than the maximum supported k8s version %s , hence using the latest available configurations", kubeVersion, K8sMaximumSupportedVersion))
+		log.Infof("Installed k8s version %s is greater than the maximum supported k8s version %s , hence using the latest available configurations", kubeVersion, K8sMaximumSupportedVersion)
 		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
 	} else {
 		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
