@@ -130,8 +130,8 @@ func csmWithTolerations() csmv1.ContainerStorageModule {
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
 
 	// Add NodeSelector to node and controller
-	res.Spec.Driver.Node.NodeSelector = map[string]string{"bro" : "bruh"}
-	res.Spec.Driver.Controller.NodeSelector = map[string]string{"bro" : "bruh"}
+	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs" : "NodeSelector"}
+	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs" : "NodeSelector"}
 
 	// Add log level to cover some code in GetConfigMap
 	envVarLogLevel := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
