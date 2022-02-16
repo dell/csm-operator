@@ -13,13 +13,11 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync/atomic"
 	"time"
 
 	k8sClient "github.com/dell/csm-operator/k8s"
-	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -53,7 +51,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sync"
 )
+
+var dMutex sync.RWMutex
 
 // ContainerStorageModuleReconciler reconciles a ContainerStorageModule object
 type ContainerStorageModuleReconciler struct {
@@ -92,7 +93,7 @@ var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIDriverConfigVers
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles/finalizers,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="monitoring.coreos.com",resources=servicemonitors,verbs=get;create
-// +kubebuilder:rbac:groups="apps",resources=deployments/finalizers,resourceNames=dell-csm-operator-controller-manager,verbs=update
+// +kubebuilder:rbac:groups="",resources=deployments/finalizers,resourceNames=dell-csm-operator-controller-manager,verbs=update
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csidrivers,verbs=get;list;watch;create;update;delete;patch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=storageclasses,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments,verbs=get;list;watch;create;update;patch
@@ -184,7 +185,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	if err != nil {
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
-	r.EventRecorder.Eventf(csm, "Normal", "Updated", "PreChecks ok: %s", csm.Name)
 
 	// Set the driver status to updating
 
@@ -194,26 +194,24 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		log.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
-	r.EventRecorder.Eventf(csm, "Normal", "Updated", "Call install/update driver: %s", csm.Name)
 	syncErr := r.SyncCSM(ctx, *csm, *driverConfig)
 	if syncErr == nil {
-		r.EventRecorder.Eventf(csm, "Normal", "Updated", "Driver install completed: reconcile count=%d name=%s", r.updateCount, csm.Name)
-		return utils.LogBannerAndReturn(reconcile.Result{}, err)
+		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
 	}
 
-	// Failed to sync driver deployment
+	// Failed driver deployment
 	r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed install: %s", syncErr.Error())
 
-	return utils.LogBannerAndReturn(reconcile.Result{Requeue: false}, syncErr)
+	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, syncErr)
 }
 
 func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Predicate {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			r.Log.Info("ignore Csm UpdateEvent")
 			// Ignore updates to status in which case metadata.Generation does not change
 			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
 		},
+
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			// Evaluates to false if the object has been confirmed deleted.
 			return !e.DeleteStateUnknown
@@ -222,6 +220,9 @@ func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Pre
 }
 
 func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interface{}, obj interface{}) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
+
 	old, _ := oldObj.(*appsv1.Deployment)
 	d, _ := obj.(*appsv1.Deployment)
 	name := d.Spec.Template.Labels["csm"]
@@ -233,6 +234,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	}
 
 	log.Debugw("deployment modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
 	ready := d.Status.ReadyReplicas
@@ -257,50 +259,58 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	if err != nil {
 		log.Error("deployment get csm", "error", err.Error())
 	}
-	log.Infow("csm prev status", "state", csm.Status)
-	state := false
-	if desired == available {
-		state = true
+	newStatus := csm.GetCSMStatus()
+	err = utils.UpdateStatus(ctx, csm, r, newStatus)
+	if err != nil {
+		log.Debugw("deployment status ", "pods", err.Error())
 	}
-	log.Infow("deployment status", "state", state)
-	stamp := fmt.Sprintf("at %s", time.Now().Format("2006-01-02 15:04:05"))
-	if !state {
-		err = errors.New("deployment in error")
-		newStatus := csm.GetCSMStatus()
-		newStatus.State = constants.Failed
-		newStatus.ControllerStatus = csmv1.PodStatus{
-			Available: fmt.Sprintf("%d", available),
-			Failed:    fmt.Sprintf("%d", numberUnavailable),
-			Desired:   fmt.Sprintf("%d", desired),
-		}
+	return
+}
 
-		log.Infow("deployment in err", "err", err.Error())
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
-		if err != nil {
-			log.Error("Failed to update Deployment status", "error", err.Error())
-		}
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Deployment status check Error ,pod desired:%d, unavailable:%d", stamp, desired, numberUnavailable)
+func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, obj interface{}) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
 
+	p, _ := obj.(*corev1.Pod)
+	name := p.GetLabels()["csm"]
+	if name == "" {
+		return
+	}
+	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	ctx, log := logger.GetNewContextWithLogger(key)
+
+	log.Infow("pod labeled for csm", "name", p.Name)
+
+	// update it to trigger status watch
+	ns := p.Namespace
+	namespacedName := t1.NamespacedName{
+		Name:      name,
+		Namespace: ns,
+	}
+	csm := new(csmv1.ContainerStorageModule)
+	err := r.Client.Get(ctx, namespacedName, csm)
+	if err != nil {
+		r.Log.Error("daemonset get csm", "error", err.Error())
+	}
+	log.Infow("csm prev status ", "state", csm.Status)
+	newStatus := csm.GetCSMStatus()
+
+	err = utils.UpdateStatus(ctx, csm, r, newStatus)
+	state := csm.GetCSMStatus().NodeStatus.Failed
+	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
+	if state != "0" && err != nil {
+		log.Infow("pod status ", "state", err.Error())
+		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Pod error details %s", stamp, err.Error())
 	} else {
-		log.Infow("csm status", "prev state", csm.Status.State)
-		newStatus := csm.GetCSMStatus()
-		newStatus.State = constants.Succeeded
-		newStatus.ControllerStatus = csmv1.PodStatus{
-			Available: fmt.Sprintf("%d", available),
-			Failed:    fmt.Sprintf("%d", numberUnavailable),
-			Desired:   fmt.Sprintf("%d", desired),
-		}
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
-		if err != nil {
-			log.Error("Failed to update Deployment status", "error", err.Error())
-		}
-		r.EventRecorder.Eventf(csm, "Normal", "Updated", "%s Deployment status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, available)
-
+		r.EventRecorder.Eventf(csm, "Normal", "Complete", "%s Driver pods running OK", stamp)
 	}
 	return
 }
 
 func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interface{}, obj interface{}) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
+
 	old, _ := oldObj.(*appsv1.DaemonSet)
 	d, _ := obj.(*appsv1.DaemonSet)
 	name := d.Spec.Template.Labels["csm"]
@@ -313,6 +323,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	ctx, log := logger.GetNewContextWithLogger(key)
 
 	log.Debugw("daemonset modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+
 	desired := d.Status.DesiredNumberScheduled
 	available := d.Status.NumberAvailable
 	ready := d.Status.NumberReady
@@ -323,11 +334,6 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	log.Infow("daemonset ", "numberReady", ready)
 	log.Infow("daemonset ", "available", available)
 	log.Infow("daemonset ", "numberUnavailable", numberUnavailable)
-
-	state := false
-	if desired == ready {
-		state = true
-	}
 
 	ns := d.Namespace
 	r.Log.Debugw("daemonset ", "ns", ns, "name", name)
@@ -341,45 +347,12 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	if err != nil {
 		r.Log.Error("daemonset get csm", "error", err.Error())
 	}
-	// get status and update csm
 
 	log.Infow("csm prev status ", "state", csm.Status)
-	log.Infow("daemonset status", "state", state)
-
-	stamp := fmt.Sprintf("at %s", time.Now().Format("2006-01-02 15:04:05"))
-	if !state {
-		err = errors.New("daemonset in error")
-		newStatus := csm.GetCSMStatus()
-		newStatus.State = constants.Failed
-		//newStatus.ControllerStatus = csmv1.PodStatus{}
-		newStatus.NodeStatus = csmv1.PodStatus{
-			Available: fmt.Sprintf("%d", available),
-			Failed:    fmt.Sprintf("%d", numberUnavailable),
-			Desired:   fmt.Sprintf("%d", desired),
-		}
-
-		log.Infow("daemonset in err", "err", err.Error())
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
-		if err != nil {
-			log.Infow("Failed to update Daemonset status", "error", err.Error())
-		}
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s DaemonSet status check Error ,node pod desired:%d, unavailable:%d", stamp, desired, numberUnavailable)
-	} else {
-
-		log.Infow("csm status", "prev state", csm.Status.State)
-		newStatus := csm.GetCSMStatus()
-		newStatus.State = constants.Succeeded
-		newStatus.NodeStatus = csmv1.PodStatus{
-			Available: fmt.Sprintf("%d", available),
-			Failed:    fmt.Sprintf("%d", numberUnavailable),
-			Desired:   fmt.Sprintf("%d", desired),
-		}
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
-		if err != nil {
-			log.Infow("Failed to update Daemonset status", "error", err.Error())
-		}
-		r.EventRecorder.Eventf(csm, "Normal", "Updated", "%s Daemonset status check OK : %s desired pods %d, ready pods %d", stamp, d.Name, desired, ready)
-
+	newStatus := csm.GetCSMStatus()
+	err = utils.UpdateStatus(ctx, csm, r, newStatus)
+	if err != nil {
+		log.Debugw("daemonset status ", "pods", err.Error())
 	}
 	return
 }
@@ -393,13 +366,17 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 	}
 
 	sharedInformerFactory := sinformer.NewSharedInformerFactory(clientset, time.Duration(time.Hour))
-	contentInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
-	contentdeploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
-	contentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
+	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
+	daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleDaemonsetUpdate,
 	})
-	contentdeploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleDeploymentUpdate,
+	})
+	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
+	podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: r.handlePodsUpdate,
 	})
 
 	stop := make(chan struct{})
