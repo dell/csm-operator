@@ -41,7 +41,7 @@ func InitLogger() {
     encoder := getEncoder()
     core := zapcore.NewCore(encoder, writeSyncer, zapcore.DebugLevel)
 
-    logger := zap.New(core)
+    logger := zap.New(core, zap.AddCaller())
     sugarLogger = logger.Sugar()
 }
 */
@@ -98,7 +98,7 @@ func newLogger() *zap.Logger {
 
 	core := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stderr), level)
 
-	l := zap.New(core)
+	l := zap.New(core, zap.AddCaller())
 	return l
 }
 

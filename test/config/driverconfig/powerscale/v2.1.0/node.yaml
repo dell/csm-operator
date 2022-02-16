@@ -13,7 +13,7 @@ rules:
     resources: ["persistentvolumes"]
     verbs: ["create", "delete", "get", "list", "watch", "update"]
   - apiGroups: [""]
-    resources: ["persistentvolumesclaims"]
+    resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "update"]
   - apiGroups: [""]
     resources: ["events"]
@@ -192,3 +192,4 @@ spec:
         - name: csi-isilon-config-params
           configMap:
              name: <DriverDefaultReleaseName>-config-params
+
