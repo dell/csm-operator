@@ -14,9 +14,9 @@ import (
 
 var (
 	//
-	csm = csmWithTolerations()
+	csm                         = csmWithTolerations()
 	fakeDriver csmv1.DriverType = "fakeDriver"
-	badDriver csmv1.DriverType = "badDriver"
+	badDriver  csmv1.DriverType = "badDriver"
 
 	// where to find all the yaml files
 	config = utils.OperatorConfig{
@@ -46,7 +46,7 @@ var (
 
 	// logger = zap.New(zap.UseFlagOptions(&opts)).WithName("pkg/drivers").WithName("unit-test")
 
-	trueBool bool = true
+	trueBool  bool = true
 	falseBool bool = false
 )
 
@@ -130,25 +130,25 @@ func csmWithTolerations() csmv1.ContainerStorageModule {
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
 
 	// Add NodeSelector to node and controller
-	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs" : "NodeSelector"}
-	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs" : "NodeSelector"}
+	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 
 	// Add log level to cover some code in GetConfigMap
 	envVarLogLevel := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel}
 
 	// Add sidecars to trigger code in controller
-	sideCarObjEnabledNil := csmv1.ContainerTemplate {
-		Name:		"driver",
-		Enabled:	nil,
+	sideCarObjEnabledNil := csmv1.ContainerTemplate{
+		Name:    "driver",
+		Enabled: nil,
 	}
-	sideCarObjEnabledFalse := csmv1.ContainerTemplate {
-		Name:		"resizer",
-		Enabled:	&falseBool,
+	sideCarObjEnabledFalse := csmv1.ContainerTemplate{
+		Name:    "resizer",
+		Enabled: &falseBool,
 	}
-	sideCarObjEnabledTrue := csmv1.ContainerTemplate {
-		Name:		"provisioner",
-		Enabled:	&trueBool,
+	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
+		Name:    "provisioner",
+		Enabled: &trueBool,
 	}
 	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
 	res.Spec.Driver.SideCars = sideCarList
