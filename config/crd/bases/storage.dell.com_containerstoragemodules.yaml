@@ -28,7 +28,7 @@ spec:
       type: string
     - description: Version of CSIDriver
       jsonPath: .spec.driver.configVersion
-      name: CONFIGVERSION
+      name: ConfigVersion
       type: string
     name: v1alpha1
     schema:

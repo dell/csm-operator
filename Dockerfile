@@ -27,7 +27,7 @@ ENV USER_UID=1001 \
     X_CSM_OPERATOR_CONFIG_DIR="/etc/config/dell-csm-operator"
 WORKDIR /
 COPY --from=builder /workspace/manager .
-COPY operatorconfig/ /etc/config/local/dell-csm-operator
+COPY operatorconfig/ /etc/config/dell-csm-operator
 LABEL vendor="Dell Inc." \
     name="dell-csm-operator" \
     summary="Operator for installing Dell EMC CSM Modules" \

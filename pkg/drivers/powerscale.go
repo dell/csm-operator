@@ -39,7 +39,6 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 				return fmt.Errorf("%s is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
 			}
 			skipCertValid = b
-			fmt.Printf("debug skipCertValid 1 %t\n", skipCertValid)
 		}
 		if env.Name == "CERT_SECRET_COUNT" {
 			d, err := strconv.ParseInt(env.Value, 0, 8)
