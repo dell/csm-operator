@@ -28,7 +28,7 @@ func (c *FakeDaemonSets) Apply(ctx context.Context, daemonSet *applyconfiguratio
 		return result, err
 	}
 
-	json.Unmarshal(data, result)
+	err = json.Unmarshal(data, result)
 
 	_, err = c.Get(ctx, *daemonSet.Name, v1.GetOptions{})
 	if errors.IsNotFound(err) {
