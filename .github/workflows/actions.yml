@@ -1,9 +1,9 @@
 name: Workflow
 on:
   push:
-    branches: [ main ]
+    branches: [ joos-unit-test ]
   pull_request:
-    branches: [ main ]
+    branches: [ joos-unit-test ]
 jobs:
   code-check:
     name: Check Go formatting, linting, vetting
@@ -37,7 +37,7 @@ jobs:
           repository: 'dell/csm-operator'
           path: 'csm-operator'
       - name: Run unit tests and check package coverage
-        uses: dell/common-github-actions/go-code-tester@main
+        uses: dell/common-github-actions/go-code-tester@csm-operator
         with:
           # lower to 29 until we add more unit test for controller.go
           threshold: 24
