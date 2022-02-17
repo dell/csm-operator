@@ -70,7 +70,8 @@ waitOnRunning() {
   RUNNING=0
   for D in "${PODS[@]}"; do
     echo
-    echo "Checking $D, and waiting up to $TIMEOUT seconds to roll out"
+    echo "Checking $D Waiting up to $TIMEOUT seconds to roll out."
+    echo
     kubectl -n "${NS}" rollout status --timeout=${TIMEOUT}s ${D} 2>/dev/null
     if [ $? -ne 0 ]; then
       RUNNING=1
