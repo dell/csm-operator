@@ -1,9 +1,9 @@
 name: Workflow
 on:
   push:
-    branches: [ joos-unit-test ]
+    branches: [ main ]
   pull_request:
-    branches: [ joos-unit-test ]
+    branches: [ main ]
 jobs:
   code-check:
     name: Check Go formatting, linting, vetting
