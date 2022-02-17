@@ -123,7 +123,7 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 	}
 
 	// after reconcile being run, we update deployment and daemonset
-	// then call handleDeployment/DaemonsetUpdate explicitely because
+	// then call handleDeployment/DaemonsetUpdate explicitly because
 	// in unit test listener does not get triggered
 	suite.handleDaemonsetTest(reconciler, "csm-node")
 	suite.handleDeploymentTest(reconciler, "csm-controller")
