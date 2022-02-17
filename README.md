@@ -35,6 +35,8 @@ Dell EMC Container Storage Modules (CSM) Operator is an open-source Kubernetes o
   * [Controllers](#controllers)
   * [How to Build Container Storage Modules (CSM) Operator](#how-to-build-container-storage-modules-csm-operator)
   * [How to Deploy Container Storage Modules (CSM) Operator](#how-to-deploy-container-storage-modules-csm-operator)
+  * [Uninstall Operator](#uninstall-operator)
+  * [How to Install Container Storage Modules (CSM) Components using Operator](#how-to-install-container-storage-modules-csm-components-using-operator)
 * [CSM Operator Certified Bundle](#csm-operator-certified-bundle)
 * [Versioning](#versioning)
 * [About](#about)
@@ -140,11 +142,17 @@ There are primarily four ways of deploying the Operator -
 3. [Offline installation of operator](#offline-installation-of-operator)
 4. [Run locally without deploying any image](#run-the-operator-locally-without-deploying-any-image)
  
-After installing successfully, there should be an Operator deployment created in the cluster. You can now query for the CRDs installed in the cluster by running the command `kubectl get crd`. You should see `csm.storage.dell.com` aong the list of crds
+After installing successfully, there should be an Operator deployment created in the cluster. You can now query for the CRDs installed in the cluster by running the command `kubectl get crd`. You should see `csm.storage.dell.com` among the list of crds
  
 #### Deploy Operator without OLM
 
-TODO
+1. Edit the image field in deploy/operator.yaml to specify the desired Operator image.
+   
+2. Install the Operator using deploy/install.sh bash script by running the command `./install.sh`. The Operator gets installed in `dell-csm-operator` namespace.
+
+3. Operator installation can be verified by querying for the controller manager pods of Operator by running the command `kubectl get pods -n dell-csm-operator`.
+
+
 
 #### Deploy Operator using OLM
 
@@ -161,6 +169,10 @@ Make sure that a [**KubeConfig**](https://kubernetes.io/docs/concepts/configurat
 Run `make install run` to run the Operator in your cluster without creating a deployment.
 
 The above command will update the CRDs, install the CRDs and then run the Operator.
+
+### Uninstall Operator
+
+Uninstall the Operator using deploy/uninstall.sh bash script by running the command `./uninstall.sh`. This deletes the objects created as part of Operator installation. The CRDs are not deleted.
 
 ### How to Install Container Storage Modules (CSM) Components using Operator
 
