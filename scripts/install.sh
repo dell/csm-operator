@@ -14,6 +14,8 @@ function usage() {
   echo
   echo "Usage: $PROG options..."
   echo "Options:"
+  echo "  Optional"
+  echo "  --upgrade                                Perform an upgrade of the Operator, default is false"
   echo "  -h                                       Help"
   echo
 
@@ -42,8 +44,12 @@ function warning() {
 
 # print header information
 function header() {
-  echo "******"
-  echo "Installing Dell CSM Operator"
+  if [ "$MODE" == "upgrade" ]; then
+    echo "Upgrading Dell CSM Operator"
+  else
+    echo "Installing Dell CSM Operator"
+  fi
+
   echo
 }
 
@@ -89,7 +95,9 @@ function check_or_create_namespace() {
       exit 1
     fi
   else
+    log separator
     echo "Namespace '$1' already exists"
+    echo
   fi
 }
 
@@ -106,18 +114,34 @@ function check_for_operator() {
   if [ $? -eq 0 ]; then
     operator_in_namespace=true
   fi
-  if [ "$operator_in_namespace" = true ]; then
-    log step_failure
-    log warning "Found existing installation of dell-csm-operator in '$NAMESPACE' namespace"
-    log error "Remove the existing installation manually or use uninstall.sh script, and then proceed with installation"
-    exit 1
+
+  if [ "$MODE" == "upgrade" ]; then
+  	if  [ "$operator_in_namespace" = true ]; then
+       log step_success
+       echo "Found existing installation of log error in '$NAMESPACE' namespace"
+       echo "Attempting to upgrade the Operator as --upgrade option was specified"
+    else
+       log step_failure
+       log error "Operator is not found in '$NAMESPACE' namespace to upgrade.Install the operator without the upgrade option."
+    fi
   else
-    log step_success
+  	if [ "$operator_in_namespace" = true ]; then
+       log step_failure
+       log warning "Found existing installation of dell-csm-operator in '$NAMESPACE' namespace"
+       log error "Remove the existing installation using uninstall.sh script, or use the --upgrade option to upgrade the Operator"
+       exit 1
+    else
+       log step_success
+    fi
   fi
 }
 
 function install_or_update_crd() {
-  log step "Install/Update CRDs"
+  if [ "$MODE" == "upgrade" ]; then
+    log step "Update CRD"
+  else
+    log step "Install/Update CRD"
+  fi
   kubectl apply -f ${DEPLOYDIR}/crds/storage.dell.com_containerstoragemodules.yaml 2>&1 >/dev/null
   if [ $? -ne 0 ]; then
     log error "Failed to install/update CRD"
@@ -126,7 +150,11 @@ function install_or_update_crd() {
 }
 
 function create_operator_deployment() {
-  log step "Install Operator"
+  if [ "$MODE" == "upgrade" ]; then
+    log step "Upgrade Operator"
+  else
+    log step "Install Operator"
+  fi
   kubectl apply -f ${DEPLOYDIR}/operator.yaml 2>&1 >/dev/null
   if [ $? -ne 0 ]; then
     log error "Failed to deploy operator"
@@ -135,23 +163,26 @@ function create_operator_deployment() {
 }
 
 function install_operator() {
-  log separator
-  echo "Installing Operator"
-  log separator
+  if [ "$MODE" == "upgrade" ]; then
+    log separator
+    echo "Upgrading Operator"
+  else
+    log separator
+    echo "Installing Operator"
+  fi
   install_or_update_crd
-  log separator
   create_operator_deployment $NAMESPACE
-  log separator
+
 }
 
 function check_progress() {
   # find out the deployment name
   # wait for the deployment to finish, use the default timeout
-  waitOnRunning "${NAMESPACE}" "deployment dell-csm-operator-controller-manager"
+  waitOnRunning "${NAMESPACE}" "deployment dell-csm-operator-controller-manager."
   if [ $? -eq 1 ]; then
     warning "Timed out waiting for installation of the operator to complete." \
       "This does not indicate a fatal error, pods may take a while to start." \
-      "Progress can be checked by running \"kubectl get pods\""
+      "Progress can be checked by running \"kubectl get pods -n dell-csm-operator\"."
   fi
 }
 
@@ -170,6 +201,19 @@ ASSUMEYES="false"
 
 while getopts ":h-:" optchar; do
   case "${optchar}" in
+  -)
+    case "${OPTARG}" in
+    upgrade)
+      MODE="upgrade"
+      ;;
+    *)
+      echo "Unknown option -${OPTARG}"
+      echo "For help, run $PROG -h"
+      exit 1
+      ;;
+    esac
+    ;;
+
   h)
     usage
     ;;
@@ -184,6 +228,7 @@ done
 source "$SCRIPTDIR"/common.bash
 
 header
+log separator
 check_for_kubectl
 check_for_operator
 verify_prerequisites
