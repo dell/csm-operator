@@ -17,7 +17,7 @@ function verify_snap_crds() {
 	# check for the snapshot CRDs.
     CRDS=("VolumeSnapshotClasses" "VolumeSnapshotContents" "VolumeSnapshots")
     for C in "${CRDS[@]}"; do
-      log step "Checking $C CRD"
+      log step "Checking for $C CRD"
       # Verify that snapshot related CRDs/CRs exist on the system.
       kubectl explain ${C} > /dev/null 2>&1
       if [ $? -ne 0 ]; then
@@ -82,17 +82,6 @@ function summary() {
 		done
 		RC=$EXIT_ERROR
 	fi
-
-	echo
-	log separator
-	echo "Summary"
-
-    log step "Snapshot CRDs:"
-    log ${RESULT_SNAP_CRDS}
-    log step "Snapshot Controller:"
-    log ${RESULT_SNAP_CONTROLLER}
-
-	echo
 }
 
 #
@@ -121,8 +110,6 @@ header
 log separator
 verify_snap_crds
 verify_snapshot_controller
-log separator
-
 summary
 
 if [ ${RESULT_SNAP_CRDS} == "Failed" ]; then
