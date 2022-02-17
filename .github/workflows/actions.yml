@@ -37,7 +37,7 @@ jobs:
           repository: 'dell/csm-operator'
           path: 'csm-operator'
       - name: Run unit tests and check package coverage
-        uses: dell/common-github-actions/go-code-tester@csm-operator-controller
+        uses: dell/common-github-actions/go-code-tester@csm-operator-controllers
         with:
           threshold: 40
   test_driver:
@@ -52,7 +52,7 @@ jobs:
           repository: 'dell/csm-operator'
           path: 'csm-operator'
       - name: Run unit tests and check package coverage
-        uses: dell/common-github-actions/go-code-tester@csm-operator-driver
+        uses: dell/common-github-actions/go-code-tester@csm-operator-drivers
         with:
           threshold: 70
   go_security_scan:
