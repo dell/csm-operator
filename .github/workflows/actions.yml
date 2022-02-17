@@ -25,8 +25,8 @@ jobs:
         uses: dell/common-github-actions/code-sanitizer@main
         with:
           args: /github/workspace
-  test:
-    name: Run Go unit tests and check package coverage
+  test_controller:
+    name: Run Go unit tests on controller and check package coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
@@ -37,10 +37,24 @@ jobs:
           repository: 'dell/csm-operator'
           path: 'csm-operator'
       - name: Run unit tests and check package coverage
-        uses: dell/common-github-actions/go-code-tester@csm-operator
+        uses: dell/common-github-actions/go-code-tester@csm-operator-controller
         with:
-          # lower to 29 until we add more unit test for controller.go
-          threshold: 24
+          threshold: 40
+  test_driver:
+    name: Run Go unit tests on driver and check package coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Checkout csm-operator
+        uses: actions/checkout@v2
+        with:
+          repository: 'dell/csm-operator'
+          path: 'csm-operator'
+      - name: Run unit tests and check package coverage
+        uses: dell/common-github-actions/go-code-tester@csm-operator-driver
+        with:
+          threshold: 70
   go_security_scan:
     name: Go security
     runs-on: ubuntu-latest
