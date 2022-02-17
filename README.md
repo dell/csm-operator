@@ -1,6 +1,6 @@
 
 <!--
-Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
+Copyright (c) 2022 Dell Inc., or its subsidiaries. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ You may obtain a copy of the License at
 [![Go version](https://img.shields.io/github/go-mod/go-version/dell/csm-operator)](go.mod)
 [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/dell/csm-operator?include_prereleases&label=latest&style=flat-square)](https://github.com/dell/csm-operator/releases/latest)
 
-Dell EMC Container Storage Modules (CSM) Operator is an open-source Kubernetes operator which can be used to install and manage various [Container Storage Modules - Components](#container-storage-modules---components).
+Dell EMC Container Storage Modules (CSM) Operator is an open-source Kubernetes operator which can be used to install and manage various CSI Drivers and CSM Modules.
 
 ## Table of Contents
 
@@ -29,146 +29,44 @@ Dell EMC Container Storage Modules (CSM) Operator is an open-source Kubernetes o
 * [Maintainers](./docs/MAINTAINERS.md)
 * [Support](./docs/SUPPORT.md)
 * [Security](./docs/SECURITY.md)
-* [Container Storage Modules - Components](#container-storage-modules---components)
-* [Development](#development)
-  * [Custom Resource Definitions (CRDs)](#custom-resource-definitions-crds) 
-  * [Controllers](#controllers)
-  * [How to Build Container Storage Modules (CSM) Operator](#how-to-build-container-storage-modules-csm-operator)
-  * [How to Deploy Container Storage Modules (CSM) Operator](#how-to-deploy-container-storage-modules-csm-operator)
-* [CSM Operator Certified Bundle](#csm-operator-certified-bundle)
-* [Versioning](#versioning)
-* [About](#about)
-  
+* [Dell CSM Operator](#dell-csm-operator)
+  * [Support](#support)
+  * [Supported Platforms](#supported-platforms)
+  * [Installation](#installation)
+  * [Install CSI Drivers and CSM Modules](#install-csi-drivers-and-csm-modules)
+  * [Uninstall CSI Drivers and CSM Modules](#uninstall-csi-drivers-and-csm-modules)
 
-## Container Storage Modules - Components
+# Dell CSM Operator
+Dell CSM Operator is a Kubernetes native application which helps in installing and managing CSI Drivers and CSM Modules provided by Dell EMC for its various storage platforms. 
+Dell CSM Operator uses Kubernetes CRDs (Custom Resource Definitions) to define a manifest that describes the deployment specifications for each driver to be deployed.
 
-* [Dell EMC Container Storage Modules (CSM) for Authorization](https://github.com/dell/karavi-authorization)
-* [Dell EMC Container Storage Modules (CSM) for Observability](https://github.com/dell/karavi-observability)
-* [Dell EMC Container Storage Modules (CSM) for Replication](https://github.com/dell/csm-replication)
-* [Dell EMC Container Storage Modules (CSM) for Resiliency](https://github.com/dell/karavi-resiliency)
-* [Dell EMC Container Storage Modules (CSM) for Volume Group Snapshotter](https://github.com/dell/csi-volumegroup-snapshotter)
-* [CSI Driver for Dell EMC PowerFlex](https://github.com/dell/csi-powerflex)
-* [CSI Driver for Dell EMC PowerMax](https://github.com/dell/csi-powermax)
-* [CSI Driver for Dell EMC PowerScale](https://github.com/dell/csi-powerscale)
-* [CSI Driver for Dell EMC PowerStore](https://github.com/dell/csi-powerstore)
-* [CSI Driver for Dell EMC Unity](https://github.com/dell/csi-unity)
+Dell CSM Operator is built using the [operator framework](https://github.com/operator-framework) and runs custom Kubernetes controllers to manage the driver installations. These controllers listen for any create/update/delete request for the respective CRDs and try to reconcile the request.
 
+Currently, the Dell CSM Operator can be used to deploy the following CSI drivers provided by Dell EMC
 
-## Development
+* CSI Driver for Dell EMC PowerScale
+  * CSM Authorization
 
-Container Storage Modules (CSM) Operator is built, deployed and tested using the toolset provided by Operator [framework](https://github.com/operator-framework) which include:
-* [operator-sdk](https://github.com/operator-framework/operator-sdk)
-* [operator-lifecycle-manager](https://github.com/operator-framework/operator-lifecycle-manager)
-* [operator-registry](https://github.com/operator-framework/operator-registry)
+**NOTE**: You can refer to additional information about the Dell CSM Operator on the new documentation website [here](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
-### Custom Resource Definitions (CRDs)
+## Support
+The Dell CSM Operator image is available on Dockerhub and is officially supported by Dell EMC.
+For any CSM Operator and driver issues, questions or feedback, join the [Dell EMC Container community](https://www.dell.com/community/Containers/bd-p/Containers).
 
-`csm-operator` manages a single [Custom Resource Definitions](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/) (CRDs) that supports all [Container Storage Modules - Components](#container-storage-modules---components). This CRD represent a specific CSI Driver installation and option to add other none-driver modules for that installation and is part of the API group `storage.dell.com`. The CRD managed by `csm-operator` is called `CSM`
+## Supported Platforms
+Dell CSM Operator has been tested and qualified with 
 
-### Controllers
+    * Upstream Kubernetes cluster v1.21, v1.22, v1.23
+    * OpenShift Clusters 4.8, 4.8 EUS, 4.9 with RHEL 7.x & RHCOS worker nodes
 
-`csm-operator` utilizes Kubernetes [controller runtime](https://github.com/kubernetes-sigs/controller-runtime) libraries for building controllers which
-run as part of the Operator deployment.  
-These controllers watch for any requests to create/modify/delete instances of the Custom Resource Definitions (CRDs) and handle the [reconciliation](https://godoc.org/sigs.k8s.io/controller-runtime/pkg/reconcile)
-of these requests.
+## Installation
+To install Dell CSM Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
-Each instance of a CRD is called a Custom Resource (CR) and can be managed by a client like `kubectl` in the same way a native
-Kubernetes resource is managed.  
-When you create a Custom Resource, then the corresponding Controller will create the Kubernetes objects required for the driver installation.  
+## Install CSI Drivers and CSM Modules
+To install CSI drivers and CSM modules using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
-This includes:
-* Service Accounts and RBAC configuration
-* StatefulSet
-* DaemonSet
-* Deployment and Service (only for Reverse Proxy for PowerMax Driver)
-
-> __Note__: - There is one controller for a Custom Resource type and each controller runs a single worker 
-
-
-### How to Build Container Storage Modules (CSM) Operator
-
-If you wish to clone and build the Container Storage Modules (CSM) Operator, a Linux host is required with the following installed:
-
-| Component       | Version   | Additional Information                                                                                                                     |
-| --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Docker          | v19+      | [Docker installation](https://docs.docker.com/engine/install/)                                                                                                    |
-| Docker Registry |           | Access to a local/corporate [Docker registry](https://docs.docker.com/registry/)                                                           |
-| Golang          | v1.14+    | [Golang installation](https://github.com/travis-ci/gimme)                                                                                                         |
-| operator-sdk          | v1.7.1+   |[Operator SDK installation](https://github.com/operator-framework/operator-sdk/releases/download/v1.7.1/operator-sdk_linux_amd64)                                                                                                          |
-| OLM            |     | Run ```operator-sdk olm install```                                                                                                       |
-| OPM           |   v1.14+  | [OPM installation](https://github.com/operator-framework/operator-registry/releases/download/v1.14.0/linux-amd64-opm)                                                              |
-| git             | latest    | [Git installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)                                                                              |
-| gcc             |           | Run ```sudo apt install build-essential```                                                                                                 |
-| kubectl         | 1.18-1.20 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
-
-> __Note__: While installing `operator-sdk` & `opm`, make sure they are available in your PATH & the binaries have the right names and permissions.
-
-
-There are multiple Makefile targets available for building the Operator
-
-
-#### Build Operator image
-
-There are a few available Makefile targets which let you build a docker image for the Operator. 
-The docker image is built using the `operator-sdk` binary (which is available in the repository). 
-The base image used to build the docker image is UBI (Universal Base Image) provided by Red Hat.
-
-Run the command `make docker-build` to build a docker image for the Operator which will be tagged with git semantic versioning  
-The official builds of Operator which are hosted on artifactory are built using the `make docker-build` command
-
-By default, this target will tag the newly built images with the artifactory repo  
-Run the command `make docker-build IMG=<local/private/public docker registory>/csm-operator:<your-tag>` to tag the docker image with your own repository
-
-
-#### Push docker Operator image
-
-Run the command `make docker-push IMG=<local/private/public registory>/csm-operator:<your-tag>`  to push the docker image to `local/private/public docker registry>` 
-
-
-#### Build Operator image along with bundle
-
-Run the command `make docker-build BUNDLE_IMG=<local/private/public docker registory>/csm-operator-bundle:<your-tag>` to build the operator image and operator bundle image. 
-
-The above command will also push the images to the specified registry.
-
-### How to Deploy Container Storage Modules (CSM) Operator
-
-There are primarily four ways of deploying the Operator -
-
-1. [Deploy Operator without OLM](#deploy-operator-without-olm)
-2. [Deploy Operator using OLM](#deploy-operator-using-olm)
-3. [Offline installation of operator](#offline-installation-of-operator)
-4. [Run locally without deploying any image](#run-the-operator-locally-without-deploying-any-image)
- 
-After installing successfully, there should be an Operator deployment created in the cluster. You can now query for the CRDs installed in the cluster by running the command `kubectl get crd`. You should see `csm.storage.dell.com` aong the list of crds
- 
-#### Deploy Operator without OLM
-
-TODO
-
-#### Deploy Operator using OLM
-
-TODO
-
-#### Offline Installation of Operator
-
-TODO
-
-#### Run the Operator locally without deploying any image 
-
-Make sure that a [**KubeConfig**](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) file pointing to your Kubernetes/OpenShift cluster is present in the default location
-
-Run `make install run` to run the Operator in your cluster without creating a deployment.
-
-The above command will update the CRDs, install the CRDs and then run the Operator.
-
-### How to Install Container Storage Modules (CSM) Components using Operator
-
-TODO
-
-## CSM Operator Certified Bundle 
-
-TODO
+## Uninstall CSI Drivers and CSM Modules
+To uninstall CSI drivers and CSM modules installed using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
 ## Versioning
 
