@@ -20,7 +20,7 @@ import (
 func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
-	fmt.Printf("GetController configMapPath: %+v\n", configMapPath)
+	log.Debugw("GetController", "configMapPath", configMapPath)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		log.Errorw("GetController failed", "Error", err.Error())
@@ -117,7 +117,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string) (*utils.NodeYAML, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
-	fmt.Printf("GetNode configMapPath: %+v\n", configMapPath)
+	log.Debugw("GetNode", "configMapPath", configMapPath)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		log.Errorw("GetNode failed", "Error", err.Error())
@@ -199,7 +199,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
-	fmt.Printf("GetConfigMap configMapPath: %+v\n", configMapPath)
+	log.Debugw("GetConfigMap", "configMapPath", configMapPath)
 
 	if _, err := os.Stat(configMapPath); os.IsNotExist(err) {
 		log.Errorw("GetConfigMap failed", "Error", err.Error())
@@ -236,7 +236,7 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
-	fmt.Printf("GetCSIDriver configMapPath: %+v\n", configMapPath)
+	log.Debugw("GetCSIDriver", "configMapPath", configMapPath)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		log.Errorw("GetCSIDriver failed", "Error", err.Error())
