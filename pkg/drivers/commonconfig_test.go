@@ -20,7 +20,7 @@ var (
 
 	// where to find all the yaml files
 	config = utils.OperatorConfig{
-		ConfigDirectory: "../../test/config",
+		ConfigDirectory: "../../tests/config",
 	}
 
 	tests = []struct {
