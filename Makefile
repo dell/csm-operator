@@ -116,6 +116,7 @@ static-crd: manifests kustomize ## Copies CRDs to deploy folder.
 	$(KUSTOMIZE) build config/crd > deploy/crds/storage.dell.com_containerstoragemodules.yaml
 
 static-manager: manifests kustomize ## Creates the operator manifests in deploy folder.
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/install > deploy/operator.yaml
 
 static-manifests: static-crd static-manager
@@ -127,7 +128,6 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 deploy: static-manager ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.

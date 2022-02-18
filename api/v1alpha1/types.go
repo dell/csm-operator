@@ -177,6 +177,10 @@ type Driver struct {
 	// TLSCertSecret is the name of the TLS Cert secret
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="TLSCert Secret"
 	TLSCertSecret string `json:"tlsCertSecret,omitempty" yaml:"tlsCertSecret"`
+
+	// ForceRemoveDriver is the boolean flag used to remove driver deployment when CR is deleted
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Driver"
+	ForceRemoveDriver bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
 }
 
 //ContainerTemplate template

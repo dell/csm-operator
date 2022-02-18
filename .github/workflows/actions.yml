@@ -98,3 +98,4 @@ jobs:
       #  with:
       #    image-name: controller:latest
       #    severity-threshold: HIGH
+
