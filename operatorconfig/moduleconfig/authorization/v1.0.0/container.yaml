@@ -23,5 +23,5 @@ volumeMounts:
     mountPath: /etc/karavi-authorization/config
   - name: proxy-server-root-certificate
     mountPath: /etc/karavi-authorization/root-certificates
-  - name: <DriverDefaultReleaseName>-config-params
+  - name: <DriverConfigParamsVolumeMount>
     mountPath: /etc/karavi-authorization

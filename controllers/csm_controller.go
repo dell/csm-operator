@@ -21,6 +21,7 @@ import (
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -50,8 +51,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 )
 
 var dMutex sync.RWMutex
@@ -71,15 +76,27 @@ type ContainerStorageModuleReconciler struct {
 	EventRecorder record.EventRecorder
 }
 
+// DriverConfig  -
+type DriverConfig struct {
+	Driver     *storagev1.CSIDriver
+	ConfigMap  *corev1.ConfigMap
+	Node       *utils.NodeYAML
+	Controller *utils.ControllerYAML
+}
+
+// MetadataPrefix - prefix for all labels & annotations
 const (
 	// MetadataPrefix - prefix for all labels & annotations
 	MetadataPrefix = "storage.dell.com"
 
 	// NodeYaml - yaml file name for node
 	NodeYaml = "node.yaml"
+
+	// CSMFinalizerName -
+	CSMFinalizerName = "finalizer.dell.emc.com"
 )
 
-var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIDriverConfigVersion")
+var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
 
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules/status,verbs=get;update;patch
@@ -142,34 +159,51 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		return reconcile.Result{}, nil
 	}
 
-	isCustomResourceMarkedForDeletion := csm.GetDeletionTimestamp() != nil
-	if isCustomResourceMarkedForDeletion {
-		return r.removeFinalizer(ctx, csm)
-	}
-
-	// Add finalizer
-	err = r.Client.Get(ctx, req.NamespacedName, csm)
-	if len(csm.GetFinalizers()) < 1 {
-		csm.SetFinalizers([]string{"finalizer.dell.emc.com"})
-		// Update CR
-		err = r.Client.Update(ctx, csm)
-		if err != nil {
-			log.Error(err, "Failed to update CR with finalizer")
-			return reconcile.Result{}, err
-		}
-	}
-
-	oldStatus := csm.GetCSMStatus()
-	driverConfig := &utils.OperatorConfig{
+	// Remove finalizer to allow users to delete CR
+	operatorConfig := &utils.OperatorConfig{
 		IsOpenShift:     r.Config.IsOpenShift,
 		K8sVersion:      r.Config.K8sVersion,
 		ConfigDirectory: r.Config.ConfigDirectory,
 	}
 
+	if csm.IsBeingDeleted() {
+		r.Log.Info(fmt.Sprintf("HandleFinalizer for %v", req.NamespacedName))
+		if err := r.removeFinalizer(csm); err != nil {
+			r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Deleting finalizer", fmt.Sprintf("Failed to delete finalizer: %s", err))
+			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
+		}
+		r.EventRecorder.Event(csm, corev1.EventTypeNormal, "Deleted", "Object finalizer is deleted")
+
+		// check for force cleanup
+		if csm.Spec.Driver.ForceRemoveDriver {
+			// remove all resource deployed from CR by operator
+			if err := r.removeDriver(ctx, *csm, *operatorConfig, log); err != nil {
+				r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Removing Driver", fmt.Sprintf("Failed to remove driver: %s", err))
+				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
+			}
+
+		}
+
+		return ctrl.Result{}, nil
+	}
+
+	// Add finalizer
+	if !csm.HasFinalizer(CSMFinalizerName) {
+		r.Log.Info(fmt.Sprintf("AddFinalizer for %v", req.NamespacedName))
+		if err := r.addFinalizer(csm); err != nil {
+			r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Adding finalizer", fmt.Sprintf("Failed to add finalizer: %s", err))
+			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
+		}
+		r.EventRecorder.Event(csm, corev1.EventTypeNormal, "Added", "Object finalizer is added")
+		return ctrl.Result{}, nil
+	}
+
+	oldStatus := csm.GetCSMStatus()
+
 	// Before doing anything else, check for config version and apply annotation if not set
 	isUpdated, err := checkAndApplyConfigVersionAnnotations(csm, false)
 	if err != nil {
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed add annotation during install: %s", err.Error())
+		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, "Updated", "Failed add annotation during install: %s", err.Error())
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 	if isUpdated {
@@ -181,8 +215,9 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	// perfrom prechecks
-	err = r.PreChecks(ctx, csm, *driverConfig)
+	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
+		r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Running Pre-Check", fmt.Sprintf("Failed Prechecks: %s", err))
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 
@@ -194,7 +229,8 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		log.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
-	syncErr := r.SyncCSM(ctx, *csm, *driverConfig)
+	r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, "Updated", "Call install/update driver: %s", csm.Name)
+	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig)
 	if syncErr == nil {
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
 	}
@@ -399,57 +435,33 @@ func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, li
 		}).Complete(r)
 }
 
-func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule) (reconcile.Result, error) {
-	// Remove the finalizers
-	instance.SetFinalizers(nil)
-	// Update the object
-	err := r.Client.Update(ctx, instance)
-	if err != nil {
-		return reconcile.Result{}, err
+func (r *ContainerStorageModuleReconciler) removeFinalizer(instance *csmv1.ContainerStorageModule) error {
+	if !instance.HasFinalizer(CSMFinalizerName) {
+		return nil
 	}
-	return reconcile.Result{}, nil
+	instance.SetFinalizers(nil)
+	return r.Update(context.Background(), instance)
+}
+
+func (r *ContainerStorageModuleReconciler) addFinalizer(instance *csmv1.ContainerStorageModule) error {
+	instance.SetFinalizers([]string{CSMFinalizerName})
+	return r.Update(context.Background(), instance)
 }
 
 // SyncCSM - Sync the current installation - this can lead to a create or update
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 
-	var (
-		err        error
-		driver     *storagev1.CSIDriver
-		configMap  *corev1.ConfigMap
-		node       *utils.NodeYAML
-		controller *utils.ControllerYAML
-	)
-
 	// Get Driver resources
-	log.Infof("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType)
-	driverType := cr.Spec.Driver.CSIDriverType
-
-	if driverType == csmv1.PowerScale {
-		// use powerscale instead of isilon as the folder name is powerscale
-		driverType = csmv1.PowerScaleName
-	}
-
-	configMap, err = drivers.GetConfigMap(ctx, cr, operatorConfig, driverType)
+	driverConfig, err := r.getDriverConfig(ctx, cr, operatorConfig, log)
 	if err != nil {
-		return fmt.Errorf("getting %s configMap: %v", driverType, err)
+		return err
 	}
 
-	driver, err = drivers.GetCSIDriver(ctx, cr, operatorConfig, driverType)
-	if err != nil {
-		return fmt.Errorf("getting %s configMap: %v", driverType, err)
-	}
-
-	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml)
-	if err != nil {
-		return fmt.Errorf("getting %s node: %v", driverType, err)
-	}
-
-	controller, err = drivers.GetController(ctx, cr, operatorConfig, driverType)
-	if err != nil {
-		return fmt.Errorf("getting %s controller: %v", driverType, err)
-	}
+	driver := driverConfig.Driver
+	configMap := driverConfig.ConfigMap
+	node := driverConfig.Node
+	controller := driverConfig.Controller
 
 	// Add module resources
 	for _, m := range cr.Spec.Modules {
@@ -532,6 +544,146 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	if err != nil {
 		return err
 	}
+	return nil
+
+}
+
+func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
+	log *zap.SugaredLogger) (*DriverConfig, error) {
+	var (
+		err        error
+		driver     *storagev1.CSIDriver
+		configMap  *corev1.ConfigMap
+		node       *utils.NodeYAML
+		controller *utils.ControllerYAML
+	)
+
+	// Get Driver resources
+	log.Infof("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType)
+	driverType := cr.Spec.Driver.CSIDriverType
+
+	if driverType == csmv1.PowerScale {
+		// use powerscale instead of isilon as the folder name is powerscale
+		driverType = csmv1.PowerScaleName
+	}
+
+	configMap, err = drivers.GetConfigMap(ctx, cr, operatorConfig, driverType)
+	if err != nil {
+		return nil, fmt.Errorf("getting %s configMap: %v", driverType, err)
+	}
+
+	driver, err = drivers.GetCSIDriver(ctx, cr, operatorConfig, driverType)
+	if err != nil {
+		return nil, fmt.Errorf("getting %s CSIDriver: %v", driverType, err)
+	}
+
+	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml)
+	if err != nil {
+		return nil, fmt.Errorf("getting %s node: %v", driverType, err)
+	}
+
+	controller, err = drivers.GetController(ctx, cr, operatorConfig, driverType)
+	if err != nil {
+		return nil, fmt.Errorf("getting %s controller: %v", driverType, err)
+	}
+
+	return &DriverConfig{
+		Driver:     driver,
+		ConfigMap:  configMap,
+		Node:       node,
+		Controller: controller,
+	}, nil
+
+}
+
+func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
+	reqLogger *zap.SugaredLogger) error {
+	deleteObj := func(obj client.Object) error {
+		err := r.GetClient().Get(ctx, types.NamespacedName{Name: obj.GetName()}, obj)
+		if err != nil && k8serror.IsNotFound(err) {
+			return nil
+		} else if err != nil {
+			reqLogger.Info("Unknown error.", "Error", err.Error())
+			return err
+		} else {
+			reqLogger.Info("Deleting object", "Name:", obj.GetName(), "Kind:", obj.GetObjectKind().GroupVersionKind().Kind)
+			err = r.GetClient().Delete(ctx, obj)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// Get Driver resources
+	driverConfig, err := r.getDriverConfig(ctx, instance, operatorConfig, reqLogger)
+	if err != nil {
+		return err
+	}
+
+	err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount)
+	if err != nil {
+		return err
+	}
+	err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount)
+	if err != nil {
+		return err
+	}
+
+	err = deleteObj(&driverConfig.Node.Rbac.ClusterRole)
+	if err != nil {
+		return err
+	}
+	err = deleteObj(&driverConfig.Controller.Rbac.ClusterRole)
+	if err != nil {
+		return err
+	}
+
+	err = deleteObj(&driverConfig.Node.Rbac.ClusterRoleBinding)
+	if err != nil {
+		return err
+	}
+	err = deleteObj(&driverConfig.Controller.Rbac.ClusterRoleBinding)
+	if err != nil {
+		return err
+	}
+
+	err = deleteObj(driverConfig.ConfigMap)
+	if err != nil {
+		return err
+	}
+
+	err = deleteObj(driverConfig.Driver)
+	if err != nil {
+		return err
+	}
+
+	cfg := ctrl.GetConfigOrDie()
+	clientset, err := k8sv1.NewForConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	opts := metav1.DeleteOptions{}
+
+	daemonsets := clientset.DaemonSets(*driverConfig.Node.DaemonSetApplyConfig.Namespace)
+	if found, _ := daemonsets.Get(ctx, *driverConfig.Node.DaemonSetApplyConfig.Name, metav1.GetOptions{}); found.Name != "" {
+		err := daemonsets.Delete(ctx, found.Name, opts)
+		if err != nil {
+			reqLogger.Info("Delete DaemonSet error", "set", err.Error())
+			return err
+		}
+	}
+
+	deployments := clientset.Deployments(*driverConfig.Controller.Deployment.Namespace)
+	if found, _ := deployments.Get(ctx, *driverConfig.Controller.Deployment.Name, metav1.GetOptions{}); found.Name != "" {
+		err := deployments.Delete(ctx, found.Name, opts)
+		if err != nil {
+			reqLogger.Info("Delete Deployment error", "set", err.Error())
+			return err
+		}
+	}
+
 	return nil
 }
 

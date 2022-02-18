@@ -11,12 +11,15 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	goYAML "github.com/go-yaml/yaml"
+
 	//appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+
+	//hashutil "k8s.io/kubernetes/pkg/util/hash"
+	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 )
@@ -180,13 +183,14 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 				}
 				sRef := old.ValueFrom.SecretKeyRef
 				if sRef != nil {
-					key := *sRef.Key
+					secret := &acorev1.SecretKeySelectorApplyConfiguration{
+						Key: sRef.Key,
+					}
+					secret.WithName(*sRef.Name)
 					e = acorev1.EnvVarApplyConfiguration{
 						Name: old.Name,
 						ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
-							SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
-								Key: &key,
-							},
+							SecretKeyRef: secret,
 						},
 					}
 				}

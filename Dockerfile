@@ -16,11 +16,18 @@ COPY controllers/ controllers/
 COPY core/ core/
 COPY pkg/ pkg/
 COPY k8s/ k8s/
+COPY tests/ tests/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
+RUN go mod tidy && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
-FROM gcr.io/distroless/static:nonroot
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+RUN microdnf install yum \
+    && yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical \
+    && yum clean all \
+    && rpm -e yum \
+    && microdnf clean all
 
 ENV USER_UID=1001 \
     USER_NAME=dell-csm-operator \

@@ -19,6 +19,14 @@ import (
 // Log global for all methods in this file
 var Log logr.Logger
 
+const (
+	// PowerScalePluginIdentifier -
+	PowerScalePluginIdentifier = "powerscale"
+
+	// PowerScaleConfigParamsVolumeMount -
+	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params"
+)
+
 // PrecheckPowerScale do input validation
 func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
@@ -70,8 +78,6 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 			log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
 		}
 	}
-
-	// TODO(Michael): Do Other configuration checks
 
 	return nil
 }

@@ -10,9 +10,9 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
-	"github.com/dell/csm-operator/test/shared"
-	"github.com/dell/csm-operator/test/shared/clientgoclient"
-	"github.com/dell/csm-operator/test/shared/crclient"
+	"github.com/dell/csm-operator/tests/shared"
+	"github.com/dell/csm-operator/tests/shared/clientgoclient"
+	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
@@ -156,6 +156,7 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
 	assert.Nil(suite.T(), err)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	csm.Annotations[configVersionKey] = configVersion
 
 	err = suite.fakeClient.Create(context.Background(), &csm)
