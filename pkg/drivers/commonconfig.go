@@ -20,6 +20,7 @@ import (
 func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	log.Debugw("GetController", "configMapPath", configMapPath)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		log.Errorw("GetController failed", "Error", err.Error())
@@ -74,7 +75,6 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 				if s.Enabled == nil {
 					fmt.Printf("Container  to be enabled : %s\n", *c.Name)
 					break
-
 				} else if !*s.Enabled {
 					removeContainer = true
 					fmt.Printf("Container to be removed : %s\n", *c.Name)
@@ -85,8 +85,8 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			}
 		}
 		if !removeContainer {
-			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
+			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
+			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
 			newcontainers = append(newcontainers, c)
 		}
 
@@ -117,6 +117,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string) (*utils.NodeYAML, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
+	log.Debugw("GetNode", "configMapPath", configMapPath)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		log.Errorw("GetNode failed", "Error", err.Error())
@@ -167,8 +168,8 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 		}
 
-		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-		utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
+		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
+		utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
 
 	}
 
@@ -198,6 +199,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	log.Debugw("GetConfigMap", "configMapPath", configMapPath)
 
 	if _, err := os.Stat(configMapPath); os.IsNotExist(err) {
 		log.Errorw("GetConfigMap failed", "Error", err.Error())
@@ -234,6 +236,7 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	log.Debugw("GetCSIDriver", "configMapPath", configMapPath)
 	buf, err := ioutil.ReadFile(configMapPath)
 	if err != nil {
 		log.Errorw("GetCSIDriver failed", "Error", err.Error())
