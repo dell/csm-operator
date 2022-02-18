@@ -11,7 +11,6 @@ import (
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	applyconfigurationsappsv1 "k8s.io/client-go/applyconfigurations/apps/v1"
-	applyconfigurationsautoscalingv1 "k8s.io/client-go/applyconfigurations/autoscaling/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -119,6 +118,6 @@ func (c *FakeDeployments) UpdateScale(ctx context.Context, deploymentName string
 
 // ApplyScale takes top resource name and the apply declarative configuration for scale,
 // applies it and returns the applied scale, and an error, if there is any.
-func (c *FakeDeployments) ApplyScale(ctx context.Context, deploymentName string, scale *applyconfigurationsautoscalingv1.ScaleApplyConfiguration, opts v1.ApplyOptions) (result *autoscalingv1.Scale, err error) {
+/*func (c *FakeDeployments) ApplyScale(ctx context.Context, deploymentName string, scale *applyconfigurationsautoscalingv1.ScaleApplyConfiguration, opts v1.ApplyOptions) (result *autoscalingv1.Scale, err error) {
 	panic("implement me")
-}
+}*/
