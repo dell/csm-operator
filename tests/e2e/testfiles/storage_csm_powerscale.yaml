@@ -5,18 +5,19 @@ metadata:
   namespace: test-isilon
 spec:
   driver:
-    csiDriverType: "isilon" 
+    csiDriverType: "isilon"
+        
     # Config version for CSI PowerScale v2.1.0 driver
     configVersion: v2.1.0
+
     authSecret: test-isilon-creds
+
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
-    # Uninstall CSI Driver and/or modules when CR is deleted
-    forceRemoveDriver: false
     common:
       # Image for CSI PowerScale driver v2.1.0
-      image: "dellemc/csi-isilon:v2.1.0"
+      image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -183,7 +184,7 @@ spec:
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
-            value: ""
+            value: "fake-proxy"
         
           # insecure: Enable/Disable certificate validation of the csm-authorization server       
           - name: "INSECURE"

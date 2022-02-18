@@ -6,7 +6,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/utils"
-	"github.com/dell/csm-operator/test/shared"
+	"github.com/dell/csm-operator/tests/shared"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
