@@ -16,6 +16,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var defaultVolumeConfigName = map[csmv1.DriverType]string{
+	csmv1.PowerScaleName: "isilon-configs",
+}
+
 // GetController get controller yaml
 func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
@@ -103,7 +107,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			}
 			controllerYAML.Deployment.Spec.Template.Spec.Volumes[i] = *newV
 		}
-		if *v.Name == cr.Name+"-creds" && cr.Spec.Driver.AuthSecret != "" {
+		if *v.Name == defaultVolumeConfigName[driverName] && cr.Spec.Driver.AuthSecret != "" {
 			controllerYAML.Deployment.Spec.Template.Spec.Volumes[i].Secret.SecretName = &cr.Spec.Driver.AuthSecret
 		}
 
@@ -185,7 +189,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 			nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes[i] = *newV
 		}
-		if *v.Name == cr.Name+"-creds" && cr.Spec.Driver.AuthSecret != "" {
+		if *v.Name == defaultVolumeConfigName[driverType] && cr.Spec.Driver.AuthSecret != "" {
 			nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes[i].Secret.SecretName = &cr.Spec.Driver.AuthSecret
 		}
 

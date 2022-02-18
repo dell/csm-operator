@@ -10,7 +10,6 @@ package modules
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -24,7 +23,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
-	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/yaml"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -65,104 +63,19 @@ func getCustomResource() (csmv1.ContainerStorageModule, error) {
 
 }
 
-func checkAnnotation(annotation map[string]string) error {
-	if annotation != nil {
-		if _, ok := annotation["com.dell.karavi-authorization-proxy"]; !ok {
-			return errors.New("com.dell.karavi-authorization-proxy is missing from annotation")
-		}
-		if annotation["com.dell.karavi-authorization-proxy"] != "true" {
-			return fmt.Errorf("extpected notation value to be true but got %s", annotation["com.dell.karavi-authorization-proxy"])
-		}
-	} else {
-		return errors.New("annotation is nil")
-	}
-	return nil
-}
-
-func checkApplyVolumes(volumes []acorev1.VolumeApplyConfiguration) error {
-	// Volume
-	volumeNames := []string{"karavi-authorization-config"}
-NAME_LOOP:
-	for _, volName := range volumeNames {
-		for _, vol := range volumes {
-			if *vol.Name == volName {
-				continue NAME_LOOP
-			}
-		}
-		return fmt.Errorf("missing the following volume %s", volName)
-	}
-
-	return nil
-}
-
-func checkVolumes(volumes []corev1.Volume) error {
-	// Volume
-	volumeNames := []string{"karavi-authorization-config"}
-NAME_LOOP:
-	for _, volName := range volumeNames {
-		for _, vol := range volumes {
-			if vol.Name == volName {
-				continue NAME_LOOP
-			}
-		}
-		return fmt.Errorf("missing the following volume %s", volName)
-	}
-
-	return nil
-}
-
-func checkApplyContainers(contianers []acorev1.ContainerApplyConfiguration) error {
-	authString := "karavi-authorization-proxy"
-	for _, cnt := range contianers {
-		if *cnt.Name == authString {
-			volumeMounts := []string{"karavi-authorization-config", "test-isilon-config-params"}
-		MOUNT_NAME_LOOP:
-			for _, volName := range volumeMounts {
-				for _, vol := range cnt.VolumeMounts {
-					if *vol.Name == volName {
-						continue MOUNT_NAME_LOOP
-					}
-				}
-				return fmt.Errorf("missing the following volume mount %s", volName)
-			}
-		}
-		return nil
-	}
-	return errors.New("karavi-authorization-proxy container was not injected into driver")
-}
-
-func checkContainers(contianers []corev1.Container) error {
-	for _, cnt := range contianers {
-		if cnt.Name == "karavi-authorization-proxy" {
-			volumeMounts := []string{"karavi-authorization-config", "test-isilon-config-params"}
-		MOUNT_NAME_LOOP:
-			for _, volName := range volumeMounts {
-				for _, vol := range cnt.VolumeMounts {
-					if vol.Name == volName {
-						continue MOUNT_NAME_LOOP
-					}
-				}
-				return fmt.Errorf("missing the following volume mount %s", volName)
-			}
-			return nil
-		}
-
-	}
-	return errors.New("karavi-authorization-proxy container was not injected into driver")
-}
-
 func TestAuthInjectDaemonset(t *testing.T) {
 	ctx := context.Background()
-	correctlyInjected := func(ds applyv1.DaemonSetApplyConfiguration) error {
-		err := checkAnnotation(ds.Annotations)
+	correctlyInjected := func(ds applyv1.DaemonSetApplyConfiguration, drivertype string) error {
+		err := CheckAnnotation(ds.Annotations)
 		if err != nil {
 			return err
 		}
-		err = checkApplyVolumes(ds.Spec.Template.Spec.Volumes)
+		err = CheckApplyVolumes(ds.Spec.Template.Spec.Volumes)
 		if err != nil {
 			return err
 		}
-		err = checkApplyContainers(ds.Spec.Template.Spec.Containers)
+
+		err = CheckApplyContainers(ds.Spec.Template.Spec.Containers, drivertype)
 		if err != nil {
 			return err
 		}
@@ -222,7 +135,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			newDaemonSet, err := AuthInjectDaemonset(ds, customResource, opConfig)
 			if success {
 				assert.NoError(t, err)
-				if err := correctlyInjected(*newDaemonSet); err != nil {
+				if err := correctlyInjected(*newDaemonSet, string(customResource.Spec.Driver.CSIDriverType)); err != nil {
 					assert.NoError(t, err)
 				}
 			} else {
@@ -234,16 +147,16 @@ func TestAuthInjectDaemonset(t *testing.T) {
 }
 func TestAuthInjectDeployment(t *testing.T) {
 	ctx := context.Background()
-	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration) error {
-		err := checkAnnotation(dp.Annotations)
+	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration, drivertype string) error {
+		err := CheckAnnotation(dp.Annotations)
 		if err != nil {
 			return err
 		}
-		err = checkApplyVolumes(dp.Spec.Template.Spec.Volumes)
+		err = CheckApplyVolumes(dp.Spec.Template.Spec.Volumes)
 		if err != nil {
 			return err
 		}
-		err = checkApplyContainers(dp.Spec.Template.Spec.Containers)
+		err = CheckApplyContainers(dp.Spec.Template.Spec.Containers, drivertype)
 		if err != nil {
 			return err
 		}
@@ -300,7 +213,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			newDeployment, err := AuthInjectDeployment(dp, cr, opConfig)
 			if success {
 				assert.NoError(t, err)
-				if err := correctlyInjected(*newDeployment); err != nil {
+				if err := correctlyInjected(*newDeployment, string(cr.Spec.Driver.CSIDriverType)); err != nil {
 					assert.NoError(t, err)
 				}
 			} else {
@@ -311,7 +224,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 	}
 
 }
-func TestAuthorizationPrecheck(t *testing.T) {
+func TestAuthorizationPreCheck(t *testing.T) {
 	getSecret := func(namespace, secretName string) *corev1.Secret {
 		return &corev1.Secret{
 			TypeMeta: metav1.TypeMeta{

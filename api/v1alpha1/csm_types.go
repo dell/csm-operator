@@ -101,3 +101,18 @@ func (cr *ContainerStorageModule) GetContainerStorageModuleSpec() *ContainerStor
 func (cr *ContainerStorageModule) GetDriverType() DriverType {
 	return cr.Spec.Driver.CSIDriverType
 }
+
+// IsBeingDeleted  - Returns  true if a deletion timestamp is set
+func (cr *ContainerStorageModule) IsBeingDeleted() bool {
+	return !cr.ObjectMeta.DeletionTimestamp.IsZero()
+}
+
+// HasFinalizer returns true if the item has the specified finalizer
+func (cr *ContainerStorageModule) HasFinalizer(finalizerName string) bool {
+	for _, item := range cr.ObjectMeta.Finalizers {
+		if item == finalizerName {
+			return true
+		}
+	}
+	return false
+}
