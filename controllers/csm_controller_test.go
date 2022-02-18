@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	"github.com/dell/csm-operator/test/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -23,6 +25,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+var (
+	opts = zap.Options{
+		Development: true,
+	}
+
+	unittestLogger = zap.New(zap.UseFlagOptions(&opts)).WithName("controllers").WithName("unit-test")
 )
 
 // CSMContrllerTestSuite implements testify suite
@@ -39,14 +49,9 @@ type CSMControllerTestSuite struct {
 
 // init every test
 func (suite *CSMControllerTestSuite) SetupTest() {
-	opts := zap.Options{
-		Development: true,
-	}
+	ctrl.SetLogger(unittestLogger)
 
-	logger := zap.New(zap.UseFlagOptions(&opts)).WithName("controllers").WithName("unit-test")
-	ctrl.SetLogger(logger)
-
-	logger.Info("Init unit test...")
+	unittestLogger.Info("Init unit test...")
 
 	csmv1.AddToScheme(scheme.Scheme)
 
@@ -55,7 +60,6 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	suite.k8sClient = clientgoclient.NewFakeClient(suite.fakeClient)
 
 	suite.namespace = "test"
-
 }
 
 func (suite *CSMControllerTestSuite) TestReconcile() {
@@ -118,6 +122,29 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
 	}
 
+	// after reconcile being run, we update deployment and daemonset
+	// then call handleDeployment/DaemonsetUpdate explicitly because
+	// in unit test listener does not get triggered
+	suite.handleDaemonsetTest(reconciler, "csm-node")
+	suite.handleDeploymentTest(reconciler, "csm-controller")
+}
+
+func (suite *CSMControllerTestSuite) handleDaemonsetTest(r *ContainerStorageModuleReconciler, name string) {
+	daemonset := &appsv1.DaemonSet{}
+	err := suite.fakeClient.Get(context.Background(), client.ObjectKey{Namespace: suite.namespace, Name: name}, daemonset)
+	assert.Nil(suite.T(), err)
+	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm"}
+
+	r.handleDaemonsetUpdate(daemonset, daemonset)
+}
+
+func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageModuleReconciler, name string) {
+	deployement := &appsv1.Deployment{}
+	err := suite.fakeClient.Get(context.Background(), client.ObjectKey{Namespace: suite.namespace, Name: name}, deployement)
+	assert.Nil(suite.T(), err)
+	deployement.Spec.Template.Labels = map[string]string{"csm": "csm"}
+
+	r.handleDeploymentUpdate(deployement, deployement)
 }
 
 // helper method to create k8s objects
@@ -138,4 +165,13 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
 func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Object) error {
 	// Needs to implement based on need
 	return nil
+}
+
+// debugFakeObjects prints the runtime objects in the fake client
+func (suite *CSMControllerTestSuite) debugFakeObjects() {
+	objects := suite.fakeClient.(*crclient.Client).Objects
+	for key, o := range objects {
+		unittestLogger.Info("found fake object ", "name", key.Name)
+		unittestLogger.Info("found fake object ", "object", fmt.Sprintf("%#v", o))
+	}
 }

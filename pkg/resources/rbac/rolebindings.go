@@ -33,25 +33,3 @@ func SyncClusterRoleBindings(ctx context.Context, rb *rbacv1.ClusterRoleBinding,
 	}
 	return nil
 }
-
-// SyncRoleBindings - Syncs the RoleBindings
-func SyncRoleBindings(ctx context.Context, rb *rbacv1.RoleBinding, client client.Client) error {
-	log := logger.GetLogger(ctx)
-	found := &rbacv1.RoleBinding{}
-	err := client.Get(ctx, types.NamespacedName{Name: rb.Name, Namespace: rb.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new RoleBinding", "Namespace", rb.Namespace, "Name", rb.Name)
-		err = client.Create(ctx, rb)
-		return err
-	} else if err != nil {
-		log.Info("Unknown error.", "Error", err.Error())
-		return err
-	} else {
-		log.Info("Updating RoleBinding", "Name:", rb.Name)
-		err = client.Update(ctx, rb)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
