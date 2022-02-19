@@ -156,6 +156,7 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
 	assert.Nil(suite.T(), err)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	csm.Annotations[configVersionKey] = configVersion
 
 	err = suite.fakeClient.Create(context.Background(), &csm)
