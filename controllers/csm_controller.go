@@ -190,10 +190,10 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	// Add finalizer
 	if !csm.HasFinalizer(CSMFinalizerName) {
 		r.Log.Info(fmt.Sprintf("AddFinalizer for %v", req.NamespacedName))
-		/*if err := r.addFinalizer(csm); err != nil {
+		if err := r.addFinalizer(csm); err != nil {
 			r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Adding finalizer", fmt.Sprintf("Failed to add finalizer: %s", err))
 			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
-		}*/
+		}
 		r.EventRecorder.Event(csm, corev1.EventTypeNormal, "Added", "Object finalizer is added")
 		return ctrl.Result{}, nil
 	}
@@ -574,7 +574,7 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, 
 
 	driver, err = drivers.GetCSIDriver(ctx, cr, operatorConfig, driverType)
 	if err != nil {
-		return nil, fmt.Errorf("getting %s configMap: %v", driverType, err)
+		return nil, fmt.Errorf("getting %s CSIDriver: %v", driverType, err)
 	}
 
 	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml)
