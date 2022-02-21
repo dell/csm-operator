@@ -21,7 +21,7 @@ COPY tests/ tests/
 # Build
 RUN go mod tidy && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi8/ubi-minimal@sha256:3aa3f379a81013bd3264faa0af87d201cdaa5981050d78c567b48fdfd5b38bb8
 
 RUN microdnf install yum \
     && yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical \
@@ -36,11 +36,11 @@ WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY operatorconfig/ /etc/config/dell-csm-operator
 LABEL vendor="Dell Inc." \
-    name="dell-csm-operator" \
-    summary="Operator for installing Dell EMC CSM Modules" \
-    description="Common Operator for installing various Dell EMC Container Storage Modules" \
-    version="0.1.0" \
-    license="Dell CSM Operator Apache License"
+      name="dell-csm-operator" \
+      summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
+      description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
+      version="0.1.0" \
+      license="Dell CSM Operator Apache License"
 
 ENTRYPOINT ["/manager"]
 USER ${USER_UID}
