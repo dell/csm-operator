@@ -48,14 +48,12 @@ var (
 		name string
 		// csm object
 		csm csmv1.ContainerStorageModule
-		// reconciler
-		reconciler utils.ReconcileCSM
 		// expected error
 		expectedErr string
 	}{
-		{"happy path", powerScaleCSM, reconciler, ""},
-		{"invalid value for skip cert validation", powerScaleCSMBadSkipCert, *reconciler, "is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION"},
-		{"invalid value for cert secret cnt", powerScaleCSMBadCertCnt, *reconciler, "is an invalid value for CERT_SECRET_COUNT"},
+		{"happy path", powerScaleCSM, ""},
+		{"invalid value for skip cert validation", powerScaleCSMBadSkipCert, "is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION"},
+		{"invalid value for cert secret cnt", powerScaleCSMBadCertCnt, "is an invalid value for CERT_SECRET_COUNT"},
 	}
 	
 	opts = zap.Options{
