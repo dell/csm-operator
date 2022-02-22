@@ -14,12 +14,12 @@ import (
 
 var (
 	//
-	csm                         = csmWithTolerations()
-	fakeDriver csmv1.DriverType = "fakeDriver"
-	badDriver  csmv1.DriverType = "badDriver"
-	powerScaleCSM		    = csmForPowerScale()
-	powerScaleCSMBadSkipCert    = csmForPowerScaleBadSkipCert()
-	powerScaleCSMBadCertCnt     = csmForPowerScaleBadCertCnt()
+	csm                                       = csmWithTolerations()
+	fakeDriver               csmv1.DriverType = "fakeDriver"
+	badDriver                csmv1.DriverType = "badDriver"
+	powerScaleCSM                             = csmForPowerScale()
+	powerScaleCSMBadSkipCert                  = csmForPowerScaleBadSkipCert()
+	powerScaleCSMBadCertCnt                   = csmForPowerScaleBadCertCnt()
 
 	// where to find all the yaml files
 	config = utils.OperatorConfig{
@@ -55,7 +55,7 @@ var (
 		{"invalid value for skip cert validation", powerScaleCSMBadSkipCert, "is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION"},
 		{"invalid value for cert secret cnt", powerScaleCSMBadCertCnt, "is an invalid value for CERT_SECRET_COUNT"},
 	}
-	
+
 	opts = zap.Options{
 		Development: true,
 	}
@@ -160,7 +160,7 @@ func csmWithTolerations() csmv1.ContainerStorageModule {
 
 	// Add image name
 	res.Spec.Driver.Common.Image = "thisIsAnImage"
-	
+
 	// Add NodeSelector to node and controller
 	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
@@ -193,8 +193,8 @@ func csmForPowerScale() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add log level to cover some code in GetConfigMap
-	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2",}
-	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION", Value: "true",}
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
 	return res
@@ -205,8 +205,8 @@ func csmForPowerScaleBadSkipCert() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add log level to cover some code in GetConfigMap
-	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2",}
-	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION", Value: "richardStallman",}
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION", Value: "NotABool"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
 	return res
@@ -217,8 +217,8 @@ func csmForPowerScaleBadCertCnt() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add log level to cover some code in GetConfigMap
-	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "thisIsNotANumber",}
-	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION", Value: "true",}
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "thisIsNotANumber"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
 	return res
