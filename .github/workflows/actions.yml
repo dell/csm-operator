@@ -74,7 +74,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BASE_IMG : ubuntu:latest
-      DEFAULT_IMG: csm-operator:latest
     steps:
       - name: Set up Go 1.17+
         uses: actions/setup-go@v2
@@ -88,7 +87,7 @@ jobs:
       - name: Get dependencies
         run: go mod download
       - name: Build Docker Images
-        run: make docker-build
+        run: DEFAULT_IMG=csm-operator:latest make docker-build
       - name: Scan controller Image
         uses: Azure/container-scan@v0
         with:
