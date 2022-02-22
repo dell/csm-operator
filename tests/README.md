@@ -174,4 +174,4 @@ Most steps to cover common use cases already have their respective backend imple
             }
             ```
 
-        3. [Run your E2E](#run). If you get this error `no method for step: <you step>`. It means you either haven't implemented it or there's a problem with your regex.
+        3. [Run your E2E](#run). If you get this error `no method for step: <you step>`, it means you either haven't implemented it or there's a problem with your regex.
