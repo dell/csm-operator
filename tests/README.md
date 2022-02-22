@@ -12,7 +12,7 @@ To run unit test, go to the root directory of this project and run `make unit-te
 
 ## E2E Test
 
-At the moment, the E2E test only test the installation of Dell CSI Drivers and Dell CSM Modules. This mean, to run the test you MUST have the following pre-req
+The E2E tests will test the installation of Dell CSI Drivers and Dell CSM Modules. The prerequisites and execution of e2e tests are documented below:
 
 ### Prerequisite
 
@@ -68,10 +68,10 @@ Each test has:
 
 - `scenario`: The name of the test to run
 - `path`: The path to the custom resources yaml file that has the specific configuration you want to test.
-- `steps`: Steps to take for the specific scenearios. Please note that all steps above and the oe ones in this sample file `tests/e2e/testfiles/values.yaml` already have a backend implementation. If you desire to use a different step, see [Develop](#develop) for how to add new E2E Test
-- `customTest`: An entrypoint for users to run custom test against their environment. You Must have `"Run custom test"` as part of your `steps` above for this custom test to run. This object has the following parameter.
+- `steps`: Steps to take for the specific scenearios. Please note that all steps above and the ones in this sample file `tests/e2e/testfiles/values.yaml` already have a backend implementation. If you desire to use a different step, see [Develop](#develop) for how to add new E2E Test
+- `customTest`: An entrypoint for users to run custom test against their environment. You must have `"Run custom test"` as part of your `steps` above for this custom test to run. This object has the following parameter.
    - `name`: Name of your custom test
-    - `run`: A command line argument that wil be ran by the e2e test. To ensure the command is accessible from e2e test repo, use absolute paths if you are running a script. 
+    - `run`: A command line argument that will be run by the e2e test. To ensure the command is accessible from e2e test repo, use absolute paths if you are running a script. 
 
 
 ### Develop
@@ -106,9 +106,9 @@ Most steps to cover common use cases already have their respective backend imple
   path: "<path-to-cr-for-powerhello-with-world-enabled>"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resources" # fully re-cycled old step
+    - "Apply custom resources" # fully recycled old step
     - "Validate custom resources"
-    - "Validate [powerhello] driver is installed" # partially re-cycled old step
+    - "Validate [powerhello] driver is installed" # partially recycled old step
     - "Validate [world] module is installed"
     - "Validate Today is Tuesday"  # a new simple step without a backend implementation
     - "Validate it is [raining], [snowing], [sunny], and [pay-day]"  # a new templated step without a backend implementation
@@ -123,10 +123,10 @@ Most steps to cover common use cases already have their respective backend imple
 
 - Add backend Support: we will cover three case:
 
-   1. `Fully re-cycled old step`: If the desired steps is already covered in another test scenario, just copy line for line. You don't need any code chnage
-   2. `partially re-cycled old step`: In this case, a very similar test has already been cover. This means there's already an entrypoint in `steps`. You should review the `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go) and trace the implementation function that matches your step. For example  the step `"Validate [world] module is installed"`. The line that  matches this in `StepRunnerInit` is `runner.addStep(`^Validate \[([^"]*)\] module is installed$`, step.validateModuleInstalled)`. The implementation to trace is `step.validateModuleInstalled`. We will review the implementation function in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go) to decide whether or not we need to do anything. Make the code changes if needed.
+   1. `Fully recycled old step`: If the desired steps has already been covered in another test scenario, just copy line for line. You don't need any code change
+   2. `partially recycled old step`: In this case, a very similar test has already been cover. This means there's already an entrypoint in `steps`. You should review the `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go) and trace the implementation function that matches your step. For example  the step `"Validate [world] module is installed"`. The line that  matches this in `StepRunnerInit` is `runner.addStep(`^Validate \[([^"]*)\] module is installed$`, step.validateModuleInstalled)`. The implementation to trace is `step.validateModuleInstalled`. We will review the implementation function in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go) to decide whether or not we need to do anything. Make the code changes if needed.
    3. `new step`:  New step can be  simple such as `"Validate Today is Tuesday"` or a templated such as `["Validate it is [raining]"](https://jira.cec.lab.emc.com/browse/KRV-3130)`. The workflow to support these two cases is the same and only varies in the signature of the implementation function. The workflow include:
-        1. Implement steps in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go). Define a function to implement your step. Note that the steps are stateless! If you want to define a function to test a happy path, your function should return nil if no error occurs and error otherwise. If however you want to test an error path, your function should return nil if you get error and error otherwise. The constraints of all functions in step_def.go is as follows:
+        1. Implement steps in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go). Define a function to implement your step. Note that the steps are stateless! If you want to define a function to test a happy path, your function should return nil if no error occurs and error otherwise. However, if you want to test an error path, your function should return nil if you get error and error otherwise. The constraints of all functions in step_def.go is as follows:
              - must return `error` or `nil`
              - must take at least one argument. The first one MUST be type `Resource`(even though it may not be used). If your step has any group(a groups is anything in your step enclosed by `[]`), the remaining arguments should be the groups in the order they appear on the steps(from left to right). For example, the two new functions above will can be implemented as shown below:
              
