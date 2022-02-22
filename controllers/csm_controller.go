@@ -21,7 +21,6 @@ import (
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -54,9 +53,6 @@ import (
 
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 )
 
 var dMutex sync.RWMutex
@@ -300,7 +296,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	if err != nil {
 		log.Debugw("deployment status ", "pods", err.Error())
 	}
-	return
+
 }
 
 func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, obj interface{}) {
@@ -340,7 +336,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	} else {
 		r.EventRecorder.Eventf(csm, "Normal", "Complete", "%s Driver pods running OK", stamp)
 	}
-	return
+
 }
 
 func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interface{}, obj interface{}) {
@@ -390,7 +386,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	if err != nil {
 		log.Debugw("daemonset status ", "pods", err.Error())
 	}
-	return
+
 }
 
 // ContentWatch - watch updates on deployment and deamonset
@@ -599,7 +595,7 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, 
 func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
 	reqLogger *zap.SugaredLogger) error {
 	deleteObj := func(obj client.Object) error {
-		err := r.GetClient().Get(ctx, types.NamespacedName{Name: obj.GetName()}, obj)
+		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, obj)
 		if err != nil && k8serror.IsNotFound(err) {
 			return nil
 		} else if err != nil {
@@ -658,30 +654,22 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return err
 	}
 
-	cfg := ctrl.GetConfigOrDie()
-	clientset, err := k8sv1.NewForConfig(cfg)
-	if err != nil {
-		return err
+	daemonsetKey := client.ObjectKey{
+		Namespace: *driverConfig.Node.DaemonSetApplyConfig.Namespace,
+		Name:      *driverConfig.Node.DaemonSetApplyConfig.Name,
+	}
+	daemonsetObj := &appsv1.DaemonSet{}
+	if err = r.Get(ctx, daemonsetKey, daemonsetObj); err == nil {
+		r.Delete(ctx, daemonsetObj)
 	}
 
-	opts := metav1.DeleteOptions{}
-
-	daemonsets := clientset.DaemonSets(*driverConfig.Node.DaemonSetApplyConfig.Namespace)
-	if found, _ := daemonsets.Get(ctx, *driverConfig.Node.DaemonSetApplyConfig.Name, metav1.GetOptions{}); found.Name != "" {
-		err := daemonsets.Delete(ctx, found.Name, opts)
-		if err != nil {
-			reqLogger.Info("Delete DaemonSet error", "set", err.Error())
-			return err
-		}
+	deploymentKey := client.ObjectKey{
+		Namespace: *driverConfig.Controller.Deployment.Namespace,
+		Name:      *driverConfig.Controller.Deployment.Name,
 	}
-
-	deployments := clientset.Deployments(*driverConfig.Controller.Deployment.Namespace)
-	if found, _ := deployments.Get(ctx, *driverConfig.Controller.Deployment.Name, metav1.GetOptions{}); found.Name != "" {
-		err := deployments.Delete(ctx, found.Name, opts)
-		if err != nil {
-			reqLogger.Info("Delete Deployment error", "set", err.Error())
-			return err
-		}
+	deploymentObj := &appsv1.Deployment{}
+	if err = r.Get(ctx, deploymentKey, deploymentObj); err == nil {
+		r.Delete(ctx, deploymentObj)
 	}
 
 	return nil
