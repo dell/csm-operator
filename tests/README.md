@@ -141,7 +141,7 @@ Most steps to cover common use cases already have their respective backend imple
                 }
 
                 /*
-                    Take four more arguments for each groups as defined here "Validate it is [raining], [snowing], [sunny], and [pay-day]". 
+                    Takes four more arguments for each group as defined here "Validate it is [raining], [snowing], [sunny], and [pay-day]". 
                     Thus function wll be  automatically called with:
                             checkWeather(Resource{}, "raining", "snowing", "sunny", "pay-day")
                     Please see "Validate [powerhello] driver is installed" step and the function signature that implemented it
