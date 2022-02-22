@@ -10,8 +10,8 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
+	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
-	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -281,7 +281,8 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 }
 
 // AuthorizationPrecheck  - runs precheck for CSM Authorization
-func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op utils.OperatorConfig, auth csmv1.Module, ctrlClient crclient.Client, log logr.Logger) error {
+func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op utils.OperatorConfig, auth csmv1.Module, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
 	if _, ok := SupportedDrivers[driverType]; !ok {
 		return fmt.Errorf("CSM Authorization does not support %s driver", driverType)
 	}

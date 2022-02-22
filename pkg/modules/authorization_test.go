@@ -25,7 +25,6 @@ import (
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"sigs.k8s.io/yaml"
 
-	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -370,7 +369,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, namespace, drivertype, authModule, client := tc(t)
-			err := AuthorizationPrecheck(context.TODO(), namespace, drivertype, operatorConfig, authModule, client, ctrl.Log.WithName("authorization").WithName(name))
+			err := AuthorizationPrecheck(context.TODO(), namespace, drivertype, operatorConfig, authModule, client)
 			if success {
 				assert.NoError(t, err)
 
