@@ -74,6 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BASE_IMG : ubuntu:latest
+      DEFAULT_IMG: csm-operator:latest
     steps:
       - name: Set up Go 1.17+
         uses: actions/setup-go@v2
@@ -91,6 +92,6 @@ jobs:
       - name: Scan controller Image
         uses: Azure/container-scan@v0
         with:
-          image-name: controller:latest
+          image-name: csm-operator:latest
           severity-threshold: HIGH
 
