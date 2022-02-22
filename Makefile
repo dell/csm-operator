@@ -100,8 +100,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 docker-build: ## Build docker image with the manager.
 	docker build . -t ${DEFAULT_IMG}
 
-docker-push: ## Builds, tags and pushes docker image with the manager.
-	docker-build
+docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}
 	docker push ${IMG}
 
