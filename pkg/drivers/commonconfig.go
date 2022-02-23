@@ -254,5 +254,16 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		return nil, err
 	}
 
+	if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy != "" {
+		fsGroupPolicy := storagev1.NoneFSGroupPolicy
+		if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "ReadWriteOnceWithFSType" {
+			fsGroupPolicy = storagev1.ReadWriteOnceWithFSTypeFSGroupPolicy
+		} else if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "File" {
+			fsGroupPolicy = storagev1.FileFSGroupPolicy
+		}
+		csidriver.Spec.FSGroupPolicy = &fsGroupPolicy
+		log.Debugw("GetCSIDriver", "fsGroupPolicy", fsGroupPolicy)
+	}
+
 	return &csidriver, nil
 }

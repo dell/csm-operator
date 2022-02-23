@@ -438,6 +438,12 @@ spec:
                           type: object
                         type: array
                     type: object
+                  csiDriverSpec:
+                    description: CSIDriverSpec is the specification for CSIDriver
+                    properties:
+                      fSGroupPolicy:
+                        type: string
+                    type: object
                   csiDriverType:
                     description: CSIDriverType is the CSI Driver type for Dell EMC
                       - e.g, powermax, powerflex,...
