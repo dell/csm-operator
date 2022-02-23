@@ -100,7 +100,7 @@ func MakePod(name, ns string) corev1.Pod {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
-			Labels: map[string]string{},
+			Labels:    map[string]string{},
 		},
 	}
 
