@@ -1,9 +1,4 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
   - storage_v1_csm_powerscale.yaml
-  - storage_v1_csm_powermax.yaml
-  - storage_v1_csm_powerstore.yaml
-  - storage_v1_csm_observability.yaml
-  - storage_v1_csm_powerflex.yaml
-  - storage_v1_csm_unity.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
