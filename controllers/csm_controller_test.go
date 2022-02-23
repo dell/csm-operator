@@ -85,7 +85,7 @@ func (suite *CSMControllerTestSuite) TestReconcile() {
 	suite.makeFakeCSM("csm", suite.namespace)
 	suite.runFakeCSMManager("csm", suite.namespace)
 	suite.runFakeConfigManager("csm", suite.namespace)
-	//suite.runFakeCsiManager("csm", suite.namespace)
+	suite.runFakeCsiManager("csm", suite.namespace)
 	suite.runFakeClusterroleManager("csm", suite.namespace)
 	suite.runFakeClusterrolebindingManager("csm", suite.namespace)
 	suite.runFakeServiceaccountManager("csm", suite.namespace)
@@ -191,7 +191,7 @@ func (suite *CSMControllerTestSuite) runFakeConfigManager(reqName, expectedErr s
 	updateCMError = false
 }
 
-/*func (suite *CSMControllerTestSuite) runFakeCsiManager(reqName, expectedErr string) {
+func (suite *CSMControllerTestSuite) runFakeCsiManager(reqName, expectedErr string) {
 	reconciler := suite.createReconciler()
 
 	req := reconcile.Request{
@@ -224,7 +224,7 @@ func (suite *CSMControllerTestSuite) runFakeConfigManager(reqName, expectedErr s
 	updateCSIError = true
 	res, err = reconciler.Reconcile(context.Background(), req)
 	updateCSIError = false
-}*/
+}
 
 func (suite *CSMControllerTestSuite) runFakeClusterroleManager(reqName, expectedErr string) {
 	reconciler := suite.createReconciler()
