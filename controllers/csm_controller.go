@@ -167,7 +167,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resource deployed from CR by operator
-			if err := r.removeDriver(ctx, *csm, *operatorConfig, log); err != nil {
+			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Removing Driver", fmt.Sprintf("Failed to remove driver: %s", err))
 				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
 			}
@@ -260,7 +260,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 	if name == "" {
-		r.Log.Info("ignore deployment not labeled for csm", "name", d.Name)
+		log.Infow("ignore deployment not labeled for csm", "name", d.Name)
 		return
 	}
 
@@ -581,8 +581,9 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
 
 }
 
-func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
-	reqLogger *zap.SugaredLogger) error {
+func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+	log := logger.GetLogger(ctx)
+
 	deleteObj := func(obj client.Object) error {
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
 		name := obj.GetName()
@@ -590,13 +591,13 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
 		if err != nil && k8serror.IsNotFound(err) {
-			reqLogger.Info("Can't find object to delete", "Name:", name, "Kind:", kind)
+			log.Infow("Can't find object to delete", "Name:", name, "Kind:", kind)
 			return nil
 		} else if err != nil {
-			reqLogger.Error("Unknown error to find object in deleteObj", "Error", err.Error(), "Name:", name, "Kind:", kind)
+			log.Errorw("Unknown error to find object in deleteObj", "Error", err.Error(), "Name:", name, "Kind:", kind)
 			return err
 		} else {
-			reqLogger.Info("Deleting object", "Name:", name, "Kind:", kind)
+			log.Infow("Deleting object", "Name:", name, "Kind:", kind)
 			err = r.GetClient().Delete(ctx, obj)
 			if err != nil {
 				return err
@@ -608,47 +609,47 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	// Get Driver resources
 	driverConfig, err := r.getDriverConfig(ctx, instance, operatorConfig)
 	if err != nil {
-		reqLogger.Error("error in getDriverConfig ")
+		log.Error("error in getDriverConfig")
 		return err
 	}
 
 	if err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount); err != nil {
-		reqLogger.Error("error delete node service account", "Error", err.Error())
+		log.Errorw("error delete node service account", "Error", err.Error())
 		return err
 	}
 
 	if err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount); err != nil {
-		reqLogger.Error("error delete controller service account", "Error", err.Error())
+		log.Errorw("error delete controller service account", "Error", err.Error())
 		return err
 	}
 
 	if err = deleteObj(&driverConfig.Node.Rbac.ClusterRole); err != nil {
-		reqLogger.Error("error delete node cluster role", "Error", err.Error())
+		log.Errorw("error delete node cluster role", "Error", err.Error())
 		return err
 	}
 
 	if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRole); err != nil {
-		reqLogger.Error("error delete controller cluster role", "Error", err.Error())
+		log.Errorw("error delete controller cluster role", "Error", err.Error())
 		return err
 	}
 
 	if err = deleteObj(&driverConfig.Node.Rbac.ClusterRoleBinding); err != nil {
-		reqLogger.Error("error delete controller cluster role", "Error", err.Error())
+		log.Errorw("error delete controller cluster role", "Error", err.Error())
 		return err
 	}
 
 	if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRoleBinding); err != nil {
-		reqLogger.Error("error delete controller cluster role binding", "Error", err.Error())
+		log.Errorw("error delete controller cluster role binding", "Error", err.Error())
 		return err
 	}
 
 	if err = deleteObj(driverConfig.ConfigMap); err != nil {
-		reqLogger.Error("error delete configmap", "Error", err.Error())
+		log.Errorw("error delete configmap", "Error", err.Error())
 		return err
 	}
 
 	if err = deleteObj(driverConfig.Driver); err != nil {
-		reqLogger.Error("error delete csi driver", "Error", err.Error())
+		log.Errorw("error delete csi driver", "Error", err.Error())
 		return err
 	}
 
@@ -660,7 +661,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	daemonsetObj := &appsv1.DaemonSet{}
 	if err = r.Get(ctx, daemonsetKey, daemonsetObj); err == nil {
 		if err = r.Delete(ctx, daemonsetObj); err != nil {
-			reqLogger.Error("error delete daemonset", "Error", err.Error())
+			log.Errorw("error delete daemonset", "Error", err.Error())
 		}
 	}
 
@@ -672,7 +673,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	deploymentObj := &appsv1.Deployment{}
 	if err = r.Get(ctx, deploymentKey, deploymentObj); err == nil {
 		if err = r.Delete(ctx, deploymentObj); err != nil {
-			reqLogger.Error("error delete deployment", "Error", err.Error())
+			log.Errorw("error delete deployment", "Error", err.Error())
 		}
 	}
 
@@ -742,8 +743,8 @@ func checkAndApplyConfigVersionAnnotations(instance *csmv1.ContainerStorageModul
 		annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
 		isUpdated = true
 		instance.SetAnnotations(annotations)
-		fmt.Println(fmt.Sprintf("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
-			instance.GetName(), instance.Spec.Driver.ConfigVersion))
+		fmt.Printf("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
+			instance.GetName(), instance.Spec.Driver.ConfigVersion)
 	} else {
 		if configVersion != instance.Spec.Driver.ConfigVersion {
 			annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
