@@ -53,8 +53,7 @@ var (
 	createSAError  bool
 	getSAError     bool
 	updateSAError  bool
-	csmName = "csm"
-
+	csmName        = "csm"
 )
 
 // CSMContrllerTestSuite implements testify suite
@@ -91,7 +90,7 @@ func (suite *CSMControllerTestSuite) TestReconcile() {
 	suite.runFakeCsiManager(csmName, suite.namespace)
 	suite.runFakeClusterroleManager(csmName, suite.namespace)
 	suite.runFakeClusterrolebindingManager(csmName, suite.namespace)
-  suite.runFakeServiceaccountManager(csmName, suite.namespace)
+	suite.runFakeServiceaccountManager(csmName, suite.namespace)
 	suite.runFakeCSMManager(csmName, suite.namespace, false)
 	suite.deleteCSM(context.Background(), csmName)
 	suite.runFakeCSMManager(csmName, suite.namespace, true)
@@ -155,7 +154,7 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 	// after reconcile being run, we update deployment and daemonset
 	// then call handleDeployment/DaemonsetUpdate explicitly because
 	// in unit test listener does not get triggered
-  // If delete, we shouldn't call these methods since reconcile
+	// If delete, we shouldn't call these methods since reconcile
 	// would return before this
 	if !reconcileDelete {
 		suite.handleDaemonsetTest(reconciler, "csm-node")
