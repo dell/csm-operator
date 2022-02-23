@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    # Config version for CSI PowerScale v2.1.0 driver
+    # Config version for CSI PowerScale v2.2.0 driver
     configVersion: v2.2.0
     authSecret: test-isilon-creds
     replicas: 1

@@ -121,7 +121,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 			failedCount++
 			for _, cs := range pod.Status.ContainerStatuses {
 				if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
-					//message: Back-off pulling image "dellec/csi-isilon:v2.1.0"
+					//message: Back-off pulling image "dellec/csi-isilon:xxxx"
 					//reason: ImagePullBackOff
 					log.Infow("daemonset pod container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
 					shortMsg := strings.Replace(cs.State.Waiting.Message,
