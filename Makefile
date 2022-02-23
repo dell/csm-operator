@@ -86,8 +86,11 @@ test: manifests generate fmt vet envtest ## Run tests.
 unit-test:
 	go clean -cache && go test -v -coverprofile=c.out ./controllers/csm*
 
-driver-unit-test:
+controller-unit-test:
 	go clean -cache && go test -v -coverpkg=github.com/dell/csm-operator/pkg/logger,github.com/dell/csm-operator/pkg/resources/daemonset,github.com/dell/csm-operator/pkg/resources/deployment,github.com/dell/csm-operator/pkg/drivers,github.com/dell/csm-operator/pkg/resources/configmap,github.com/dell/csm-operator/pkg/resources/serviceaccount,github.com/dell/csm-operator/pkg/resources/rbac,github.com/dell/csm-operator/pkg/utils,github.com/dell/csm-operator/pkg/resources/csidriver,github.com/dell/csm-operator/pkg/constants,github.com/dell/csm-operator/controllers -coverprofile=c.out github.com/dell/csm-operator/controllers
+
+driver-unit-test:
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/drivers
 
 ##@ Build
 
@@ -100,8 +103,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 docker-build: ## Build docker image with the manager.
 	docker build . -t ${DEFAULT_IMG}
 
-docker-push: ## Builds, tags and pushes docker image with the manager.
-	docker-build
+docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}
 	docker push ${IMG}
 

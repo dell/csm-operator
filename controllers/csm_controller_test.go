@@ -37,6 +37,7 @@ var (
 	}
 
 	unittestLogger = zap.New(zap.UseFlagOptions(&opts)).WithName("controllers").WithName("unit-test")
+
 	createCMError  bool
 	getCMError     bool
 	updateCMError  bool
@@ -52,6 +53,8 @@ var (
 	createSAError  bool
 	getSAError     bool
 	updateSAError  bool
+	csmName = "csm"
+
 )
 
 // CSMContrllerTestSuite implements testify suite
@@ -82,13 +85,16 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 }
 
 func (suite *CSMControllerTestSuite) TestReconcile() {
-	suite.makeFakeCSM("csm", suite.namespace)
-	suite.runFakeCSMManager("csm", suite.namespace)
-	suite.runFakeConfigManager("csm", suite.namespace)
-	suite.runFakeCsiManager("csm", suite.namespace)
-	suite.runFakeClusterroleManager("csm", suite.namespace)
-	suite.runFakeClusterrolebindingManager("csm", suite.namespace)
-	suite.runFakeServiceaccountManager("csm", suite.namespace)
+
+	suite.makeFakeCSM(csmName, suite.namespace)
+	suite.runFakeConfigManager(csmName, suite.namespace)
+	suite.runFakeCsiManager(csmName, suite.namespace)
+	suite.runFakeClusterroleManager(csmName, suite.namespace)
+	suite.runFakeClusterrolebindingManager(csmName, suite.namespace)
+  suite.runFakeServiceaccountManager(csmName, suite.namespace)
+	suite.runFakeCSMManager(csmName, suite.namespace, false)
+	suite.deleteCSM(context.Background(), csmName)
+	suite.runFakeCSMManager(csmName, suite.namespace, true)
 }
 
 // helper method to create and run reconciler
@@ -122,7 +128,7 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 	return reconciler
 }
 
-func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr string) {
+func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr string, reconcileDelete bool) {
 	reconciler := suite.createReconciler()
 
 	req := reconcile.Request{
@@ -149,8 +155,12 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 	// after reconcile being run, we update deployment and daemonset
 	// then call handleDeployment/DaemonsetUpdate explicitly because
 	// in unit test listener does not get triggered
-	suite.handleDaemonsetTest(reconciler, "csm-node")
-	suite.handleDeploymentTest(reconciler, "csm-controller")
+  // If delete, we shouldn't call these methods since reconcile
+	// would return before this
+	if !reconcileDelete {
+		suite.handleDaemonsetTest(reconciler, "csm-node")
+		suite.handleDeploymentTest(reconciler, "csm-controller")
+	}
 
 	res, err = reconciler.Reconcile(context.Background(), req)
 	res, err = reconciler.Reconcile(context.Background(), req)
@@ -349,6 +359,18 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	r.handleDeploymentUpdate(deployement, deployement)
 }
 
+// deleteCSM sets deletionTimeStamp on the csm object and deletes it
+func (suite *CSMControllerTestSuite) deleteCSM(ctx context.Context, csmName string) {
+	csm := &csmv1.ContainerStorageModule{}
+	key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
+	err := suite.fakeClient.Get(context.Background(), key, csm)
+	assert.Nil(suite.T(), err)
+
+	suite.fakeClient.(*crclient.Client).SetDeletionTimeStamp(ctx, csm)
+
+	suite.fakeClient.Delete(ctx, csm)
+}
+
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
 	configVersion := shared.ConfigVersion
@@ -359,6 +381,8 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	// remove driver when deleting csm
+	csm.Spec.Driver.ForceRemoveDriver = true
 	csm.Annotations[configVersionKey] = configVersion
 
 	err = suite.fakeClient.Create(context.Background(), &csm)
