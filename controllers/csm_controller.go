@@ -17,7 +17,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	k8sClient "github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -164,11 +163,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	if csm.IsBeingDeleted() {
 		r.Log.Info(fmt.Sprintf("HandleFinalizer for %v", req.NamespacedName))
-		if err := r.removeFinalizer(csm); err != nil {
-			r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Deleting finalizer", fmt.Sprintf("Failed to delete finalizer: %s", err))
-			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
-		}
-		r.EventRecorder.Event(csm, corev1.EventTypeNormal, "Deleted", "Object finalizer is deleted")
 
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
@@ -177,8 +171,13 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Removing Driver", fmt.Sprintf("Failed to remove driver: %s", err))
 				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
 			}
-
 		}
+
+		if err := r.removeFinalizer(csm); err != nil {
+			r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Deleting finalizer", fmt.Sprintf("Failed to delete finalizer: %s", err))
+			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
+		}
+		r.EventRecorder.Event(csm, corev1.EventTypeNormal, "Deleted", "Object finalizer is deleted")
 
 		return ctrl.Result{}, nil
 	}
@@ -390,22 +389,20 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 }
 
 // ContentWatch - watch updates on deployment and deamonset
-func (r *ContainerStorageModuleReconciler) ContentWatch() error {
+func (r *ContainerStorageModuleReconciler) ContentWatch() {
 
-	clientset, err := k8sClient.GetClientSetWrapper()
-	if err != nil {
-		r.Log.Error(err, err.Error())
-	}
+	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
 
-	sharedInformerFactory := sinformer.NewSharedInformerFactory(clientset, time.Duration(time.Hour))
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
-	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
 	daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleDaemonsetUpdate,
 	})
+
+	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
 	deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleDeploymentUpdate,
 	})
+
 	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
 	podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handlePodsUpdate,
@@ -413,8 +410,6 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
 	stop := make(chan struct{})
 	sharedInformerFactory.Start(stop)
-
-	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -449,7 +444,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
-	driverConfig, err := r.getDriverConfig(ctx, cr, operatorConfig, log)
+	driverConfig, err := r.getDriverConfig(ctx, cr, operatorConfig)
 	if err != nil {
 		return err
 	}
@@ -487,71 +482,65 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update ServiceAccount
-	err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, r.Client)
-	if err != nil {
+	if err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, r.Client); err != nil {
 		return err
 	}
-	err = serviceaccount.SyncServiceAccount(ctx, &controller.Rbac.ServiceAccount, r.Client)
-	if err != nil {
+
+	if err = serviceaccount.SyncServiceAccount(ctx, &controller.Rbac.ServiceAccount, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update ClusterRoles
-	_, err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, r.Client)
-	if err != nil {
+	if _, err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, r.Client); err != nil {
 		return err
 	}
-	_, err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, r.Client)
-	if err != nil {
+
+	if _, err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update ClusterRoleBinding
-	err = rbac.SyncClusterRoleBindings(ctx, &node.Rbac.ClusterRoleBinding, r.Client)
-	if err != nil {
+	if err = rbac.SyncClusterRoleBindings(ctx, &node.Rbac.ClusterRoleBinding, r.Client); err != nil {
 		return err
 	}
-	err = rbac.SyncClusterRoleBindings(ctx, &controller.Rbac.ClusterRoleBinding, r.Client)
-	if err != nil {
+
+	if err = rbac.SyncClusterRoleBindings(ctx, &controller.Rbac.ClusterRoleBinding, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update CSIDriver
-	err = csidriver.SyncCSIDriver(ctx, driver, r.Client)
-	if err != nil {
+	if err = csidriver.SyncCSIDriver(ctx, driver, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update ConfigMap
-	err = configmap.SyncConfigMap(ctx, configMap, r.Client)
-	if err != nil {
+	if err = configmap.SyncConfigMap(ctx, configMap, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update Deployment
-	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, cr.Name)
-	if err != nil {
+	if err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, cr.Name); err != nil {
 		return err
 	}
 
 	// Create/Update DeamonSet
-
-	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.K8sClient, cr.Name)
-	if err != nil {
+	if err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.K8sClient, cr.Name); err != nil {
 		return err
 	}
-	return nil
 
+	return nil
 }
 
-func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
-	log *zap.SugaredLogger) (*DriverConfig, error) {
+func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
+	cr csmv1.ContainerStorageModule,
+	operatorConfig utils.OperatorConfig) (*DriverConfig, error) {
 	var (
 		err        error
 		driver     *storagev1.CSIDriver
 		configMap  *corev1.ConfigMap
 		node       *utils.NodeYAML
 		controller *utils.ControllerYAML
+		log        = logger.GetLogger(ctx)
 	)
 
 	// Get Driver resources
@@ -595,14 +584,19 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, 
 func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
 	reqLogger *zap.SugaredLogger) error {
 	deleteObj := func(obj client.Object) error {
-		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, obj)
+		kind := obj.GetObjectKind().GroupVersionKind().Kind
+		name := obj.GetName()
+
+		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+
 		if err != nil && k8serror.IsNotFound(err) {
+			reqLogger.Info("Can't find object to delete", "Name:", name, "Kind:", kind)
 			return nil
 		} else if err != nil {
-			reqLogger.Info("Unknown error.", "Error", err.Error())
+			reqLogger.Error("Unknown error to find object in deleteObj", "Error", err.Error(), "Name:", name, "Kind:", kind)
 			return err
 		} else {
-			reqLogger.Info("Deleting object", "Name:", obj.GetName(), "Kind:", obj.GetObjectKind().GroupVersionKind().Kind)
+			reqLogger.Info("Deleting object", "Name:", name, "Kind:", kind)
 			err = r.GetClient().Delete(ctx, obj)
 			if err != nil {
 				return err
@@ -612,45 +606,49 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	}
 
 	// Get Driver resources
-	driverConfig, err := r.getDriverConfig(ctx, instance, operatorConfig, reqLogger)
+	driverConfig, err := r.getDriverConfig(ctx, instance, operatorConfig)
 	if err != nil {
+		reqLogger.Error("error in getDriverConfig ")
 		return err
 	}
 
-	err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount)
-	if err != nil {
-		return err
-	}
-	err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount); err != nil {
+		reqLogger.Error("error delete node service account", "Error", err.Error())
 		return err
 	}
 
-	err = deleteObj(&driverConfig.Node.Rbac.ClusterRole)
-	if err != nil {
-		return err
-	}
-	err = deleteObj(&driverConfig.Controller.Rbac.ClusterRole)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount); err != nil {
+		reqLogger.Error("error delete controller service account", "Error", err.Error())
 		return err
 	}
 
-	err = deleteObj(&driverConfig.Node.Rbac.ClusterRoleBinding)
-	if err != nil {
-		return err
-	}
-	err = deleteObj(&driverConfig.Controller.Rbac.ClusterRoleBinding)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Node.Rbac.ClusterRole); err != nil {
+		reqLogger.Error("error delete node cluster role", "Error", err.Error())
 		return err
 	}
 
-	err = deleteObj(driverConfig.ConfigMap)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRole); err != nil {
+		reqLogger.Error("error delete controller cluster role", "Error", err.Error())
 		return err
 	}
 
-	err = deleteObj(driverConfig.Driver)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Node.Rbac.ClusterRoleBinding); err != nil {
+		reqLogger.Error("error delete controller cluster role", "Error", err.Error())
+		return err
+	}
+
+	if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRoleBinding); err != nil {
+		reqLogger.Error("error delete controller cluster role binding", "Error", err.Error())
+		return err
+	}
+
+	if err = deleteObj(driverConfig.ConfigMap); err != nil {
+		reqLogger.Error("error delete configmap", "Error", err.Error())
+		return err
+	}
+
+	if err = deleteObj(driverConfig.Driver); err != nil {
+		reqLogger.Error("error delete csi driver", "Error", err.Error())
 		return err
 	}
 
@@ -658,18 +656,24 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		Namespace: *driverConfig.Node.DaemonSetApplyConfig.Namespace,
 		Name:      *driverConfig.Node.DaemonSetApplyConfig.Name,
 	}
+
 	daemonsetObj := &appsv1.DaemonSet{}
 	if err = r.Get(ctx, daemonsetKey, daemonsetObj); err == nil {
-		r.Delete(ctx, daemonsetObj)
+		if err = r.Delete(ctx, daemonsetObj); err != nil {
+			reqLogger.Error("error delete daemonset", "Error", err.Error())
+		}
 	}
 
 	deploymentKey := client.ObjectKey{
 		Namespace: *driverConfig.Controller.Deployment.Namespace,
 		Name:      *driverConfig.Controller.Deployment.Name,
 	}
+
 	deploymentObj := &appsv1.Deployment{}
 	if err = r.Get(ctx, deploymentKey, deploymentObj); err == nil {
-		r.Delete(ctx, deploymentObj)
+		if err = r.Delete(ctx, deploymentObj); err != nil {
+			reqLogger.Error("error delete deployment", "Error", err.Error())
+		}
 	}
 
 	return nil
