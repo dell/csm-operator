@@ -26,7 +26,11 @@ spec:
       type: string
     - description: Version of CSIDriver
       jsonPath: .spec.driver.configVersion
-      name: CONFIGVERSION
+      name: ConfigVersion
+      type: string
+    - description: State of Installation
+      jsonPath: .status.state
+      name: State
       type: string
     name: v1alpha1
     schema:
@@ -70,7 +74,7 @@ spec:
                               description: Name of the environment variable. Must be a C_IDENTIFIER.
                               type: string
                             value:
-                              description: 'Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
+                              description: 'Variable references $(VAR_NAME) are expanded using the previous defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
                               type: string
                             valueFrom:
                               description: Source for the environment variable's value. Cannot be used if value is not empty.
@@ -202,7 +206,7 @@ spec:
                               description: Name of the environment variable. Must be a C_IDENTIFIER.
                               type: string
                             value:
-                              description: 'Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
+                              description: 'Variable references $(VAR_NAME) are expanded using the previous defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
                               type: string
                             valueFrom:
                               description: Source for the environment variable's value. Cannot be used if value is not empty.
@@ -317,6 +321,9 @@ spec:
                   dnsPolicy:
                     description: DNSPolicy is the dnsPolicy of the daemonset for Node plugin
                     type: string
+                  forceRemoveDriver:
+                    description: ForceRemoveDriver is the boolean flag used to remove driver deployment when CR is deleted
+                    type: boolean
                   forceUpdate:
                     description: ForceUpdate is the boolean flag used to force an update of the driver instance
                     type: boolean
@@ -342,7 +349,7 @@ spec:
                                 description: Name of the environment variable. Must be a C_IDENTIFIER.
                                 type: string
                               value:
-                                description: 'Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
+                                description: 'Variable references $(VAR_NAME) are expanded using the previous defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
                                 type: string
                               valueFrom:
                                 description: Source for the environment variable's value. Cannot be used if value is not empty.
@@ -472,7 +479,7 @@ spec:
                               description: Name of the environment variable. Must be a C_IDENTIFIER.
                               type: string
                             value:
-                              description: 'Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
+                              description: 'Variable references $(VAR_NAME) are expanded using the previous defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
                               type: string
                             valueFrom:
                               description: Source for the environment variable's value. Cannot be used if value is not empty.
@@ -607,7 +614,7 @@ spec:
                                 description: Name of the environment variable. Must be a C_IDENTIFIER.
                                 type: string
                               value:
-                                description: 'Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
+                                description: 'Variable references $(VAR_NAME) are expanded using the previous defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
                                 type: string
                               valueFrom:
                                 description: Source for the environment variable's value. Cannot be used if value is not empty.
@@ -763,7 +770,7 @@ spec:
                                   description: Name of the environment variable. Must be a C_IDENTIFIER.
                                   type: string
                                 value:
-                                  description: 'Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
+                                  description: 'Variable references $(VAR_NAME) are expanded using the previous defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to "".'
                                   type: string
                                 valueFrom:
                                   description: Source for the environment variable's value. Cannot be used if value is not empty.
