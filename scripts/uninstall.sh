@@ -12,8 +12,7 @@ fi
 # find the namespace from the filtered string
 NAMESPACE=$(echo $NS_STRING | cut -d ' ' -f2)
 
-echo "** Deleting the Operator Deployment **"
+echo "Deleting the Operator Deployment"
 echo
-echo kubectl delete -f $DEPLOYDIR/operator.yaml
 kubectl delete -f $DEPLOYDIR/operator.yaml
 echo
