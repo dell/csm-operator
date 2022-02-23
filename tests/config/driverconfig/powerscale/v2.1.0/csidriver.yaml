@@ -2,13 +2,13 @@ apiVersion: storage.k8s.io/v1
 kind: CSIDriver
 metadata:
     name: csi-isilon.dellemc.com
-  ownerReferences:
+    ownerReferences:
     - apiVersion: cache.example.com/v1alpha1
       kind: Memcached
       name: example-memcached
 spec:
     attachRequired: true
-    podInfoOnMount: trues
+    podInfoOnMount: true
     volumeLifecycleModes:
     - Persistent
     - Ephemeral
