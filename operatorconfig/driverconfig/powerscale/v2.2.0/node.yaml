@@ -77,7 +77,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-isilon:v2.1.0
+          image: dellemc/csi-isilon:v2.2.0
           imagePullPolicy: IfNotPresent
           env:
             - name: CSI_ENDPOINT
