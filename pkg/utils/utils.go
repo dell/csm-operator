@@ -33,7 +33,7 @@ type K8sImagesConfig struct {
 		Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
 		Registrar             string `json:"registrar" yaml:"registrar"`
 		Resizer               string `json:"resizer" yaml:"resizer"`
-		Externalhealthmonitor string `json:"external-health-monitor" yaml:"external-health-monitor"`
+		Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
 	} `json:"images" yaml:"images"`
 }
 

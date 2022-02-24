@@ -22,8 +22,8 @@ import (
 )
 
 const (
-	timeout  = time.Minute * 1
-	interval = time.Second * 2
+	timeout  = time.Minute * 10
+	interval = time.Second * 10
 )
 
 var (
