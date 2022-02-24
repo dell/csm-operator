@@ -82,6 +82,13 @@ const (
 	// Externalhealthmonitor - placeholder for constant
 	Externalhealthmonitor = "external-health-monitor"
 
+	// EventDeleted - Deleted in event recorder
+	EventDeleted = "Deleted"
+	// EventUpdated - Updated in event recorder
+	EventUpdated = "Updated"
+	// EventCompleted - Completed in event recorder
+	EventCompleted = "Completed"
+
 	// Succeeded - constant
 	Succeeded CSMOperatorConditionType = "Succeeded"
 	// InvalidConfig - constant
