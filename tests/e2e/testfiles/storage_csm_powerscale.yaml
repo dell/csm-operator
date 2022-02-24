@@ -7,8 +7,8 @@ spec:
   driver:
     csiDriverType: "isilon"
         
-    # Config version for CSI PowerScale v2.1.0 driver
-    configVersion: v2.1.0
+    # Config version for CSI PowerScale v2.2.0 driver
+    configVersion: v2.2.0
 
     authSecret: test-isilon-creds
 
@@ -16,7 +16,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     common:
-      # Image for CSI PowerScale driver v2.1.0
+      # Image for CSI PowerScale driver v2.2.0
       image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
