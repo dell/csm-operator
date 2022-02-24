@@ -116,7 +116,7 @@ func (suite *CSMControllerTestSuite) TestAddFinalizer() {
 
 // test error injection. Client get should fail
 func (suite *CSMControllerTestSuite) TestErrorInjection() {
-	suite.makeFakeCSM(csmName, suite.namespace, false)
+	suite.makeFakeCSM(csmName, suite.namespace, true)
 	suite.reconcileWithErrorInjection(csmName, "")
 }
 
@@ -221,6 +221,8 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 
 	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
 	res, err := reconciler.Reconcile(ctx, req)
+	// after a successful reconcile, there should be 14 objects in memory
+	assert.Equal(suite.T(), 14, len(suite.fakeClient.(*crclient.Client).Objects))
 
 	ctrl.Log.Info("reconcile response", "res is: ", res)
 
@@ -247,8 +249,8 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 
 	updateCMError = true
 	_, err = reconciler.Reconcile(ctx, req)
-	// assert.Error(suite.T(), err)
-	// assert.Containsf(suite.T(), err.Error(), updateCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), updateCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateCMError = false
 
 	getCSIError = true
