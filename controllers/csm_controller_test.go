@@ -127,6 +127,10 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 	suite.createReconciler().ContentWatch()
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
+
+	version, err := utils.GetModuleDefaultVersion("v2.2.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
+	assert.NotNil(suite.T(), err)
+	assert.NotNil(suite.T(), version)
 }
 
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {
