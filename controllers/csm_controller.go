@@ -164,21 +164,22 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	if csm.IsBeingDeleted() {
 		r.Log.Info(fmt.Sprintf("HandleFinalizer for %v", req.NamespacedName))
-		if err := r.removeFinalizer(csm); err != nil {
-			r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Deleting finalizer", fmt.Sprintf("Failed to delete finalizer: %s", err))
-			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
-		}
-		r.EventRecorder.Event(csm, corev1.EventTypeNormal, "Deleted", "Object finalizer is deleted")
 
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resource deployed from CR by operator
-			if err := r.removeDriver(ctx, *csm, *operatorConfig, log); err != nil {
+			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Removing Driver", fmt.Sprintf("Failed to remove driver: %s", err))
 				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
 			}
 
 		}
+
+		if err := r.removeFinalizer(csm); err != nil {
+			r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Deleting finalizer", fmt.Sprintf("Failed to delete finalizer: %s", err))
+			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
+		}
+		r.EventRecorder.Event(csm, corev1.EventTypeNormal, "Deleted", "Object finalizer is deleted")
 
 		return ctrl.Result{}, nil
 	}
@@ -449,7 +450,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
-	driverConfig, err := r.getDriverConfig(ctx, cr, operatorConfig, log)
+	driverConfig, err := r.getDriverConfig(ctx, cr, operatorConfig)
 	if err != nil {
 		return err
 	}
@@ -544,8 +545,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 }
 
-func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
-	log *zap.SugaredLogger) (*DriverConfig, error) {
+func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*DriverConfig, error) {
 	var (
 		err        error
 		driver     *storagev1.CSIDriver
@@ -553,6 +553,8 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, 
 		node       *utils.NodeYAML
 		controller *utils.ControllerYAML
 	)
+
+	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
 	log.Infof("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType)
@@ -592,17 +594,19 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, 
 
 }
 
-func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig,
-	reqLogger *zap.SugaredLogger) error {
+func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+
+	log := logger.GetLogger(ctx)
+
 	deleteObj := func(obj client.Object) error {
 		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, obj)
 		if err != nil && k8serror.IsNotFound(err) {
 			return nil
 		} else if err != nil {
-			reqLogger.Info("Unknown error.", "Error", err.Error())
+			log.Info("Unknown error.", "Error", err.Error())
 			return err
 		} else {
-			reqLogger.Info("Deleting object", "Name:", obj.GetName(), "Kind:", obj.GetObjectKind().GroupVersionKind().Kind)
+			log.Info("Deleting object", "Name:", obj.GetName(), "Kind:", obj.GetObjectKind().GroupVersionKind().Kind)
 			err = r.GetClient().Delete(ctx, obj)
 			if err != nil {
 				return err
@@ -612,7 +616,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	}
 
 	// Get Driver resources
-	driverConfig, err := r.getDriverConfig(ctx, instance, operatorConfig, reqLogger)
+	driverConfig, err := r.getDriverConfig(ctx, instance, operatorConfig)
 	if err != nil {
 		return err
 	}
