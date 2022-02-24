@@ -25,7 +25,7 @@ var (
 	powerScaleCSMBadCertCnt                   = csmForPowerScaleBadCertCnt()
 	objects                                   = map[shared.StorageKey]runtime.Object{}
 	powerScaleClient                          = crclient.NewFakeClientNoInjector(objects)
-	powerScaleSecret                          = shared.MakeSecret("csm", "driver-test", shared.ConfigVersion)
+	powerScaleSecret                          = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
 
 	// where to find all the yaml files
 	config = utils.OperatorConfig{
