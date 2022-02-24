@@ -32,8 +32,8 @@ To run e2e test, go through the following steps:
 - Run the e2e test by executing the commands below:
 
 ```bash
-   source env-e2e-test.sh
-   source run-e2e-test.sh
+   ./env-e2e-test.sh
+   ./run-e2e-test.sh
 ```
 
 
