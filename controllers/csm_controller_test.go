@@ -219,27 +219,12 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 		},
 	}
 
-	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
-	res, err := reconciler.Reconcile(ctx, req)
-	// after a successful reconcile, there should be 14 objects in memory
-	assert.Equal(suite.T(), 14, len(suite.fakeClient.(*crclient.Client).Objects))
-
-	ctrl.Log.Info("reconcile response", "res is: ", res)
-
-	if expectedErr == "" {
-		assert.NoError(suite.T(), err)
-	}
-
-	if err != nil {
-		ctrl.Log.Error(err, "Error returned")
-		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
-	}
-
-	getCMError = true
-	_, err = reconciler.Reconcile(ctx, req)
+	// create would fail
+	createCSIError = true
+	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Containsf(suite.T(), err.Error(), getCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
-	getCMError = false
+	assert.Containsf(suite.T(), err.Error(), createCSIErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	createCSIError = false
 
 	createCMError = true
 	_, err = reconciler.Reconcile(ctx, req)
@@ -247,22 +232,37 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	assert.Containsf(suite.T(), err.Error(), createCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	createCMError = false
 
+	// create everything this time
+	reconciler.Reconcile(ctx, req)
+	// after a successful reconcile, there should be 14 objects in memory
+	assert.Equal(suite.T(), 14, len(suite.fakeClient.(*crclient.Client).Objects))
+
+	getCSIError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), getCSIErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	getCSIError = false
+
+	updateCSIError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), updateCSIErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	updateCSIError = false
+
+	getCMError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), getCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	getCMError = false
+
 	updateCMError = true
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), updateCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateCMError = false
 
-	getCSIError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	getCSIError = false
-	createCSIError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	createCSIError = false
-	updateCSIError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	updateCSIError = false
 
+	// TODO: follow instructions above
 	getCRError = true
 	_, err = reconciler.Reconcile(ctx, req)
 	getCRError = false
@@ -284,13 +284,13 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	updateCRBError = false
 
 	getSAError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	getSAError = false
 	createSAError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	createSAError = false
 	updateSAError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	updateSAError = false
 }
 
