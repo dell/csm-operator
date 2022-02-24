@@ -129,6 +129,10 @@ type Driver struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Type"
 	CSIDriverType DriverType `json:"csiDriverType" yaml:"csiDriverType"`
 
+	// CSIDriverSpec is the specification for CSIDriver
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Spec"
+	CSIDriverSpec CSIDriverSpec `json:"csiDriverSpec" yaml:"csiDriverSpec"`
+
 	// ConfigVersion is the configuration version of the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
 	ConfigVersion string `json:"configVersion" yaml:"configVersion"`
@@ -229,4 +233,9 @@ type SnapshotClass struct {
 	// Parameters is a map of driver specific parameters for snapshot class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Parameters"
 	Parameters map[string]string `json:"parameters,omitempty" yaml:"parameters"`
+}
+
+//CSIDriverSpec struct
+type CSIDriverSpec struct {
+	FSGroupPolicy string `json:"fSGroupPolicy,omitempty" yaml:"fSGroupPolicy,omitempty"`
 }
