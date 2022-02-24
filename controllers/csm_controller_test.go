@@ -38,6 +38,8 @@ var (
 
 	unittestLogger = zap.New(zap.UseFlagOptions(&opts)).WithName("controllers").WithName("unit-test")
 
+	ctx = context.Background()
+
 	createCMError  bool
 	getCMError     bool
 	updateCMError  bool
@@ -83,17 +85,33 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	suite.namespace = "test"
 }
 
+// test a happy path scenerio with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
 
-	suite.makeFakeCSM(csmName, suite.namespace)
-	suite.runFakeConfigManager(csmName, suite.namespace)
-	suite.runFakeCsiManager(csmName, suite.namespace)
-	suite.runFakeClusterroleManager(csmName, suite.namespace)
-	suite.runFakeClusterrolebindingManager(csmName, suite.namespace)
-	suite.runFakeServiceaccountManager(csmName, suite.namespace)
-	suite.runFakeCSMManager(csmName, suite.namespace, false)
-	suite.deleteCSM(context.Background(), csmName)
-	suite.runFakeCSMManager(csmName, suite.namespace, true)
+	suite.makeFakeCSM(csmName, suite.namespace, true)
+	suite.runFakeCSMManager(csmName, "", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeCSMManager(csmName, "", true)
+}
+
+// test with a csm without a finalizer, reconcile should add it
+func (suite *CSMControllerTestSuite) TestAddFinalizer() {
+	suite.makeFakeCSM(csmName, suite.namespace, false)
+	suite.runFakeCSMManager(csmName, "", true)
+}
+
+// test error injection. Client get should fail
+func (suite *CSMControllerTestSuite) TestErrorInjection() {
+	suite.reconcileWithErrorInjection(csmName, "")
+}
+
+// test csm not found. err should be nil
+func (suite *CSMControllerTestSuite) TestCsmNotFound() {
+	suite.runFakeCSMManager(csmName, "", true)
+}
+
+func (suite *CSMControllerTestSuite) TestIgnoreUpdatePredicate() {
+	suite.createReconciler().ignoreUpdatePredicate()
 }
 
 // helper method to create and run reconciler
@@ -138,12 +156,14 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 	}
 
 	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
-	res, err := reconciler.Reconcile(context.Background(), req)
+	res, err := reconciler.Reconcile(ctx, req)
 
 	ctrl.Log.Info("reconcile response", "res is: ", res)
 
 	if expectedErr == "" {
 		assert.NoError(suite.T(), err)
+	} else {
+		assert.NotNil(suite.T(), err)
 	}
 
 	if err != nil {
@@ -159,13 +179,11 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 	if !reconcileDelete {
 		suite.handleDaemonsetTest(reconciler, "csm-node")
 		suite.handleDeploymentTest(reconciler, "csm-controller")
+		suite.handlePodTest(reconciler, "csm-pod")
 	}
-
-	res, err = reconciler.Reconcile(context.Background(), req)
-	res, err = reconciler.Reconcile(context.Background(), req)
 }
 
-func (suite *CSMControllerTestSuite) runFakeConfigManager(reqName, expectedErr string) {
+func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expectedErr string) {
 	reconciler := suite.createReconciler()
 
 	req := reconcile.Request{
@@ -176,7 +194,7 @@ func (suite *CSMControllerTestSuite) runFakeConfigManager(reqName, expectedErr s
 	}
 
 	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
-	res, err := reconciler.Reconcile(context.Background(), req)
+	res, err := reconciler.Reconcile(ctx, req)
 
 	ctrl.Log.Info("reconcile response", "res is: ", res)
 
@@ -190,159 +208,59 @@ func (suite *CSMControllerTestSuite) runFakeConfigManager(reqName, expectedErr s
 	}
 
 	getCMError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	getCMError = false
 	createCMError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	createCMError = false
 	updateCMError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	updateCMError = false
-}
-
-func (suite *CSMControllerTestSuite) runFakeCsiManager(reqName, expectedErr string) {
-	reconciler := suite.createReconciler()
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Namespace: suite.namespace,
-			Name:      reqName,
-		},
-	}
-
-	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
-	res, err := reconciler.Reconcile(context.Background(), req)
-
-	ctrl.Log.Info("reconcile response", "res is: ", res)
-
-	if expectedErr == "" {
-		assert.NoError(suite.T(), err)
-	}
-
-	if err != nil {
-		ctrl.Log.Error(err, "Error returned")
-		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
-	}
 
 	getCSIError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	getCSIError = false
 	createCSIError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	createCSIError = false
 	updateCSIError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	updateCSIError = false
-}
-
-func (suite *CSMControllerTestSuite) runFakeClusterroleManager(reqName, expectedErr string) {
-	reconciler := suite.createReconciler()
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Namespace: suite.namespace,
-			Name:      reqName,
-		},
-	}
-
-	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
-	res, err := reconciler.Reconcile(context.Background(), req)
-
-	ctrl.Log.Info("reconcile response", "res is: ", res)
-
-	if expectedErr == "" {
-		assert.NoError(suite.T(), err)
-	}
-
-	if err != nil {
-		ctrl.Log.Error(err, "Error returned")
-		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
-	}
 
 	getCRError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	getCRError = false
 	createCRError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	createCRError = false
 	updateCRError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	updateCRError = false
-}
-
-func (suite *CSMControllerTestSuite) runFakeClusterrolebindingManager(reqName, expectedErr string) {
-	reconciler := suite.createReconciler()
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Namespace: suite.namespace,
-			Name:      reqName,
-		},
-	}
-
-	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
-	res, err := reconciler.Reconcile(context.Background(), req)
-
-	ctrl.Log.Info("reconcile response", "res is: ", res)
-
-	if expectedErr == "" {
-		assert.NoError(suite.T(), err)
-	}
-
-	if err != nil {
-		ctrl.Log.Error(err, "Error returned")
-		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
-	}
 
 	getCRBError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	getCRBError = false
 	createCRBError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	createCRBError = false
 	updateCRBError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	updateCRBError = false
-}
-
-func (suite *CSMControllerTestSuite) runFakeServiceaccountManager(reqName, expectedErr string) {
-	reconciler := suite.createReconciler()
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Namespace: suite.namespace,
-			Name:      reqName,
-		},
-	}
-
-	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
-	res, err := reconciler.Reconcile(context.Background(), req)
-
-	ctrl.Log.Info("reconcile response", "res is: ", res)
-
-	if expectedErr == "" {
-		assert.NoError(suite.T(), err)
-	}
-
-	if err != nil {
-		ctrl.Log.Error(err, "Error returned")
-		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
-	}
 
 	getSAError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	getSAError = false
 	createSAError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	createSAError = false
 	updateSAError = true
-	res, err = reconciler.Reconcile(context.Background(), req)
+	res, err = reconciler.Reconcile(ctx, req)
 	updateSAError = false
 }
 
 func (suite *CSMControllerTestSuite) handleDaemonsetTest(r *ContainerStorageModuleReconciler, name string) {
 	daemonset := &appsv1.DaemonSet{}
-	err := suite.fakeClient.Get(context.Background(), client.ObjectKey{Namespace: suite.namespace, Name: name}, daemonset)
+	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, daemonset)
 	assert.Nil(suite.T(), err)
 	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm"}
 
@@ -351,18 +269,28 @@ func (suite *CSMControllerTestSuite) handleDaemonsetTest(r *ContainerStorageModu
 
 func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageModuleReconciler, name string) {
 	deployement := &appsv1.Deployment{}
-	err := suite.fakeClient.Get(context.Background(), client.ObjectKey{Namespace: suite.namespace, Name: name}, deployement)
+	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployement)
 	assert.Nil(suite.T(), err)
 	deployement.Spec.Template.Labels = map[string]string{"csm": "csm"}
 
 	r.handleDeploymentUpdate(deployement, deployement)
 }
 
+func (suite *CSMControllerTestSuite) handlePodTest(r *ContainerStorageModuleReconciler, name string) {
+	suite.makeFakePod(name, suite.namespace)
+	pod := &corev1.Pod{}
+	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, pod)
+	assert.Nil(suite.T(), err)
+
+	// since deployments/daemonsets dont create pod in non-k8s env, we have to explicitely create pod
+	r.handlePodsUpdate(pod, pod)
+}
+
 // deleteCSM sets deletionTimeStamp on the csm object and deletes it
-func (suite *CSMControllerTestSuite) deleteCSM(ctx context.Context, csmName string) {
+func (suite *CSMControllerTestSuite) deleteCSM(csmName string) {
 	csm := &csmv1.ContainerStorageModule{}
 	key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
-	err := suite.fakeClient.Get(context.Background(), key, csm)
+	err := suite.fakeClient.Get(ctx, key, csm)
 	assert.Nil(suite.T(), err)
 
 	suite.fakeClient.(*crclient.Client).SetDeletionTimeStamp(ctx, csm)
@@ -371,20 +299,67 @@ func (suite *CSMControllerTestSuite) deleteCSM(ctx context.Context, csmName stri
 }
 
 // helper method to create k8s objects
-func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string) {
+func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool) {
 	configVersion := shared.ConfigVersion
-	csm := shared.MakeCSM(name, ns, configVersion)
-	sec := shared.MakeSecret(name, ns, configVersion)
-	err := suite.fakeClient.Create(context.Background(), sec)
+
+	// make pre-requisite secrets
+	sec := shared.MakeSecret(name+"-creds", ns, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("karavi-authorization-config", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("proxy-authz-tokens", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
-	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	if withFinalizer {
+		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	}
 	// remove driver when deleting csm
 	csm.Spec.Driver.ForceRemoveDriver = true
 	csm.Annotations[configVersionKey] = configVersion
 
-	err = suite.fakeClient.Create(context.Background(), &csm)
+	addModuleToCSM(&csm)
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+func addModuleToCSM(csm *csmv1.ContainerStorageModule) {
+	// add modules
+	csm.Spec.Modules = []csmv1.Module{
+		{
+			Name:          "authorization",
+			Enabled:       true,
+			ConfigVersion: "v1.0.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: "karavi-authorization-proxy",
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "INSECURE",
+							Value: "true",
+						},
+					},
+				},
+			},
+		},
+	}
+
+}
+
+func (suite *CSMControllerTestSuite) makeFakePod(name, ns string) {
+	pod := shared.MakePod(name, ns)
+	pod.Labels["csm"] = csmName
+	err := suite.fakeClient.Create(ctx, &pod)
 	assert.Nil(suite.T(), err)
 }
 
