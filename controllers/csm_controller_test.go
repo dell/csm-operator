@@ -42,12 +42,24 @@ var (
 
 	ctx = context.Background()
 
-	createCMError  bool
-	getCMError     bool
-	updateCMError  bool
-	createCSIError bool
+	createCMError    bool
+	createCMErrorStr = "unable to create ConfigMap"
+
+	getCMError    bool
+	getCMErrorStr = "unable to get ConfigMap"
+
+	updateCMError    bool
+	updateCMErrorStr = "unable to update ConfigMap"
+
+	createCSIError    bool
+	createCSIErrorStr = "unable to create Csidriver"
+
 	getCSIError    bool
-	updateCSIError bool
+	getCSIErrorStr = "unable to get Csidriver"
+
+	updateCSIError    bool
+	updateCSIErrorStr = "unable to update Csidriver"
+
 	getCRError     bool
 	updateCRError  bool
 	createCRError  bool
@@ -57,7 +69,8 @@ var (
 	createSAError  bool
 	getSAError     bool
 	updateSAError  bool
-	csmName        = "csm"
+
+	csmName = "csm"
 )
 
 // CSMContrllerTestSuite implements testify suite
@@ -89,7 +102,6 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 // test a happy path scenerio with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
-
 	suite.makeFakeCSM(csmName, suite.namespace, true)
 	suite.runFakeCSMManager(csmName, "", false)
 	suite.deleteCSM(csmName)
@@ -104,6 +116,7 @@ func (suite *CSMControllerTestSuite) TestAddFinalizer() {
 
 // test error injection. Client get should fail
 func (suite *CSMControllerTestSuite) TestErrorInjection() {
+	suite.makeFakeCSM(csmName, suite.namespace, false)
 	suite.reconcileWithErrorInjection(csmName, "")
 }
 
@@ -221,43 +234,51 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	}
 
 	getCMError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), getCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	getCMError = false
+
 	createCMError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), createCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	createCMError = false
+
 	updateCMError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
+	// assert.Error(suite.T(), err)
+	// assert.Containsf(suite.T(), err.Error(), updateCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateCMError = false
 
 	getCSIError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	getCSIError = false
 	createCSIError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	createCSIError = false
 	updateCSIError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	updateCSIError = false
 
 	getCRError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	getCRError = false
 	createCRError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	createCRError = false
 	updateCRError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	updateCRError = false
 
 	getCRBError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	getCRBError = false
 	createCRBError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	createCRBError = false
 	updateCRBError = true
-	res, err = reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	updateCRBError = false
 
 	getSAError = true
@@ -384,26 +405,26 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		if method == "Create" && createCMError {
 			fmt.Printf("[ShouldFail] force Configmap error for configmap named %+v\n", cm.Name)
 			fmt.Printf("[ShouldFail] force Configmap error for obj of type %+v\n", v)
-			return errors.New("unable to create ConfigMap")
+			return errors.New(createCMErrorStr)
 		} else if method == "Update" && updateCMError {
 			fmt.Printf("[ShouldFail] force update configmap error for obj of type %+v\n", v)
-			return errors.New("unable to update ConfigMap")
+			return errors.New(updateCMErrorStr)
 		} else if method == "Get" && getCMError {
 			fmt.Printf("[ShouldFail] force get configmap error for obj of type %+v\n", v)
-			return errors.New("unable to get ConfigMap")
+			return errors.New(getCMErrorStr)
 		}
 	case *storagev1.CSIDriver:
 		csi := obj.(*storagev1.CSIDriver)
 		if method == "Create" && createCSIError {
 			fmt.Printf("[ShouldFail] force Csidriver error for csidriver named %+v\n", csi.Name)
 			fmt.Printf("[ShouldFail] force Csidriver error for obj of type %+v\n", v)
-			return errors.New("unable to create Csidriver")
+			return errors.New(createCSIErrorStr)
 		} else if method == "Update" && updateCSIError {
 			fmt.Printf("[ShouldFail] force update Csidriver error for obj of type %+v\n", v)
-			return errors.New("unable to update Csidriver")
+			return errors.New(updateCSIErrorStr)
 		} else if method == "Get" && getCSIError {
 			fmt.Printf("[ShouldFail] force get Csidriver error for obj of type %+v\n", v)
-			return errors.New("unable to get Csidriver")
+			return errors.New(getCSIErrorStr)
 		}
 	case *rbacv1.ClusterRole:
 		cr := obj.(*rbacv1.ClusterRole)
