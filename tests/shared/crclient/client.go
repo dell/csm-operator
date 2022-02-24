@@ -36,6 +36,11 @@ func NewFakeClient(objectMap map[shared.StorageKey]runtime.Object, errorInjector
 	}
 }
 
+// NewFakeClientNoInjector creates a new client without an error injector
+func NewFakeClientNoInjector(objectMap map[shared.StorageKey]runtime.Object) *Client {
+	return &Client{Objects: objectMap}
+}
+
 // Get implements client.Client.
 func (f Client) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
 	if f.ErrorInjector != nil {
