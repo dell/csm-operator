@@ -22,7 +22,9 @@ TIMESTAMP := $(shell  date +%Y%m%d%H%M%S)
 
 # Image URL to use all building/pushing image targets
 # Local Image
+ifeq ($(DEFAULT_IMG),)
 DEFAULT_IMG ?= "$(IMAGE_TAG_BASE):$(TIMESTAMP)"
+endif
 
 # Operator image name
 IMG ?= "$(REGISTRY)/$(IMAGE_TAG_BASE):$(VERSION)"

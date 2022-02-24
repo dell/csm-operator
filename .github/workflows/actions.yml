@@ -46,11 +46,6 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
-      - name: Checkout csm-operator
-        uses: actions/checkout@v2
-        with:
-          repository: 'dell/csm-operator'
-          path: 'csm-operator'
       - name: Run unit tests and check package coverage
         uses: dell/common-github-actions/go-code-tester@csm-operator-drivers
         with:
@@ -92,10 +87,10 @@ jobs:
       - name: Get dependencies
         run: go mod download
       - name: Build Docker Images
-        run: make docker-build
-      #- name: Scan controller Image
-      #  uses: Azure/container-scan@v0
-      #  with:
-      #    image-name: controller:latest
-      #    severity-threshold: HIGH
+        run: DEFAULT_IMG=csm-operator:latest make docker-build
+      - name: Scan controller Image
+        uses: Azure/container-scan@v0
+        with:
+          image-name: csm-operator:latest
+          severity-threshold: HIGH
 
