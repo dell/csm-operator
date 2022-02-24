@@ -680,11 +680,9 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	if cr.Spec.Driver.Common.Image == "" {
 		return fmt.Errorf("driver image not specified in spec")
 	}
-	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.1.0" {
+	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.2.0" {
 		return fmt.Errorf("driver version not specified in spec or driver version is not valid")
 	}
-
-	// add check for version
 
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
