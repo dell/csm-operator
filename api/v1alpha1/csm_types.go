@@ -52,6 +52,7 @@ type ContainerStorageModuleStatus struct {
 // +kubebuilder:printcolumn:name="CreationTime",type=date,JSONPath=`.metadata.creationTimestamp`
 // +kubebuilder:printcolumn:name="CSIDriverType",type=string,JSONPath=`.spec.driver.csiDriverType`,description="Type of CSIDriver"
 // +kubebuilder:printcolumn:name="ConfigVersion",type=string,JSONPath=`.spec.driver.configVersion`,description="Version of CSIDriver"
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="State of Installation"
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 

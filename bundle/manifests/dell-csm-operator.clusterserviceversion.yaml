@@ -48,10 +48,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.0.0",
+                "image": "dellemc/csi-isilon:v2.x.y",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.0.0",
+              "configVersion": "v2.x.y",
               "controller": {
                 "envs": [
                   {
@@ -112,7 +112,7 @@ metadata:
                     "image": "dellemc/csm-authorization-sidecar:v1.0.0"
                   }
                 ],
-                "configVersion": "v2.0.0",
+                "configVersion": "v2.x.y",
                 "enabled": false,
                 "name": "authorization"
               }

@@ -30,6 +30,10 @@ spec:
       jsonPath: .spec.driver.configVersion
       name: ConfigVersion
       type: string
+    - description: State of Installation
+      jsonPath: .status.state
+      name: State
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -437,6 +441,12 @@ spec:
                               type: string
                           type: object
                         type: array
+                    type: object
+                  csiDriverSpec:
+                    description: CSIDriverSpec is the specification for CSIDriver
+                    properties:
+                      fSGroupPolicy:
+                        type: string
                     type: object
                   csiDriverType:
                     description: CSIDriverType is the CSI Driver type for Dell EMC

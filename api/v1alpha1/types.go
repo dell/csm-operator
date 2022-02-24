@@ -82,6 +82,13 @@ const (
 	// Externalhealthmonitor - placeholder for constant
 	Externalhealthmonitor = "external-health-monitor"
 
+	// EventDeleted - Deleted in event recorder
+	EventDeleted = "Deleted"
+	// EventUpdated - Updated in event recorder
+	EventUpdated = "Updated"
+	// EventCompleted - Completed in event recorder
+	EventCompleted = "Completed"
+
 	// Succeeded - constant
 	Succeeded CSMOperatorConditionType = "Succeeded"
 	// InvalidConfig - constant
@@ -128,6 +135,10 @@ type Driver struct {
 	// CSIDriverType is the CSI Driver type for Dell EMC - e.g, powermax, powerflex,...
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Type"
 	CSIDriverType DriverType `json:"csiDriverType" yaml:"csiDriverType"`
+
+	// CSIDriverSpec is the specification for CSIDriver
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Spec"
+	CSIDriverSpec CSIDriverSpec `json:"csiDriverSpec" yaml:"csiDriverSpec"`
 
 	// ConfigVersion is the configuration version of the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
@@ -229,4 +240,9 @@ type SnapshotClass struct {
 	// Parameters is a map of driver specific parameters for snapshot class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Parameters"
 	Parameters map[string]string `json:"parameters,omitempty" yaml:"parameters"`
+}
+
+//CSIDriverSpec struct
+type CSIDriverSpec struct {
+	FSGroupPolicy string `json:"fSGroupPolicy,omitempty" yaml:"fSGroupPolicy,omitempty"`
 }

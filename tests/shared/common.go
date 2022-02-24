@@ -13,7 +13,7 @@ import (
 
 const (
 	// ConfigVersion - used in all unit test
-	ConfigVersion string = "v2.1.0"
+	ConfigVersion string = "v2.2.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
@@ -89,7 +89,20 @@ func MakeSecret(name, ns, configVersion string) *corev1.Secret {
 	data := map[string][]byte{
 		"config": []byte("csm"),
 	}
-	object := metav1.ObjectMeta{Name: name + "-creds", Namespace: ns}
+	object := metav1.ObjectMeta{Name: name, Namespace: ns}
 	secret := &corev1.Secret{Data: data, ObjectMeta: object}
 	return secret
+}
+
+// MakePod returns a pod object
+func MakePod(name, ns string) corev1.Pod {
+	podObj := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+			Labels:    map[string]string{},
+		},
+	}
+
+	return podObj
 }

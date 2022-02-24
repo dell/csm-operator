@@ -17,13 +17,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	k8sClient "github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/dell/csm-operator/api/v1alpha1"
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/resources/configmap"
@@ -169,17 +169,16 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		if csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resource deployed from CR by operator
 			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
-				r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Removing Driver", fmt.Sprintf("Failed to remove driver: %s", err))
+				r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))
 				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
 			}
-
 		}
 
 		if err := r.removeFinalizer(csm); err != nil {
-			r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Deleting finalizer", fmt.Sprintf("Failed to delete finalizer: %s", err))
+			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventDeleted, fmt.Sprintf("Failed to delete finalizer: %s", err))
 			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
 		}
-		r.EventRecorder.Event(csm, corev1.EventTypeNormal, "Deleted", "Object finalizer is deleted")
+		r.EventRecorder.Event(csm, corev1.EventTypeNormal, csmv1.EventDeleted, "Object finalizer is deleted")
 
 		return ctrl.Result{}, nil
 	}
@@ -188,19 +187,19 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	if !csm.HasFinalizer(CSMFinalizerName) {
 		r.Log.Info(fmt.Sprintf("AddFinalizer for %v", req.NamespacedName))
 		if err := r.addFinalizer(csm); err != nil {
-			r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Adding finalizer", fmt.Sprintf("Failed to add finalizer: %s", err))
+			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed to add finalizer: %s", err))
 			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
 		}
-		r.EventRecorder.Event(csm, corev1.EventTypeNormal, "Added", "Object finalizer is added")
+		r.EventRecorder.Event(csm, corev1.EventTypeNormal, v1alpha1.EventUpdated, "Object finalizer is added")
 		return ctrl.Result{}, nil
 	}
 
 	oldStatus := csm.GetCSMStatus()
 
 	// Before doing anything else, check for config version and apply annotation if not set
-	isUpdated, err := checkAndApplyConfigVersionAnnotations(csm, false)
+	isUpdated, err := checkAndApplyConfigVersionAnnotations(ctx, csm)
 	if err != nil {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, "Updated", "Failed add annotation during install: %s", err.Error())
+		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "Failed add annotation during install: %s", err.Error())
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 	if isUpdated {
@@ -214,7 +213,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	// perfrom prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
-		r.EventRecorder.Event(csm, corev1.EventTypeWarning, "Running Pre-Check", fmt.Sprintf("Failed Prechecks: %s", err))
+		r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 
@@ -226,14 +225,14 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		log.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
-	r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, "Updated", "Call install/update driver: %s", csm.Name)
+	r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventUpdated, "Call install/update driver: %s", csm.Name)
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig)
 	if syncErr == nil {
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
 	}
 
 	// Failed driver deployment
-	r.EventRecorder.Eventf(csm, "Warning", "Updated", "Failed install: %s", syncErr.Error())
+	r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "Failed install: %s", syncErr.Error())
 
 	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, syncErr)
 }
@@ -262,7 +261,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 	if name == "" {
-		r.Log.Info("ignore deployment not labeled for csm", "name", d.Name)
+		log.Infow("ignore deployment not labeled for csm", "name", d.Name)
 		return
 	}
 
@@ -333,9 +332,9 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 	if state != "0" && err != nil {
 		log.Infow("pod status ", "state", err.Error())
-		r.EventRecorder.Eventf(csm, "Warning", "Updated", "%s Pod error details %s", stamp, err.Error())
+		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
 	} else {
-		r.EventRecorder.Eventf(csm, "Normal", "Complete", "%s Driver pods running OK", stamp)
+		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "%s Driver pods running OK", stamp)
 	}
 
 }
@@ -393,20 +392,18 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 // ContentWatch - watch updates on deployment and deamonset
 func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
-	clientset, err := k8sClient.GetClientSetWrapper()
-	if err != nil {
-		r.Log.Error(err, err.Error())
-	}
+	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
 
-	sharedInformerFactory := sinformer.NewSharedInformerFactory(clientset, time.Duration(time.Hour))
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
-	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
 	daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleDaemonsetUpdate,
 	})
+
+	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
 	deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleDeploymentUpdate,
 	})
+
 	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
 	podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handlePodsUpdate,
@@ -488,73 +485,66 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update ServiceAccount
-	err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, r.Client)
-	if err != nil {
+	if err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, r.Client); err != nil {
 		return err
 	}
-	err = serviceaccount.SyncServiceAccount(ctx, &controller.Rbac.ServiceAccount, r.Client)
-	if err != nil {
+
+	if err = serviceaccount.SyncServiceAccount(ctx, &controller.Rbac.ServiceAccount, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update ClusterRoles
-	_, err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, r.Client)
-	if err != nil {
+	if _, err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, r.Client); err != nil {
 		return err
 	}
-	_, err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, r.Client)
-	if err != nil {
+
+	if _, err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update ClusterRoleBinding
-	err = rbac.SyncClusterRoleBindings(ctx, &node.Rbac.ClusterRoleBinding, r.Client)
-	if err != nil {
+	if err = rbac.SyncClusterRoleBindings(ctx, &node.Rbac.ClusterRoleBinding, r.Client); err != nil {
 		return err
 	}
-	err = rbac.SyncClusterRoleBindings(ctx, &controller.Rbac.ClusterRoleBinding, r.Client)
-	if err != nil {
+
+	if err = rbac.SyncClusterRoleBindings(ctx, &controller.Rbac.ClusterRoleBinding, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update CSIDriver
-	err = csidriver.SyncCSIDriver(ctx, driver, r.Client)
-	if err != nil {
+	if err = csidriver.SyncCSIDriver(ctx, driver, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update ConfigMap
-	err = configmap.SyncConfigMap(ctx, configMap, r.Client)
-	if err != nil {
+	if err = configmap.SyncConfigMap(ctx, configMap, r.Client); err != nil {
 		return err
 	}
 
 	// Create/Update Deployment
-	err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, cr.Name)
-	if err != nil {
+	if err = deployment.SyncDeployment(ctx, &controller.Deployment, r.K8sClient, cr.Name); err != nil {
 		return err
 	}
 
 	// Create/Update DeamonSet
-
-	err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.K8sClient, cr.Name)
-	if err != nil {
+	if err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, r.K8sClient, cr.Name); err != nil {
 		return err
 	}
-	return nil
 
+	return nil
 }
 
-func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (*DriverConfig, error) {
+func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
+	cr csmv1.ContainerStorageModule,
+	operatorConfig utils.OperatorConfig) (*DriverConfig, error) {
 	var (
 		err        error
 		driver     *storagev1.CSIDriver
 		configMap  *corev1.ConfigMap
 		node       *utils.NodeYAML
 		controller *utils.ControllerYAML
+		log        = logger.GetLogger(ctx)
 	)
-
-	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
 	log.Infof("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType)
@@ -595,18 +585,22 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context, 
 }
 
 func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
-
 	log := logger.GetLogger(ctx)
 
 	deleteObj := func(obj client.Object) error {
-		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, obj)
+		kind := obj.GetObjectKind().GroupVersionKind().Kind
+		name := obj.GetName()
+
+		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+
 		if err != nil && k8serror.IsNotFound(err) {
+			log.Infow("Object not found to delete", "Name:", name, "Kind:", kind)
 			return nil
 		} else if err != nil {
-			log.Info("Unknown error.", "Error", err.Error())
+			log.Errorw("error to find object in deleteObj", "Error", err.Error(), "Name:", name, "Kind:", kind)
 			return err
 		} else {
-			log.Info("Deleting object", "Name:", obj.GetName(), "Kind:", obj.GetObjectKind().GroupVersionKind().Kind)
+			log.Infow("Deleting object", "Name:", name, "Kind:", kind)
 			err = r.GetClient().Delete(ctx, obj)
 			if err != nil {
 				return err
@@ -618,43 +612,47 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	// Get Driver resources
 	driverConfig, err := r.getDriverConfig(ctx, instance, operatorConfig)
 	if err != nil {
+		log.Error("error in getDriverConfig")
 		return err
 	}
 
-	err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount)
-	if err != nil {
-		return err
-	}
-	err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount); err != nil {
+		log.Errorw("error delete node service account", "Error", err.Error())
 		return err
 	}
 
-	err = deleteObj(&driverConfig.Node.Rbac.ClusterRole)
-	if err != nil {
-		return err
-	}
-	err = deleteObj(&driverConfig.Controller.Rbac.ClusterRole)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount); err != nil {
+		log.Errorw("error delete controller service account", "Error", err.Error())
 		return err
 	}
 
-	err = deleteObj(&driverConfig.Node.Rbac.ClusterRoleBinding)
-	if err != nil {
-		return err
-	}
-	err = deleteObj(&driverConfig.Controller.Rbac.ClusterRoleBinding)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Node.Rbac.ClusterRole); err != nil {
+		log.Errorw("error delete node cluster role", "Error", err.Error())
 		return err
 	}
 
-	err = deleteObj(driverConfig.ConfigMap)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRole); err != nil {
+		log.Errorw("error delete controller cluster role", "Error", err.Error())
 		return err
 	}
 
-	err = deleteObj(driverConfig.Driver)
-	if err != nil {
+	if err = deleteObj(&driverConfig.Node.Rbac.ClusterRoleBinding); err != nil {
+		log.Errorw("error delete node cluster role binding", "Error", err.Error())
+		return err
+	}
+
+	if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRoleBinding); err != nil {
+		log.Errorw("error delete controller cluster role binding", "Error", err.Error())
+		return err
+	}
+
+	if err = deleteObj(driverConfig.ConfigMap); err != nil {
+		log.Errorw("error delete configmap", "Error", err.Error())
+		return err
+	}
+
+	if err = deleteObj(driverConfig.Driver); err != nil {
+		log.Errorw("error delete csi driver", "Error", err.Error())
 		return err
 	}
 
@@ -662,18 +660,29 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		Namespace: *driverConfig.Node.DaemonSetApplyConfig.Namespace,
 		Name:      *driverConfig.Node.DaemonSetApplyConfig.Name,
 	}
+
 	daemonsetObj := &appsv1.DaemonSet{}
-	if err = r.Get(ctx, daemonsetKey, daemonsetObj); err == nil {
-		r.Delete(ctx, daemonsetObj)
+	err = r.Get(ctx, daemonsetKey, daemonsetObj)
+	if err == nil {
+		if err = r.Delete(ctx, daemonsetObj); err != nil {
+			log.Errorw("error delete daemonset", "Error", err.Error())
+		}
+	} else {
+		log.Infow("error getting daemonset", "daemonsetKey", daemonsetKey)
 	}
 
 	deploymentKey := client.ObjectKey{
 		Namespace: *driverConfig.Controller.Deployment.Namespace,
 		Name:      *driverConfig.Controller.Deployment.Name,
 	}
+
 	deploymentObj := &appsv1.Deployment{}
 	if err = r.Get(ctx, deploymentKey, deploymentObj); err == nil {
-		r.Delete(ctx, deploymentObj)
+		if err = r.Delete(ctx, deploymentObj); err != nil {
+			log.Errorw("error delete deployment", "Error", err.Error())
+		}
+	} else {
+		log.Infow("error getting deployment", "deploymentKey", deploymentKey)
 	}
 
 	return nil
@@ -684,17 +693,15 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	if cr.Spec.Driver.Common.Image == "" {
 		return fmt.Errorf("driver image not specified in spec")
 	}
-	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.1.0" {
+	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.2.0" {
 		return fmt.Errorf("driver version not specified in spec or driver version is not valid")
 	}
-
-	// add check for version
 
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
 
-		err := drivers.PrecheckPowerScale(ctx, cr, r)
+		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
@@ -725,7 +732,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 }
 
-func checkAndApplyConfigVersionAnnotations(instance *csmv1.ContainerStorageModule, update bool) (bool, error) {
+// TODO: refactor this
+func checkAndApplyConfigVersionAnnotations(ctx context.Context, instance *csmv1.ContainerStorageModule) (bool, error) {
+
+	log := logger.GetLogger(ctx)
+
 	if instance.Spec.Driver.ConfigVersion == "" {
 		// fail immediately
 		return false, fmt.Errorf("mandatory argument: ConfigVersion missing")
@@ -742,15 +753,15 @@ func checkAndApplyConfigVersionAnnotations(instance *csmv1.ContainerStorageModul
 		annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
 		isUpdated = true
 		instance.SetAnnotations(annotations)
-		fmt.Println(fmt.Sprintf("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
-			instance.GetName(), instance.Spec.Driver.ConfigVersion))
+		log.Infof("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
+			instance.GetName(), instance.Spec.Driver.ConfigVersion)
 	} else {
 		if configVersion != instance.Spec.Driver.ConfigVersion {
 			annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
 			isUpdated = true
 			instance.SetAnnotations(annotations)
-			fmt.Println(fmt.Sprintf("Config Version changed from %s to %s. Updating Annotations",
-				configVersion, instance.Spec.Driver.ConfigVersion))
+			log.Infof("Config Version changed from %s to %s. Updating Annotations",
+				configVersion, instance.Spec.Driver.ConfigVersion)
 		}
 	}
 	return isUpdated, nil
