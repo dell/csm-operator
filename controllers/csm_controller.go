@@ -25,6 +25,7 @@ import (
 
 	"github.com/dell/csm-operator/api/v1alpha1"
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/resources/configmap"
 	"github.com/dell/csm-operator/pkg/resources/csidriver"
@@ -37,6 +38,7 @@ import (
 
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	t1 "k8s.io/apimachinery/pkg/types"
+	rtime "k8s.io/apimachinery/pkg/util/runtime"
 	sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -155,7 +157,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		return reconcile.Result{}, nil
 	}
 
-	// Remove finalizer to allow users to delete CR
 	operatorConfig := &utils.OperatorConfig{
 		IsOpenShift:     r.Config.IsOpenShift,
 		K8sVersion:      r.Config.K8sVersion,
@@ -257,7 +258,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 
 	old, _ := oldObj.(*appsv1.Deployment)
 	d, _ := obj.(*appsv1.Deployment)
-	name := d.Spec.Template.Labels["csm"]
+	name := d.Spec.Template.Labels[constants.CsmLabel]
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 	if name == "" {
@@ -304,7 +305,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	defer dMutex.Unlock()
 
 	p, _ := obj.(*corev1.Pod)
-	name := p.GetLabels()["csm"]
+	name := p.GetLabels()[constants.CsmLabel]
 	if name == "" {
 		return
 	}
@@ -322,7 +323,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	csm := new(csmv1.ContainerStorageModule)
 	err := r.Client.Get(ctx, namespacedName, csm)
 	if err != nil {
-		r.Log.Error("daemonset get csm", "error", err.Error())
+		r.Log.Errorw("daemonset get csm", "error", err.Error())
 	}
 	log.Infow("csm prev status ", "state", csm.Status)
 	newStatus := csm.GetCSMStatus()
@@ -345,7 +346,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 
 	old, _ := oldObj.(*appsv1.DaemonSet)
 	d, _ := obj.(*appsv1.DaemonSet)
-	name := d.Spec.Template.Labels["csm"]
+	name := d.Spec.Template.Labels[constants.CsmLabel]
 	if name == "" {
 		r.Log.Debugw("ignore daemonset not labeled for csm", "name", d.Name)
 		return
@@ -410,6 +411,8 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 	})
 
 	stop := make(chan struct{})
+	defer close(stop)
+	defer rtime.HandleCrash()
 	sharedInformerFactory.Start(stop)
 
 	return nil

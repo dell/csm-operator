@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -25,6 +26,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -118,6 +120,13 @@ func (suite *CSMControllerTestSuite) TestIgnoreUpdatePredicate() {
 func TestCustom(t *testing.T) {
 	testSuite := new(CSMControllerTestSuite)
 	suite.Run(t, testSuite)
+}
+
+// test with a csm without a finalizer, reconcile should add it
+func (suite *CSMControllerTestSuite) TestContentWatch() {
+	suite.createReconciler().ContentWatch()
+	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
+	suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
 }
 
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {

@@ -57,3 +57,6 @@ var PendingCreate = "Pending create"
 
 // PodStatusRemoveString -make pod status crisp
 var PodStatusRemoveString = "rpc error: code = Unknown desc = Error response from daemon:"
+
+// CsmLabel - label driver resources
+var CsmLabel = "csm"
