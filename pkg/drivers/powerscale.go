@@ -7,12 +7,12 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/logger"
-	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -28,7 +28,7 @@ const (
 )
 
 // PrecheckPowerScale do input validation
-func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) error {
 	log := logger.GetLogger(ctx)
 	// Check for secrete only
 	config := cr.Name + "-creds"
@@ -69,13 +69,12 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, r
 
 	for _, name := range secrets {
 		found := &corev1.Secret{}
-		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name,
-			Namespace: cr.GetNamespace()}, found)
+		err := ct.Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
 		if err != nil {
+			log.Error(err, "Failed query for secret %s", name)
 			if errors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s", name)
 			}
-			log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
 		}
 	}
 

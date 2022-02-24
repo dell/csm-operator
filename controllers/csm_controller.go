@@ -688,7 +688,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
 
-		err := drivers.PrecheckPowerScale(ctx, cr, r)
+		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
