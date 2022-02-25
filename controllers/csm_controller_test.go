@@ -60,15 +60,32 @@ var (
 	updateCSIError    bool
 	updateCSIErrorStr = "unable to update Csidriver"
 
-	getCRError     bool
-	updateCRError  bool
-	createCRError  bool
+	getCRError    bool
+	getCRErrorStr = "unable to get Clusterrole"
+
+	updateCRError    bool
+	updateCRErrorStr = "unable to update Clusterrole"
+
+	createCRError    bool
+	createCRErrorStr = "unable to create Clusterrole"
+
 	getCRBError    bool
-	updateCRBError bool
-	createCRBError bool
-	createSAError  bool
-	getSAError     bool
-	updateSAError  bool
+	getCRBErrorStr = "unable to get ClusterroleBinding"
+
+	updateCRBError    bool
+	updateCRBErrorStr = "unable to update Clusterroleinding"
+
+	createCRBError    bool
+	createCRBErrorStr = "unable to create ClusterroleBinding"
+
+	createSAError    bool
+	createSAErrorStr = "unable to create ServiceAccount"
+
+	getSAError    bool
+	getSAErrorStr = "unable to get ServiceAccount"
+
+	updateSAError    bool
+	updateSAErrorStr = "unable to update ServiceAccount"
 
 	csmName = "csm"
 )
@@ -197,6 +214,9 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
 	}
 
+	res, err = reconciler.Reconcile(ctx, req)
+	res, err = reconciler.Reconcile(ctx, req)
+
 	// after reconcile being run, we update deployment and daemonset
 	// then call handleDeployment/DaemonsetUpdate explicitly because
 	// in unit test listener does not get triggered
@@ -220,8 +240,27 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	}
 
 	// create would fail
-	createCSIError = true
+
+	createSAError = true
 	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), createSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	createSAError = false
+
+	createCRError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), createCRErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	createCRError = false
+
+	createCRBError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), createCRBErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	createCRBError = false
+
+	createCSIError = true
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), createCSIErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	createCSIError = false
@@ -261,35 +300,41 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	assert.Containsf(suite.T(), err.Error(), updateCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateCMError = false
 
+	getCRBError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), getCRBErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	getCRBError = false
+
+	updateCRBError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), updateCRBErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	updateCRBError = false
+
 	// TODO: follow instructions above
 	getCRError = true
 	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), getCRError, "expected error containing %q, got %s", expectedErr, err)
 	getCRError = false
-	createCRError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	createCRError = false
+
 	updateCRError = true
 	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), updateCRErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateCRError = false
-
-	getCRBError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	getCRBError = false
-	createCRBError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	createCRBError = false
-	updateCRBError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	updateCRBError = false
 
 	getSAError = true
 	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), getSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	getSAError = false
-	createSAError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	createSAError = false
+
 	updateSAError = true
 	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), updateSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateSAError = false
 }
 
@@ -404,8 +449,8 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 	case *corev1.ConfigMap:
 		cm := obj.(*corev1.ConfigMap)
 		if method == "Create" && createCMError {
-			fmt.Printf("[ShouldFail] force Configmap error for configmap named %+v\n", cm.Name)
-			fmt.Printf("[ShouldFail] force Configmap error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force create Configmap error for configmap named %+v\n", cm.Name)
+			fmt.Printf("[ShouldFail] force create Configmap error for obj of type %+v\n", v)
 			return errors.New(createCMErrorStr)
 		} else if method == "Update" && updateCMError {
 			fmt.Printf("[ShouldFail] force update configmap error for obj of type %+v\n", v)
@@ -432,39 +477,39 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		if method == "Create" && createCRError {
 			fmt.Printf("[ShouldFail] force ClusterRole error for ClusterRole named %+v\n", cr.Name)
 			fmt.Printf("[ShouldFail] force ClusterRole error for obj of type %+v\n", v)
-			return errors.New("unable to create ClusterRole")
+			return errors.New(createCRErrorStr)
 		} else if method == "Update" && updateCRError {
 			fmt.Printf("[ShouldFail] force update ClusterRole error for obj of type %+v\n", v)
-			return errors.New("unable to update ClusterRole")
+			return errors.New(updateCRErrorStr)
 		} else if method == "Get" && getCRError {
 			fmt.Printf("[ShouldFail] force get ClusterRole error for obj of type %+v\n", v)
-			return errors.New("unable to get ClusterRole")
+			return errors.New(getCRErrorStr)
 		}
 	case *rbacv1.ClusterRoleBinding:
 		crb := obj.(*rbacv1.ClusterRoleBinding)
 		if method == "Create" && createCRBError {
 			fmt.Printf("[ShouldFail] force ClusterRoleBinding error for ClusterRoleBinding named %+v\n", crb.Name)
 			fmt.Printf("[ShouldFail] force ClusterRoleBinding error for obj of type %+v\n", v)
-			return errors.New("unable to create ClusterRoleBinding")
+			return errors.New(createCRBErrorStr)
 		} else if method == "Update" && updateCRBError {
 			fmt.Printf("[ShouldFail] force update ClusterRoleBinding error for obj of type %+v\n", v)
-			return errors.New("unable to update ClusterRoleBinding")
+			return errors.New(updateCRBErrorStr)
 		} else if method == "Get" && getCRBError {
 			fmt.Printf("[ShouldFail] force get ClusterRoleBinding error for obj of type %+v\n", v)
-			return errors.New("unable to get ClusterRoleBinding")
+			return errors.New(getCRBErrorStr)
 		}
 	case *corev1.ServiceAccount:
 		sa := obj.(*corev1.ServiceAccount)
 		if method == "Create" && createSAError {
 			fmt.Printf("[ShouldFail] force ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			fmt.Printf("[ShouldFail] force ServiceAccount error for obj of type %+v\n", v)
-			return errors.New("unable to create ServiceAccount")
+			return errors.New(createSAErrorStr)
 		} else if method == "Update" && updateSAError {
 			fmt.Printf("[ShouldFail] force update ServiceAccount error for obj of type %+v\n", v)
-			return errors.New("unable to update ServiceAccount")
+			return errors.New(updateSAErrorStr)
 		} else if method == "Get" && getSAError {
 			fmt.Printf("[ShouldFail] force get ServiceAccount error for obj of type %+v\n", v)
-			return errors.New("unable to get ServiceAccount")
+			return errors.New(getSAErrorStr)
 		}
 	default:
 	}
