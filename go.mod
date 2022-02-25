@@ -3,15 +3,15 @@ module github.com/dell/csm-operator
 go 1.17
 
 require (
-	github.com/go-logr/logr v1.2.0
+	github.com/go-logr/logr v1.2.2
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/zap v1.19.0
+	go.uber.org/zap v1.21.0
 	k8s.io/api v0.23.4
 	k8s.io/apimachinery v0.23.4
 	k8s.io/client-go v0.23.4
-	sigs.k8s.io/controller-runtime v0.10.3
-	sigs.k8s.io/yaml v1.2.0
+	sigs.k8s.io/controller-runtime v0.11.1
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
