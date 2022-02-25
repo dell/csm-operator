@@ -172,7 +172,6 @@ func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
 }
 
 func (suite *CSMControllerTestSuite) TestCsmError() {
-	_, log := logger.GetNewContextWithLogger("0")
 
 	// set bad version for error
 	configVersion = "v0"
