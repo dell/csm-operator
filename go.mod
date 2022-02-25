@@ -3,7 +3,7 @@ module github.com/dell/csm-operator
 go 1.17
 
 require (
-	github.com/go-logr/logr v1.2.2
+	github.com/go-logr/logr v1.2.0
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.21.0
