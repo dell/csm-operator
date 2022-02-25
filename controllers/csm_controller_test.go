@@ -21,6 +21,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -143,7 +145,22 @@ func (suite *CSMControllerTestSuite) TestCsmNotFound() {
 }
 
 func (suite *CSMControllerTestSuite) TestIgnoreUpdatePredicate() {
-	suite.createReconciler().ignoreUpdatePredicate()
+	p := suite.createReconciler().ignoreUpdatePredicate()
+	assert.NotNil(suite.T(), p)
+	o := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "biz", Name: "baz"},
+	}
+	e := event.UpdateEvent{
+		ObjectOld: o,
+		ObjectNew: o,
+	}
+	r := p.Update(e)
+	assert.NotNil(suite.T(), r)
+	d := event.DeleteEvent{
+		Object: o,
+	}
+	s := p.Delete(d)
+	assert.NotNil(suite.T(), s)
 }
 
 // helper method to create and run reconciler
