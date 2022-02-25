@@ -140,7 +140,7 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 	suite.createReconciler().ContentWatch()
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
-
+	close(StopWatch)
 	version, err := utils.GetModuleDefaultVersion("v2.2.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
 	assert.NotNil(suite.T(), err)
 	assert.NotNil(suite.T(), version)
@@ -260,7 +260,6 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), updateCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateCMError = false
-
 
 	// TODO: follow instructions above
 	getCRError = true
