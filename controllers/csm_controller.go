@@ -14,6 +14,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -196,20 +197,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	oldStatus := csm.GetCSMStatus()
 
-	// Before doing anything else, check for config version and apply annotation if not set
-	isUpdated, err := checkAndApplyConfigVersionAnnotations(ctx, csm)
-	if err != nil {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "Failed add annotation during install: %s", err.Error())
-		return utils.HandleValidationError(ctx, csm, r, err)
-	}
-	if isUpdated {
-		err = r.GetClient().Update(ctx, csm)
-		if err != nil {
-			log.Error(err, "Failed to update CR with finalizer")
-			return reconcile.Result{}, err
-		}
-	}
-
 	// perfrom prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
@@ -217,7 +204,15 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 
-	// Set the driver status to updating
+	// Set the driver annotation
+	isUpdated := applyConfigVersionAnnotations(ctx, csm)
+	if isUpdated {
+		err = r.GetClient().Update(ctx, csm)
+		if err != nil {
+			log.Error(err, "Failed to update CR with annotation")
+			return reconcile.Result{}, err
+		}
+	}
 
 	newStatus := csm.GetCSMStatus()
 	_, err = utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
@@ -331,7 +326,9 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 	if state != "0" && err != nil {
 		log.Infow("pod status ", "state", err.Error())
-		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
+		if !strings.Contains(err.Error(), "not found") {
+			r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
+		}
 	} else {
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "%s Driver pods running OK", stamp)
 	}
@@ -729,38 +726,25 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 }
 
 // TODO: refactor this
-func checkAndApplyConfigVersionAnnotations(ctx context.Context, instance *csmv1.ContainerStorageModule) (bool, error) {
+func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.ContainerStorageModule) bool {
 
 	log := logger.GetLogger(ctx)
 
-	if instance.Spec.Driver.ConfigVersion == "" {
-		// fail immediately
-		return false, fmt.Errorf("mandatory argument: ConfigVersion missing")
-	}
 	// If driver has not been initialized yet, we first annotate the driver with the config version annotation
 
 	annotations := instance.GetAnnotations()
 	isUpdated := false
 	if annotations == nil {
 		annotations = make(map[string]string)
-		isUpdated = true
 	}
-	if configVersion, ok := annotations[configVersionKey]; !ok {
+	if _, ok := annotations[configVersionKey]; !ok {
 		annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
 		isUpdated = true
 		instance.SetAnnotations(annotations)
 		log.Infof("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
 			instance.GetName(), instance.Spec.Driver.ConfigVersion)
-	} else {
-		if configVersion != instance.Spec.Driver.ConfigVersion {
-			annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
-			isUpdated = true
-			instance.SetAnnotations(annotations)
-			log.Infof("Config Version changed from %s to %s. Updating Annotations",
-				configVersion, instance.Spec.Driver.ConfigVersion)
-		}
 	}
-	return isUpdated, nil
+	return isUpdated
 }
 
 // GetClient - returns the split client
