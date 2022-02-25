@@ -38,7 +38,6 @@ import (
 
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	t1 "k8s.io/apimachinery/pkg/types"
-	rtime "k8s.io/apimachinery/pkg/util/runtime"
 	sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -56,8 +55,6 @@ import (
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
 )
-
-var dMutex sync.RWMutex
 
 // ContainerStorageModuleReconciler reconciles a ContainerStorageModule object
 type ContainerStorageModuleReconciler struct {
@@ -94,7 +91,9 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 )
 
+var dMutex sync.RWMutex
 var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
+var StopWatch = make(chan struct{})
 
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules/status,verbs=get;update;patch
@@ -262,7 +261,6 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 	if name == "" {
-		log.Infow("ignore deployment not labeled for csm", "name", d.Name)
 		return
 	}
 
@@ -348,7 +346,6 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	d, _ := obj.(*appsv1.DaemonSet)
 	name := d.Spec.Template.Labels[constants.CsmLabel]
 	if name == "" {
-		r.Log.Debugw("ignore daemonset not labeled for csm", "name", d.Name)
 		return
 	}
 
@@ -410,11 +407,7 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 		UpdateFunc: r.handlePodsUpdate,
 	})
 
-	stop := make(chan struct{})
-	defer close(stop)
-	defer rtime.HandleCrash()
-	sharedInformerFactory.Start(stop)
-
+	sharedInformerFactory.Start(StopWatch)
 	return nil
 }
 
