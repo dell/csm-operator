@@ -90,6 +90,8 @@ var (
 	updateSAErrorStr = "unable to update ServiceAccount"
 
 	csmName = "csm"
+
+	configVersion = shared.ConfigVersion
 )
 
 // CSMContrllerTestSuite implements testify suite
@@ -142,6 +144,64 @@ func (suite *CSMControllerTestSuite) TestErrorInjection() {
 // test csm not found. err should be nil
 func (suite *CSMControllerTestSuite) TestCsmNotFound() {
 	suite.runFakeCSMManager(csmName, "", true)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	err := suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+
+	reconciler := suite.createReconciler()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: suite.namespace,
+			Name:      csmName,
+		},
+	}
+
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+
+}
+
+func (suite *CSMControllerTestSuite) TestCsmError() {
+	_, log := logger.GetNewContextWithLogger("0")
+
+	// set bad version for error
+	configVersion = "v0"
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Annotations[configVersionKey] = configVersion
+
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	err = suite.fakeClient.Create(ctx, &csm)
+
+	reconciler := suite.createReconciler()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: suite.namespace,
+			Name:      csmName,
+		},
+	}
+
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
+
+	// set it back to good version for other tests
+	configVersion = shared.ConfigVersion
+
 }
 
 func (suite *CSMControllerTestSuite) TestIgnoreUpdatePredicate() {
@@ -397,7 +457,6 @@ func (suite *CSMControllerTestSuite) deleteCSM(csmName string) {
 
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool) {
-	configVersion := shared.ConfigVersion
 
 	// make pre-requisite secrets
 	sec := shared.MakeSecret(name+"-creds", ns, configVersion)

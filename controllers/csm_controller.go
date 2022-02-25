@@ -142,7 +142,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	csm := new(csmv1.ContainerStorageModule)
 
 	log.Infow("reconcile for", "Namespace", req.Namespace, "Name", req.Name, "Attempt", r.GetUpdateCount())
-	log.Debugw(fmt.Sprintf("Reconciling %s ", "csm"), "request", req.String())
 
 	// Fetch the ContainerStorageModuleReconciler instance
 	err := r.Client.Get(ctx, req.NamespacedName, csm)
@@ -164,7 +163,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	if csm.IsBeingDeleted() {
-		r.Log.Info(fmt.Sprintf("HandleFinalizer for %v", req.NamespacedName))
+		log.Infow("HandleFinalizer", "request", req.NamespacedName)
 
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
@@ -186,7 +185,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	// Add finalizer
 	if !csm.HasFinalizer(CSMFinalizerName) {
-		r.Log.Info(fmt.Sprintf("AddFinalizer for %v", req.NamespacedName))
+		log.Infow("HandleFinalizer", "name", CSMFinalizerName)
 		if err := r.addFinalizer(csm); err != nil {
 			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed to add finalizer: %s", err))
 			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
@@ -259,7 +258,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		return
 	}
 
-	log.Debugw("deployment modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+	log.Debugw("deployment modified generation", d.Generation, old.Generation)
 
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
@@ -349,7 +348,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
-	log.Debugw("daemonset modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+	log.Debugw("daemonset modified generation", "new", d.Generation, "old", old.Generation)
 
 	desired := d.Status.DesiredNumberScheduled
 	available := d.Status.NumberAvailable
