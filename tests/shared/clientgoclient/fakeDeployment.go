@@ -124,7 +124,7 @@ func (c *FakeDeployments) ApplyScale(ctx context.Context, deploymentName string,
 	panic("implement me")
 }
 
-// ApplyScaleV2 takes top resource name and the apply declarative configuration for scale,
+// AutoscalingV2 takes top resource name and the apply declarative configuration for scale,
 // applies it and returns the applied scale, and an error, if there is any.
 func (c *FakeDeployments) AutoscalingV2(ctx context.Context, deploymentName string, scale *applyconfigurationsautoscalingv1.ScaleApplyConfiguration, opts v1.ApplyOptions) (result *autoscalingv1.Scale, err error) {
 	panic("implement me")
