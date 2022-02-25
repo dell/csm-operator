@@ -333,7 +333,7 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	getCRError = true
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Containsf(suite.T(), err.Error(), getCRError, "expected error containing %q, got %s", expectedErr, err)
+	assert.Containsf(suite.T(), err.Error(), getCRErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	getCRError = false
 
 	updateCRError = true
