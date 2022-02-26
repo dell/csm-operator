@@ -82,10 +82,6 @@ jobs:
         id: go
       - name: Checkout the code
         uses: actions/checkout@v2
-      - name: Install dependencies
-        run:  |
-          go version
-          go get -u sigs.k8s.io/controller-runtime@latest
       - name: Build Docker Images
         run: DEFAULT_IMG=csm-operator:latest make docker-build
       - name: Scan controller Image
