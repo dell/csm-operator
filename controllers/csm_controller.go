@@ -94,6 +94,7 @@ const (
 
 var dMutex sync.RWMutex
 var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
+
 // StopWatch - watcher stop handle
 var StopWatch = make(chan struct{})
 

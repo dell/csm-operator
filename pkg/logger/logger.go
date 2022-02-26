@@ -30,24 +30,6 @@ type loggerKey struct{}
 // create either development logger or production logger
 func SetLoggerLevel(logLevel LogLevel) {
 	defaultLogLevel = logLevel
-	if logLevel != ProductionLogLevel && logLevel != DevelopmentLogLevel {
-		defaultLogLevel = ProductionLogLevel
-	}
-}
-
-/*
-func InitLogger() {
-    writeSyncer := getLogWriter()
-    encoder := getEncoder()
-    core := zapcore.NewCore(encoder, writeSyncer, zapcore.DebugLevel)
-
-    logger := zap.New(core, zap.AddCaller())
-    sugarLogger = logger.Sugar()
-}
-*/
-
-func getEncoder() zapcore.Encoder {
-	return zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
 }
 
 // getLogger returns the logger associated with the given context.
@@ -100,10 +82,4 @@ func newLogger() *zap.Logger {
 
 	l := zap.New(core, zap.AddCaller())
 	return l
-}
-
-// GetLoggerWithNoContext returns a new logger to the caller.
-// Returned logger is not associated with any context.
-func GetLoggerWithNoContext() *zap.SugaredLogger {
-	return newLogger().Sugar()
 }
