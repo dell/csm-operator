@@ -86,8 +86,6 @@ jobs:
         run:  |
           go version
           go get -u sigs.k8s.io/controller-runtime@latest
-      - name: Install Mockgen
-        run: go get github.com/golang/mock/mockgen@v1.4.4
       - name: Build Docker Images
         run: DEFAULT_IMG=csm-operator:latest make docker-build
       - name: Scan controller Image
