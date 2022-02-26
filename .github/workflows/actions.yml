@@ -82,6 +82,10 @@ jobs:
         id: go
       - name: Checkout the code
         uses: actions/checkout@v2
+      - name: Install dependencies
+        run:  |
+          go version
+          go get -u sigs.k8s.io/controller-runtime@latest
       - name: Install Mockgen
         run: go get github.com/golang/mock/mockgen@v1.4.4
       - name: Build Docker Images
