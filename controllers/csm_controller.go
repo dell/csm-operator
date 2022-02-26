@@ -14,7 +14,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -300,16 +299,19 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.CsmLabel]
+	ns := p.Namespace
 	if name == "" {
 		return
 	}
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
-	log.Infow("pod labeled for csm", "name", p.Name)
+	if !p.ObjectMeta.DeletionTimestamp.IsZero() {
+		log.Debugw("driver delete invoked", "stopping pod with name", p.Name)
+		return
+	}
+	log.Infow("pod modified for driver", "name", p.Name)
 
-	// update it to trigger status watch
-	ns := p.Namespace
 	namespacedName := t1.NamespacedName{
 		Name:      name,
 		Namespace: ns,
@@ -327,9 +329,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 	if state != "0" && err != nil {
 		log.Infow("pod status ", "state", err.Error())
-		if !strings.Contains(err.Error(), constants.NotFoundMsg) {
-			r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
-		}
+		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
 	} else {
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "%s Driver pods running OK", stamp)
 	}
