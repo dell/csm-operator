@@ -684,22 +684,17 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
-	if cr.Spec.Driver.Common.Image == "" {
-		return fmt.Errorf("driver image not specified in spec")
-	}
 	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.2.0" {
-		return fmt.Errorf("driver version not specified in spec or driver version is not valid")
+		return fmt.Errorf("driver version not specified in spec or driver version is not supported")
 	}
 
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
-
 		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
-
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
@@ -721,9 +716,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 		}
 	}
-
 	return nil
-
 }
 
 // TODO: refactor this

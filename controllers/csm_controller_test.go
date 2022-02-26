@@ -50,6 +50,9 @@ var (
 	getCMError    bool
 	getCMErrorStr = "unable to get ConfigMap"
 
+	updateCSMError    bool
+	updateCSMErrorStr = "unable to get CSM"
+
 	updateCMError    bool
 	updateCMErrorStr = "unable to update ConfigMap"
 
@@ -165,9 +168,10 @@ func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
 			Name:      csmName,
 		},
 	}
-
+	updateCSMError = true
 	_, err = reconciler.Reconcile(ctx, req)
-	assert.Nil(suite.T(), err)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
 
 }
 
@@ -521,6 +525,12 @@ func (suite *CSMControllerTestSuite) makeFakePod(name, ns string) {
 func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Object) error {
 	// Needs to implement based on need
 	switch v := obj.(type) {
+	case *csmv1.ContainerStorageModule:
+		csm := obj.(*csmv1.ContainerStorageModule)
+		if method == "Update" && updateCSMError {
+			fmt.Printf("[ShouldFail] force Update csm error for obj of type %+v\n", csm)
+			return errors.New(updateCSMErrorStr)
+		}
 	case *corev1.ConfigMap:
 		cm := obj.(*corev1.ConfigMap)
 		if method == "Create" && createCMError {
