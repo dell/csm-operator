@@ -129,6 +129,11 @@ func (f Client) Create(ctx context.Context, obj client.Object, opts ...client.Cr
 
 // Delete implements client.Client.
 func (f Client) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+	if f.ErrorInjector != nil {
+		if err := f.ErrorInjector.ShouldFail("Delete", obj); err != nil {
+			return err
+		}
+	}
 	if len(opts) > 0 {
 		return fmt.Errorf("delete options are not supported")
 	}
@@ -162,6 +167,12 @@ func (f Client) Delete(ctx context.Context, obj client.Object, opts ...client.De
 
 	delete(f.Objects, k)
 	return nil
+}
+
+func (f Client) Clear() {
+	for sk := range f.Objects {
+		delete(f.Objects, sk)
+	}
 }
 
 // SetDeletionTimeStamp so that reconcile can go into deletion part of code

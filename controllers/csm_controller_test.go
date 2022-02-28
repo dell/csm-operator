@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -50,6 +49,9 @@ var (
 	getCMError    bool
 	getCMErrorStr = "unable to get ConfigMap"
 
+	updateCSMError    bool
+	updateCSMErrorStr = "unable to get CSM"
+
 	updateCMError    bool
 	updateCMErrorStr = "unable to update ConfigMap"
 
@@ -89,7 +91,29 @@ var (
 	updateSAError    bool
 	updateSAErrorStr = "unable to update ServiceAccount"
 
+	deleteDSError    bool
+	deleteDSErrorStr = "unable to delete Daemonset"
+
+	deleteDeploymentError    bool
+	deleteDeploymentErrorStr = "unable to delete Deployment"
+
+	deleteSAError    bool
+	deleteSAErrorStr = "unable to delete ServiceAccount"
+
 	csmName = "csm"
+
+	configVersion = shared.ConfigVersion
+
+	req = reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: "test",
+			Name:      csmName,
+		},
+	}
+
+	operatorConfig = utils.OperatorConfig{
+		ConfigDirectory: "../operatorconfig",
+	}
 )
 
 // CSMContrllerTestSuite implements testify suite
@@ -122,26 +146,118 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 // test a happy path scenerio with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
 	suite.makeFakeCSM(csmName, suite.namespace, true)
-	suite.runFakeCSMManager(csmName, "", false)
+	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
-	suite.runFakeCSMManager(csmName, "", true)
-}
-
-// test with a csm without a finalizer, reconcile should add it
-func (suite *CSMControllerTestSuite) TestAddFinalizer() {
-	suite.makeFakeCSM(csmName, suite.namespace, false)
-	suite.runFakeCSMManager(csmName, "", true)
+	suite.runFakeCSMManager("", true)
 }
 
 // test error injection. Client get should fail
 func (suite *CSMControllerTestSuite) TestErrorInjection() {
-	suite.makeFakeCSM(csmName, suite.namespace, true)
+	// test csm not found. err should be nil
+	suite.runFakeCSMManager("", true)
+	// make a csm without finalizer
+	suite.makeFakeCSM(csmName, suite.namespace, false)
+	// reconcile adds finalizer
+	suite.runFakeCSMManager("", true)
 	suite.reconcileWithErrorInjection(csmName, "")
 }
 
-// test csm not found. err should be nil
-func (suite *CSMControllerTestSuite) TestCsmNotFound() {
-	suite.runFakeCSMManager(csmName, "", true)
+func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
+
+}
+
+// Test all edge cases in RevoveDriver
+func (suite *CSMControllerTestSuite) TestRemoveDriver() {
+	r := suite.createReconciler()
+	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = "powerscale"
+
+	removeDriverTests := []struct {
+		name          string
+		csm           csmv1.ContainerStorageModule
+		errorInjector *bool
+		expectedErr   string
+	}{
+		{"getDriverConfig error", csmWoType, nil, "no such file or directory"},
+		// can't find objects since they are not created. In this case error is nil
+		{"delete obj not found", csm, nil, ""},
+		{"get SA error", csm, &getSAError, getSAErrorStr},
+		{"get CR error", csm, &getCRError, getCRErrorStr},
+		{"get CRB error", csm, &getCRBError, getCRBErrorStr},
+		{"get CM error", csm, &getCMError, getCMErrorStr},
+		{"get Driver error", csm, &getCSIError, getCSIErrorStr},
+		{"delete SA error", csm, &deleteSAError, deleteSAErrorStr},
+		// code only logs the error when delete fails. No error returned
+		{"delete Daemonset error", csm, &deleteDSError, ""},
+		{"delete Deployment error", csm, &deleteDeploymentError, ""},
+	}
+
+	for _, tt := range removeDriverTests {
+		suite.T().Run(tt.name, func(t *testing.T) {
+
+			if tt.errorInjector != nil {
+				// need to create all objs before running removeDriver to hit unknown error
+				suite.makeFakeCSM(csmName, suite.namespace, true)
+				r.Reconcile(ctx, req)
+				*tt.errorInjector = true
+			}
+
+			err := r.removeDriver(ctx, tt.csm, operatorConfig)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+
+			if tt.errorInjector != nil {
+				*tt.errorInjector = false
+				r.Client.(*crclient.Client).Clear()
+			}
+		})
+	}
+
+}
+
+func (suite *CSMControllerTestSuite) TestCsmError() {
+
+	// set bad version for error
+	configVersion = "v0"
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Annotations[configVersionKey] = configVersion
+
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+
+	reconciler := suite.createReconciler()
+
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
+
+	// set it back to good version for other tests
+	configVersion = shared.ConfigVersion
 }
 
 func (suite *CSMControllerTestSuite) TestIgnoreUpdatePredicate() {
@@ -182,12 +298,6 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {
 
-	configDir, err := filepath.Abs("../operatorconfig")
-	assert.NoError(suite.T(), err)
-	operatorConfig := utils.OperatorConfig{
-		ConfigDirectory: configDir,
-	}
-
 	logType := logger.DevelopmentLogLevel
 	logger.SetLoggerLevel(logType)
 	_, log := logger.GetNewContextWithLogger("0")
@@ -205,15 +315,8 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 	return reconciler
 }
 
-func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr string, reconcileDelete bool) {
+func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, reconcileDelete bool) {
 	reconciler := suite.createReconciler()
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Namespace: suite.namespace,
-			Name:      reqName,
-		},
-	}
 
 	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
 	res, err := reconciler.Reconcile(ctx, req)
@@ -251,18 +354,11 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 	}
 }
 
+// call reconcile with different injection errors in k8s client
 func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expectedErr string) {
 	reconciler := suite.createReconciler()
 
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Namespace: suite.namespace,
-			Name:      reqName,
-		},
-	}
-
 	// create would fail
-
 	createSAError = true
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
@@ -295,8 +391,6 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 
 	// create everything this time
 	reconciler.Reconcile(ctx, req)
-	// after a successful reconcile, there should be 14 objects in memory
-	assert.Equal(suite.T(), 14, len(suite.fakeClient.(*crclient.Client).Objects))
 
 	getCSIError = true
 	_, err = reconciler.Reconcile(ctx, req)
@@ -334,7 +428,6 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	assert.Containsf(suite.T(), err.Error(), updateCRBErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateCRBError = false
 
-	// TODO: follow instructions above
 	getCRError = true
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
@@ -358,6 +451,13 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), updateSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateSAError = false
+
+	deleteSAError = true
+	suite.deleteCSM(csmName)
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), deleteSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	deleteSAError = false
 }
 
 func (suite *CSMControllerTestSuite) handleDaemonsetTest(r *ContainerStorageModuleReconciler, name string) {
@@ -409,7 +509,6 @@ func (suite *CSMControllerTestSuite) deleteCSM(csmName string) {
 
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool) {
-	configVersion := shared.ConfigVersion
 
 	// make pre-requisite secrets
 	sec := shared.MakeSecret(name+"-creds", ns, configVersion)
@@ -475,6 +574,13 @@ func (suite *CSMControllerTestSuite) makeFakePod(name, ns string) {
 func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Object) error {
 	// Needs to implement based on need
 	switch v := obj.(type) {
+	case *csmv1.ContainerStorageModule:
+		csm := obj.(*csmv1.ContainerStorageModule)
+		if method == "Update" && updateCSMError {
+			fmt.Printf("[ShouldFail] force Update csm error for obj of type %+v\n", csm)
+			return errors.New(updateCSMErrorStr)
+		}
+
 	case *corev1.ConfigMap:
 		cm := obj.(*corev1.ConfigMap)
 		if method == "Create" && createCMError {
@@ -488,6 +594,7 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 			fmt.Printf("[ShouldFail] force get configmap error for obj of type %+v\n", v)
 			return errors.New(getCMErrorStr)
 		}
+
 	case *storagev1.CSIDriver:
 		csi := obj.(*storagev1.CSIDriver)
 		if method == "Create" && createCSIError {
@@ -501,6 +608,7 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 			fmt.Printf("[ShouldFail] force get Csidriver error for obj of type %+v\n", v)
 			return errors.New(getCSIErrorStr)
 		}
+
 	case *rbacv1.ClusterRole:
 		cr := obj.(*rbacv1.ClusterRole)
 		if method == "Create" && createCRError {
@@ -514,6 +622,7 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 			fmt.Printf("[ShouldFail] force get ClusterRole error for obj of type %+v\n", v)
 			return errors.New(getCRErrorStr)
 		}
+
 	case *rbacv1.ClusterRoleBinding:
 		crb := obj.(*rbacv1.ClusterRoleBinding)
 		if method == "Create" && createCRBError {
@@ -539,7 +648,27 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		} else if method == "Get" && getSAError {
 			fmt.Printf("[ShouldFail] force get ServiceAccount error for obj of type %+v\n", v)
 			return errors.New(getSAErrorStr)
+		} else if method == "Delete" && deleteSAError {
+			fmt.Printf("[ShouldFail] force delete ServiceAccount error for obj of type %+v\n", v)
+			return errors.New(deleteSAErrorStr)
 		}
+
+	case *appsv1.DaemonSet:
+		ds := obj.(*appsv1.DaemonSet)
+		if method == "Delete" && deleteDSError {
+			fmt.Printf("[ShouldFail] force ServiceAccount error for ServiceAccount named %+v\n", ds.Name)
+			fmt.Printf("[ShouldFail] force delete Daemonset error for obj of type %+v\n", v)
+			return errors.New(deleteDSErrorStr)
+		}
+
+	case *appsv1.Deployment:
+		deployment := obj.(*appsv1.Deployment)
+		if method == "Delete" && deleteDeploymentError {
+			fmt.Printf("[ShouldFail] force ServiceAccount error for ServiceAccount named %+v\n", deployment.Name)
+			fmt.Printf("[ShouldFail] force delete Daemonset error for obj of type %+v\n", v)
+			return errors.New(deleteDeploymentErrorStr)
+		}
+
 	default:
 	}
 	return nil

@@ -14,7 +14,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -94,6 +93,8 @@ const (
 
 var dMutex sync.RWMutex
 var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
+
+// StopWatch - watcher stop handle
 var StopWatch = make(chan struct{})
 
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules,verbs=get;list;watch;create;update;patch;delete
@@ -142,7 +143,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	csm := new(csmv1.ContainerStorageModule)
 
 	log.Infow("reconcile for", "Namespace", req.Namespace, "Name", req.Name, "Attempt", r.GetUpdateCount())
-	log.Debugw(fmt.Sprintf("Reconciling %s ", "csm"), "request", req.String())
 
 	// Fetch the ContainerStorageModuleReconciler instance
 	err := r.Client.Get(ctx, req.NamespacedName, csm)
@@ -164,7 +164,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	if csm.IsBeingDeleted() {
-		r.Log.Info(fmt.Sprintf("HandleFinalizer for %v", req.NamespacedName))
+		log.Infow("HandleFinalizer", "request", req.NamespacedName)
 
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
@@ -186,7 +186,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	// Add finalizer
 	if !csm.HasFinalizer(CSMFinalizerName) {
-		r.Log.Info(fmt.Sprintf("AddFinalizer for %v", req.NamespacedName))
+		log.Infow("HandleFinalizer", "name", CSMFinalizerName)
 		if err := r.addFinalizer(csm); err != nil {
 			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed to add finalizer: %s", err))
 			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
@@ -259,7 +259,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		return
 	}
 
-	log.Debugw("deployment modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+	log.Debugw("deployment modified generation", d.Generation, old.Generation)
 
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
@@ -299,16 +299,19 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.CsmLabel]
+	ns := p.Namespace
 	if name == "" {
 		return
 	}
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
-	log.Infow("pod labeled for csm", "name", p.Name)
+	if !p.ObjectMeta.DeletionTimestamp.IsZero() {
+		log.Debugw("driver delete invoked", "stopping pod with name", p.Name)
+		return
+	}
+	log.Infow("pod modified for driver", "name", p.Name)
 
-	// update it to trigger status watch
-	ns := p.Namespace
 	namespacedName := t1.NamespacedName{
 		Name:      name,
 		Namespace: ns,
@@ -326,9 +329,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 	if state != "0" && err != nil {
 		log.Infow("pod status ", "state", err.Error())
-		if !strings.Contains(err.Error(), "not found") {
-			r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
-		}
+		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
 	} else {
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "%s Driver pods running OK", stamp)
 	}
@@ -349,7 +350,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
-	log.Debugw("daemonset modified generation", fmt.Sprintf("%d", d.Generation), fmt.Sprintf("%d", old.Generation))
+	log.Debugw("daemonset modified generation", "new", d.Generation, "old", old.Generation)
 
 	desired := d.Status.DesiredNumberScheduled
 	available := d.Status.NumberAvailable
@@ -584,7 +585,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
 		name := obj.GetName()
 
-		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+		err := r.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
 		if err != nil && k8serror.IsNotFound(err) {
 			log.Infow("Object not found to delete", "Name:", name, "Kind:", kind)
@@ -683,22 +684,17 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
-	if cr.Spec.Driver.Common.Image == "" {
-		return fmt.Errorf("driver image not specified in spec")
-	}
 	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.2.0" {
-		return fmt.Errorf("driver version not specified in spec or driver version is not valid")
+		return fmt.Errorf("driver version not specified in spec or driver version is not supported")
 	}
 
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
-
 		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
-
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
@@ -720,9 +716,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 		}
 	}
-
 	return nil
-
 }
 
 // TODO: refactor this
