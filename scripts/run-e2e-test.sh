@@ -29,7 +29,7 @@ else
     read -ra OPTS <<<"-v $GINKGO_OPTS"
 fi
 
-cd tests/e2e && ginkgo "${OPTS[@]}"
+cd tests/e2e && ginkgo -mod=mod "${OPTS[@]}"
 
 # Checking for test status
 TEST_PASS=$?
