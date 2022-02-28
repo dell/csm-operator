@@ -26,11 +26,7 @@ func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.
 		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
 	} else {
-		log.Infow("Updating CSIDriver", "Name:", csi.Name)
-		err = client.Update(ctx, csi)
-		if err != nil {
-			return err
-		}
+		log.Infow("CSIDriver Object exist", "Name:", csi.Name)
 	}
 	return nil
 }

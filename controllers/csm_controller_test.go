@@ -232,7 +232,6 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 	}
 
 	res, err = reconciler.Reconcile(ctx, req)
-	res, err = reconciler.Reconcile(ctx, req)
 
 	// after reconcile being run, we update deployment and daemonset
 	// then call handleDeployment/DaemonsetUpdate explicitly because
@@ -243,6 +242,12 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(reqName, expectedErr stri
 		suite.handleDaemonsetTest(reconciler, "csm-node")
 		suite.handleDeploymentTest(reconciler, "csm-controller")
 		suite.handlePodTest(reconciler, "csm-pod")
+		_, err = reconciler.Reconcile(ctx, req)
+		if expectedErr == "" {
+			assert.NoError(suite.T(), err)
+		} else {
+			assert.NotNil(suite.T(), err)
+		}
 	}
 }
 
@@ -299,11 +304,11 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	assert.Containsf(suite.T(), err.Error(), getCSIErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	getCSIError = false
 
-	updateCSIError = true
+	/*updateCSIError = true
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), updateCSIErrorStr, "expected error containing %q, got %s", expectedErr, err)
-	updateCSIError = false
+	updateCSIError = false*/
 
 	getCMError = true
 	_, err = reconciler.Reconcile(ctx, req)
@@ -371,6 +376,13 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	deployement.Spec.Template.Labels = map[string]string{"csm": "csm"}
 
 	r.handleDeploymentUpdate(deployement, deployement)
+	suite.makeFakePod(name, suite.namespace)
+	podList := &corev1.PodList{}
+	err = suite.fakeClient.List(ctx, podList, nil)
+	assert.Nil(suite.T(), err)
+	for _, pod := range podList.Items {
+		pod.Status.Phase = corev1.PodPending
+	}
 }
 
 func (suite *CSMControllerTestSuite) handlePodTest(r *ContainerStorageModuleReconciler, name string) {
