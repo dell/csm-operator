@@ -14,7 +14,7 @@ export GO111MODULE=on
 export ACK_GINKGO_DEPRECATIONS=1.16.4
 export ACK_GINKGO_RC=true
 
-if ! (go get -u github.com/onsi/ginkgo/ginkgo); then
+if ! (cd tests/e2e && go mod vendor && go get -u github.com/onsi/ginkgo/ginkgo); then
     echo "go mod vendor or go get ginkgo error"
     exit 1
 fi
