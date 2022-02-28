@@ -585,7 +585,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
 		name := obj.GetName()
 
-		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+		err := r.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
 		if err != nil && k8serror.IsNotFound(err) {
 			log.Infow("Object not found to delete", "Name:", name, "Kind:", kind)
