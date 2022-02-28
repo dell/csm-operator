@@ -13,6 +13,7 @@ import (
 	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	authorizationv1beta1 "k8s.io/client-go/kubernetes/typed/authorization/v1beta1"
 	autoscalingv1 "k8s.io/client-go/kubernetes/typed/autoscaling/v1"
+	autoscalingv2 "k8s.io/client-go/kubernetes/typed/autoscaling/v2"
 	autoscalingv2beta1 "k8s.io/client-go/kubernetes/typed/autoscaling/v2beta1"
 	autoscalingv2beta2 "k8s.io/client-go/kubernetes/typed/autoscaling/v2beta2"
 	batchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
@@ -29,6 +30,7 @@ import (
 	extensionsv1beta1 "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
 	flowcontrolv1alpha1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1alpha1"
 	flowcontrolv1beta1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1"
+	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
 	networkingv1 "k8s.io/client-go/kubernetes/typed/networking/v1"
 	networkingv1beta1 "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
 	nodev1 "k8s.io/client-go/kubernetes/typed/node/v1"
@@ -116,6 +118,16 @@ func (c *K8sClient) AuthorizationV1beta1() authorizationv1beta1.AuthorizationV1b
 
 // AutoscalingV1 retrieves the AutoscalingV1Client
 func (c *K8sClient) AutoscalingV1() autoscalingv1.AutoscalingV1Interface {
+	panic("implement me")
+}
+
+// AutoscalingV2 retrieves the AutoscalingV2Client
+func (c *K8sClient) AutoscalingV2() autoscalingv2.AutoscalingV2Interface {
+	panic("implement me")
+}
+
+// FlowcontrolV1beta2 retrieves the FlowcontrolV1beta2Client
+func (c *K8sClient) FlowcontrolV1beta2() flowcontrolv1beta2.FlowcontrolV1beta2Interface {
 	panic("implement me")
 }
 
