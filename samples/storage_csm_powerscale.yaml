@@ -14,9 +14,8 @@ spec:
     # Config version for CSI PowerScale v2.2.0 driver
     configVersion: v2.2.0
     authSecret: test-isilon-creds
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:

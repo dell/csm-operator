@@ -436,7 +436,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: 10.247.98.118:5000/controller:latest
+        image: controller:latest
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
