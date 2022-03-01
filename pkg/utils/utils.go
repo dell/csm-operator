@@ -111,6 +111,7 @@ func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.Container
 			}
 			emptyEnv := make([]corev1.EnvVar, 0)
 			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, side.Envs)
+			fmt.Printf("side arguments %#v", side.Args)
 			c.Args = ReplaceAllArgs(c.Args, side.Args)
 		}
 	}
@@ -212,7 +213,9 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 // ReplaceAllArgs -
 func ReplaceAllArgs(defaultArgs, crArgs []string) []string {
 	merge := []string{}
+	fmt.Printf("**merge args *** ")
 	for _, old := range crArgs {
+		fmt.Printf("**merge args *** old %#v", old)
 		found := false
 		keyOld := strings.Split(old, "=")
 		for i, new := range defaultArgs {

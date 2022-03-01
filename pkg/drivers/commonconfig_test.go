@@ -215,26 +215,45 @@ func csmWithTolerations() csmv1.ContainerStorageModule {
 	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 
+	/*arguments := make([]string, 0)
+	arguments = append(arguments, "--volume-name-prefix=csipsc")
+	for _, side := range res.Spec.Driver.SideCars {
+		if side.Name == "provisioner" {
+			side.Args = arguments
+		}
+	}
+	sideCarArgs := make([]string, 0)
+	for _, sidecar := range res.Spec.Driver.SideCars {
+		if sidecar.Name == "provisioner" {
+			sidecar.Args = "--volume-name-prefix=csipsc",
+		}
+	}
+	return sideCarArgs*/
+
 	// Add log level to cover some code in GetConfigMap
 	envVarLogLevel := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel}
-
 	// Add sidecars to trigger code in controller
 	sideCarObjEnabledNil := csmv1.ContainerTemplate{
 		Name:    "driver",
 		Enabled: nil,
+		Args:    []string{"--v=5"},
 	}
 	sideCarObjEnabledFalse := csmv1.ContainerTemplate{
 		Name:    "resizer",
 		Enabled: &falseBool,
+		Args:    []string{"--v=5"},
 	}
 	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
 		Name:    "provisioner",
 		Enabled: &trueBool,
+		Args:    []string{"--volume-name-prefix=k8s"},
 	}
 	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
 	res.Spec.Driver.SideCars = sideCarList
 
+	//argsList := []string{"--volume-name-prefix=k8s"}
+	//res.Spec.Driver.SideCars.Args = argsList
 	return res
 }
 

@@ -334,8 +334,6 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, recon
 		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
 	}
 
-	res, err = reconciler.Reconcile(ctx, req)
-
 	// after reconcile being run, we update deployment and daemonset
 	// then call handleDeployment/DaemonsetUpdate explicitly because
 	// in unit test listener does not get triggered
@@ -397,12 +395,6 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), getCSIErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	getCSIError = false
-
-	/*updateCSIError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	assert.Error(suite.T(), err)
-	assert.Containsf(suite.T(), err.Error(), updateCSIErrorStr, "expected error containing %q, got %s", expectedErr, err)
-	updateCSIError = false*/
 
 	getCMError = true
 	_, err = reconciler.Reconcile(ctx, req)
@@ -467,6 +459,25 @@ func (suite *CSMControllerTestSuite) handleDaemonsetTest(r *ContainerStorageModu
 	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm"}
 
 	r.handleDaemonsetUpdate(daemonset, daemonset)
+
+	// Make Pod and set status
+	pod := shared.MakePod(name, suite.namespace)
+	pod.Labels["csm"] = csmName
+	pod.Status.Phase = corev1.PodPending
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{
+					Reason: "test",
+				},
+			},
+		},
+	}
+	err = suite.fakeClient.Create(ctx, &pod)
+	assert.Nil(suite.T(), err)
+	podList := &corev1.PodList{}
+	err = suite.fakeClient.List(ctx, podList, nil)
+	assert.Nil(suite.T(), err)
 }
 
 func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageModuleReconciler, name string) {
@@ -476,13 +487,25 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	deployement.Spec.Template.Labels = map[string]string{"csm": "csm"}
 
 	r.handleDeploymentUpdate(deployement, deployement)
-	suite.makeFakePod(name, suite.namespace)
+
+	//Make Pod and set pod status
+	pod := shared.MakePod(name, suite.namespace)
+	pod.Labels["csm"] = csmName
+	pod.Status.Phase = corev1.PodPending
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{
+					Reason: "test",
+				},
+			},
+		},
+	}
+	err = suite.fakeClient.Create(ctx, &pod)
+	assert.Nil(suite.T(), err)
 	podList := &corev1.PodList{}
 	err = suite.fakeClient.List(ctx, podList, nil)
 	assert.Nil(suite.T(), err)
-	for _, pod := range podList.Items {
-		pod.Status.Phase = corev1.PodPending
-	}
 }
 
 func (suite *CSMControllerTestSuite) handlePodTest(r *ContainerStorageModuleReconciler, name string) {
