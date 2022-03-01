@@ -234,18 +234,18 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 // HandleValidationError for csm
 func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM,
 	validationError error) (reconcile.Result, error) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
 	log := logger.GetLogger(ctx)
 
-	log.Error(validationError, "Validation error")
 	newStatus := instance.GetCSMStatus()
 	// Update the status
-	log.Info("Marking the driver status as InvalidConfig")
 	newStatus.State = constants.Failed
-	err := UpdateStatus(ctx, instance, r, newStatus)
+	err := r.GetClient().Status().Update(ctx, instance)
 	if err != nil {
 		log.Error(err, "Failed to update CR status HandleValidationError")
 	}
-	log.Error(validationError, fmt.Sprintf("*************Create/Update %s failed ********",
+	log.Error(validationError, fmt.Sprintf(" *************Create/Update %s failed ********",
 		instance.GetDriverType()))
 	return LogBannerAndReturn(reconcile.Result{Requeue: false}, validationError)
 }

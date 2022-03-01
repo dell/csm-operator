@@ -164,31 +164,34 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	if csm.IsBeingDeleted() {
-		log.Infow("HandleFinalizer", "request", req.NamespacedName)
+		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
 
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resource deployed from CR by operator
 			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))
+				log.Errorw("remove driver", "error", err.Error())
 				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
 			}
 		}
 
 		if err := r.removeFinalizer(csm); err != nil {
 			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventDeleted, fmt.Sprintf("Failed to delete finalizer: %s", err))
+			log.Errorw("remove driver finalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
 		}
 		r.EventRecorder.Event(csm, corev1.EventTypeNormal, csmv1.EventDeleted, "Object finalizer is deleted")
 
 		return ctrl.Result{}, nil
 	}
-
+	log.Info("===DEBUG=== test finalizer error")
 	// Add finalizer
 	if !csm.HasFinalizer(CSMFinalizerName) {
 		log.Infow("HandleFinalizer", "name", CSMFinalizerName)
 		if err := r.addFinalizer(csm); err != nil {
 			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed to add finalizer: %s", err))
+			log.Errorw("HandleFinalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
 		}
 		r.EventRecorder.Event(csm, corev1.EventTypeNormal, v1alpha1.EventUpdated, "Object finalizer is added")
@@ -201,7 +204,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
 		csm.GetCSMStatus().State = constants.InvalidConfig
-		err = r.GetClient().Update(ctx, csm)
 		r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
