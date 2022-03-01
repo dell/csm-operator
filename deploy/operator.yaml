@@ -436,7 +436,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: dellemc/dell-csm-operator:v0.1.0
+        image: controller:latest
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

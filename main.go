@@ -223,6 +223,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ContainerStorageModule")
 		os.Exit(1)
 	}
+	defer close(controllers.StopWatch)
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
