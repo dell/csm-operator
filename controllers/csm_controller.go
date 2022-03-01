@@ -200,7 +200,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	oldStatus := csm.GetCSMStatus()
 
-	// perfrom prechecks
+	// perform prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
 		csm.GetCSMStatus().State = constants.InvalidConfig
