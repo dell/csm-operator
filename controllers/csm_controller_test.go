@@ -250,7 +250,7 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 
 }
 
-func (suite *CSMControllerTestSuite) TestCsmPreCheckError() {
+func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 
 	// set bad version error
 	configVersion = "v0"
@@ -263,15 +263,43 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckError() {
 	suite.fakeClient.Create(ctx, sec)
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
-
 	suite.fakeClient.Create(ctx, &csm)
-
 	reconciler := suite.createReconciler()
 
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.NotNil(suite.T(), err)
 
 	// set it back to good version for other tests
+	suite.deleteCSM(csmName)
+	reconciler = suite.createReconciler()
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+	configVersion = shared.ConfigVersion
+
+}
+
+func (suite *CSMControllerTestSuite) TestCsmPreCheckTypeError() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Annotations[configVersionKey] = configVersion
+
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	suite.fakeClient.Create(ctx, &csm)
+	reconciler := suite.createReconciler()
+
+	configVersion = shared.ConfigVersion
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
+	// set it back to good version for other tests
+	suite.deleteCSM(csmName)
+	reconciler = suite.createReconciler()
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
 	configVersion = shared.ConfigVersion
 }
 
@@ -555,8 +583,12 @@ func (suite *CSMControllerTestSuite) deleteCSM(csmName string) {
 func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
 	suite.makeFakeCSM(csmName, suite.namespace, true)
 	suite.runFakeCSMManager("", false)
+
 	updateCSMError = true
 	suite.deleteCSM(csmName)
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
 	updateCSMError = false
 }
 

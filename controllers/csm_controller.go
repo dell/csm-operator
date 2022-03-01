@@ -185,7 +185,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 		return ctrl.Result{}, nil
 	}
-	log.Info("===DEBUG=== test finalizer error")
+
 	// Add finalizer
 	if !csm.HasFinalizer(CSMFinalizerName) {
 		log.Infow("HandleFinalizer", "name", CSMFinalizerName)
