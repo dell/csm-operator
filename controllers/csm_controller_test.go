@@ -91,6 +91,9 @@ var (
 	updateSAError    bool
 	updateSAErrorStr = "unable to update ServiceAccount"
 
+	updateDSError bool
+	updateDSErrorStr = "unable to update Daemonset"
+
 	deleteDSError    bool
 	deleteDSErrorStr = "unable to delete Daemonset"
 
@@ -456,6 +459,12 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	assert.Containsf(suite.T(), err.Error(), updateSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateSAError = false
 
+	updateDSError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), updateDSErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	updateDSError = false
+
 	deleteSAError = true
 	suite.deleteCSM(csmName)
 	_, err = reconciler.Reconcile(ctx, req)
@@ -523,6 +532,7 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 func (suite *CSMControllerTestSuite) handlePodTest(r *ContainerStorageModuleReconciler, name string) {
 	suite.makeFakePod(name, suite.namespace)
 	pod := &corev1.Pod{}
+
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, pod)
 	assert.Nil(suite.T(), err)
 
@@ -548,7 +558,6 @@ func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
 	updateCSMError = true
 	suite.deleteCSM(csmName)
 	updateCSMError = false
-	suite.runFakeCSMManager("", true)
 }
 
 // helper method to create k8s objects
@@ -706,8 +715,11 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 	case *appsv1.DaemonSet:
 		ds := obj.(*appsv1.DaemonSet)
 		if method == "Delete" && deleteDSError {
-			fmt.Printf("[ShouldFail] force ServiceAccount error for ServiceAccount named %+v\n", ds.Name)
+			fmt.Printf("[ShouldFail] force delete ServiceAccount error for ServiceAccount named %+v\n", ds.Name)
 			return errors.New(deleteDSErrorStr)
+		} else if method == "Update" && updateDSError {
+			fmt.Printf("[ShouldFail] force update ServiceAccount error for ServiceAccount named %+v\n", ds.Name)
+			return errors.New(updateDSErrorStr)
 		}
 
 	case *appsv1.Deployment:
