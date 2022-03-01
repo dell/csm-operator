@@ -551,6 +551,14 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	truebool := true
+	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
+		Name:    "provisioner",
+		Enabled: &truebool,
+		Args:    []string{"--volume-name-prefix=k8s"},
+	}
+	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledTrue}
+	csm.Spec.Driver.SideCars = sideCarList
 	if withFinalizer {
 		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	}
