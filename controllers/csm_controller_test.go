@@ -182,6 +182,18 @@ func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
 
 }
 
+func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.ObjectMeta.Finalizers = []string{"foo"}
+	suite.fakeClient.Create(ctx, &csm)
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
+	updateCSMError = false
+}
+
 // Test all edge cases in RevoveDriver
 func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	r := suite.createReconciler()
@@ -235,9 +247,9 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 
 }
 
-func (suite *CSMControllerTestSuite) TestCsmError() {
+func (suite *CSMControllerTestSuite) TestCsmPreCheckError() {
 
-	// set bad version for error
+	// set bad version error
 	configVersion = "v0"
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
@@ -490,6 +502,15 @@ func (suite *CSMControllerTestSuite) deleteCSM(csmName string) {
 	suite.fakeClient.(*crclient.Client).SetDeletionTimeStamp(ctx, csm)
 
 	suite.fakeClient.Delete(ctx, csm)
+}
+
+func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
+	suite.makeFakeCSM(csmName, suite.namespace, true)
+	suite.runFakeCSMManager("", false)
+	updateCSMError = true
+	suite.deleteCSM(csmName)
+	updateCSMError = false
+	suite.runFakeCSMManager("", true)
 }
 
 // helper method to create k8s objects
