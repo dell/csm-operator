@@ -91,7 +91,7 @@ var (
 	updateSAError    bool
 	updateSAErrorStr = "unable to update ServiceAccount"
 
-	updateDSError bool
+	updateDSError    bool
 	updateDSErrorStr = "unable to update Daemonset"
 
 	deleteDSError    bool
