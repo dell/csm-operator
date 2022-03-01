@@ -169,6 +169,7 @@ func (f Client) Delete(ctx context.Context, obj client.Object, opts ...client.De
 	return nil
 }
 
+// Clear cleans objects
 func (f Client) Clear() {
 	for sk := range f.Objects {
 		delete(f.Objects, sk)
