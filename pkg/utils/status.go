@@ -4,18 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
+	"sync"
+
 	t1 "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"strings"
-	"sync"
 )
 
 var dMutex sync.RWMutex
@@ -57,7 +60,6 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	for _, pod := range podList.Items {
 
 		log.Infof("deployment pod count %d name %s status %s", readyPods, pod.Name, pod.Status.Phase)
-
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
 		} else if pod.Status.Phase == corev1.PodPending {
@@ -232,20 +234,20 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 // HandleValidationError for csm
 func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM,
 	validationError error) (reconcile.Result, error) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
 	log := logger.GetLogger(ctx)
 
-	log.Error(validationError, "Validation error")
 	newStatus := instance.GetCSMStatus()
 	// Update the status
-	log.Info("Marking the driver status as InvalidConfig")
 	newStatus.State = constants.Failed
-	err := UpdateStatus(ctx, instance, r, newStatus)
+	err := r.GetClient().Status().Update(ctx, instance)
 	if err != nil {
 		log.Error(err, "Failed to update CR status HandleValidationError")
 	}
-	log.Error(validationError, fmt.Sprintf("*************Create/Update %s failed ********",
+	log.Error(validationError, fmt.Sprintf(" *************Create/Update %s failed ********",
 		instance.GetDriverType()))
-	return LogBannerAndReturn(reconcile.Result{Requeue: false}, nil)
+	return LogBannerAndReturn(reconcile.Result{Requeue: false}, validationError)
 }
 
 // HandleSuccess for csm

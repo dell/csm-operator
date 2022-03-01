@@ -70,6 +70,8 @@ const (
 	DefaultReleaseNamespace = "<DriverDefaultReleaseNamespace>"
 	// DefaultImagePullPolicy constant
 	DefaultImagePullPolicy = "IfNotPresent"
+	//KubeletConfigDir path
+	KubeletConfigDir = "<KUBELET_CONFIG_DIR>"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -239,6 +241,15 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
 		YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
 	}
+	path := ""
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == "KUBELET_CONFIG_DIR" {
+			path = env.Value
+			break
+		}
+	}
+	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
+
 	return YamlString
 }
 
