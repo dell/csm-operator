@@ -26,24 +26,7 @@ func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.
 		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
 	} else {
-		isUpdateRequired := false
-		ownerRefs := found.GetOwnerReferences()
-		for _, ownerRef := range ownerRefs {
-			if ownerRef.APIVersion != "rbac.authorization.k8s.io/v1" {
-				// Lets overwrite everything
-				isUpdateRequired = true
-				break
-			}
-		}
-		if isUpdateRequired {
-			found.OwnerReferences = csi.OwnerReferences
-			err = client.Update(ctx, found)
-			if err != nil {
-				log.Error(err, "Failed to update CSIDriver object")
-			} else {
-				log.Infow("Successfully updated CSIDriver object", "Name:", csi.Name)
-			}
-		}
+		log.Infow("CSIDriver Object exist", "Name:", csi.Name)
 	}
 	return nil
 }
