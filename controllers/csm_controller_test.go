@@ -574,9 +574,11 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	truebool := true
 	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
-		Name:    "provisioner",
-		Enabled: &truebool,
-		Args:    []string{"--volume-name-prefix=k8s"},
+		Name:            "provisioner",
+		Enabled:         &truebool,
+		Image:           "image2",
+		ImagePullPolicy: "IfNotPresent",
+		Args:            []string{"--volume-name-prefix=k8s"},
 	}
 	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledTrue}
 	csm.Spec.Driver.SideCars = sideCarList
@@ -637,71 +639,67 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		cm := obj.(*corev1.ConfigMap)
 		if method == "Create" && createCMError {
 			fmt.Printf("[ShouldFail] force create Configmap error for configmap named %+v\n", cm.Name)
-			fmt.Printf("[ShouldFail] force create Configmap error for obj of type %+v\n", v)
 			return errors.New(createCMErrorStr)
 		} else if method == "Update" && updateCMError {
-			fmt.Printf("[ShouldFail] force update configmap error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Update Configmap error for configmap named %+v\n", cm.Name)
 			return errors.New(updateCMErrorStr)
 		} else if method == "Get" && getCMError {
-			fmt.Printf("[ShouldFail] force get configmap error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Get Configmap error for configmap named %+v\n", cm.Name)
+			fmt.Printf("[ShouldFail] force Get Configmap error for configmap named %+v\n", v)
 			return errors.New(getCMErrorStr)
 		}
 
 	case *storagev1.CSIDriver:
 		csi := obj.(*storagev1.CSIDriver)
 		if method == "Create" && createCSIError {
-			fmt.Printf("[ShouldFail] force Csidriver error for csidriver named %+v\n", csi.Name)
-			fmt.Printf("[ShouldFail] force Csidriver error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Create Csidriver error for csidriver named %+v\n", csi.Name)
 			return errors.New(createCSIErrorStr)
 		} else if method == "Update" && updateCSIError {
-			fmt.Printf("[ShouldFail] force update Csidriver error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Update Csidriver error for csidriver named %+v\n", csi.Name)
 			return errors.New(updateCSIErrorStr)
 		} else if method == "Get" && getCSIError {
-			fmt.Printf("[ShouldFail] force get Csidriver error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Get Csidriver error for csidriver named %+v\n", csi.Name)
 			return errors.New(getCSIErrorStr)
 		}
 
 	case *rbacv1.ClusterRole:
 		cr := obj.(*rbacv1.ClusterRole)
 		if method == "Create" && createCRError {
-			fmt.Printf("[ShouldFail] force ClusterRole error for ClusterRole named %+v\n", cr.Name)
-			fmt.Printf("[ShouldFail] force ClusterRole error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Create ClusterRole error for ClusterRole named %+v\n", cr.Name)
 			return errors.New(createCRErrorStr)
 		} else if method == "Update" && updateCRError {
-			fmt.Printf("[ShouldFail] force update ClusterRole error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Update ClusterRole error for ClusterRole named %+v\n", cr.Name)
 			return errors.New(updateCRErrorStr)
 		} else if method == "Get" && getCRError {
-			fmt.Printf("[ShouldFail] force get ClusterRole error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Get ClusterRole error for ClusterRole named %+v\n", cr.Name)
 			return errors.New(getCRErrorStr)
 		}
 
 	case *rbacv1.ClusterRoleBinding:
 		crb := obj.(*rbacv1.ClusterRoleBinding)
 		if method == "Create" && createCRBError {
-			fmt.Printf("[ShouldFail] force ClusterRoleBinding error for ClusterRoleBinding named %+v\n", crb.Name)
-			fmt.Printf("[ShouldFail] force ClusterRoleBinding error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Create ClusterRoleBinding error for ClusterRoleBinding named %+v\n", crb.Name)
 			return errors.New(createCRBErrorStr)
 		} else if method == "Update" && updateCRBError {
-			fmt.Printf("[ShouldFail] force update ClusterRoleBinding error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Update ClusterRoleBinding error for ClusterRoleBinding named %+v\n", crb.Name)
 			return errors.New(updateCRBErrorStr)
 		} else if method == "Get" && getCRBError {
-			fmt.Printf("[ShouldFail] force get ClusterRoleBinding error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Get ClusterRoleBinding error for ClusterRoleBinding named %+v\n", crb.Name)
 			return errors.New(getCRBErrorStr)
 		}
 	case *corev1.ServiceAccount:
 		sa := obj.(*corev1.ServiceAccount)
 		if method == "Create" && createSAError {
-			fmt.Printf("[ShouldFail] force ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
-			fmt.Printf("[ShouldFail] force ServiceAccount error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Create ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(createSAErrorStr)
 		} else if method == "Update" && updateSAError {
-			fmt.Printf("[ShouldFail] force update ServiceAccount error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Update ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(updateSAErrorStr)
 		} else if method == "Get" && getSAError {
-			fmt.Printf("[ShouldFail] force get ServiceAccount error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Get ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(getSAErrorStr)
 		} else if method == "Delete" && deleteSAError {
-			fmt.Printf("[ShouldFail] force delete ServiceAccount error for obj of type %+v\n", v)
+			fmt.Printf("[ShouldFail] force Delete ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(deleteSAErrorStr)
 		}
 
@@ -709,7 +707,6 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		ds := obj.(*appsv1.DaemonSet)
 		if method == "Delete" && deleteDSError {
 			fmt.Printf("[ShouldFail] force ServiceAccount error for ServiceAccount named %+v\n", ds.Name)
-			fmt.Printf("[ShouldFail] force delete Daemonset error for obj of type %+v\n", v)
 			return errors.New(deleteDSErrorStr)
 		}
 
@@ -717,7 +714,6 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		deployment := obj.(*appsv1.Deployment)
 		if method == "Delete" && deleteDeploymentError {
 			fmt.Printf("[ShouldFail] force ServiceAccount error for ServiceAccount named %+v\n", deployment.Name)
-			fmt.Printf("[ShouldFail] force delete Daemonset error for obj of type %+v\n", v)
 			return errors.New(deleteDeploymentErrorStr)
 		}
 
