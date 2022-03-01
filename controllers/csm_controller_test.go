@@ -91,13 +91,13 @@ var (
 	updateSAError    bool
 	updateSAErrorStr = "unable to update ServiceAccount"
 
-	deleteDSError bool
+	deleteDSError    bool
 	deleteDSErrorStr = "unable to delete Daemonset"
 
-	deleteDeploymentError bool
+	deleteDeploymentError    bool
 	deleteDeploymentErrorStr = "unable to delete Deployment"
 
-	deleteSAError bool
+	deleteSAError    bool
 	deleteSAErrorStr = "unable to delete ServiceAccount"
 
 	csmName = "csm"
@@ -349,8 +349,6 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, recon
 // call reconcile with different injection errors in k8s client
 func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expectedErr string) {
 	reconciler := suite.createReconciler()
-
-
 
 	// create would fail
 	createSAError = true

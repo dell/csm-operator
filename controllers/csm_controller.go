@@ -200,6 +200,8 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	// perfrom prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
+		csm.GetCSMStatus().State = constants.InvalidConfig
+		err = r.GetClient().Update(ctx, csm)
 		r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
@@ -220,9 +222,9 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		log.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
-	r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventUpdated, "Call install/update driver: %s", csm.Name)
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig)
 	if syncErr == nil {
+		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "install/update driver: %s completed OK", csm.Name)
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
 	}
 
@@ -289,6 +291,8 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
 	if err != nil {
 		log.Debugw("deployment status ", "pods", err.Error())
+	} else {
+		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "Driver deployment running OK")
 	}
 
 }
@@ -325,7 +329,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	newStatus := csm.GetCSMStatus()
 
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
-	state := csm.GetCSMStatus().NodeStatus.Failed
+	state := csm.GetCSMStatus().State
 	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 	if state != "0" && err != nil {
 		log.Infow("pod status ", "state", err.Error())
@@ -381,6 +385,8 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
 	if err != nil {
 		log.Debugw("daemonset status ", "pods", err.Error())
+	} else {
+		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "Driver daemonset running OK")
 	}
 
 }
@@ -433,6 +439,7 @@ func (r *ContainerStorageModuleReconciler) removeFinalizer(instance *csmv1.Conta
 
 func (r *ContainerStorageModuleReconciler) addFinalizer(instance *csmv1.ContainerStorageModule) error {
 	instance.SetFinalizers([]string{CSMFinalizerName})
+	instance.GetCSMStatus().State = constants.Creating
 	return r.Update(context.Background(), instance)
 }
 
