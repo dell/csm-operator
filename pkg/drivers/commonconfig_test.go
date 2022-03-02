@@ -221,19 +221,21 @@ func csmWithTolerations() csmv1.ContainerStorageModule {
 	// Add log level to cover some code in GetConfigMap
 	envVarLogLevel := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel}
-
 	// Add sidecars to trigger code in controller
 	sideCarObjEnabledNil := csmv1.ContainerTemplate{
 		Name:    "driver",
 		Enabled: nil,
+		Args:    []string{"--v=5"},
 	}
 	sideCarObjEnabledFalse := csmv1.ContainerTemplate{
 		Name:    "resizer",
 		Enabled: &falseBool,
+		Args:    []string{"--v=5"},
 	}
 	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
 		Name:    "provisioner",
 		Enabled: &trueBool,
+		Args:    []string{"--volume-name-prefix=k8s"},
 	}
 	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
 	res.Spec.Driver.SideCars = sideCarList
