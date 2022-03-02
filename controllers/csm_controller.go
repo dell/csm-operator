@@ -550,7 +550,7 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
 	)
 
 	// Get Driver resources
-	log.Infof("Getting %s CSI Driver for Dell EMC", cr.Spec.Driver.CSIDriverType)
+	log.Infof("Getting %s CSI Driver for Dell Technologies", cr.Spec.Driver.CSIDriverType)
 	driverType := cr.Spec.Driver.CSIDriverType
 
 	if driverType == csmv1.PowerScale {

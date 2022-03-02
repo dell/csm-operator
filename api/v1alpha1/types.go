@@ -132,7 +132,7 @@ type PodStatus struct {
 // Driver of CSIDriver
 // +k8s:openapi-gen=true
 type Driver struct {
-	// CSIDriverType is the CSI Driver type for Dell EMC - e.g, powermax, powerflex,...
+	// CSIDriverType is the CSI Driver type for Dell Technologies - e.g, powermax, powerflex,...
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Type"
 	CSIDriverType DriverType `json:"csiDriverType" yaml:"csiDriverType"`
 

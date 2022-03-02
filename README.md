@@ -9,14 +9,14 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 -->
 
-# Dell EMC Container Storage Modules (CSM) Operator
+# Dell Technologies Container Storage Modules (CSM) Operator
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](https://github.com/dell/csm/blob/main/docs/CODE_OF_CONDUCT.md)
 [![License](https://img.shields.io/github/license/dell/csm-operator)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/dellemc/csm-operator)](https://hub.docker.com/r/dellemc/csm-operator)
 [![Go version](https://img.shields.io/github/go-mod/go-version/dell/csm-operator)](go.mod)
 [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/dell/csm-operator?include_prereleases&label=latest&style=flat-square)](https://github.com/dell/csm-operator/releases/latest)
 
-Dell EMC Container Storage Modules (CSM) Operator is an open-source Kubernetes operator which can be used to install and manage various CSI Drivers and CSM Modules.
+Dell Technologies Container Storage Modules (CSM) Operator is an open-source Kubernetes operator which can be used to install and manage various CSI Drivers and CSM Modules.
 
 ## Table of Contents
 
@@ -37,21 +37,21 @@ Dell EMC Container Storage Modules (CSM) Operator is an open-source Kubernetes o
   * [Uninstall CSI Drivers and CSM Modules](#uninstall-csi-drivers-and-csm-modules)
 
 # Dell CSM Operator
-Dell CSM Operator is a Kubernetes native application which helps in installing and managing CSI Drivers and CSM Modules provided by Dell EMC for its various storage platforms. 
+Dell CSM Operator is a Kubernetes native application which helps in installing and managing CSI Drivers and CSM Modules provided by Dell Technologies for its various storage platforms. 
 Dell CSM Operator uses Kubernetes CRDs (Custom Resource Definitions) to define a manifest that describes the deployment specifications for each driver to be deployed.
 
 Dell CSM Operator is built using the [operator framework](https://github.com/operator-framework) and runs custom Kubernetes controllers to manage the driver installations. These controllers listen for any create/update/delete request for the respective CRDs and try to reconcile the request.
 
-Currently, the Dell CSM Operator can be used to deploy the following CSI drivers provided by Dell EMC
+Currently, the Dell CSM Operator can be used to deploy the following CSI drivers provided by Dell Technologies
 
-* CSI Driver for Dell EMC PowerScale
+* CSI Driver for Dell Technologies PowerScale
   * CSM Authorization
 
 **NOTE**: You can refer to additional information about the Dell CSM Operator on the new documentation website [here](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
 ## Support
-The Dell CSM Operator image is available on Dockerhub and is officially supported by Dell EMC.
-For any CSM Operator and driver issues, questions or feedback, join the [Dell EMC Container community](https://www.dell.com/community/Containers/bd-p/Containers).
+The Dell CSM Operator image is available on Dockerhub and is officially supported by Dell Technologies.
+For any CSM Operator and driver issues, questions or feedback, join the [Dell Technologies Container community](https://www.dell.com/community/Containers/bd-p/Containers) or the [Slack channel for Dell Container Storage Modules](https://dellemccsm.slack.com/).
 
 ## Supported Platforms
 Dell CSM Operator has been tested and qualified with 
@@ -74,6 +74,6 @@ This project is adhering to [Semantic Versioning](https://semver.org/).
 
 ## About
 
-Dell EMC Container Storage Modules (CSM) Operator is 100% open source and community-driven. All components are available
+Dell Technologies Container Storage Modules (CSM) Operator is 100% open source and community-driven. All components are available
 under [Apache 2 License](https://www.apache.org/licenses/LICENSE-2.0.html) on
 GitHub.
