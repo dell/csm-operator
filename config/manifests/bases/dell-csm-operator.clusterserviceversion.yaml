@@ -85,7 +85,7 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.controller.tolerations
-      - description: CSIDriverType is the CSI Driver type for Dell EMC - e.g, powermax,
+      - description: CSIDriverType is the CSI Driver type for Dell Technologies - e.g, powermax,
           powerflex,...
         displayName: CSI Driver Type
         path: driver.csiDriverType

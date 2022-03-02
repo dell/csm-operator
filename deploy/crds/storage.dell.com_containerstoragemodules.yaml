@@ -49,7 +49,7 @@ spec:
             description: ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
             properties:
               driver:
-                description: Driver is a CSI Drivers for Dell EMC
+                description: Driver is a CSI Drivers for Dell Technologies
                 properties:
                   authSecret:
                     description: AuthSecret is the name of the credentials secret for the driver
@@ -322,7 +322,7 @@ spec:
                         type: string
                     type: object
                   csiDriverType:
-                    description: CSIDriverType is the CSI Driver type for Dell EMC - e.g, powermax, powerflex,...
+                    description: CSIDriverType is the CSI Driver type for Dell Technologies - e.g, powermax, powerflex,...
                     type: string
                   dnsPolicy:
                     description: DNSPolicy is the dnsPolicy of the daemonset for Node plugin
