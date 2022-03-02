@@ -176,7 +176,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 			}
 		}
 
-		if err := r.removeFinalizer(csm); err != nil {
+		if err := r.removeFinalizer(ctx, csm); err != nil {
 			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventDeleted, fmt.Sprintf("Failed to delete finalizer: %s", err))
 			log.Errorw("remove driver finalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
@@ -189,7 +189,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	// Add finalizer
 	if !csm.HasFinalizer(CSMFinalizerName) {
 		log.Infow("HandleFinalizer", "name", CSMFinalizerName)
-		if err := r.addFinalizer(csm); err != nil {
+		if err := r.addFinalizer(ctx, csm); err != nil {
 			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed to add finalizer: %s", err))
 			log.Errorw("HandleFinalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
@@ -430,18 +430,18 @@ func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, li
 		}).Complete(r)
 }
 
-func (r *ContainerStorageModuleReconciler) removeFinalizer(instance *csmv1.ContainerStorageModule) error {
+func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule) error {
 	if !instance.HasFinalizer(CSMFinalizerName) {
 		return nil
 	}
 	instance.SetFinalizers(nil)
-	return r.Update(context.Background(), instance)
+	return r.Update(ctx, instance)
 }
 
-func (r *ContainerStorageModuleReconciler) addFinalizer(instance *csmv1.ContainerStorageModule) error {
+func (r *ContainerStorageModuleReconciler) addFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule) error {
 	instance.SetFinalizers([]string{CSMFinalizerName})
 	instance.GetCSMStatus().State = constants.Creating
-	return r.Update(context.Background(), instance)
+	return r.Update(ctx, instance)
 }
 
 // SyncCSM - Sync the current installation - this can lead to a create or update
