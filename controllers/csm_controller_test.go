@@ -160,8 +160,6 @@ func (suite *CSMControllerTestSuite) TestErrorInjection() {
 	suite.runFakeCSMManager("", true)
 	// make a csm without finalizer
 	suite.makeFakeCSM(csmName, suite.namespace, false)
-	// reconcile adds finalizer
-	suite.runFakeCSMManager("", true)
 	suite.reconcileWithErrorInjection(csmName, "")
 }
 
@@ -219,9 +217,8 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 		{"get CM error", csm, &getCMError, getCMErrorStr},
 		{"get Driver error", csm, &getCSIError, getCSIErrorStr},
 		{"delete SA error", csm, &deleteSAError, deleteSAErrorStr},
-		// code only logs the error when delete fails. No error returned
-		{"delete Daemonset error", csm, &deleteDSError, ""},
-		{"delete Deployment error", csm, &deleteDeploymentError, ""},
+		{"delete Daemonset error", csm, &deleteDSError, deleteDSErrorStr},
+		{"delete Deployment error", csm, &deleteDeploymentError, deleteDeploymentErrorStr},
 	}
 
 	for _, tt := range removeDriverTests {
@@ -238,6 +235,7 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
+				assert.Error(t, err)
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 
