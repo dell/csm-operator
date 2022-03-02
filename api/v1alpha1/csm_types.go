@@ -25,7 +25,7 @@ type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Driver is a CSI Drivers for Dell EMC
+	// Driver is a CSI Drivers for Dell Technologies
 	Driver Driver `json:"driver,omitempty" yaml:"driver,omitempty"`
 
 	// Modules is list of Container Storage Module modules you want to deploy
