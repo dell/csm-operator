@@ -195,7 +195,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
 		}
 		r.EventRecorder.Event(csm, corev1.EventTypeNormal, v1alpha1.EventUpdated, "Object finalizer is added")
-		return ctrl.Result{}, nil
 	}
 
 	oldStatus := csm.GetCSMStatus()
@@ -604,8 +603,8 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 			return err
 		} else {
 			log.Infow("Deleting object", "Name:", name, "Kind:", kind)
-			err = r.GetClient().Delete(ctx, obj)
-			if err != nil {
+			err = r.Delete(ctx, obj)
+			if err != nil && !k8serror.IsNotFound(err) {
 				return err
 			}
 		}
@@ -667,8 +666,9 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	daemonsetObj := &appsv1.DaemonSet{}
 	err = r.Get(ctx, daemonsetKey, daemonsetObj)
 	if err == nil {
-		if err = r.Delete(ctx, daemonsetObj); err != nil {
+		if err = r.Delete(ctx, daemonsetObj); err != nil && !k8serror.IsNotFound(err) {
 			log.Errorw("error delete daemonset", "Error", err.Error())
+			return err
 		}
 	} else {
 		log.Infow("error getting daemonset", "daemonsetKey", daemonsetKey)
@@ -681,8 +681,9 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 
 	deploymentObj := &appsv1.Deployment{}
 	if err = r.Get(ctx, deploymentKey, deploymentObj); err == nil {
-		if err = r.Delete(ctx, deploymentObj); err != nil {
+		if err = r.Delete(ctx, deploymentObj); err != nil && !k8serror.IsNotFound(err) {
 			log.Errorw("error delete deployment", "Error", err.Error())
+			return err
 		}
 	} else {
 		log.Infow("error getting deployment", "deploymentKey", deploymentKey)

@@ -77,13 +77,13 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		for _, s := range cr.Spec.Driver.SideCars {
 			if s.Name == *c.Name {
 				if s.Enabled == nil {
-					log.Info("Container  to be enabled : %s\n", *c.Name)
+					log.Infow("Container  to be enabled : %s\n", *c.Name)
 					break
 				} else if !*s.Enabled {
 					removeContainer = true
-					log.Info("Container to be removed : %s\n", *c.Name)
+					log.Infow("Container to be removed : %s\n", *c.Name)
 				} else {
-					log.Info("Container to be enabled : %s\n", *c.Name)
+					log.Infow("Container to be enabled : %s\n", *c.Name)
 				}
 				break
 			}
