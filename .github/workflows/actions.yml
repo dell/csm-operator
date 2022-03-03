@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Run Go Security
         uses: securego/gosec@master
-	with:
+        with:
           args: -exclude-dir=tests ./...
   malware_security_scan:
     name: Malware Scanner
