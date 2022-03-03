@@ -7,7 +7,6 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/logger"
-	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -15,9 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	// +kubebuilder:scaffold:imports
 )
-
-// Log global for all methods in this file
-var Log logr.Logger
 
 const (
 	// PowerScalePluginIdentifier -

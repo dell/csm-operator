@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	osruntime "runtime"
 	"strconv"
 	"time"
@@ -48,6 +49,10 @@ import (
 )
 
 const (
+	// ConfigDir path to driver deployment files
+	ConfigDir = "/etc/config/dell-csm-operator"
+	// Operatorconfig sub folder for deployment files
+	Operatorconfig = "operatorconfig"
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
 	K8sMinimumSupportedVersion = "1.21"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
@@ -129,27 +134,19 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 		log.Infof("Current kubernetes version is %s which is a supported version ", kubeVersion)
 	}
 
-	// Get the environment variable config dir
-	configDir := os.Getenv("X_CSM_OPERATOR_CONFIG_DIR")
-	if configDir == "" {
-		// Set the config dir to the folder pkg/config
-		configDir = "operatorconfig"
-		k8sPath = fmt.Sprintf("%s%s", configDir, k8sPath)
+	_, err = ioutil.ReadDir(filepath.Clean(ConfigDir))
+	if err != nil {
+		log.Errorw(err.Error(), "cannot find driver config path", ConfigDir)
+		cfg.ConfigDirectory = Operatorconfig
+		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
+		k8sPath = fmt.Sprintf("%s%s", Operatorconfig, k8sPath)
 	} else {
-		k8sPath = fmt.Sprintf("%s%s", configDir, k8sPath)
-		_, err := ioutil.ReadFile(k8sPath)
-		if err != nil {
-			// This means that the configmap is not mounted
-			// fall back to the local copy
-			log.Error(err, "Error reading file from the configmap mount")
-			log.Info("Falling back to local copy of config files")
-			configDir = "/etc/config/local/dell-csm-operator"
-			k8sPath = fmt.Sprintf("%s%s", configDir, k8sPath)
-		}
-
+		cfg.ConfigDirectory = filepath.Clean(ConfigDir)
+		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
+		k8sPath = fmt.Sprintf("%s%s", ConfigDir, k8sPath)
 	}
-	cfg.ConfigDirectory = configDir
-	buf, err := ioutil.ReadFile(k8sPath)
+
+	buf, err := ioutil.ReadFile(filepath.Clean(k8sPath))
 	if err != nil {
 		log.Info(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
 	}
