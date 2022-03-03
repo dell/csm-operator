@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
@@ -331,7 +332,7 @@ func LogBannerAndReturn(result reconcile.Result, err error) (reconcile.Result, e
 func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.DriverType, moduleType csmv1.ModuleType, path string) (string, error) {
 	/* TODO(Michal): review with Team */
 	configMapPath := fmt.Sprintf("%s/moduleconfig/common/version-values.yaml", path)
-	buf, err := ioutil.ReadFile(configMapPath)
+	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return "", err
 	}
