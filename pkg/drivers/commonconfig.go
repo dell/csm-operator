@@ -25,7 +25,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	log.Debugw("GetController", "configMapPath", configMapPath)
-	buf, err := ioutil.ReadFile(configMapPath)
+	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		log.Errorw("GetController failed", "Error", err.Error())
 		return nil, err
@@ -89,8 +89,8 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			}
 		}
 		if !removeContainer {
-			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
-			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
+			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
+			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
 			newcontainers = append(newcontainers, c)
 		}
 
@@ -122,7 +122,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
 	log.Debugw("GetNode", "configMapPath", configMapPath)
-	buf, err := ioutil.ReadFile(configMapPath)
+	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		log.Errorw("GetNode failed", "Error", err.Error())
 		return nil, err
@@ -172,8 +172,8 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 		}
 
-		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
-		utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
+		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
+		utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
 
 	}
 
@@ -241,7 +241,7 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	log.Debugw("GetCSIDriver", "configMapPath", configMapPath)
-	buf, err := ioutil.ReadFile(configMapPath)
+	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		log.Errorw("GetCSIDriver failed", "Error", err.Error())
 		return nil, err

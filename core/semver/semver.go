@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -57,7 +58,7 @@ func main() {
 		format = "ver"
 	} else {
 		if fileExists(format) {
-			buf, err := ioutil.ReadFile(format)
+			buf, err := ioutil.ReadFile(filepath.Clean(format))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error: read tpl failed: %v\n", err)
 				os.Exit(1)
@@ -70,13 +71,15 @@ func main() {
 
 	var w io.Writer = os.Stdout
 	if len(output) > 0 {
-		fout, err := os.Create(output)
+		fout, err := os.Create(filepath.Clean(output))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
 		}
 		w = fout
-		defer fout.Close()
+		if err := fout.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "error closing file: %v\n", err)
+		}
 	}
 
 	gitdesc := chkErr(doExec("git", "describe", "--long", "--dirty"))

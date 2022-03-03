@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -65,7 +66,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 	}
 
 	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/container.yaml", op.ConfigDirectory, authConfigVersion)
-	buf, err := ioutil.ReadFile(configMapPath)
+	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -124,7 +125,7 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfi
 	}
 
 	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", op.ConfigDirectory, version)
-	buf, err := ioutil.ReadFile(configMapPath)
+	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return nil, err
 	}
