@@ -1,11 +1,4 @@
 apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    control-plane: controller-manager
-  name: dell-csm-operator
----
-apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
@@ -436,7 +429,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: controller:latest
+        image: dellemc/dell-csm-operator:v0.1.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
