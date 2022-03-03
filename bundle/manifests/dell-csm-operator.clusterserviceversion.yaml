@@ -48,10 +48,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.x.y",
+                "image": "dellemc/csi-isilon:v2.2.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.x.y",
+              "configVersion": "v2.2.0",
               "controller": {
                 "envs": [
                   {
@@ -112,7 +112,7 @@ metadata:
                     "image": "dellemc/csm-authorization-sidecar:v1.0.0"
                   }
                 ],
-                "configVersion": "v2.x.y",
+                "configVersion": "v2.0.0",
                 "enabled": false,
                 "name": "authorization"
               }
@@ -204,6 +204,9 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.controller.tolerations
+      - description: CSIDriverSpec is the specification for CSIDriver
+        displayName: CSI Driver Spec
+        path: driver.csiDriverSpec
       - description: CSIDriverType is the CSI Driver type for Dell Technologies - e.g, powermax,
           powerflex,...
         displayName: CSI Driver Type
@@ -678,7 +681,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: dellemc/dell-csm-operator:0.1.0
+                image: dellemc/dell-csm-operator:v0.1.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
