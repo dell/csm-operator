@@ -30,8 +30,7 @@ RUN microdnf install yum \
     && microdnf clean all
 
 ENV USER_UID=1001 \
-    USER_NAME=dell-csm-operator \
-    X_CSM_OPERATOR_CONFIG_DIR="/etc/config/dell-csm-operator"
+    USER_NAME=dell-csm-operator
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY operatorconfig/ /etc/config/dell-csm-operator
