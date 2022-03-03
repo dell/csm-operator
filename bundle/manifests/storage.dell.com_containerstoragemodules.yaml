@@ -28,6 +28,10 @@ spec:
       jsonPath: .spec.driver.configVersion
       name: ConfigVersion
       type: string
+    - description: State of Installation
+      jsonPath: .status.state
+      name: State
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -50,7 +54,7 @@ spec:
             description: ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
             properties:
               driver:
-                description: Driver is a CSI Drivers for Dell EMC
+                description: Driver is a CSI Drivers for Dell Technologies
                 properties:
                   authSecret:
                     description: AuthSecret is the name of the credentials secret
@@ -82,14 +86,15 @@ spec:
                               type: string
                             value:
                               description: 'Variable references $(VAR_NAME) are expanded
-                                using the previous defined environment variables in
-                                the container and any service environment variables.
+                                using the previously defined environment variables
+                                in the container and any service environment variables.
                                 If a variable cannot be resolved, the reference in
-                                the input string will be unchanged. The $(VAR_NAME)
-                                syntax can be escaped with a double $$, ie: $$(VAR_NAME).
-                                Escaped references will never be expanded, regardless
-                                of whether the variable exists or not. Defaults to
-                                "".'
+                                the input string will be unchanged. Double $$ are
+                                reduced to a single $, which allows for escaping the
+                                $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce
+                                the string literal "$(VAR_NAME)". Escaped references
+                                will never be expanded, regardless of whether the
+                                variable exists or not. Defaults to "".'
                               type: string
                             valueFrom:
                               description: Source for the environment variable's value.
@@ -274,14 +279,15 @@ spec:
                               type: string
                             value:
                               description: 'Variable references $(VAR_NAME) are expanded
-                                using the previous defined environment variables in
-                                the container and any service environment variables.
+                                using the previously defined environment variables
+                                in the container and any service environment variables.
                                 If a variable cannot be resolved, the reference in
-                                the input string will be unchanged. The $(VAR_NAME)
-                                syntax can be escaped with a double $$, ie: $$(VAR_NAME).
-                                Escaped references will never be expanded, regardless
-                                of whether the variable exists or not. Defaults to
-                                "".'
+                                the input string will be unchanged. Double $$ are
+                                reduced to a single $, which allows for escaping the
+                                $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce
+                                the string literal "$(VAR_NAME)". Escaped references
+                                will never be expanded, regardless of whether the
+                                variable exists or not. Defaults to "".'
                               type: string
                             valueFrom:
                               description: Source for the environment variable's value.
@@ -436,8 +442,14 @@ spec:
                           type: object
                         type: array
                     type: object
+                  csiDriverSpec:
+                    description: CSIDriverSpec is the specification for CSIDriver
+                    properties:
+                      fSGroupPolicy:
+                        type: string
+                    type: object
                   csiDriverType:
-                    description: CSIDriverType is the CSI Driver type for Dell EMC
+                    description: CSIDriverType is the CSI Driver type for Dell Technologies
                       - e.g, powermax, powerflex,...
                     type: string
                   dnsPolicy:
@@ -479,14 +491,16 @@ spec:
                                 type: string
                               value:
                                 description: 'Variable references $(VAR_NAME) are
-                                  expanded using the previous defined environment
+                                  expanded using the previously defined environment
                                   variables in the container and any service environment
                                   variables. If a variable cannot be resolved, the
                                   reference in the input string will be unchanged.
-                                  The $(VAR_NAME) syntax can be escaped with a double
-                                  $$, ie: $$(VAR_NAME). Escaped references will never
-                                  be expanded, regardless of whether the variable
-                                  exists or not. Defaults to "".'
+                                  Double $$ are reduced to a single $, which allows
+                                  for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)"
+                                  will produce the string literal "$(VAR_NAME)". Escaped
+                                  references will never be expanded, regardless of
+                                  whether the variable exists or not. Defaults to
+                                  "".'
                                 type: string
                               valueFrom:
                                 description: Source for the environment variable's
@@ -668,14 +682,15 @@ spec:
                               type: string
                             value:
                               description: 'Variable references $(VAR_NAME) are expanded
-                                using the previous defined environment variables in
-                                the container and any service environment variables.
+                                using the previously defined environment variables
+                                in the container and any service environment variables.
                                 If a variable cannot be resolved, the reference in
-                                the input string will be unchanged. The $(VAR_NAME)
-                                syntax can be escaped with a double $$, ie: $$(VAR_NAME).
-                                Escaped references will never be expanded, regardless
-                                of whether the variable exists or not. Defaults to
-                                "".'
+                                the input string will be unchanged. Double $$ are
+                                reduced to a single $, which allows for escaping the
+                                $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce
+                                the string literal "$(VAR_NAME)". Escaped references
+                                will never be expanded, regardless of whether the
+                                variable exists or not. Defaults to "".'
                               type: string
                             valueFrom:
                               description: Source for the environment variable's value.
@@ -862,14 +877,16 @@ spec:
                                 type: string
                               value:
                                 description: 'Variable references $(VAR_NAME) are
-                                  expanded using the previous defined environment
+                                  expanded using the previously defined environment
                                   variables in the container and any service environment
                                   variables. If a variable cannot be resolved, the
                                   reference in the input string will be unchanged.
-                                  The $(VAR_NAME) syntax can be escaped with a double
-                                  $$, ie: $$(VAR_NAME). Escaped references will never
-                                  be expanded, regardless of whether the variable
-                                  exists or not. Defaults to "".'
+                                  Double $$ are reduced to a single $, which allows
+                                  for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)"
+                                  will produce the string literal "$(VAR_NAME)". Escaped
+                                  references will never be expanded, regardless of
+                                  whether the variable exists or not. Defaults to
+                                  "".'
                                 type: string
                               valueFrom:
                                 description: Source for the environment variable's
@@ -1080,14 +1097,16 @@ spec:
                                   type: string
                                 value:
                                   description: 'Variable references $(VAR_NAME) are
-                                    expanded using the previous defined environment
+                                    expanded using the previously defined environment
                                     variables in the container and any service environment
                                     variables. If a variable cannot be resolved, the
                                     reference in the input string will be unchanged.
-                                    The $(VAR_NAME) syntax can be escaped with a double
-                                    $$, ie: $$(VAR_NAME). Escaped references will
-                                    never be expanded, regardless of whether the variable
-                                    exists or not. Defaults to "".'
+                                    Double $$ are reduced to a single $, which allows
+                                    for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)"
+                                    will produce the string literal "$(VAR_NAME)".
+                                    Escaped references will never be expanded, regardless
+                                    of whether the variable exists or not. Defaults
+                                    to "".'
                                   type: string
                                 valueFrom:
                                   description: Source for the environment variable's

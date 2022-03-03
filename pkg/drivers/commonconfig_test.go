@@ -205,6 +205,9 @@ func csmWithTolerations() csmv1.ContainerStorageModule {
 		},
 	}
 
+	// Add FSGroupPolicy
+	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+
 	// Add DNS Policy for GetNode test
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
 
