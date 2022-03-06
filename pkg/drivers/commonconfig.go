@@ -6,13 +6,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	metacv1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -113,8 +116,32 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	}
 
+	crUID := cr.GetUID()
+	bController := true
+	bOwnerDeletion := !cr.Spec.Driver.ForceRemoveDriver
+	kind := reflect.TypeOf(csmv1.ContainerStorageModule{}).Name()
+	v1 := "apps/v1"
+	controllerYAML.Deployment.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
+		{
+			APIVersion:         &v1,
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               &kind,
+			Name:               &cr.Name,
+			UID:                &crUID,
+		},
+	}
+	controllerYAML.Rbac.ServiceAccount.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         "apps/v1",
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               kind,
+			Name:               cr.Name,
+			UID:                crUID,
+		},
+	}
 	return &controllerYAML, nil
-
 }
 
 // GetNode get node yaml
@@ -178,7 +205,6 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = containers
-
 	// Update volumes
 	for i, v := range nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes {
 		if *v.Name == "certs" {
@@ -194,7 +220,31 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		}
 
 	}
-
+	crUID := cr.GetUID()
+	bController := true
+	bOwnerDeletion := !cr.Spec.Driver.ForceRemoveDriver
+	kind := reflect.TypeOf(csmv1.ContainerStorageModule{}).Name()
+	v1 := "apps/v1"
+	nodeYaml.DaemonSetApplyConfig.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
+		{
+			APIVersion:         &v1,
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               &kind,
+			Name:               &cr.Name,
+			UID:                &crUID,
+		},
+	}
+	nodeYaml.Rbac.ServiceAccount.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         "apps/v1",
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               kind,
+			Name:               cr.Name,
+			UID:                crUID,
+		},
+	}
 	return &nodeYaml, nil
 
 }
@@ -223,7 +273,6 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		log.Errorw("GetConfigMap yaml marshall failed", "Error", err.Error())
 		return nil, err
 	}
-
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "CSI_LOG_LEVEL" {
 			configMap.Data = map[string]string{
@@ -232,8 +281,21 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 			break
 		}
 	}
+	crUID := cr.GetUID()
+	bController := true
+	bOwnerDeletion := !cr.Spec.Driver.ForceRemoveDriver
+	kind := reflect.TypeOf(csmv1.ContainerStorageModule{}).Name()
+	configMap.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         "apps/v1",
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               kind,
+			Name:               cr.Name,
+			UID:                crUID,
+		},
+	}
 	return &configMap, nil
-
 }
 
 // GetCSIDriver get driver
@@ -265,5 +327,19 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		log.Debugw("GetCSIDriver", "fsGroupPolicy", fsGroupPolicy)
 	}
 
+	crUID := cr.GetUID()
+	bController := true
+	bOwnerDeletion := !cr.Spec.Driver.ForceRemoveDriver
+	kind := reflect.TypeOf(csmv1.ContainerStorageModule{}).Name()
+	csidriver.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         "apps/v1",
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               kind,
+			Name:               cr.Name,
+			UID:                crUID,
+		},
+	}
 	return &csidriver, nil
 }

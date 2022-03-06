@@ -261,7 +261,10 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	if name == "" {
 		return
 	}
-
+	if !d.ObjectMeta.DeletionTimestamp.IsZero() {
+		log.Debugw("driver delete invoked", "stopping deployment with name", d.Name)
+		return
+	}
 	log.Debugw("deployment modified generation", d.Generation, old.Generation)
 
 	desired := d.Status.Replicas
@@ -351,10 +354,13 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	if name == "" {
 		return
 	}
-
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
+	if !d.ObjectMeta.DeletionTimestamp.IsZero() {
+		log.Debugw("driver delete invoked", "stopping daemonset with name", d.Name)
+		return
+	}
 	log.Debugw("daemonset modified generation", "new", d.Generation, "old", old.Generation)
 
 	desired := d.Status.DesiredNumberScheduled
@@ -496,11 +502,11 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update ClusterRoles
-	if _, err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, r.Client); err != nil {
+	if err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, r.Client); err != nil {
 		return err
 	}
 
-	if _, err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, r.Client); err != nil {
+	if err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, r.Client); err != nil {
 		return err
 	}
 
@@ -618,16 +624,6 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return err
 	}
 
-	if err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount); err != nil {
-		log.Errorw("error delete node service account", "Error", err.Error())
-		return err
-	}
-
-	if err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount); err != nil {
-		log.Errorw("error delete controller service account", "Error", err.Error())
-		return err
-	}
-
 	if err = deleteObj(&driverConfig.Node.Rbac.ClusterRole); err != nil {
 		log.Errorw("error delete node cluster role", "Error", err.Error())
 		return err
@@ -688,7 +684,6 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	} else {
 		log.Infow("error getting deployment", "deploymentKey", deploymentKey)
 	}
-
 	return nil
 }
 

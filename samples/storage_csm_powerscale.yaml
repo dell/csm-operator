@@ -17,7 +17,7 @@ spec:
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
-    forceRemoveDriver: true
+    forceRemoveDriver: false
     common:
       # Image for CSI PowerScale driver v2.2.0
       image: "dellemc/csi-isilon:nightly"
