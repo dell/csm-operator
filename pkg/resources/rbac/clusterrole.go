@@ -37,5 +37,5 @@ func SyncClusterRole(ctx context.Context, clusterRole *rbacv1.ClusterRole, clien
 		}
 	}
 
-	return found, nil
+	return nil
 }
