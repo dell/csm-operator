@@ -165,7 +165,6 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          #image: quay.io/k8scsi/csi-snapshotter:v1.0.0
           image: k8s.gcr.io/sig-storage/csi-snapshotter:v4.1.1
           imagePullPolicy: IfNotPresent
           args:
@@ -181,7 +180,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-isilon:v2.0.0
+          image: dellemc/csi-isilon:v2.2.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-isilon" ]
           args:
