@@ -640,7 +640,7 @@ func addModuleToCSM(csm *csmv1.ContainerStorageModule) {
 		{
 			Name:          "authorization",
 			Enabled:       true,
-			ConfigVersion: "v1.0.0",
+			ConfigVersion: "v1.2.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: "karavi-authorization-proxy",

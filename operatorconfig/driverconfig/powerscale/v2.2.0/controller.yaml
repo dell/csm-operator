@@ -194,7 +194,6 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          #image: quay.io/k8scsi/csi-snapshotter:v1.0.0
           image: k8s.gcr.io/sig-storage/csi-snapshotter:v4.2.1
           imagePullPolicy: IfNotPresent
           args:
