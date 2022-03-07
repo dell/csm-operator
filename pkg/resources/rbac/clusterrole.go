@@ -11,7 +11,7 @@ import (
 )
 
 // SyncClusterRole - Syncs a ClusterRole
-func SyncClusterRole(ctx context.Context, clusterRole *rbacv1.ClusterRole, client client.Client) (*rbacv1.ClusterRole, error) {
+func SyncClusterRole(ctx context.Context, clusterRole *rbacv1.ClusterRole, client client.Client) error {
 	log := logger.GetLogger(ctx)
 	found := &rbacv1.ClusterRole{}
 	err := client.Get(ctx, types.NamespacedName{Name: clusterRole.Name, Namespace: clusterRole.Namespace}, found)
