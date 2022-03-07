@@ -264,7 +264,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			drivertype := string(customResource.Spec.Driver.CSIDriverType)
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.0.0"
+			auth.ConfigVersion = "v1.2.0"
 
 			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")

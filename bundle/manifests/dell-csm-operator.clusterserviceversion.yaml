@@ -109,10 +109,10 @@ metadata:
                         "value": true
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.0.0"
+                    "image": "dellemc/csm-authorization-sidecar:v1.2.0"
                   }
                 ],
-                "configVersion": "v2.0.0",
+                "configVersion": "v2.2.0",
                 "enabled": false,
                 "name": "authorization"
               }
@@ -207,8 +207,8 @@ spec:
       - description: CSIDriverSpec is the specification for CSIDriver
         displayName: CSI Driver Spec
         path: driver.csiDriverSpec
-      - description: CSIDriverType is the CSI Driver type for Dell Technologies - e.g, powermax,
-          powerflex,...
+      - description: CSIDriverType is the CSI Driver type for Dell Technologies -
+          e.g, powermax, powerflex,...
         displayName: CSI Driver Type
         path: driver.csiDriverType
       - description: DNSPolicy is the dnsPolicy of the daemonset for Node plugin
