@@ -178,7 +178,7 @@ function install_operator() {
 function check_progress() {
   # find out the deployment name
   # wait for the deployment to finish, use the default timeout
-  waitOnRunning "${NAMESPACE}" "deployment dell-csm-operator-controller-manager."
+  waitOnRunning "${NAMESPACE}" "deployment dell-csm-operator-controller-manager"
   if [ $? -eq 1 ]; then
     warning "Timed out waiting for installation of the operator to complete." \
       "This does not indicate a fatal error, pods may take a while to start." \
