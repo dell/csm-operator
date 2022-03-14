@@ -133,7 +133,7 @@ func TestGetCsiDriver(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetCSIDriver(ctx, tt.csm, config, tt.driverName)
+			_, err := GetCSIDriver(ctx, tt.csm, "xxxx")
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -147,7 +147,7 @@ func TestGetConfigMap(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetConfigMap(ctx, tt.csm, config, tt.driverName)
+			_, err := GetConfigMap(ctx, tt.csm, "xxxx")
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -161,7 +161,7 @@ func TestGetController(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetController(ctx, tt.csm, config, tt.driverName)
+			_, err := GetController(ctx, tt.csm, "xxxx", tt.driverName, config)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -175,7 +175,7 @@ func TestGetNode(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename)
+			_, err := GetNode(ctx, tt.csm, "xxx", tt.driverName, config)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {

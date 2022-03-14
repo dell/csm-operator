@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
+	//"io/ioutil"
+	//"path/filepath"
 	"strconv"
 	"strings"
 
@@ -47,7 +47,7 @@ var SupportedDrivers = map[string]SupportedDriverParam{
 	}, // either powerscale or isilon are valid types
 }
 
-func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getAuthApplyCR(cr csmv1.ContainerStorageModule, authMap corev1.ConfigMap) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	authModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -57,21 +57,9 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 		}
 	}
 
-	authConfigVersion := authModule.ConfigVersion
-	if authConfigVersion == "" {
-		authConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/container.yaml", op.ConfigDirectory, authConfigVersion)
-	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	// get auth yaml from configmap
+	authYaml := authMap.Data["container.yaml"]
+	YamlString := utils.ModifyCommonCR(authYaml, cr)
 
 	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
 		YamlString = strings.ReplaceAll(YamlString, utils.DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
@@ -118,20 +106,12 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 
 }
 
-func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, auth csmv1.ContainerTemplate) ([]acorev1.VolumeApplyConfiguration, error) {
-	version, err := utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
-	if err != nil {
-		return nil, err
-	}
+func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, authMap corev1.ConfigMap, auth csmv1.ContainerTemplate) ([]acorev1.VolumeApplyConfiguration, error) {
 
-	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", op.ConfigDirectory, version)
-	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
-	if err != nil {
-		return nil, err
-	}
+	authYaml := authMap.Data["volumes.yaml"]
 
 	var vols []acorev1.VolumeApplyConfiguration
-	err = yaml.Unmarshal(buf, &vols)
+	err := yaml.Unmarshal([]byte(authYaml), &vols)
 	if err != nil {
 		return nil, err
 	}
@@ -225,8 +205,8 @@ func CheckApplyContainers(contianers []acorev1.ContainerApplyConfiguration, driv
 }
 
 // AuthInjectDaemonset  - inject authorization into daemonset
-func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DaemonSetApplyConfiguration, error) {
-	authModule, containerPtr, err := getAuthApplyCR(cr, op)
+func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, authMap corev1.ConfigMap) (*applyv1.DaemonSetApplyConfiguration, error) {
+	authModule, containerPtr, err := getAuthApplyCR(cr, authMap)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +214,7 @@ func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.Contai
 	container := *containerPtr
 	utils.UpdateSideCarApply(authModule.Components, &container)
 
-	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
+	vols, err := getAuthApplyVolumes(cr, authMap, authModule.Components[0])
 	if err != nil {
 		return nil, err
 	}
@@ -253,8 +233,8 @@ func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.Contai
 }
 
 // AuthInjectDeployment - inject authorization into deployment
-func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
-	authModule, containerPtr, err := getAuthApplyCR(cr, op)
+func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, authMap corev1.ConfigMap) (*applyv1.DeploymentApplyConfiguration, error) {
+	authModule, containerPtr, err := getAuthApplyCR(cr, authMap)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +242,7 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 	container := *containerPtr
 	utils.UpdateSideCarApply(authModule.Components, &container)
 
-	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
+	vols, err := getAuthApplyVolumes(cr, authMap, authModule.Components[0])
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +262,7 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 }
 
 // AuthorizationPrecheck  - runs precheck for CSM Authorization
-func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op utils.OperatorConfig, auth csmv1.Module, ctrlClient crclient.Client) error {
+func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, authMap corev1.ConfigMap, auth csmv1.Module, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 	if _, ok := SupportedDrivers[driverType]; !ok {
 		return fmt.Errorf("CSM Authorization does not support %s driver", driverType)
@@ -290,20 +270,8 @@ func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op
 
 	// check if provided version is supported
 	if auth.ConfigVersion != "" {
-		files, err := ioutil.ReadDir(fmt.Sprintf("%s/moduleconfig/authorization/", op.ConfigDirectory))
-		if err != nil {
-			return err
-		}
-		found := false
-		authVersions := ""
-		for _, file := range files {
-			authVersions += (file.Name() + ",")
-			if file.Name() == auth.ConfigVersion {
-				found = true
-			}
-		}
-		if !found {
-			return fmt.Errorf("CSM Authorization does not have %s version. The following are supported versions: %s", auth.ConfigVersion, authVersions[:len(authVersions)-1])
+		if len(authMap.Data["container.yaml"]) < 1 || len(authMap.Data["volumes.yaml"]) < 1 {
+			return fmt.Errorf("CSM Authorization does not have both %s and %s yamls in configmap", "container.yaml", "volumes.yaml")
 		}
 	}
 

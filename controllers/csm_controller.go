@@ -51,6 +51,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	"sigs.k8s.io/yaml"
 
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
@@ -84,11 +85,11 @@ const (
 	// MetadataPrefix - prefix for all labels & annotations
 	MetadataPrefix = "storage.dell.com"
 
-	// NodeYaml - yaml file name for node
-	NodeYaml = "node.yaml"
-
 	// CSMFinalizerName -
 	CSMFinalizerName = "finalizer.dell.emc.com"
+
+	// OperatorNameSpace
+	OperatorNameSpace = "dell-csm-operator"
 )
 
 var dMutex sync.RWMutex
@@ -157,11 +158,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		return reconcile.Result{}, nil
 	}
 
-	operatorConfig := &utils.OperatorConfig{
-		IsOpenShift:     r.Config.IsOpenShift,
-		K8sVersion:      r.Config.K8sVersion,
-		ConfigDirectory: r.Config.ConfigDirectory,
-	}
+	operatorConfig := &r.Config
 
 	if csm.IsBeingDeleted() {
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
@@ -169,7 +166,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resource deployed from CR by operator
-			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
+			if err := r.removeDriver(ctx, *csm, operatorConfig); err != nil {
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))
 				log.Errorw("remove driver", "error", err.Error())
 				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
@@ -200,7 +197,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	oldStatus := csm.GetCSMStatus()
 
 	// perform prechecks
-	err = r.PreChecks(ctx, csm, *operatorConfig)
+	err = r.PreChecks(ctx, csm, operatorConfig)
 	if err != nil {
 		csm.GetCSMStatus().State = constants.InvalidConfig
 		r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
@@ -223,7 +220,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		log.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
-	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig)
+	syncErr := r.SyncCSM(ctx, *csm, operatorConfig)
 	if syncErr == nil {
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "install/update driver: %s completed OK", csm.Name)
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
@@ -445,12 +442,13 @@ func (r *ContainerStorageModuleReconciler) addFinalizer(ctx context.Context, ins
 }
 
 // SyncCSM - Sync the current installation - this can lead to a create or update
-func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig *utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
 	driverConfig, err := r.getDriverConfig(ctx, cr, operatorConfig)
 	if err != nil {
+		// did not file configmap
 		return err
 	}
 
@@ -462,16 +460,34 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	// Add module resources
 	for _, m := range cr.Spec.Modules {
 		if m.Enabled {
+
+			// get driver configmap
+			//authorization-common       1      46s
+
+			modName := m.Name
+			modConfigVersion := m.ConfigVersion
+
+			moduleMapName := fmt.Sprintf("%s-%s", modName, modConfigVersion)
+			log.Infof("Get driver yaml from configmap %s", moduleMapName)
+
+			moduleMap := &corev1.ConfigMap{}
+
+			err = r.Client.Get(ctx, t1.NamespacedName{Name: moduleMapName, Namespace: OperatorNameSpace}, moduleMap)
+
+			if err != nil {
+				log.Errorw("unable to get drive configMap", "error", err.Error(), "name", moduleMapName, "namespace", OperatorNameSpace)
+				return fmt.Errorf("unable to get configMap: %s in namespace: %s", moduleMapName, OperatorNameSpace)
+			}
 			switch m.Name {
 			case csmv1.Authorization:
 				log.Info("Injecting CSM Authorization")
-				dp, err := modules.AuthInjectDeployment(controller.Deployment, cr, operatorConfig)
+				dp, err := modules.AuthInjectDeployment(controller.Deployment, cr, *moduleMap)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deployment: %v", err)
 				}
 				controller.Deployment = *dp
 
-				ds, err := modules.AuthInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig)
+				ds, err := modules.AuthInjectDaemonset(node.DaemonSetApplyConfig, cr, *moduleMap)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deamonset: %v", err)
 				}
@@ -538,7 +554,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
-	operatorConfig utils.OperatorConfig) (*DriverConfig, error) {
+	operatorConfig *utils.OperatorConfig) (*DriverConfig, error) {
 	var (
 		err        error
 		driver     *storagev1.CSIDriver
@@ -549,7 +565,7 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
 	)
 
 	// Get Driver resources
-	log.Infof("Getting %s CSI Driver for Dell Technologies", cr.Spec.Driver.CSIDriverType)
+	log.Infof("Get %s CSI Driver for Dell Technologies", cr.Spec.Driver.CSIDriverType)
 	driverType := cr.Spec.Driver.CSIDriverType
 
 	if driverType == csmv1.PowerScale {
@@ -557,22 +573,42 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
 		driverType = csmv1.PowerScaleName
 	}
 
-	configMap, err = drivers.GetConfigMap(ctx, cr, operatorConfig, driverType)
+	// get driver configmap
+	driverMapName := fmt.Sprintf("%s-driver-%s", driverType, cr.Spec.Driver.ConfigVersion)
+	log.Infof("Get driver yaml from configmap %s", driverMapName)
+
+	//Get driver yaml from configmap powerscale-driver-v2.2.0
+
+	driverMap := &corev1.ConfigMap{}
+
+	err = r.Client.Get(ctx, t1.NamespacedName{Name: driverMapName, Namespace: OperatorNameSpace}, driverMap)
+
+	if err != nil {
+		log.Errorw("unable to get drive configMap", "error", err.Error(), "name", driverMapName, "namespace", OperatorNameSpace)
+		return nil, fmt.Errorf("unable to get configMap: %s in namespace: %s", driverMapName, OperatorNameSpace)
+	}
+
+	yamlString := driverMap.Data["driver-config-params.yaml"]
+
+	configMap, err = drivers.GetConfigMap(ctx, cr, yamlString)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s configMap: %v", driverType, err)
 	}
 
-	driver, err = drivers.GetCSIDriver(ctx, cr, operatorConfig, driverType)
+	yamlString = driverMap.Data["csidriver.yaml"]
+	driver, err = drivers.GetCSIDriver(ctx, cr, yamlString)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s CSIDriver: %v", driverType, err)
 	}
 
-	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml)
+	yamlString = driverMap.Data["node.yaml"]
+	node, err = drivers.GetNode(ctx, cr, yamlString, driverType, operatorConfig)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s node: %v", driverType, err)
 	}
 
-	controller, err = drivers.GetController(ctx, cr, operatorConfig, driverType)
+	yamlString = driverMap.Data["controller.yaml"]
+	controller, err = drivers.GetController(ctx, cr, yamlString, driverType, operatorConfig)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s controller: %v", driverType, err)
 	}
@@ -586,7 +622,7 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
 
 }
 
-func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig *utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 
 	deleteObj := func(obj client.Object) error {
@@ -693,17 +729,45 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 }
 
 // PreChecks - validate input values
-func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig *utils.OperatorConfig) error {
+	log := logger.GetLogger(ctx)
 	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.2.0" {
 		return fmt.Errorf("driver version not specified in spec or driver version is not supported")
 	}
 
 	// Check drivers
+
+	// get k8s sidecars configmap exists
+	mapName := "driver-sidecars"
+	k8sPath := operatorConfig.K8sSidecars.K8sVersion
+
+	log.Infof("Get pre-requisite sidecars images for %s from configmap %s", k8sPath, mapName)
+
+	sidecarsMap := &corev1.ConfigMap{}
+
+	err := r.Client.Get(ctx, t1.NamespacedName{Name: mapName, Namespace: OperatorNameSpace}, sidecarsMap)
+	if err != nil {
+		log.Errorw("unable to get drive configMap", "error", err.Error(), "name", mapName, "namespace", OperatorNameSpace)
+		return fmt.Errorf("failed driver validation unable to get configMap: %s in namespace: %s", mapName, OperatorNameSpace)
+	}
+
+	yamlString := sidecarsMap.Data[k8sPath]
+	var imageConfig utils.K8sImagesConfig
+	err = yaml.Unmarshal([]byte(yamlString), &imageConfig)
+	if err != nil {
+		return fmt.Errorf("failed driver validation: unable to unmarshall yamlString %s", yamlString)
+	}
+	// driver sidecars images for a given k8sPath
+	operatorConfig.K8sSidecars = imageConfig
+	if operatorConfig.K8sSidecars.Images.Attacher == "" {
+		return fmt.Errorf("failed driver validation unable to get sidecars images %s for %s", mapName, k8sPath)
+	}
+
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
 		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
 		if err != nil {
-			return fmt.Errorf("failed powerscale validation: %v", err)
+			return fmt.Errorf("failed driver validation: %v", err)
 		}
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
@@ -713,8 +777,25 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	for _, m := range cr.Spec.Modules {
 		if m.Enabled {
 			switch m.Name {
+
+			// get driver configmap
+			//authorization-common
+
 			case csmv1.Authorization:
-				err := modules.AuthorizationPrecheck(ctx, cr.GetNamespace(), string(cr.Spec.Driver.CSIDriverType), operatorConfig, m, r.GetClient())
+
+				moduleMapName := fmt.Sprintf("%s-%s", m.Name, "common")
+				log.Infof("Get driver yaml from configmap %s", moduleMapName)
+
+				moduleMap := &corev1.ConfigMap{}
+
+				err = r.Client.Get(ctx, t1.NamespacedName{Name: moduleMapName, Namespace: OperatorNameSpace}, moduleMap)
+
+				if err != nil {
+					log.Errorw("unable to get drive configMap", "error", err.Error(), "name", moduleMapName, "namespace", OperatorNameSpace)
+					return fmt.Errorf("unable to get configMap: %s in namespace: %s", moduleMapName, OperatorNameSpace)
+				}
+
+				err := modules.AuthorizationPrecheck(ctx, cr.GetNamespace(), string(cr.Spec.Driver.CSIDriverType), *moduleMap, m, r.GetClient())
 				if err != nil {
 					return fmt.Errorf("failed authorization validation: %v", err)
 				}

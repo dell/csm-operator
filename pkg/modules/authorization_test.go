@@ -87,7 +87,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
+			nodeYAML, err := drivers.GetNode(ctx, customResource, "node.yaml", csmv1.PowerScaleName, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
@@ -98,7 +98,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
+			nodeYAML, err := drivers.GetNode(ctx, customResource, "node.yaml", csmv1.PowerScaleName, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
@@ -114,7 +114,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
+			nodeYAML, err := drivers.GetNode(ctx, customResource, "node.yaml", csmv1.PowerScaleName, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
@@ -168,7 +168,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			controllerYAML, err := drivers.GetController(ctx, customResource, "xxxx", csmv1.PowerScaleName, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
@@ -180,7 +180,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 			tmpCR := customResource
-			controllerYAML, err := drivers.GetController(ctx, tmpCR, operatorConfig, csmv1.PowerScaleName)
+			controllerYAML, err := drivers.GetController(ctx, tmpCR, "xxxx", csmv1.PowerScaleName, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
@@ -196,7 +196,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			controllerYAML, err := drivers.GetController(ctx, customResource, "xxxx", csmv1.PowerScaleName, operatorConfig)
 			if err != nil {
 				panic(err)
 			}

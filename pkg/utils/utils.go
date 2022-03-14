@@ -40,9 +40,8 @@ type K8sImagesConfig struct {
 
 // OperatorConfig -
 type OperatorConfig struct {
-	IsOpenShift     bool
-	K8sVersion      K8sImagesConfig
-	ConfigDirectory string
+	IsOpenShift bool
+	K8sSidecars K8sImagesConfig
 }
 
 // RbacYAML -
@@ -330,7 +329,9 @@ func LogBannerAndReturn(result reconcile.Result, err error) (reconcile.Result, e
 
 // GetModuleDefaultVersion -
 func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.DriverType, moduleType csmv1.ModuleType, path string) (string, error) {
-	/* TODO(Michal): review with Team */
+	// xxxxx
+	// get ConfigMap
+
 	configMapPath := fmt.Sprintf("%s/moduleconfig/common/version-values.yaml", path)
 	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
