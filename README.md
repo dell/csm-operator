@@ -57,7 +57,7 @@ For any CSM Operator and driver issues, questions or feedback, join the [Dell Te
 Dell CSM Operator has been tested and qualified with 
 
     * Upstream Kubernetes cluster v1.21, v1.22, v1.23
-    * OpenShift Clusters 4.8, 4.8 EUS, 4.9 with RHEL 7.x & RHCOS worker nodes
+    * OpenShift Clusters 4.8, 4.9 with RHEL 7.x & RHCOS worker nodes
 
 ## Installation
 To install Dell CSM Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
@@ -66,7 +66,7 @@ To install Dell CSM Operator please refer the steps given here at [https://dell.
 To install CSI drivers and CSM modules using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
 ## Uninstall CSI Drivers and CSM Modules
-To uninstall CSI drivers and CSM modules installed using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
+To uninstall CSI drivers and CSM modules installed using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/).
 
 ## Versioning
 
@@ -74,6 +74,6 @@ This project is adhering to [Semantic Versioning](https://semver.org/).
 
 ## About
 
-Dell Technologies Container Storage Modules (CSM) Operator is 100% open source and community-driven. All components are available
+Dell Technologies Container Storage Modules (CSM) operator is 100% open source and community-driven. All components are available
 under [Apache 2 License](https://www.apache.org/licenses/LICENSE-2.0.html) on
 GitHub.
