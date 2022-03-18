@@ -66,7 +66,7 @@ To install Dell CSM Operator please refer the steps given here at [https://dell.
 To install CSI drivers and CSM modules using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
 ## Uninstall CSI Drivers and CSM Modules
-To uninstall CSI drivers and CSM modules installed using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
+To uninstall CSI drivers and CSM modules installed using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/).
 
 ## Versioning
 
@@ -74,6 +74,6 @@ This project is adhering to [Semantic Versioning](https://semver.org/).
 
 ## About
 
-Dell Technologies Container Storage Modules (CSM) Operator is 100% open source and community-driven. All components are available
+Dell Technologies Container Storage Modules (CSM) operator is 100% open source and community-driven. All components are available
 under [Apache 2 License](https://www.apache.org/licenses/LICENSE-2.0.html) on
 GitHub.
