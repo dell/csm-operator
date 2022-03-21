@@ -39,6 +39,7 @@ jobs:
         with:
           threshold: 90
           package-list: github.com/dell/csm-operator/controllers
+          coverpkg: github.com/dell/csm-operator/pkg/logger,github.com/dell/csm-operator/pkg/resources/daemonset,github.com/dell/csm-operator/pkg/resources/deployment,github.com/dell/csm-operator/pkg/resources/configmap,github.com/dell/csm-operator/pkg/resources/serviceaccount,github.com/dell/csm-operator/pkg/resources/rbac,github.com/dell/csm-operator/pkg/utils,github.com/dell/csm-operator/pkg/resources/csidriver,github.com/dell/csm-operator/pkg/constants,github.com/dell/csm-operator/controllers
   test_driver:
     name: Run Go unit tests on driver and check package coverage
     runs-on: ubuntu-latest
