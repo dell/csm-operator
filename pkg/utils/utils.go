@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
 	goYAML "github.com/go-yaml/yaml"
 
 	//appsv1 "k8s.io/api/apps/v1"
