@@ -5,7 +5,7 @@ metadata:
   namespace: test-isilon
 spec:
   remoteRepo:
-    url: "https://amaas-eos-mw1.cec.lab.emc.com:5036/artifactory/csi-driver-helm-virtual/powerscale-v2.2.0.tgz"
+    repository: "https://amaas-eos-mw1.cec.lab.emc.com:5036/artifactory/csi-driver-helm-virtual"
     credSecretName: "credSecretTest"
     certSecretName: "certSecretTest"
   driver:

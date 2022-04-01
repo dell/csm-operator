@@ -131,7 +131,7 @@ type PodStatus struct {
 
 // RemoteRepo to download yamls for driver
 type RemoteRepo struct {
-	Url            string `json:"url,omitempty"`
+	Repository     string `json:"repository,omitempty"`
 	CredSecretName string `json:"credSecretName,omitempty"`
 	CertSecretName string `json:"certSecretName,omitempty"`
 }

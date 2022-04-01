@@ -1288,7 +1288,7 @@ spec:
                     type: string
                   credSecretName:
                     type: string
-                  url:
+                  repository:
                     type: string
                 type: object
             type: object
