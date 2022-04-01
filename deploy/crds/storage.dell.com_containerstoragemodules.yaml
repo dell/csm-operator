@@ -897,6 +897,16 @@ spec:
                       type: string
                   type: object
                 type: array
+              remoteRepo:
+                description: RemoteRepo is the remote repo to download yamls for driver
+                properties:
+                  certSecretName:
+                    type: string
+                  credSecretName:
+                    type: string
+                  repository:
+                    type: string
+                type: object
             type: object
           status:
             description: ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
