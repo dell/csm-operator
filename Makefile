@@ -16,7 +16,7 @@ endif
 # - use environment variables to overwrite this value (e.g export DEFAULT_CHANNEL="stable")
 ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
-endif
+endif 
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 
