@@ -4,6 +4,10 @@ metadata:
   name: test-isilon
   namespace: test-isilon
 spec:
+  remoteRepo:
+    repository: "https://amaas-eos-mw1.cec.lab.emc.com:5036/artifactory/csi-driver-helm-virtual"
+    credSecretName: "credSecretTest"
+    certSecretName: "certSecretTest"
   driver:
     csiDriverType: "isilon" 
     csiDriverSpec:
