@@ -3,3 +3,4 @@ powerscale:
   # List of Driver versions and modules that supports the version
   v2.2.0:
       authorization: "v1.2.0"
+      replication: "v1.2.0"

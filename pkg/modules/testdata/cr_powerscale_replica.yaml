@@ -1,0 +1,54 @@
+apiVersion: storage.dell.com/v1alpha1
+kind: ContainerStorageModule
+metadata:
+  name: test-isilon
+  namespace: test-isilon
+spec:
+  driver:
+    csiDriverType: "isilon"
+    configVersion: v2.2.0
+    authSecret: test-isilon-creds 
+    replicas: 1
+    common:
+      image: "dellemc/csi-isilon:v2.2.0"
+      imagePullPolicy: IfNotPresent
+
+  modules:
+    - name: replication
+      enabled: true
+      components:
+      - name: dell-csi-replicator
+        image: dellemc/dell-csi-replicator:v1.2.0
+        envs:
+          - name: "X_CSI_REPLICATION_PREFIX"
+            value: "replication.storage.dell.com"
+      
+      - name: dell-replication-controller
+        image: dellemc/dell-replication-controller:v1.2.0
+        envs:
+          - name: "CLUSTERS_IDS"
+            #value: "cluster-144,cluster-151"
+            value: "test-cluster-1,test-cluster-2"
+
+          - name: "REPLICATION_CTRL_LOG_LEVEL"
+            value: "debug"
+          
+          - name: "REPLICATION_CTRL_REPLICAS"
+            value: "1"
+
+          - name: "LEADER_ELECTION"
+            value: "true"
+
+          - name: "RETRY_INTERVAL_MIN"
+            value: "1s"
+
+          - name: "RETRY_INTERVAL_MAX"
+            value: "5m"
+
+          # HostAliases: Optional features that allows <hostname:IP> entry injection into pod's /etc/hosts file
+          - name: "HOST_ALIASES_ENABLED"
+            value: "false"
+          - name: "HOST_ALIASES_HOST"
+            value: "foo.bar"
+          - name: "HOST_ALIASES_IP"
+            value: "10.10.10.10"

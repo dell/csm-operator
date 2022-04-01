@@ -5,6 +5,12 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/clientcmd"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // GetClientSetWrapper -
@@ -56,4 +62,17 @@ func IsOpenShift() (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// NewControllerRuntimeClient will return a new controller runtime client using config
+func NewControllerRuntimeClient(data []byte) (ctrlClient.Client, error) {
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(data)
+	if err != nil {
+		return nil, err
+	}
+
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+
+	return ctrlClient.New(restConfig, ctrlClient.Options{Scheme: scheme})
 }

@@ -22,21 +22,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	// DefaultPluginIdentifier - spring placeholder for driver plugin
-	DefaultPluginIdentifier = "<DriverPluginIdentifier>"
-	// DefaultDriverConfigParamsVolumeMount - string placeholder for Driver ConfigParamsVolumeMount
-	DefaultDriverConfigParamsVolumeMount = "<DriverConfigParamsVolumeMount>"
-)
-
-// SupportedDriverParam -
-type SupportedDriverParam struct {
-	PluginIdentifier              string
-	DriverConfigParamsVolumeMount string
-}
-
-// SupportedDrivers is a map containing the CSI Drivers supported by CMS Authorization. The key is driver name and the value is the driver plugin identifier
-var SupportedDrivers = map[string]SupportedDriverParam{
+// AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CMS Authorization. The key is driver name and the value is the driver plugin identifier
+var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
@@ -73,11 +60,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
-	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
-		YamlString = strings.ReplaceAll(YamlString, utils.DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
-	}
-
-	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].PluginIdentifier)
+	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].PluginIdentifier)
 
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
@@ -107,7 +90,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 
 	for i, c := range container.VolumeMounts {
 		if *c.Name == DefaultDriverConfigParamsVolumeMount {
-			newName := SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
+			newName := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
 			container.VolumeMounts[i].Name = &newName
 			break
 		}
@@ -196,7 +179,7 @@ func CheckApplyContainers(contianers []acorev1.ContainerApplyConfiguration, driv
 	authString := "karavi-authorization-proxy"
 	for _, cnt := range contianers {
 		if *cnt.Name == authString {
-			volumeMounts := []string{"karavi-authorization-config", SupportedDrivers[drivertype].DriverConfigParamsVolumeMount}
+			volumeMounts := []string{"karavi-authorization-config", AuthorizationSupportedDrivers[drivertype].DriverConfigParamsVolumeMount}
 		MOUNT_NAME_LOOP:
 			for _, volName := range volumeMounts {
 				for _, vol := range cnt.VolumeMounts {
@@ -284,26 +267,15 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 // AuthorizationPrecheck  - runs precheck for CSM Authorization
 func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op utils.OperatorConfig, auth csmv1.Module, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
-	if _, ok := SupportedDrivers[driverType]; !ok {
+	if _, ok := AuthorizationSupportedDrivers[driverType]; !ok {
 		return fmt.Errorf("CSM Authorization does not support %s driver", driverType)
 	}
 
 	// check if provided version is supported
 	if auth.ConfigVersion != "" {
-		files, err := ioutil.ReadDir(fmt.Sprintf("%s/moduleconfig/authorization/", op.ConfigDirectory))
+		err := checkVersion(string(csmv1.Authorization), auth.ConfigVersion, op.ConfigDirectory)
 		if err != nil {
 			return err
-		}
-		found := false
-		authVersions := ""
-		for _, file := range files {
-			authVersions += (file.Name() + ",")
-			if file.Name() == auth.ConfigVersion {
-				found = true
-			}
-		}
-		if !found {
-			return fmt.Errorf("CSM Authorization does not have %s version. The following are supported versions: %s", auth.ConfigVersion, authVersions[:len(authVersions)-1])
 		}
 	}
 

@@ -10,57 +10,17 @@ package modules
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
-	"log"
-	"os"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
-	"sigs.k8s.io/yaml"
 
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
-
-var (
-	operatorConfig utils.OperatorConfig
-)
-
-func TestMain(m *testing.M) {
-	status := 0
-
-	operatorConfig = utils.OperatorConfig{}
-	operatorConfig.ConfigDirectory = "../../operatorconfig"
-
-	if st := m.Run(); st > status {
-		status = st
-	}
-
-	os.Exit(status)
-}
-
-func getCustomResource() (csmv1.ContainerStorageModule, error) {
-	b, err := ioutil.ReadFile("./testdata/cr_powerscale_auth.yaml")
-	if err != nil {
-		log.Fatalf("failed to read testdata: %v", err)
-
-	}
-	customResource := csmv1.ContainerStorageModule{}
-	err = yaml.Unmarshal(b, &customResource)
-	if err != nil {
-		return customResource, fmt.Errorf("failed to read unmarshal CSM Custom resource: %v", err)
-	}
-
-	return customResource, nil
-
-}
 
 func TestAuthInjectDaemonset(t *testing.T) {
 	ctx := context.Background()
@@ -83,7 +43,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 	//*appsv1.DaemonSet
 	tests := map[string]func(t *testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig){
 		"success - greenfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -94,7 +54,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			return true, nodeYAML.DaemonSetApplyConfig, operatorConfig
 		},
 		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -110,7 +70,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			return true, *newDaemonSet, operatorConfig
 		},
 		"fail - bad config path": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -127,7 +87,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, ds, opConfig := tc(t)
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -164,7 +124,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule){
 		"success - greenfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -175,7 +135,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
 		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -192,7 +152,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			return true, *newDeployment, operatorConfig, customResource
 		},
 		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -224,22 +184,9 @@ func TestAuthInjectDeployment(t *testing.T) {
 
 }
 func TestAuthorizationPreCheck(t *testing.T) {
-	getSecret := func(namespace, secretName string) *corev1.Secret {
-		return &corev1.Secret{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Secret",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        secretName,
-				Namespace:   namespace,
-				Annotations: map[string]string{},
-			},
-		}
-	}
 	tests := map[string]func(t *testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client){
 		"success": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -256,7 +203,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			return true, namespace, drivertype, auth, client
 		},
 		"success - version provided": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -274,7 +221,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			return true, namespace, drivertype, auth, client
 		},
 		"fail - INSECURE is false but no cert": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -297,7 +244,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			return false, namespace, drivertype, auth, client
 		},
 		"fail - invalid INSECURE value": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -317,7 +264,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			return false, namespace, drivertype, auth, client
 		},
 		"fail - empty proxy host": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -337,7 +284,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 		},
 
 		"fail - unsupported driver": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -351,7 +298,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			return false, namespace, drivertype, auth, client
 		},
 		"fail - unsupported auth version": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
-			customResource, err := getCustomResource()
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
