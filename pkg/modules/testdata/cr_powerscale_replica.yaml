@@ -22,6 +22,9 @@ spec:
         envs:
           - name: "X_CSI_REPLICATION_PREFIX"
             value: "replication.storage.dell.com"
+          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+            value: "powerscale"
+      
       
       - name: dell-replication-controller
         image: dellemc/dell-replication-controller:v1.2.0

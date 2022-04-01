@@ -34,6 +34,72 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	}, // either powerscale or isilon are valid types
 }
 
+// CheckAnnotationAuth --
+func CheckAnnotationAuth(annotation map[string]string) error {
+	if annotation != nil {
+		fmt.Println(annotation)
+		if _, ok := annotation["com.dell.karavi-authorization-proxy"]; !ok {
+			return errors.New("com.dell.karavi-authorization-proxy is missing from annotation")
+		}
+		if annotation["com.dell.karavi-authorization-proxy"] != "true" {
+			return fmt.Errorf("extpected notation value to be true but got %s", annotation["com.dell.karavi-authorization-proxy"])
+		}
+		return nil
+	}
+	return errors.New("annotation is nil")
+
+}
+
+// CheckApplyVolumesAuth --
+func CheckApplyVolumesAuth(volumes []acorev1.VolumeApplyConfiguration) error {
+	// Volume
+	volumeNames := []string{"karavi-authorization-config"}
+NAME_LOOP:
+	for _, volName := range volumeNames {
+		for _, vol := range volumes {
+			if *vol.Name == volName {
+				continue NAME_LOOP
+			}
+		}
+		return fmt.Errorf("missing the following volume %s", volName)
+	}
+
+	return nil
+}
+
+// CheckApplyContainersAuth --
+func CheckApplyContainersAuth(contianers []acorev1.ContainerApplyConfiguration, drivertype string) error {
+	authString := "karavi-authorization-proxy"
+	for _, cnt := range contianers {
+		if *cnt.Name == authString {
+			volumeMounts := []string{"karavi-authorization-config", AuthorizationSupportedDrivers[drivertype].DriverConfigParamsVolumeMount}
+		MOUNT_NAME_LOOP:
+			for _, volName := range volumeMounts {
+				for _, vol := range cnt.VolumeMounts {
+					if *vol.Name == volName {
+						continue MOUNT_NAME_LOOP
+					}
+				}
+				return fmt.Errorf("missing the following volume mount %s", volName)
+			}
+
+			for _, env := range cnt.Env {
+				if *env.Name == "INSECURE" {
+					if _, err := strconv.ParseBool(*env.Value); err != nil {
+						return fmt.Errorf("%s is an invalid value for INSECURE: %v", *env.Value, err)
+					}
+				}
+				if *env.Name == "PROXY_HOST" && *env.Value == "" {
+					return fmt.Errorf("PROXY_HOST for authorization is empty")
+				}
+			}
+			return nil
+		}
+
+	}
+	return errors.New("karavi-authorization-proxy container was not injected into driver")
+}
+
 func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	authModule := csmv1.Module{}
@@ -139,72 +205,6 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfi
 
 	}
 	return vols, nil
-}
-
-// CheckAnnotation --
-func CheckAnnotation(annotation map[string]string) error {
-	if annotation != nil {
-		fmt.Println(annotation)
-		if _, ok := annotation["com.dell.karavi-authorization-proxy"]; !ok {
-			return errors.New("com.dell.karavi-authorization-proxy is missing from annotation")
-		}
-		if annotation["com.dell.karavi-authorization-proxy"] != "true" {
-			return fmt.Errorf("extpected notation value to be true but got %s", annotation["com.dell.karavi-authorization-proxy"])
-		}
-		return nil
-	}
-	return errors.New("annotation is nil")
-
-}
-
-// CheckApplyVolumes --
-func CheckApplyVolumes(volumes []acorev1.VolumeApplyConfiguration) error {
-	// Volume
-	volumeNames := []string{"karavi-authorization-config"}
-NAME_LOOP:
-	for _, volName := range volumeNames {
-		for _, vol := range volumes {
-			if *vol.Name == volName {
-				continue NAME_LOOP
-			}
-		}
-		return fmt.Errorf("missing the following volume %s", volName)
-	}
-
-	return nil
-}
-
-// CheckApplyContainers --
-func CheckApplyContainers(contianers []acorev1.ContainerApplyConfiguration, drivertype string) error {
-	authString := "karavi-authorization-proxy"
-	for _, cnt := range contianers {
-		if *cnt.Name == authString {
-			volumeMounts := []string{"karavi-authorization-config", AuthorizationSupportedDrivers[drivertype].DriverConfigParamsVolumeMount}
-		MOUNT_NAME_LOOP:
-			for _, volName := range volumeMounts {
-				for _, vol := range cnt.VolumeMounts {
-					if *vol.Name == volName {
-						continue MOUNT_NAME_LOOP
-					}
-				}
-				return fmt.Errorf("missing the following volume mount %s", volName)
-			}
-
-			for _, env := range cnt.Env {
-				if *env.Name == "INSECURE" {
-					if _, err := strconv.ParseBool(*env.Value); err != nil {
-						return fmt.Errorf("%s is an invalid value for INSECURE: %v", *env.Value, err)
-					}
-				}
-				if *env.Name == "PROXY_HOST" && *env.Value == "" {
-					return fmt.Errorf("PROXY_HOST for authorization is empty")
-				}
-			}
-			return nil
-		}
-
-	}
-	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
 
 // AuthInjectDaemonset  - inject authorization into daemonset

@@ -3,6 +3,10 @@ package modules
 import (
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
+
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	utils "github.com/dell/csm-operator/pkg/utils"
 )
 
 const (
@@ -38,4 +42,18 @@ func checkVersion(moduleType, givenVersion, configPath string) error {
 		)
 	}
 	return nil
+}
+
+func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, filename string) ([]byte, error) {
+	var err error
+	moduleConfigVersion := module.ConfigVersion
+	if moduleConfigVersion == "" {
+		moduleConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	configMapPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, module.Name, moduleConfigVersion, filename)
+	return ioutil.ReadFile(filepath.Clean(configMapPath))
 }

@@ -10,15 +10,115 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	drivers "github.com/dell/csm-operator/pkg/drivers"
+	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
+	rbacv1 "k8s.io/api/rbac/v1"
+	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+func TestReplicationInjectDeployment(t *testing.T) {
+	ctx := context.Background()
+	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule) error {
+		return CheckApplyContainersReplica(dp.Spec.Template.Spec.Containers, cr)
+	}
+
+	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			if err != nil {
+				panic(err)
+			}
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			if err != nil {
+				panic(err)
+			}
+			tmpOperatorConfig := operatorConfig
+			tmpOperatorConfig.ConfigDirectory = "bad/path"
+
+			return false, controllerYAML.Deployment, tmpOperatorConfig, customResource
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, dp, opConfig, cr := tc(t)
+			newDeployment, err := ReplicationInjectDeployment(dp, cr, opConfig)
+			if success {
+				assert.NoError(t, err)
+				if err := correctlyInjected(*newDeployment, cr); err != nil {
+					assert.NoError(t, err)
+				}
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestReplicationInjectClusterRole(t *testing.T) {
+	ctx := context.Background()
+
+	tests := map[string]func(t *testing.T) (bool, rbacv1.ClusterRole, utils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, rbacv1.ClusterRole, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			if err != nil {
+				panic(err)
+			}
+			return false, controllerYAML.Rbac.ClusterRole, operatorConfig, customResource
+		},
+		/*"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			if err != nil {
+				panic(err)
+			}
+			tmpOperatorConfig := operatorConfig
+			tmpOperatorConfig.ConfigDirectory = "bad/path"
+
+			return false, controllerYAML.Deployment, tmpOperatorConfig, customResource
+		},*/
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, clusterRole, opConfig, cr := tc(t)
+			newClusterRole, err := ReplicationInjectClusterRole(clusterRole, cr, opConfig)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+			fmt.Println(newClusterRole)
+
+		})
+	}
+}
 
 func TestReplicationPreCheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)

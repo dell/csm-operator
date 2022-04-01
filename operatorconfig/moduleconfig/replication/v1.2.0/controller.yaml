@@ -1,3 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dell-replication-controller
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -177,7 +182,7 @@ data:
   config.yaml: |
     clusterId: ""
     targets: []
-    CSI_LOG_LEVEL: <REPLICATION_LOG_LEVEL>
+    CSI_LOG_LEVEL: "info"
 kind: ConfigMap
 metadata:
   name: dell-replication-controller-config
@@ -206,7 +211,7 @@ metadata:
   name: dell-replication-controller-manager
   namespace: dell-replication-controller
 spec:
-  replicas: {{ .Values.replicas }}
+  replicas: 1
   selector:
     matchLabels:
       control-plane: controller-manager
@@ -215,22 +220,10 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
-      {{- if hasKey .Values "hostAliases" }}
-      {{ if .Values.hostAliases.enableHostAliases }}
-      hostAliases:
-      - ip: {{.Values.hostAliases.ip}}
-        hostnames:
-        - {{.Values.hostAliases.hostName}}
-      {{ end }}
-      {{- end }}
       containers:
       - args:
-        - prefix=replication.storage.dell.com
-        {{- if eq .Values.leaderElection "true" }}
-        - enable-leader-election
-        {{ end }}
-        - retry-interval-start {{ .Values.retryIntervalMin }}
-        - retry-interval-max {{ .Values.retryIntervalMax }}
+        - --enable-leader-election
+        - --prefix=replication.storage.dell.com
         command:
         - /dell-replication-controller
         env:
@@ -252,7 +245,7 @@ spec:
           value: /app/certs
         - name: X_CSI_REPLICATION_CONFIG_FILE_NAME
           value: config
-        image: {{ .Values.image }}
+        image: dellemc/dell-replication-controller:v1.1.0
         imagePullPolicy: Always
         name: manager
         resources:

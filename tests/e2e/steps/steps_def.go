@@ -238,16 +238,16 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string) error 
 func (step *Step) validateAuthorizationInstalled(res Resource) error {
 	cr := res.CustomResource
 	correctlyInjected := func(annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
-		err := modules.CheckAnnotation(annotations)
+		err := modules.CheckAnnotationAuth(annotations)
 		if err != nil {
 			return err
 		}
 
-		err = modules.CheckApplyVolumes(vols)
+		err = modules.// .CheckApplyVolumesAuth(vols)
 		if err != nil {
 			return err
 		}
-		err = modules.CheckApplyContainers(cnt, string(cr.Spec.Driver.CSIDriverType))
+		err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType))
 		if err != nil {
 			return err
 		}

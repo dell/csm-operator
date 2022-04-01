@@ -3,10 +3,8 @@ package modules
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
@@ -15,6 +13,7 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
@@ -29,6 +28,11 @@ const (
 	ReplicationPrefix               = "replication.storage.dell.com"
 	DefaultReplicationContextPrefix = "<ReplicationContextPrefix>"
 	DefaultReplicationPrefix        = "<ReplicationPrefix>"
+)
+
+var (
+	XCSIReplicaCTXPrefix = "X_CSI_REPLICATION_CONTEXT_PREFIX"
+	XCSIReplicaPrefix    = "X_CSI_REPLICATION_PREFIX"
 )
 
 // ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CMS Replication. The key is driver name and the value is the driver plugin identifier
@@ -94,11 +98,12 @@ func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) 
 	replicationContextPrefix := ReplicationSupportedDrivers[string(driverType)].PluginIdentifier
 
 	for _, component := range replicaModule.Components {
-		if component.Name == "dell-replication-controller" {
+		if component.Name == "dell-csi-replicator" {
 			for _, env := range component.Envs {
-				if env.Name == "X_CSI_REPLICATION_PREFIX" {
+				fmt.Println(env.Name, env.Value)
+				if env.Name == XCSIReplicaPrefix {
 					replicationPrefix = env.Value
-				} else if env.Name == "X_CSI_REPLICATION_CONTEXT_PREFIX" {
+				} else if env.Name == XCSIReplicaCTXPrefix {
 					replicationContextPrefix = env.Value
 				}
 			}
@@ -118,16 +123,7 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig)
 		}
 	}
 
-	replicaConfigVersion := replicaModule.ConfigVersion
-	if replicaConfigVersion == "" {
-		replicaConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Replication, op.ConfigDirectory)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	configMapPath := fmt.Sprintf("%s/moduleconfig/replication/%s/container.yaml", op.ConfigDirectory, replicaConfigVersion)
-	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
+	buf, err := readConfigFile(replicaModule, cr, op, "container.yaml")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -135,25 +131,21 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig)
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
 	replicationContextPrefix, replicationPrefix := getRepctlPrefices(replicaModule, cr.Spec.Driver.CSIDriverType)
-
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicationPrefix, replicationPrefix)
-	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, replicationContextPrefix)
+	YamlString = strings.ReplaceAll(YamlString, DefaultReplicationContextPrefix, replicationContextPrefix)
 	YamlString = strings.ReplaceAll(YamlString, DefaultDriverConfigParamsVolumeMount, ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount)
-
-	fmt.Print(YamlString)
 
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Print(container)
 
 	return &replicaModule, &container, nil
 }
 
-// ReplicationDeployment - inject replication into deployment
-func ReplicationDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
+// ReplicationInjectDeployment - inject replication into deployment
+func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
 	replicaModule, containerPtr, err := getReplicaApplyCR(cr, op)
 	if err != nil {
 		return nil, err
@@ -162,19 +154,118 @@ func ReplicationDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Con
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
 	// inject replication in driver environment
-	xcsiReplicaCTXPrefix := "X_CSI_REPLICATION_CONTEXT_PREFIX"
-	xcsiReplicaPrefix := "X_CSI_REPLICATION_PREFIX"
+
 	replicationContextPrefix, replicationPrefix := getRepctlPrefices(*replicaModule, cr.Spec.Driver.CSIDriverType)
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if *cnt.Name == "driver" {
 			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
-				acorev1.EnvVarApplyConfiguration{Name: &xcsiReplicaCTXPrefix, Value: &replicationContextPrefix},
-				acorev1.EnvVarApplyConfiguration{Name: &xcsiReplicaPrefix, Value: &replicationPrefix},
+				acorev1.EnvVarApplyConfiguration{Name: &XCSIReplicaCTXPrefix, Value: &replicationContextPrefix},
+				acorev1.EnvVarApplyConfiguration{Name: &XCSIReplicaPrefix, Value: &replicationPrefix},
 			)
 			break
 		}
 	}
 	return &dp, nil
+}
+
+// CheckApplyContainersAuth --
+func CheckApplyContainersReplica(contianers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
+	replicaModule := csmv1.Module{}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Replication {
+			replicaModule = m
+			break
+		}
+	}
+
+	replicaString := "dell-csi-replicator"
+	driverString := "driver"
+	replicationContextPrefix, replicationPrefix := getRepctlPrefices(replicaModule, cr.Spec.Driver.CSIDriverType)
+	for _, cnt := range contianers {
+		if *cnt.Name == replicaString {
+			// check volumes
+			volName := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
+			foundVol := false
+			for _, vol := range cnt.VolumeMounts {
+				if *vol.Name == volName {
+					foundVol = true
+					break
+				}
+			}
+			if !foundVol {
+				return fmt.Errorf("missing the following volume mount %s", volName)
+			}
+
+			//check arguments
+			foundReplicationPrefix := false
+			foundReplicationContextPrefix := false
+			for _, arg := range cnt.Args {
+				if fmt.Sprintf("--context-prefix=%s", replicationContextPrefix) == arg {
+					foundReplicationContextPrefix = true
+				}
+				if fmt.Sprintf("--prefix=%s", replicationPrefix) == arg {
+					foundReplicationPrefix = true
+				}
+			}
+			if !foundReplicationContextPrefix {
+				return fmt.Errorf("missing the following  argument %s", replicationContextPrefix)
+			}
+			if !foundReplicationPrefix {
+				return fmt.Errorf("missing the following  argument %s", replicationPrefix)
+			}
+
+		} else if *cnt.Name == driverString {
+			foundReplicationPrefix := false
+			foundReplicationContextPrefix := false
+			for _, env := range cnt.Env {
+				if *env.Name == XCSIReplicaPrefix {
+					foundReplicationPrefix = true
+					if *env.Value != replicationPrefix {
+						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIReplicaPrefix, replicationPrefix, *env.Value)
+					}
+				}
+				if *env.Name == XCSIReplicaCTXPrefix {
+					foundReplicationContextPrefix = true
+					if *env.Value != replicationContextPrefix {
+						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIReplicaCTXPrefix, replicationContextPrefix, *env.Value)
+					}
+				}
+			}
+			if !foundReplicationContextPrefix {
+				return fmt.Errorf("missing the following  argument %s", replicationContextPrefix)
+			}
+			if !foundReplicationPrefix {
+				return fmt.Errorf("missing the following  argument %s", replicationPrefix)
+			}
+
+		}
+	}
+	return nil
+}
+
+// ReplicationInjectClusterRole - inject replication into clusterrole
+func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*rbacv1.ClusterRole, error) {
+	var err error
+	replicaModule := csmv1.Module{}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Replication {
+			replicaModule = m
+			break
+		}
+	}
+	buf, err := readConfigFile(replicaModule, cr, op, "rules.yaml")
+	if err != nil {
+		return nil, err
+	}
+
+	var rules []rbacv1.PolicyRule
+	err = yaml.Unmarshal(buf, &rules)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("%+v", rules)
+	return &clusterRole, nil
 }
 
 // ReplicationPrecheck  - runs precheck for CSM ReplicationPrecheck

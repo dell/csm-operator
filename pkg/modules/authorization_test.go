@@ -10,6 +10,7 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
@@ -17,24 +18,40 @@ import (
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+func checkApplyVolumesAuth(volumes []acorev1.VolumeApplyConfiguration) error {
+	// Volume
+	volumeNames := []string{"karavi-authorization-config"}
+NAME_LOOP:
+	for _, volName := range volumeNames {
+		for _, vol := range volumes {
+			if *vol.Name == volName {
+				continue NAME_LOOP
+			}
+		}
+		return fmt.Errorf("missing the following volume %s", volName)
+	}
+
+	return nil
+}
 func TestAuthInjectDaemonset(t *testing.T) {
 	ctx := context.Background()
 	correctlyInjected := func(ds applyv1.DaemonSetApplyConfiguration, drivertype string) error {
-		err := CheckAnnotation(ds.Annotations)
+		err := CheckAnnotationAuth(ds.Annotations)
 		if err != nil {
 			return err
 		}
-		err = CheckApplyVolumes(ds.Spec.Template.Spec.Volumes)
+		err = CheckApplyVolumesAuth(ds.Spec.Template.Spec.Volumes)
 		if err != nil {
 			return err
 		}
 
-		err = CheckApplyContainers(ds.Spec.Template.Spec.Containers, drivertype)
+		err = CheckApplyContainersAuth(ds.Spec.Template.Spec.Containers, drivertype)
 		if err != nil {
 			return err
 		}
@@ -107,15 +124,15 @@ func TestAuthInjectDaemonset(t *testing.T) {
 func TestAuthInjectDeployment(t *testing.T) {
 	ctx := context.Background()
 	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration, drivertype string) error {
-		err := CheckAnnotation(dp.Annotations)
+		err := CheckAnnotationAuth(dp.Annotations)
 		if err != nil {
 			return err
 		}
-		err = CheckApplyVolumes(dp.Spec.Template.Spec.Volumes)
+		err = CheckApplyVolumesAuth(dp.Spec.Template.Spec.Volumes)
 		if err != nil {
 			return err
 		}
-		err = CheckApplyContainers(dp.Spec.Template.Spec.Containers, drivertype)
+		err = CheckApplyContainersAuth(dp.Spec.Template.Spec.Containers, drivertype)
 		if err != nil {
 			return err
 		}
