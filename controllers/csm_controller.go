@@ -90,7 +90,7 @@ const (
 )
 
 var (
-	dMutex sync.RWMutex
+	dMutex           sync.RWMutex
 	configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
 
 	// PScaleSupportedDriverVersions is a list of supported Powerscale driver versions
