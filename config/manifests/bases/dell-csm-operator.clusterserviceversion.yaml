@@ -270,7 +270,7 @@ spec:
         path: state
         x-descriptors:
         - urn:alm:descriptor:text
-      version: v1alpha1
+      version: v1alpha2
   description: Dell CSM Operator for Dell CSI Drivers and Dell CSM Modules
   displayName: Dell CSM Operator
   icon:
