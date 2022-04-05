@@ -23,8 +23,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/dell/csm-operator/api/v1alpha1"
-	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/resources/configmap"
@@ -170,14 +169,14 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		if csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resource deployed from CR by operator
 			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
-				r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))
+				r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))
 				log.Errorw("remove driver", "error", err.Error())
 				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
 			}
 		}
 
 		if err := r.removeFinalizer(ctx, csm); err != nil {
-			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventDeleted, fmt.Sprintf("Failed to delete finalizer: %s", err))
+			r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to delete finalizer: %s", err))
 			log.Errorw("remove driver finalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
 		}
@@ -190,11 +189,11 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	if !csm.HasFinalizer(CSMFinalizerName) {
 		log.Infow("HandleFinalizer", "name", CSMFinalizerName)
 		if err := r.addFinalizer(ctx, csm); err != nil {
-			r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed to add finalizer: %s", err))
+			r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed to add finalizer: %s", err))
 			log.Errorw("HandleFinalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
 		}
-		r.EventRecorder.Event(csm, corev1.EventTypeNormal, v1alpha1.EventUpdated, "Object finalizer is added")
+		r.EventRecorder.Event(csm, corev1.EventTypeNormal, csmv1.EventUpdated, "Object finalizer is added")
 	}
 
 	oldStatus := csm.GetCSMStatus()
@@ -203,7 +202,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
 		csm.GetCSMStatus().State = constants.InvalidConfig
-		r.EventRecorder.Event(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
+		r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 
@@ -225,12 +224,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	// Update the driver
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig)
 	if syncErr == nil {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "install/update driver: %s completed OK", csm.Name)
+		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update driver: %s completed OK", csm.Name)
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
 	}
 
 	// Failed driver deployment
-	r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "Failed install: %s", syncErr.Error())
+	r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", syncErr.Error())
 
 	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, syncErr)
 }
@@ -293,7 +292,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	if err != nil {
 		log.Debugw("deployment status ", "pods", err.Error())
 	} else {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "Driver deployment running OK")
+		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
 	}
 
 }
@@ -334,9 +333,9 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 	if state != "0" && err != nil {
 		log.Infow("pod status ", "state", err.Error())
-		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, v1alpha1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
+		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
 	} else {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "%s Driver pods running OK", stamp)
+		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "%s Driver pods running OK", stamp)
 	}
 
 }
@@ -387,7 +386,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	if err != nil {
 		log.Debugw("daemonset status ", "pods", err.Error())
 	} else {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, v1alpha1.EventCompleted, "Driver daemonset running OK")
+		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver daemonset running OK")
 	}
 
 }
