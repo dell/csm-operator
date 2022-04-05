@@ -5,16 +5,16 @@ on:
   pull_request:
     branches: [ main ]
 jobs:
-  code-check:
-    name: Check Go formatting, linting, vetting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the code
-        uses: actions/checkout@v2
-      - name: Run the formatter, linter, and vetter
-        uses: dell/common-github-actions/go-code-formatter-linter-vetter@update-go-version
-        with:
-          directories: ./...
+#  code-check:
+#    name: Check Go formatting, linting, vetting
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout the code
+#        uses: actions/checkout@v2
+#      - name: Run the formatter, linter, and vetter
+#        uses: dell/common-github-actions/go-code-formatter-linter-vetter@update-go-version
+#        with:
+#          directories: ./...
   sanitize:
     name: Check for forbidden words
     runs-on: ubuntu-latest
@@ -25,41 +25,41 @@ jobs:
         uses: dell/common-github-actions/code-sanitizer@main
         with:
           args: /github/workspace
-  test_controller:
-    name: Run Go unit tests on controller and check package coverage
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the code
-        uses: actions/checkout@v2
-      - name: Checkout csm-operator
-        uses: actions/checkout@v2
-        with:
-          repository: 'dell/csm-operator'
-          path: 'csm-operator'
-      - name: Run unit tests and check package coverage
-        uses: dell/common-github-actions/go-code-tester@csm-operator-controllers
-        with:
-          threshold: 84 
-  test_driver:
-    name: Run Go unit tests on driver and check package coverage
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the code
-        uses: actions/checkout@v2
-      - name: Run unit tests and check package coverage
-        uses: dell/common-github-actions/go-code-tester@csm-operator-drivers
-        with:
-          threshold: 92
-  go_security_scan:
-    name: Go security
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the code
-        uses: actions/checkout@v2
-      - name: Run Go Security
-        uses: securego/gosec@master
-        with:
-          args: -exclude-dir=tests ./...
+#  test_controller:
+#    name: Run Go unit tests on controller and check package coverage
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout the code
+#        uses: actions/checkout@v2
+#      - name: Checkout csm-operator
+#        uses: actions/checkout@v2
+#        with:
+#          repository: 'dell/csm-operator'
+#          path: 'csm-operator'
+#      - name: Run unit tests and check package coverage
+#        uses: dell/common-github-actions/go-code-tester@csm-operator-controllers
+#        with:
+#          threshold: 84 
+#  test_driver:
+#    name: Run Go unit tests on driver and check package coverage
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout the code
+#        uses: actions/checkout@v2
+#      - name: Run unit tests and check package coverage
+#        uses: dell/common-github-actions/go-code-tester@csm-operator-drivers
+#        with:
+#          threshold: 92
+#  go_security_scan:
+#    name: Go security
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout the code
+#        uses: actions/checkout@v2
+#      - name: Run Go Security
+#        uses: securego/gosec@master
+#        with:
+#          args: -exclude-dir=tests ./...
   malware_security_scan:
     name: Malware Scanner
     runs-on: ubuntu-latest
@@ -71,24 +71,23 @@ jobs:
         with:
           directories: .
           options: -ri
-  image_security_scan:
-    name: Image Scanner
-    runs-on: ubuntu-latest
-    env:
-      BASE_IMG : ubuntu:latest
-    steps:
-      - name: Set up Go 1.17+
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.17
-        id: go
-      - name: Checkout the code
-        uses: actions/checkout@v2
-      - name: Build Docker Images
-        run: DEFAULT_IMG=csm-operator:latest make docker-build
+#  image_security_scan:
+#    name: Image Scanner
+#    runs-on: ubuntu-latest
+#    env:
+#      BASE_IMG : ubuntu:latest
+#    steps:
+#      - name: Set up Go 1.17+
+#        uses: actions/setup-go@v2
+#        with:
+#          go-version: ^1.17
+#        id: go
+#      - name: Checkout the code
+#        uses: actions/checkout@v2
+#      - name: Build Docker Images
+#        run: DEFAULT_IMG=csm-operator:latest make docker-build
 #      - name: Scan controller Image
 #        uses: Azure/container-scan@v0
 #        with:
 #          image-name: csm-operator:latest
 #          severity-threshold: HIGH
-
