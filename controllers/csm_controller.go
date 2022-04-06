@@ -446,26 +446,6 @@ func (r *ContainerStorageModuleReconciler) addFinalizer(ctx context.Context, ins
 	return r.Update(ctx, instance)
 }
 
-func (r *ContainerStorageModuleReconciler) getReplicaClusters(ctx context.Context, cr csmv1.ContainerStorageModule) (bool, []utils.ReplicaCluster, error) {
-	var err error
-	clusterClients := []utils.ReplicaCluster{
-		{
-			ClutsterCTRLClient: r.Client,
-			ClusterK8sClient:   r.K8sClient,
-		},
-	}
-
-	for _, m := range cr.Spec.Modules {
-		if m.Name == csmv1.Replication && m.Enabled {
-			clusterClients, err = utils.GetReplicaClusters(ctx, m, r.GetClient())
-			if err != nil {
-				return true, clusterClients, err
-			}
-		}
-	}
-	return false, clusterClients, nil
-}
-
 // SyncCSM - Sync the current installation - this can lead to a create or update
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
@@ -481,7 +461,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	node := driverConfig.Node
 	controller := driverConfig.Controller
 
-	replicationEnabled, clusterClients, err := r.getReplicaClusters(ctx, cr)
+	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)
 	if err != nil {
 		return err
 	}
@@ -665,7 +645,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return err
 	}
 
-	replicationEnabled, clusterClients, err := r.getReplicaClusters(ctx, instance)
+	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, instance, r)
 	if err != nil {
 		return err
 	}
@@ -775,7 +755,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 				}
 
 			case csmv1.Replication:
-				err := modules.ReplicationPrecheck(ctx, operatorConfig, m, *cr, r.GetClient())
+				err := modules.ReplicationPrecheck(ctx, operatorConfig, m, *cr, r)
 				if err != nil {
 					return fmt.Errorf("failed replication validation: %v", err)
 				}
@@ -827,7 +807,7 @@ func (r *ContainerStorageModuleReconciler) GetUpdateCount() int32 {
 	return r.updateCount
 }
 
-// GetUpdateCount - Returns the current update count
+// GetK8sClient - Returns the current update count
 func (r *ContainerStorageModuleReconciler) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
 }

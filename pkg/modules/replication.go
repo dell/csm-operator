@@ -272,7 +272,7 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		}
 	}
 
-	replicaClusters, err := utils.GetDefaultClusters(ctx, cr, r)
+	_, replicaClusters, err := utils.GetDefaultClusters(ctx, cr, r)
 	if err != nil {
 		return err
 	}

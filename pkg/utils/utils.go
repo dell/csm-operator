@@ -485,7 +485,7 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 }*/
 
 // GetDefultClusters -
-func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) ([]ReplicaCluster, error) {
+func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) (bool, []ReplicaCluster, error) {
 	clusterClients := []ReplicaCluster{
 		{
 			ClutsterCTRLClient: r.GetClient(),
@@ -493,23 +493,24 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 		},
 	}
 
+	replicaEnabled := false
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Replication && m.Enabled {
 			clusterClients := []ReplicaCluster{}
 			clusterIDs, err := clusterIDs(m)
 			if err != nil {
-				return clusterClients, err
+				return replicaEnabled, clusterClients, err
 			}
 
 			//k8sClient := kubernetes.NewForConfigOrDie(restConfig)
 			for _, clusterID := range clusterIDs {
 				targetCtrlClient, err := getClusterCtrlClient(ctx, clusterID, r.GetClient())
 				if err != nil {
-					return clusterClients, err
+					return replicaEnabled, clusterClients, err
 				}
 				targetK8sClient, err := getClusterK8SClient(ctx, clusterID, r.GetClient())
 				if err != nil {
-					return clusterClients, err
+					return replicaEnabled, clusterClients, err
 				}
 
 				clusterClients = append(clusterClients, ReplicaCluster{
@@ -521,5 +522,5 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 
 		}
 	}
-	return clusterClients, nil
+	return replicaEnabled, clusterClients, nil
 }
