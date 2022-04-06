@@ -34,7 +34,6 @@ ENV USER_UID=1001 \
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY operatorconfig/ /etc/config/dell-csm-operator
-#RUN  chmod a-s /usr/bin/chage
 RUN  chmod a-w /usr/bin/chage
 RUN  rm -rf tmp
 LABEL vendor="Dell Inc." \
