@@ -225,7 +225,7 @@ spec:
           - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
             value: "powerscale"
       
-      - name: dell-replication-controller
+      - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
         image: dellemc/dell-replication-controller:v1.2.0
@@ -260,11 +260,3 @@ spec:
           # Allowed values: time
           - name: "RETRY_INTERVAL_MAX"
             value: "5m"
-
-          # HostAliases: Optional features that allows <hostname:IP> entry injection into pod's /etc/hosts file
-          - name: "HOST_ALIASES_ENABLED"
-            value: "false"
-          - name: "HOST_ALIASES_HOST"
-            value: "foo.bar"
-          - name: "HOST_ALIASES_IP"
-            value: "10.10.10.10"

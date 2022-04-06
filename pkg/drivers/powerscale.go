@@ -82,7 +82,7 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, c
 		found := &corev1.Secret{}
 		err := ct.Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
 		if err != nil {
-			log.Error(err, "Failed query for secret %s", name)
+			log.Error(err, "Failed query for secret ", name)
 			if errors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s", name)
 			}

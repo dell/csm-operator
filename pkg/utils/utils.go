@@ -73,9 +73,9 @@ type NodeYAML struct {
 
 // ReplicaCluster -
 type ReplicaCluster struct {
-	ClutsterID         string
-	ClutsterCTRLClient crclient.Client
-	ClusterK8sClient   kubernetes.Interface
+	ClutsterID        string
+	ClusterCTRLClient crclient.Client
+	ClusterK8sClient  kubernetes.Interface
 }
 
 const (
@@ -88,6 +88,7 @@ const (
 	//KubeletConfigDir path
 	KubeletConfigDir               = "<KUBELET_CONFIG_DIR>"
 	ReplicationControllerNameSpace = "dell-replication-controller"
+	ReplicationControllerManager   = "dell-replication-controller-manager"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -414,7 +415,7 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 func clusterIDs(replica csmv1.Module) ([]string, error) {
 	var clusterIDs []string
 	for _, comp := range replica.Components {
-		if comp.Name == ReplicationControllerNameSpace {
+		if comp.Name == ReplicationControllerManager {
 			for _, env := range comp.Envs {
 				if env.Name == "CLUSTERS_IDS" {
 					clusterIDs = strings.Split(env.Value, ",")
@@ -445,11 +446,13 @@ func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Cl
 
 // NewControllerRuntimeClientWrapper -
 var NewControllerRuntimeClientWrapper = func(clusterConfigData []byte) (crclient.Client, error) {
+	fmt.Println("NewControllerRuntimeClientWrapper")
 	return k8sClient.NewControllerRuntimeClient(clusterConfigData)
 }
 
 // NewK8sClientWrapper -
 var NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
+	fmt.Println("NewK8sClientWrapper")
 	restConfig, err := clientcmd.RESTConfigFromKubeConfig(clusterConfigData)
 	if err != nil {
 		return nil, err
@@ -477,26 +480,20 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 
 }
 
-// GetReplicaClusters -
-/*func GetReplicaClusters(ctx context.Context, replica csmv1.Module, sourceCtrlClient crclient.Client) ([]ReplicaCluster, error) {
-	var clusters []ReplicaCluster
-
-	return clusters, nil
-}*/
-
-// GetDefultClusters -
+// GetDefaultClusters -
 func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) (bool, []ReplicaCluster, error) {
 	clusterClients := []ReplicaCluster{
 		{
-			ClutsterCTRLClient: r.GetClient(),
-			ClusterK8sClient:   r.GetK8sClient(),
+			ClusterCTRLClient: r.GetClient(),
+			ClusterK8sClient:  r.GetK8sClient(),
+			ClutsterID:        "default-source-cluster",
 		},
 	}
 
 	replicaEnabled := false
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Replication && m.Enabled {
-			clusterClients := []ReplicaCluster{}
+			clusterClients = []ReplicaCluster{} // redeclare
 			clusterIDs, err := clusterIDs(m)
 			if err != nil {
 				return replicaEnabled, clusterClients, err
@@ -514,9 +511,9 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 				}
 
 				clusterClients = append(clusterClients, ReplicaCluster{
-					ClutsterID:         clusterID,
-					ClutsterCTRLClient: targetCtrlClient,
-					ClusterK8sClient:   targetK8sClient,
+					ClutsterID:        clusterID,
+					ClusterCTRLClient: targetCtrlClient,
+					ClusterK8sClient:  targetK8sClient,
 				})
 			}
 

@@ -512,39 +512,39 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 	for _, cluster := range clusterClients {
 		// Create/Update ServiceAccount
-		if err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, cluster.ClutsterCTRLClient); err != nil {
+		if err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
-		if err = serviceaccount.SyncServiceAccount(ctx, &controller.Rbac.ServiceAccount, cluster.ClutsterCTRLClient); err != nil {
+		if err = serviceaccount.SyncServiceAccount(ctx, &controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
 		// Create/Update ClusterRoles
-		if err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, cluster.ClutsterCTRLClient); err != nil {
+		if err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
-		if err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, cluster.ClutsterCTRLClient); err != nil {
+		if err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
 		// Create/Update ClusterRoleBinding
-		if err = rbac.SyncClusterRoleBindings(ctx, &node.Rbac.ClusterRoleBinding, cluster.ClutsterCTRLClient); err != nil {
+		if err = rbac.SyncClusterRoleBindings(ctx, &node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
-		if err = rbac.SyncClusterRoleBindings(ctx, &controller.Rbac.ClusterRoleBinding, cluster.ClutsterCTRLClient); err != nil {
+		if err = rbac.SyncClusterRoleBindings(ctx, &controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
 		// Create/Update CSIDriver
-		if err = csidriver.SyncCSIDriver(ctx, driver, cluster.ClutsterCTRLClient); err != nil {
+		if err = csidriver.SyncCSIDriver(ctx, driver, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
 		// Create/Update ConfigMap
-		if err = configmap.SyncConfigMap(ctx, configMap, cluster.ClutsterCTRLClient); err != nil {
+		if err = configmap.SyncConfigMap(ctx, configMap, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
@@ -650,42 +650,42 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return err
 	}
 	for _, cluster := range clusterClients {
-		if err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount, cluster.ClutsterCTRLClient); err != nil {
+		if err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete node service account", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount, cluster.ClutsterCTRLClient); err != nil {
+		if err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete controller service account", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Node.Rbac.ClusterRole, cluster.ClutsterCTRLClient); err != nil {
+		if err = deleteObj(&driverConfig.Node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete node cluster role", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRole, cluster.ClutsterCTRLClient); err != nil {
+		if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete controller cluster role", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Node.Rbac.ClusterRoleBinding, cluster.ClutsterCTRLClient); err != nil {
+		if err = deleteObj(&driverConfig.Node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete node cluster role binding", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRoleBinding, cluster.ClutsterCTRLClient); err != nil {
+		if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete controller cluster role binding", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(driverConfig.ConfigMap, cluster.ClutsterCTRLClient); err != nil {
+		if err = deleteObj(driverConfig.ConfigMap, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete configmap", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(driverConfig.Driver, cluster.ClutsterCTRLClient); err != nil {
+		if err = deleteObj(driverConfig.Driver, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete csi driver", "Error", err.Error())
 			return err
 		}
@@ -696,9 +696,9 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		}
 
 		daemonsetObj := &appsv1.DaemonSet{}
-		err = cluster.ClutsterCTRLClient.Get(ctx, daemonsetKey, daemonsetObj)
+		err = cluster.ClusterCTRLClient.Get(ctx, daemonsetKey, daemonsetObj)
 		if err == nil {
-			if err = cluster.ClutsterCTRLClient.Delete(ctx, daemonsetObj); err != nil && !k8serror.IsNotFound(err) {
+			if err = cluster.ClusterCTRLClient.Delete(ctx, daemonsetObj); err != nil && !k8serror.IsNotFound(err) {
 				log.Errorw("error delete daemonset", "Error", err.Error())
 				return err
 			}
@@ -712,8 +712,8 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		}
 
 		deploymentObj := &appsv1.Deployment{}
-		if err = cluster.ClutsterCTRLClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
-			if err = cluster.ClutsterCTRLClient.Delete(ctx, deploymentObj); err != nil && !k8serror.IsNotFound(err) {
+		if err = cluster.ClusterCTRLClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
+			if err = cluster.ClusterCTRLClient.Delete(ctx, deploymentObj); err != nil && !k8serror.IsNotFound(err) {
 				log.Errorw("error delete deployment", "Error", err.Error())
 				return err
 			}

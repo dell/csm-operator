@@ -26,7 +26,7 @@ spec:
             value: "powerscale"
       
       
-      - name: dell-replication-controller
+      - name: dell-replication-controller-manager
         image: dellemc/dell-replication-controller:v1.2.0
         envs:
           - name: "CLUSTERS_IDS"

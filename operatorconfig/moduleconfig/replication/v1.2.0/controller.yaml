@@ -182,7 +182,7 @@ data:
   config.yaml: |
     clusterId: ""
     targets: []
-    CSI_LOG_LEVEL: "info"
+    CSI_LOG_LEVEL: "<REPLICATION_CTRL_LOG_LEVEL>"
 kind: ConfigMap
 metadata:
   name: dell-replication-controller-config
@@ -211,7 +211,7 @@ metadata:
   name: dell-replication-controller-manager
   namespace: dell-replication-controller
 spec:
-  replicas: 1
+  replicas: <REPLICATION_CTRL_REPLICAS>
   selector:
     matchLabels:
       control-plane: controller-manager
@@ -224,6 +224,8 @@ spec:
       - args:
         - --enable-leader-election
         - --prefix=replication.storage.dell.com
+        - --retry-interval-start <RETRY_INTERVAL_MIN>
+        - --retry-interval-max <RETRY_INTERVAL_MAX>
         command:
         - /dell-replication-controller
         env:
@@ -245,8 +247,8 @@ spec:
           value: /app/certs
         - name: X_CSI_REPLICATION_CONFIG_FILE_NAME
           value: config
-        image: dellemc/dell-replication-controller:v1.1.0
-        imagePullPolicy: Always
+        image: <REPLICATION_CONTROLLER_IMAGE>
+        imagePullPolicy: IfNotPresent
         name: manager
         resources:
           requests:

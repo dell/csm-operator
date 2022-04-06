@@ -337,3 +337,40 @@ func TestReplicationPreCheck(t *testing.T) {
 		})
 	}
 }
+
+func TestReplicationDeployManagerController(t *testing.T) {
+	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule){
+		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			replica := tmpCR.Spec.Modules[0]
+
+			return false, replica, tmpCR
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, replica, tmpCR := tc(t)
+
+			os.Setenv("REPCTL_BINARY", "echo")
+			defer os.Unsetenv("REPCTL_BINARY")
+
+			err := ReplicationDeployManagerController(context.TODO(), operatorConfig, replica, tmpCR)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
