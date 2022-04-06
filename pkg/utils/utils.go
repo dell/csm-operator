@@ -2,7 +2,7 @@ package utils
 
 import (
 	"bytes"
-	//"encoding/json"
+	"context"
 	"io"
 	"io/ioutil"
 
@@ -12,18 +12,24 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
+	"github.com/dell/csm-operator/pkg/logger"
 	goYAML "github.com/go-yaml/yaml"
 
-	//appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-
-	//hashutil "k8s.io/kubernetes/pkg/util/hash"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+
+	k8sClient "github.com/dell/csm-operator/k8s"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // K8sImagesConfig -
@@ -65,6 +71,13 @@ type NodeYAML struct {
 	Rbac                 RbacYAML
 }
 
+// ReplicaCluster -
+type ReplicaCluster struct {
+	ClutsterID         string
+	ClutsterCTRLClient crclient.Client
+	ClusterK8sClient   kubernetes.Interface
+}
+
 const (
 	// DefaultReleaseName constant
 	DefaultReleaseName = "<DriverDefaultReleaseName>"
@@ -73,7 +86,8 @@ const (
 	// DefaultImagePullPolicy constant
 	DefaultImagePullPolicy = "IfNotPresent"
 	//KubeletConfigDir path
-	KubeletConfigDir = "<KUBELET_CONFIG_DIR>"
+	KubeletConfigDir               = "<KUBELET_CONFIG_DIR>"
+	ReplicationControllerNameSpace = "dell-replication-controller"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -331,7 +345,6 @@ func LogBannerAndReturn(result reconcile.Result, err error) (reconcile.Result, e
 
 // GetModuleDefaultVersion -
 func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.DriverType, moduleType csmv1.ModuleType, path string) (string, error) {
-	/* TODO(Michal): review with Team */
 	configMapPath := fmt.Sprintf("%s/moduleconfig/common/version-values.yaml", path)
 	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
@@ -398,4 +411,115 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	}
 	err = fmt.Errorf("version %s below minimum version %s", version, minVersion)
 	return false, nil
+func clusterIDs(replica csmv1.Module) ([]string, error) {
+	var clusterIDs []string
+	for _, comp := range replica.Components {
+		if comp.Name == ReplicationControllerNameSpace {
+			for _, env := range comp.Envs {
+				if env.Name == "CLUSTERS_IDS" {
+					clusterIDs = strings.Split(env.Value, ",")
+					break
+				}
+			}
+		}
+	}
+	err := fmt.Errorf("CLUSTERS_IDS on CR should have more than 1 commma seperated cluster IDs. Got  %d", len(clusterIDs))
+	if len(clusterIDs) >= 2 {
+		err = nil
+	}
+	return clusterIDs, err
+}
+
+func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Client) ([]byte, error) {
+	log := logger.GetLogger(ctx)
+	secret := &corev1.Secret{}
+	if err := ctrlClient.Get(ctx, types.NamespacedName{Name: clusterID,
+		Namespace: ReplicationControllerNameSpace}, secret); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return []byte("error"), fmt.Errorf("failed to find secret %s", clusterID)
+		}
+		log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
+	}
+	return secret.Data["data"], nil
+}
+
+// NewControllerRuntimeClientWrapper -
+var NewControllerRuntimeClientWrapper = func(clusterConfigData []byte) (crclient.Client, error) {
+	return k8sClient.NewControllerRuntimeClient(clusterConfigData)
+}
+
+// NewK8sClientWrapper -
+var NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(clusterConfigData)
+	if err != nil {
+		return nil, err
+	}
+
+	return kubernetes.NewForConfig(restConfig)
+}
+
+func getClusterCtrlClient(ctx context.Context, clusterID string, ctrlClient crclient.Client) (crclient.Client, error) {
+	clusterConfigData, err := getConfigData(ctx, clusterID, ctrlClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewControllerRuntimeClientWrapper(clusterConfigData)
+}
+
+func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crclient.Client) (*kubernetes.Clientset, error) {
+	clusterConfigData, err := getConfigData(ctx, clusterID, ctrlClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewK8sClientWrapper(clusterConfigData)
+
+}
+
+// GetReplicaClusters -
+/*func GetReplicaClusters(ctx context.Context, replica csmv1.Module, sourceCtrlClient crclient.Client) ([]ReplicaCluster, error) {
+	var clusters []ReplicaCluster
+
+	return clusters, nil
+}*/
+
+// GetDefultClusters -
+func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) ([]ReplicaCluster, error) {
+	clusterClients := []ReplicaCluster{
+		{
+			ClutsterCTRLClient: r.GetClient(),
+			ClusterK8sClient:   r.GetK8sClient(),
+		},
+	}
+
+	for _, m := range instance.Spec.Modules {
+		if m.Name == csmv1.Replication && m.Enabled {
+			clusterClients := []ReplicaCluster{}
+			clusterIDs, err := clusterIDs(m)
+			if err != nil {
+				return clusterClients, err
+			}
+
+			//k8sClient := kubernetes.NewForConfigOrDie(restConfig)
+			for _, clusterID := range clusterIDs {
+				targetCtrlClient, err := getClusterCtrlClient(ctx, clusterID, r.GetClient())
+				if err != nil {
+					return clusterClients, err
+				}
+				targetK8sClient, err := getClusterK8SClient(ctx, clusterID, r.GetClient())
+				if err != nil {
+					return clusterClients, err
+				}
+
+				clusterClients = append(clusterClients, ReplicaCluster{
+					ClutsterID:         clusterID,
+					ClutsterCTRLClient: targetCtrlClient,
+					ClusterK8sClient:   targetK8sClient,
+				})
+			}
+
+		}
+	}
+	return clusterClients, nil
 }

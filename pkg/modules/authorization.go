@@ -265,10 +265,10 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 }
 
 // AuthorizationPrecheck  - runs precheck for CSM Authorization
-func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op utils.OperatorConfig, auth csmv1.Module, ctrlClient crclient.Client) error {
+func AuthorizationPrecheck(ctx context.Context, op utils.OperatorConfig, auth csmv1.Module, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
-	if _, ok := AuthorizationSupportedDrivers[driverType]; !ok {
-		return fmt.Errorf("CSM Authorization does not support %s driver", driverType)
+	if _, ok := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
+		return fmt.Errorf("CSM Authorization does not support %s driver", string(cr.Spec.Driver.CSIDriverType))
 	}
 
 	// check if provided version is supported
@@ -303,7 +303,7 @@ func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op
 	for _, name := range secrets {
 		found := &corev1.Secret{}
 		err := ctrlClient.Get(ctx, types.NamespacedName{Name: name,
-			Namespace: namespace}, found)
+			Namespace: cr.GetNamespace()}, found)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)

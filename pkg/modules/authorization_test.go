@@ -10,7 +10,6 @@ package modules
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
@@ -18,27 +17,11 @@ import (
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
-	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func checkApplyVolumesAuth(volumes []acorev1.VolumeApplyConfiguration) error {
-	// Volume
-	volumeNames := []string{"karavi-authorization-config"}
-NAME_LOOP:
-	for _, volName := range volumeNames {
-		for _, vol := range volumes {
-			if *vol.Name == volName {
-				continue NAME_LOOP
-			}
-		}
-		return fmt.Errorf("missing the following volume %s", volName)
-	}
-
-	return nil
-}
 func TestAuthInjectDaemonset(t *testing.T) {
 	ctx := context.Background()
 	correctlyInjected := func(ds applyv1.DaemonSetApplyConfiguration, drivertype string) error {
@@ -201,14 +184,13 @@ func TestAuthInjectDeployment(t *testing.T) {
 
 }
 func TestAuthorizationPreCheck(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client){
-		"success": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client){
+		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
 			namespace := customResource.Namespace
-			drivertype := string(customResource.Spec.Driver.CSIDriverType)
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 
@@ -217,15 +199,14 @@ func TestAuthorizationPreCheck(t *testing.T) {
 
 			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
 
-			return true, namespace, drivertype, auth, client
+			return true, auth, tmpCR, client
 		},
-		"success - version provided": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
+		"success - version provided": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
 			namespace := customResource.Namespace
-			drivertype := string(customResource.Spec.Driver.CSIDriverType)
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 			auth.ConfigVersion = "v1.2.0"
@@ -235,15 +216,14 @@ func TestAuthorizationPreCheck(t *testing.T) {
 
 			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
 
-			return true, namespace, drivertype, auth, client
+			return true, auth, tmpCR, client
 		},
-		"fail - INSECURE is false but no cert": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
+		"fail - INSECURE is false but no cert": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
 			namespace := customResource.Namespace
-			drivertype := string(customResource.Spec.Driver.CSIDriverType)
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 
@@ -258,15 +238,13 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
 			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
 
-			return false, namespace, drivertype, auth, client
+			return false, auth, tmpCR, client
 		},
-		"fail - invalid INSECURE value": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
+		"fail - invalid INSECURE value": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
-			namespace := customResource.Namespace
-			drivertype := string(customResource.Spec.Driver.CSIDriverType)
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 			// set insecure to false
@@ -278,15 +256,13 @@ func TestAuthorizationPreCheck(t *testing.T) {
 
 			client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, namespace, drivertype, auth, client
+			return false, auth, tmpCR, client
 		},
-		"fail - empty proxy host": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
+		"fail - empty proxy host": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
-			namespace := customResource.Namespace
-			drivertype := string(customResource.Spec.Driver.CSIDriverType)
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 
@@ -297,43 +273,43 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			}
 			client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, namespace, drivertype, auth, client
+			return false, auth, tmpCR, client
 		},
 
-		"fail - unsupported driver": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
+		"fail - unsupported driver": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
-			namespace := customResource.Namespace
-			drivertype := "unsupported-driver"
+
 			tmpCR := customResource
+			tmpCR.Spec.Driver.CSIDriverType = "unsupported-driver"
 			auth := tmpCR.Spec.Modules[0]
 
 			client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, namespace, drivertype, auth, client
+			return false, auth, tmpCR, client
 		},
-		"fail - unsupported auth version": func(*testing.T) (bool, string, string, csmv1.Module, ctrlClient.Client) {
+		"fail - unsupported auth version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
-			namespace := customResource.Namespace
-			drivertype := string(customResource.Spec.Driver.CSIDriverType)
+
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 			auth.ConfigVersion = "v100000.0.0"
 
 			client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, namespace, drivertype, auth, client
+			return false, auth, tmpCR, client
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, namespace, drivertype, authModule, client := tc(t)
-			err := AuthorizationPrecheck(context.TODO(), namespace, drivertype, operatorConfig, authModule, client)
+			success, auth, tmpCR, client := tc(t)
+			// err := ReplicationPrecheck(context.TODO(), operatorConfig, replica, tmpCR, sourceClient)
+			err := AuthorizationPrecheck(context.TODO(), operatorConfig, auth, tmpCR, client)
 			if success {
 				assert.NoError(t, err)
 

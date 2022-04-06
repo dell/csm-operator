@@ -8,23 +8,20 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
-	k8sClient "github.com/dell/csm-operator/k8s"
+
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
-	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
+
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+
 	"sigs.k8s.io/yaml"
 )
 
 const (
 	RepctlBinary                    = "repctl"
-	ReplicationControllerNameSpace  = "dell-replication-controller"
 	ReplicationPrefix               = "replication.storage.dell.com"
 	DefaultReplicationContextPrefix = "<ReplicationContextPrefix>"
 	DefaultReplicationPrefix        = "<ReplicationPrefix>"
@@ -45,52 +42,6 @@ var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
-}
-
-func clusterIDs(replica csmv1.Module) ([]string, error) {
-	var clusterIDs []string
-	for _, comp := range replica.Components {
-		if comp.Name == ReplicationControllerNameSpace {
-			for _, env := range comp.Envs {
-				if env.Name == "CLUSTERS_IDS" {
-					clusterIDs = strings.Split(env.Value, ",")
-					break
-				}
-			}
-		}
-	}
-	err := fmt.Errorf("CLUSTERS_IDS on CR should have more than 1 commma seperated cluster IDs. Got  %d", len(clusterIDs))
-	if len(clusterIDs) >= 2 {
-		err = nil
-	}
-	return clusterIDs, err
-}
-
-func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Client) ([]byte, error) {
-	log := logger.GetLogger(ctx)
-	secret := &corev1.Secret{}
-	if err := ctrlClient.Get(ctx, types.NamespacedName{Name: clusterID,
-		Namespace: ReplicationControllerNameSpace}, secret); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return []byte("error"), fmt.Errorf("failed to find secret %s", clusterID)
-		}
-		log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
-	}
-	return secret.Data["data"], nil
-}
-
-// NewControllerRuntimeClientWrapper -
-var NewControllerRuntimeClientWrapper = func(clusterConfigData []byte) (crclient.Client, error) {
-	return k8sClient.NewControllerRuntimeClient(clusterConfigData)
-}
-
-func getClusterCtrlClient(ctx context.Context, clusterID string, ctrlClient crclient.Client) (crclient.Client, error) {
-	clusterConfigData, err := getConfigData(ctx, clusterID, ctrlClient)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewControllerRuntimeClientWrapper(clusterConfigData)
 }
 
 func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) (string, string) {
@@ -168,7 +119,7 @@ func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csm
 	return &dp, nil
 }
 
-// CheckApplyContainersAuth --
+// CheckApplyContainersReplica --
 func CheckApplyContainersReplica(contianers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
 	replicaModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -243,6 +194,31 @@ func CheckApplyContainersReplica(contianers []acorev1.ContainerApplyConfiguratio
 	return nil
 }
 
+// CheckClusterRoleReplica -
+func CheckClusterRoleReplica(rules []rbacv1.PolicyRule) error {
+	foundRepilcaGroup := false
+	foundReplicaStatus := false
+	for _, rule := range rules {
+		if len(rule.APIGroups) > 0 && rule.APIGroups[0] == "replication.storage.dell.com" {
+			if rule.Resources[0] == "dellcsireplicationgroups" {
+				foundRepilcaGroup = true
+			}
+			if rule.Resources[0] == "dellcsireplicationgroups/status" {
+				foundReplicaStatus = true
+			}
+		}
+	}
+
+	if !foundRepilcaGroup {
+		return fmt.Errorf("missing the resources for %s", "dellcsireplicationgroups")
+	}
+	if !foundReplicaStatus {
+		return fmt.Errorf("missing the resources for %s", "dellcsireplicationgroups/status")
+	}
+	return nil
+
+}
+
 // ReplicationInjectClusterRole - inject replication into clusterrole
 func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*rbacv1.ClusterRole, error) {
 	var err error
@@ -264,12 +240,12 @@ func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Conta
 		return nil, err
 	}
 
-	fmt.Printf("%+v", rules)
+	clusterRole.Rules = append(clusterRole.Rules, rules...)
 	return &clusterRole, nil
 }
 
 // ReplicationPrecheck  - runs precheck for CSM ReplicationPrecheck
-func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule, sourceCtrlClient crclient.Client) error {
+func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
 	if _, ok := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
@@ -296,23 +272,18 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		}
 	}
 
-	clusterIDs, err := clusterIDs(replica)
+	replicaClusters, err := utils.GetDefaultClusters(ctx, cr, r)
 	if err != nil {
 		return err
 	}
 
-	for _, clusterID := range clusterIDs {
-		targetCtrlClient, err := getClusterCtrlClient(ctx, clusterID, sourceCtrlClient)
-		if err != nil {
-			return err
-		}
-
+	for _, cluster := range replicaClusters {
 		switch cr.Spec.Driver.CSIDriverType {
 		case csmv1.PowerScale:
 			tmpCR := cr
-			err := drivers.PrecheckPowerScale(ctx, &tmpCR, targetCtrlClient)
+			err := drivers.PrecheckPowerScale(ctx, &tmpCR, cluster.ClutsterCTRLClient)
 			if err != nil {
-				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, clusterID)
+				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClutsterID)
 			}
 		}
 	}

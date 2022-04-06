@@ -154,8 +154,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	}, err
 }
 
-// CalculateState of pods
-func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := false
 	controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
@@ -214,7 +213,7 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	log.Infow("Update State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
-	_, merr := CalculateState(ctx, instance, r, newStatus)
+	_, merr := calculateState(ctx, instance, r, newStatus)
 	csm := new(csmv1.ContainerStorageModule)
 	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,
 		Namespace: instance.GetNamespace()}, csm)
@@ -257,7 +256,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 
 	log := logger.GetLogger(ctx)
 
-	running, err := CalculateState(ctx, instance, r, newStatus)
+	running, err := calculateState(ctx, instance, r, newStatus)
 	if err != nil {
 		log.Error("HandleSuccess Driver status ", "error", err.Error())
 		newStatus.State = constants.Failed

@@ -10,7 +10,6 @@ package modules
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
@@ -20,9 +19,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
-
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	//csmReconciler "github.com/dell/csm-operator/controllers"
 )
 
 func TestReplicationInjectDeployment(t *testing.T) {
@@ -88,9 +89,12 @@ func TestReplicationInjectClusterRole(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			return false, controllerYAML.Rbac.ClusterRole, operatorConfig, customResource
+			return true, controllerYAML.Rbac.ClusterRole, operatorConfig, customResource
 		},
-		/*"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"fail - bad config path": func(*testing.T) (bool, rbacv1.ClusterRole, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			tmpOperatorConfig := operatorConfig
+			tmpOperatorConfig.ConfigDirectory = "bad/path"
+
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -99,11 +103,8 @@ func TestReplicationInjectClusterRole(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			tmpOperatorConfig := operatorConfig
-			tmpOperatorConfig.ConfigDirectory = "bad/path"
-
-			return false, controllerYAML.Deployment, tmpOperatorConfig, customResource
-		},*/
+			return false, controllerYAML.Rbac.ClusterRole, tmpOperatorConfig, customResource
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -111,11 +112,10 @@ func TestReplicationInjectClusterRole(t *testing.T) {
 			newClusterRole, err := ReplicationInjectClusterRole(clusterRole, cr, opConfig)
 			if success {
 				assert.NoError(t, err)
+				assert.NoError(t, CheckClusterRoleReplica(newClusterRole.Rules))
 			} else {
 				assert.Error(t, err)
 			}
-			fmt.Println(newClusterRole)
-
 		})
 	}
 }
@@ -133,8 +133,8 @@ func TestReplicationPreCheck(t *testing.T) {
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
 
-			cluster1ConfigSecret := getSecret(ReplicationControllerNameSpace, "test-cluster-1")
-			cluster2ConfigSecret := getSecret(ReplicationControllerNameSpace, "test-cluster-2")
+			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-1")
+			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-2")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret).Build()
 
@@ -158,8 +158,8 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica := tmpCR.Spec.Modules[0]
 			replica.ConfigVersion = "v1.2.0"
 
-			cluster1ConfigSecret := getSecret(ReplicationControllerNameSpace, "test-cluster-1")
-			cluster2ConfigSecret := getSecret(ReplicationControllerNameSpace, "test-cluster-2")
+			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-1")
+			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-2")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret).Build()
 
@@ -183,8 +183,8 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica := tmpCR.Spec.Modules[0]
 			replica.ConfigVersion = "v1.2.0"
 
-			cluster1ConfigSecret := getSecret(ReplicationControllerNameSpace, "test-cluster-1")
-			cluster2ConfigSecret := getSecret(ReplicationControllerNameSpace, "test-cluster-2")
+			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-1")
+			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-2")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret).Build()
 
@@ -291,7 +291,6 @@ func TestReplicationPreCheck(t *testing.T) {
 			tmpCR := customResource
 			tmpCR.Spec.Driver.CSIDriverType = "unsupported-driver"
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v100000.0.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
@@ -305,20 +304,29 @@ func TestReplicationPreCheck(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := NewControllerRuntimeClientWrapper
+			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
 			defer func() {
-				NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 
 			success, setREPCTL, replica, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
-			NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			utils.NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
+				return nil, nil
+			}
 
 			if setREPCTL {
 				os.Setenv("REPCTL_BINARY", "echo")
 				defer os.Unsetenv("REPCTL_BINARY")
 			}
+			fakeReconcile := utils.FakeReconcileCSM{
+				Client:    sourceClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
 
-			err := ReplicationPrecheck(context.TODO(), operatorConfig, replica, tmpCR, sourceClient)
+			err := ReplicationPrecheck(context.TODO(), operatorConfig, replica, tmpCR, &fakeReconcile)
 			if success {
 				assert.NoError(t, err)
 
