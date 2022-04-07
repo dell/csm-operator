@@ -693,10 +693,12 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+
 	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.2.0" {
 		return fmt.Errorf("driver version not specified in spec or driver version is not supported")
 	}
 
+	driverName := ""
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
@@ -704,6 +706,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
+		driverName = string(csmv1.PowerScaleName)
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
@@ -725,6 +728,47 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 		}
 	}
+
+	//make([]string) for each configmap powerscale-sideccar-v2.2.0, replication
+	//configFolder := []string{"sidecars", "driver"}
+	// "authorization-module", "module-common", "replication-module", "resiliency-module"}
+	configmapname := make([]string, 0)
+	ns := cr.GetNamespace()
+	//isFound := utils.CheckMaps(configmapname, ns, driverName + "-" + cr.Spec.Driver.ConfigVersion, r.K8sClient)
+	isFound := utils.CheckMaps(configmapname, ns, driverName+"-"+cr.Spec.Driver.ConfigVersion, r.K8sClient)
+	//have skipflag
+	if isFound && skipifexists {
+		// log message fmt.Errorf("ConfigMaps Already exist")
+	}
+	if !isFound {
+		// Force Download
+		skipifExists = false
+	}
+	if cr.Spec.remoteRepo.repository == "" && !isFound {
+		// return error url not found and configmap doesn't exist
+	}
+	if cr.Spec.remoteRepo.repository != "" && !skipifExists {
+		fileName := driverName + "-" + cr.Spec.Driver.ConfigVersion + ".tgz"
+		pluginData, err := utils.Download(cr.Spec.remoteRepo.repository + fileName)
+		if err != nil {
+			return fmt.Errorf("Error from download and creating ConfigMaps: %v", err)
+		}
+		if configmapname, err = utils.ExtractandCreateMap(pluginData, driverName+cr.Spec.Driver.ConfigVersion); err != nil {
+			panic(err)
+		}
+	}
+
+	// check if configmap exists for this entirelist then below code
+	//https://amaas-eos-mw1.cec.lab.emc.com:5036/artifactory/csi-driver-helm-virtual/powerscale-v2.2.0.tgz
+	//https://amaas-eos-mw1.cec.lab.emc.com:5036/artifactory/csi-driver-helm-virtual/
+
+	// if cr.spec.remoterepo.url != "" {
+	//	filename =  driverName + "-" + cr.Spec.Driver.ConfigVersion + ".tgz"  //cr.powerscale-v2.2.0.tgz
+	//	utils.Download(url + filename);
+	//	check err for utils.Download
+	//	utils.extractandcreatemap(buf, list)
+	//	check err
+	//}
 	return nil
 }
 
