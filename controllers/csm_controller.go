@@ -694,6 +694,8 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 
+	log := logger.GetLogger(ctx)
+
 	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.2.0" {
 		return fmt.Errorf("driver version not specified in spec or driver version is not supported")
 	}
@@ -734,22 +736,22 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	// "authorization-module", "module-common", "replication-module", "resiliency-module"}
 	configmapname := make([]string, 0)
 	ns := cr.GetNamespace()
-	//isFound := utils.CheckMaps(configmapname, ns, driverName + "-" + cr.Spec.Driver.ConfigVersion, r.K8sClient)
 	isFound := utils.CheckMaps(configmapname, ns, driverName+"-"+cr.Spec.Driver.ConfigVersion, r.K8sClient)
 	//have skipflag
-	if isFound && skipifexists {
-		// log message fmt.Errorf("ConfigMaps Already exist")
+	if isFound && cr.Spec.RemoteRepo.SkipIfExists {
+		log.Infow("ConfigMap Already Exists", "Name:", driverName+"-"+cr.Spec.Driver.ConfigVersion)
 	}
 	if !isFound {
 		// Force Download
-		skipifExists = false
+		cr.Spec.RemoteRepo.SkipIfExists = false
 	}
-	if cr.Spec.remoteRepo.repository == "" && !isFound {
+	if cr.Spec.RemoteRepo.Repository == "" && !isFound {
 		// return error url not found and configmap doesn't exist
+		return fmt.Errorf("Configmap doesn't exist and url not found : %s", cr.Spec.RemoteRepo.Repository)
 	}
-	if cr.Spec.remoteRepo.repository != "" && !skipifExists {
+	if cr.Spec.RemoteRepo.Repository != "" && !cr.Spec.RemoteRepo.SkipIfExists {
 		fileName := driverName + "-" + cr.Spec.Driver.ConfigVersion + ".tgz"
-		pluginData, err := utils.Download(cr.Spec.remoteRepo.repository + fileName)
+		pluginData, err := utils.Download(cr.Spec.RemoteRepo.Repository + fileName)
 		if err != nil {
 			return fmt.Errorf("Error from download and creating ConfigMaps: %v", err)
 		}

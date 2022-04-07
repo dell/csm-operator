@@ -121,14 +121,14 @@ func Get(u *url.URL) (*bytes.Buffer, error) {
 func ExtractandCreateMap(buffer *bytes.Buffer, nameofMap string) ([]string, error) {
 	uncompressedStream, err := gzip.NewReader(buffer)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tarReader := tar.NewReader(uncompressedStream)
 
 	var configMapData map[string]string
 	configMapData = make(map[string]string, 0)
-	configmapname := make([]string, 0)
+	configMapName := make([]string, 0)
 	name := ""
 	ns := "dell-csm-operator"
 	for {
@@ -137,18 +137,18 @@ func ExtractandCreateMap(buffer *bytes.Buffer, nameofMap string) ([]string, erro
 			break
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if strings.Contains(header.Name, nameofMap) {
 			// extract the file and get list of configmap names
-			var b bytes.Buffer
-			b.ReadFrom(tarReader)
+			var b []byte
+			//b.ReadFrom(tarReader)
 			var install InstallConfig
 			err = yaml.Unmarshal(b, &install)
 			if err != nil {
 				return nil, err
 			}
-			configmapname = strings.Split(install.Listofconfigmapnames, ",")
+			configMapName = strings.Split(install.Listofconfigmapnames, ",")
 			break
 		}
 	}
@@ -158,11 +158,11 @@ func ExtractandCreateMap(buffer *bytes.Buffer, nameofMap string) ([]string, erro
 			break
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		//add for loop for each configmapname
-		for _, cmName := range configmapName {
+		for _, cmName := range configMapName {
 			key := ""
 			// header.name = /a/b/c/foo.yaml
 			name = cmName
@@ -183,7 +183,7 @@ func ExtractandCreateMap(buffer *bytes.Buffer, nameofMap string) ([]string, erro
 			case tar.TypeXGlobalHeader, tar.TypeXHeader:
 				continue
 			default:
-				return fmt.Errorf("unknown type: %b in %s", header.Typeflag, header.Name)
+				return nil, fmt.Errorf("unknown type: %b in %s", header.Typeflag, header.Name)
 			}
 		}
 	}
@@ -191,7 +191,7 @@ func ExtractandCreateMap(buffer *bytes.Buffer, nameofMap string) ([]string, erro
 		_ = CreateMap(name, ns, configMapData)
 	}
 
-	return nil
+	return configMapName, nil
 }
 
 // CreateMap - create configmap if needed else update existing map
@@ -262,16 +262,16 @@ func CheckMaps(configName []string, ns string, nameofMap string, k8sClient kuber
 		return isFound
 	}
 	// read name of map and make a list of configname
-	configName = strings.Split(cm["listofconfigmapname"], ",")
+	configName = strings.Split(cm.Data["listofconfigmapname"], ",")
 	for _, name := range configName {
 		if cm, err := k8sClient.CoreV1().ConfigMaps(ns).Get(ctx, name, metav1.GetOptions{}); err != nil {
 
 			fmt.Println("new configmap needed", err.Error())
 
 			fmt.Printf("create new configmap %+v", cm.Name)
-		} else {
-			isFound = true
+			return isFound
 		}
 	}
+	isFound = true
 	return isFound
 }

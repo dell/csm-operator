@@ -134,6 +134,7 @@ type RemoteRepo struct {
 	Repository     string `json:"repository,omitempty"`
 	CredSecretName string `json:"credSecretName,omitempty"`
 	CertSecretName string `json:"certSecretName,omitempty"`
+	SkipIfExists   bool   `json:"skipIfExists,omitempty"`
 }
 
 // Driver of CSIDriver
