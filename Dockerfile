@@ -34,6 +34,8 @@ ENV USER_UID=1001 \
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY operatorconfig/ /etc/config/dell-csm-operator
+RUN  chmod a-w /usr/bin/chage
+RUN  rm -rf tmp
 LABEL vendor="Dell Inc." \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
