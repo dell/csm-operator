@@ -251,7 +251,7 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 
 	// set bad version error
-	configVersion = "v0"
+	configVersion = "v2.2.0"
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
