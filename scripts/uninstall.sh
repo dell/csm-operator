@@ -14,5 +14,7 @@ fi
 NAMESPACE=$(echo $NS_STRING | cut -d ' ' -f2)
 log separator
 echo "Deleting the Operator Deployment"
+echo
+log separator
 kubectl delete -f $DEPLOYDIR/operator.yaml
 echo

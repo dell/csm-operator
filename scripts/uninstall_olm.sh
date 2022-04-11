@@ -16,6 +16,8 @@ NAMESPACE="test-csm-operator-olm"
 CSV=`kubectl get csv -n $NAMESPACE --no-headers -o custom-columns=":metadata.name" | grep dell-csm-operator 2>&1`
 log separator
 echo "Deleting the Operator Deployment"
+echo
+log separator
 kubectl delete -f $MANIFEST_FILE
 kubectl delete csv $CSV -n $NAMESPACE
 echo
