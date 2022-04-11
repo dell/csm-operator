@@ -1,0 +1,1453 @@
+=== RUN   TestCustom
+=== RUN   TestCustom/TestContentWatch
+1.649186421955953e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:21.956-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:21.956-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+=== RUN   TestCustom/TestCsmAnnotation
+1.6491864219570577e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:21.957-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:21.957-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.957-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:21.959-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-1", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:21.959-0400	INFO	controllers/csm_controller.go:776	Installing CSI Driver csm with config Version v2.2.0. Updating Annotations with Config Version	{"TraceId": "csm-1"}
+[ShouldFail] force Update csm error for obj of type &{TypeMeta:{Kind: APIVersion:} ObjectMeta:{Name:csm GenerateName: Namespace:test SelfLink: UID: ResourceVersion: Generation:0 CreationTimestamp:0001-01-01 00:00:00 +0000 UTC DeletionTimestamp:<nil> DeletionGracePeriodSeconds:<nil> Labels:map[] Annotations:map[storage.dell.com/CSIoperatorConfigVersion:v2.2.0] OwnerReferences:[] Finalizers:[finalizer.dell.emc.com] ClusterName: ManagedFields:[]} Spec:{Driver:{CSIDriverType:isilon CSIDriverSpec:{FSGroupPolicy:} ConfigVersion:v2.2.0 Replicas:0 DNSPolicy: Common:{Name: Enabled:<nil> Image:image ImagePullPolicy: Args:[] Envs:[{Name:X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION Value:true ValueFrom:nil}] Tolerations:[] NodeSelector:map[]} Controller:{Name: Enabled:<nil> Image: ImagePullPolicy: Args:[] Envs:[] Tolerations:[] NodeSelector:map[]} Node:{Name: Enabled:<nil> Image: ImagePullPolicy: Args:[] Envs:[] Tolerations:[] NodeSelector:map[]} SideCars:[] InitContainers:[] SnapshotClass:[] ForceUpdate:false AuthSecret: TLSCertSecret: ForceRemoveDriver:false} Modules:[]} Status:{ControllerStatus:{Available: Desired: Failed:} NodeStatus:{Available: Desired: Failed:} State:}}
+2022-04-05T15:20:21.959-0400	ERROR	controllers/csm_controller.go:218	unable to get CSMFailed to update CR with annotation	{"TraceId": "csm-1"}
+=== RUN   TestCustom/TestCsmFinalizerError
+1.6491864219599063e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:21.960-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:21.960-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.960-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:21.960-0400	INFO	controllers/csm_controller.go:194	HandleFinalizer	{"TraceId": "csm-1", "name": "finalizer.dell.emc.com"}
+[ShouldFail] force Update csm error for obj of type &{TypeMeta:{Kind: APIVersion:} ObjectMeta:{Name:csm GenerateName: Namespace:test SelfLink: UID: ResourceVersion: Generation:0 CreationTimestamp:0001-01-01 00:00:00 +0000 UTC DeletionTimestamp:<nil> DeletionGracePeriodSeconds:<nil> Labels:map[] Annotations:map[] OwnerReferences:[] Finalizers:[finalizer.dell.emc.com] ClusterName: ManagedFields:[]} Spec:{Driver:{CSIDriverType: CSIDriverSpec:{FSGroupPolicy:} ConfigVersion:v2.2.0 Replicas:0 DNSPolicy: Common:{Name: Enabled:<nil> Image: ImagePullPolicy: Args:[] Envs:[{Name:X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION Value:true ValueFrom:nil}] Tolerations:[] NodeSelector:map[]} Controller:{Name: Enabled:<nil> Image: ImagePullPolicy: Args:[] Envs:[] Tolerations:[] NodeSelector:map[]} Node:{Name: Enabled:<nil> Image: ImagePullPolicy: Args:[] Envs:[] Tolerations:[] NodeSelector:map[]} SideCars:[] InitContainers:[] SnapshotClass:[] ForceUpdate:false AuthSecret: TLSCertSecret: ForceRemoveDriver:false} Modules:[]} Status:{ControllerStatus:{Available: Desired: Failed:} NodeStatus:{Available: Desired: Failed:} State:Creating}}
+2022-04-05T15:20:21.960-0400	ERROR	controllers/csm_controller.go:197	HandleFinalizer	{"TraceId": "csm-1", "error": "unable to get CSM"}
+=== RUN   TestCustom/TestCsmPreCheckTypeError
+1.649186421960525e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:21.960-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:21.960-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.960-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:21.960-0400	ERROR	utils/status.go:248	unsupported driver type powerflex *************Create/Update powerflex failed ********	{"TraceId": "csm-1"}
+################End Reconcile##############
+2022-04-05T15:20:21.961-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:21.961-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.961-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:21.961-0400	INFO	controllers/csm_controller.go:170	Delete request	{"TraceId": "csm-1", "csm": "test", "Name": "csm"}
+=== RUN   TestCustom/TestCsmPreCheckVersionError
+1.649186421961355e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:21.961-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:21.961-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.961-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:21.961-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-1", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:21.961-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.961-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.961-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.961-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.961-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.961-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.961-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {}, "Node": {}}
+2022-04-05T15:20:21.962-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.962-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-1", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:21.962-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.962-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:21.962-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:21.962-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:21.982-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:21.997-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:21.997-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:21.997-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.998-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.998-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.998-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-1"}
+2022-04-05T15:20:21.998-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-1", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:21.998-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-1", "Name": "csm-config-params"}
+2022-04-05T15:20:21.998-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-1", "name": "csm-controller"}
+2022-04-05T15:20:21.998-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-1", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:21.998-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-1", "Name:": ""}
+2022-04-05T15:20:22.002-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-1", "name": "csm-controller"}
+2022-04-05T15:20:22.002-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-1", "name": "csm-node"}
+2022-04-05T15:20:22.002-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-1", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:22.002-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-1", "Name:": "csm-node"}
+################End Reconcile##############
+    csm_controller_test.go:268: 
+        	Error Trace:	csm_controller_test.go:268
+        	Error:      	Expected value not to be nil.
+        	Test:       	TestCustom/TestCsmPreCheckVersionError
+2022-04-05T15:20:22.003-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:22.003-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.003-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:22.003-0400	INFO	controllers/csm_controller.go:170	Delete request	{"TraceId": "csm-1", "csm": "test", "Name": "csm"}
+=== RUN   TestCustom/TestDeleteErrorReconcile
+1.6491864220041347e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:22.004-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:22.004-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.004-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:22.004-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-1", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.005-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.005-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.005-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.005-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.005-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.005-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.005-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.005-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.005-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-1", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.005-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.005-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.005-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.005-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.057-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.076-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-1", "name": "provisioner"}
+2022-04-05T15:20:22.076-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.078-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:22.078-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:22.078-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.078-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.078-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.078-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.078-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-1", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:22.078-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-1", "Name": "csm-config-params"}
+2022-04-05T15:20:22.078-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-1", "name": "csm-controller"}
+2022-04-05T15:20:22.078-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-1", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:22.078-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-1", "Name:": ""}
+2022-04-05T15:20:22.079-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-1", "name": "csm-controller"}
+2022-04-05T15:20:22.079-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-1", "name": "csm-node"}
+2022-04-05T15:20:22.079-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-1", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:22.079-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-1", "Name:": "csm-node"}
+################End Reconcile##############
+1.6491864220803292e+09	INFO	controllers.unit-test	reconcile response	{"res is: ": {"Requeue":false,"RequeueAfter":0}}
+2022-04-05T15:20:22.088-0400	DEBUG	controllers/csm_controller.go:361	daemonset modified generation	{"TraceId": "csm-1", "new": 0, "old": 0}
+2022-04-05T15:20:22.089-0400	INFO	controllers/csm_controller.go:368	daemonset 	{"TraceId": "csm-1", "name": "csm-node", "namespace": "test"}
+2022-04-05T15:20:22.089-0400	INFO	controllers/csm_controller.go:369	daemonset 	{"TraceId": "csm-1", "desired": 0}
+2022-04-05T15:20:22.089-0400	INFO	controllers/csm_controller.go:370	daemonset 	{"TraceId": "csm-1", "numberReady": 0}
+2022-04-05T15:20:22.089-0400	INFO	controllers/csm_controller.go:371	daemonset 	{"TraceId": "csm-1", "available": 0}
+2022-04-05T15:20:22.089-0400	INFO	controllers/csm_controller.go:372	daemonset 	{"TraceId": "csm-1", "numberUnavailable": 0}
+2022-04-05T15:20:22.089-0400	DEBUG	controllers/csm_controller.go:375	daemonset 	{"TraceId": "0", "ns": "test", "name": "csm"}
+2022-04-05T15:20:22.089-0400	INFO	controllers/csm_controller.go:387	csm prev status 	{"TraceId": "csm-1", "state": {"controllerStatus":{},"nodeStatus":{}}}
+2022-04-05T15:20:22.089-0400	INFO	utils/status.go:210	update current csm status	{"TraceId": "csm-1", "status": ""}
+2022-04-05T15:20:22.089-0400	INFO	utils/status.go:213	update new Status: (State - )	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.089-0400	INFO	utils/status.go:214	Update State	{"TraceId": "csm-1", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.091-0400	INFO	utils/status.go:230	Update done	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.092-0400	ERROR	zap@v1.21.0/sugar.go:173	Ignored key-value pairs with non-string keys.	{"TraceId": "csm-1", "invalid": [{"position": 0, "key": 0, "value": 0}]}
+2022-04-05T15:20:22.092-0400	DEBUG	controllers/csm_controller.go:268	deployment modified generation	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.092-0400	INFO	controllers/csm_controller.go:277	deployment	{"TraceId": "csm-1", "desired": 0}
+2022-04-05T15:20:22.092-0400	INFO	controllers/csm_controller.go:278	deployment	{"TraceId": "csm-1", "numberReady": 0}
+2022-04-05T15:20:22.092-0400	INFO	controllers/csm_controller.go:279	deployment	{"TraceId": "csm-1", "available": 0}
+2022-04-05T15:20:22.092-0400	INFO	controllers/csm_controller.go:280	deployment	{"TraceId": "csm-1", "numberUnavailable": 0}
+2022-04-05T15:20:22.092-0400	DEBUG	controllers/csm_controller.go:283	deployment	{"TraceId": "csm-1", "namespace": "test", "name": "csm"}
+2022-04-05T15:20:22.092-0400	INFO	utils/status.go:210	update current csm status	{"TraceId": "csm-1", "status": "Succeeded"}
+2022-04-05T15:20:22.092-0400	INFO	utils/status.go:213	update new Status: (State - Succeeded)	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.092-0400	INFO	utils/status.go:214	Update State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-node status Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:121	daemonset pod csm-node : Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:145	daemonset status failedCount pods 1	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.093-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.094-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.094-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.094-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: test=, Daemonseterror: test=]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.094-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"1"}, "Node": {"available":"0","desired":"0","failed":"1"}}
+2022-04-05T15:20:22.094-0400	INFO	utils/status.go:230	Update done	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.094-0400	DEBUG	controllers/csm_controller.go:297	deployment status 	{"TraceId": "csm-1", "pods": "ControllerError: test=, Daemonseterror: test="}
+2022-04-05T15:20:22.116-0400	INFO	controllers/csm_controller.go:321	pod modified for driver	{"TraceId": "csm-1", "name": "csm-pod"}
+2022-04-05T15:20:22.117-0400	INFO	controllers/csm_controller.go:332	csm prev status 	{"TraceId": "csm-1", "state": {"controllerStatus":{"available":"0","desired":"0","failed":"1"},"nodeStatus":{"available":"0","desired":"0","failed":"1"},"state":"Succeeded"}}
+2022-04-05T15:20:22.117-0400	INFO	utils/status.go:210	update current csm status	{"TraceId": "csm-1", "status": "Succeeded"}
+2022-04-05T15:20:22.117-0400	INFO	utils/status.go:213	update new Status: (State - Succeeded)	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.117-0400	INFO	utils/status.go:214	Update State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"1"}, "Node": {"available":"0","desired":"0","failed":"1"}}
+2022-04-05T15:20:22.117-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-controller status Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-pod status 	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-node status Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:121	daemonset pod csm-pod : 	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:121	daemonset pod csm-node : Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:121	daemonset pod csm-controller : Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:145	daemonset status failedCount pods 2	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: test=test=, Daemonseterror: test=]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.118-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"2"}, "Node": {"available":"0","desired":"0","failed":"2"}}
+2022-04-05T15:20:22.119-0400	INFO	utils/status.go:230	Update done	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.119-0400	INFO	controllers/csm_controller.go:339	pod status 	{"TraceId": "csm-1", "state": "ControllerError: test=test=, Daemonseterror: test="}
+2022-04-05T15:20:22.119-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.119-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-2", "Namespace": "test", "Name": "csm", "Attempt": 2}
+2022-04-05T15:20:22.119-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-2", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.120-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-node status Pending	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.120-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-2", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.120-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-controller status Pending	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.120-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-2", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.120-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-pod status 	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:121	daemonset pod csm-pod : 	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:121	daemonset pod csm-node : Pending	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-2", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:121	daemonset pod csm-controller : Pending	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-2", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:145	daemonset status failedCount pods 2	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: test=test=, Daemonseterror: test=]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-2", "Controller": {"available":"0","desired":"0","failed":"2"}, "Node": {"available":"0","desired":"0","failed":"2"}}
+2022-04-05T15:20:22.129-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: test=test=, Daemonseterror: test=	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-2", "newStatus.State": "Running"}
+2022-04-05T15:20:22.129-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.129-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.130-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.130-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.181-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.229-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-2", "name": "provisioner"}
+2022-04-05T15:20:22.229-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.231-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-2", "Name:": "csm-node"}
+2022-04-05T15:20:22.231-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-2", "Name:": "csm-controller"}
+2022-04-05T15:20:22.231-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.232-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.232-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-node	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.232-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-controller	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.232-0400	INFO	csidriver/csidriver.go:29	CSIDriver Object exist	{"TraceId": "csm-2", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:22.232-0400	INFO	configmap/configmap.go:30	Updating ConfigMap	{"TraceId": "csm-2", "Name:": "csm-config-params"}
+2022-04-05T15:20:22.232-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-2", "name": "csm-controller"}
+2022-04-05T15:20:22.233-0400	INFO	deployment/deployment.go:36	found deployment	{"TraceId": "csm-2", "image": ""}
+2022-04-05T15:20:22.234-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-2", "name": "csm-controller"}
+2022-04-05T15:20:22.234-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-2", "name": "csm-node"}
+2022-04-05T15:20:22.235-0400	INFO	daemonset/daemonset.go:30	found daemonset	{"TraceId": "csm-2", "image": "image"}
+################End Reconcile##############
+2022-04-05T15:20:22.236-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:22.236-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.236-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:22.236-0400	INFO	controllers/csm_controller.go:170	Delete request	{"TraceId": "csm-1", "csm": "test", "Name": "csm"}
+2022-04-05T15:20:22.236-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.236-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.237-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.237-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.262-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.309-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-1", "name": "provisioner"}
+2022-04-05T15:20:22.310-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:22.310-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-controller", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:22.310-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-node", "Kind:": "ClusterRole"}
+2022-04-05T15:20:22.310-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-controller", "Kind:": "ClusterRole"}
+2022-04-05T15:20:22.310-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-node", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:22.310-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-controller", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:22.310-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-config-params", "Kind:": "ConfigMap"}
+2022-04-05T15:20:22.310-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csi-isilon.dellemc.com", "Kind:": "CSIDriver"}
+[ShouldFail] force Update csm error for obj of type &{TypeMeta:{Kind: APIVersion:} ObjectMeta:{Name:csm GenerateName: Namespace:test SelfLink: UID: ResourceVersion: Generation:0 CreationTimestamp:0001-01-01 00:00:00 +0000 UTC DeletionTimestamp:2022-04-05 15:20:22 -0400 EDT DeletionGracePeriodSeconds:<nil> Labels:map[] Annotations:map[storage.dell.com/CSIoperatorConfigVersion:v2.2.0] OwnerReferences:[] Finalizers:[] ClusterName: ManagedFields:[]} Spec:{Driver:{CSIDriverType:isilon CSIDriverSpec:{FSGroupPolicy:} ConfigVersion:v2.2.0 Replicas:0 DNSPolicy: Common:{Name: Enabled:<nil> Image:image ImagePullPolicy: Args:[] Envs:[{Name:X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION Value:true ValueFrom:nil}] Tolerations:[] NodeSelector:map[]} Controller:{Name: Enabled:<nil> Image: ImagePullPolicy: Args:[] Envs:[] Tolerations:[] NodeSelector:map[]} Node:{Name: Enabled:<nil> Image: ImagePullPolicy: Args:[] Envs:[] Tolerations:[] NodeSelector:map[]} SideCars:[{Name:provisioner Enabled:0xc00022594b Image:image2 ImagePullPolicy:IfNotPresent Args:[--volume-name-prefix=k8s] Envs:[] Tolerations:[] NodeSelector:map[]}] InitContainers:[] SnapshotClass:[] ForceUpdate:false AuthSecret: TLSCertSecret: ForceRemoveDriver:true} Modules:[{Name:authorization Enabled:true ConfigVersion:v1.2.0 Components:[{Name:karavi-authorization-proxy Enabled:<nil> Image: ImagePullPolicy: Args:[] Envs:[{Name:INSECURE Value:true ValueFrom:nil}] Tolerations:[] NodeSelector:map[]}]}]} Status:{ControllerStatus:{Available:0 Desired:0 Failed:2} NodeStatus:{Available:0 Desired:0 Failed:2} State:Succeeded}}
+2022-04-05T15:20:22.312-0400	ERROR	controllers/csm_controller.go:184	remove driver finalizer	{"TraceId": "csm-1", "error": "unable to get CSM"}
+=== RUN   TestCustom/TestErrorInjection
+1.6491864223126695e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:22.312-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:22.312-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.313-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+1.6491864223130832e+09	INFO	controllers.unit-test	reconcile response	{"res is: ": {"Requeue":false,"RequeueAfter":0}}
+2022-04-05T15:20:22.313-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:22.313-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.313-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:22.313-0400	INFO	controllers/csm_controller.go:194	HandleFinalizer	{"TraceId": "csm-1", "name": "finalizer.dell.emc.com"}
+2022-04-05T15:20:22.313-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-1", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.313-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.313-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.313-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.313-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.313-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.313-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.313-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.314-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.314-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-1", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.314-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.314-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.314-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.314-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.327-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.347-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-1", "name": "provisioner"}
+2022-04-05T15:20:22.347-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.349-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm-node"}
+[ShouldFail] force Create ServiceAccount error for ServiceAccount named csm-node
+################End Reconcile##############
+2022-04-05T15:20:22.349-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.349-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-2", "Namespace": "test", "Name": "csm", "Attempt": 2}
+2022-04-05T15:20:22.349-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-2", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.349-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.349-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.349-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.349-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.349-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.349-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.349-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-2", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.349-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.349-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-2", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.349-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.349-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.350-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.350-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.357-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.377-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-2", "name": "provisioner"}
+2022-04-05T15:20:22.377-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.378-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-2", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:22.378-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-2", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:22.378-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-2"}
+[ShouldFail] force Create ClusterRole error for ClusterRole named csm-node
+################End Reconcile##############
+2022-04-05T15:20:22.378-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.378-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-3", "Namespace": "test", "Name": "csm", "Attempt": 3}
+2022-04-05T15:20:22.379-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-3", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.379-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.379-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.379-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.379-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.379-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.379-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.379-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-3", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.379-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.379-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-3", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.379-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.379-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-3", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.379-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-3", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.380-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-3", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.386-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-3", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.401-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-3", "name": "provisioner"}
+2022-04-05T15:20:22.401-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.403-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-3", "Name:": "csm-node"}
+2022-04-05T15:20:22.403-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-3", "Name:": "csm-controller"}
+2022-04-05T15:20:22.403-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.403-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-3"}
+2022-04-05T15:20:22.404-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-3"}
+[ShouldFail] force Create ClusterRoleBinding error for ClusterRoleBinding named csm-node
+################End Reconcile##############
+2022-04-05T15:20:22.404-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.404-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-4", "Namespace": "test", "Name": "csm", "Attempt": 4}
+2022-04-05T15:20:22.404-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-4", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.405-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.405-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.405-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.405-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.405-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.405-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.405-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-4", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.405-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.405-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-4", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.405-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.405-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-4", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.406-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-4", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.406-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-4", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.413-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-4", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.423-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-4", "name": "provisioner"}
+2022-04-05T15:20:22.423-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.425-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-4", "Name:": "csm-node"}
+2022-04-05T15:20:22.425-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-4", "Name:": "csm-controller"}
+2022-04-05T15:20:22.425-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.426-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.426-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.426-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-4"}
+2022-04-05T15:20:22.426-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-4", "Name:": "csi-isilon.dellemc.com"}
+[ShouldFail] force Create Csidriver error for csidriver named csi-isilon.dellemc.com
+################End Reconcile##############
+2022-04-05T15:20:22.426-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.426-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-5", "Namespace": "test", "Name": "csm", "Attempt": 5}
+2022-04-05T15:20:22.426-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-5", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.428-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.428-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.428-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.428-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.428-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.428-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.428-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-5", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.428-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.428-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-5", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.428-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.428-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-5", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.428-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-5", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.429-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-5", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.439-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-5", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.448-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-5", "name": "provisioner"}
+2022-04-05T15:20:22.448-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.450-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-5", "Name:": "csm-node"}
+2022-04-05T15:20:22.450-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-5", "Name:": "csm-controller"}
+2022-04-05T15:20:22.450-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.451-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.451-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-node	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.451-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-controller	{"TraceId": "csm-5"}
+2022-04-05T15:20:22.451-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-5", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:22.451-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-5", "Name": "csm-config-params"}
+[ShouldFail] force create Configmap error for configmap named csm-config-params
+################End Reconcile##############
+2022-04-05T15:20:22.451-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.451-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-6", "Namespace": "test", "Name": "csm", "Attempt": 6}
+2022-04-05T15:20:22.451-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-6", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.452-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.452-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.452-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.452-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.452-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.452-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.452-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-6", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.452-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.452-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-6", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.452-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.452-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-6", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.452-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-6", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.452-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-6", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.466-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-6", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.479-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-6", "name": "provisioner"}
+2022-04-05T15:20:22.479-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.481-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-6", "Name:": "csm-node"}
+2022-04-05T15:20:22.481-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-6", "Name:": "csm-controller"}
+2022-04-05T15:20:22.482-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.482-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.482-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-node	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.482-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-controller	{"TraceId": "csm-6"}
+2022-04-05T15:20:22.482-0400	INFO	csidriver/csidriver.go:29	CSIDriver Object exist	{"TraceId": "csm-6", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:22.482-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-6", "Name": "csm-config-params"}
+2022-04-05T15:20:22.482-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-6", "name": "csm-controller"}
+2022-04-05T15:20:22.482-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-6", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:22.482-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-6", "Name:": ""}
+2022-04-05T15:20:22.483-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-6", "name": "csm-controller"}
+2022-04-05T15:20:22.483-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-6", "name": "csm-node"}
+2022-04-05T15:20:22.483-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-6", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:22.483-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-6", "Name:": "csm-node"}
+################End Reconcile##############
+2022-04-05T15:20:22.484-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.484-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-7", "Namespace": "test", "Name": "csm", "Attempt": 7}
+2022-04-05T15:20:22.484-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-7", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-7", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-7", "newStatus.State": "Running"}
+2022-04-05T15:20:22.488-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.488-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-7", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.488-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-7", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.489-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-7", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.495-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-7", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.506-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-7", "name": "provisioner"}
+2022-04-05T15:20:22.506-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.508-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-7", "Name:": "csm-node"}
+2022-04-05T15:20:22.508-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-7", "Name:": "csm-controller"}
+2022-04-05T15:20:22.508-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.509-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.509-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-node	{"TraceId": "csm-7"}
+2022-04-05T15:20:22.509-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-controller	{"TraceId": "csm-7"}
+[ShouldFail] force Get Csidriver error for csidriver named 
+2022-04-05T15:20:22.509-0400	ERROR	csidriver/csidriver.go:26	Unknown error.	{"TraceId": "csm-7", "Error": "unable to get Csidriver"}
+################End Reconcile##############
+2022-04-05T15:20:22.509-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.509-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-8", "Namespace": "test", "Name": "csm", "Attempt": 8}
+2022-04-05T15:20:22.509-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-8", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.510-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.510-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.510-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.510-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.510-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.510-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.510-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.511-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.511-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-8", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.511-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-8", "newStatus.State": "Running"}
+2022-04-05T15:20:22.511-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.511-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.511-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-8", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.511-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-8", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.511-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-8", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.517-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-8", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.528-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-8", "name": "provisioner"}
+2022-04-05T15:20:22.529-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.531-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-8", "Name:": "csm-node"}
+2022-04-05T15:20:22.531-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-8", "Name:": "csm-controller"}
+2022-04-05T15:20:22.531-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.532-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.532-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-node	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.532-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-controller	{"TraceId": "csm-8"}
+2022-04-05T15:20:22.532-0400	INFO	csidriver/csidriver.go:29	CSIDriver Object exist	{"TraceId": "csm-8", "Name:": "csi-isilon.dellemc.com"}
+[ShouldFail] force Get Configmap error for configmap named 
+[ShouldFail] force Get Configmap error for configmap named &ConfigMap{ObjectMeta:{      0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] []  []},Data:map[string]string{},BinaryData:map[string][]byte{},Immutable:nil,}
+2022-04-05T15:20:22.532-0400	ERROR	configmap/configmap.go:27	Unknown error.	{"TraceId": "csm-8", "Error": "unable to get ConfigMap"}
+################End Reconcile##############
+2022-04-05T15:20:22.532-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.532-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-9", "Namespace": "test", "Name": "csm", "Attempt": 9}
+2022-04-05T15:20:22.532-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-9", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-9", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-9", "newStatus.State": "Running"}
+2022-04-05T15:20:22.534-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.534-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-9", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.534-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-9", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.535-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-9", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.541-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-9", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.555-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-9", "name": "provisioner"}
+2022-04-05T15:20:22.555-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.559-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-9", "Name:": "csm-node"}
+2022-04-05T15:20:22.559-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-9", "Name:": "csm-controller"}
+2022-04-05T15:20:22.559-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.560-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.560-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-node	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.560-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-controller	{"TraceId": "csm-9"}
+2022-04-05T15:20:22.560-0400	INFO	csidriver/csidriver.go:29	CSIDriver Object exist	{"TraceId": "csm-9", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:22.560-0400	INFO	configmap/configmap.go:30	Updating ConfigMap	{"TraceId": "csm-9", "Name:": "csm-config-params"}
+[ShouldFail] force Update Configmap error for configmap named csm-config-params
+################End Reconcile##############
+2022-04-05T15:20:22.560-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.560-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-10", "Namespace": "test", "Name": "csm", "Attempt": 10}
+2022-04-05T15:20:22.561-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-10", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-10", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-10", "newStatus.State": "Running"}
+2022-04-05T15:20:22.562-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.562-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-10", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.563-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-10", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.563-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-10", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.570-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-10", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.583-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-10", "name": "provisioner"}
+2022-04-05T15:20:22.583-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.586-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-10", "Name:": "csm-node"}
+2022-04-05T15:20:22.587-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-10", "Name:": "csm-controller"}
+2022-04-05T15:20:22.587-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-10"}
+2022-04-05T15:20:22.587-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-10"}
+[ShouldFail] force Get ClusterRoleBinding error for ClusterRoleBinding named 
+2022-04-05T15:20:22.587-0400	INFO	rbac/rolebindings.go:25	Unknown error.Errorunable to get ClusterroleBinding	{"TraceId": "csm-10"}
+################End Reconcile##############
+2022-04-05T15:20:22.587-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.587-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-11", "Namespace": "test", "Name": "csm", "Attempt": 11}
+2022-04-05T15:20:22.588-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-11", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-11", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-11", "newStatus.State": "Running"}
+2022-04-05T15:20:22.589-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.589-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-11", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.589-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-11", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.590-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-11", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.596-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-11", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.608-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-11", "name": "provisioner"}
+2022-04-05T15:20:22.608-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.610-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-11", "Name:": "csm-node"}
+2022-04-05T15:20:22.610-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-11", "Name:": "csm-controller"}
+2022-04-05T15:20:22.611-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.611-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-11"}
+2022-04-05T15:20:22.611-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-node	{"TraceId": "csm-11"}
+[ShouldFail] force Update ClusterRoleBinding error for ClusterRoleBinding named csm-node
+################End Reconcile##############
+2022-04-05T15:20:22.612-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.612-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-12", "Namespace": "test", "Name": "csm", "Attempt": 12}
+2022-04-05T15:20:22.612-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-12", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-12", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-12", "newStatus.State": "Running"}
+2022-04-05T15:20:22.614-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.614-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-12", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.615-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-12", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.615-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-12", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.622-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-12", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.632-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-12", "name": "provisioner"}
+2022-04-05T15:20:22.632-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-12"}
+2022-04-05T15:20:22.634-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-12", "Name:": "csm-node"}
+2022-04-05T15:20:22.634-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-12", "Name:": "csm-controller"}
+[ShouldFail] force Get ClusterRole error for ClusterRole named 
+2022-04-05T15:20:22.634-0400	INFO	rbac/clusterrole.go:30	Unknown error.Errorunable to get Clusterrole	{"TraceId": "csm-12"}
+################End Reconcile##############
+2022-04-05T15:20:22.634-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.634-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-13", "Namespace": "test", "Name": "csm", "Attempt": 13}
+2022-04-05T15:20:22.634-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-13", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.637-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.637-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.637-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.637-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.637-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.638-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.638-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.638-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.638-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-13", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.638-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-13", "newStatus.State": "Running"}
+2022-04-05T15:20:22.638-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.638-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.638-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-13", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.638-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-13", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.645-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-13", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.657-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-13", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.669-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-13", "name": "provisioner"}
+2022-04-05T15:20:22.669-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-13"}
+2022-04-05T15:20:22.670-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-13", "Name:": "csm-node"}
+2022-04-05T15:20:22.671-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-13", "Name:": "csm-controller"}
+2022-04-05T15:20:22.671-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-13"}
+[ShouldFail] force Update ClusterRole error for ClusterRole named csm-node
+################End Reconcile##############
+2022-04-05T15:20:22.671-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.671-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-14", "Namespace": "test", "Name": "csm", "Attempt": 14}
+2022-04-05T15:20:22.671-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-14", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-14", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-14", "newStatus.State": "Running"}
+2022-04-05T15:20:22.673-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-14"}
+2022-04-05T15:20:22.673-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-14", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.673-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-14", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.673-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-14", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.682-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-14", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.699-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-14", "name": "provisioner"}
+2022-04-05T15:20:22.699-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-14"}
+[ShouldFail] force Get ServiceAccount error for ServiceAccount named 
+2022-04-05T15:20:22.701-0400	ERROR	serviceaccount/serviceaccount.go:27	Unknown error.	{"TraceId": "csm-14", "Error": "unable to get ServiceAccount"}
+################End Reconcile##############
+2022-04-05T15:20:22.701-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.701-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-15", "Namespace": "test", "Name": "csm", "Attempt": 15}
+2022-04-05T15:20:22.701-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-15", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-15", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-15", "newStatus.State": "Running"}
+2022-04-05T15:20:22.703-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.703-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-15", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.703-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-15", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.704-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-15", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.711-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-15", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.736-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-15", "name": "provisioner"}
+2022-04-05T15:20:22.736-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-15"}
+2022-04-05T15:20:22.738-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-15", "Name:": "csm-node"}
+[ShouldFail] force Update ServiceAccount error for ServiceAccount named csm-node
+################End Reconcile##############
+2022-04-05T15:20:22.738-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.738-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-16", "Namespace": "test", "Name": "csm", "Attempt": 16}
+2022-04-05T15:20:22.738-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-16", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-16", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-16", "newStatus.State": "Running"}
+2022-04-05T15:20:22.740-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.740-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-16", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.740-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-16", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.740-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-16", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.748-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-16", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.759-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-16", "name": "provisioner"}
+2022-04-05T15:20:22.759-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.760-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-16", "Name:": "csm-node"}
+2022-04-05T15:20:22.760-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-16", "Name:": "csm-controller"}
+2022-04-05T15:20:22.760-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.761-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.761-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-node	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.761-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-controller	{"TraceId": "csm-16"}
+2022-04-05T15:20:22.761-0400	INFO	csidriver/csidriver.go:29	CSIDriver Object exist	{"TraceId": "csm-16", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:22.761-0400	INFO	configmap/configmap.go:30	Updating ConfigMap	{"TraceId": "csm-16", "Name:": "csm-config-params"}
+2022-04-05T15:20:22.761-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-16", "name": "csm-controller"}
+2022-04-05T15:20:22.762-0400	INFO	deployment/deployment.go:36	found deployment	{"TraceId": "csm-16", "image": ""}
+2022-04-05T15:20:22.765-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-16", "name": "csm-controller"}
+2022-04-05T15:20:22.765-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-16", "name": "csm-node"}
+2022-04-05T15:20:22.767-0400	INFO	daemonset/daemonset.go:30	found daemonset	{"TraceId": "csm-16", "image": "image"}
+[ShouldFail] force update ServiceAccount error for ServiceAccount named csm-node
+2022-04-05T15:20:22.769-0400	ERROR	daemonset/daemonset.go:36	Apply DaemonSet error	{"TraceId": "csm-16", "set": "unable to update Daemonset"}
+################End Reconcile##############
+2022-04-05T15:20:22.769-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-17"}
+2022-04-05T15:20:22.769-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-17", "Namespace": "test", "Name": "csm", "Attempt": 17}
+2022-04-05T15:20:22.769-0400	INFO	controllers/csm_controller.go:170	Delete request	{"TraceId": "csm-17", "csm": "test", "Name": "csm"}
+2022-04-05T15:20:22.769-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-17"}
+2022-04-05T15:20:22.769-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-17", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.770-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-17", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.770-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-17", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.777-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-17", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.795-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-17", "name": "provisioner"}
+2022-04-05T15:20:22.796-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-17", "Name:": "csm-node", "Kind:": "ServiceAccount"}
+[ShouldFail] force Delete ServiceAccount error for ServiceAccount named csm-node
+2022-04-05T15:20:22.796-0400	ERROR	controllers/csm_controller.go:625	error delete node service account	{"TraceId": "csm-17", "Error": "unable to delete ServiceAccount"}
+2022-04-05T15:20:22.796-0400	ERROR	controllers/csm_controller.go:177	remove driver	{"TraceId": "csm-17", "error": "unable to delete ServiceAccount"}
+=== RUN   TestCustom/TestIgnoreUpdatePredicate
+1.6491864227963886e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:22.796-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+=== RUN   TestCustom/TestReconcile
+1.649186422796895e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:22.797-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:22.797-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.797-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:22.797-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-1", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.797-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.797-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.797-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.797-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.797-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.797-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.797-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.797-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.797-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-1", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.797-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.797-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.798-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.798-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.805-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.818-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-1", "name": "provisioner"}
+2022-04-05T15:20:22.818-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.820-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:22.820-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:22.820-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.821-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.821-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.821-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.821-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-1", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:22.821-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-1", "Name": "csm-config-params"}
+2022-04-05T15:20:22.821-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-1", "name": "csm-controller"}
+2022-04-05T15:20:22.821-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-1", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:22.821-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-1", "Name:": ""}
+2022-04-05T15:20:22.822-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-1", "name": "csm-controller"}
+2022-04-05T15:20:22.822-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-1", "name": "csm-node"}
+2022-04-05T15:20:22.822-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-1", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:22.822-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-1", "Name:": "csm-node"}
+################End Reconcile##############
+1.64918642282324e+09	INFO	controllers.unit-test	reconcile response	{"res is: ": {"Requeue":false,"RequeueAfter":0}}
+2022-04-05T15:20:22.823-0400	DEBUG	controllers/csm_controller.go:361	daemonset modified generation	{"TraceId": "csm-1", "new": 0, "old": 0}
+2022-04-05T15:20:22.823-0400	INFO	controllers/csm_controller.go:368	daemonset 	{"TraceId": "csm-1", "name": "csm-node", "namespace": "test"}
+2022-04-05T15:20:22.823-0400	INFO	controllers/csm_controller.go:369	daemonset 	{"TraceId": "csm-1", "desired": 0}
+2022-04-05T15:20:22.823-0400	INFO	controllers/csm_controller.go:370	daemonset 	{"TraceId": "csm-1", "numberReady": 0}
+2022-04-05T15:20:22.823-0400	INFO	controllers/csm_controller.go:371	daemonset 	{"TraceId": "csm-1", "available": 0}
+2022-04-05T15:20:22.823-0400	INFO	controllers/csm_controller.go:372	daemonset 	{"TraceId": "csm-1", "numberUnavailable": 0}
+2022-04-05T15:20:22.824-0400	DEBUG	controllers/csm_controller.go:375	daemonset 	{"TraceId": "0", "ns": "test", "name": "csm"}
+2022-04-05T15:20:22.824-0400	INFO	controllers/csm_controller.go:387	csm prev status 	{"TraceId": "csm-1", "state": {"controllerStatus":{},"nodeStatus":{}}}
+2022-04-05T15:20:22.824-0400	INFO	utils/status.go:210	update current csm status	{"TraceId": "csm-1", "status": ""}
+2022-04-05T15:20:22.824-0400	INFO	utils/status.go:213	update new Status: (State - )	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.824-0400	INFO	utils/status.go:214	Update State	{"TraceId": "csm-1", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:145	daemonset status failedCount pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.825-0400	INFO	utils/status.go:230	Update done	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.826-0400	ERROR	zap@v1.21.0/sugar.go:173	Ignored key-value pairs with non-string keys.	{"TraceId": "csm-1", "invalid": [{"position": 0, "key": 0, "value": 0}]}
+2022-04-05T15:20:22.826-0400	DEBUG	controllers/csm_controller.go:268	deployment modified generation	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.826-0400	INFO	controllers/csm_controller.go:277	deployment	{"TraceId": "csm-1", "desired": 0}
+2022-04-05T15:20:22.826-0400	INFO	controllers/csm_controller.go:278	deployment	{"TraceId": "csm-1", "numberReady": 0}
+2022-04-05T15:20:22.826-0400	INFO	controllers/csm_controller.go:279	deployment	{"TraceId": "csm-1", "available": 0}
+2022-04-05T15:20:22.826-0400	INFO	controllers/csm_controller.go:280	deployment	{"TraceId": "csm-1", "numberUnavailable": 0}
+2022-04-05T15:20:22.826-0400	DEBUG	controllers/csm_controller.go:283	deployment	{"TraceId": "csm-1", "namespace": "test", "name": "csm"}
+2022-04-05T15:20:22.827-0400	INFO	utils/status.go:210	update current csm status	{"TraceId": "csm-1", "status": "Succeeded"}
+2022-04-05T15:20:22.827-0400	INFO	utils/status.go:213	update new Status: (State - Succeeded)	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.827-0400	INFO	utils/status.go:214	Update State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"0"}, "Node": {"available":"0","desired":"0","failed":"0"}}
+2022-04-05T15:20:22.827-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-node status Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.827-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:121	daemonset pod csm-node : Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:145	daemonset status failedCount pods 1	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: test=, Daemonseterror: test=]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"1"}, "Node": {"available":"0","desired":"0","failed":"1"}}
+2022-04-05T15:20:22.828-0400	INFO	utils/status.go:230	Update done	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.828-0400	DEBUG	controllers/csm_controller.go:297	deployment status 	{"TraceId": "csm-1", "pods": "ControllerError: test=, Daemonseterror: test="}
+2022-04-05T15:20:22.829-0400	INFO	controllers/csm_controller.go:321	pod modified for driver	{"TraceId": "csm-1", "name": "csm-pod"}
+2022-04-05T15:20:22.829-0400	INFO	controllers/csm_controller.go:332	csm prev status 	{"TraceId": "csm-1", "state": {"controllerStatus":{"available":"0","desired":"0","failed":"1"},"nodeStatus":{"available":"0","desired":"0","failed":"1"},"state":"Succeeded"}}
+2022-04-05T15:20:22.829-0400	INFO	utils/status.go:210	update current csm status	{"TraceId": "csm-1", "status": "Succeeded"}
+2022-04-05T15:20:22.829-0400	INFO	utils/status.go:213	update new Status: (State - Succeeded)	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.829-0400	INFO	utils/status.go:214	Update State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"1"}, "Node": {"available":"0","desired":"0","failed":"1"}}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-node status Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-controller status Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-pod status 	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:121	daemonset pod csm-pod : 	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:121	daemonset pod csm-node : Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:121	daemonset pod csm-controller : Pending	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-1", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:145	daemonset status failedCount pods 2	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.830-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.831-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.831-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.831-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: test=test=, Daemonseterror: test=]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.831-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {"available":"0","desired":"0","failed":"2"}, "Node": {"available":"0","desired":"0","failed":"2"}}
+2022-04-05T15:20:22.831-0400	INFO	utils/status.go:230	Update done	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.831-0400	INFO	controllers/csm_controller.go:339	pod status 	{"TraceId": "csm-1", "state": "ControllerError: test=test=, Daemonseterror: test="}
+2022-04-05T15:20:22.831-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.831-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-2", "Namespace": "test", "Name": "csm", "Attempt": 2}
+2022-04-05T15:20:22.831-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-2", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.832-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-pod status 	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.832-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-node status Pending	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-2", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:62	deployment pod count 0 name csm-controller status Pending	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:70	container	{"TraceId": "csm-2", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:121	daemonset pod csm-node : Pending	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-2", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:121	daemonset pod csm-controller : Pending	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:128	daemonset pod container	{"TraceId": "csm-2", "message": "", "Reason": "test"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:121	daemonset pod csm-pod : 	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:144	daemonset status available pods 0	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:145	daemonset status failedCount pods 2	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:146	daemonset status desired pods 0	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:168	deployment controllerStatus.Available [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.833-0400	INFO	utils/status.go:177	calculate overall state [Succeeded]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.834-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: test=test=, Daemonseterror: test=]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.834-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-2", "Controller": {"available":"0","desired":"0","failed":"2"}, "Node": {"available":"0","desired":"0","failed":"2"}}
+2022-04-05T15:20:22.834-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: test=test=, Daemonseterror: test=	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.834-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-2", "newStatus.State": "Running"}
+2022-04-05T15:20:22.834-0400	INFO	utils/status.go:272	HandleSuccess Driver state didn't change from Running	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.834-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.834-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.834-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.834-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.843-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.861-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-2", "name": "provisioner"}
+2022-04-05T15:20:22.861-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.862-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-2", "Name:": "csm-node"}
+2022-04-05T15:20:22.862-0400	INFO	serviceaccount/serviceaccount.go:30	Updating ServiceAccount	{"TraceId": "csm-2", "Name:": "csm-controller"}
+2022-04-05T15:20:22.862-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-node	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.863-0400	INFO	rbac/clusterrole.go:33	Updating ClusterRoleName:csm-controller	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.863-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-node	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.863-0400	INFO	rbac/rolebindings.go:28	Updating ClusterRoleBindingName:csm-controller	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.863-0400	INFO	csidriver/csidriver.go:29	CSIDriver Object exist	{"TraceId": "csm-2", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:22.863-0400	INFO	configmap/configmap.go:30	Updating ConfigMap	{"TraceId": "csm-2", "Name:": "csm-config-params"}
+2022-04-05T15:20:22.863-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-2", "name": "csm-controller"}
+2022-04-05T15:20:22.864-0400	INFO	deployment/deployment.go:36	found deployment	{"TraceId": "csm-2", "image": ""}
+2022-04-05T15:20:22.865-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-2", "name": "csm-controller"}
+2022-04-05T15:20:22.865-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-2", "name": "csm-node"}
+2022-04-05T15:20:22.866-0400	INFO	daemonset/daemonset.go:30	found daemonset	{"TraceId": "csm-2", "image": "image"}
+################End Reconcile##############
+2022-04-05T15:20:22.867-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+2022-04-05T15:20:22.867-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.867-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:22.867-0400	INFO	controllers/csm_controller.go:170	Delete request	{"TraceId": "csm-1", "csm": "test", "Name": "csm"}
+2022-04-05T15:20:22.867-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.867-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.867-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.867-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.874-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.894-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-1", "name": "provisioner"}
+2022-04-05T15:20:22.894-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:22.894-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-controller", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:22.894-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-node", "Kind:": "ClusterRole"}
+2022-04-05T15:20:22.895-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-controller", "Kind:": "ClusterRole"}
+2022-04-05T15:20:22.895-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-node", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:22.895-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-controller", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:22.895-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csm-config-params", "Kind:": "ConfigMap"}
+2022-04-05T15:20:22.897-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"TraceId": "csm-1", "Name:": "csi-isilon.dellemc.com", "Kind:": "CSIDriver"}
+1.6491864228987343e+09	INFO	controllers.unit-test	reconcile response	{"res is: ": {"Requeue":false,"RequeueAfter":0}}
+=== RUN   TestCustom/TestRemoveDriver
+1.649186422898876e+09	INFO	controllers.unit-test	Init unit test...
+2022-04-05T15:20:22.899-0400	INFO	controllers/csm_controller_test.go:345	Version : DEVELOPMENT	{"TraceId": "0"}
+=== RUN   TestCustom/TestRemoveDriver/getDriverConfig_error
+2022-04-05T15:20:22.899-0400	INFO	controllers/csm_controller.go:555	Getting  CSI Driver for Dell Technologies
+2022-04-05T15:20:22.899-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig//v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.899-0400	ERROR	drivers/commonconfig.go:209	GetConfigMap failed	{"Error": "stat ../operatorconfig/driverconfig//v2.2.0/driver-config-params.yaml: no such file or directory"}
+2022-04-05T15:20:22.899-0400	ERROR	controllers/csm_controller.go:620	error in getDriverConfig
+=== RUN   TestCustom/TestRemoveDriver/delete_obj_not_found
+2022-04-05T15:20:22.899-0400	INFO	controllers/csm_controller.go:555	Getting powerscale CSI Driver for Dell Technologies
+2022-04-05T15:20:22.899-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.899-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.900-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.908-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:602	Object not found to delete	{"Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:602	Object not found to delete	{"Name:": "csm-controller", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:602	Object not found to delete	{"Name:": "csm-node", "Kind:": "ClusterRole"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:602	Object not found to delete	{"Name:": "csm-controller", "Kind:": "ClusterRole"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:602	Object not found to delete	{"Name:": "csm-node", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:602	Object not found to delete	{"Name:": "csm-controller", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:602	Object not found to delete	{"Name:": "csm-config-params", "Kind:": "ConfigMap"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:602	Object not found to delete	{"Name:": "csi-isilon.dellemc.com", "Kind:": "CSIDriver"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:677	error getting daemonset	{"daemonsetKey": "test/csm-node"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:692	error getting deployment	{"deploymentKey": "test/csm-controller"}
+=== RUN   TestCustom/TestRemoveDriver/get_SA_error
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.919-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm", "Attempt": 1}
+2022-04-05T15:20:22.920-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-1", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.920-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.920-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.920-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.920-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.920-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.920-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.920-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-1", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.920-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.920-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-1", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.920-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.920-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.921-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.921-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.931-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-1", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.940-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-1", "name": "provisioner"}
+2022-04-05T15:20:22.941-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.942-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:22.942-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-1", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:22.942-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.942-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.943-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.943-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-1"}
+2022-04-05T15:20:22.943-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-1", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:22.943-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-1", "Name": "csm-config-params"}
+2022-04-05T15:20:22.943-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-1", "name": "csm-controller"}
+2022-04-05T15:20:22.943-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-1", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:22.943-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-1", "Name:": ""}
+2022-04-05T15:20:22.943-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-1", "name": "csm-controller"}
+2022-04-05T15:20:22.943-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-1", "name": "csm-node"}
+2022-04-05T15:20:22.943-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-1", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:22.943-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-1", "Name:": "csm-node"}
+################End Reconcile##############
+2022-04-05T15:20:22.944-0400	INFO	controllers/csm_controller.go:555	Getting powerscale CSI Driver for Dell Technologies
+2022-04-05T15:20:22.944-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.944-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.945-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.955-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+[ShouldFail] force Get ServiceAccount error for ServiceAccount named csm-node
+2022-04-05T15:20:22.966-0400	ERROR	controllers/csm_controller.go:605	error to find object in deleteObj	{"Error": "unable to get ServiceAccount", "Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:22.966-0400	ERROR	controllers/csm_controller.go:625	error delete node service account	{"Error": "unable to get ServiceAccount"}
+=== RUN   TestCustom/TestRemoveDriver/get_CR_error
+2022-04-05T15:20:22.967-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.967-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-2", "Namespace": "test", "Name": "csm", "Attempt": 2}
+2022-04-05T15:20:22.967-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-2", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:22.967-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.967-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.967-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.967-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.967-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.967-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.967-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-2", "Controller": {}, "Node": {}}
+2022-04-05T15:20:22.968-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.968-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-2", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:22.968-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-2"}
+2022-04-05T15:20:22.968-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:22.968-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:22.968-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:22.981-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-2", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:22.997-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-2", "name": "provisioner"}
+2022-04-05T15:20:22.998-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-2"}
+2022-04-05T15:20:23.010-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-2", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:23.010-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-2", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:23.011-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-2"}
+2022-04-05T15:20:23.011-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-2"}
+2022-04-05T15:20:23.011-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-2"}
+2022-04-05T15:20:23.011-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-2"}
+2022-04-05T15:20:23.011-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-2", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:23.011-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-2", "Name": "csm-config-params"}
+2022-04-05T15:20:23.011-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-2", "name": "csm-controller"}
+2022-04-05T15:20:23.011-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-2", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:23.011-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-2", "Name:": ""}
+2022-04-05T15:20:23.012-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-2", "name": "csm-controller"}
+2022-04-05T15:20:23.012-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-2", "name": "csm-node"}
+2022-04-05T15:20:23.012-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-2", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:23.012-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-2", "Name:": "csm-node"}
+################End Reconcile##############
+2022-04-05T15:20:23.012-0400	INFO	controllers/csm_controller.go:555	Getting powerscale CSI Driver for Dell Technologies
+2022-04-05T15:20:23.012-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.013-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.013-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.035-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.051-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.051-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ServiceAccount"}
+[ShouldFail] force Get ClusterRole error for ClusterRole named csm-node
+2022-04-05T15:20:23.051-0400	ERROR	controllers/csm_controller.go:605	error to find object in deleteObj	{"Error": "unable to get Clusterrole", "Name:": "csm-node", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.051-0400	ERROR	controllers/csm_controller.go:635	error delete node cluster role	{"Error": "unable to get Clusterrole"}
+=== RUN   TestCustom/TestRemoveDriver/get_CRB_error
+2022-04-05T15:20:23.052-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.052-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-3", "Namespace": "test", "Name": "csm", "Attempt": 3}
+2022-04-05T15:20:23.052-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-3", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:23.052-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.052-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.052-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.052-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.052-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.052-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.052-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-3", "Controller": {}, "Node": {}}
+2022-04-05T15:20:23.052-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.052-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-3", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:23.052-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.052-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-3", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.053-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-3", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.053-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-3", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.062-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-3", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.074-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-3", "name": "provisioner"}
+2022-04-05T15:20:23.074-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.076-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-3", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:23.076-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-3", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:23.076-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.076-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.077-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.077-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-3"}
+2022-04-05T15:20:23.077-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-3", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:23.077-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-3", "Name": "csm-config-params"}
+2022-04-05T15:20:23.077-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-3", "name": "csm-controller"}
+2022-04-05T15:20:23.077-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-3", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:23.077-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-3", "Name:": ""}
+2022-04-05T15:20:23.078-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-3", "name": "csm-controller"}
+2022-04-05T15:20:23.078-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-3", "name": "csm-node"}
+2022-04-05T15:20:23.078-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-3", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:23.078-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-3", "Name:": "csm-node"}
+################End Reconcile##############
+2022-04-05T15:20:23.078-0400	INFO	controllers/csm_controller.go:555	Getting powerscale CSI Driver for Dell Technologies
+2022-04-05T15:20:23.078-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.078-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.079-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.087-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.099-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.099-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.099-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.100-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ClusterRole"}
+[ShouldFail] force Get ClusterRoleBinding error for ClusterRoleBinding named csm-node
+2022-04-05T15:20:23.100-0400	ERROR	controllers/csm_controller.go:605	error to find object in deleteObj	{"Error": "unable to get ClusterroleBinding", "Name:": "csm-node", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:23.100-0400	ERROR	controllers/csm_controller.go:645	error delete node cluster role binding	{"Error": "unable to get ClusterroleBinding"}
+=== RUN   TestCustom/TestRemoveDriver/get_CM_error
+2022-04-05T15:20:23.100-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.100-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-4", "Namespace": "test", "Name": "csm", "Attempt": 4}
+2022-04-05T15:20:23.100-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-4", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:23.100-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.100-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.100-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.101-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.101-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.101-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.101-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-4", "Controller": {}, "Node": {}}
+2022-04-05T15:20:23.101-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.101-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-4", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:23.101-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.101-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-4", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.101-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-4", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.101-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-4", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.109-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-4", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.122-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-4", "name": "provisioner"}
+2022-04-05T15:20:23.122-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.124-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-4", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:23.124-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-4", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:23.124-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.124-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.125-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.125-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-4"}
+2022-04-05T15:20:23.125-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-4", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:23.125-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-4", "Name": "csm-config-params"}
+2022-04-05T15:20:23.125-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-4", "name": "csm-controller"}
+2022-04-05T15:20:23.125-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-4", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:23.125-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-4", "Name:": ""}
+2022-04-05T15:20:23.125-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-4", "name": "csm-controller"}
+2022-04-05T15:20:23.125-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-4", "name": "csm-node"}
+2022-04-05T15:20:23.125-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-4", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:23.125-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-4", "Name:": "csm-node"}
+################End Reconcile##############
+2022-04-05T15:20:23.126-0400	INFO	controllers/csm_controller.go:555	Getting powerscale CSI Driver for Dell Technologies
+2022-04-05T15:20:23.126-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.126-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.126-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.133-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.145-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.145-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.146-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.146-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.146-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:23.146-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ClusterRoleBinding"}
+[ShouldFail] force Get Configmap error for configmap named csm-config-params
+[ShouldFail] force Get Configmap error for configmap named &ConfigMap{ObjectMeta:{csm-config-params  test    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] []  []},Data:map[string]string{driver-config-params.yaml: CSI_LOG_LEVEL: debug
+,},BinaryData:map[string][]byte{},Immutable:nil,}
+2022-04-05T15:20:23.146-0400	ERROR	controllers/csm_controller.go:605	error to find object in deleteObj	{"Error": "unable to get ConfigMap", "Name:": "csm-config-params", "Kind:": "ConfigMap"}
+2022-04-05T15:20:23.146-0400	ERROR	controllers/csm_controller.go:655	error delete configmap	{"Error": "unable to get ConfigMap"}
+=== RUN   TestCustom/TestRemoveDriver/get_Driver_error
+2022-04-05T15:20:23.147-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.147-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-5", "Namespace": "test", "Name": "csm", "Attempt": 5}
+2022-04-05T15:20:23.147-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-5", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:23.147-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.147-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.147-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.147-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.147-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.147-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.147-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-5", "Controller": {}, "Node": {}}
+2022-04-05T15:20:23.147-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.147-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-5", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:23.147-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.147-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-5", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.148-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-5", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.148-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-5", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.154-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-5", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.166-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-5", "name": "provisioner"}
+2022-04-05T15:20:23.166-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.171-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-5", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:23.171-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-5", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:23.171-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.171-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.171-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.171-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-5"}
+2022-04-05T15:20:23.171-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-5", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:23.171-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-5", "Name": "csm-config-params"}
+2022-04-05T15:20:23.171-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-5", "name": "csm-controller"}
+2022-04-05T15:20:23.172-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-5", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:23.172-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-5", "Name:": ""}
+2022-04-05T15:20:23.172-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-5", "name": "csm-controller"}
+2022-04-05T15:20:23.172-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-5", "name": "csm-node"}
+2022-04-05T15:20:23.172-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-5", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:23.172-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-5", "Name:": "csm-node"}
+################End Reconcile##############
+2022-04-05T15:20:23.173-0400	INFO	controllers/csm_controller.go:555	Getting powerscale CSI Driver for Dell Technologies
+2022-04-05T15:20:23.173-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.173-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.173-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.180-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.191-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.191-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.192-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.192-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.192-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:23.192-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:23.192-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-config-params", "Kind:": "ConfigMap"}
+[ShouldFail] force Get Csidriver error for csidriver named csi-isilon.dellemc.com
+2022-04-05T15:20:23.192-0400	ERROR	controllers/csm_controller.go:605	error to find object in deleteObj	{"Error": "unable to get Csidriver", "Name:": "csi-isilon.dellemc.com", "Kind:": "CSIDriver"}
+2022-04-05T15:20:23.192-0400	ERROR	controllers/csm_controller.go:660	error delete csi driver	{"Error": "unable to get Csidriver"}
+=== RUN   TestCustom/TestRemoveDriver/delete_SA_error
+2022-04-05T15:20:23.194-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.194-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-6", "Namespace": "test", "Name": "csm", "Attempt": 6}
+2022-04-05T15:20:23.195-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-6", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:23.195-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.195-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.195-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.195-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.195-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.195-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.195-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-6", "Controller": {}, "Node": {}}
+2022-04-05T15:20:23.195-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.195-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-6", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:23.195-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.195-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-6", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.196-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-6", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.196-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-6", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.209-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-6", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.220-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-6", "name": "provisioner"}
+2022-04-05T15:20:23.220-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.221-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-6", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:23.221-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-6", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:23.221-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.222-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.222-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.222-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-6"}
+2022-04-05T15:20:23.222-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-6", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:23.222-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-6", "Name": "csm-config-params"}
+2022-04-05T15:20:23.222-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-6", "name": "csm-controller"}
+2022-04-05T15:20:23.222-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-6", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:23.222-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-6", "Name:": ""}
+2022-04-05T15:20:23.223-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-6", "name": "csm-controller"}
+2022-04-05T15:20:23.223-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-6", "name": "csm-node"}
+2022-04-05T15:20:23.223-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-6", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:23.223-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-6", "Name:": "csm-node"}
+################End Reconcile##############
+2022-04-05T15:20:23.223-0400	INFO	controllers/csm_controller.go:555	Getting powerscale CSI Driver for Dell Technologies
+2022-04-05T15:20:23.223-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.224-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.224-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.230-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.245-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ServiceAccount"}
+[ShouldFail] force Delete ServiceAccount error for ServiceAccount named csm-node
+2022-04-05T15:20:23.245-0400	ERROR	controllers/csm_controller.go:625	error delete node service account	{"Error": "unable to delete ServiceAccount"}
+=== RUN   TestCustom/TestRemoveDriver/delete_Daemonset_error
+2022-04-05T15:20:23.245-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.245-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-7", "Namespace": "test", "Name": "csm", "Attempt": 7}
+2022-04-05T15:20:23.245-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-7", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:23.246-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.246-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.246-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.246-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.246-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.246-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.246-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-7", "Controller": {}, "Node": {}}
+2022-04-05T15:20:23.246-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.246-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-7", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:23.246-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.246-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-7", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.246-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-7", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.247-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-7", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.253-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-7", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.266-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-7", "name": "provisioner"}
+2022-04-05T15:20:23.266-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.268-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-7", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:23.268-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-7", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:23.268-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.268-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.268-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.269-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-7"}
+2022-04-05T15:20:23.269-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-7", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:23.269-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-7", "Name": "csm-config-params"}
+2022-04-05T15:20:23.269-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-7", "name": "csm-controller"}
+2022-04-05T15:20:23.269-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-7", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:23.269-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-7", "Name:": ""}
+2022-04-05T15:20:23.269-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-7", "name": "csm-controller"}
+2022-04-05T15:20:23.269-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-7", "name": "csm-node"}
+2022-04-05T15:20:23.269-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-7", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:23.269-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-7", "Name:": "csm-node"}
+################End Reconcile##############
+2022-04-05T15:20:23.270-0400	INFO	controllers/csm_controller.go:555	Getting powerscale CSI Driver for Dell Technologies
+2022-04-05T15:20:23.270-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.270-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.270-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.277-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.290-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.290-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.291-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.291-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.291-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:23.291-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:23.291-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-config-params", "Kind:": "ConfigMap"}
+2022-04-05T15:20:23.291-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csi-isilon.dellemc.com", "Kind:": "CSIDriver"}
+[ShouldFail] force delete ServiceAccount error for ServiceAccount named csm-node
+2022-04-05T15:20:23.292-0400	ERROR	controllers/csm_controller.go:673	error delete daemonset	{"Error": "unable to delete Daemonset"}
+=== RUN   TestCustom/TestRemoveDriver/delete_Deployment_error
+2022-04-05T15:20:23.292-0400	INFO	controllers/csm_controller.go:145	################Starting Reconcile##############	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.292-0400	INFO	controllers/csm_controller.go:148	reconcile for	{"TraceId": "csm-8", "Namespace": "test", "Name": "csm", "Attempt": 8}
+2022-04-05T15:20:23.292-0400	DEBUG	drivers/powerscale.go:58	preCheck	{"TraceId": "csm-8", "skipCertValid": true, "certCount": 1, "secrets": 1}
+[minVersionCheck] version: v2.2.0
+[minVersionCheck] versionBits: 2.2.0
+[minVersionCheck] versionBits: [2 2 0]
+2022-04-05T15:20:23.293-0400	INFO	utils/status.go:167	deployment controllerReplicas [0]	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.293-0400	INFO	utils/status.go:168	deployment controllerStatus.Available []	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.293-0400	INFO	utils/status.go:170	daemonset expected [0]	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.293-0400	INFO	utils/status.go:171	daemonset nodeStatus.Available []	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.293-0400	INFO	utils/status.go:177	calculate overall state [Failed]	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.293-0400	INFO	utils/status.go:187	calculate overall error msg [ControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found]	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.293-0400	INFO	utils/status.go:198	Driver State	{"TraceId": "csm-8", "Controller": {}, "Node": {}}
+2022-04-05T15:20:23.293-0400	ERROR	utils/status.go:262	HandleSuccess Driver status errorControllerError: Deployment.apps "csm-controller" not found, Daemonseterror: DaemonSet.apps "csm-node" not found	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.293-0400	INFO	utils/status.go:268	HandleSuccess Driver state 	{"TraceId": "csm-8", "newStatus.State": "Failed"}
+################End Reconcile##############
+2022-04-05T15:20:23.293-0400	INFO	controllers/csm_controller.go:555	Getting isilon CSI Driver for Dell Technologies	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.293-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"TraceId": "csm-8", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.293-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"TraceId": "csm-8", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.293-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"TraceId": "csm-8", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.301-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"TraceId": "csm-8", "configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.314-0400	INFO	drivers/commonconfig.go:86	Container to be enabled	{"TraceId": "csm-8", "name": "provisioner"}
+2022-04-05T15:20:23.314-0400	INFO	controllers/csm_controller.go:470	Injecting CSM Authorization	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.315-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-8", "Namespace": "test", "Name": "csm-node"}
+2022-04-05T15:20:23.315-0400	INFO	serviceaccount/serviceaccount.go:19	Creating a new ServiceAccount	{"TraceId": "csm-8", "Namespace": "test", "Name": "csm-controller"}
+2022-04-05T15:20:23.316-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-node	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.316-0400	INFO	rbac/clusterrole.go:19	Creating a new ClusterRoleNamecsm-controller	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.316-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-node	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.316-0400	INFO	rbac/rolebindings.go:19	Creating a new ClusterRoleBindingNamespaceNamecsm-controller	{"TraceId": "csm-8"}
+2022-04-05T15:20:23.316-0400	INFO	csidriver/csidriver.go:20	Creating a new CSIDriver	{"TraceId": "csm-8", "Name:": "csi-isilon.dellemc.com"}
+2022-04-05T15:20:23.316-0400	INFO	configmap/configmap.go:21	Creating a new ConfigMap	{"TraceId": "csm-8", "Name": "csm-config-params"}
+2022-04-05T15:20:23.316-0400	INFO	deployment/deployment.go:23	Sync Deployment:	{"TraceId": "csm-8", "name": "csm-controller"}
+2022-04-05T15:20:23.316-0400	ERROR	deployment/deployment.go:29	get SyncDeployment error	{"TraceId": "csm-8", "Error": "Deployment.apps \"csm-controller\" not found"}
+2022-04-05T15:20:23.316-0400	INFO	deployment/deployment.go:33	No existing Deployment	{"TraceId": "csm-8", "Name:": ""}
+2022-04-05T15:20:23.317-0400	INFO	deployment/deployment.go:45	deployment apply done	{"TraceId": "csm-8", "name": "csm-controller"}
+2022-04-05T15:20:23.317-0400	INFO	daemonset/daemonset.go:16	Sync DaemonSet:	{"TraceId": "csm-8", "name": "csm-node"}
+2022-04-05T15:20:23.317-0400	ERROR	daemonset/daemonset.go:23	get SyncDaemonset error	{"TraceId": "csm-8", "Error": "DaemonSet.apps \"csm-node\" not found"}
+2022-04-05T15:20:23.317-0400	INFO	daemonset/daemonset.go:28	No existing DaemonSet	{"TraceId": "csm-8", "Name:": "csm-node"}
+################End Reconcile##############
+2022-04-05T15:20:23.317-0400	INFO	controllers/csm_controller.go:555	Getting powerscale CSI Driver for Dell Technologies
+2022-04-05T15:20:23.317-0400	DEBUG	drivers/commonconfig.go:206	GetConfigMap	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/driver-config-params.yaml"}
+2022-04-05T15:20:23.318-0400	DEBUG	drivers/commonconfig.go:243	GetCSIDriver	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/csidriver.yaml"}
+2022-04-05T15:20:23.318-0400	DEBUG	drivers/commonconfig.go:124	GetNode	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/node.yaml"}
+2022-04-05T15:20:23.325-0400	DEBUG	drivers/commonconfig.go:27	GetController	{"configMapPath": "../operatorconfig/driverconfig/powerscale/v2.2.0/controller.yaml"}
+2022-04-05T15:20:23.337-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.337-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ServiceAccount"}
+2022-04-05T15:20:23.337-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.337-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ClusterRole"}
+2022-04-05T15:20:23.337-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-node", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:23.337-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-controller", "Kind:": "ClusterRoleBinding"}
+2022-04-05T15:20:23.337-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csm-config-params", "Kind:": "ConfigMap"}
+2022-04-05T15:20:23.337-0400	INFO	controllers/csm_controller.go:608	Deleting object	{"Name:": "csi-isilon.dellemc.com", "Kind:": "CSIDriver"}
+[ShouldFail] force ServiceAccount error for ServiceAccount named csm-controller
+2022-04-05T15:20:23.339-0400	ERROR	controllers/csm_controller.go:688	error delete deployment	{"Error": "unable to delete Deployment"}
+--- FAIL: TestCustom (1.38s)
+    --- PASS: TestCustom/TestContentWatch (0.00s)
+    --- PASS: TestCustom/TestCsmAnnotation (0.00s)
+    --- PASS: TestCustom/TestCsmFinalizerError (0.00s)
+    --- PASS: TestCustom/TestCsmPreCheckTypeError (0.00s)
+    --- FAIL: TestCustom/TestCsmPreCheckVersionError (0.04s)
+    --- PASS: TestCustom/TestDeleteErrorReconcile (0.31s)
+    --- PASS: TestCustom/TestErrorInjection (0.48s)
+    --- PASS: TestCustom/TestIgnoreUpdatePredicate (0.00s)
+    --- PASS: TestCustom/TestReconcile (0.10s)
+    --- PASS: TestCustom/TestRemoveDriver (0.44s)
+        --- PASS: TestCustom/TestRemoveDriver/getDriverConfig_error (0.00s)
+        --- PASS: TestCustom/TestRemoveDriver/delete_obj_not_found (0.02s)
+        --- PASS: TestCustom/TestRemoveDriver/get_SA_error (0.05s)
+        --- PASS: TestCustom/TestRemoveDriver/get_CR_error (0.08s)
+        --- PASS: TestCustom/TestRemoveDriver/get_CRB_error (0.05s)
+        --- PASS: TestCustom/TestRemoveDriver/get_CM_error (0.05s)
+        --- PASS: TestCustom/TestRemoveDriver/get_Driver_error (0.05s)
+        --- PASS: TestCustom/TestRemoveDriver/delete_SA_error (0.05s)
+        --- PASS: TestCustom/TestRemoveDriver/delete_Daemonset_error (0.05s)
+        --- PASS: TestCustom/TestRemoveDriver/delete_Deployment_error (0.05s)
+FAIL
+coverage: 90.5% of statements in github.com/dell/csm-operator/pkg/logger, github.com/dell/csm-operator/pkg/resources/daemonset, github.com/dell/csm-operator/pkg/resources/deployment, github.com/dell/csm-operator/pkg/resources/configmap, github.com/dell/csm-operator/pkg/resources/serviceaccount, github.com/dell/csm-operator/pkg/resources/rbac, github.com/dell/csm-operator/pkg/utils, github.com/dell/csm-operator/pkg/resources/csidriver, github.com/dell/csm-operator/pkg/constants, github.com/dell/csm-operator/controllers
+FAIL	github.com/dell/csm-operator/controllers	1.430s
+FAIL
