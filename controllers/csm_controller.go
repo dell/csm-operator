@@ -16,6 +16,8 @@ import (
 	"fmt"
 	"sync/atomic"
 	"time"
+	"strings"
+	"strconv"
 
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
@@ -690,6 +692,31 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	}
 
 	return nil
+}
+
+// minVersionCheck takes a driver name and a version of the form "vA.B.C" and checks it against the minimum version for the specified driver
+func minVersionCheck(driverName string, version string) bool {
+	fmt.Printf("[minVersionCheck] version: %+v\n", version)
+	// strip v off of version string
+	versionNoV := strings.TrimLeft(version, "v")
+	fmt.Printf("[minVersionCheck] versionBits: %+v\n", versionNoV)
+	// split by .
+	versionBits := strings.Split(versionNoV, ".")
+	fmt.Printf("[minVersionCheck] versionBits: %+v\n", versionBits)
+	majorVersion, _ := strconv.Atoi(versionBits[0])
+	minorVersion, _ := strconv.Atoi(versionBits[1])
+	// compare each part according to minimum driver version
+	if driverName == "powerscale" {
+		// min version: v2.2.0
+		if majorVersion >= 2 && minorVersion >= 2 {
+			//log.Infow("unsupported version", "version", version)
+			return true
+		}
+		return false
+	} else {
+		//log.Infow("unknown driver name", "driverName", driverName)
+		return false
+	}
 }
 
 // PreChecks - validate input values
