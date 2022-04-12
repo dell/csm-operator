@@ -60,9 +60,6 @@ function AddWarning() {
 
 # Print a nice summary at the end
 function summary() {
-	echo
-	log separator
-	echo "Pre-requisites verification Complete"
 	# print all the WARNINGS
 	if [ "${#WARNINGS[@]}" -ne 0 ]; then
 		echo
@@ -84,6 +81,15 @@ function summary() {
 	fi
 }
 
+function check_for_kubectl() {
+  log step "Checking for kubectl installation"
+  out=$(command -v kubectl)
+  if [ $? -eq 0 ]; then
+    log step_success
+  else
+    log error "Couldn't find kubectl binary in path"
+  fi
+}
 #
 # main
 #
@@ -108,6 +114,7 @@ source $SCRIPTDIR/common.bash
 
 header
 log separator
+check_for_kubectl
 verify_snap_crds
 verify_snapshot_controller
 summary

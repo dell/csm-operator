@@ -7,13 +7,14 @@
 SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 ROOTDIR="$(dirname "$SCRIPTDIR")"
 DEPLOYDIR="$ROOTDIR/deploy/olm"
-
+VERIFYSCRIPT="verify.sh"
 # Constants
 CATALOGSOURCE="dell-csm-catalogsource"
 OPERATORGROUP="dell-csm-operatorgroup"
 SUBSCRIPTION="dell-csm-subscription"
 COMMUNITY_MANIFEST="operator_community.yaml"
 
+NAMESPACE="test-csm-operator-olm"
 MANIFEST_FILE="$DEPLOYDIR/$COMMUNITY_MANIFEST"
 
 unableToFindKubectlErrorMsg="Install kubectl before running this script"
@@ -29,12 +30,12 @@ subcrd="subscriptions.operators.coreos.com"
 
 # print header information
 function header() {
-  echo "Installing CSM Operator in an OLM environment"
+  echo "Installing Dell CSM Operator in an OLM environment"
   echo
 }
 
 function check_for_kubectl() {
-  echo "*****"
+  log separator
   echo "Checking for kubectl installation"
   out=$(command -v kubectl)
   if [ $? -ne 0 ]; then
@@ -45,7 +46,7 @@ function check_for_kubectl() {
 }
 
 function check_for_olm_components() {
-  echo "*****"
+  log separator
   echo "Checking for OLM installation"
   kubectl get crd | grep $catsrccrd --quiet
   if [ $? -ne 0 ]; then
@@ -67,70 +68,61 @@ function check_for_olm_components() {
   if [ $? -ne 0 ]; then
     log error "Couldn't find $subcrd. $installOLMErrorMsg"
   fi
-  echo "OLM exists"
+  log step_success
   echo
 }
 
 function check_existing_installation() {
-  echo "*****"
+  log separator
   echo "Checking for existing installation of Dell CSM Operator"
-  kubectl get catalogsource "$CATALOGSOURCE" -n $NS > /dev/null 2>&1
+  kubectl get catalogsource "$CATALOGSOURCE" -n $NAMESPACE > /dev/null 2>&1
   if [ $? -eq 0 ]; then
-    log error "A CatalogSource with name $CATALOGSOURCE already exists in namespace $NS. $uninstallComponentErrorMsg "
+    log error "A CatalogSource with name $CATALOGSOURCE already exists in namespace $NAMESPACE. $uninstallComponentErrorMsg "
   fi
-  kubectl get operatorgroup "$OPERATORGROUP" -n $NS > /dev/null 2>&1
+  kubectl get operatorgroup "$OPERATORGROUP" -n $NAMESPACE > /dev/null 2>&1
   if [ $? -eq 0 ]; then
-    log error "An OperatorGroup with name $OPERATORGROUP already exists in namespace $NS. $uninstallComponentErrorMsg"
+    log error "An OperatorGroup with name $OPERATORGROUP already exists in namespace $NAMESPACE. $uninstallComponentErrorMsg"
   fi
-  kubectl get Subscription "$SUBSCRIPTION" -n "$NS" > /dev/null 2>&1
+  kubectl get Subscription "$SUBSCRIPTION" -n "$NAMESPACE" > /dev/null 2>&1
   if [ $? -eq 0 ]; then
-    log error "A Subscription with name $SUBSCRIPTION already exists in namespace $NS. $uninstallComponentErrorMsg"
+    log error "A Subscription with name $SUBSCRIPTION already exists in namespace $NAMESPACE. $uninstallComponentErrorMsg"
   fi
   echo
 }
 
-function set_namespace() {
-  NS="test-csm-operator-olm"
-  echo "*****"
-  echo "CSM Operator will be installed in namespace: $NS"
-}
-
-function check_or_create_namespace() {
-  # Check if namespace exists
-  kubectl get namespace $NS > /dev/null 2>&1
-  if [ $? -ne 0 ]; then
-    echo "Namespace $NS doesn't exist"
-    echo "Creating namespace $NS"
-    echo "kubectl create namespace $NS"
-    kubectl create namespace $NS 2>&1 >/dev/null
-    if [ $? -ne 0 ]; then
-      echo "Failed to create namespace: $NS"
-      echo "Exiting with failure"
-      exit 1
-    fi
-  else
-    echo "Namespace $NS already exists"
+# verify pre-requisites
+function verify_prerequisites() {
+  if [ ! -f "${SCRIPTDIR}/${VERIFYSCRIPT}" ]; then
+    log error "Unable to locate ${VERIFYSCRIPT} script in ${SCRIPTDIR}"
   fi
-  echo
+  bash "${SCRIPTDIR}/${VERIFYSCRIPT}"
+  case $? in
+  0) ;;
+
+  1)
+    warning "Pre-requisites validation failed but installation can continue. " \
+      "This may affect driver/module installation."
+    ;;
+  *)
+    log error "Pre-requisites validation failed."
+    ;;
+  esac
 }
 
 function install_operator() {
-  echo "*****"
+  log separator
   echo "Installing Operator"
   kubectl apply -f $MANIFEST_FILE
   echo
 }
 
 source "$SCRIPTDIR"/common.bash
-
 header
-check_for_kubectl
+verify_prerequisites
 check_for_olm_components
-set_namespace
-check_or_create_namespace
+check_or_create_namespace $NAMESPACE
 check_existing_installation
 install_operator
-
-echo "*****"
+log separator
 echo "The installation will take some time to complete"
-echo "If the installation is successful, a CSV with the status 'Succeeded' should be created in the namespace $NS"
+echo "If the installation is successful, a CSV with the status 'Succeeded' and a deployment dell-csm-operator-controller-manager pod with the status 'Running' should be created in the namespace $NAMESPACE"

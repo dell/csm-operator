@@ -72,36 +72,9 @@ function verify_prerequisites() {
   esac
 }
 
-function check_for_kubectl() {
-  log step "Checking for kubectl installation"
-  out=$(command -v kubectl)
-  if [ $? -eq 0 ]; then
-    log step_success
-  else
-    log error "Couldn't find kubectl binary in path"
-  fi
-}
-
-function check_or_create_namespace() {
-  # Check if namespace exists
-  kubectl get namespace $1 > /dev/null 2>&1
-  if [ $? -ne 0 ]; then
-    echo "Namespace '$1' doesn't exist"
-    echo "Creating namespace '$1'"
-    kubectl create namespace $1 2>&1 >/dev/null
-    if [ $? -ne 0 ]; then
-      echo "Failed to create namespace: '$1'"
-      echo "Exiting with failure"
-      exit 1
-    fi
-  else
-    log separator
-    echo "Namespace '$1' already exists"
-    echo
-  fi
-}
-
-function check_for_operator() { 
+function check_existing_installation() {
+  log separator
+  echo "Checking for existing installation of Dell CSM Operator"
   # get namespace from YAML file for deployment
   NS_STRING=$(cat ${DEPLOYDIR}/operator.yaml | grep "namespace:" | head -1)
   # find the namespace from the filtered string
@@ -134,9 +107,11 @@ function check_for_operator() {
        log step_success
     fi
   fi
+  echo
 }
 
 function install_or_update_crd() {
+  log separator
   if [ "$MODE" == "upgrade" ]; then
     log step "Update CRD"
   else
@@ -147,9 +122,11 @@ function install_or_update_crd() {
     log error "Failed to install/update CRD"
   fi
   log step_success
+  echo
 }
 
 function create_operator_deployment() {
+  log separator
   if [ "$MODE" == "upgrade" ]; then
     log step "Upgrade Operator"
   else
@@ -160,9 +137,11 @@ function create_operator_deployment() {
     log error "Failed to deploy operator"
   fi
   log step_success
+  echo
 }
 
 function install_operator() {
+  log separator
   if [ "$MODE" == "upgrade" ]; then
     log separator
     echo "Upgrading Operator"
@@ -172,7 +151,7 @@ function install_operator() {
   fi
   install_or_update_crd
   create_operator_deployment $NAMESPACE
-
+  echo
 }
 
 function check_progress() {
@@ -189,7 +168,7 @@ function check_progress() {
 # Print a nice summary at the end
 function summary() {
   echo
-  echo "******"
+  log separator
   echo "Installation complete"
   echo
 }
@@ -226,14 +205,11 @@ while getopts ":h-:" optchar; do
 done
 
 source "$SCRIPTDIR"/common.bash
-
 header
 log separator
-check_for_kubectl
-check_for_operator
+check_existing_installation
 verify_prerequisites
 check_or_create_namespace $NAMESPACE
 install_operator $NAMESPACE
 check_progress
-
 summary
