@@ -695,26 +695,34 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 }
 
 // minVersionCheck takes a driver name and a version of the form "vA.B.C" and checks it against the minimum version for the specified driver
-func minVersionCheck(driverName string, version string) bool {
+func minVersionCheck(driverName csmv1.DriverType, version string) bool {
 	fmt.Printf("[minVersionCheck] version: %+v\n", version)
 	// strip v off of version string
 	versionNoV := strings.TrimLeft(version, "v")
-	fmt.Printf("[minVersionCheck] versionBits: %+v\n", versionNoV)
+	fmt.Printf("[minVersionCheck] versionNoV: %+v\n", versionNoV)
 	// split by .
-	versionBits := strings.Split(versionNoV, ".")
-	fmt.Printf("[minVersionCheck] versionBits: %+v\n", versionBits)
-	majorVersion, _ := strconv.Atoi(versionBits[0])
-	minorVersion, _ := strconv.Atoi(versionBits[1])
+	versionPieces := strings.Split(versionNoV, ".")
+	fmt.Printf("[minVersionCheck] versionPieces: %+v\n", versionPieces)
+	if len(versionPieces) != 3 {
+		fmt.Printf("len(versionPieces): %+v\n", len(versionPieces))
+		return false
+	}
+	majorVersion, _ := strconv.Atoi(versionPieces[0])
+	minorVersion, _ := strconv.Atoi(versionPieces[1])
 	// compare each part according to minimum driver version
-	if driverName == "powerscale" {
+	if driverName == csmv1.PowerScale {
 		// min version: v2.2.0
+		fmt.Printf("[minVersionCheck] driver is powerscale\n")
 		if majorVersion >= 2 && minorVersion >= 2 {
+			fmt.Printf("[minVersionCheck] version is lit\n")
 			//log.Infow("unsupported version", "version", version)
 			return true
 		}
+		fmt.Printf("[minVersionCheck] version is not lit\n")
 		return false
 	} else {
 		//log.Infow("unknown driver name", "driverName", driverName)
+		fmt.Printf("[minVersionCheck] not powerscale bruh\n")
 		return false
 	}
 }
