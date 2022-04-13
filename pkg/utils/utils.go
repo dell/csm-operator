@@ -366,15 +366,12 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 
 // MinVersionCheck takes a driver name and a version of the form "vA.B.C" and checks it against the minimum version for the specified driver
 func MinVersionCheck(driverName csmv1.DriverType, version string) bool {
-	fmt.Printf("[minVersionCheck] version: %+v\n", version)
 	// strip v off of version string
 	versionNoV := strings.TrimLeft(version, "v")
-	fmt.Printf("[minVersionCheck] versionNoV: %+v\n", versionNoV)
 	// split by .
 	versionPieces := strings.Split(versionNoV, ".")
-	fmt.Printf("[minVersionCheck] versionPieces: %+v\n", versionPieces)
 	if len(versionPieces) != 3 {
-		fmt.Printf("len(versionPieces): %+v\n", len(versionPieces))
+		fmt.Errorf("version %+v not in correct version format, breaks down as: %+v", version, versionPieces)
 		return false
 	}
 	majorVersion, _ := strconv.Atoi(versionPieces[0])
@@ -382,17 +379,12 @@ func MinVersionCheck(driverName csmv1.DriverType, version string) bool {
 	// compare each part according to minimum driver version
 	if driverName == csmv1.PowerScale {
 		// min version: v2.2.0
-		fmt.Printf("[minVersionCheck] driver is powerscale\n")
 		if majorVersion >= 2 && minorVersion >= 2 {
-			fmt.Printf("[minVersionCheck] version is lit\n")
-			//log.Infow("unsupported version", "version", version)
 			return true
 		}
-		fmt.Printf("[minVersionCheck] version is not lit\n")
-		return false
-	} else {
-		//log.Infow("unknown driver name", "driverName", driverName)
-		fmt.Printf("[minVersionCheck] not powerscale bruh\n")
+		fmt.Errorf("version %+v below minimum version v2.2.0", version)
 		return false
 	}
+	fmt.Errorf("driver type %+v not supported", driverName)
+	return false
 }
