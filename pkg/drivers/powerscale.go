@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
-	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/pkg/logger"
+	"github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
