@@ -6,6 +6,8 @@ import (
 	"strconv"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -31,6 +33,10 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, c
 
 	if cr.Spec.Driver.AuthSecret != "" {
 		config = cr.Spec.Driver.AuthSecret
+	}
+
+	if cr.Spec.Driver.ConfigVersion == "" || !utils.MinVersionCheck(cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.ConfigVersion) {
+		return fmt.Errorf("driver version not specified in spec or driver version is not supported")
 	}
 
 	// check if skip validation is enabled:
