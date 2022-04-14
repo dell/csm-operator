@@ -414,6 +414,8 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	}
 	err = fmt.Errorf("version %s below minimum version %s", version, minVersion)
 	return false, nil
+}
+
 func clusterIDs(replica csmv1.Module) ([]string, error) {
 	var clusterIDs []string
 	for _, comp := range replica.Components {
