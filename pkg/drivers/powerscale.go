@@ -23,13 +23,14 @@ const (
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params"
 
+	// PowerScaleMinVersion is the minimum version of the PowerScale driver that is supported
 	PowerScaleMinVersion = "v2.2.0"
 )
 
 // PrecheckPowerScale do input validation
 func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) error {
 	log := logger.GetLogger(ctx)
-	// Check for secrete only
+	// Check for secret only
 	config := cr.Name + "-creds"
 
 	if cr.Spec.Driver.AuthSecret != "" {
