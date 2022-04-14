@@ -339,8 +339,6 @@ func TestReplicationPreCheck(t *testing.T) {
 }
 
 func TestReplicationDeployManagerController(t *testing.T) {
-	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
-
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule){
 		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
@@ -351,7 +349,7 @@ func TestReplicationDeployManagerController(t *testing.T) {
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
 
-			return false, replica, tmpCR
+			return true, replica, tmpCR
 		},
 	}
 

@@ -56,7 +56,6 @@ func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) 
 	for _, component := range replicaModule.Components {
 		if component.Name == "dell-csi-replicator" {
 			for _, env := range component.Envs {
-				fmt.Println(env.Name, env.Value)
 				if env.Name == XCSIReplicaPrefix {
 					replicationPrefix = env.Value
 				} else if env.Name == XCSIReplicaCTXPrefix {
@@ -286,23 +285,6 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		switch cr.Spec.Driver.CSIDriverType {
 		case csmv1.PowerScale:
 			tmpCR := cr
-
-			/*found := &corev1.SecretList{}
-			opts := []client.ListOption{
-				client.InNamespace(cr.Namespace),
-			}
-			err := cluster.ClusterCTRLClient.List(ctx, found, opts...)
-			if err != nil {
-				if k8serrors.IsNotFound(err) {
-					return fmt.Errorf("failed to find secret %s", "lololo")
-				}
-				return fmt.Errorf("failed %v", err)
-			}
-
-			for _, sec := range found.Items {
-				fmt.Println("301", sec.Name)
-			}*/
-
 			err = drivers.PrecheckPowerScale(ctx, &tmpCR, cluster.ClusterCTRLClient)
 			if err != nil {
 				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClutsterID)
@@ -314,45 +296,12 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 
 func ReplicationDeployManagerController(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule) error {
 	log := logger.GetLogger(ctx)
-	repctlBinary, ok := os.LookupEnv("REPCTL_BINARY")
-	if !ok {
+	var repctlBinary string
+	var ok bool
+	if repctlBinary, ok = os.LookupEnv("REPCTL_BINARY"); !ok {
 		repctlBinary = RepctlBinary
 		log.Warnf("REPCTL_BINARY environment variable not defined. Using default %s", repctlBinary)
 	}
-
-	var err error
-	repctlConfigVersion := replica.ConfigVersion
-	if repctlConfigVersion == "" {
-		repctlConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, replica.Name, op.ConfigDirectory)
-		if err != nil {
-			return err
-		}
-	}
-
-	// To create CRDs
-	/*crdPath := fmt.Sprintf("%s/moduleconfig/replication/%s/replicationcrds.all.yaml", op.ConfigDirectory, repctlConfigVersion)
-	out, err := exec.CommandContext(ctx, repctlBinary, "create", "-f", crdPath).CombinedOutput()
-	if err != nil {
-		log.Infof(fmt.Sprintf("%s", out))
-		return err
-	}*/
-
-	/*
-		          - name: "REPLICATION_CTRL_LOG_LEVEL"
-		            value: "debug"
-
-		          - name: "REPLICATION_CTRL_REPLICAS"
-		            value: "1"
-
-		          - name: "RETRY_INTERVAL_MIN"
-		            value: "1s"
-
-		          - name: "RETRY_INTERVAL_MAX"
-		            value: "5m"
-
-					REPLICATION_CONTROLLER_IMAGE
-
-	*/
 
 	buf, err := readConfigFile(replica, cr, op, "controller.yaml")
 	if err != nil {
@@ -391,14 +340,11 @@ func ReplicationDeployManagerController(ctx context.Context, op utils.OperatorCo
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMax, retryMax)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
 
-	fmt.Println(YamlString)
-
 	// To create controller
 	ctrlCmd := exec.CommandContext(ctx, repctlBinary, "create", "-f", "-")
 	ctrlCmd.Stdin = strings.NewReader(YamlString)
 	_, err = ctrlCmd.CombinedOutput()
 	if err != nil {
-		//log.Infof(fmt.Sprintf("%s", out))
 		return err
 	}
 

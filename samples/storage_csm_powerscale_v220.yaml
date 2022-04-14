@@ -205,7 +205,7 @@ spec:
       #   true: enable replication feature(install dell-csi-replicator sidecar)
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
-      enabled: true
+      enabled: false
       configVersion: v1.2.0
       components:
       - name: dell-csi-replicator
@@ -245,12 +245,6 @@ spec:
           # Default value: 1
           - name: "REPLICATION_CTRL_REPLICAS"
             value: "1"
-          # leaderElection: Enable leader election for dell-replication-controller manager.
-          # Enabling this will ensure there is only one active dell-replication-controller manager.
-          # Allowed values: "true", "false"
-          # Default value: "true"
-          - name: "LEADER_ELECTION"
-            value: "true"
           # retryIntervalMin: Initial retry interval of failed reconcile request.
           # It doubles with each failure, upto retry-interval-max
           # Allowed values: time

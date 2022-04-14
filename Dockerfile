@@ -2,6 +2,11 @@
 FROM golang:1.17 as builder
 
 WORKDIR /workspace
+
+# Download repctl
+RUN wget  https://github.com/dell/csm-replication/releases/download/v1.2.0/repctl-linux-amd64
+RUN  chmod +x repctl-linux-amd64 && mv repctl-linux-amd64 /usr/local/bin/repctl
+
 # Copy the Go Modules manifests
 COPY go.mod go.mod
 COPY go.sum go.sum
@@ -17,6 +22,9 @@ COPY core/ core/
 COPY pkg/ pkg/
 COPY k8s/ k8s/
 COPY tests/ tests/
+
+
+# wget  https://github.com/dell/csm-replication/releases/download/v1.2.0/repctl-linux-amd64
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
