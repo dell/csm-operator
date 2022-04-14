@@ -1,9 +1,13 @@
-apiVersion: storage.dell.com/v1alpha1
+apiVersion: storage.dell.com/v1alpha2
 kind: ContainerStorageModule
 metadata:
   name: test-isilon
   namespace: test-isilon
 spec:
+  remoteRepo:
+    repository:
+    credSecretName: "credSecretTest"
+    certSecretName: "certSecretTest"
   driver:
     csiDriverType: "isilon" 
     csiDriverSpec:
