@@ -274,7 +274,7 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		log.Warnf("REPCTL_BINARY environment variable not defined. Using default %s", repctlBinary)
 	}
 
-	if out, err := exec.CommandContext(ctx, repctlBinary, "--help").CombinedOutput(); err != nil {
+	if out, err := exec.CommandContext(ctx, string(repctlBinary), "--help").CombinedOutput(); err != nil {
 		log.Errorf("%s", out)
 		return fmt.Errorf("repctl not installed: %v", err)
 	}
