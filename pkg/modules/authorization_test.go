@@ -51,6 +51,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
+
 			return true, nodeYAML.DaemonSetApplyConfig, operatorConfig
 		},
 		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {

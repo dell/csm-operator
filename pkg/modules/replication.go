@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
 
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -21,20 +21,31 @@ import (
 )
 
 const (
-	RepctlBinary                    = "repctl"
-	ReplicationPrefix               = "replication.storage.dell.com"
+	// RepctlBinary - default binary name
+	RepctlBinary = "repctl"
+	// ReplicationPrefix -
+	ReplicationPrefix = "replication.storage.dell.com"
+	// DefaultReplicationContextPrefix -
 	DefaultReplicationContextPrefix = "<ReplicationContextPrefix>"
-	DefaultReplicationPrefix        = "<ReplicationPrefix>"
-	DefaultLogLevel                 = "<REPLICATION_CTRL_LOG_LEVEL>"
-	DefautlReplicaCount             = "<REPLICATION_CTRL_REPLICAS>"
-	DefaultRetryMin                 = "<RETRY_INTERVAL_MIN>"
-	DefaultRetryMax                 = "<RETRY_INTERVAL_MAX>"
-	DefaultReplicaImage             = "<REPLICATION_CONTROLLER_IMAGE>"
+	// DefaultReplicationPrefix -
+	DefaultReplicationPrefix = "<ReplicationPrefix>"
+	// DefaultLogLevel -
+	DefaultLogLevel = "<REPLICATION_CTRL_LOG_LEVEL>"
+	// DefautlReplicaCount -
+	DefautlReplicaCount = "<REPLICATION_CTRL_REPLICAS>"
+	// DefaultRetryMin -
+	DefaultRetryMin = "<RETRY_INTERVAL_MIN>"
+	// DefaultRetryMax -
+	DefaultRetryMax = "<RETRY_INTERVAL_MAX>"
+	// DefaultReplicaImage -
+	DefaultReplicaImage = "<REPLICATION_CONTROLLER_IMAGE>"
 )
 
 var (
+	// XCSIReplicaCTXPrefix -
 	XCSIReplicaCTXPrefix = "X_CSI_REPLICATION_CONTEXT_PREFIX"
-	XCSIReplicaPrefix    = "X_CSI_REPLICATION_PREFIX"
+	// XCSIReplicaPrefix -
+	XCSIReplicaPrefix = "X_CSI_REPLICATION_PREFIX"
 )
 
 // ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CMS Replication. The key is driver name and the value is the driver plugin identifier
@@ -294,6 +305,7 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 	return nil
 }
 
+// ReplicationDeployManagerController -
 func ReplicationDeployManagerController(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule) error {
 	log := logger.GetLogger(ctx)
 	var repctlBinary string

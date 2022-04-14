@@ -86,9 +86,11 @@ const (
 	// DefaultImagePullPolicy constant
 	DefaultImagePullPolicy = "IfNotPresent"
 	//KubeletConfigDir path
-	KubeletConfigDir               = "<KUBELET_CONFIG_DIR>"
+	KubeletConfigDir = "<KUBELET_CONFIG_DIR>"
+	// ReplicationControllerNameSpace -
 	ReplicationControllerNameSpace = "dell-replication-controller"
-	ReplicationControllerManager   = "dell-replication-controller-manager"
+	// ReplicationControllerManager -
+	ReplicationControllerManager = "dell-replication-controller-manager"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.

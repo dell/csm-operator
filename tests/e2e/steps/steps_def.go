@@ -243,7 +243,7 @@ func (step *Step) validateAuthorizationInstalled(res Resource) error {
 			return err
 		}
 
-		err = modules.// .CheckApplyVolumesAuth(vols)
+		err = modules.CheckApplyVolumesAuth(vols)
 		if err != nil {
 			return err
 		}
