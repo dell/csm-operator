@@ -7,6 +7,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
 	"github.com/dell/csm-operator/pkg/logger"
+	"github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -21,16 +22,30 @@ const (
 
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params"
+
+	// PowerScaleMinVersion is the minimum version of the PowerScale driver that is supported
+	PowerScaleMinVersion = "v2.2.0"
 )
 
 // PrecheckPowerScale do input validation
 func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) error {
 	log := logger.GetLogger(ctx)
-	// Check for secrete only
+	// Check for secret only
 	config := cr.Name + "-creds"
 
 	if cr.Spec.Driver.AuthSecret != "" {
 		config = cr.Spec.Driver.AuthSecret
+	}
+
+	if cr.Spec.Driver.ConfigVersion != "" {
+		goodVersion, err := utils.MinVersionCheck(PowerScaleMinVersion, cr.Spec.Driver.ConfigVersion)
+		if err != nil {
+			return fmt.Errorf("Minimum version check returned error: %+v", err)
+		} else if goodVersion == false {
+			return fmt.Errorf("driver version %s not supported min version is %s", cr.Spec.Driver.ConfigVersion, PowerScaleMinVersion)
+		}
+	} else {
+		return fmt.Errorf("driver version not specified in spec")
 	}
 
 	// check if skip validation is enabled:
