@@ -20,7 +20,7 @@ type ReconcileCSM interface {
 	IncrUpdateCount()
 }
 
-// FakeReconcileCSM-
+// FakeReconcileCSM -
 type FakeReconcileCSM struct {
 	reconcile.Reconciler
 	client.Client
@@ -28,6 +28,7 @@ type FakeReconcileCSM struct {
 	updateCount int32
 }
 
+// GetClient -
 func (r *FakeReconcileCSM) GetClient() client.Client {
 	return r.Client
 }
