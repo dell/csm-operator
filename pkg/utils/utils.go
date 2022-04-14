@@ -364,27 +364,38 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 
 }
 
-// MinVersionCheck takes a driver name and a version of the form "vA.B.C" and checks it against the minimum version for the specified driver
-func MinVersionCheck(driverName csmv1.DriverType, version string) bool {
+func versionParser(version string) (int, int, error) {
 	// strip v off of version string
 	versionNoV := strings.TrimLeft(version, "v")
 	// split by .
 	versionPieces := strings.Split(versionNoV, ".")
 	if len(versionPieces) != 3 {
-		fmt.Errorf("version %+v not in correct version format, breaks down as: %+v", version, versionPieces)
-		return false
+		err := fmt.Errorf("version %+v not in correct version format, breaks down as: %+v", version, versionPieces)
+		return -1, -1, err
 	}
+
 	majorVersion, _ := strconv.Atoi(versionPieces[0])
 	minorVersion, _ := strconv.Atoi(versionPieces[1])
-	// compare each part according to minimum driver version
-	if driverName == csmv1.PowerScale {
-		// min version: v2.2.0
-		if majorVersion >= 2 && minorVersion >= 2 {
-			return true
-		}
-		fmt.Errorf("version %+v below minimum version v2.2.0", version)
-		return false
+
+	return majorVersion, minorVersion, nil
+}
+
+// MinVersionCheck takes a driver name and a version of the form "vA.B.C" and checks it against the minimum version for the specified driver
+func MinVersionCheck(minVersion string, version string) (bool, error) {
+	minVersionA, minVersionB, err := versionParser(minVersion)
+	if err != nil {
+		return false, err
 	}
-	fmt.Errorf("driver type %+v not supported", driverName)
-	return false
+
+	versionA, versionB, err := versionParser(version)
+	if err != nil {
+		return false, err
+	}
+
+	// compare each part according to minimum driver version
+	if versionA >= minVersionA && versionB >= minVersionB {
+		return true, nil
+	}
+	err = fmt.Errorf("version %s below minimum version %s", version, minVersion)
+	return false, nil
 }

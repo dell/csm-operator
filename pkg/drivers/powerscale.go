@@ -22,6 +22,8 @@ const (
 
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params"
+
+	PowerScaleMinVersion = "v2.2.0"
 )
 
 // PrecheckPowerScale do input validation
@@ -34,8 +36,15 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, c
 		config = cr.Spec.Driver.AuthSecret
 	}
 
-	if cr.Spec.Driver.ConfigVersion == "" || !utils.MinVersionCheck(cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.ConfigVersion) {
-		return fmt.Errorf("driver version not specified in spec or driver version is not supported")
+	if cr.Spec.Driver.ConfigVersion != "" {
+		goodVersion, err := utils.MinVersionCheck(PowerScaleMinVersion, cr.Spec.Driver.ConfigVersion)
+		if err != nil {
+			return fmt.Errorf("Minimum version check returned error: %+v", err)
+		} else if goodVersion == false {
+			return fmt.Errorf("driver version %s not supported min version is %s", cr.Spec.Driver.ConfigVersion, PowerScaleMinVersion)
+		}
+	} else {
+		return fmt.Errorf("driver version not specified in spec")
 	}
 
 	// check if skip validation is enabled:

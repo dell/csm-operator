@@ -17,15 +17,18 @@ import (
 
 var (
 	//
-	csm                                       = csmWithTolerations()
-	fakeDriver               csmv2.DriverType = "fakeDriver"
-	badDriver                csmv2.DriverType = "badDriver"
-	powerScaleCSM                             = csmForPowerScale()
-	powerScaleCSMBadSkipCert                  = csmForPowerScaleBadSkipCert()
-	powerScaleCSMBadCertCnt                   = csmForPowerScaleBadCertCnt()
-	objects                                   = map[shared.StorageKey]runtime.Object{}
-	powerScaleClient                          = crclient.NewFakeClientNoInjector(objects)
-	powerScaleSecret                          = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
+	csm                                            = csmWithTolerations()
+	fakeDriver                    csmv2.DriverType = "fakeDriver"
+	badDriver                     csmv2.DriverType = "badDriver"
+	powerScaleCSM                                  = csmForPowerScale()
+	powerScaleCSMBadSkipCert                       = csmForPowerScaleBadSkipCert()
+	powerScaleCSMBadCertCnt                        = csmForPowerScaleBadCertCnt()
+	powerScaleCSMBadVersionFormat                  = csmForPowerScaleBadVersionFormat()
+	powerScaleCSMEmptyVersion                      = csmForPowerScaleEmptyVersion()
+	powerScaleCSMVersionTooLow                     = csmForPowerScaleVersionTooLow()
+	objects                                        = map[shared.StorageKey]runtime.Object{}
+	powerScaleClient                               = crclient.NewFakeClientNoInjector(objects)
+	powerScaleSecret                               = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
 
 	// where to find all the yaml files
 	config = utils.OperatorConfig{
@@ -78,6 +81,9 @@ var (
 		expectedErr string
 	}{
 		{"missing secret", powerScaleCSM, powerScaleClient, powerScaleSecret, "failed to find secret"},
+		{"bad version format", powerScaleCSMBadVersionFormat, powerScaleClient, powerScaleSecret, "Minimum version check returned error"},
+		{"empty version", powerScaleCSMEmptyVersion, powerScaleClient, powerScaleSecret, "driver version not specified in spec"},
+		{"version too low", powerScaleCSMVersionTooLow, powerScaleClient, powerScaleSecret, "not supported min version is"},
 	}
 
 	opts = zap.Options{
@@ -293,6 +299,39 @@ func csmForPowerScaleBadCertCnt() csmv2.ContainerStorageModule {
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = "v2.2.0"
+	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
+
+	return res
+}
+
+// makes a csm object with tolerations
+func csmForPowerScaleBadVersionFormat() csmv2.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add pscale driver version
+	res.Spec.Driver.ConfigVersion = "v0"
+	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
+
+	return res
+}
+
+// makes a csm object with tolerations
+func csmForPowerScaleEmptyVersion() csmv2.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add pscale driver version
+	res.Spec.Driver.ConfigVersion = ""
+	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
+
+	return res
+}
+
+// makes a csm object with tolerations
+func csmForPowerScaleVersionTooLow() csmv2.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add pscale driver version
+	res.Spec.Driver.ConfigVersion = "v2.1.0"
 	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
 
 	return res
