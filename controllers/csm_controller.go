@@ -78,7 +78,6 @@ type DriverConfig struct {
 	Controller *utils.ControllerYAML
 }
 
-// MetadataPrefix - prefix for all labels & annotations
 const (
 	// MetadataPrefix - prefix for all labels & annotations
 	MetadataPrefix = "storage.dell.com"
@@ -90,11 +89,13 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 )
 
-var dMutex sync.RWMutex
-var configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
+var (
+	dMutex           sync.RWMutex
+	configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
 
-// StopWatch - watcher stop handle
-var StopWatch = make(chan struct{})
+	// StopWatch - watcher stop handle
+	StopWatch = make(chan struct{})
+)
 
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules/status,verbs=get;update;patch
@@ -693,10 +694,6 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
-	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.2.0" {
-		return fmt.Errorf("driver version not specified in spec or driver version is not supported")
-	}
-
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
@@ -704,6 +701,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
+
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
