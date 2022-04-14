@@ -273,7 +273,6 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Nil(suite.T(), err)
 	configVersion = shared.ConfigVersion
-
 }
 
 func (suite *CSMControllerTestSuite) TestCsmPreCheckTypeError() {

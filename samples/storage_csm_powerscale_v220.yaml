@@ -5,7 +5,7 @@ metadata:
   namespace: test-isilon
 spec:
   remoteRepo:
-    repository: "https://amaas-eos-mw1.cec.lab.emc.com:5036/artifactory/csi-driver-helm-virtual"
+    repository:
     credSecretName: "credSecretTest"
     certSecretName: "certSecretTest"
   driver:
