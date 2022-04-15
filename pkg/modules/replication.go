@@ -17,6 +17,11 @@ import (
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -235,15 +240,8 @@ func CheckClusterRoleReplica(rules []rbacv1.PolicyRule) error {
 }
 
 // ReplicationInjectClusterRole - inject replication into clusterrole
-func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*rbacv1.ClusterRole, error) {
+func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, replicaModule csmv1.Module, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*rbacv1.ClusterRole, error) {
 	var err error
-	replicaModule := csmv1.Module{}
-	for _, m := range cr.Spec.Modules {
-		if m.Name == csmv1.Replication {
-			replicaModule = m
-			break
-		}
-	}
 	buf, err := readConfigFile(replicaModule, cr, op, "rules.yaml")
 	if err != nil {
 		return nil, err
@@ -274,7 +272,7 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		log.Warnf("REPCTL_BINARY environment variable not defined. Using default %s", repctlBinary)
 	}
 
-	if out, err := exec.CommandContext(ctx, string(repctlBinary), "--help").CombinedOutput(); err != nil {
+	if out, err := exec.CommandContext(ctx, repctlBinary, "--help").CombinedOutput(); err != nil { //nolint:gosec
 		log.Errorf("%s", out)
 		return fmt.Errorf("repctl not installed: %v", err)
 	}
@@ -300,13 +298,14 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 			if err != nil {
 				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClutsterID)
 			}
+
 		}
 	}
 	return nil
 }
 
-// ReplicationDeployManagerController -
-func ReplicationDeployManagerController(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule) error {
+// ReplicationInstallManagerController -
+func ReplicationInstallManagerController(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule) error {
 	log := logger.GetLogger(ctx)
 	var repctlBinary string
 	var ok bool
@@ -353,11 +352,97 @@ func ReplicationDeployManagerController(ctx context.Context, op utils.OperatorCo
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
 
 	// To create controller
-	ctrlCmd := exec.CommandContext(ctx, repctlBinary, "create", "-f", "-")
+	ctrlCmd := exec.CommandContext(ctx, repctlBinary, "create", "-f", "-") //nolint:gosec
 	ctrlCmd.Stdin = strings.NewReader(YamlString)
 	_, err = ctrlCmd.CombinedOutput()
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ReplicationUninstallManagerController -
+func ReplicationUninstallManagerController(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule, ctrlCleint client.Client) error {
+	CtrlBuf, err := readConfigFile(replica, cr, op, "controller.yaml")
+	if err != nil {
+		return err
+	}
+
+	bufs, err := utils.SplitYaml(CtrlBuf)
+	if err != nil {
+		return err
+	}
+
+	for _, raw := range bufs {
+		var meta metav1.TypeMeta
+		err = yaml.Unmarshal(raw, &meta)
+		if err != nil {
+			return err
+		}
+		switch meta.Kind {
+		case "ServiceAccount":
+			var sa corev1.ServiceAccount
+			if err := yaml.Unmarshal(raw, &sa); err != nil {
+				return err
+			}
+			if utils.DeleteObject(ctx, &sa, ctrlCleint); err != nil {
+				return err
+			}
+
+		case "ClusterRole":
+			var cr rbacv1.ClusterRole
+			if err := yaml.Unmarshal(raw, &cr); err != nil {
+				return err
+			}
+			if utils.DeleteObject(ctx, &cr, ctrlCleint); err != nil {
+				return err
+			}
+
+		case "ClusterRoleBinding":
+			var crb rbacv1.ClusterRoleBinding
+			if err := yaml.Unmarshal(raw, &crb); err != nil {
+				return err
+			}
+
+			if utils.DeleteObject(ctx, &crb, ctrlCleint); err != nil {
+				return err
+			}
+
+		case "Service":
+
+			var sv corev1.Service
+			if err := yaml.Unmarshal(raw, &sv); err != nil {
+				return err
+			}
+
+			if utils.DeleteObject(ctx, &sv, ctrlCleint); err != nil {
+				return err
+			}
+
+		case "ConfigMap":
+
+			var cm corev1.ConfigMap
+			if err := yaml.Unmarshal(raw, &cm); err != nil {
+				return err
+			}
+
+			if utils.DeleteObject(ctx, &cm, ctrlCleint); err != nil {
+				return err
+			}
+
+		case "Deployment":
+
+			var dp appsv1.Deployment
+			if err := yaml.Unmarshal(raw, &dp); err != nil {
+				return err
+			}
+
+			if utils.DeleteObject(ctx, &dp, ctrlCleint); err != nil {
+				return err
+			}
+
+		}
 	}
 
 	return nil

@@ -17,7 +17,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -338,6 +340,31 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 	}
 
 	return nil, fmt.Errorf("unsupported kind %s", kind)
+}
+
+// DeleteObject
+func DeleteObject(ctx context.Context, obj crclient.Object, ctrlCleint crclient.Client) error {
+	log := logger.GetLogger(ctx)
+
+	kind := obj.GetObjectKind().GroupVersionKind().Kind
+	name := obj.GetName()
+
+	err := ctrlCleint.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+
+	if err != nil && k8serror.IsNotFound(err) {
+		log.Infow("Object not found to delete", "Name:", name, "Kind:", kind)
+		return nil
+	} else if err != nil {
+		log.Errorw("error to find object in deleteObj", "Error", err.Error(), "Name:", name, "Kind:", kind)
+		return err
+	} else {
+		log.Infow("Deleting object", "Name:", name, "Kind:", kind)
+		err = ctrlCleint.Delete(ctx, obj)
+		if err != nil && !k8serror.IsNotFound(err) {
+			return err
+		}
+	}
+	return nil
 }
 
 // LogBannerAndReturn -

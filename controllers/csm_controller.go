@@ -50,7 +50,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
@@ -494,14 +493,17 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
-				clusterRole, err := modules.ReplicationInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig)
+				clusterRole, err := modules.ReplicationInjectClusterRole(controller.Rbac.ClusterRole, m, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting replication into controller cluster role: %v", err)
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
 
-				// do controller deployment
+				err = modules.ReplicationInstallManagerController(ctx, operatorConfig, m, cr)
+				if err != nil {
+					return fmt.Errorf("failed top deploy replication controller: %v", err)
+				}
 
 			default:
 				return fmt.Errorf("unsupported module type %s", m.Name)
@@ -616,28 +618,6 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
 func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 
-	deleteObj := func(obj client.Object, ctrlCleint crclient.Client) error {
-		kind := obj.GetObjectKind().GroupVersionKind().Kind
-		name := obj.GetName()
-
-		err := ctrlCleint.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
-
-		if err != nil && k8serror.IsNotFound(err) {
-			log.Infow("Object not found to delete", "Name:", name, "Kind:", kind)
-			return nil
-		} else if err != nil {
-			log.Errorw("error to find object in deleteObj", "Error", err.Error(), "Name:", name, "Kind:", kind)
-			return err
-		} else {
-			log.Infow("Deleting object", "Name:", name, "Kind:", kind)
-			err = ctrlCleint.Delete(ctx, obj)
-			if err != nil && !k8serror.IsNotFound(err) {
-				return err
-			}
-		}
-		return nil
-	}
-
 	// Get Driver resources
 	driverConfig, err := r.getDriverConfig(ctx, instance, operatorConfig)
 	if err != nil {
@@ -650,42 +630,42 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return err
 	}
 	for _, cluster := range clusterClients {
-		if err = deleteObj(&driverConfig.Node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+		if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete node service account", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+		if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete controller service account", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
+		if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete node cluster role", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
+		if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete controller cluster role", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+		if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete node cluster role binding", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(&driverConfig.Controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+		if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete controller cluster role binding", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(driverConfig.ConfigMap, cluster.ClusterCTRLClient); err != nil {
+		if err = utils.DeleteObject(ctx, driverConfig.ConfigMap, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete configmap", "Error", err.Error())
 			return err
 		}
 
-		if err = deleteObj(driverConfig.Driver, cluster.ClusterCTRLClient); err != nil {
+		if err = utils.DeleteObject(ctx, driverConfig.Driver, cluster.ClusterCTRLClient); err != nil {
 			log.Errorw("error delete csi driver", "Error", err.Error())
 			return err
 		}
@@ -721,10 +701,14 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
 		}
 
-	}
-	if replicationEnabled {
-		// TODO: uninstall replication controllers
-		log.Infow("Deleting Replication controller")
+		if replicationEnabled {
+			log.Infow("Deleting Replication controller")
+			if err = modules.ReplicationUninstallManagerController(ctx, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
+				log.Errorw("error deleting replication controller", err.Error())
+				return err
+			}
+		}
+
 	}
 
 	return nil
