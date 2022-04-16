@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
 	"github.com/dell/csm-operator/controllers"
 	"github.com/dell/csm-operator/core"
 	k8sClient "github.com/dell/csm-operator/k8s"

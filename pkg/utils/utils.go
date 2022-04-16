@@ -8,9 +8,10 @@ import (
 
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
 	goYAML "github.com/go-yaml/yaml"
 
 	//appsv1 "k8s.io/api/apps/v1"
@@ -362,4 +363,40 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 
 	return "", fmt.Errorf("%s driver does not exist in file %s", dType, configMapPath)
 
+}
+
+func versionParser(version string) (int, int, error) {
+	// strip v off of version string
+	versionNoV := strings.TrimLeft(version, "v")
+	// split by .
+	versionPieces := strings.Split(versionNoV, ".")
+	if len(versionPieces) != 3 {
+		err := fmt.Errorf("version %+v not in correct version format, breaks down as: %+v", version, versionPieces)
+		return -1, -1, err
+	}
+
+	majorVersion, _ := strconv.Atoi(versionPieces[0])
+	minorVersion, _ := strconv.Atoi(versionPieces[1])
+
+	return majorVersion, minorVersion, nil
+}
+
+// MinVersionCheck takes a driver name and a version of the form "vA.B.C" and checks it against the minimum version for the specified driver
+func MinVersionCheck(minVersion string, version string) (bool, error) {
+	minVersionA, minVersionB, err := versionParser(minVersion)
+	if err != nil {
+		return false, err
+	}
+
+	versionA, versionB, err := versionParser(version)
+	if err != nil {
+		return false, err
+	}
+
+	// compare each part according to minimum driver version
+	if versionA >= minVersionA && versionB >= minVersionB {
+		return true, nil
+	}
+	err = fmt.Errorf("version %s below minimum version %s", version, minVersion)
+	return false, nil
 }

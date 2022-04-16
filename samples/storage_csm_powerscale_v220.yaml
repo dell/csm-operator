@@ -1,9 +1,13 @@
-apiVersion: storage.dell.com/v1alpha1
+apiVersion: storage.dell.com/v1alpha2
 kind: ContainerStorageModule
 metadata:
   name: test-isilon
   namespace: test-isilon
 spec:
+  remoteRepo:
+    repository:
+    credSecretName: "credSecretTest"
+    certSecretName: "certSecretTest"
   driver:
     csiDriverType: "isilon" 
     csiDriverSpec:
@@ -20,7 +24,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerScale driver v2.2.0
-      image: "dellemc/csi-isilon:nightly"
+      image: "dellemc/csi-isilon:v2.2.0"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs

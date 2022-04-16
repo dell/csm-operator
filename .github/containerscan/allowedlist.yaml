@@ -8,6 +8,9 @@ general:
     - CVE-2022-25236
     - CVE-2021-44568
     - CVE-2022-24407
+    - CVE-2022-0778
+    - CVE-2022-26280 
+    - CVE-2018-25032
   bestPracticeViolations:
     # list of best practies violatied that needs a fix
     - DKL-DI-0006

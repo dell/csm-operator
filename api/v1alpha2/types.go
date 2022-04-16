@@ -9,7 +9,7 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 */
 
-package v1alpha1
+package v1alpha2
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -127,6 +127,13 @@ type PodStatus struct {
 	Available string `json:"available,omitempty"`
 	Desired   string `json:"desired,omitempty"`
 	Failed    string `json:"failed,omitempty"`
+}
+
+// RemoteRepo to download yamls for driver
+type RemoteRepo struct {
+	Repository     string `json:"repository,omitempty"`
+	CredSecretName string `json:"credSecretName,omitempty"`
+	CertSecretName string `json:"certSecretName,omitempty"`
 }
 
 // Driver of CSIDriver

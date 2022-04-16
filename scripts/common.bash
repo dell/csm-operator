@@ -84,6 +84,26 @@ waitOnRunning() {
   return 0
 }
 
+function check_or_create_namespace() {
+  # Check if namespace exists
+  log separator
+  echo "Checking if namespace exists '$1'"
+  kubectl get namespace $1 > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Namespace '$1' doesn't exist"
+    echo "Creating namespace '$1'"
+    kubectl create namespace $1 2>&1 >/dev/null
+    if [ $? -ne 0 ]; then
+      echo "Failed to create namespace: '$1'"
+      echo "Exiting with failure"
+      exit 1
+    fi
+  else
+    echo "Namespace '$1' already exists"
+  fi
+  echo
+}
+
 # Get the kubernetes major and minor version numbers.
 kMajorVersion=$(kubectl version | grep 'Server Version' | sed -e 's/^.*Major:"//' -e 's/[^0-9].*//g')
 kMinorVersion=$(kubectl version | grep 'Server Version' | sed -e 's/^.*Minor:"//' -e 's/[^0-9].*//g')

@@ -9,7 +9,7 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 */
 
-package v1alpha1
+package v1alpha2
 
 import (
 	"fmt"
@@ -24,6 +24,9 @@ import (
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// RemoteRepo is the remote repo to download yamls for driver
+	RemoteRepo RemoteRepo `json:"remoteRepo,omitempty"`
 
 	// Driver is a CSI Drivers for Dell Technologies
 	Driver Driver `json:"driver,omitempty" yaml:"driver,omitempty"`
