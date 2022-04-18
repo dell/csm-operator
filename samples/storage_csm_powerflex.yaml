@@ -75,55 +75,27 @@ spec:
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "true"
 
+        #"image": "k8s.gcr.io/sig-storage/csi-provisioner:v3.1.0"}
+
     sideCars:
-      - name: provisioner
-        args: ["--volume-name-prefix=csipscale"]
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
+        image: "gcr.io/k8s-staging-sig-storage/csi-external-health-monitor-controller:v0.4.0"
         enabled: true
-        args: ["--monitor-interval=60s"]
       - name: podmon
+        image: "dellemc/podmon:v1.1.0"
         enabled: true
       - name: vgsnapshotter
         enabled: true
         image: amaas-eos-mw1.cec.lab.emc.com:5036/vg-controller:master-latest
       # FIX ME : add initContainer suppport
-      - name: sdc
-        image: amaas-eos-mw1.cec.lab.emc.com:5044/container/sdc:3.6.200.104
       - name: sdc-monitor
         image: amaas-eos-mw1.cec.lab.emc.com:5044/container/sdc:3.6.200.104
 
     initContainers:
       - name: sdc
-        securityContext:
-          privileged: true
         image: amaas-eos-mw1.cec.lab.emc.com:5044/container/sdc:3.6.200.104
         imagePullPolicy: IfNotPresent
-        env:
-          - name: NODENAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
-          - name: MODE
-            value: "config"
-          - name: MDM
-            valueFrom:
-              secretKeyRef:
-                name: vxflexos-config
-                key: MDM
-          - name: HOST_DRV_CFG_PATH
-            value: /opt/emc/scaleio/sdc/bin
-        volumeMounts:
-          - name: dev
-            mountPath: /dev
-          - name: os-release
-            mountPath: /host-os-release
-          - name: sdc-storage
-            mountPath: /storage
-          - name: udev-d
-            mountPath: /rules.d
-          - name: scaleio-path-opt
-            mountPath: /host_drv_cfg_path
 
   modules:
     # Authorization: enable csm-authorization for RBAC

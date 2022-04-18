@@ -40,6 +40,8 @@ func SyncDeployment(ctx context.Context, deployment *appsv1.DeploymentApplyConfi
 	set, err := deployments.Apply(ctx, deployment, opts)
 	if err != nil {
 		log.Errorw("Apply Deployment error", "set", err.Error())
+		// spec.template.spec.containers
+		log.Errorw("Apply Deployment error", "template", deployment.Spec )
 		return err
 	}
 	log.Infow("deployment apply done", "name", set.Name)

@@ -83,7 +83,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, control
 			}
 		}
 		if !removeContainer {
+			log.Debugw("Controller Container to be enabled", "name", *c.Name, "image", containers[i].Image)
 			utils.ReplaceAllContainerImageApply(operatorConfig.K8sSidecars, &containers[i])
+			log.Debugw("Sidecar containers", "image", operatorConfig.K8sSidecars)
 			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
 			newcontainers = append(newcontainers, c)
 		}
