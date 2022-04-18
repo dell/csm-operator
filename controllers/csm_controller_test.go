@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -148,6 +149,9 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 // test a happy path scenerio with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
+	os.Setenv("REPCTL_BINARY", "echo")
+	defer os.Unsetenv("REPCTL_BINARY")
+
 	suite.makeFakeCSM(csmName, suite.namespace, true, getReplicaModule())
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
