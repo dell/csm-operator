@@ -493,14 +493,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
-				clusterRole, err := modules.ReplicationInjectClusterRole(controller.Rbac.ClusterRole, m, cr, operatorConfig)
+				clusterRole, err := modules.ReplicationInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting replication into controller cluster role: %v", err)
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
 
-				err = modules.ReplicationInstallManagerController(ctx, operatorConfig, m, cr)
+				err = modules.ReplicationInstallManagerController(ctx, operatorConfig, cr)
 				if err != nil {
 					return fmt.Errorf("failed top deploy replication controller: %v", err)
 				}

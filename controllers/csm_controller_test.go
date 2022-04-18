@@ -148,7 +148,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 // test a happy path scenerio with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
-	suite.makeFakeCSM(csmName, suite.namespace, true)
+	suite.makeFakeCSM(csmName, suite.namespace, true, getReplicaModule())
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
@@ -159,7 +159,7 @@ func (suite *CSMControllerTestSuite) TestErrorInjection() {
 	// test csm not found. err should be nil
 	suite.runFakeCSMManager("", true)
 	// make a csm without finalizer
-	suite.makeFakeCSM(csmName, suite.namespace, false)
+	suite.makeFakeCSM(csmName, suite.namespace, false, getAuthModule())
 	suite.reconcileWithErrorInjection(csmName, "")
 }
 
@@ -226,7 +226,7 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 
 			if tt.errorInjector != nil {
 				// need to create all objs before running removeDriver to hit unknown error
-				suite.makeFakeCSM(csmName, suite.namespace, true)
+				suite.makeFakeCSM(csmName, suite.namespace, true, getAuthModule())
 				r.Reconcile(ctx, req)
 				*tt.errorInjector = true
 			}
@@ -577,8 +577,53 @@ func (suite *CSMControllerTestSuite) deleteCSM(csmName string) {
 	suite.fakeClient.Delete(ctx, csm)
 }
 
+func getReplicaModule() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.Replication,
+			Enabled:       true,
+			ConfigVersion: "v1.2.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: "dell-csi-replicator",
+				},
+				{
+					Name: "dell-replication-controller-manager",
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "CLUSTERS_IDS",
+							Value: "skip-replication-cluster-check,skip-replication-cluster-check",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func getAuthModule() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.Authorization,
+			Enabled:       true,
+			ConfigVersion: "v1.2.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: "karavi-authorization-proxy",
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "INSECURE",
+							Value: "true",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
-	suite.makeFakeCSM(csmName, suite.namespace, true)
+	suite.makeFakeCSM(csmName, suite.namespace, true, getAuthModule())
 	suite.runFakeCSMManager("", false)
 
 	updateCSMError = true
@@ -590,7 +635,7 @@ func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
 }
 
 // helper method to create k8s objects
-func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool) {
+func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool, modules []csmv1.Module) {
 
 	// make pre-requisite secrets
 	sec := shared.MakeSecret(name+"-creds", ns, configVersion)
@@ -604,6 +649,11 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 
 	// this secret required by authorization module
 	sec = shared.MakeSecret("proxy-authz-tokens", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// replication secrets
+	sec = shared.MakeSecret("skip-replication-cluster-check", utils.ReplicationControllerNameSpace, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
@@ -627,33 +677,10 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm.Spec.Driver.ForceRemoveDriver = true
 	csm.Annotations[configVersionKey] = configVersion
 
-	addModuleToCSM(&csm)
+	csm.Spec.Modules = modules
 
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
-}
-
-func addModuleToCSM(csm *csmv1.ContainerStorageModule) {
-	// add modules
-	csm.Spec.Modules = []csmv1.Module{
-		{
-			Name:          "authorization",
-			Enabled:       true,
-			ConfigVersion: "v1.2.0",
-			Components: []csmv1.ContainerTemplate{
-				{
-					Name: "karavi-authorization-proxy",
-					Envs: []corev1.EnvVar{
-						{
-							Name:  "INSECURE",
-							Value: "true",
-						},
-					},
-				},
-			},
-		},
-	}
-
 }
 
 func (suite *CSMControllerTestSuite) makeFakePod(name, ns string) {

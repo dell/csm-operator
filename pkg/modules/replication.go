@@ -17,10 +17,6 @@ import (
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -141,12 +137,9 @@ func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csm
 
 // CheckApplyContainersReplica --
 func CheckApplyContainersReplica(contianers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
-	replicaModule := csmv1.Module{}
-	for _, m := range cr.Spec.Modules {
-		if m.Name == csmv1.Replication {
-			replicaModule = m
-			break
-		}
+	replicaModule, err := getReplicaModule(cr)
+	if err != nil {
+		return err
 	}
 
 	replicaString := "dell-csi-replicator"
@@ -240,8 +233,14 @@ func CheckClusterRoleReplica(rules []rbacv1.PolicyRule) error {
 }
 
 // ReplicationInjectClusterRole - inject replication into clusterrole
-func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, replicaModule csmv1.Module, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*rbacv1.ClusterRole, error) {
+func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*rbacv1.ClusterRole, error) {
 	var err error
+
+	replicaModule, err := getReplicaModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
 	buf, err := readConfigFile(replicaModule, cr, op, "rules.yaml")
 	if err != nil {
 		return nil, err
@@ -304,21 +303,19 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 	return nil
 }
 
-// ReplicationInstallManagerController -
-func ReplicationInstallManagerController(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule) error {
-	log := logger.GetLogger(ctx)
-	var repctlBinary string
-	var ok bool
-	if repctlBinary, ok = os.LookupEnv("REPCTL_BINARY"); !ok {
-		repctlBinary = RepctlBinary
-		log.Warnf("REPCTL_BINARY environment variable not defined. Using default %s", repctlBinary)
+func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+
+	replica, err := getReplicaModule(cr)
+	if err != nil {
+		return YamlString, err
 	}
 
 	buf, err := readConfigFile(replica, cr, op, "controller.yaml")
 	if err != nil {
-		return err
+		return YamlString, err
 	}
-	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	YamlString = utils.ModifyCommonCR(string(buf), cr)
 
 	logLevel := "debug"
 	replicaCount := "1"
@@ -350,6 +347,33 @@ func ReplicationInstallManagerController(ctx context.Context, op utils.OperatorC
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicaImage, replicaImage)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMax, retryMax)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
+	return YamlString, nil
+}
+
+func getReplicaModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Replication {
+			return m, nil
+
+		}
+	}
+	return csmv1.Module{}, fmt.Errorf("could not find replica module")
+}
+
+// ReplicationInstallManagerController -
+func ReplicationInstallManagerController(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule) error {
+	log := logger.GetLogger(ctx)
+	var repctlBinary string
+	var ok bool
+	if repctlBinary, ok = os.LookupEnv("REPCTL_BINARY"); !ok {
+		repctlBinary = RepctlBinary
+		log.Warnf("REPCTL_BINARY environment variable not defined. Using default %s", repctlBinary)
+	}
+
+	YamlString, err := getReplicaController(op, cr)
+	if err != nil {
+		return err
+	}
 
 	// To create controller
 	ctrlCmd := exec.CommandContext(ctx, repctlBinary, "create", "-f", "-") //nolint:gosec
@@ -363,85 +387,20 @@ func ReplicationInstallManagerController(ctx context.Context, op utils.OperatorC
 }
 
 // ReplicationUninstallManagerController -
-func ReplicationUninstallManagerController(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule, ctrlCleint client.Client) error {
-	CtrlBuf, err := readConfigFile(replica, cr, op, "controller.yaml")
+func ReplicationUninstallManagerController(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlCleint client.Client) error {
+	YamlString, err := getReplicaController(op, cr)
 	if err != nil {
 		return err
 	}
 
-	bufs, err := utils.SplitYaml(CtrlBuf)
+	ctrlObjects, err := utils.GetCTRLObject([]byte(YamlString))
 	if err != nil {
 		return err
 	}
 
-	for _, raw := range bufs {
-		var meta metav1.TypeMeta
-		err = yaml.Unmarshal(raw, &meta)
-		if err != nil {
+	for _, ctrlObj := range ctrlObjects {
+		if utils.DeleteObject(ctx, ctrlObj, ctrlCleint); err != nil {
 			return err
-		}
-		switch meta.Kind {
-		case "ServiceAccount":
-			var sa corev1.ServiceAccount
-			if err := yaml.Unmarshal(raw, &sa); err != nil {
-				return err
-			}
-			if utils.DeleteObject(ctx, &sa, ctrlCleint); err != nil {
-				return err
-			}
-
-		case "ClusterRole":
-			var cr rbacv1.ClusterRole
-			if err := yaml.Unmarshal(raw, &cr); err != nil {
-				return err
-			}
-			if utils.DeleteObject(ctx, &cr, ctrlCleint); err != nil {
-				return err
-			}
-
-		case "ClusterRoleBinding":
-			var crb rbacv1.ClusterRoleBinding
-			if err := yaml.Unmarshal(raw, &crb); err != nil {
-				return err
-			}
-
-			if utils.DeleteObject(ctx, &crb, ctrlCleint); err != nil {
-				return err
-			}
-
-		case "Service":
-
-			var sv corev1.Service
-			if err := yaml.Unmarshal(raw, &sv); err != nil {
-				return err
-			}
-
-			if utils.DeleteObject(ctx, &sv, ctrlCleint); err != nil {
-				return err
-			}
-
-		case "ConfigMap":
-
-			var cm corev1.ConfigMap
-			if err := yaml.Unmarshal(raw, &cm); err != nil {
-				return err
-			}
-
-			if utils.DeleteObject(ctx, &cm, ctrlCleint); err != nil {
-				return err
-			}
-
-		case "Deployment":
-
-			var dp appsv1.Deployment
-			if err := yaml.Unmarshal(raw, &dp); err != nil {
-				return err
-			}
-
-			if utils.DeleteObject(ctx, &dp, ctrlCleint); err != nil {
-				return err
-			}
-
 		}
 	}
 

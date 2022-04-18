@@ -18,6 +18,7 @@ import (
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
@@ -339,29 +340,26 @@ func TestReplicationPreCheck(t *testing.T) {
 }
 
 func TestReplicationInstallManagerController(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule){
-		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule){
+		"success": func(*testing.T) (bool, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
 			}
 
-			tmpCR := customResource
-			replica := tmpCR.Spec.Modules[0]
-
-			return true, replica, tmpCR
+			return true, customResource
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 
-			success, replica, tmpCR := tc(t)
+			success, tmpCR := tc(t)
 
 			os.Setenv("REPCTL_BINARY", "echo")
 			defer os.Unsetenv("REPCTL_BINARY")
 
-			err := ReplicationInstallManagerController(context.TODO(), operatorConfig, replica, tmpCR)
+			err := ReplicationInstallManagerController(context.TODO(), operatorConfig, tmpCR)
 			if success {
 				assert.NoError(t, err)
 
@@ -374,26 +372,36 @@ func TestReplicationInstallManagerController(t *testing.T) {
 }
 
 func TestReplicationUninstallManagerController(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule){
-		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
 			}
 
 			tmpCR := customResource
-			replica := tmpCR.Spec.Modules[0]
 
-			return false, replica, tmpCR
+			cr := &rbacv1.ClusterRole{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "dell-replication-manager-role",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+
+			return true, tmpCR, sourceClient, operatorConfig
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 
-			success, replica, tmpCR := tc(t)
+			success, cr, sourceClient, op := tc(t)
 
-			err := ReplicationUninstallManagerController(context.TODO(), operatorConfig, replica, tmpCR)
+			err := ReplicationUninstallManagerController(context.TODO(), op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
 
