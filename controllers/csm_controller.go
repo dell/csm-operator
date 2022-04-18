@@ -98,6 +98,8 @@ var (
 	StopWatch = make(chan struct{})
 )
 
+var K8sVersion string
+
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules/finalizers,verbs=update
@@ -166,7 +168,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resource deployed from CR by operator
-			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
+			if err := r.removeDriver(ctx, *csm, operatorConfig); err != nil {
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))
 				log.Errorw("remove driver", "error", err.Error())
 				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
@@ -197,7 +199,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	oldStatus := csm.GetCSMStatus()
 
 	// perform prechecks
-	err = r.PreChecks(ctx, csm, operatorConfig)
+	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
 		csm.GetCSMStatus().State = constants.InvalidConfig
 		r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
@@ -730,13 +732,14 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+	log := logger.GetLogger(ctx)
 	// Check drivers
 
 	// get k8s sidecars configmap exists
 	mapName := "driver-sidecars"
-	k8sPath := operatorConfig.K8sSidecars.K8sVersion
+	K8sVersion = operatorConfig.K8sSidecars.K8sVersion
 
-	log.Infof("Get pre-requisite sidecars images for %s from configmap %s", k8sPath, mapName)
+	log.Infof("Get pre-requisite sidecars images for %s from configmap %s", K8sVersion, mapName)
 
 	sidecarsMap := &corev1.ConfigMap{}
 
@@ -746,19 +749,21 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		return fmt.Errorf("failed driver validation unable to get configMap: %s in namespace: %s", mapName, OperatorNameSpace)
 	}
 
-	yamlString := sidecarsMap.Data[k8sPath]
+	yamlString := sidecarsMap.Data[K8sVersion]
 	var imageConfig utils.K8sImagesConfig
 	err = yaml.Unmarshal([]byte(yamlString), &imageConfig)
 	if err != nil {
 		return fmt.Errorf("failed driver validation: unable to unmarshall yamlString %s", yamlString)
 	}
-	// driver sidecars images for a given k8sPath
+	// driver sidecars images for a given K8sVersion
 	operatorConfig.K8sSidecars = imageConfig
 	if operatorConfig.K8sSidecars.Images.Attacher == "" {
-		return fmt.Errorf("failed driver validation unable to get sidecars images %s for %s", mapName, k8sPath)
+		return fmt.Errorf("failed driver validation unable to get sidecars images %s for %s", mapName, K8sVersion)
 	}
 
 	switch cr.Spec.Driver.CSIDriverType {
+	case csmv1.PowerFlex:
+		log.Infof("deploy driver type %s", cr.Spec.Driver.CSIDriverType)
 	case csmv1.PowerScale:
 		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
 		if err != nil {
