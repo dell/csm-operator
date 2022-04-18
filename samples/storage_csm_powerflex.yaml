@@ -1,11 +1,12 @@
-apiVersion: storage.dell.com/v1alpha1
+---
+apiVersion: storage.dell.com/v1alpha2
 kind: ContainerStorageModule
 metadata:
   name: test-vxflexos
   namespace: test-vxflexos
 spec:
   driver:
-    csiDriverType: "powerflex" 
+    csiDriverType: "powerflex"
     csiDriverSpec:
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
@@ -20,7 +21,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerScale driver v2.2.0
-      image:  amaas-eos-mw1.cec.lab.emc.com:5036/csi-vxflexos:v2.2.0
+      image: amaas-eos-mw1.cec.lab.emc.com:5036/csi-vxflexos:v2.2.0
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: Specify whether the PowerScale OneFS API server's certificate chain and host name should be verified.
@@ -28,8 +29,8 @@ spec:
         # This value acts as a default value for skipCertificateValidation, if not specified for a cluster config in secret
         # Allowed values:
         #   true: skip OneFS API server's certificate verification
-        #   false: verify OneFS API server's certificates 
-        # Default value: true	
+        #   false: verify OneFS API server's certificates
+        # Default value: true
         - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
           value: "true"
 
@@ -38,7 +39,7 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
-        
+
         # certSecretCount: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (isilon-cert-0..isilon-cert-n)
         # Allowed values: n, where n > 0
@@ -54,43 +55,76 @@ spec:
 
     controller:
       envs:
-      # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
-      # Install the 'external-health-monitor' sidecar accordingly.
-      # Allowed values:
-      #   true: enable checking of health condition of CSI volumes
-      #   false: disable checking of health condition of CSI volumes
-      # Default value: false
-      - name: X_CSI_HEALTH_MONITOR_ENABLED
-        value: "false"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "true"
 
     node:
       envs:
-      # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
-      # Install the 'external-health-monitor' sidecar accordingly.
-      # Allowed values:
-      #   true: enable checking of health condition of CSI volumes
-      #   false: disable checking of health condition of CSI volumes
-      # Default value: false
-      - name: X_CSI_HEALTH_MONITOR_ENABLED
-        value: "false"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "true"
 
     sideCars:
       - name: provisioner
         args: ["--volume-name-prefix=csipscale"]
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
-        enabled: false
+        enabled: true
         args: ["--monitor-interval=60s"]
       - name: podmon
         enabled: true
       - name: vgsnapshotter
         enabled: true
         image: amaas-eos-mw1.cec.lab.emc.com:5036/vg-controller:master-latest
-      #FIX ME : add initContainer suppport
+      # FIX ME : add initContainer suppport
       - name: sdc
         image: amaas-eos-mw1.cec.lab.emc.com:5044/container/sdc:3.6.200.104
       - name: sdc-monitor
         image: amaas-eos-mw1.cec.lab.emc.com:5044/container/sdc:3.6.200.104
+
+    initContainers:
+      - name: sdc
+        securityContext:
+          privileged: true
+        image: amaas-eos-mw1.cec.lab.emc.com:5044/container/sdc:3.6.200.104
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: NODENAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: MODE
+            value: "config"
+          - name: MDM
+            valueFrom:
+              secretKeyRef:
+                name: vxflexos-config
+                key: MDM
+          - name: HOST_DRV_CFG_PATH
+            value: /opt/emc/scaleio/sdc/bin
+        volumeMounts:
+          - name: dev
+            mountPath: /dev
+          - name: os-release
+            mountPath: /host-os-release
+          - name: sdc-storage
+            mountPath: /storage
+          - name: udev-d
+            mountPath: /rules.d
+          - name: scaleio-path-opt
+            mountPath: /host_drv_cfg_path
+
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -98,13 +132,13 @@ spec:
       enabled: false
       configVersion: v1.2.0
       components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.2.0
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: ""
-        
-          # insecure: Enable/Disable certificate validation of the csm-authorization server       
-          - name: "INSECURE"
-            value: "true"
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:v1.2.0
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: ""
+
+            # insecure: Enable/Disable certificate validation of the csm-authorization server
+            - name: "INSECURE"
+              value: "true"
