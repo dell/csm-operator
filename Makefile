@@ -76,8 +76,12 @@ test: manifests generate fmt vet envtest ## Run tests.
 unit-test:
 	go clean -cache && go test -v -coverprofile=c.out ./controllers/csm*
 
+## TODO(Michael): discuss with Team how the following packages will be properly tested:
+##   - github.com/dell/csm-operator/pkg/modules
+##   - github.com/dell/csm-operator/pkg/utils
+
 controller-unit-test:
-	go clean -cache && go test -v -coverpkg=github.com/dell/csm-operator/pkg/logger,github.com/dell/csm-operator/pkg/modules,github.com/dell/csm-operator/pkg/resources/daemonset,github.com/dell/csm-operator/pkg/resources/deployment,github.com/dell/csm-operator/pkg/resources/configmap,github.com/dell/csm-operator/pkg/resources/serviceaccount,github.com/dell/csm-operator/pkg/resources/rbac,github.com/dell/csm-operator/pkg/utils,github.com/dell/csm-operator/pkg/resources/csidriver,github.com/dell/csm-operator/pkg/constants,github.com/dell/csm-operator/controllers -coverprofile=c.out github.com/dell/csm-operator/pkg/modules github.com/dell/csm-operator/controllers
+	go clean -cache && go test -v -coverpkg=github.com/dell/csm-operator/pkg/logger,github.com/dell/csm-operator/pkg/resources/daemonset,github.com/dell/csm-operator/pkg/resources/deployment,github.com/dell/csm-operator/pkg/resources/configmap,github.com/dell/csm-operator/pkg/resources/serviceaccount,github.com/dell/csm-operator/pkg/resources/rbac,github.com/dell/csm-operator/pkg/resources/csidriver,github.com/dell/csm-operator/pkg/constants,github.com/dell/csm-operator/controllers -coverprofile=c.out github.com/dell/csm-operator/controllers
 
 driver-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/drivers
