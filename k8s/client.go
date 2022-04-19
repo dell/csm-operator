@@ -70,9 +70,11 @@ func NewControllerRuntimeClient(data []byte) (ctrlClient.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("here")
 
 	scheme := runtime.NewScheme()
+	fmt.Println("here 75")
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
+	fmt.Println("here 76")
 	return ctrlClient.New(restConfig, ctrlClient.Options{Scheme: scheme})
 }

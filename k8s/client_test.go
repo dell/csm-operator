@@ -163,3 +163,79 @@ func Test_GetVersion(t *testing.T) {
 		})
 	}
 }
+
+func Test_ControllerRuntimeClient(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, string){
+		"fail - full run": func(*testing.T) (bool, string) {
+			content := `
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://localhost:8080
+    extensions:
+    - name: client.authentication.k8s.io/exec
+      extension:
+        audience: foo
+        other: bar
+  name: foo-cluster
+contexts:
+- context:
+    cluster: foo-cluster
+    user: foo-user
+    namespace: bar
+  name: foo-context
+current-context: foo-context
+kind: Config
+users:
+- name: foo-user
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1alpha1
+      args:
+      - arg-1
+      - arg-2
+      command: foo-command
+      provideClusterInfo: true
+`
+			return false, content
+		},
+		"fail - RESTConfigFromKubeConfig": func(*testing.T) (bool, string) {
+			content := `
+apiVersion: v1
+clusters:
+- cluster:
+	certificate-authority-data: ZGF0YS1oZXJl
+	server: https://127.0.0.1:6443
+	name: kubernetes
+contexts:
+- context:
+	cluster: kubernetes
+	user: kubernetes-admin
+	name: kubernetes-admin@kubernetes
+current-context: kubernetes-admin@kubernetes
+kind: Config
+preferences: {}
+users:
+- name: kubernetes-admin
+	user:
+	client-certificate-data: ZGF0YS1oZXJl
+	client-key-data: ZGF0YS1oZXJl
+`
+			return false, content
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, data := tc(t)
+
+			_, err := NewControllerRuntimeClient([]byte(data))
+
+			if !success {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+		})
+	}
+}

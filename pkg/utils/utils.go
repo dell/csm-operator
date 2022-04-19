@@ -292,13 +292,6 @@ func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 			return ctrlObjects, err
 		}
 		switch meta.Kind {
-		case "ServiceAccount":
-			var sa corev1.ServiceAccount
-			if err := yaml.Unmarshal(raw, &sa); err != nil {
-				return ctrlObjects, err
-			}
-			ctrlObjects = append(ctrlObjects, &sa)
-
 		case "ClusterRole":
 			var cr rbacv1.ClusterRole
 			if err := yaml.Unmarshal(raw, &cr); err != nil {
@@ -555,7 +548,6 @@ var NewControllerRuntimeClientWrapper = func(clusterConfigData []byte) (crclient
 
 // NewK8sClientWrapper -
 var NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
-	fmt.Println("NewK8sClientWrapper")
 	restConfig, err := clientcmd.RESTConfigFromKubeConfig(clusterConfigData)
 	if err != nil {
 		return nil, err
@@ -617,7 +609,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 					return replicaEnabled, clusterClients, err
 				}
 
-				clusterClients = append(clusterClients, ReplicaCluster{
+				tmp = append(tmp, ReplicaCluster{
 					ClutsterID:        clusterID,
 					ClusterCTRLClient: targetCtrlClient,
 					ClusterK8sClient:  targetK8sClient,

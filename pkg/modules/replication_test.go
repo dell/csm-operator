@@ -198,7 +198,7 @@ func TestReplicationPreCheck(t *testing.T) {
 			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
-		"fail - less tahn one cluster set": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"fail - less than one cluster set": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
