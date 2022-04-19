@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	osruntime "runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -57,10 +58,6 @@ const (
 	K8sMinimumSupportedVersion = "1.21"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
 	K8sMaximumSupportedVersion = "1.23"
-	// OpenshiftMinimumSupportedVersion is the minimum supported version for openshift
-	OpenshiftMinimumSupportedVersion = "4.8"
-	// OpenshiftMaximumSupportedVersion is the maximum supported version for openshift
-	OpenshiftMaximumSupportedVersion = "4.9"
 )
 
 var (
@@ -91,32 +88,32 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
 	}
 	cfg.IsOpenShift = isOpenShift
-
-	kubeVersion, err := k8sClient.GetVersion()
-	if err != nil {
-		log.Info(fmt.Sprintf("kubeVersion err %s", kubeVersion))
+	if isOpenShift {
+		log.Infof("Openshift environment")
+	}else {
+		log.Infof("Kubernetes environment")
 	}
+	kubeAPIServerVersion, err := k8sClient.GetKubeAPIServerVersion()
+	if err != nil {
+		log.Info(fmt.Sprintf("kubeVersion err %s", kubeAPIServerVersion))
+	}
+	//format the required k8s version
+	majorVersion := kubeAPIServerVersion.Major
+	minorVersion := strings.TrimSuffix(kubeAPIServerVersion.Minor, "+")
+	kubeVersion := fmt.Sprintf("%s.%s", majorVersion, minorVersion)
+
 	minVersion := 0.0
 	maxVersion := 0.0
-	if !isOpenShift {
-		minVersion, err = strconv.ParseFloat(K8sMinimumSupportedVersion, 64)
-		if err != nil {
-			log.Info(fmt.Sprintf("minVersion %s", K8sMinimumSupportedVersion))
-		}
-		maxVersion, err = strconv.ParseFloat(K8sMaximumSupportedVersion, 64)
-		if err != nil {
-			log.Info(fmt.Sprintf("maxVersion %s", K8sMaximumSupportedVersion))
-		}
-	} else {
-		minVersion, err = strconv.ParseFloat(OpenshiftMinimumSupportedVersion, 64)
-		if err != nil {
-			log.Info(fmt.Sprintf("minVersion %s", OpenshiftMinimumSupportedVersion))
-		}
-		maxVersion, err = strconv.ParseFloat(OpenshiftMaximumSupportedVersion, 64)
-		if err != nil {
-			log.Info(fmt.Sprintf("maxVersion  %s", OpenshiftMaximumSupportedVersion))
-		}
+
+	minVersion, err = strconv.ParseFloat(K8sMinimumSupportedVersion, 64)
+	if err != nil {
+		log.Info(fmt.Sprintf("minVersion %s", K8sMinimumSupportedVersion))
 	}
+	maxVersion, err = strconv.ParseFloat(K8sMaximumSupportedVersion, 64)
+	if err != nil {
+		log.Info(fmt.Sprintf("maxVersion %s", K8sMaximumSupportedVersion))
+	}
+
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
 	if err != nil {
 		log.Infof("currentVersion is %s", kubeVersion)

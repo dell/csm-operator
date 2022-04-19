@@ -152,7 +152,7 @@ func Test_GetVersion(t *testing.T) {
 				GetClientSetWrapper = patch.getClientSetWrapper
 			}
 
-			out, err := GetVersion()
+			out, err := GetKubeAPIServerVersion()
 			if !success {
 				assert.Error(t, err)
 			} else {
