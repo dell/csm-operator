@@ -7,7 +7,6 @@ WORKDIR /workspace
 RUN mkdir /repctl
 RUN wget  https://github.com/dell/csm-replication/releases/download/v1.2.0/repctl-linux-amd64 -O /repctl/repctl
 RUN cd /repctl && chmod +x repctl && mv repctl /usr/local/bin
-RUN repctl
 
 # Copy the Go Modules manifests
 COPY go.mod go.mod
