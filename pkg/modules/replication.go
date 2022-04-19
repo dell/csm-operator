@@ -260,6 +260,7 @@ func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Conta
 func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
+	var repctlBinary string
 	if _, ok := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
 		return fmt.Errorf("CSM Operator does not suport Replication deployment for %s driver", cr.Spec.Driver.CSIDriverType)
 	}
@@ -271,7 +272,8 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		log.Warnf("REPCTL_BINARY environment variable not defined. Using default %s", repctlBinary)
 	}
 
-	if out, err := exec.CommandContext(ctx, repctlBinary, "--help").CombinedOutput(); err != nil { //nolint:gosec
+	cmd := exec.CommandContext(ctx, repctlBinary, "--help")
+	if out, err := cmd.CombinedOutput(); err != nil {
 		log.Errorf("%s", out)
 		return fmt.Errorf("repctl not installed: %v", err)
 	}
@@ -376,7 +378,7 @@ func ReplicationInstallManagerController(ctx context.Context, op utils.OperatorC
 	}
 
 	// To create controller
-	ctrlCmd := exec.CommandContext(ctx, repctlBinary, "create", "-f", "-") //nolint:gosec
+	ctrlCmd := exec.CommandContext(ctx, repctlBinary, "create", "-f", "-")
 	ctrlCmd.Stdin = strings.NewReader(YamlString)
 	_, err = ctrlCmd.CombinedOutput()
 	if err != nil {
@@ -399,7 +401,7 @@ func ReplicationUninstallManagerController(ctx context.Context, op utils.Operato
 	}
 
 	for _, ctrlObj := range ctrlObjects {
-		if utils.DeleteObject(ctx, ctrlObj, ctrlCleint); err != nil {
+		if err := utils.DeleteObject(ctx, ctrlObj, ctrlCleint); err != nil {
 			return err
 		}
 	}
