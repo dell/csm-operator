@@ -1,9 +1,9 @@
 package k8s
 
 import (
-	"fmt"
-
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/discovery"
+	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -22,19 +22,20 @@ var GetClientSetWrapper = func() (kubernetes.Interface, error) {
 
 	return clientset, nil
 }
-
-// GetVersion returns version of the k8s cluster
-func GetVersion() (string, error) {
-	k8sClientSet, err := GetClientSetWrapper()
+// GetKubeAPIServerVersion returns version of the k8s/openshift cluster
+func GetKubeAPIServerVersion() (*version.Info, error) {
+	// Get a config to talk to the apiserver
+	cfg, err := config.GetConfig()
+	// Create the discoveryClient
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
 	if err != nil {
-		return "nil", err
+		return nil, err
 	}
-	sv, err := k8sClientSet.Discovery().ServerVersion()
+	sv, err := discoveryClient.ServerVersion()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return fmt.Sprintf("%s.%s", sv.Major, sv.Minor), nil
+	return sv, nil
 }
 
 // IsOpenShift - Returns a boolean which indicates if we are running in an OpenShift cluster
