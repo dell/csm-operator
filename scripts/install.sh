@@ -77,6 +77,10 @@ function check_existing_installation() {
   echo "Checking for existing installation of Dell CSM Operator"
   # get namespace from YAML file for deployment
   NS_STRING=$(cat ${DEPLOYDIR}/operator.yaml | grep "namespace:" | head -1)
+  if [ -z "${NS_STRING}" ]; then
+    echo "Couldn't find any target namespace in ${DEPLOYDIR}/operator.yaml"
+    exit 1
+  fi
   # find the namespace from the filtered string
   NAMESPACE=$(echo $NS_STRING | cut -d ' ' -f2)
   
@@ -150,7 +154,7 @@ function install_operator() {
     echo "Installing Operator"
   fi
   install_or_update_crd
-  create_operator_deployment $NAMESPACE
+  create_operator_deployment
   echo
 }
 
@@ -210,6 +214,6 @@ log separator
 check_existing_installation
 verify_prerequisites
 check_or_create_namespace $NAMESPACE
-install_operator $NAMESPACE
+install_operator
 check_progress
 summary

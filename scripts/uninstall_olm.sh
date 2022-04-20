@@ -9,8 +9,14 @@ source "$SCRIPTDIR"/common.bash
 COMMUNITY_MANIFEST="operator_community.yaml"
 MANIFEST_FILE="$DEPLOYDIR/$COMMUNITY_MANIFEST"
 
-# Set the namespace
-NAMESPACE="test-csm-operator-olm"
+# find the operator namespace from operator.yaml file
+NS_STRING=$(cat ${MANIFEST_FILE} | grep "namespace:" | head -1)
+if [ -z "${NS_STRING}" ]; then
+  echo "Couldn't find any target namespace in ${MANIFEST_FILE}"
+  exit 1
+fi
+# find the namespace from the filtered string
+NAMESPACE=$(echo $NS_STRING | cut -d ' ' -f2)
 
 # Get CSV name
 CSV=`kubectl get csv -n $NAMESPACE --no-headers -o custom-columns=":metadata.name" | grep dell-csm-operator 2>&1`
