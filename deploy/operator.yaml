@@ -431,6 +431,13 @@ spec:
         - /manager
         image: dellemc/dell-csm-operator:v0.1.0
         imagePullPolicy: Always
+        env:
+          - name: SSL_CERT_DIR
+            value: /certs
+        volumeMounts:
+          - name: certs
+            mountPath: /certs
+            readOnly: true
         livenessProbe:
           httpGet:
             path: /healthz
@@ -457,3 +464,12 @@ spec:
         runAsNonRoot: true
       serviceAccountName: dell-csm-operator-controller-manager
       terminationGracePeriodSeconds: 10
+      volumes:
+      - name: certs
+        projected:
+          sources:
+          - secret:
+              name: certsecret
+              items:
+              - key: repo-cert
+                path: repo-cert
