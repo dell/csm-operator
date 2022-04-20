@@ -1,9 +1,9 @@
 package k8s
 
 import (
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/discovery"
 	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,6 +28,7 @@ var GetClientSetWrapper = func() (kubernetes.Interface, error) {
 
 	return clientset, nil
 }
+
 // GetKubeAPIServerVersion returns version of the k8s/openshift cluster
 func GetKubeAPIServerVersion() (*version.Info, error) {
 	// Get a config to talk to the apiserver
