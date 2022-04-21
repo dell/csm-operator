@@ -22,7 +22,7 @@ function log() {
       printf "${YELLOW}Warning: $2${NC}\n"
       ;;
     step)
-      printf "%-75s %s" "$2"
+      printf "%-75s %s\n" "$2"
       ;;
     step_success)
       printf "${GREEN}Success${NC}\n"
@@ -32,6 +32,11 @@ function log() {
       ;;
     step_warning)
       printf "${YELLOW}Warning${NC}\n"
+      ;;
+    section)
+      log separator
+      printf "> %s\n" "$2"
+      log separator
       ;;
     Passed)
       printf "${GREEN}Success${NC}\n"
