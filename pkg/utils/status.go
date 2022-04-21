@@ -44,10 +44,13 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	failedCount := 0
 
 	//app=test-isilon-controller
+	//name=test-vxflexos-controller
 	label := instance.GetNamespace() + "-controller"
+
 	opts := []client.ListOption{
 		client.InNamespace(instance.GetNamespace()),
-		client.MatchingLabels{"app": label},
+		//client.MatchingLabels{"app": label},
+		client.MatchingLabels{"name": label},
 	}
 
 	podList := &v1.PodList{}

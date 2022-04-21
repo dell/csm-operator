@@ -64,3 +64,6 @@ sed -i 's/namespace: vxflexos/namespace: <DriverDefaultReleaseNamespace>/' drive
 # install yamllint and run , fix indent/space issues
 yamllint *
 
+# dont forget to run dos2unix  , convert dos files to unix format , 
+# sidecar k8s-1.xx.yaml files had newline  missing issues
+
