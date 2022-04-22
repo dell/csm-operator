@@ -1,12 +1,13 @@
 #!/bin/bash
 
-source ../common.bash
+source ./common.sh
 
 NS="dell-csm-operator"
 DRIVER="powerscale"
-CONFIGVERSION="v2.3.0"
+DRIVERVERSION="v2.2.0"
 # All below variables not recommended for user modification
 DELETE_EXIST_CFGMAP=0
+CFGFOLDER=""
 TEMPDIR="/tmp/csm-oper-cfg-map/"
 PROG="${0}"
 CFGMAP_NAMES_FILE="cm_names.txt"
@@ -28,8 +29,8 @@ function cleanup_created_cfgmaps() {
 function read_configmap_names() {
   # make sure there is no existing list
   rm -rf $CFGMAP_NAMES_FILE
-  log section "Read configmap names from file"
-  cat $DRIVER-$CONFIGVERSION.yaml | while read line
+  log section "Read configmap names from file $CFGFOLDER$DRIVER-$DRIVERVERSION.yaml"
+  cat $CFGFOLDER$DRIVER-$DRIVERVERSION.yaml | while read line
   do
     echo $line | grep listOfConfigMapNames
       if [ "$?" == "0" ]; then
@@ -53,12 +54,13 @@ function usage() {
   echo "Help for $PROG"
   echo
   echo "This script uses config files from the github.com/dell/csm-operator-config repo to install configmaps for a specified driver"
-  echo "To select the driver type and version, edit the DRIVER and CONFIGVERSION variables to reflect the drivername and version"
+  echo "To select the driver and version, edit the DRIVER and DRIVERVERSION variables to reflect the drivername and version"
   echo
   echo "Usage: $PROG options..."
   echo "Options:"
   echo "  Optional"
   echo "  --force-configmap-delete                 Force deletion of existing configmaps"
+  echo "  --use-local-config=<config-folder>       Use local configmaps in given folder"
   echo "  -h                                       Help"
   echo
 
@@ -72,6 +74,13 @@ while getopts ":h-:" optchar; do
     force-configmap-delete)
       DELETE_EXIST_CFGMAP=1
       ;;
+    use-local-config)
+      CFGFOLDER="${!OPTIND}"
+      OPTIND=$((OPTIND + 1))
+      ;;
+    use-local-config=*)
+      CFGFOLDER=${OPTARG#*=}
+      ;;
     *)
       echo "Unknown option -${OPTARG}"
       echo "For help, run $PROG -h"
@@ -79,7 +88,6 @@ while getopts ":h-:" optchar; do
       ;;
     esac
     ;;
-
   h)
     usage
     ;;
@@ -98,26 +106,44 @@ kubectl --help >&/dev/null || {
   exit 1
 }
 
+# if we are using local files, get the absolute path
+if [ $CFGFOLDER != "" ]; then
+  cd $CFGFOLDER
+  if [ "$?" != "0" ]; then
+    log error "the provided config files folder, $CFGFOLDER, was not found"
+    cleanup
+    log Failed
+    exit 4
+  fi
+  CFGFOLDER=`pwd`
+  # Add trailing slash
+  CFGFOLDER="$CFGFOLDER/"
+  log step "using config files located at $CFGFOLDER"
+  cd -
+fi
+
 # Make temporary directory, move into it
 mkdir $TEMPDIR
 cd $TEMPDIR
 
 
-log section "Downloading configmap yamls"
-# Download config tgz -- you will be required to put your personal access token in here as long as the csm-operator-config repo is private
-read -s -p 'Please enter GitHub token: ' github_token
-wget --header "Authorization: token ${github_token}" https://raw.githubusercontent.com/dell/csm-operator-config/main/$DRIVER/$DRIVER-$CONFIGVERSION/downloads/$DRIVER-$CONFIGVERSION.tgz
-wget_ret=$?
-if [ "$wget_ret" != "0" ]; then
-  log error "wget of config files failed with return code $wget_ret, exiting"
-  cleanup
-  log Failed
-  exit 2
-fi
+if [ $CFGFOLDER == "" ]; then
+  log section "Downloading configmap yamls"
+  # Download config tgz -- you will be required to put your personal access token in here as long as the csm-operator-config repo is private
+  read -s -p 'Please enter GitHub token: ' github_token
+  wget --header "Authorization: token ${github_token}" https://raw.githubusercontent.com/dell/csm-operator-config/main/$DRIVER/$DRIVER-$DRIVERVERSION/downloads/$DRIVER-$DRIVERVERSION.tgz
+  wget_ret=$?
+  if [ "$wget_ret" != "0" ]; then
+    log error "wget of config files failed with return code $wget_ret, exiting"
+    cleanup
+    log Failed
+    exit 2
+  fi
 
-log section "Untar config files"
-# untar the config files
-tar -xzvf $DRIVER-$CONFIGVERSION.tgz
+  log section "Untar config files"
+  # untar the config files
+  tar -xzvf $DRIVER-$DRIVERVERSION.tgz
+fi
 
 # read configmap names from yaml file
 read_configmap_names
@@ -142,7 +168,7 @@ do
   fi
 
   # create new configmap
-  kubectl create cm $cfgmap --from-file=$cfgmap -n $NS
+  kubectl create cm $cfgmap --from-file=$CFGFOLDER$cfgmap -n $NS
 
   # check the configmap exists
   kubectl get configmap -n $NS | grep -q $cfgmap
@@ -159,6 +185,8 @@ do
   fi
 done <<<`cat $CFGMAP_NAMES_FILE`
 log section "Finishing configmap creation"
+
 log step "Following configmaps created: $cfgmaps_created"
 log Passed
 cleanup
+
