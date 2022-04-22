@@ -22,7 +22,7 @@ function log() {
       printf "${YELLOW}Warning: $2${NC}\n"
       ;;
     step)
-      printf "%-75s %s\n" "$2"
+      printf "%-75s %s" "$2"
       ;;
     step_success)
       printf "${GREEN}Success${NC}\n"
@@ -32,11 +32,6 @@ function log() {
       ;;
     step_warning)
       printf "${YELLOW}Warning${NC}\n"
-      ;;
-    section)
-      log separator
-      printf "> %s\n" "$2"
-      log separator
       ;;
     Passed)
       printf "${GREEN}Success${NC}\n"
@@ -87,6 +82,26 @@ waitOnRunning() {
     return 1
   fi
   return 0
+}
+
+function check_or_create_namespace() {
+  # Check if namespace exists
+  log separator
+  echo "Checking if namespace exists '$1'"
+  kubectl get namespace $1 > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Namespace '$1' doesn't exist"
+    echo "Creating namespace '$1'"
+    kubectl create namespace $1 2>&1 >/dev/null
+    if [ $? -ne 0 ]; then
+      echo "Failed to create namespace: '$1'"
+      echo "Exiting with failure"
+      exit 1
+    fi
+  else
+    echo "Namespace '$1' already exists"
+  fi
+  echo
 }
 
 # Get the kubernetes major and minor version numbers.
