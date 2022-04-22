@@ -52,6 +52,9 @@ function usage() {
   echo
   echo "Help for $PROG"
   echo
+  echo "This script uses config files from the github.com/dell/csm-operator-config repo to install configmaps for a specified driver"
+  echo "To select the driver type and version, edit the DRIVER and CONFIGVERSION variables to reflect the drivername and version"
+  echo
   echo "Usage: $PROG options..."
   echo "Options:"
   echo "  Optional"
