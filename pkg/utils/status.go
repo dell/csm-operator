@@ -34,128 +34,168 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	deployment := &appsv1.Deployment{}
 	log := logger.GetLogger(ctx)
 
-	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
-		Namespace: instance.GetNamespace()}, deployment)
-	if err != nil {
-		return 0, csmv1.PodStatus{}, err
-	}
-	replicas := getInt32(deployment.Spec.Replicas)
-	readyPods := 0
-	failedCount := 0
-
-	//app=test-isilon-controller
-	label := instance.GetNamespace() + "-controller"
-	opts := []client.ListOption{
-		client.InNamespace(instance.GetNamespace()),
-		client.MatchingLabels{"app": label},
-	}
-
-	podList := &v1.PodList{}
-	err = r.GetClient().List(ctx, podList, opts...)
-	if err != nil {
-		return deployment.Status.ReadyReplicas, csmv1.PodStatus{}, err
-	}
-
+	var err error
 	var msg string
-	for _, pod := range podList.Items {
+	totalReplicas := int32(0)
+	totalReadyPods := 0
+	totalFailedCount := 0
 
-		log.Infof("deployment pod count %d name %s status %s", readyPods, pod.Name, pod.Status.Phase)
-		if pod.Status.Phase == corev1.PodRunning {
-			readyPods++
-		} else if pod.Status.Phase == corev1.PodPending {
-			failedCount++
-			errMap := make(map[string]string)
-			for _, cs := range pod.Status.ContainerStatuses {
-				if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
-					log.Infow("container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
-					shortMsg := strings.Replace(cs.State.Waiting.Message,
-						constants.PodStatusRemoveString, "", 1)
-					errMap[cs.State.Waiting.Reason] = shortMsg
+	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
+	if err != nil {
+		return int32(totalReplicas), csmv1.PodStatus{}, err
+	}
+
+	for _, cluster := range clusterClients {
+		log.Infof("deployment status for cluster: %s", cluster.ClutsterID)
+		msg += fmt.Sprintf("error message for %s \n", cluster.ClutsterID)
+
+		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
+			Namespace: instance.GetNamespace()}, deployment)
+		if err != nil {
+			return 0, csmv1.PodStatus{}, err
+		}
+		replicas := getInt32(deployment.Spec.Replicas)
+		readyPods := 0
+		failedCount := 0
+
+		//app=test-isilon-controller
+		label := instance.GetNamespace() + "-controller"
+		opts := []client.ListOption{
+			client.InNamespace(instance.GetNamespace()),
+			client.MatchingLabels{"app": label},
+		}
+
+		podList := &v1.PodList{}
+		err = cluster.ClusterCTRLClient.List(ctx, podList, opts...)
+		if err != nil {
+			return deployment.Status.ReadyReplicas, csmv1.PodStatus{}, err
+		}
+
+		for _, pod := range podList.Items {
+
+			log.Infof("deployment pod count %d name %s status %s", readyPods, pod.Name, pod.Status.Phase)
+			if pod.Status.Phase == corev1.PodRunning {
+				readyPods++
+			} else if pod.Status.Phase == corev1.PodPending {
+				failedCount++
+				errMap := make(map[string]string)
+				for _, cs := range pod.Status.ContainerStatuses {
+					if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
+						log.Infow("container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
+						shortMsg := strings.Replace(cs.State.Waiting.Message,
+							constants.PodStatusRemoveString, "", 1)
+						errMap[cs.State.Waiting.Reason] = shortMsg
+					}
+					if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
+						errMap[cs.State.Waiting.Reason] = constants.PendingCreate
+					}
 				}
-				if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
-					errMap[cs.State.Waiting.Reason] = constants.PendingCreate
+				for k, v := range errMap {
+					msg += k + "=" + v
 				}
-			}
-			for k, v := range errMap {
-				msg += k + "=" + v
 			}
 		}
+
+		totalReplicas += replicas
+		totalReadyPods += readyPods
+		totalFailedCount += failedCount
 	}
-	if failedCount > 0 {
+
+	if totalFailedCount > 0 {
 		err = errors.New(msg)
 	}
 
-	return replicas, csmv1.PodStatus{
-		Available: fmt.Sprintf("%d", readyPods),
-		Desired:   fmt.Sprintf("%d", replicas),
-		Failed:    fmt.Sprintf("%d", failedCount),
+	return totalReplicas, csmv1.PodStatus{
+		Available: fmt.Sprintf("%d", totalReadyPods),
+		Desired:   fmt.Sprintf("%d", totalReplicas),
+		Failed:    fmt.Sprintf("%d", totalFailedCount),
 	}, err
 }
 
 func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
 	log := logger.GetLogger(ctx)
 
-	ds := &appsv1.DaemonSet{}
-	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.GetNodeName(),
-		Namespace: instance.GetNamespace()}, ds)
+	var msg string
+
+	totalAvialable := int32(0)
+	totalDesired := int32(0)
+	totalFailedCount := 0
+
+	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
 	}
 
-	failedCount := 0
-	podList := &v1.PodList{}
-	label := instance.GetNamespace() + "-node"
-	opts := []client.ListOption{
-		client.InNamespace(instance.GetNamespace()),
-		client.MatchingLabels{"app": label},
-	}
+	for _, cluster := range clusterClients {
+		log.Infof("daemonset status for cluster: %s", cluster.ClutsterID)
+		msg += fmt.Sprintf("error message for %s \n", cluster.ClutsterID)
 
-	err = r.GetClient().List(ctx, podList, opts...)
-	if err != nil {
-		return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{}, err
-	}
+		ds := &appsv1.DaemonSet{}
+		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetNodeName(),
+			Namespace: instance.GetNamespace()}, ds)
+		if err != nil {
+			return 0, csmv1.PodStatus{}, err
+		}
 
-	var msg string
-	errMap := make(map[string]string)
-	for _, pod := range podList.Items {
-		log.Infof("daemonset pod %s : %s", pod.Name, pod.Status.Phase)
-		if pod.Status.Phase == corev1.PodPending {
-			failedCount++
-			for _, cs := range pod.Status.ContainerStatuses {
-				if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
-					//message: Back-off pulling image "dellec/csi-isilon:xxxx"
-					//reason: ImagePullBackOff
-					log.Infow("daemonset pod container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
-					shortMsg := strings.Replace(cs.State.Waiting.Message,
-						constants.PodStatusRemoveString, "", 1)
-					errMap[cs.State.Waiting.Reason] = shortMsg
-				}
-				if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
-					log.Infof("daemonset pod container %s : %s", pod.Name, pod.Status.Phase)
-					errMap[cs.State.Waiting.Reason] = constants.PendingCreate
+		failedCount := 0
+		podList := &v1.PodList{}
+		label := instance.GetNamespace() + "-node"
+		opts := []client.ListOption{
+			client.InNamespace(instance.GetNamespace()),
+			client.MatchingLabels{"app": label},
+		}
+
+		err = cluster.ClusterCTRLClient.List(ctx, podList, opts...)
+		if err != nil {
+			return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{}, err
+		}
+
+		errMap := make(map[string]string)
+		for _, pod := range podList.Items {
+			log.Infof("daemonset pod %s : %s", pod.Name, pod.Status.Phase)
+			if pod.Status.Phase == corev1.PodPending {
+				failedCount++
+				for _, cs := range pod.Status.ContainerStatuses {
+					if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
+						//message: Back-off pulling image "dellec/csi-isilon:xxxx"
+						//reason: ImagePullBackOff
+						log.Infow("daemonset pod container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
+						shortMsg := strings.Replace(cs.State.Waiting.Message,
+							constants.PodStatusRemoveString, "", 1)
+						errMap[cs.State.Waiting.Reason] = shortMsg
+					}
+					if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
+						log.Infof("daemonset pod container %s : %s", pod.Name, pod.Status.Phase)
+						errMap[cs.State.Waiting.Reason] = constants.PendingCreate
+					}
 				}
 			}
 		}
-	}
-	for k, v := range errMap {
-		msg += k + "=" + v
+		for k, v := range errMap {
+			msg += k + "=" + v
+		}
+
+		log.Infof("daemonset status available pods %d", ds.Status.NumberAvailable)
+		log.Infof("daemonset status failedCount pods %d", failedCount)
+		log.Infof("daemonset status desired pods %d", ds.Status.DesiredNumberScheduled)
+
+		totalAvialable += ds.Status.NumberAvailable
+		totalDesired += ds.Status.DesiredNumberScheduled
+		totalFailedCount += failedCount
+
 	}
 
-	log.Infof("daemonset status available pods %d", ds.Status.NumberAvailable)
-	log.Infof("daemonset status failedCount pods %d", failedCount)
-	log.Infof("daemonset status desired pods %d", ds.Status.DesiredNumberScheduled)
-	if failedCount > 0 {
+	if totalFailedCount > 0 {
 		err = errors.New(msg)
 	}
-	return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{
-		Available: fmt.Sprintf("%d", ds.Status.NumberAvailable),
-		Desired:   fmt.Sprintf("%d", ds.Status.DesiredNumberScheduled),
-		Failed:    fmt.Sprintf("%d", failedCount),
+	return totalDesired, csmv1.PodStatus{
+		Available: fmt.Sprintf("%d", totalAvialable),
+		Desired:   fmt.Sprintf("%d", totalDesired),
+		Failed:    fmt.Sprintf("%d", totalFailedCount),
 	}, err
 }
 
-// CalculateState of pods
-func CalculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := false
 	controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
@@ -214,7 +254,7 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	log.Infow("Update State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
-	_, merr := CalculateState(ctx, instance, r, newStatus)
+	_, merr := calculateState(ctx, instance, r, newStatus)
 	csm := new(csmv1.ContainerStorageModule)
 	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,
 		Namespace: instance.GetNamespace()}, csm)
@@ -257,7 +297,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 
 	log := logger.GetLogger(ctx)
 
-	running, err := CalculateState(ctx, instance, r, newStatus)
+	running, err := calculateState(ctx, instance, r, newStatus)
 	if err != nil {
 		log.Error("HandleSuccess Driver status ", "error", err.Error())
 		newStatus.State = constants.Failed

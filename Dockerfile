@@ -2,6 +2,12 @@
 FROM golang:1.17 as builder
 
 WORKDIR /workspace
+
+# Download repctl
+RUN mkdir /repctl
+RUN wget  https://github.com/dell/csm-replication/releases/download/v1.2.0/repctl-linux-amd64 -O /repctl/repctl
+RUN cd /repctl && chmod +x repctl && mv repctl /usr/local/bin
+
 # Copy the Go Modules manifests
 COPY go.mod go.mod
 COPY go.sum go.sum
@@ -17,6 +23,7 @@ COPY core/ core/
 COPY pkg/ pkg/
 COPY k8s/ k8s/
 COPY tests/ tests/
+
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
@@ -34,8 +41,6 @@ ENV USER_UID=1001 \
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY operatorconfig/ /etc/config/dell-csm-operator
-RUN  chmod a-w /usr/bin/chage
-RUN  rm -rf tmp
 LABEL vendor="Dell Inc." \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
