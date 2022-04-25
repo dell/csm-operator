@@ -90,7 +90,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	cfg.IsOpenShift = isOpenShift
 	if isOpenShift {
 		log.Infof("Openshift environment")
-	}else {
+	} else {
 		log.Infof("Kubernetes environment")
 	}
 	kubeAPIServerVersion, err := k8sClient.GetKubeAPIServerVersion()

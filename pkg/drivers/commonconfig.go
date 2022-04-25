@@ -9,7 +9,8 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
 	"github.com/dell/csm-operator/pkg/logger"
-	utils "github.com/dell/csm-operator/pkg/utils"
+	"github.com/dell/csm-operator/pkg/utils"
+
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
