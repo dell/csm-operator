@@ -22,21 +22,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	// DefaultPluginIdentifier - spring placeholder for driver plugin
-	DefaultPluginIdentifier = "<DriverPluginIdentifier>"
-	// DefaultDriverConfigParamsVolumeMount - string placeholder for Driver ConfigParamsVolumeMount
-	DefaultDriverConfigParamsVolumeMount = "<DriverConfigParamsVolumeMount>"
-)
-
-// SupportedDriverParam -
-type SupportedDriverParam struct {
-	PluginIdentifier              string
-	DriverConfigParamsVolumeMount string
-}
-
-// SupportedDrivers is a map containing the CSI Drivers supported by CMS Authorization. The key is driver name and the value is the driver plugin identifier
-var SupportedDrivers = map[string]SupportedDriverParam{
+// AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CMS Authorization. The key is driver name and the value is the driver plugin identifier
+var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
@@ -45,6 +32,72 @@ var SupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	}, // either powerscale or isilon are valid types
+}
+
+// CheckAnnotationAuth --
+func CheckAnnotationAuth(annotation map[string]string) error {
+	if annotation != nil {
+		fmt.Println(annotation)
+		if _, ok := annotation["com.dell.karavi-authorization-proxy"]; !ok {
+			return errors.New("com.dell.karavi-authorization-proxy is missing from annotation")
+		}
+		if annotation["com.dell.karavi-authorization-proxy"] != "true" {
+			return fmt.Errorf("extpected notation value to be true but got %s", annotation["com.dell.karavi-authorization-proxy"])
+		}
+		return nil
+	}
+	return errors.New("annotation is nil")
+
+}
+
+// CheckApplyVolumesAuth --
+func CheckApplyVolumesAuth(volumes []acorev1.VolumeApplyConfiguration) error {
+	// Volume
+	volumeNames := []string{"karavi-authorization-config"}
+NAME_LOOP:
+	for _, volName := range volumeNames {
+		for _, vol := range volumes {
+			if *vol.Name == volName {
+				continue NAME_LOOP
+			}
+		}
+		return fmt.Errorf("missing the following volume %s", volName)
+	}
+
+	return nil
+}
+
+// CheckApplyContainersAuth --
+func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, drivertype string) error {
+	authString := "karavi-authorization-proxy"
+	for _, cnt := range containers {
+		if *cnt.Name == authString {
+			volumeMounts := []string{"karavi-authorization-config", AuthorizationSupportedDrivers[drivertype].DriverConfigParamsVolumeMount}
+		MOUNT_NAME_LOOP:
+			for _, volName := range volumeMounts {
+				for _, vol := range cnt.VolumeMounts {
+					if *vol.Name == volName {
+						continue MOUNT_NAME_LOOP
+					}
+				}
+				return fmt.Errorf("missing the following volume mount %s", volName)
+			}
+
+			for _, env := range cnt.Env {
+				if *env.Name == "INSECURE" {
+					if _, err := strconv.ParseBool(*env.Value); err != nil {
+						return fmt.Errorf("%s is an invalid value for INSECURE: %v", *env.Value, err)
+					}
+				}
+				if *env.Name == "PROXY_HOST" && *env.Value == "" {
+					return fmt.Errorf("PROXY_HOST for authorization is empty")
+				}
+			}
+			return nil
+		}
+
+	}
+	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
 
 func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
@@ -73,11 +126,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
-	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
-		YamlString = strings.ReplaceAll(YamlString, utils.DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
-	}
-
-	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].PluginIdentifier)
+	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].PluginIdentifier)
 
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
@@ -107,7 +156,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 
 	for i, c := range container.VolumeMounts {
 		if *c.Name == DefaultDriverConfigParamsVolumeMount {
-			newName := SupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
+			newName := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
 			container.VolumeMounts[i].Name = &newName
 			break
 		}
@@ -156,72 +205,6 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfi
 
 	}
 	return vols, nil
-}
-
-// CheckAnnotation --
-func CheckAnnotation(annotation map[string]string) error {
-	if annotation != nil {
-		fmt.Println(annotation)
-		if _, ok := annotation["com.dell.karavi-authorization-proxy"]; !ok {
-			return errors.New("com.dell.karavi-authorization-proxy is missing from annotation")
-		}
-		if annotation["com.dell.karavi-authorization-proxy"] != "true" {
-			return fmt.Errorf("extpected notation value to be true but got %s", annotation["com.dell.karavi-authorization-proxy"])
-		}
-		return nil
-	}
-	return errors.New("annotation is nil")
-
-}
-
-// CheckApplyVolumes --
-func CheckApplyVolumes(volumes []acorev1.VolumeApplyConfiguration) error {
-	// Volume
-	volumeNames := []string{"karavi-authorization-config"}
-NAME_LOOP:
-	for _, volName := range volumeNames {
-		for _, vol := range volumes {
-			if *vol.Name == volName {
-				continue NAME_LOOP
-			}
-		}
-		return fmt.Errorf("missing the following volume %s", volName)
-	}
-
-	return nil
-}
-
-// CheckApplyContainers --
-func CheckApplyContainers(contianers []acorev1.ContainerApplyConfiguration, drivertype string) error {
-	authString := "karavi-authorization-proxy"
-	for _, cnt := range contianers {
-		if *cnt.Name == authString {
-			volumeMounts := []string{"karavi-authorization-config", SupportedDrivers[drivertype].DriverConfigParamsVolumeMount}
-		MOUNT_NAME_LOOP:
-			for _, volName := range volumeMounts {
-				for _, vol := range cnt.VolumeMounts {
-					if *vol.Name == volName {
-						continue MOUNT_NAME_LOOP
-					}
-				}
-				return fmt.Errorf("missing the following volume mount %s", volName)
-			}
-
-			for _, env := range cnt.Env {
-				if *env.Name == "INSECURE" {
-					if _, err := strconv.ParseBool(*env.Value); err != nil {
-						return fmt.Errorf("%s is an invalid value for INSECURE: %v", *env.Value, err)
-					}
-				}
-				if *env.Name == "PROXY_HOST" && *env.Value == "" {
-					return fmt.Errorf("PROXY_HOST for authorization is empty")
-				}
-			}
-			return nil
-		}
-
-	}
-	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
 
 // AuthInjectDaemonset  - inject authorization into daemonset
@@ -282,28 +265,17 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 }
 
 // AuthorizationPrecheck  - runs precheck for CSM Authorization
-func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op utils.OperatorConfig, auth csmv1.Module, ctrlClient crclient.Client) error {
+func AuthorizationPrecheck(ctx context.Context, op utils.OperatorConfig, auth csmv1.Module, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
-	if _, ok := SupportedDrivers[driverType]; !ok {
-		return fmt.Errorf("CSM Authorization does not support %s driver", driverType)
+	if _, ok := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
+		return fmt.Errorf("CSM Authorization does not support %s driver", string(cr.Spec.Driver.CSIDriverType))
 	}
 
 	// check if provided version is supported
 	if auth.ConfigVersion != "" {
-		files, err := ioutil.ReadDir(fmt.Sprintf("%s/moduleconfig/authorization/", op.ConfigDirectory))
+		err := checkVersion(string(csmv1.Authorization), auth.ConfigVersion, op.ConfigDirectory)
 		if err != nil {
 			return err
-		}
-		found := false
-		authVersions := ""
-		for _, file := range files {
-			authVersions += (file.Name() + ",")
-			if file.Name() == auth.ConfigVersion {
-				found = true
-			}
-		}
-		if !found {
-			return fmt.Errorf("CSM Authorization does not have %s version. The following are supported versions: %s", auth.ConfigVersion, authVersions[:len(authVersions)-1])
 		}
 	}
 
@@ -331,7 +303,7 @@ func AuthorizationPrecheck(ctx context.Context, namespace, driverType string, op
 	for _, name := range secrets {
 		found := &corev1.Secret{}
 		err := ctrlClient.Get(ctx, types.NamespacedName{Name: name,
-			Namespace: namespace}, found)
+			Namespace: cr.GetNamespace()}, found)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)

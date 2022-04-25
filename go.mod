@@ -3,7 +3,6 @@ module github.com/dell/csm-operator
 go 1.17
 
 require (
-	github.com/go-logr/logr v1.2.2
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.21.0
@@ -27,6 +26,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/go-logr/logr v1.2.2 // indirect
 	github.com/go-logr/zapr v1.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
@@ -50,7 +50,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
+	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
 	golang.org/x/sys v0.0.0-20220224120231-95c6836cb0e7 // indirect
