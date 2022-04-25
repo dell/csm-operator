@@ -68,9 +68,9 @@ NAME_LOOP:
 }
 
 // CheckApplyContainersAuth --
-func CheckApplyContainersAuth(contianers []acorev1.ContainerApplyConfiguration, drivertype string) error {
+func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, drivertype string) error {
 	authString := "karavi-authorization-proxy"
-	for _, cnt := range contianers {
+	for _, cnt := range containers {
 		if *cnt.Name == authString {
 			volumeMounts := []string{"karavi-authorization-config", AuthorizationSupportedDrivers[drivertype].DriverConfigParamsVolumeMount}
 		MOUNT_NAME_LOOP:

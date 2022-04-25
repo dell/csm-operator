@@ -136,7 +136,7 @@ func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csm
 }
 
 // CheckApplyContainersReplica --
-func CheckApplyContainersReplica(contianers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
+func CheckApplyContainersReplica(contaners []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
 	replicaModule, err := getReplicaModule(cr)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func CheckApplyContainersReplica(contianers []acorev1.ContainerApplyConfiguratio
 	replicaString := "dell-csi-replicator"
 	driverString := "driver"
 	replicationContextPrefix, replicationPrefix := getRepctlPrefices(replicaModule, cr.Spec.Driver.CSIDriverType)
-	for _, cnt := range contianers {
+	for _, cnt := range contaners {
 		if *cnt.Name == replicaString {
 			// check volumes
 			volName := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount

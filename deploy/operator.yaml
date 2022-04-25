@@ -429,7 +429,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: 10.247.142.143:5000/csm-operator:v0.0.1
+        image: dellemc/dell-csm-operator:v0.1.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
