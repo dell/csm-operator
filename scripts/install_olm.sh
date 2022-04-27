@@ -14,7 +14,6 @@ OPERATORGROUP="dell-csm-operatorgroup"
 SUBSCRIPTION="dell-csm-subscription"
 COMMUNITY_MANIFEST="operator_community.yaml"
 
-NAMESPACE="test-csm-operator-olm"
 MANIFEST_FILE="$DEPLOYDIR/$COMMUNITY_MANIFEST"
 
 unableToFindKubectlErrorMsg="Install kubectl before running this script"
@@ -75,6 +74,15 @@ function check_for_olm_components() {
 function check_existing_installation() {
   log separator
   echo "Checking for existing installation of Dell CSM Operator"
+  # get namespace from YAML file for deployment
+  NS_STRING=$(cat ${MANIFEST_FILE} | grep "namespace:" | head -1)
+  if [ -z "${NS_STRING}" ]; then
+    echo "Couldn't find any target namespace in ${MANIFEST_FILE}"
+    exit 1
+  fi
+  # find the namespace from the filtered string
+  NAMESPACE=$(echo $NS_STRING | cut -d ' ' -f2)
+
   kubectl get catalogsource "$CATALOGSOURCE" -n $NAMESPACE > /dev/null 2>&1
   if [ $? -eq 0 ]; then
     log error "A CatalogSource with name $CATALOGSOURCE already exists in namespace $NAMESPACE. $uninstallComponentErrorMsg "
@@ -118,10 +126,10 @@ function install_operator() {
 
 source "$SCRIPTDIR"/common.bash
 header
+check_existing_installation
 verify_prerequisites
 check_for_olm_components
 check_or_create_namespace $NAMESPACE
-check_existing_installation
 install_operator
 log separator
 echo "The installation will take some time to complete"
