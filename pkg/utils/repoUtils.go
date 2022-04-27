@@ -74,7 +74,7 @@ func Download(ctx context.Context, repository string, client http.Client) (*byte
 // Get similar to scalio Get call
 func Get(u *url.URL, client http.Client) (*bytes.Buffer, error) {
 	ctx := context.Background()
-	timeout := time.Second * 5
+	timeout := time.Second * 20
 
 	transport := &http.Transport{
 		DisableCompression: true,
@@ -82,7 +82,8 @@ func Get(u *url.URL, client http.Client) (*bytes.Buffer, error) {
 	}
 
 	transport.TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: true,
+		// TODO: change to a variable
+		InsecureSkipVerify: false,
 	}
 
 	client.Transport = transport
