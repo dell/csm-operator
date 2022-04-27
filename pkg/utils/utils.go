@@ -43,6 +43,7 @@ type OperatorConfig struct {
 	IsOpenShift     bool
 	K8sVersion      K8sImagesConfig
 	ConfigDirectory string
+	//K8sSidecars K8sImagesConfig
 }
 
 // RbacYAML -
@@ -73,6 +74,8 @@ const (
 	DefaultImagePullPolicy = "IfNotPresent"
 	//KubeletConfigDir path
 	KubeletConfigDir = "<KUBELET_CONFIG_DIR>"
+	// OperatorNamespace
+	OperatorNamespace = "dell-csm-operator"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.

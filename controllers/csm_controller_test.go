@@ -1,9 +1,14 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -38,6 +43,7 @@ var (
 	opts = zap.Options{
 		Development: true,
 	}
+	URL string
 
 	unittestLogger = zap.New(zap.UseFlagOptions(&opts)).WithName("controllers").WithName("unit-test")
 
@@ -126,9 +132,36 @@ var (
 // It also implements ErrorInjector interface so that we can force error
 type CSMControllerTestSuite struct {
 	suite.Suite
-	fakeClient client.Client
-	k8sClient  kubernetes.Interface
-	namespace  string
+	fakeClient     client.Client
+	k8sClient      kubernetes.Interface
+	fakehttpClient http.Client
+	namespace      string
+}
+
+func handleAction(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Debug handler called")
+	fileName := "./testdata/powerscale-v2.2.0.tgz"
+	if os.Getenv("SET_BAD_FILE") == "true" {
+		fileName = "./testdata/powerbad-v2.2.0.tgz"
+	}
+	// return a tgz file
+	streamTGZbytes, err := ioutil.ReadFile(fileName)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	b := bytes.NewBuffer(streamTGZbytes)
+
+	// stream straight to client(browser)
+	w.Header().Set("Content-type", "application/tgz")
+
+	if _, err := b.WriteTo(w); err != nil { // <----- here!
+		fmt.Fprintf(w, "%s", err)
+	}
+	fmt.Println("debug tgz file sucess")
+
+	w.Write([]byte("TGZ Generated"))
+
 }
 
 // init every test
@@ -138,17 +171,56 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	unittestLogger.Info("Init unit test...")
 
 	csmv1.AddToScheme(scheme.Scheme)
-
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)
 	suite.k8sClient = clientgoclient.NewFakeClient(suite.fakeClient)
-
 	suite.namespace = "test"
+}
+
+func (suite *CSMControllerTestSuite) StartRemoteServer() {
+	hostname, _ := os.Hostname()
+	addr := hostname + ":9001"
+	certFile := "./testdata/server.crt"
+	keyFile := "./testdata/server.key"
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", handleAction)
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+		TLSConfig: &tls.Config{
+			MinVersion:               tls.VersionTLS13,
+			PreferServerCipherSuites: true,
+		},
+	}
+	fmt.Printf("Starting server on %s\n", addr)
+	go func() {
+		err := srv.ListenAndServeTLS(certFile, keyFile)
+		if err != nil {
+			fmt.Printf("Not able to listen on address %s\n", err.Error())
+		}
+		//time.Sleep(10 * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		srv.Shutdown(ctx)
+	}()
+
+	URL = "https://" + srv.Addr
+	fmt.Printf("debug server url %s\n", srv.Addr)
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	suite.fakehttpClient = *client
 }
 
 // test a happy path scenerio with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
-	suite.makeFakeCSM(csmName, suite.namespace, true)
+
+	suite.StartRemoteServer()
+	suite.makeFakeCSM(csmName, suite.namespace, true, URL)
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
@@ -156,11 +228,97 @@ func (suite *CSMControllerTestSuite) TestReconcile() {
 
 // test error injection. Client get should fail
 func (suite *CSMControllerTestSuite) TestErrorInjection() {
+
+	// test csm not found. err should be nil
+	suite.StartRemoteServer()
+	suite.runFakeCSMManager("", true)
+	// make a csm without finalizer
+	suite.makeFakeCSM(csmName, suite.namespace, false, URL)
+	suite.reconcileWithErrorInjection(csmName, "")
+}
+
+func (suite *CSMControllerTestSuite) TestConfigmap() {
+
+	suite.StartRemoteServer()
 	// test csm not found. err should be nil
 	suite.runFakeCSMManager("", true)
 	// make a csm without finalizer
-	suite.makeFakeCSM(csmName, suite.namespace, false)
-	suite.reconcileWithErrorInjection(csmName, "")
+	suite.makeFakeCSM(csmName, suite.namespace, false, URL)
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+	//suite.reconcileWithErrorInjection(csmName, "")
+}
+
+func (suite *CSMControllerTestSuite) TestConfigmapwithbadUrl() {
+
+	suite.StartRemoteServer()
+	// test csm not found. err should be nil
+	suite.runFakeCSMManager("", true)
+	// make a csm without finalizer
+	URL = "https://red@ityu/artifactory/"
+	suite.makeFakeCSM(csmName, suite.namespace, false, URL)
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
+	//suite.reconcileWithErrorInjection(csmName, "")
+}
+
+func (suite *CSMControllerTestSuite) TestConfigmapwithbadStringUrl() {
+
+	suite.StartRemoteServer()
+	// test csm not found. err should be nil
+	suite.runFakeCSMManager("", true)
+	// make a csm without finalizer
+	URL = "https://amaas-eos-mw1.cec.lab.emc.com/artifactory#/"
+	suite.makeFakeCSM(csmName, suite.namespace, false, URL)
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
+	//suite.reconcileWithErrorInjection(csmName, "")
+}
+
+func (suite *CSMControllerTestSuite) TestConfigmapwithnohttp() {
+
+	suite.StartRemoteServer()
+	// test csm not found. err should be nil
+	suite.runFakeCSMManager("", true)
+	// make a csm without finalizer
+	URL = "http://amaas-eos-mw1.cec.lab.emc.com/artifactory/"
+	suite.makeFakeCSM(csmName, suite.namespace, false, URL)
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
+	//suite.reconcileWithErrorInjection(csmName, "")
+}
+
+func (suite *CSMControllerTestSuite) TestConfigmapwithbadfile() {
+
+	os.Setenv("SET_BAD_FILE", "true")
+	suite.StartRemoteServer()
+	// test csm not found. err should be nil
+	suite.runFakeCSMManager("", true)
+	// make a csm without finalizer
+	suite.makeFakeCSM(csmName, suite.namespace, false, URL)
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
+	//suite.reconcileWithErrorInjection(csmName, "")
+	os.Setenv("SET_BAD_FILE", "false")
+}
+
+func (suite *CSMControllerTestSuite) TestConfigmapwithnodata() {
+
+	suite.StartRemoteServer()
+	// test csm not found. err should be nil
+	suite.runFakeCSMManager("", true)
+	// make a csm without finalizer
+	URL = "https://amaas-eos-mw1.cec.lab.emc.com/artifactory/powerscale-v2.2.0.tgz"
+	suite.makeFakeCSM(csmName, suite.namespace, false, URL)
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.NotNil(suite.T(), err)
+	//suite.reconcileWithErrorInjection(csmName, "")
 }
 
 func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
@@ -225,8 +383,9 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 		suite.T().Run(tt.name, func(t *testing.T) {
 
 			if tt.errorInjector != nil {
+				suite.StartRemoteServer()
 				// need to create all objs before running removeDriver to hit unknown error
-				suite.makeFakeCSM(csmName, suite.namespace, true)
+				suite.makeFakeCSM(csmName, suite.namespace, true, URL)
 				r.Reconcile(ctx, req)
 				*tt.errorInjector = true
 			}
@@ -347,6 +506,7 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 	reconciler = &ContainerStorageModuleReconciler{
 		Client:        suite.fakeClient,
 		K8sClient:     suite.k8sClient,
+		HttpClient:    suite.fakehttpClient,
 		Scheme:        scheme.Scheme,
 		Log:           log,
 		Config:        operatorConfig,
@@ -579,7 +739,10 @@ func (suite *CSMControllerTestSuite) deleteCSM(csmName string) {
 }
 
 func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
-	suite.makeFakeCSM(csmName, suite.namespace, true)
+
+	suite.StartRemoteServer()
+
+	suite.makeFakeCSM(csmName, suite.namespace, true, URL)
 	suite.runFakeCSMManager("", false)
 
 	updateCSMError = true
@@ -591,7 +754,7 @@ func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
 }
 
 // helper method to create k8s objects
-func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool) {
+func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool, URL string) {
 
 	// make pre-requisite secrets
 	sec := shared.MakeSecret(name+"-creds", ns, configVersion)
@@ -611,6 +774,7 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Spec.RemoteRepo.Repository = URL
 	truebool := true
 	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
 		Name:            "provisioner",

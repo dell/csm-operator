@@ -15,6 +15,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	osruntime "runtime"
@@ -91,7 +92,6 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
 	}
 	cfg.IsOpenShift = isOpenShift
-
 	kubeVersion, err := k8sClient.GetVersion()
 	if err != nil {
 		log.Info(fmt.Sprintf("kubeVersion err %s", kubeVersion))
@@ -202,6 +202,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	httpClient := &http.Client{}
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(log.Infof)
 	k8sClient := kubernetes.NewForConfigOrDie(restConfig)
@@ -211,6 +212,7 @@ func main() {
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	if err = (&controllers.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),
+		HttpClient:    *httpClient,
 		K8sClient:     k8sClient,
 		Log:           log,
 		Scheme:        mgr.GetScheme(),
@@ -222,7 +224,6 @@ func main() {
 	}
 	defer close(controllers.StopWatch)
 	//+kubebuilder:scaffold:builder
-
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)

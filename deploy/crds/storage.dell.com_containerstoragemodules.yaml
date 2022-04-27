@@ -906,6 +906,8 @@ spec:
                     type: string
                   repository:
                     type: string
+                  skipIfExists:
+                    type: boolean
                 type: object
             type: object
           status:

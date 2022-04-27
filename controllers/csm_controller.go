@@ -14,6 +14,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -62,6 +64,7 @@ type ContainerStorageModuleReconciler struct {
 	// k8s client, implements client-go/kubernetes interface, responsible for apply, which
 	// client.Client does not provides
 	K8sClient     kubernetes.Interface
+	HttpClient    http.Client
 	Scheme        *runtime.Scheme
 	Log           *zap.SugaredLogger
 	Config        utils.OperatorConfig
@@ -696,6 +699,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 	log := logger.GetLogger(ctx)
 
+	//Todo - check for version from yaml file
 	if cr.Spec.Driver.ConfigVersion == "" || cr.Spec.Driver.ConfigVersion != "v2.2.0" {
 		return fmt.Errorf("driver version not specified in spec or driver version is not supported")
 	}
@@ -731,46 +735,44 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		}
 	}
 
-	//make([]string) for each configmap powerscale-sideccar-v2.2.0, replication
-	//configFolder := []string{"sidecars", "driver"}
-	// "authorization-module", "module-common", "replication-module", "resiliency-module"}
+	// Download tgz file and create configmaps
 	configmapname := make([]string, 0)
-	ns := cr.GetNamespace()
-	isFound := utils.CheckMaps(configmapname, ns, driverName+"-"+cr.Spec.Driver.ConfigVersion, r.K8sClient)
-	//have skipflag
+	ns := utils.OperatorNamespace
+	isFound, err := utils.CheckMaps(ctx, configmapname, ns, driverName+"-"+cr.Spec.Driver.ConfigVersion, r.K8sClient)
+	if err != nil {
+		return fmt.Errorf("Configmap created is in wrong state and need to be created again: %v", err)
+	}
 	if isFound && cr.Spec.RemoteRepo.SkipIfExists {
 		log.Infow("ConfigMap Already Exists", "Name:", driverName+"-"+cr.Spec.Driver.ConfigVersion)
+	}
+	if isFound && cr.Spec.RemoteRepo.Repository == "" {
+		log.Infow("ConfigMap Already Exists created with scripts", "Name:", driverName+"-"+cr.Spec.Driver.ConfigVersion)
 	}
 	if !isFound {
 		// Force Download
 		cr.Spec.RemoteRepo.SkipIfExists = false
 	}
 	if cr.Spec.RemoteRepo.Repository == "" && !isFound {
-		// return error url not found and configmap doesn't exist
 		return fmt.Errorf("Configmap doesn't exist and url not found : %s", cr.Spec.RemoteRepo.Repository)
 	}
+	// if url is not empty and skipflag is false
 	if cr.Spec.RemoteRepo.Repository != "" && !cr.Spec.RemoteRepo.SkipIfExists {
 		fileName := driverName + "-" + cr.Spec.Driver.ConfigVersion + ".tgz"
-		pluginData, err := utils.Download(cr.Spec.RemoteRepo.Repository + fileName)
-		if err != nil {
-			return fmt.Errorf("Error from download and creating ConfigMaps: %v", err)
+		if !strings.HasSuffix(cr.Spec.RemoteRepo.Repository, "/") {
+			cr.Spec.RemoteRepo.Repository += "/"
 		}
-		if configmapname, err = utils.ExtractandCreateMap(pluginData, driverName+cr.Spec.Driver.ConfigVersion); err != nil {
-			panic(err)
+		pluginData, err := utils.Download(ctx, cr.Spec.RemoteRepo.Repository+fileName, r.HttpClient)
+		if err != nil {
+			log.Errorw("Error from download and creating ConfigMaps", "Error", err.Error())
+			return err
+		}
+		//fmt.Printf("After download plugindata: %v", pluginData)
+		if configmapname, err = utils.ExtractandCreateMap(ctx, pluginData, driverName+"-"+cr.Spec.Driver.ConfigVersion, r.K8sClient); err != nil {
+			log.Errorw("Not able to create configmap from tgz file", "Error", err.Error())
+			return err
 		}
 	}
 
-	// check if configmap exists for this entirelist then below code
-	//https://amaas-eos-mw1.cec.lab.emc.com:5036/artifactory/csi-driver-helm-virtual/powerscale-v2.2.0.tgz
-	//https://amaas-eos-mw1.cec.lab.emc.com:5036/artifactory/csi-driver-helm-virtual/
-
-	// if cr.spec.remoterepo.url != "" {
-	//	filename =  driverName + "-" + cr.Spec.Driver.ConfigVersion + ".tgz"  //cr.powerscale-v2.2.0.tgz
-	//	utils.Download(url + filename);
-	//	check err for utils.Download
-	//	utils.extractandcreatemap(buf, list)
-	//	check err
-	//}
 	return nil
 }
 

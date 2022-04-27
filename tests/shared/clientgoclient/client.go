@@ -173,7 +173,9 @@ func (c *K8sClient) CoordinationV1() coordinationv1.CoordinationV1Interface {
 
 // CoreV1 retrieves the CoreV1Client
 func (c *K8sClient) CoreV1() corev1.CoreV1Interface {
-	panic("implement me")
+	return &FakeCoreV1{
+		FakeClient: c.FakeClient,
+	}
 }
 
 // DiscoveryV1 retrieves the DiscoveryV1Client

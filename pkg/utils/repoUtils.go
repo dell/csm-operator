@@ -6,7 +6,6 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/tls"
-	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,26 +15,40 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dell/csm-operator/pkg/logger"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	cmcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	cmmetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/yaml"
 	//"k8s.io/apimachinery/pkg/api/errors"
 )
 
 type InstallConfig struct {
-	Listofconfigmapnames  string
+	Listofconfigmapnames  []string
 	UpgradePathMinVersion string
 	UpgradePathToVersion  string
 }
 
 // download tgx file from remote repo
 // do security checks to make sure  url is authentic
-func Download(repository string) (*bytes.Buffer, error) {
+func Download(ctx context.Context, repository string, client http.Client) (*bytes.Buffer, error) {
 	//repoURL := "https://amaas-eos-mw1.cec.lab.emc.com:5036/artifactory/csi-driver-helm-virtual/powerscale-v2.2.0.tgz"
 
+	log := logger.GetLogger(ctx)
+
 	u, err := url.Parse(repository)
+	if err != nil {
+		return nil, err
+	}
+
+	var isStringAlphabetic = regexp.MustCompile(`^[a-zA-Z0-9-.]+$`).MatchString
+	if !u.IsAbs() || u.Scheme != "https" || len(u.Query()) > 0 || !isStringAlphabetic(u.Hostname()) {
+		return nil, fmt.Errorf("bad url issue : %s", u.String())
+	}
+
 	if strings.Contains(u.String(), "@") ||
 		!strings.HasPrefix(u.String(), "https://") ||
 		!strings.HasSuffix(u.String(), "tgz") ||
@@ -43,30 +56,23 @@ func Download(repository string) (*bytes.Buffer, error) {
 		strings.Contains(u.String(), "#") ||
 		strings.Contains(u.Path, "//") ||
 		strings.Contains(u.Path, "/.") {
-
 		fmt.Printf("bad url %s", u.String())
-		panic(err)
-	}
-
-	var isStringAlphabetic = regexp.MustCompile(`^[a-zA-Z0-9-.]+$`).MatchString
-
-	if err != nil || !u.IsAbs() || u.Scheme != "https" || len(u.Query()) > 0 || !isStringAlphabetic(u.Hostname()) {
-		fmt.Printf("bad url issue %+v", u)
-		panic(err)
+		return nil, fmt.Errorf("bad url issue : %s", u.String())
 	}
 
 	fmt.Println("download from ", u.String())
 
-	pluginData, err := Get(u)
+	pluginData, err := Get(u, client)
 	if err != nil {
-		panic(err)
+		log.Errorw("Not able to download file", "Error", err.Error())
+		return nil, err
 	}
 
 	return pluginData, nil
 }
 
 // Get similar to scalio Get call
-func Get(u *url.URL) (*bytes.Buffer, error) {
+func Get(u *url.URL, client http.Client) (*bytes.Buffer, error) {
 	ctx := context.Background()
 	timeout := time.Second * 5
 
@@ -79,10 +85,8 @@ func Get(u *url.URL) (*bytes.Buffer, error) {
 		InsecureSkipVerify: true,
 	}
 
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   timeout,
-	}
+	client.Transport = transport
+	client.Timeout = timeout
 
 	// Get the URL
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
@@ -110,27 +114,34 @@ func Get(u *url.URL) (*bytes.Buffer, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch %s : %s", u, resp.Status)
 	}
-
+	fmt.Printf("http get Status code : %d", resp.StatusCode)
 	buf := bytes.NewBuffer(nil)
 	_, err = io.Copy(buf, resp.Body)
 	return buf, err
 
 }
 
+type data struct {
+	yamls map[string]string
+}
+
 // Extract - tar unzip tgz file and create config map from file contents
-func ExtractandCreateMap(buffer *bytes.Buffer, nameofMap string) ([]string, error) {
+func ExtractandCreateMap(ctx context.Context, buffer *bytes.Buffer, nameofMap string, k8sClient kubernetes.Interface) ([]string, error) {
+
+	//log := logger.GetLogger(ctx)
 	uncompressedStream, err := gzip.NewReader(buffer)
 	if err != nil {
 		return nil, err
 	}
 
 	tarReader := tar.NewReader(uncompressedStream)
-
-	var configMapData map[string]string
-	configMapData = make(map[string]string, 0)
+	configMapData := make(map[string]data, 0)
 	configMapName := make([]string, 0)
-	name := ""
-	ns := "dell-csm-operator"
+	metaDataMap := make(map[string]string, 0)
+
+	ns := OperatorNamespace
+
+	cmName := ""
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -139,139 +150,127 @@ func ExtractandCreateMap(buffer *bytes.Buffer, nameofMap string) ([]string, erro
 		if err != nil {
 			return nil, err
 		}
-		if strings.Contains(header.Name, nameofMap) {
-			// extract the file and get list of configmap names
-			var b []byte
-			//b.ReadFrom(tarReader)
-			var install InstallConfig
-			err = yaml.Unmarshal(b, &install)
-			if err != nil {
-				return nil, err
+
+		fmt.Printf("** create configmap with name %s and namespace %s\n", cmName, ns)
+		tarFile := filepath.Base(header.Name)
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			cmName = strings.ReplaceAll(header.Name, "/", "")
+			fmt.Printf("**found new directory from tar %s and namespace %s\n", cmName, ns)
+			d := new(data)
+			d.yamls = make(map[string]string)
+			configMapData[cmName] = *d
+			continue
+		case tar.TypeReg:
+			if strings.Contains(header.Name, nameofMap) {
+				// extract the file and get list of configmap names
+				var b bytes.Buffer
+				b.ReadFrom(tarReader)
+				key := filepath.Base(header.Name)
+				metaDataMap[key] = b.String()
+				_ = CreateMap(ctx, nameofMap, ns, metaDataMap, k8sClient)
+				configMapName, err = ConfigmapReader(ctx, k8sClient, nameofMap, ns, configMapName)
+				if err != nil {
+					return nil, err
+				}
+				break
 			}
-			configMapName = strings.Split(install.Listofconfigmapnames, ",")
-			break
-		}
-	}
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		//add for loop for each configmapname
-		for _, cmName := range configMapName {
-			key := ""
-			// header.name = /a/b/c/foo.yaml
-			name = cmName
-			key = filepath.Base(header.Name)
-
-			switch header.Typeflag {
-			case tar.TypeDir:
-				continue
-			case tar.TypeReg:
+			if strings.Contains(header.Name, cmName) {
 				// save to configmap
 				var b bytes.Buffer
 				b.ReadFrom(tarReader)
-				//fmt.Println("debug contents [%s]", b.String())
-				if key != "" {
-					fmt.Println("configmap key", key)
-					configMapData[key] = b.String()
+				if tarFile != "" {
+					configMapData[cmName].yamls[tarFile] = b.String()
 				}
-			case tar.TypeXGlobalHeader, tar.TypeXHeader:
-				continue
-			default:
-				return nil, fmt.Errorf("unknown type: %b in %s", header.Typeflag, header.Name)
 			}
+		case tar.TypeXGlobalHeader, tar.TypeXHeader:
+			continue
+		default:
+			return nil, fmt.Errorf("unknown type: %b in %s", header.Typeflag, header.Name)
 		}
 	}
-	if len(configMapData) > 0 {
-		_ = CreateMap(name, ns, configMapData)
+
+	for _, cmName := range configMapName {
+		_ = CreateMap(ctx, cmName, ns, configMapData[cmName].yamls, k8sClient)
 	}
 
 	return configMapName, nil
 }
 
 // CreateMap - create configmap if needed else update existing map
-func CreateMap(name string, ns string, configMapData map[string]string) error {
+func CreateMap(ctx context.Context, name string, ns string, configMapData map[string]string, k8sClient kubernetes.Interface) error {
 
-	var kubeconfig *string
-	home := "/root"
-	kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	flag.Parse()
-
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	clientset := kubernetes.NewForConfigOrDie(config)
-
-	configMap := corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
+	log := logger.GetLogger(ctx)
+	kindName := "ConfigMap"
+	apiVersion := "v1"
+	immutable := true
+	configMap := &cmcorev1.ConfigMapApplyConfiguration{
+		TypeMetaApplyConfiguration: cmmetav1.TypeMetaApplyConfiguration{
+			Kind:       &kindName,
+			APIVersion: &apiVersion,
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns,
+		ObjectMetaApplyConfiguration: &cmmetav1.ObjectMetaApplyConfiguration{
+			Name:      &name,
+			Namespace: &ns,
 		},
-		Data: configMapData,
+		Data:      configMapData,
+		Immutable: &immutable,
 	}
 
-	ctx := context.Background()
-	var cm *corev1.ConfigMap
-	if cm, err = clientset.CoreV1().ConfigMaps(ns).Get(ctx, name, metav1.GetOptions{}); err != nil {
-
-		fmt.Println("new configmap needed", err.Error())
-
-		cm, _ = clientset.CoreV1().ConfigMaps(ns).Create(ctx, &configMap, metav1.CreateOptions{})
-
-		fmt.Printf("create new configmap %+v", cm.Name)
-
-	} else {
-		cm, _ = clientset.CoreV1().ConfigMaps(ns).Update(ctx, &configMap, metav1.UpdateOptions{})
-		fmt.Println("update configmap", cm.Name)
-	}
-
-	_, err = clientset.CoreV1().ConfigMaps(ns).Get(ctx, name, metav1.GetOptions{})
+	opts := metav1.ApplyOptions{FieldManager: "application/apply-patch"}
+	cm, err := k8sClient.CoreV1().ConfigMaps(ns).Apply(ctx, configMap, opts)
 	if err != nil {
-		fmt.Println("failed to find configmap ", err.Error())
+		log.Errorw("Failed to Apply Map", "error", err.Error())
+		return err
 	}
-
 	fmt.Println("found configmap ", cm.Name)
 
 	return nil
 
 }
 
-func CheckMaps(configName []string, ns string, nameofMap string, k8sClient kubernetes.Interface) bool {
-	// add k8sclient here
+func CheckMaps(ctx context.Context, configName []string, ns string, nameofMap string, k8sClient kubernetes.Interface) (bool, error) {
 
-	ctx := context.Background()
 	var cm *corev1.ConfigMap
+	var err error
 	isFound := false
-	if cm, err := k8sClient.CoreV1().ConfigMaps(ns).Get(ctx, nameofMap, metav1.GetOptions{}); err != nil {
+	if cm, err = k8sClient.CoreV1().ConfigMaps(ns).Get(ctx, nameofMap, metav1.GetOptions{}); err != nil {
 
 		fmt.Println("new configmap needed", err.Error())
 
 		fmt.Printf("create new configmap %+v", cm.Name)
-		return isFound
+		return isFound, nil
 	}
-	// read name of map and make a list of configname
-	configName = strings.Split(cm.Data["listofconfigmapname"], ",")
+	configName, err = ConfigmapReader(ctx, k8sClient, nameofMap, ns, configName)
 	for _, name := range configName {
 		if cm, err := k8sClient.CoreV1().ConfigMaps(ns).Get(ctx, name, metav1.GetOptions{}); err != nil {
 
-			fmt.Println("new configmap needed", err.Error())
-
-			fmt.Printf("create new configmap %+v", cm.Name)
-			return isFound
+			fmt.Printf("Failed to apply maps from yaml file and need to create new configmap %+v", cm.Name)
+			return isFound, err
 		}
 	}
 	isFound = true
-	return isFound
+	return isFound, nil
+}
+
+func ConfigmapReader(ctx context.Context, k8sClient kubernetes.Interface, nameofMap string, ns string, configMapName []string) ([]string, error) {
+
+	var cm *corev1.ConfigMap
+	log := logger.GetLogger(ctx)
+	var err error
+	if cm, err = k8sClient.CoreV1().ConfigMaps(ns).Get(ctx, nameofMap, metav1.GetOptions{}); err != nil {
+		fmt.Println("configmap not created", err.Error())
+	}
+	// read name of map and make a list of configname
+	configMapYaml := cm.Data[nameofMap+".yaml"]
+	var install InstallConfig
+	err = yaml.Unmarshal([]byte(configMapYaml), &install)
+	if err != nil {
+		log.Errorw("Error reading yaml", "error", err.Error())
+		return nil, err
+	}
+	configMapName = install.Listofconfigmapnames
+	return configMapName, nil
+
 }
