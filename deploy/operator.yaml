@@ -429,7 +429,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: amaas-eos-mw1.cec.lab.emc.com:5036/dell-csm-operator:v0.0.2
+        image: dellemc/dell-csm-operator:v0.1.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
