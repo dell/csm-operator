@@ -129,13 +129,6 @@ type PodStatus struct {
 	Failed    string `json:"failed,omitempty"`
 }
 
-// RemoteRepo to download yamls for driver
-type RemoteRepo struct {
-	Repository     string `json:"repository,omitempty"`
-	CredSecretName string `json:"credSecretName,omitempty"`
-	CertSecretName string `json:"certSecretName,omitempty"`
-}
-
 // Driver of CSIDriver
 // +k8s:openapi-gen=true
 type Driver struct {
