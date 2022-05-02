@@ -4,10 +4,6 @@ metadata:
   name: test-isilon
   namespace: test-isilon
 spec:
-  remoteRepo:
-    repository:
-    credSecretName: "credSecretTest"
-    certSecretName: "certSecretTest"
   driver:
     csiDriverType: "isilon" 
     csiDriverSpec:
