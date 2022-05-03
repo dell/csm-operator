@@ -508,20 +508,20 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	return false, nil
 }
 
-func clusterIDs(replica csmv1.Module) ([]string, error) {
+func ClusterIDs(replica csmv1.Module) ([]string, error) {
 	var clusterIDs []string
 	for _, comp := range replica.Components {
 		if comp.Name == ReplicationControllerManager {
 			for _, env := range comp.Envs {
-				if env.Name == "CLUSTERS_IDS" {
+				if env.Name == "TARGET_CLUSTERS_IDS" {
 					clusterIDs = strings.Split(env.Value, ",")
 					break
 				}
 			}
 		}
 	}
-	err := fmt.Errorf("CLUSTERS_IDS on CR should have more than 1 commma seperated cluster IDs. Got  %d", len(clusterIDs))
-	if len(clusterIDs) >= 2 {
+	err := fmt.Errorf("TARGET_CLUSTERS_IDS on CR should have more than 0 commma seperated cluster IDs. Got  %d", len(clusterIDs))
+	if len(clusterIDs) >= 1 {
 		err = nil
 	}
 	return clusterIDs, err
@@ -542,7 +542,6 @@ func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Cl
 
 // NewControllerRuntimeClientWrapper -
 var NewControllerRuntimeClientWrapper = func(clusterConfigData []byte) (crclient.Client, error) {
-	fmt.Println("NewControllerRuntimeClientWrapper")
 	return k8sClient.NewControllerRuntimeClient(clusterConfigData)
 }
 
@@ -589,8 +588,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Replication && m.Enabled {
 			replicaEnabled = true
-			tmp := []ReplicaCluster{} // redeclare
-			clusterIDs, err := clusterIDs(m)
+			clusterIDs, err := ClusterIDs(m)
 			if err != nil {
 				return replicaEnabled, clusterClients, err
 			}
@@ -609,14 +607,12 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 					return replicaEnabled, clusterClients, err
 				}
 
-				tmp = append(tmp, ReplicaCluster{
+				clusterClients = append(clusterClients, ReplicaCluster{
 					ClutsterID:        clusterID,
 					ClusterCTRLClient: targetCtrlClient,
 					ClusterK8sClient:  targetK8sClient,
 				})
 			}
-
-			clusterClients = tmp
 		}
 	}
 	return replicaEnabled, clusterClients, nil

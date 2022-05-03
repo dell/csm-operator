@@ -13,6 +13,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -90,8 +91,9 @@ const (
 )
 
 var (
-	dMutex           sync.RWMutex
-	configVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
+	dMutex                          sync.RWMutex
+	configVersionKey                = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
+	previouslyAppliedCustomResource = fmt.Sprintf("%s/%s", MetadataPrefix, "previously-applied-configuration")
 
 	// StopWatch - watcher stop handle
 	StopWatch = make(chan struct{})
@@ -445,9 +447,67 @@ func (r *ContainerStorageModuleReconciler) addFinalizer(ctx context.Context, ins
 	return r.Update(ctx, instance)
 }
 
+func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx context.Context, newCR *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+	log := logger.GetLogger(ctx)
+	log.Info("Checking if standalone modules need clean up")
+
+	replicaEnabled := func(cr *csmv1.ContainerStorageModule) bool {
+		for _, m := range cr.Spec.Modules {
+			if m.Name == csmv1.Replication {
+				return m.Enabled
+			}
+		}
+		return false
+	}
+
+	var err error
+
+	if oldCrJSON, ok := newCR.Annotations[previouslyAppliedCustomResource]; ok {
+		fmt.Println(oldCrJSON)
+		oldCR := new(csmv1.ContainerStorageModule)
+
+		err = json.Unmarshal([]byte(oldCrJSON), &oldCR)
+		if err != nil {
+			return err
+		}
+
+		// Check if replica needs to be uninstalled
+		if replicaEnabled(oldCR) && !replicaEnabled(newCR) {
+			log.Infow("Deleting Replication controller")
+
+			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
+			if err != nil {
+				return err
+			}
+			for _, cluster := range clusterClients {
+				if err = modules.ReplicationUninstallManagerController(ctx, operatorConfig, *oldCR, cluster.ClusterCTRLClient); err != nil {
+					log.Errorw("error deleting replication controller in cluster", err.Error())
+					return err
+				}
+			}
+
+		}
+	}
+
+	annotations := newCR.GetAnnotations()
+	newCR.Annotations[previouslyAppliedCustomResource] = newCR.Annotations["kubectl.kubernetes.io/last-applied-configuration"]
+	newCR.SetAnnotations(annotations)
+	err = r.GetClient().Update(ctx, newCR)
+	if err != nil {
+		err = fmt.Errorf("failed to update CR with new annotation: %+v", err)
+	}
+
+	return err
+}
+
 // SyncCSM - Sync the current installation - this can lead to a create or update
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
+
+	err := r.oldStandAloneModuleCleanup(ctx, &cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 
 	// Get Driver resources
 	driverConfig, err := r.getDriverConfig(ctx, cr, operatorConfig)
@@ -513,50 +573,51 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	for _, cluster := range clusterClients {
+		log.Infof("Starting SYNC for %s cluster", cluster.ClutsterID)
 		// Create/Update ServiceAccount
-		if err = serviceaccount.SyncServiceAccount(ctx, &node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+		if err = serviceaccount.SyncServiceAccount(ctx, node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
-		if err = serviceaccount.SyncServiceAccount(ctx, &controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+		if err = serviceaccount.SyncServiceAccount(ctx, controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
 		// Create/Update ClusterRoles
-		if err = rbac.SyncClusterRole(ctx, &node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
+		if err = rbac.SyncClusterRole(ctx, node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
-		if err = rbac.SyncClusterRole(ctx, &controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
+		if err = rbac.SyncClusterRole(ctx, controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
 		// Create/Update ClusterRoleBinding
-		if err = rbac.SyncClusterRoleBindings(ctx, &node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+		if err = rbac.SyncClusterRoleBindings(ctx, node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
-		if err = rbac.SyncClusterRoleBindings(ctx, &controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+		if err = rbac.SyncClusterRoleBindings(ctx, controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
 		// Create/Update CSIDriver
-		if err = csidriver.SyncCSIDriver(ctx, driver, cluster.ClusterCTRLClient); err != nil {
+		if err = csidriver.SyncCSIDriver(ctx, *driver, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
 		// Create/Update ConfigMap
-		if err = configmap.SyncConfigMap(ctx, configMap, cluster.ClusterCTRLClient); err != nil {
+		if err = configmap.SyncConfigMap(ctx, *configMap, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
 		// Create/Update Deployment
-		if err = deployment.SyncDeployment(ctx, &controller.Deployment, cluster.ClusterK8sClient, cr.Name); err != nil {
+		if err = deployment.SyncDeployment(ctx, controller.Deployment, cluster.ClusterK8sClient, cr.Name); err != nil {
 			return err
 		}
 
 		// Create/Update DeamonSet
-		if err = daemonset.SyncDaemonset(ctx, &node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
+		if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
 			return err
 		}
 

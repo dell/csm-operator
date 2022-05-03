@@ -225,10 +225,10 @@ spec:
         # Allowed values: string
         image: dellemc/dell-replication-controller:v1.2.0
         envs:
-          # CLUSTERS_IDS: comma separated list of clusters id. The first id should be source(wherever CSM Operator is deployed)
-          # Allowed values: time
-          - name: "CLUSTERS_IDS"
-            value: "cluster-1,cluster-2"
+          # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
+          # Allowed values: string
+          - name: "TARGET_CLUSTERS_IDS"
+            value: "target-cluster-1"
           # Replication log level
           # Allowed values: "error", "warn"/"warning", "info", "debug"
           # Default value: "debug"

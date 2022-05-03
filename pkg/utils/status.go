@@ -127,7 +127,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	}
 
 	for _, cluster := range clusterClients {
-		log.Infof("daemonset status for cluster: %s", cluster.ClutsterID)
+		log.Infof("\ndaemonset status for cluster: %s", cluster.ClutsterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClutsterID)
 
 		ds := &appsv1.DaemonSet{}

@@ -10,6 +10,7 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -134,14 +135,14 @@ func TestReplicationPreCheck(t *testing.T) {
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
 
-			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-1")
-			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-2")
+			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
+			driverSecret1 := getSecret(customResource.Namespace, customResource.Name+"-creds")
+			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret).Build()
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret, driverSecret1, driverSecret2).Build()
 
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				driverSecret1 := getSecret(customResource.Namespace, customResource.Name+"-creds")
-				driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret1, driverSecret2).Build()
 				return clusterClient, nil
 			}
@@ -159,14 +160,13 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica := tmpCR.Spec.Modules[0]
 			replica.ConfigVersion = "v1.2.0"
 
-			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-1")
-			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-2")
+			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
+			driverSecret1 := getSecret(customResource.Namespace, customResource.Name+"-creds")
+			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret).Build()
-
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret, driverSecret1, driverSecret2).Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				driverSecret1 := getSecret(customResource.Namespace, customResource.Name+"-creds")
-				driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret1, driverSecret2).Build()
 				return clusterClient, nil
 			}
@@ -184,8 +184,8 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica := tmpCR.Spec.Modules[0]
 			replica.ConfigVersion = "v1.2.0"
 
-			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-1")
-			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-cluster-2")
+			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret).Build()
 
@@ -209,14 +209,15 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica.ConfigVersion = "v1.2.0"
 
 			for i, component := range replica.Components {
-				if component.Name == "dell-replication-controller" {
+				if component.Name == utils.ReplicationControllerManager {
 					for j, env := range component.Envs {
-						if env.Name == "CLUSTERS_IDS" {
-							replica.Components[i].Envs[j].Value = "test-cluster-1"
+						if env.Name == "TARGET_CLUSTERS_IDS" {
+							replica.Components[i].Envs[j].Value = ""
 						}
 					}
 				}
 			}
+			fmt.Println(replica)
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
@@ -224,7 +225,7 @@ func TestReplicationPreCheck(t *testing.T) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
-			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return true, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
 		"fail - no cluster config secret found": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
@@ -246,6 +247,7 @@ func TestReplicationPreCheck(t *testing.T) {
 			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
+		/* TODO(Michael): figure better way to test repctl not installed case */
 		"fail - repctl not installed": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -261,7 +263,7 @@ func TestReplicationPreCheck(t *testing.T) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
-			return false, false, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return true, false, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
 		"fail - unsupported replication version": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
