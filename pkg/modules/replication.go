@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
