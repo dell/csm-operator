@@ -5,7 +5,7 @@ metadata:
     alm-examples: |-
       [
         {
-          "apiVersion": "storage.dell.com/v1alpha2",
+          "apiVersion": "storage.dell.com/v1alpha1",
           "kind": "ContainerStorageModule",
           "metadata": {
             "name": "test-isilon",
@@ -389,7 +389,7 @@ spec:
         path: state
         x-descriptors:
         - urn:alm:descriptor:text
-      version: v1alpha2
+      version: v1alpha1
   description: Dell CSM Operator for Dell CSI Drivers and Dell CSM Modules
   displayName: Dell CSM Operator
   icon:

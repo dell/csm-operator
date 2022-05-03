@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	csmv1 "github.com/dell/csm-operator/api/v1alpha2"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	step "github.com/dell/csm-operator/tests/e2e/steps"
 
 	"k8s.io/client-go/kubernetes"
