@@ -66,7 +66,7 @@ func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) 
 	replicationContextPrefix := ReplicationSupportedDrivers[string(driverType)].PluginIdentifier
 
 	for _, component := range replicaModule.Components {
-		if component.Name == "dell-csi-replicator" {
+		if component.Name == utils.ReplicationSideCarName {
 			for _, env := range component.Envs {
 				if env.Name == XCSIReplicaPrefix {
 					replicationPrefix = env.Value
@@ -142,11 +142,10 @@ func CheckApplyContainersReplica(contaners []acorev1.ContainerApplyConfiguration
 		return err
 	}
 
-	replicaString := "dell-csi-replicator"
 	driverString := "driver"
 	replicationContextPrefix, replicationPrefix := getRepctlPrefices(replicaModule, cr.Spec.Driver.CSIDriverType)
 	for _, cnt := range contaners {
-		if *cnt.Name == replicaString {
+		if *cnt.Name == utils.ReplicationSideCarName {
 			// check volumes
 			volName := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
 			foundVol := false
@@ -295,10 +294,10 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		switch cr.Spec.Driver.CSIDriverType {
 		case csmv1.PowerScale:
 			tmpCR := cr
-			log.Infof("\nperforming pre checks for: %s", cluster.ClutsterID)
+			log.Infof("\nperforming pre checks for: %s", cluster.ClusterID)
 			err = drivers.PrecheckPowerScale(ctx, &tmpCR, cluster.ClusterCTRLClient)
 			if err != nil {
-				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClutsterID)
+				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClusterID)
 			}
 		}
 	}

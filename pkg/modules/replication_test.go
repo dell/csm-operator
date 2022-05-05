@@ -10,7 +10,6 @@ package modules
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
@@ -208,16 +207,15 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica := tmpCR.Spec.Modules[0]
 			replica.ConfigVersion = "v1.2.0"
 
-			for i, component := range replica.Components {
+			for i, component := range tmpCR.Spec.Modules[0].Components {
 				if component.Name == utils.ReplicationControllerManager {
 					for j, env := range component.Envs {
 						if env.Name == "TARGET_CLUSTERS_IDS" {
-							replica.Components[i].Envs[j].Value = ""
+							tmpCR.Spec.Modules[0].Components[i].Envs[j].Value = ""
 						}
 					}
 				}
 			}
-			fmt.Println(replica)
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
@@ -225,7 +223,7 @@ func TestReplicationPreCheck(t *testing.T) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
-			return true, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
 		"fail - no cluster config secret found": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
@@ -247,7 +245,7 @@ func TestReplicationPreCheck(t *testing.T) {
 			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
-		/* TODO(Michael): figure better way to test repctl not installed case */
+		/*TODO(Michael): figure better way to test repctl not installed case
 		"fail - repctl not installed": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -264,7 +262,7 @@ func TestReplicationPreCheck(t *testing.T) {
 			}
 
 			return true, false, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
-		},
+		},*/
 
 		"fail - unsupported replication version": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")

@@ -176,22 +176,6 @@ spec:
         args: ["--monitor-interval=60s"]
 
   modules:
-    # Authorization: enable csm-authorization for RBAC
-    - name: authorization
-      # enable: Enable/Disable csm-authorization
-      enabled: false
-      configVersion: v1.2.0
-      components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.2.0
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: ""
-        
-          # insecure: Enable/Disable certificate validation of the csm-authorization server       
-          - name: "INSECURE"
-            value: "true"
     # replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
@@ -200,7 +184,7 @@ spec:
       #   true: enable replication feature(install dell-csi-replicator sidecar)
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
-      enabled: false
+      enabled: true
       configVersion: v1.2.0
       components:
       - name: dell-csi-replicator

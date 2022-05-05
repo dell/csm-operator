@@ -447,7 +447,7 @@ func (r *ContainerStorageModuleReconciler) addFinalizer(ctx context.Context, ins
 	return r.Update(ctx, instance)
 }
 
-func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx context.Context, newCR *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx context.Context, newCR *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverConfig *DriverConfig) error {
 	log := logger.GetLogger(ctx)
 	log.Info("Checking if standalone modules need clean up")
 
@@ -484,6 +484,15 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 					log.Errorw("error deleting replication controller in cluster", err.Error())
 					return err
 				}
+
+				// also uninstalled drivers in target clusters
+				if cluster.ClusterID != utils.DefaultSourceClusterID {
+					if err = removeDriverReplicaCluster(ctx, cluster, driverConfig); err != nil {
+						return err
+					}
+
+				}
+
 			}
 
 		}
@@ -504,13 +513,12 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 
-	err := r.oldStandAloneModuleCleanup(ctx, &cr, operatorConfig)
+	// Get Driver resources
+	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig)
 	if err != nil {
 		return err
 	}
-
-	// Get Driver resources
-	driverConfig, err := r.getDriverConfig(ctx, cr, operatorConfig)
+	err = r.oldStandAloneModuleCleanup(ctx, &cr, operatorConfig, driverConfig)
 	if err != nil {
 		return err
 	}
@@ -573,7 +581,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	for _, cluster := range clusterClients {
-		log.Infof("Starting SYNC for %s cluster", cluster.ClutsterID)
+		log.Infof("Starting SYNC for %s cluster", cluster.ClusterID)
 		// Create/Update ServiceAccount
 		if err = serviceaccount.SyncServiceAccount(ctx, node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 			return err
@@ -626,7 +634,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	return nil
 }
 
-func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
+func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
 	operatorConfig utils.OperatorConfig) (*DriverConfig, error) {
 	var (
@@ -676,11 +684,91 @@ func (r *ContainerStorageModuleReconciler) getDriverConfig(ctx context.Context,
 
 }
 
+func removeDriverReplicaCluster(ctx context.Context, cluster utils.ReplicaCluster, driverConfig *DriverConfig) error {
+	log := logger.GetLogger(ctx)
+	var err error
+
+	log.Infow("removing driver from", cluster.ClusterID)
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete node service account", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete controller service account", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete node cluster role", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete controller cluster role", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete node cluster role binding", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete controller cluster role binding", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, driverConfig.ConfigMap, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete configmap", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, driverConfig.Driver, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete csi driver", "Error", err.Error())
+		return err
+	}
+
+	daemonsetKey := client.ObjectKey{
+		Namespace: *driverConfig.Node.DaemonSetApplyConfig.Namespace,
+		Name:      *driverConfig.Node.DaemonSetApplyConfig.Name,
+	}
+
+	daemonsetObj := &appsv1.DaemonSet{}
+	err = cluster.ClusterCTRLClient.Get(ctx, daemonsetKey, daemonsetObj)
+	if err == nil {
+		if err = cluster.ClusterCTRLClient.Delete(ctx, daemonsetObj); err != nil && !k8serror.IsNotFound(err) {
+			log.Errorw("error delete daemonset", "Error", err.Error())
+			return err
+		}
+	} else {
+		log.Infow("error getting daemonset", "daemonsetKey", daemonsetKey)
+	}
+
+	deploymentKey := client.ObjectKey{
+		Namespace: *driverConfig.Controller.Deployment.Namespace,
+		Name:      *driverConfig.Controller.Deployment.Name,
+	}
+
+	deploymentObj := &appsv1.Deployment{}
+	if err = cluster.ClusterCTRLClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
+		if err = cluster.ClusterCTRLClient.Delete(ctx, deploymentObj); err != nil && !k8serror.IsNotFound(err) {
+			log.Errorw("error delete deployment", "Error", err.Error())
+			return err
+		}
+	} else {
+		log.Infow("error getting deployment", "deploymentKey", deploymentKey)
+	}
+
+	return nil
+}
+
 func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
-	driverConfig, err := r.getDriverConfig(ctx, instance, operatorConfig)
+	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig)
 	if err != nil {
 		log.Error("error in getDriverConfig")
 		return err
@@ -691,77 +779,9 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return err
 	}
 	for _, cluster := range clusterClients {
-		if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
-			log.Errorw("error delete node service account", "Error", err.Error())
+		if err = removeDriverReplicaCluster(ctx, cluster, driverConfig); err != nil {
 			return err
 		}
-
-		if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
-			log.Errorw("error delete controller service account", "Error", err.Error())
-			return err
-		}
-
-		if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
-			log.Errorw("error delete node cluster role", "Error", err.Error())
-			return err
-		}
-
-		if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
-			log.Errorw("error delete controller cluster role", "Error", err.Error())
-			return err
-		}
-
-		if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
-			log.Errorw("error delete node cluster role binding", "Error", err.Error())
-			return err
-		}
-
-		if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
-			log.Errorw("error delete controller cluster role binding", "Error", err.Error())
-			return err
-		}
-
-		if err = utils.DeleteObject(ctx, driverConfig.ConfigMap, cluster.ClusterCTRLClient); err != nil {
-			log.Errorw("error delete configmap", "Error", err.Error())
-			return err
-		}
-
-		if err = utils.DeleteObject(ctx, driverConfig.Driver, cluster.ClusterCTRLClient); err != nil {
-			log.Errorw("error delete csi driver", "Error", err.Error())
-			return err
-		}
-
-		daemonsetKey := client.ObjectKey{
-			Namespace: *driverConfig.Node.DaemonSetApplyConfig.Namespace,
-			Name:      *driverConfig.Node.DaemonSetApplyConfig.Name,
-		}
-
-		daemonsetObj := &appsv1.DaemonSet{}
-		err = cluster.ClusterCTRLClient.Get(ctx, daemonsetKey, daemonsetObj)
-		if err == nil {
-			if err = cluster.ClusterCTRLClient.Delete(ctx, daemonsetObj); err != nil && !k8serror.IsNotFound(err) {
-				log.Errorw("error delete daemonset", "Error", err.Error())
-				return err
-			}
-		} else {
-			log.Infow("error getting daemonset", "daemonsetKey", daemonsetKey)
-		}
-
-		deploymentKey := client.ObjectKey{
-			Namespace: *driverConfig.Controller.Deployment.Namespace,
-			Name:      *driverConfig.Controller.Deployment.Name,
-		}
-
-		deploymentObj := &appsv1.Deployment{}
-		if err = cluster.ClusterCTRLClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
-			if err = cluster.ClusterCTRLClient.Delete(ctx, deploymentObj); err != nil && !k8serror.IsNotFound(err) {
-				log.Errorw("error delete deployment", "Error", err.Error())
-				return err
-			}
-		} else {
-			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
-		}
-
 		if replicationEnabled {
 			log.Infow("Deleting Replication controller")
 			if err = modules.ReplicationUninstallManagerController(ctx, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {

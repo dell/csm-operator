@@ -77,7 +77,7 @@ type NodeYAML struct {
 
 // ReplicaCluster -
 type ReplicaCluster struct {
-	ClutsterID        string
+	ClusterID         string
 	ClusterCTRLClient crclient.Client
 	ClusterK8sClient  kubernetes.Interface
 }
@@ -95,6 +95,10 @@ const (
 	ReplicationControllerNameSpace = "dell-replication-controller"
 	// ReplicationControllerManager -
 	ReplicationControllerManager = "dell-replication-controller-manager"
+	// ReplicationSideCarName
+	ReplicationSideCarName = "dell-csi-replicator"
+	// DefaultSourceClusterID -
+	DefaultSourceClusterID = "default-source-cluster"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -510,10 +514,12 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 
 func ClusterIDs(replica csmv1.Module) ([]string, error) {
 	var clusterIDs []string
+	fmt.Println(len(clusterIDs))
 	for _, comp := range replica.Components {
 		if comp.Name == ReplicationControllerManager {
 			for _, env := range comp.Envs {
-				if env.Name == "TARGET_CLUSTERS_IDS" {
+				if env.Name == "TARGET_CLUSTERS_IDS" && env.Value != "" {
+					fmt.Println(env.Value)
 					clusterIDs = strings.Split(env.Value, ",")
 					break
 				}
@@ -580,7 +586,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 		{
 			ClusterCTRLClient: r.GetClient(),
 			ClusterK8sClient:  r.GetK8sClient(),
-			ClutsterID:        "default-source-cluster",
+			ClusterID:         DefaultSourceClusterID,
 		},
 	}
 
@@ -608,7 +614,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 				}
 
 				clusterClients = append(clusterClients, ReplicaCluster{
-					ClutsterID:        clusterID,
+					ClusterID:         clusterID,
 					ClusterCTRLClient: targetCtrlClient,
 					ClusterK8sClient:  targetK8sClient,
 				})
