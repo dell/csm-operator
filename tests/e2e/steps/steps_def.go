@@ -240,20 +240,17 @@ func (step *Step) validateReplicationNotInstalled(res Resource) error {
 	// deployment does not have replication stuff
 
 	// check all cluster and be sure replication isn't there\
-	// check that driver is not installed in target clusters
+	// check that driver is not installed in target clustersce
 
-	cr := res.CustomResource
-
+	// check that replicatinf sidecar is not in source cluster
 	dp, err := getDriverDeployment(cr, step.ctrlClient)
 	if err != nil {
 		return fmt.Errorf("failed to get deployment: %v", err)
 	}
-
 	for _, cnt := range dp.Spec.Template.Spec.Containers {
 		if cnt.Name == utils.ReplicationSideCarName {
 			return fmt.Errorf("found %s: %v", utils.ReplicationSideCarName, err)
 		}
-
 	}
 
 	return nil

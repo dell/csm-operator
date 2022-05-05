@@ -84,7 +84,6 @@
     - "Validate [powerscale] driver is installed"
     - "Validate [replication] module is not installed"
     - "Enable [replication] module"
-    - "Set Driver secret to [test-isilon-creds-auth]"
     - "Validate [powerscale] driver is installed"
     - "Validate [replication] module is installed"
     - "Run custom test"
@@ -94,8 +93,6 @@
   customTest:
     name: HelloWorld 
     run: "echo Hello && echo World"
-
-
 
 
 - scenario: "Uninstall PowerScale Driver"
