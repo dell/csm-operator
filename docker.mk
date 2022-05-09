@@ -15,10 +15,10 @@ BUNDLE_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-bundle
 CATALOG_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-catalog
 
 # Operator version tagged with build number. For e.g. - v1.2.0.001
-VERSION ?= v0.1.0
+VERSION ?= v0.2.0
 
 # Bundle Version is the semantic version(required by operator-sdk)
-BUNDLE_VERSION ?= 0.1.0
+BUNDLE_VERSION ?= 0.2.0
 
 # Timestamp local builds
 TIMESTAMP := $(shell  date +%Y%m%d%H%M%S)

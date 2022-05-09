@@ -57,7 +57,7 @@ For any CSM Operator and driver issues, questions or feedback, join the [Dell Te
 Dell CSM Operator has been tested and qualified with 
 
     * Upstream Kubernetes cluster v1.21, v1.22, v1.23
-    * OpenShift Clusters 4.8, 4.9 with RHEL 7.x & RHCOS worker nodes
+    * OpenShift Clusters 4.9, 4.10 with RHEL 7.x & RHCOS worker nodes
 
 ## Installation
 To install Dell CSM Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
