@@ -13,7 +13,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	metacv1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -114,6 +116,31 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	}
 
+	crUID := cr.GetUID()
+	bController := true
+	bOwnerDeletion := !cr.Spec.Driver.ForceRemoveDriver
+	kind := cr.Kind
+	v1 := "apps/v1"
+	controllerYAML.Deployment.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
+		{
+			APIVersion:         &v1,
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               &kind,
+			Name:               &cr.Name,
+			UID:                &crUID,
+		},
+	}
+	controllerYAML.Rbac.ServiceAccount.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         "apps/v1",
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               kind,
+			Name:               cr.Name,
+			UID:                crUID,
+		},
+	}
 	return &controllerYAML, nil
 
 }
