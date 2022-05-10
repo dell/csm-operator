@@ -50,8 +50,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
 )
 
@@ -157,10 +157,35 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		return reconcile.Result{}, nil
 	}
 
+	// if the csidriver exist and check the label
+	// 1) if label exist - continueafter getting the label -
+	// 2) driver already installed with no operator and no label - log(delete and install operator to update or ugrade or delete)
+	// 3) if csidriver doesn't exist continue
+
+	//alternate approcah
+	// get deployment for a driver
+	/*deployments := r.K8sClient.AppsV1().Deployments(csm.Namespace)
+
+	driver, err := deployments.Get(ctx, csm.Name+"-controller", metav1.GetOptions{})
+	if err != nil {
+		log.Errorw("get SyncDeployment error", "Error", err.Error())
+	}*/
+	//if driver.OwnerReferences.name = csm.name -- continue
+	//if no owner reference - fail
+	//if no driver -- continue
+
 	operatorConfig := &utils.OperatorConfig{
 		IsOpenShift:     r.Config.IsOpenShift,
 		K8sVersion:      r.Config.K8sVersion,
 		ConfigDirectory: r.Config.ConfigDirectory,
+	}
+
+	// perform prechecks
+	err = r.PreChecks(ctx, csm, *operatorConfig)
+	if err != nil {
+		csm.GetCSMStatus().State = constants.InvalidConfig
+		r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
+		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 
 	if csm.IsBeingDeleted() {
@@ -198,14 +223,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	oldStatus := csm.GetCSMStatus()
-
-	// perform prechecks
-	err = r.PreChecks(ctx, csm, *operatorConfig)
-	if err != nil {
-		csm.GetCSMStatus().State = constants.InvalidConfig
-		r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
-		return utils.HandleValidationError(ctx, csm, r, err)
-	}
 
 	// Set the driver annotation
 	isUpdated := applyConfigVersionAnnotations(ctx, csm)
@@ -716,7 +733,51 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+
+	log := logger.GetLogger(ctx)
 	// Check drivers
+	// 1) check if no other driver is installed(same driver but different namespace) - log error
+	// 2) check for drivertype
+	// 3) check for ownerref
+	// 4) check for supported version
+
+	//alternate approcah
+	// get deployment for a driver
+	/*deployments := r.K8sClient.AppsV1().Deployments(csm.Namespace)
+
+	driver, err := deployments.Get(ctx, csm.Name+"-controller", metav1.GetOptions{})
+	if err != nil {
+		log.Errorw("get SyncDeployment error", "Error", err.Error())
+	}*/
+	//if driver.OwnerReferences.name = csm.name -- continue
+	//if no owner reference - fail
+	//if no driver -- continue
+
+	// check for owner reference
+	deployments := r.K8sClient.AppsV1().Deployments(cr.Namespace)
+	driver, err := deployments.Get(ctx, cr.Name+"-controller", metav1.GetOptions{})
+	if err != nil {
+		fmt.Printf("***driver not installed so not checking owner ref")
+		log.Infow("Driver not installed yet")
+	} else {
+		if driver.GetOwnerReferences() != nil {
+			cred := driver.GetOwnerReferences()
+			for _, m := range cred {
+				if m.Name == cr.Name {
+					fmt.Printf("*** after finding driver***8")
+					log.Infow("Owner reference is found and matches")
+					break
+				} else {
+					return fmt.Errorf("Required Owner reference not found. Please install driver again")
+				}
+			}
+
+		} else {
+			return fmt.Errorf("Owner reference not found and need to install fresh driver")
+		}
+
+	}
+
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
 		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
