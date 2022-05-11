@@ -37,6 +37,10 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, c
 		config = cr.Spec.Driver.AuthSecret
 	}
 
+	// Get upgrade info for particular driver version
+	//upgradePath := GetUpgradeInfo
+	// Check to make sure upgrade path is satisfied
+
 	if cr.Spec.Driver.ConfigVersion != "" {
 		goodVersion, err := utils.MinVersionCheck(PowerScaleMinVersion, cr.Spec.Driver.ConfigVersion)
 		if err != nil {
