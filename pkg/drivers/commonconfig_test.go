@@ -163,6 +163,20 @@ func TestGetConfigMap(t *testing.T) {
 	}
 }
 
+func TestGetUpgradeInfo(t *testing.T) {
+	ctx := context.Background()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := GetUpgradeInfo(ctx, tt.csm, config, tt.driverName)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
+	}
+}
+
 func TestGetController(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
