@@ -157,23 +157,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		return reconcile.Result{}, nil
 	}
 
-	// if the csidriver exist and check the label
-	// 1) if label exist - continueafter getting the label -
-	// 2) driver already installed with no operator and no label - log(delete and install operator to update or ugrade or delete)
-	// 3) if csidriver doesn't exist continue
-
-	//alternate approcah
-	// get deployment for a driver
-	/*deployments := r.K8sClient.AppsV1().Deployments(csm.Namespace)
-
-	driver, err := deployments.Get(ctx, csm.Name+"-controller", metav1.GetOptions{})
-	if err != nil {
-		log.Errorw("get SyncDeployment error", "Error", err.Error())
-	}*/
-	//if driver.OwnerReferences.name = csm.name -- continue
-	//if no owner reference - fail
-	//if no driver -- continue
-
 	operatorConfig := &utils.OperatorConfig{
 		IsOpenShift:     r.Config.IsOpenShift,
 		K8sVersion:      r.Config.K8sVersion,
