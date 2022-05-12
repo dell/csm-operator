@@ -10,7 +10,6 @@ package modules
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
@@ -124,8 +123,8 @@ func TestReplicationInjectClusterRole(t *testing.T) {
 func TestReplicationPreCheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
-		"success": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
+		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -146,10 +145,10 @@ func TestReplicationPreCheck(t *testing.T) {
 				return clusterClient, nil
 			}
 
-			return true, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
-		"success - version provided": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"success - version provided": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -170,10 +169,10 @@ func TestReplicationPreCheck(t *testing.T) {
 				return clusterClient, nil
 			}
 
-			return true, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
-		"fail - replica driver pre-check": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"fail - replica driver pre-check": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -194,10 +193,10 @@ func TestReplicationPreCheck(t *testing.T) {
 				return clusterClient, nil
 			}
 
-			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return false, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
-		"fail - less than one cluster set": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"fail - less than one cluster set": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -223,10 +222,10 @@ func TestReplicationPreCheck(t *testing.T) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
-			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return false, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
-		"fail - no cluster config secret found": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"fail - no cluster config secret found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -242,29 +241,10 @@ func TestReplicationPreCheck(t *testing.T) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
-			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return false, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
-		/*TODO(Michael): figure better way to test repctl not installed case
-		"fail - repctl not installed": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-			replica := tmpCR.Spec.Modules[0]
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
-			}
-
-			return true, false, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
-		},*/
-
-		"fail - unsupported replication version": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"fail - unsupported replication version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -280,10 +260,10 @@ func TestReplicationPreCheck(t *testing.T) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
-			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return false, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
-		"fail - unsupported driver replication": func(*testing.T) (bool, bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"fail - unsupported driver replication": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -299,7 +279,7 @@ func TestReplicationPreCheck(t *testing.T) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
-			return false, true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return false, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 	}
 
@@ -312,16 +292,12 @@ func TestReplicationPreCheck(t *testing.T) {
 				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 
-			success, setREPCTL, replica, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
+			success, replica, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
 			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
 			utils.NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 
-			if setREPCTL {
-				os.Setenv("REPCTL_BINARY", "echo")
-				defer os.Unsetenv("REPCTL_BINARY")
-			}
 			fakeReconcile := utils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
@@ -338,80 +314,6 @@ func TestReplicationPreCheck(t *testing.T) {
 		})
 	}
 }
-
-/*func TestReplicationInstallManagerController(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule){
-		"success": func(*testing.T) (bool, csmv1.ContainerStorageModule) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			return true, customResource
-		},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-
-			success, tmpCR := tc(t)
-
-			os.Setenv("REPCTL_BINARY", "echo")
-			defer os.Unsetenv("REPCTL_BINARY")
-
-			err := ReplicationInstallManagerController(context.TODO(), operatorConfig, tmpCR)
-			if success {
-				assert.NoError(t, err)
-
-			} else {
-				assert.Error(t, err)
-			}
-
-		})
-	}
-}
-
-func TestReplicationUninstallManagerController(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			cr := &rbacv1.ClusterRole{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "ClusterRole",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "dell-replication-manager-role",
-				},
-			}
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
-
-			return true, tmpCR, sourceClient, operatorConfig
-		},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-
-			success, cr, sourceClient, op := tc(t)
-
-			err := ReplicationUninstallManagerController(context.TODO(), op, cr, sourceClient)
-			if success {
-				assert.NoError(t, err)
-
-			} else {
-				assert.Error(t, err)
-			}
-
-		})
-	}
-}*/
 
 func TestReplicationManagerController(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
