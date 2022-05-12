@@ -339,7 +339,7 @@ func TestReplicationPreCheck(t *testing.T) {
 	}
 }
 
-func TestReplicationInstallManagerController(t *testing.T) {
+/*func TestReplicationInstallManagerController(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule){
 		"success": func(*testing.T) (bool, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
@@ -402,6 +402,61 @@ func TestReplicationUninstallManagerController(t *testing.T) {
 			success, cr, sourceClient, op := tc(t)
 
 			err := ReplicationUninstallManagerController(context.TODO(), op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}*/
+
+func TestReplicationManagerController(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &rbacv1.ClusterRole{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "dell-replication-manager-role",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := ReplicationManagerController(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
 

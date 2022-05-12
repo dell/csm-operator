@@ -71,7 +71,23 @@ func checkAllRunningPods(namespace string, k8sClient kubernetes.Interface) error
 		return fmt.Errorf(notReadyMessage)
 	}
 	return nil
+}
 
+func checkNoRunningPods(namespace string, k8sClient kubernetes.Interface) error {
+	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+	if err != nil {
+		return err
+	}
+
+	podsFound := ""
+	for _, pod := range pods {
+		podsFound += (pod.Name + ",")
+	}
+	if len(pods) != 0 {
+		return fmt.Errorf("found the following pods: %s", podsFound)
+	}
+
+	return nil
 }
 
 func getApplyDeploymentDaemonSet(cr csmv1.ContainerStorageModule, ctrlClient client.Client) (confv1.DeploymentApplyConfiguration, confv1.DaemonSetApplyConfiguration, error) {

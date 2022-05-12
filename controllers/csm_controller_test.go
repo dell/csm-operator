@@ -589,7 +589,7 @@ func getReplicaModule() []csmv1.Module {
 			ConfigVersion: "v1.2.0",
 			Components: []csmv1.ContainerTemplate{
 				{
-					Name: "dell-csi-replicator",
+					Name: utils.ReplicationSideCarName,
 				},
 				{
 					Name: "dell-replication-controller-manager",

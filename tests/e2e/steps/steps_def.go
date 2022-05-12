@@ -12,7 +12,6 @@ import (
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -116,21 +115,7 @@ func (step *Step) validateDriverInstalled(res Resource, driverType string) error
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverType string) error {
-	cr := res.CustomResource
-	pods, err := fpod.GetPodsInNamespace(step.clientSet, cr.Namespace, map[string]string{})
-	if err != nil {
-		return err
-	}
-
-	podsFound := ""
-	for _, pod := range pods {
-		podsFound += (pod.Name + ",")
-	}
-	if len(pods) != 0 {
-		return fmt.Errorf("found the following pods: %s", podsFound)
-	}
-
-	return nil
+	return checkNoRunningPods(res.CustomResource.Namespace, step.clientSet)
 }
 
 func (step *Step) validateModuleInstalled(res Resource, module string) error {
@@ -237,12 +222,35 @@ func (step *Step) validateReplicationInstalled(res Resource) error {
 
 func (step *Step) validateReplicationNotInstalled(res Resource) error {
 	cr := res.CustomResource
-	// deployment does not have replication stuff
 
-	// check all cluster and be sure replication isn't there\
-	// check that driver is not installed in target clustersce
+	/* TODO(Michael): explore better way to handle this instead of using hacks*/
+	// check installation for all replicas
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
 
-	// check that replicatinf sidecar is not in source cluster
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check replication  controller is not installed
+		if err := checkNoRunningPods(utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
+		}
+
+		// check no driver is not installed in target clusters
+		if cluster.ClusterID != utils.DefaultSourceClusterID {
+
+			if err := checkNoRunningPods(cr.Namespace, cluster.ClusterK8sClient); err != nil {
+				return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
+			}
+		}
+
+	}
+
+	// check that replication sidecar is not in source cluster
 	dp, err := getDriverDeployment(cr, step.ctrlClient)
 	if err != nil {
 		return fmt.Errorf("failed to get deployment: %v", err)
@@ -288,33 +296,21 @@ func (step *Step) validateAuthorizationInstalled(res Resource) error {
 }
 
 func (step *Step) validateAuthorizationNotInstalled(res Resource) error {
-	cr := res.CustomResource
-	dp := &appsv1.Deployment{}
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      fmt.Sprintf("%s-controller", cr.Name)}, dp)
+	dpApply, dsApply, err := getApplyDeploymentDaemonSet(res.CustomResource, step.ctrlClient)
 	if err != nil {
-		return fmt.Errorf("failed to get deployment: %v", err)
+		return err
 	}
 
-	for _, cnt := range dp.Spec.Template.Spec.Containers {
-		if cnt.Name == authString {
+	for _, cnt := range dpApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == authString {
 			return fmt.Errorf("found authorization in deployment: %v", err)
 		}
 
 	}
 
-	ds := &appsv1.DaemonSet{}
-	err = step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      fmt.Sprintf("%s-node", cr.Name)}, ds)
-	if err != nil {
-		return fmt.Errorf("failed to get daemonset: %v", err)
-	}
-
-	for _, cnt := range ds.Spec.Template.Spec.Containers {
-		if cnt.Name == authString {
-			return fmt.Errorf("found authorization in deployment: %v", err)
+	for _, cnt := range dsApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == authString {
+			return fmt.Errorf("found authorization in daemonset: %v", err)
 		}
 
 	}

@@ -102,9 +102,12 @@ var (
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules/finalizers,verbs=update
+// +kubebuilder:rbac:groups="replication.storage.dell.com",resources=dellcsireplicationgroups,verbs=get;list;watch;update;create;delete;patch
+// +kubebuilder:rbac:groups="replication.storage.dell.com",resources=dellcsireplicationgroups/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=pods;services;services/finalizers;endpoints;persistentvolumeclaims;events;configmaps;secrets;serviceaccounts,verbs=*
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch;create;patch;update
-// +kubebuilder:rbac:groups="",resources=persistentvolumeclaims/status,verbs=update;patch
+// +kubebuilder:rbac:groups="",resources=persistentvolumeclaims/status,verbs=update;patch;get
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;list;watch;create;delete;patch;update
 // +kubebuilder:rbac:groups="apps",resources=deployments;daemonsets;replicasets;statefulsets,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles;clusterrolebindings;replicasets;rolebindings,verbs=get;list;watch;update;create;delete;patch
@@ -120,10 +123,13 @@ var (
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotclasses;volumesnapshotcontents,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotcontents/status,verbs=update
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots;volumesnapshots/status,verbs=get;list;watch;update
-// +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=create;list;watch;delete
+// +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=create;list;watch;delete;get
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments/status,verbs=patch
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="security.openshift.io",resources=securitycontextconstraints,resourceNames=privileged,verbs=use
+// +kubebuilder:rbac:urls="/metrics",verbs=get
+// +kubebuilder:rbac:groups="authentication.k8s.io",resources=tokenreviews,verbs=create
+// +kubebuilder:rbac:groups="authorization.k8s.io",resources=subjectaccessreviews,verbs=create
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -463,7 +469,6 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 	var err error
 
 	if oldCrJSON, ok := newCR.Annotations[previouslyAppliedCustomResource]; ok {
-		fmt.Println(oldCrJSON)
 		oldCR := new(csmv1.ContainerStorageModule)
 
 		err = json.Unmarshal([]byte(oldCrJSON), &oldCR)
@@ -480,7 +485,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 				return err
 			}
 			for _, cluster := range clusterClients {
-				if err = modules.ReplicationUninstallManagerController(ctx, operatorConfig, *oldCR, cluster.ClusterCTRLClient); err != nil {
+				if err = modules.ReplicationManagerController(ctx, true, operatorConfig, *oldCR, cluster.ClusterCTRLClient); err != nil {
 					log.Errorw("error deleting replication controller in cluster", err.Error())
 					return err
 				}
@@ -568,11 +573,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 				controller.Rbac.ClusterRole = *clusterRole
 
-				err = modules.ReplicationInstallManagerController(ctx, operatorConfig, cr)
-				if err != nil {
-					return fmt.Errorf("failed top deploy replication controller: %v", err)
-				}
-
 			default:
 				return fmt.Errorf("unsupported module type %s", m.Name)
 			}
@@ -627,6 +627,12 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		// Create/Update DeamonSet
 		if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
 			return err
+		}
+
+		if replicationEnabled {
+			if err = modules.ReplicationManagerController(ctx, false, operatorConfig, cr, cluster.ClusterCTRLClient); err != nil {
+				return fmt.Errorf("failed to deploy replication controller: %v", err)
+			}
 		}
 
 	}
@@ -784,7 +790,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		}
 		if replicationEnabled {
 			log.Infow("Deleting Replication controller")
-			if err = modules.ReplicationUninstallManagerController(ctx, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
+			if err = modules.ReplicationManagerController(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
 				log.Errorw("error deleting replication controller", err.Error())
 				return err
 			}
