@@ -743,12 +743,12 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 					log.Infow("Owner reference is found and matches")
 					break
 				} else {
-					return fmt.Errorf("Required Owner reference not found. Please install driver again")
+					return fmt.Errorf("Required Owner reference not found. Please re-install driver ")
 				}
 			}
 
 		} else {
-			return fmt.Errorf("Owner reference not found and need to install fresh driver")
+			return fmt.Errorf("Owner reference not found. Please re-install driver")
 		}
 
 	}
