@@ -95,7 +95,7 @@ const (
 	ReplicationControllerNameSpace = "dell-replication-controller"
 	// ReplicationControllerManager -
 	ReplicationControllerManager = "dell-replication-controller-manager"
-	// ReplicationSideCarName
+	// ReplicationSideCarName -
 	ReplicationSideCarName = "dell-csi-replicator"
 	// DefaultSourceClusterID -
 	DefaultSourceClusterID = "default-source-cluster"
@@ -541,7 +541,7 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	return false, nil
 }
 
-func ClusterIDs(replica csmv1.Module) ([]string, error) {
+func getClusterIDs(replica csmv1.Module) ([]string, error) {
 	var clusterIDs []string
 	for _, comp := range replica.Components {
 		if comp.Name == ReplicationControllerManager {
@@ -621,7 +621,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Replication && m.Enabled {
 			replicaEnabled = true
-			clusterIDs, err := ClusterIDs(m)
+			clusterIDs, err := getClusterIDs(m)
 			if err != nil {
 				return replicaEnabled, clusterClients, err
 			}

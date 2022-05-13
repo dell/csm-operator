@@ -468,12 +468,11 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 
 	var err error
 
-	if oldCrJSON, ok := newCR.Annotations[previouslyAppliedCustomResource]; ok {
+	if oldCrJSON, ok := newCR.Annotations[previouslyAppliedCustomResource]; ok && oldCrJSON != "" {
 		oldCR := new(csmv1.ContainerStorageModule)
-
 		err = json.Unmarshal([]byte(oldCrJSON), &oldCR)
 		if err != nil {
-			return err
+			return fmt.Errorf("error unmarshalling old annotation: %v", err)
 		}
 
 		// Check if replica needs to be uninstalled
@@ -495,11 +494,8 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 					if err = removeDriverReplicaCluster(ctx, cluster, driverConfig); err != nil {
 						return err
 					}
-
 				}
-
 			}
-
 		}
 	}
 

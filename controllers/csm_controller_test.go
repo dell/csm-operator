@@ -591,8 +591,8 @@ func getReplicaModule() []csmv1.Module {
 					Name: "dell-replication-controller-manager",
 					Envs: []corev1.EnvVar{
 						{
-							Name:  "CLUSTERS_IDS",
-							Value: "skip-replication-cluster-check,skip-replication-cluster-check",
+							Name:  "TARGET_CLUSTERS_IDS",
+							Value: "skip-replication-cluster-check",
 						},
 					},
 				},
@@ -771,17 +771,17 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 	case *appsv1.DaemonSet:
 		ds := obj.(*appsv1.DaemonSet)
 		if method == "Delete" && deleteDSError {
-			fmt.Printf("[ShouldFail] force delete ServiceAccount error for ServiceAccount named %+v\n", ds.Name)
+			fmt.Printf("[ShouldFail] force delete DaemonSet error for DaemonSet named %+v\n", ds.Name)
 			return errors.New(deleteDSErrorStr)
 		} else if method == "Update" && updateDSError {
-			fmt.Printf("[ShouldFail] force update ServiceAccount error for ServiceAccount named %+v\n", ds.Name)
+			fmt.Printf("[ShouldFail] force update DaemonSet error for DaemonSet named %+v\n", ds.Name)
 			return errors.New(updateDSErrorStr)
 		}
 
 	case *appsv1.Deployment:
 		deployment := obj.(*appsv1.Deployment)
 		if method == "Delete" && deleteDeploymentError {
-			fmt.Printf("[ShouldFail] force ServiceAccount error for ServiceAccount named %+v\n", deployment.Name)
+			fmt.Printf("[ShouldFail] force Deployment error for Deployment named %+v\n", deployment.Name)
 			return errors.New(deleteDeploymentErrorStr)
 		}
 
