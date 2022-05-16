@@ -531,9 +531,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		if m.Enabled {
 			switch m.Name {
 			case csmv1.Authorization:
-				if replicationEnabled { /* TODO(Michael): for now, Replication deployment is mutually exclusive with other module */
-					return fmt.Errorf("cannot deploy replication with %s", m.Name)
-				}
 				log.Info("Injecting CSM Authorization")
 				dp, err := modules.AuthInjectDeployment(controller.Deployment, cr, operatorConfig)
 				if err != nil {
