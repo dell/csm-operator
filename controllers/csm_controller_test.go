@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -195,7 +196,7 @@ func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
 	updateCSMError = false
 }
 
-// Test all edge cases in RevoveDriver
+// Test all edge cases in RemoveDriver
 func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	r := suite.createReconciler()
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -298,6 +299,45 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckTypeError() {
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Nil(suite.T(), err)
 	configVersion = shared.ConfigVersion
+}
+
+func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Annotations[configVersionKey] = configVersion
+
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	suite.fakeClient.Create(ctx, &csm)
+	reconciler := suite.createReconciler()
+
+	badOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
+
+	// error in Authorization
+	csm.Spec.Modules = getAuthModule()
+	err := reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Replication
+	csm.Spec.Modules = getReplicaModule()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error unsupported module
+	csm.Spec.Modules = []csmv1.Module{
+		{
+			Name:    "Unsupported module",
+			Enabled: true,
+		},
+	}
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
 }
 
 func (suite *CSMControllerTestSuite) TestIgnoreUpdatePredicate() {
@@ -677,7 +717,13 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm.Spec.Driver.ForceRemoveDriver = true
 	csm.Annotations[configVersionKey] = configVersion
 
+	csm.Spec.Modules = getReplicaModule()
+	out, _ := json.Marshal(csm)
+	csm.Annotations[previouslyAppliedCustomResource] = string(out)
+
 	csm.Spec.Modules = modules
+	out, _ = json.Marshal(csm)
+	csm.Annotations["kubectl.kubernetes.io/last-applied-configuration"] = string(out)
 
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)

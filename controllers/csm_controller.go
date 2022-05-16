@@ -477,15 +477,13 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 
 		// Check if replica needs to be uninstalled
 		if replicaEnabled(oldCR) && !replicaEnabled(newCR) {
-			log.Infow("Deleting Replication controller")
-
 			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
 			if err != nil {
 				return err
 			}
 			for _, cluster := range clusterClients {
+				log.Infow("Deleting Replication controller", "clusterID:", cluster.ClusterID)
 				if err = modules.ReplicationManagerController(ctx, true, operatorConfig, *oldCR, cluster.ClusterCTRLClient); err != nil {
-					log.Errorw("error deleting replication controller in cluster", err.Error())
 					return err
 				}
 
@@ -502,12 +500,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 	annotations := newCR.GetAnnotations()
 	newCR.Annotations[previouslyAppliedCustomResource] = newCR.Annotations["kubectl.kubernetes.io/last-applied-configuration"]
 	newCR.SetAnnotations(annotations)
-	err = r.GetClient().Update(ctx, newCR)
-	if err != nil {
-		err = fmt.Errorf("failed to update CR with new annotation: %+v", err)
-	}
-
-	return err
+	return r.GetClient().Update(ctx, newCR)
 }
 
 // SyncCSM - Sync the current installation - this can lead to a create or update
@@ -568,9 +561,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
-
-			default:
-				return fmt.Errorf("unsupported module type %s", m.Name)
 			}
 
 		}
@@ -787,7 +777,6 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		if replicationEnabled {
 			log.Infow("Deleting Replication controller")
 			if err = modules.ReplicationManagerController(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
-				log.Errorw("error deleting replication controller", err.Error())
 				return err
 			}
 		}
@@ -800,6 +789,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	// Check drivers
+	fmt.Println(cr.Spec.Driver.CSIDriverType)
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
 		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
@@ -816,20 +806,17 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if m.Enabled {
 			switch m.Name {
 			case csmv1.Authorization:
-				err := modules.AuthorizationPrecheck(ctx, operatorConfig, m, *cr, r.GetClient())
-				if err != nil {
+				if err := modules.AuthorizationPrecheck(ctx, operatorConfig, m, *cr, r.GetClient()); err != nil {
 					return fmt.Errorf("failed authorization validation: %v", err)
 				}
 
 			case csmv1.Replication:
-				err := modules.ReplicationPrecheck(ctx, operatorConfig, m, *cr, r)
-				if err != nil {
+				if err := modules.ReplicationPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed replication validation: %v", err)
 				}
 
 			default:
 				return fmt.Errorf("unsupported module type %s", m.Name)
-
 			}
 
 		}
