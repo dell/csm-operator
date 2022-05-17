@@ -28,7 +28,6 @@ func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.
 	} else {
 		log.Infow("CSIDriver Object exist", "Name:", csi.Name)
 	}
-	csi.Labels["driverVersion"] = "v2.2.0"
 	return nil
 }
 
