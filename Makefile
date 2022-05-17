@@ -64,13 +64,18 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+#Generate semver.mk
+gen-semver: generate
+	(cd core; rm -f core_generated.go; go generate)
+	go run core/semver/semver.go -f mk > semver.mk
+
 fmt: ## Run go fmt against code.
 	go fmt ./...
 
 vet: ## Run go vet against code.
 	go vet ./...
 
-test: manifests generate fmt vet envtest ## Run tests.
+test: manifests gen-semver fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
 unit-test:
@@ -88,13 +93,13 @@ driver-unit-test:
 
 ##@ Build
 
-build: generate fmt vet ## Build manager binary.
+build: gen-semver fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
-run: manifests generate fmt vet ## Run a controller from your host.
+run: generate gen-semver fmt vet static-manifests ## Run a controller from your host.
 	go run ./main.go
 
-docker-build: ## Build docker image with the manager.
+docker-build: gen-semver ## Build docker image with the manager.
 	docker build . -t ${DEFAULT_IMG}
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
@@ -153,18 +158,18 @@ rm -rf $$TMP_DIR ;\
 endef
 
 .PHONY: bundle
-bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build
-bundle-build: ## Build the bundle image.
+bundle-build: gen-semver ## Build the bundle image.
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
 .PHONY: bundle-push
-bundle-push: ## Push the bundle image.
+bundle-push: gen-semver ## Push the bundle image.
 	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
 
 .PHONY: opm
@@ -197,10 +202,10 @@ endif
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
-catalog-build: opm ## Build a catalog image.
+catalog-build: gen-semver opm ## Build a catalog image.
 	$(OPM) index add --container-tool docker --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
 
 # Push the catalog image.
 .PHONY: catalog-push
-catalog-push: ## Push a catalog image.
+catalog-push: gen-semver ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
