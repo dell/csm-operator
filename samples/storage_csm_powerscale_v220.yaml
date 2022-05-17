@@ -200,7 +200,7 @@ spec:
       #   true: enable replication feature(install dell-csi-replicator sidecar)
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
-      enabled: true
+      enabled: false
       configVersion: v1.2.0
       components:
       - name: dell-csi-replicator

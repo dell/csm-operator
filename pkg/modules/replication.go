@@ -257,23 +257,9 @@ func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Conta
 func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
-	//var repctlBinary string
 	if _, ok := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
 		return fmt.Errorf("CSM Operator does not suport Replication deployment for %s driver", cr.Spec.Driver.CSIDriverType)
 	}
-
-	// Check repctl binary runs fine
-	/*repctlBinary, ok := os.LookupEnv("REPCTL_BINARY")
-	if !ok {
-		repctlBinary = RepctlBinary
-		log.Warnf("REPCTL_BINARY environment variable not defined. Using default %s", repctlBinary)
-	}
-
-	cmd := exec.CommandContext(ctx, repctlBinary, "--help")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		log.Errorf("%s", out)
-		return fmt.Errorf("repctl not installed: %v", err)
-	}*/
 
 	// check if provided version is supported
 	if replica.ConfigVersion != "" {

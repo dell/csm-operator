@@ -786,7 +786,6 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	// Check drivers
-	fmt.Println(cr.Spec.Driver.CSIDriverType)
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
 		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
