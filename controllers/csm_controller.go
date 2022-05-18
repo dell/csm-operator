@@ -51,6 +51,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
@@ -171,6 +172,14 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		ConfigDirectory: r.Config.ConfigDirectory,
 	}
 
+	// perform prechecks
+	err = r.PreChecks(ctx, csm, *operatorConfig)
+	if err != nil {
+		csm.GetCSMStatus().State = constants.InvalidConfig
+		r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
+		return utils.HandleValidationError(ctx, csm, r, err)
+	}
+
 	if csm.IsBeingDeleted() {
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
 
@@ -206,14 +215,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	oldStatus := csm.GetCSMStatus()
-
-	// perform prechecks
-	err = r.PreChecks(ctx, csm, *operatorConfig)
-	if err != nil {
-		csm.GetCSMStatus().State = constants.InvalidConfig
-		r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
-		return utils.HandleValidationError(ctx, csm, r, err)
-	}
 
 	// Set the driver annotation
 	isUpdated := applyConfigVersionAnnotations(ctx, csm)
@@ -785,6 +786,9 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+
+	log := logger.GetLogger(ctx)
+
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
@@ -795,6 +799,29 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
+	}
+
+	// check for owner reference
+	deployments := r.K8sClient.AppsV1().Deployments(cr.Namespace)
+	driver, err := deployments.Get(ctx, cr.Name+"-controller", metav1.GetOptions{})
+	if err != nil {
+		log.Infow("Driver not installed yet")
+	} else {
+		if driver.GetOwnerReferences() != nil {
+			cred := driver.GetOwnerReferences()
+			for _, m := range cred {
+				if m.Name == cr.Name {
+					log.Infow("Owner reference is found and matches")
+					break
+				} else {
+					return fmt.Errorf("Required Owner reference not found. Please re-install driver ")
+				}
+			}
+
+		} else {
+			return fmt.Errorf("Owner reference not found. Please re-install driver")
+		}
+
 	}
 
 	// check modules
