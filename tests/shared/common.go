@@ -63,7 +63,6 @@ func MakeCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
 		},
 		Status: csmv1.ContainerStorageModuleStatus{},
 	}
-
 	return csmObj
 }
 

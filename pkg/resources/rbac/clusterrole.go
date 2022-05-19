@@ -11,13 +11,13 @@ import (
 )
 
 // SyncClusterRole - Syncs a ClusterRole
-func SyncClusterRole(ctx context.Context, clusterRole *rbacv1.ClusterRole, client client.Client) error {
+func SyncClusterRole(ctx context.Context, clusterRole rbacv1.ClusterRole, client client.Client) error {
 	log := logger.GetLogger(ctx)
 	found := &rbacv1.ClusterRole{}
 	err := client.Get(ctx, types.NamespacedName{Name: clusterRole.Name, Namespace: clusterRole.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new ClusterRole", "Name", clusterRole.Name)
-		err = client.Create(ctx, clusterRole)
+		err = client.Create(ctx, &clusterRole)
 		if err != nil {
 			return err
 		}
@@ -31,7 +31,7 @@ func SyncClusterRole(ctx context.Context, clusterRole *rbacv1.ClusterRole, clien
 		return err
 	} else {
 		log.Info("Updating ClusterRole", "Name:", clusterRole.Name)
-		err = client.Update(ctx, clusterRole)
+		err = client.Update(ctx, &clusterRole)
 		if err != nil {
 			return err
 		}
