@@ -17,7 +17,7 @@ import (
 var SleepTime = 10 * time.Second
 
 // SyncDeployment - Syncs a Deployment for controller
-func SyncDeployment(ctx context.Context, deployment *appsv1.DeploymentApplyConfiguration, k8sClient kubernetes.Interface, csmName string) error {
+func SyncDeployment(ctx context.Context, deployment appsv1.DeploymentApplyConfiguration, k8sClient kubernetes.Interface, csmName string) error {
 	log := logger.GetLogger(ctx)
 
 	log.Infow("Sync Deployment:", "name", *deployment.ObjectMetaApplyConfiguration.Name)
@@ -37,7 +37,7 @@ func SyncDeployment(ctx context.Context, deployment *appsv1.DeploymentApplyConfi
 	}
 
 	deployment.Spec.Template.Labels["csm"] = csmName
-	set, err := deployments.Apply(ctx, deployment, opts)
+	set, err := deployments.Apply(ctx, &deployment, opts)
 	if err != nil {
 		log.Errorw("Apply Deployment error", "set", err.Error())
 		return err

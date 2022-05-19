@@ -3,11 +3,6 @@ FROM golang:1.18 as builder
 
 WORKDIR /workspace
 
-# Download repctl
-RUN mkdir /repctl
-RUN wget  https://github.com/dell/csm-replication/releases/download/v1.2.0/repctl-linux-amd64 -O /repctl/repctl
-RUN cd /repctl && chmod +x repctl && mv repctl /usr/local/bin
-
 # Copy the Go Modules manifests
 COPY go.mod go.mod
 COPY go.sum go.sum
@@ -48,6 +43,6 @@ LABEL vendor="Dell Inc." \
     version="0.2.0" \
     license="Dell CSM Operator Apache License"
 
+
 ENTRYPOINT ["/manager"]
 USER ${USER_UID}
-

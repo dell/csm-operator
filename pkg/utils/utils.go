@@ -77,7 +77,7 @@ type NodeYAML struct {
 
 // ReplicaCluster -
 type ReplicaCluster struct {
-	ClutsterID        string
+	ClusterID         string
 	ClusterCTRLClient crclient.Client
 	ClusterK8sClient  kubernetes.Interface
 }
@@ -95,6 +95,10 @@ const (
 	ReplicationControllerNameSpace = "dell-replication-controller"
 	// ReplicationControllerManager -
 	ReplicationControllerManager = "dell-replication-controller-manager"
+	// ReplicationSideCarName -
+	ReplicationSideCarName = "dell-csi-replicator"
+	// DefaultSourceClusterID -
+	DefaultSourceClusterID = "default-source-cluster"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -408,13 +412,13 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 }
 
 // DeleteObject -
-func DeleteObject(ctx context.Context, obj crclient.Object, ctrlCleint crclient.Client) error {
+func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlCleint.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
 	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Object not found to delete", "Name:", name, "Kind:", kind, "Namespace:", obj.GetNamespace())
@@ -424,8 +428,37 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlCleint crclient.
 		return err
 	} else {
 		log.Infow("Deleting object", "Name:", name, "Kind:", kind)
-		err = ctrlCleint.Delete(ctx, obj)
+		err = ctrlClient.Delete(ctx, obj)
 		if err != nil && !k8serror.IsNotFound(err) {
+			return err
+		}
+	}
+	return nil
+}
+
+// ApplyObject -
+func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
+
+	kind := obj.GetObjectKind().GroupVersionKind().Kind
+	name := obj.GetName()
+
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+
+	if err != nil && k8serror.IsNotFound(err) {
+		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
+		err = ctrlClient.Create(ctx, obj)
+		if err != nil {
+			return err
+		}
+
+	} else if err != nil {
+		log.Errorw("Unknown error.", "Error", err.Error())
+		return err
+	} else {
+		log.Infow("Updating a new Object", "Name:", name, "Kind:", kind)
+		err = ctrlClient.Update(ctx, obj)
+		if err != nil {
 			return err
 		}
 	}
@@ -508,20 +541,20 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	return false, nil
 }
 
-func clusterIDs(replica csmv1.Module) ([]string, error) {
+func getClusterIDs(replica csmv1.Module) ([]string, error) {
 	var clusterIDs []string
 	for _, comp := range replica.Components {
 		if comp.Name == ReplicationControllerManager {
 			for _, env := range comp.Envs {
-				if env.Name == "CLUSTERS_IDS" {
+				if env.Name == "TARGET_CLUSTERS_IDS" && env.Value != "" {
 					clusterIDs = strings.Split(env.Value, ",")
 					break
 				}
 			}
 		}
 	}
-	err := fmt.Errorf("CLUSTERS_IDS on CR should have more than 1 commma seperated cluster IDs. Got  %d", len(clusterIDs))
-	if len(clusterIDs) >= 2 {
+	err := fmt.Errorf("TARGET_CLUSTERS_IDS on CR should have more than 0 commma seperated cluster IDs. Got  %d", len(clusterIDs))
+	if len(clusterIDs) >= 1 {
 		err = nil
 	}
 	return clusterIDs, err
@@ -542,7 +575,6 @@ func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Cl
 
 // NewControllerRuntimeClientWrapper -
 var NewControllerRuntimeClientWrapper = func(clusterConfigData []byte) (crclient.Client, error) {
-	fmt.Println("NewControllerRuntimeClientWrapper")
 	return k8sClient.NewControllerRuntimeClient(clusterConfigData)
 }
 
@@ -581,7 +613,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 		{
 			ClusterCTRLClient: r.GetClient(),
 			ClusterK8sClient:  r.GetK8sClient(),
-			ClutsterID:        "default-source-cluster",
+			ClusterID:         DefaultSourceClusterID,
 		},
 	}
 
@@ -589,8 +621,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Replication && m.Enabled {
 			replicaEnabled = true
-			tmp := []ReplicaCluster{} // redeclare
-			clusterIDs, err := clusterIDs(m)
+			clusterIDs, err := getClusterIDs(m)
 			if err != nil {
 				return replicaEnabled, clusterClients, err
 			}
@@ -609,14 +640,12 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 					return replicaEnabled, clusterClients, err
 				}
 
-				tmp = append(tmp, ReplicaCluster{
-					ClutsterID:        clusterID,
+				clusterClients = append(clusterClients, ReplicaCluster{
+					ClusterID:         clusterID,
 					ClusterCTRLClient: targetCtrlClient,
 					ClusterK8sClient:  targetK8sClient,
 				})
 			}
-
-			clusterClients = tmp
 		}
 	}
 	return replicaEnabled, clusterClients, nil

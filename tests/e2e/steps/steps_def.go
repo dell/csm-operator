@@ -8,45 +8,20 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
-	appsv1 "k8s.io/api/apps/v1"
+	"github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	"k8s.io/apimachinery/pkg/types"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
-
-// CustomTest -
-type CustomTest struct {
-	Name string `json:"name" yaml:"name"`
-	Run  string `json:"run" yaml:"run"`
-}
-
-// Scenario -
-type Scenario struct {
-	Scenario   string     `json:"scenario" yaml:"scenario"`
-	Path       string     `json:"path" yaml:"path"`
-	Steps      []string   `json:"steps" yaml:"steps"`
-	CustomTest CustomTest `json:"customTest,omitempty" yaml:"customTest"`
-}
-
-// Resource -
-type Resource struct {
-	Scenario       Scenario
-	CustomResource csmv1.ContainerStorageModule
-}
-
-// Step -
-type Step struct {
-	ctrlClient client.Client
-	clientSet  *kubernetes.Clientset
-}
 
 var (
 	authString        = "karavi-authorization-proxy"
@@ -136,54 +111,11 @@ func (step *Step) validateCustomResourceStatus(res Resource) error {
 }
 
 func (step *Step) validateDriverInstalled(res Resource, driverType string) error {
-	cr := res.CustomResource
-	notReadyMessage := ""
-	allReady := true
-	pods, err := fpod.GetPodsInNamespace(step.clientSet, cr.Namespace, map[string]string{})
-	if err != nil {
-		return err
-	}
-	if len(pods) == 0 {
-		return fmt.Errorf("no driver pod was found")
-	}
-	for _, pod := range pods {
-		if pod.Status.Phase == corev1.PodRunning {
-			for _, cntStat := range pod.Status.ContainerStatuses {
-				if cntStat.State.Running == nil {
-					allReady = false
-					notReadyMessage += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
-					break
-				}
-			}
-		} else {
-			allReady = false
-			notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
-		}
-	}
-
-	if !allReady {
-		return fmt.Errorf(notReadyMessage)
-	}
-	return nil
+	return checkAllRunningPods(res.CustomResource.Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverType string) error {
-	cr := res.CustomResource
-	//ginkgo.By(fmt.Sprintf("validating %s driver is not installed", driverType))
-	pods, err := fpod.GetPodsInNamespace(step.clientSet, cr.Namespace, map[string]string{})
-	if err != nil {
-		return err
-	}
-
-	podsFound := ""
-	for _, pod := range pods {
-		podsFound += (pod.Name + ",")
-	}
-	if len(pods) != 0 {
-		return fmt.Errorf("found the following pods: %s", podsFound)
-	}
-
-	return nil
+	return checkNoRunningPods(res.CustomResource.Namespace, step.clientSet)
 }
 
 func (step *Step) validateModuleInstalled(res Resource, module string) error {
@@ -204,6 +136,9 @@ func (step *Step) validateModuleInstalled(res Resource, module string) error {
 			switch m.Name {
 			case csmv1.Authorization:
 				return step.validateAuthorizationInstalled(res)
+
+			case csmv1.Replication:
+				return step.validateReplicationInstalled(res)
 			}
 		}
 	}
@@ -228,7 +163,101 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string) error 
 			switch m.Name {
 			case csmv1.Authorization:
 				return step.validateAuthorizationNotInstalled(res)
+
+			case csmv1.Replication:
+				return step.validateReplicationNotInstalled(res)
 			}
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateReplicationInstalled(res Resource) error {
+	cr := res.CustomResource
+
+	dpApply, _, err := getApplyDeploymentDaemonSet(cr, step.ctrlClient)
+	if err != nil {
+		return err
+	}
+	if err := modules.CheckApplyContainersReplica(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
+		return err
+	}
+
+	// cluster role
+	clusterRole := &rbacv1.ClusterRole{}
+	err = step.ctrlClient.Get(context.TODO(), types.NamespacedName{
+		Name: fmt.Sprintf("%s-controller", cr.Name)}, clusterRole)
+	if err != nil {
+		return err
+	}
+	if err := modules.CheckClusterRoleReplica(clusterRole.Rules); err != nil {
+		return err
+	}
+
+	// check installation for all replicas
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check replication controllers in all clusters
+		if err := checkAllRunningPods(utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed to check for  replication controllers installation in %s: %v", cluster.ClusterID, err)
+		}
+
+		// check driver deployment in all clusters
+		if err := checkAllRunningPods(res.CustomResource.Namespace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed while check for driver installation in %s: %v", cluster.ClusterID, err)
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateReplicationNotInstalled(res Resource) error {
+	cr := res.CustomResource
+
+	/* TODO(Michael): explore better way to handle this instead of using hacks*/
+	// check installation for all replicas
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check replication  controller is not installed
+		if err := checkNoRunningPods(utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
+		}
+
+		// check no driver is not installed in target clusters
+		if cluster.ClusterID != utils.DefaultSourceClusterID {
+
+			if err := checkNoRunningPods(cr.Namespace, cluster.ClusterK8sClient); err != nil {
+				return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
+			}
+		}
+
+	}
+
+	// check that replication sidecar is not in source cluster
+	dp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name == utils.ReplicationSideCarName {
+			return fmt.Errorf("found %s: %v", utils.ReplicationSideCarName, err)
 		}
 	}
 
@@ -254,79 +283,34 @@ func (step *Step) validateAuthorizationInstalled(res Resource) error {
 		return nil
 	}
 
-	dp := &appsv1.Deployment{}
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      fmt.Sprintf("%s-controller", cr.Name)}, dp)
-	if err != nil {
-		return fmt.Errorf("failed to get deployment: %v", err)
-	}
-
-	podBuf, err := yaml.Marshal(dp)
-	if err != nil {
-		return fmt.Errorf("failed to get deployment: %v", err)
-	}
-
-	var dpApply confv1.DeploymentApplyConfiguration
-	err = yaml.Unmarshal(podBuf, &dpApply)
+	dpApply, dsApply, err := getApplyDeploymentDaemonSet(cr, step.ctrlClient)
 	if err != nil {
 		return err
 	}
 
-	if err := correctlyInjected(dp.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
+	if err := correctlyInjected(dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
 		return err
 	}
 
-	ds := &appsv1.DaemonSet{}
-	err = step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      fmt.Sprintf("%s-node", cr.Name)}, ds)
-	if err != nil {
-		return fmt.Errorf("failed to get daemonset: %v", err)
-	}
-
-	podBuf, err = yaml.Marshal(ds)
-	if err != nil {
-		return fmt.Errorf("failed to get deployment: %v", err)
-	}
-
-	var dsApply confv1.DaemonSetApplyConfiguration
-	err = yaml.Unmarshal(podBuf, &dsApply)
-	if err != nil {
-		return err
-	}
-
-	return correctlyInjected(ds.Annotations, dsApply.Spec.Template.Spec.Volumes, dsApply.Spec.Template.Spec.Containers)
+	return correctlyInjected(dsApply.Annotations, dsApply.Spec.Template.Spec.Volumes, dsApply.Spec.Template.Spec.Containers)
 }
 
 func (step *Step) validateAuthorizationNotInstalled(res Resource) error {
-	cr := res.CustomResource
-	dp := &appsv1.Deployment{}
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      fmt.Sprintf("%s-controller", cr.Name)}, dp)
+	dpApply, dsApply, err := getApplyDeploymentDaemonSet(res.CustomResource, step.ctrlClient)
 	if err != nil {
-		return fmt.Errorf("failed to get deployment: %v", err)
+		return err
 	}
 
-	for _, cnt := range dp.Spec.Template.Spec.Containers {
-		if cnt.Name == authString {
+	for _, cnt := range dpApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == authString {
 			return fmt.Errorf("found authorization in deployment: %v", err)
 		}
 
 	}
 
-	ds := &appsv1.DaemonSet{}
-	err = step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      fmt.Sprintf("%s-node", cr.Name)}, ds)
-	if err != nil {
-		return fmt.Errorf("failed to get daemonset: %v", err)
-	}
-
-	for _, cnt := range ds.Spec.Template.Spec.Containers {
-		if cnt.Name == authString {
-			return fmt.Errorf("found authorization in deployment: %v", err)
+	for _, cnt := range dsApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == authString {
+			return fmt.Errorf("found authorization in daemonset: %v", err)
 		}
 
 	}
