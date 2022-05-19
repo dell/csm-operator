@@ -29,9 +29,8 @@ spec:
       - name: dell-replication-controller-manager
         image: dellemc/dell-replication-controller:v1.2.0
         envs:
-          - name: "CLUSTERS_IDS"
-            #value: "cluster-144,cluster-151"
-            value: "test-cluster-1,test-cluster-2"
+          - name: "TARGET_CLUSTERS_IDS"
+            value: "test-target-cluster-1,test-target-cluster-2"
 
           - name: "REPLICATION_CTRL_LOG_LEVEL"
             value: "debug"

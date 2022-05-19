@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -149,9 +149,6 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 // test a happy path scenerio with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
-	os.Setenv("REPCTL_BINARY", "echo")
-	defer os.Unsetenv("REPCTL_BINARY")
-
 	suite.makeFakeCSM(csmName, suite.namespace, true, getReplicaModule())
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
@@ -199,7 +196,7 @@ func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
 	updateCSMError = false
 }
 
-// Test all edge cases in RevoveDriver
+// Test all edge cases in RemoveDriver
 func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	r := suite.createReconciler()
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -302,6 +299,45 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckTypeError() {
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Nil(suite.T(), err)
 	configVersion = shared.ConfigVersion
+}
+
+func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Annotations[configVersionKey] = configVersion
+
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	suite.fakeClient.Create(ctx, &csm)
+	reconciler := suite.createReconciler()
+
+	badOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
+
+	// error in Authorization
+	csm.Spec.Modules = getAuthModule()
+	err := reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Replication
+	csm.Spec.Modules = getReplicaModule()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error unsupported module
+	csm.Spec.Modules = []csmv1.Module{
+		{
+			Name:    "Unsupported module",
+			Enabled: true,
+		},
+	}
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
 }
 
 func (suite *CSMControllerTestSuite) TestIgnoreUpdatePredicate() {
@@ -589,14 +625,14 @@ func getReplicaModule() []csmv1.Module {
 			ConfigVersion: "v1.2.0",
 			Components: []csmv1.ContainerTemplate{
 				{
-					Name: "dell-csi-replicator",
+					Name: utils.ReplicationSideCarName,
 				},
 				{
 					Name: "dell-replication-controller-manager",
 					Envs: []corev1.EnvVar{
 						{
-							Name:  "CLUSTERS_IDS",
-							Value: "skip-replication-cluster-check,skip-replication-cluster-check",
+							Name:  "TARGET_CLUSTERS_IDS",
+							Value: "skip-replication-cluster-check",
 						},
 					},
 				},
@@ -681,7 +717,13 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm.Spec.Driver.ForceRemoveDriver = true
 	csm.Annotations[configVersionKey] = configVersion
 
+	csm.Spec.Modules = getReplicaModule()
+	out, _ := json.Marshal(csm)
+	csm.Annotations[previouslyAppliedCustomResource] = string(out)
+
 	csm.Spec.Modules = modules
+	out, _ = json.Marshal(csm)
+	csm.Annotations["kubectl.kubernetes.io/last-applied-configuration"] = string(out)
 
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
@@ -775,17 +817,17 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 	case *appsv1.DaemonSet:
 		ds := obj.(*appsv1.DaemonSet)
 		if method == "Delete" && deleteDSError {
-			fmt.Printf("[ShouldFail] force delete ServiceAccount error for ServiceAccount named %+v\n", ds.Name)
+			fmt.Printf("[ShouldFail] force delete DaemonSet error for DaemonSet named %+v\n", ds.Name)
 			return errors.New(deleteDSErrorStr)
 		} else if method == "Update" && updateDSError {
-			fmt.Printf("[ShouldFail] force update ServiceAccount error for ServiceAccount named %+v\n", ds.Name)
+			fmt.Printf("[ShouldFail] force update DaemonSet error for DaemonSet named %+v\n", ds.Name)
 			return errors.New(updateDSErrorStr)
 		}
 
 	case *appsv1.Deployment:
 		deployment := obj.(*appsv1.Deployment)
 		if method == "Delete" && deleteDeploymentError {
-			fmt.Printf("[ShouldFail] force ServiceAccount error for ServiceAccount named %+v\n", deployment.Name)
+			fmt.Printf("[ShouldFail] force Deployment error for Deployment named %+v\n", deployment.Name)
 			return errors.New(deleteDeploymentErrorStr)
 		}
 
