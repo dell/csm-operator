@@ -46,8 +46,8 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	}
 
 	for _, cluster := range clusterClients {
-		log.Infof("deployment status for cluster: %s", cluster.ClutsterID)
-		msg += fmt.Sprintf("error message for %s \n", cluster.ClutsterID)
+		log.Infof("deployment status for cluster: %s", cluster.ClusterID)
+		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
 		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
 			Namespace: instance.GetNamespace()}, deployment)
@@ -127,8 +127,8 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	}
 
 	for _, cluster := range clusterClients {
-		log.Infof("daemonset status for cluster: %s", cluster.ClutsterID)
-		msg += fmt.Sprintf("error message for %s \n", cluster.ClutsterID)
+		log.Infof("\ndaemonset status for cluster: %s", cluster.ClusterID)
+		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
 		ds := &appsv1.DaemonSet{}
 		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetNodeName(),

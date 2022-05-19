@@ -11,13 +11,13 @@ import (
 )
 
 // SyncClusterRoleBindings - Syncs the ClusterRoleBindings
-func SyncClusterRoleBindings(ctx context.Context, rb *rbacv1.ClusterRoleBinding, client client.Client) error {
+func SyncClusterRoleBindings(ctx context.Context, rb rbacv1.ClusterRoleBinding, client client.Client) error {
 	log := logger.GetLogger(ctx)
 	found := &rbacv1.ClusterRoleBinding{}
 	err := client.Get(ctx, types.NamespacedName{Name: rb.Name, Namespace: rb.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new ClusterRoleBinding", "Namespace", rb.Namespace, "Name", rb.Name)
-		err = client.Create(ctx, rb)
+		err = client.Create(ctx, &rb)
 		if err != nil {
 			return err
 		}
@@ -26,7 +26,7 @@ func SyncClusterRoleBindings(ctx context.Context, rb *rbacv1.ClusterRoleBinding,
 		return err
 	} else {
 		log.Info("Updating ClusterRoleBinding", "Name:", rb.Name)
-		err = client.Update(ctx, rb)
+		err = client.Update(ctx, &rb)
 		if err != nil {
 			return err
 		}

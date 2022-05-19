@@ -50,6 +50,10 @@ metadata:
   creationTimestamp: null
   name: dell-csm-operator-manager-role
 rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
 - apiGroups:
   - ""
   resources:
@@ -75,6 +79,14 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - nodes
   verbs:
   - create
@@ -88,6 +100,7 @@ rules:
   resources:
   - persistentvolumeclaims/status
   verbs:
+  - get
   - patch
   - update
 - apiGroups:
@@ -109,6 +122,7 @@ rules:
   verbs:
   - create
   - delete
+  - get
   - list
   - watch
 - apiGroups:
@@ -126,6 +140,18 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
 - apiGroups:
   - coordination.k8s.io
   resources:
@@ -191,6 +217,26 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - replication.storage.dell.com
+  resources:
+  - dellcsireplicationgroups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - replication.storage.dell.com
+  resources:
+  - dellcsireplicationgroups/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - security.openshift.io
   resourceNames:

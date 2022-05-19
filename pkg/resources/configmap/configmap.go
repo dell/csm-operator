@@ -12,14 +12,14 @@ import (
 )
 
 // SyncConfigMap - Creates/Updates a config map
-func SyncConfigMap(ctx context.Context, configMap *corev1.ConfigMap, client client.Client) error {
+func SyncConfigMap(ctx context.Context, configMap corev1.ConfigMap, client client.Client) error {
 	log := logger.GetLogger(ctx)
 
 	found := &corev1.ConfigMap{}
 	err := client.Get(ctx, types.NamespacedName{Name: configMap.Name, Namespace: configMap.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
 		log.Infow("Creating a new ConfigMap", "Name", configMap.Name)
-		err = client.Create(ctx, configMap)
+		err = client.Create(ctx, &configMap)
 		if err != nil {
 			return err
 		}
@@ -28,7 +28,7 @@ func SyncConfigMap(ctx context.Context, configMap *corev1.ConfigMap, client clie
 		return err
 	} else {
 		log.Infow("Updating ConfigMap", "Name:", configMap.Name)
-		err = client.Update(ctx, configMap)
+		err = client.Update(ctx, &configMap)
 		if err != nil {
 			return err
 		}

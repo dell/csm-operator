@@ -219,8 +219,8 @@ spec:
       - args:
         - --enable-leader-election
         - --prefix=replication.storage.dell.com
-        - --retry-interval-start <RETRY_INTERVAL_MIN>
-        - --retry-interval-max <RETRY_INTERVAL_MAX>
+        - --retry-interval-start=<RETRY_INTERVAL_MIN>
+        - --retry-interval-max=<RETRY_INTERVAL_MAX>
         command:
         - /dell-replication-controller
         env:

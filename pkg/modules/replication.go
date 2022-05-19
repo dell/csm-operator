@@ -3,8 +3,6 @@ package modules
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
@@ -66,7 +64,7 @@ func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) 
 	replicationContextPrefix := ReplicationSupportedDrivers[string(driverType)].PluginIdentifier
 
 	for _, component := range replicaModule.Components {
-		if component.Name == "dell-csi-replicator" {
+		if component.Name == utils.ReplicationSideCarName {
 			for _, env := range component.Envs {
 				if env.Name == XCSIReplicaPrefix {
 					replicationPrefix = env.Value
@@ -142,11 +140,10 @@ func CheckApplyContainersReplica(contaners []acorev1.ContainerApplyConfiguration
 		return err
 	}
 
-	replicaString := "dell-csi-replicator"
 	driverString := "driver"
 	replicationContextPrefix, replicationPrefix := getRepctlPrefices(replicaModule, cr.Spec.Driver.CSIDriverType)
 	for _, cnt := range contaners {
-		if *cnt.Name == replicaString {
+		if *cnt.Name == utils.ReplicationSideCarName {
 			// check volumes
 			volName := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
 			foundVol := false
@@ -260,22 +257,8 @@ func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Conta
 func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
-	var repctlBinary string
 	if _, ok := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
 		return fmt.Errorf("CSM Operator does not suport Replication deployment for %s driver", cr.Spec.Driver.CSIDriverType)
-	}
-
-	// Check repctl binary runs fine
-	repctlBinary, ok := os.LookupEnv("REPCTL_BINARY")
-	if !ok {
-		repctlBinary = RepctlBinary
-		log.Warnf("REPCTL_BINARY environment variable not defined. Using default %s", repctlBinary)
-	}
-
-	cmd := exec.CommandContext(ctx, repctlBinary, "--help")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		log.Errorf("%s", out)
-		return fmt.Errorf("repctl not installed: %v", err)
 	}
 
 	// check if provided version is supported
@@ -295,11 +278,11 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		switch cr.Spec.Driver.CSIDriverType {
 		case csmv1.PowerScale:
 			tmpCR := cr
+			log.Infof("\nperforming pre checks for: %s", cluster.ClusterID)
 			err = drivers.PrecheckPowerScale(ctx, &tmpCR, cluster.ClusterCTRLClient)
 			if err != nil {
-				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClutsterID)
+				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClusterID)
 			}
-
 		}
 	}
 	return nil
@@ -362,34 +345,8 @@ func getReplicaModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 	return csmv1.Module{}, fmt.Errorf("could not find replica module")
 }
 
-// ReplicationInstallManagerController -
-func ReplicationInstallManagerController(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule) error {
-	log := logger.GetLogger(ctx)
-	var repctlBinary string
-	var ok bool
-	if repctlBinary, ok = os.LookupEnv("REPCTL_BINARY"); !ok {
-		repctlBinary = RepctlBinary
-		log.Warnf("REPCTL_BINARY environment variable not defined. Using default %s", repctlBinary)
-	}
-
-	YamlString, err := getReplicaController(op, cr)
-	if err != nil {
-		return err
-	}
-
-	// To create controller
-	ctrlCmd := exec.CommandContext(ctx, repctlBinary, "create", "-f", "-")
-	ctrlCmd.Stdin = strings.NewReader(YamlString)
-	_, err = ctrlCmd.CombinedOutput()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ReplicationUninstallManagerController -
-func ReplicationUninstallManagerController(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlCleint client.Client) error {
+// ReplicationManagerController -
+func ReplicationManagerController(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	YamlString, err := getReplicaController(op, cr)
 	if err != nil {
 		return err
@@ -401,8 +358,14 @@ func ReplicationUninstallManagerController(ctx context.Context, op utils.Operato
 	}
 
 	for _, ctrlObj := range ctrlObjects {
-		if err := utils.DeleteObject(ctx, ctrlObj, ctrlCleint); err != nil {
-			return err
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
 		}
 	}
 
