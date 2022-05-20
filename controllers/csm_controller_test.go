@@ -107,6 +107,7 @@ var (
 	csmName = "csm"
 
 	configVersion = shared.ConfigVersion
+	upgradeConfigVersion = shared.UpgradeConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -187,6 +188,60 @@ func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
 
 }
 
+func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+        annotations := csm.GetAnnotations()
+        if annotations == nil {
+                annotations = make(map[string]string)
+        }
+        if _, ok := annotations[configVersionKey]; !ok {
+                annotations[configVersionKey] = upgradeConfigVersion
+                csm.SetAnnotations(annotations)
+        }
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+
+}
+
+func (suite *CSMControllerTestSuite) TestCsmUpgradeBadVersion() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+        annotations := csm.GetAnnotations()
+        if annotations == nil {
+                annotations = make(map[string]string)
+        }
+        if _, ok := annotations[configVersionKey]; !ok {
+                annotations[configVersionKey] = "v2.0.0"
+                csm.SetAnnotations(annotations)
+        }
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+
+}
+
 func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -199,7 +254,7 @@ func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
 	updateCSMError = false
 }
 
-// Test all edge cases in RevoveDriver
+// Test all edge cases in RemoveDriver
 func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	r := suite.createReconciler()
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
