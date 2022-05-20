@@ -847,25 +847,24 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 		if oldVersion == cr.Spec.Driver.ConfigVersion {
 			log.Infow("proceeding with modification of driver install")
 			return true, nil
-			//if not equal, it is an upgrade/downgrade
+		}
+		//if not equal, it is an upgrade/downgrade
+		// get minimum required version for upgrade
+		minUpgradePath, err := drivers.GetUpgradeInfo(ctx, operatorConfig, driverType, oldVersion)
+		if err != nil {
+			log.Infow("GetUpgradeInfo not successful")
+			return false, err
+		}
+		//
+		installValid, err := utils.MinVersionCheck(minUpgradePath, cr.Spec.Driver.ConfigVersion)
+		if err != nil {
+			return false, err
+		} else if installValid {
+			log.Infow("proceeding with valid driver upgrade from version %s to version %s", oldVersion, cr.Spec.Driver.ConfigVersion)
+			return installValid, nil
 		} else {
-			// get minimum required version for upgrade
-			minUpgradePath, err := drivers.GetUpgradeInfo(ctx, operatorConfig, driverType, oldVersion)
-			if err != nil {
-				log.Infow("GetUpgradeInfo not successful")
-				return false, err
-			}
-			//
-			installValid, err := utils.MinVersionCheck(minUpgradePath, cr.Spec.Driver.ConfigVersion)
-			if err != nil {
-				return false, err
-			} else if installValid {
-				log.Infow("proceeding with valid driver upgrade from version %s to version %s", oldVersion, cr.Spec.Driver.ConfigVersion)
-				return installValid, nil
-			} else {
-				log.Infow("not proceeding with invalid driver upgrade")
-				return installValid, fmt.Errorf("failed upgrade check: upgrade from version %s to %s not valid", oldVersion, cr.Spec.Driver.ConfigVersion)
-			}
+			log.Infow("not proceeding with invalid driver upgrade")
+			return installValid, fmt.Errorf("failed upgrade check: upgrade from version %s to %s not valid", oldVersion, cr.Spec.Driver.ConfigVersion)
 		}
 	} else {
 		log.Infow("proceeding with fresh driver install")
