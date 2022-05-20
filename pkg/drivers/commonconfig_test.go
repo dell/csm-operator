@@ -2,9 +2,10 @@ package drivers
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
-	csmv2 "github.com/dell/csm-operator/api/v1alpha1"
+	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/dell/csm-operator/tests/shared/crclient"
@@ -18,14 +19,12 @@ import (
 var (
 	//
 	csm                                            = csmWithTolerations()
-	fakeDriver                    csmv2.DriverType = "fakeDriver"
-	badDriver                     csmv2.DriverType = "badDriver"
+	fakeDriver                    csmv1.DriverType = "fakeDriver"
+	badDriver                     csmv1.DriverType = "badDriver"
 	powerScaleCSM                                  = csmForPowerScale()
 	powerScaleCSMBadSkipCert                       = csmForPowerScaleBadSkipCert()
 	powerScaleCSMBadCertCnt                        = csmForPowerScaleBadCertCnt()
-	powerScaleCSMBadVersionFormat                  = csmForPowerScaleBadVersionFormat()
-	powerScaleCSMEmptyVersion                      = csmForPowerScaleEmptyVersion()
-	powerScaleCSMVersionTooLow                     = csmForPowerScaleVersionTooLow()
+	powerScaleCSMBadVersion                        = csmForPowerScaleBadVersion()
 	objects                                        = map[shared.StorageKey]runtime.Object{}
 	powerScaleClient                               = crclient.NewFakeClientNoInjector(objects)
 	powerScaleSecret                               = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
@@ -39,15 +38,15 @@ var (
 		// every single unit test name
 		name string
 		// csm object
-		csm csmv2.ContainerStorageModule
+		csm csmv1.ContainerStorageModule
 		// driver name
-		driverName csmv2.DriverType
+		driverName csmv1.DriverType
 		// yaml file name to read
 		filename string
 		// expected error
 		expectedErr string
 	}{
-		{"happy path", csm, csmv2.PowerScaleName, "node.yaml", ""},
+		{"happy path", csm, csmv1.PowerScaleName, "node.yaml", ""},
 		{"file does not exist", csm, fakeDriver, "NonExist.yaml", "no such file or directory"},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
 	}
@@ -56,7 +55,7 @@ var (
 		// every single unit test name
 		name string
 		// csm object
-		csm csmv2.ContainerStorageModule
+		csm csmv1.ContainerStorageModule
 		// client
 		ct  client.Client
 		sec *corev1.Secret
@@ -72,7 +71,7 @@ var (
 		// every single unit test name
 		name string
 		// csm object
-		csm csmv2.ContainerStorageModule
+		csm csmv1.ContainerStorageModule
 		// client
 		ct client.Client
 		// secret
@@ -81,9 +80,7 @@ var (
 		expectedErr string
 	}{
 		{"missing secret", powerScaleCSM, powerScaleClient, powerScaleSecret, "failed to find secret"},
-		{"bad version format", powerScaleCSMBadVersionFormat, powerScaleClient, powerScaleSecret, "Minimum version check returned error"},
-		{"empty version", powerScaleCSMEmptyVersion, powerScaleClient, powerScaleSecret, "driver version not specified in spec"},
-		{"version too low", powerScaleCSMVersionTooLow, powerScaleClient, powerScaleSecret, "not supported min version is"},
+		{"bad version", powerScaleCSMBadVersion, powerScaleClient, powerScaleSecret, "not supported"},
 	}
 
 	opts = zap.Options{
@@ -113,7 +110,7 @@ func TestPrecheckPowerScale(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range preCheckPowerScaleTest {
 		t.Run(tt.name, func(t *testing.T) {
-			err := PrecheckPowerScale(ctx, &tt.csm, tt.ct)
+			err := PrecheckPowerScale(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -125,7 +122,7 @@ func TestPrecheckPowerScale(t *testing.T) {
 	for _, tt := range powerScaleTests {
 		tt.ct.Create(ctx, tt.sec)
 		t.Run(tt.name, func(t *testing.T) {
-			err := PrecheckPowerScale(ctx, &tt.csm, tt.ct)
+			err := PrecheckPowerScale(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -167,10 +164,14 @@ func TestGetUpgradeInfo(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetUpgradeInfo(ctx, tt.csm, config, tt.driverName)
+			_, err := GetUpgradeInfo(ctx, config, tt.driverName, tt.csm.Spec.Driver.ConfigVersion)
 			if tt.expectedErr == "" {
+				fmt.Printf("tt.expectedErr: %+v\n", tt.expectedErr)
+				fmt.Printf("err: %+v\n", err)
 				assert.Nil(t, err)
 			} else {
+				fmt.Printf("tt.expectedErr: %+v\n", tt.expectedErr)
+				fmt.Printf("err: %+v\n", err)
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
@@ -206,7 +207,7 @@ func TestGetNode(t *testing.T) {
 }
 
 // makes a csm object with tolerations
-func csmWithTolerations() csmv2.ContainerStorageModule {
+func csmWithTolerations() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add tolerations to controller and node
@@ -238,7 +239,7 @@ func csmWithTolerations() csmv2.ContainerStorageModule {
 	res.Spec.Driver.ConfigVersion = "v2.2.0"
 
 	// Add pscale driver version
-	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
+	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	// Add NodeSelector to node and controller
 	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
@@ -248,29 +249,29 @@ func csmWithTolerations() csmv2.ContainerStorageModule {
 	envVarLogLevel := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel}
 	// Add sidecars to trigger code in controller
-	sideCarObjEnabledNil := csmv2.ContainerTemplate{
+	sideCarObjEnabledNil := csmv1.ContainerTemplate{
 		Name:    "driver",
 		Enabled: nil,
 		Args:    []string{"--v=5"},
 	}
-	sideCarObjEnabledFalse := csmv2.ContainerTemplate{
+	sideCarObjEnabledFalse := csmv1.ContainerTemplate{
 		Name:    "resizer",
 		Enabled: &falseBool,
 		Args:    []string{"--v=5"},
 	}
-	sideCarObjEnabledTrue := csmv2.ContainerTemplate{
+	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
 		Name:    "provisioner",
 		Enabled: &trueBool,
 		Args:    []string{"--volume-name-prefix=k8s"},
 	}
-	sideCarList := []csmv2.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
+	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
 	res.Spec.Driver.SideCars = sideCarList
 
 	return res
 }
 
 // makes a csm object with tolerations
-func csmForPowerScale() csmv2.ContainerStorageModule {
+func csmForPowerScale() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add log level to cover some code in GetConfigMap
@@ -281,13 +282,13 @@ func csmForPowerScale() csmv2.ContainerStorageModule {
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = "v2.2.0"
-	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
+	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res
 }
 
 // makes a csm object with tolerations
-func csmForPowerScaleBadSkipCert() csmv2.ContainerStorageModule {
+func csmForPowerScaleBadSkipCert() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add log level to cover some code in GetConfigMap
@@ -297,13 +298,13 @@ func csmForPowerScaleBadSkipCert() csmv2.ContainerStorageModule {
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = "v2.2.0"
-	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
+	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res
 }
 
 // makes a csm object with tolerations
-func csmForPowerScaleBadCertCnt() csmv2.ContainerStorageModule {
+func csmForPowerScaleBadCertCnt() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add log level to cover some code in GetConfigMap
@@ -313,40 +314,19 @@ func csmForPowerScaleBadCertCnt() csmv2.ContainerStorageModule {
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = "v2.2.0"
-	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
+	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res
 }
 
 // makes a csm object with tolerations
-func csmForPowerScaleBadVersionFormat() csmv2.ContainerStorageModule {
+func csmForPowerScaleBadVersion() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = "v0"
-	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
+	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res
 }
 
-// makes a csm object with tolerations
-func csmForPowerScaleEmptyVersion() csmv2.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
-
-	// Add pscale driver version
-	res.Spec.Driver.ConfigVersion = ""
-	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
-
-	return res
-}
-
-// makes a csm object with tolerations
-func csmForPowerScaleVersionTooLow() csmv2.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
-
-	// Add pscale driver version
-	res.Spec.Driver.ConfigVersion = "v2.1.0"
-	res.Spec.Driver.CSIDriverType = csmv2.PowerScale
-
-	return res
-}
