@@ -106,7 +106,7 @@ var (
 
 	csmName = "csm"
 
-	configVersion = shared.ConfigVersion
+	configVersion        = shared.ConfigVersion
 	upgradeConfigVersion = shared.UpgradeConfigVersion
 
 	req = reconcile.Request{
@@ -197,14 +197,14 @@ func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
 	suite.fakeClient.Create(ctx, sec)
 
-        annotations := csm.GetAnnotations()
-        if annotations == nil {
-                annotations = make(map[string]string)
-        }
-        if _, ok := annotations[configVersionKey]; !ok {
-                annotations[configVersionKey] = upgradeConfigVersion
-                csm.SetAnnotations(annotations)
-        }
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	if _, ok := annotations[configVersionKey]; !ok {
+		annotations[configVersionKey] = upgradeConfigVersion
+		csm.SetAnnotations(annotations)
+	}
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
@@ -224,14 +224,14 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeBadVersion() {
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
 	suite.fakeClient.Create(ctx, sec)
 
-        annotations := csm.GetAnnotations()
-        if annotations == nil {
-                annotations = make(map[string]string)
-        }
-        if _, ok := annotations[configVersionKey]; !ok {
-                annotations[configVersionKey] = "v2.0.0"
-                csm.SetAnnotations(annotations)
-        }
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	if _, ok := annotations[configVersionKey]; !ok {
+		annotations[configVersionKey] = "v2.0.0"
+		csm.SetAnnotations(annotations)
+	}
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
