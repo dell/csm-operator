@@ -2,7 +2,6 @@ package drivers
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
@@ -18,16 +17,16 @@ import (
 
 var (
 	//
-	csm                                            = csmWithTolerations()
-	fakeDriver                    csmv1.DriverType = "fakeDriver"
-	badDriver                     csmv1.DriverType = "badDriver"
-	powerScaleCSM                                  = csmForPowerScale()
-	powerScaleCSMBadSkipCert                       = csmForPowerScaleBadSkipCert()
-	powerScaleCSMBadCertCnt                        = csmForPowerScaleBadCertCnt()
-	powerScaleCSMBadVersion                        = csmForPowerScaleBadVersion()
-	objects                                        = map[shared.StorageKey]runtime.Object{}
-	powerScaleClient                               = crclient.NewFakeClientNoInjector(objects)
-	powerScaleSecret                               = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
+	csm                                       = csmWithTolerations()
+	fakeDriver               csmv1.DriverType = "fakeDriver"
+	badDriver                csmv1.DriverType = "badDriver"
+	powerScaleCSM                             = csmForPowerScale()
+	powerScaleCSMBadSkipCert                  = csmForPowerScaleBadSkipCert()
+	powerScaleCSMBadCertCnt                   = csmForPowerScaleBadCertCnt()
+	powerScaleCSMBadVersion                   = csmForPowerScaleBadVersion()
+	objects                                   = map[shared.StorageKey]runtime.Object{}
+	powerScaleClient                          = crclient.NewFakeClientNoInjector(objects)
+	powerScaleSecret                          = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
 
 	// where to find all the yaml files
 	config = utils.OperatorConfig{
@@ -166,12 +165,8 @@ func TestGetUpgradeInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := GetUpgradeInfo(ctx, config, tt.driverName, tt.csm.Spec.Driver.ConfigVersion)
 			if tt.expectedErr == "" {
-				fmt.Printf("tt.expectedErr: %+v\n", tt.expectedErr)
-				fmt.Printf("err: %+v\n", err)
 				assert.Nil(t, err)
 			} else {
-				fmt.Printf("tt.expectedErr: %+v\n", tt.expectedErr)
-				fmt.Printf("err: %+v\n", err)
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
@@ -329,4 +324,3 @@ func csmForPowerScaleBadVersion() csmv1.ContainerStorageModule {
 
 	return res
 }
-
