@@ -129,17 +129,6 @@ type PodStatus struct {
 	Failed    string `json:"failed,omitempty"`
 }
 
-// UpgradeInfo -- stores upgrade info on particular driver
-type UpgradeInfo struct {
-	// UpgradePathMinVersion -
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
-	UpgradePathMinVersion string `json:"upgradePathMinVersion" yaml:"upgradePathMinVersion"`
-
-	// UpgradePathToVersion -
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
-	UpgradePathToVersion string `json:"upgradePathToVersion" yaml:"upgradePathToVersion"`
-}
-
 // Driver of CSIDriver
 // +k8s:openapi-gen=true
 type Driver struct {
@@ -154,14 +143,6 @@ type Driver struct {
 	// ConfigVersion is the configuration version of the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
 	ConfigVersion string `json:"configVersion" yaml:"configVersion"`
-
-	// UpgradePathMinVersion -
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
-	UpgradePathMinVersion string `json:"upgradePathMinVersion" yaml:"upgradePathMinVersion"`
-
-	// UpgradePathToVersion -
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
-	UpgradePathToVersion string `json:"upgradePathToVersion" yaml:"upgradePathToVersion"`
 
 	// Replicas is the count of controllers for Controller plugin
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Controller count"

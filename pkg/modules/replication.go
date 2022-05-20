@@ -295,7 +295,7 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		switch cr.Spec.Driver.CSIDriverType {
 		case csmv1.PowerScale:
 			tmpCR := cr
-			err = drivers.PrecheckPowerScale(ctx, &tmpCR, cluster.ClusterCTRLClient)
+			err = drivers.PrecheckPowerScale(ctx, &tmpCR, op, cluster.ClusterCTRLClient)
 			if err != nil {
 				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClutsterID)
 			}

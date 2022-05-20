@@ -30,4 +30,3 @@ func SyncCSIDriver(ctx context.Context, csi *storagev1.CSIDriver, client client.
 	}
 	return nil
 }
-
