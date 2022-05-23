@@ -106,7 +106,10 @@ var (
 
 	csmName = "csm"
 
-	configVersion = shared.ConfigVersion
+	configVersion            = shared.ConfigVersion
+	oldConfigVersion         = shared.OldConfigVersion
+	upgradeConfigVersion     = shared.UpgradeConfigVersion
+	jumpUpgradeConfigVersion = shared.JumpUpgradeConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -181,6 +184,114 @@ func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
+
+}
+
+func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	if _, ok := annotations[configVersionKey]; !ok {
+		annotations[configVersionKey] = upgradeConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+
+}
+
+func (suite *CSMControllerTestSuite) TestCsmUpgradeVersionTooOld() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	if _, ok := annotations[configVersionKey]; !ok {
+		annotations[configVersionKey] = oldConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+
+}
+
+func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	if _, ok := annotations[configVersionKey]; !ok {
+		annotations[configVersionKey] = jumpUpgradeConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+
+}
+
+func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	if _, ok := annotations[configVersionKey]; !ok {
+		annotations[configVersionKey] = jumpUpgradeConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
 
 }
 
