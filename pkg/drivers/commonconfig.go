@@ -217,6 +217,36 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 }
 
+// GetUpgradeInfo -
+func GetUpgradeInfo(ctx context.Context, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, oldVersion string) (string, error) {
+	log := logger.GetLogger(ctx)
+	upgradeInfoPath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, driverType, oldVersion)
+	log.Debugw("GetUpgradeInfo", "upgradeInfoPath", upgradeInfoPath)
+
+	if _, err := os.Stat(upgradeInfoPath); os.IsNotExist(err) {
+		log.Errorw("GetUpgradeInfo failed", "Error", err.Error())
+		return "", err
+	}
+
+	buf, err := ioutil.ReadFile(filepath.Clean(upgradeInfoPath))
+	if err != nil {
+		log.Errorw("GetUpgradeInfo failed", "Error", err.Error())
+		return "", err
+	}
+	YamlString := string(buf)
+
+	var upgradePath utils.UpgradePaths
+	err = yaml.Unmarshal([]byte(YamlString), &upgradePath)
+	if err != nil {
+		log.Errorw("GetUpgradeInfo yaml marshall failed", "Error", err.Error())
+		return "", err
+	}
+
+	// Example return value: "v2.2.0"
+	return upgradePath.MinUpgradePath, nil
+
+}
+
 // GetConfigMap get configmap
 func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
 	log := logger.GetLogger(ctx)

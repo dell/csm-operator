@@ -791,13 +791,20 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
-		err := drivers.PrecheckPowerScale(ctx, cr, r.GetClient())
+		err := drivers.PrecheckPowerScale(ctx, cr, operatorConfig, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
 
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
+	}
+
+	upgradeValid, err := checkUpgrade(ctx, cr, operatorConfig)
+	if err != nil {
+		return fmt.Errorf("failed upgrade check: %v", err)
+	} else if !upgradeValid {
+		return fmt.Errorf("failed upgrade check because upgrade is not valid")
 	}
 
 	// check for owner reference
@@ -820,7 +827,6 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		} else {
 			return fmt.Errorf("Owner reference not found. Please re-install driver")
 		}
-
 	}
 
 	// check modules
@@ -843,7 +849,49 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 		}
 	}
+
 	return nil
+}
+
+// Check for upgrade/if upgrade is appropriate
+func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (bool, error) {
+	log := logger.GetLogger(ctx)
+	driverType := cr.Spec.Driver.CSIDriverType
+	if driverType == csmv1.PowerScale {
+		// use powerscale instead of isilon as the folder name is powerscale
+		driverType = csmv1.PowerScaleName
+	}
+	// If it is an upgrade/downgrade, check to see if we meet the minimum version using GetUpgradeInfo, which returns the minimum version required
+	// for the desired upgrade. If the upgrade path is not valid fail
+	// Existing version
+	annotations := cr.GetAnnotations()
+	oldVersion, configVersionExists := annotations[configVersionKey]
+
+	// If annotation exists, we are doing an upgrade or modify
+	if configVersionExists {
+		// if versions are equal, it is a modify
+		if oldVersion == cr.Spec.Driver.ConfigVersion {
+			log.Infow("proceeding with modification of driver install")
+			return true, nil
+		}
+		//if not equal, it is an upgrade/downgrade
+		// get minimum required version for upgrade
+		minUpgradePath, err := drivers.GetUpgradeInfo(ctx, operatorConfig, driverType, oldVersion)
+		if err != nil {
+			log.Infow("GetUpgradeInfo not successful")
+			return false, err
+		}
+		//
+		installValid, _ := utils.MinVersionCheck(minUpgradePath, cr.Spec.Driver.ConfigVersion)
+		if installValid {
+			log.Infow("proceeding with valid driver upgrade from version %s to version %s", oldVersion, cr.Spec.Driver.ConfigVersion)
+			return installValid, nil
+		}
+		log.Infow("not proceeding with invalid driver upgrade")
+		return installValid, fmt.Errorf("failed upgrade check: upgrade from version %s to %s not valid", oldVersion, cr.Spec.Driver.ConfigVersion)
+	}
+	log.Infow("proceeding with fresh driver install")
+	return true, nil
 }
 
 // TODO: refactor this

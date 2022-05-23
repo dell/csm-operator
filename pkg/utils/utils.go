@@ -63,6 +63,11 @@ type RbacYAML struct {
 	ClusterRoleBinding rbacv1.ClusterRoleBinding
 }
 
+// UpgradePaths a list of versions eligible to upgrade the current version
+type UpgradePaths struct {
+	MinUpgradePath string `json:"minUpgradePath" yaml:"minUpgradePath"`
+}
+
 // ControllerYAML -
 type ControllerYAML struct {
 	Deployment confv1.DeploymentApplyConfiguration
@@ -537,7 +542,6 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	if versionA >= minVersionA && versionB >= minVersionB {
 		return true, nil
 	}
-	err = fmt.Errorf("version %s below minimum version %s", version, minVersion)
 	return false, nil
 }
 
