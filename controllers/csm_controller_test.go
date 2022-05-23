@@ -188,7 +188,11 @@ func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.ObjectMeta.Finalizers = []string{"foo"}
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
 	reconciler := suite.createReconciler()
 	updateCSMError = true
 	_, err := reconciler.Reconcile(ctx, req)
@@ -272,7 +276,7 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 	suite.deleteCSM(csmName)
 	reconciler = suite.createReconciler()
 	_, err = reconciler.Reconcile(ctx, req)
-	assert.Nil(suite.T(), err)
+	assert.NotNil(suite.T(), err)
 	configVersion = shared.ConfigVersion
 }
 
@@ -297,7 +301,7 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckTypeError() {
 	suite.deleteCSM(csmName)
 	reconciler = suite.createReconciler()
 	_, err = reconciler.Reconcile(ctx, req)
-	assert.Nil(suite.T(), err)
+	assert.NotNil(suite.T(), err)
 	configVersion = shared.ConfigVersion
 }
 
