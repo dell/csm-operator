@@ -3,6 +3,7 @@ package drivers
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
@@ -22,13 +23,10 @@ const (
 
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params"
-
-	// PowerScaleMinVersion is the minimum version of the PowerScale driver that is supported
-	PowerScaleMinVersion = "v2.2.0"
 )
 
 // PrecheckPowerScale do input validation
-func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) error {
+func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) error {
 	log := logger.GetLogger(ctx)
 	// Check for secret only
 	config := cr.Name + "-creds"
@@ -37,15 +35,11 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, c
 		config = cr.Spec.Driver.AuthSecret
 	}
 
-	if cr.Spec.Driver.ConfigVersion != "" {
-		goodVersion, err := utils.MinVersionCheck(PowerScaleMinVersion, cr.Spec.Driver.ConfigVersion)
-		if err != nil {
-			return fmt.Errorf("Minimum version check returned error: %+v", err)
-		} else if goodVersion == false {
-			return fmt.Errorf("driver version %s not supported min version is %s", cr.Spec.Driver.ConfigVersion, PowerScaleMinVersion)
-		}
-	} else {
-		return fmt.Errorf("driver version not specified in spec")
+	// Check if driver version is supported by doing a stat on a config file
+	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerScaleName, cr.Spec.Driver.ConfigVersion)
+	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+		log.Errorw("PreCheckPowerScale failed in version check", "Error", err.Error())
+		return fmt.Errorf("%s %s not supported", csmv1.PowerScaleName, cr.Spec.Driver.ConfigVersion)
 	}
 
 	// check if skip validation is enabled:
