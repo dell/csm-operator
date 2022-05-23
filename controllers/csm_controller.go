@@ -805,8 +805,9 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		return fmt.Errorf("failed upgrade check: %v", err)
 	} else if !upgradeValid {
 		return fmt.Errorf("failed upgrade check because upgrade is not valid")
+	}
 
-  // check for owner reference
+	// check for owner reference
 	deployments := r.K8sClient.AppsV1().Deployments(cr.Namespace)
 	driver, err := deployments.Get(ctx, cr.Name+"-controller", metav1.GetOptions{})
 	if err != nil {
@@ -848,6 +849,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 		}
 	}
+
 	return nil
 }
 
