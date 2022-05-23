@@ -13,9 +13,10 @@ import (
 
 // ConfigVersions used for all unit tests
 const (
-	ConfigVersion        string = "v2.2.0"
-	UpgradeConfigVersion string = "v2.3.0"
-	OldConfigVersion     string = "v2.0.0"
+	ConfigVersion            string = "v2.2.0"
+	UpgradeConfigVersion     string = "v2.3.0"
+	JumpUpgradeConfigVersion string = "v2.4.0"
+	OldConfigVersion         string = "v2.1.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client

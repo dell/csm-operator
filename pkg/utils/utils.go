@@ -542,7 +542,6 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	if versionA >= minVersionA && versionB >= minVersionB {
 		return true, nil
 	}
-	err = fmt.Errorf("version %s below minimum version %s", version, minVersion)
 	return false, nil
 }
 

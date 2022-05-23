@@ -882,20 +882,16 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 			return false, err
 		}
 		//
-		installValid, err := utils.MinVersionCheck(minUpgradePath, cr.Spec.Driver.ConfigVersion)
-		if err != nil {
-			return false, err
-		} else if installValid {
+		installValid, _ := utils.MinVersionCheck(minUpgradePath, cr.Spec.Driver.ConfigVersion)
+		if installValid {
 			log.Infow("proceeding with valid driver upgrade from version %s to version %s", oldVersion, cr.Spec.Driver.ConfigVersion)
 			return installValid, nil
-		} else {
-			log.Infow("not proceeding with invalid driver upgrade")
-			return installValid, fmt.Errorf("failed upgrade check: upgrade from version %s to %s not valid", oldVersion, cr.Spec.Driver.ConfigVersion)
 		}
-	} else {
-		log.Infow("proceeding with fresh driver install")
-		return true, nil
+		log.Infow("not proceeding with invalid driver upgrade")
+		return installValid, fmt.Errorf("failed upgrade check: upgrade from version %s to %s not valid", oldVersion, cr.Spec.Driver.ConfigVersion)
 	}
+	log.Infow("proceeding with fresh driver install")
+	return true, nil
 }
 
 // TODO: refactor this
