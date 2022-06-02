@@ -811,6 +811,8 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
 
+	ischeckingOwnRef := checkOwnerReference(*cr)
+
 	upgradeValid, err := checkUpgrade(ctx, cr, operatorConfig)
 	if err != nil {
 		return fmt.Errorf("failed upgrade check: %v", err)
@@ -836,8 +838,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			}
 
 		} else {
-			// TODO(Michael): should be deprecated after 0.2.0
-			if checkOwnerReference(*cr) {
+			if ischeckingOwnRef { // TODO(Michael): should be deprecated after 0.2.0
 				return fmt.Errorf("Owner reference not found. Please re-install driver")
 			}
 		}
