@@ -786,13 +786,14 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 }
 
 func checkOwnerReference(cr csmv1.ContainerStorageModule) bool {
+	checkRef := false
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "CHECK_OWNER_REFERENCE" {
-			checkRef, _ := strconv.ParseBool(env.Value)
-			return checkRef
+			checkRef, _ = strconv.ParseBool(env.Value)
+			break
 		}
 	}
-	return false
+	return checkRef
 }
 
 // PreChecks - validate input values
