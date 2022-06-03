@@ -79,6 +79,10 @@ func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 					Name:  "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION",
 					Value: skipCertValid,
 				},
+				{
+					Name:  "CHECK_OWNER_REFERENCE",
+					Value: "false",
+				},
 			},
 		},
 	}
