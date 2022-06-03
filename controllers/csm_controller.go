@@ -15,6 +15,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -784,6 +785,17 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	return nil
 }
 
+func checkOwnerReference(cr csmv1.ContainerStorageModule) bool {
+	checkRef := false
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == "CHECK_OWNER_REFERENCE" {
+			checkRef, _ = strconv.ParseBool(env.Value)
+			break
+		}
+	}
+	return checkRef
+}
+
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 
@@ -799,6 +811,8 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
+
+	ischeckingOwnRef := checkOwnerReference(*cr)
 
 	upgradeValid, err := checkUpgrade(ctx, cr, operatorConfig)
 	if err != nil {
@@ -825,7 +839,9 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			}
 
 		} else {
-			return fmt.Errorf("Owner reference not found. Please re-install driver")
+			if ischeckingOwnRef { // TODO(Michael): should be deprecated after 0.2.0
+				return fmt.Errorf("Owner reference not found. Please re-install driver")
+			}
 		}
 	}
 
