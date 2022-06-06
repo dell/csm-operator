@@ -55,6 +55,10 @@ metadata:
                   {
                     "name": "CSI_LOG_LEVEL",
                     "value": "debug"
+                  },
+                  {
+                    "name": "CHECK_OWNER_REFERENCE",
+                    "value": "false"
                   }
                 ],
                 "image": "dellemc/csi-isilon:v2.3.0",
@@ -161,8 +165,8 @@ metadata:
                   {
                     "envs": [
                       {
-                        "name": "CLUSTERS_IDS",
-                        "value": "cluster-1,cluster-2"
+                        "name": "TARGET_CLUSTERS_IDS",
+                        "value": "target-cluster-1"
                       },
                       {
                         "name": "REPLICATION_CTRL_LOG_LEVEL",
@@ -473,6 +477,10 @@ spec:
     spec:
       clusterPermissions:
       - rules:
+        - nonResourceURLs:
+          - /metrics
+          verbs:
+          - get
         - apiGroups:
           - ""
           resources:
@@ -498,6 +506,14 @@ spec:
         - apiGroups:
           - ""
           resources:
+          - namespaces
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
           - nodes
           verbs:
           - create
@@ -511,6 +527,7 @@ spec:
           resources:
           - persistentvolumeclaims/status
           verbs:
+          - get
           - patch
           - update
         - apiGroups:
@@ -532,6 +549,7 @@ spec:
           verbs:
           - create
           - delete
+          - get
           - list
           - watch
         - apiGroups:
@@ -549,6 +567,18 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
         - apiGroups:
           - coordination.k8s.io
           resources:
@@ -614,6 +644,26 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - replication.storage.dell.com
+          resources:
+          - dellcsireplicationgroups
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - replication.storage.dell.com
+          resources:
+          - dellcsireplicationgroups/status
+          verbs:
+          - get
+          - patch
+          - update
         - apiGroups:
           - security.openshift.io
           resourceNames:
@@ -777,10 +827,10 @@ spec:
                 resources:
                   limits:
                     cpu: 200m
-                    memory: 100Mi
+                    memory: 256Mi
                   requests:
                     cpu: 100m
-                    memory: 20Mi
+                    memory: 192Mi
                 securityContext:
                   allowPrivilegeEscalation: false
               securityContext:
