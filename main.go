@@ -57,7 +57,7 @@ const (
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
 	K8sMinimumSupportedVersion = "1.21"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.23"
+	K8sMaximumSupportedVersion = "1.24"
 )
 
 var (
