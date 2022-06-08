@@ -147,6 +147,25 @@ spec:
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
 
+      # nodeSelector: Define node selection constraints for pods of controller deployment.
+      # For the pod to be eligible to run on a node, the node must have each
+      # of the indicated key-value pairs as labels.
+      # Leave as blank to consider all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      # Examples:
+      #   node-role.kubernetes.io/master: ""
+      nodeSelector:
+      #  node-role.kubernetes.io/master: ""
+
+      # tolerations: Define tolerations for the controller deployment, if required.
+      # Default value: None
+      tolerations:
+      #  - key: "node-role.kubernetes.io/master"
+      #    operator: "Equal"
+      #    value: "true"
+      #    effect: "NoSchedule"
+
     node:
       envs:
       # X_CSI_MAX_VOLUMES_PER_NODE: Specify default value for maximum number of volumes that controller can publish to the node.
@@ -175,6 +194,30 @@ spec:
       # Default value: false
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
+      
+      # nodeSelector: Define node selection constraints for pods of node daemonset
+      # For the pod to be eligible to run on a node, the node must have each
+      # of the indicated key-value pairs as labels.
+      # Leave as blank to consider all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      # Examples:
+      #   node-role.kubernetes.io/master: ""
+      nodeSelector:
+      #  node-role.kubernetes.io/master: ""
+
+      # tolerations: Define tolerations for the node daemonset, if required.
+      # Default value: None
+      tolerations:
+      #  - key: "node.kubernetes.io/memory-pressure"
+      #    operator: "Exists"
+      #    effect: "NoExecute"
+      #  - key: "node.kubernetes.io/disk-pressure"
+      #    operator: "Exists"
+      #    effect: "NoExecute"
+      #  - key: "node.kubernetes.io/network-unavailable"
+      #    operator: "Exists"
+      #    effect: "NoExecute"
 
     sideCars:
       - name: provisioner
