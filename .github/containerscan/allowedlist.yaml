@@ -11,9 +11,13 @@ general:
     - CVE-2022-0778
     - CVE-2022-26280 
     - CVE-2018-25032
+    - CVE-2022-1271
   bestPracticeViolations:
     # list of best practies violatied that needs a fix
+    - 
     - DKL-DI-0006
     - CIS-DI-0005
     - CIS-DI-0006
+    - CIS-DI-0008
+    - DKL-LI-0003
 
