@@ -306,7 +306,7 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	replicaCount := "1"
 	retryMin := "1s"
 	retryMax := "5m"
-	replicaImage := "dellemc/dell-replication-controller:v1.2.0"
+	replicaImage := "dellemc/dell-replication-controller:v1.3.0"
 
 	for _, component := range replica.Components {
 		if component.Name == utils.ReplicationControllerManager {

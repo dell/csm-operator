@@ -46,6 +46,7 @@ Currently, the Dell CSM Operator can be used to deploy the following CSI drivers
 
 * CSI Driver for Dell Technologies PowerScale
   * CSM Authorization
+  * CSM Replication
 
 **NOTE**: You can refer to additional information about the Dell CSM Operator on the new documentation website [here](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
