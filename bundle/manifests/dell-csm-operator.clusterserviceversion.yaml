@@ -83,7 +83,9 @@ metadata:
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
                   }
-                ]
+                ],
+                "nodeSelector": null,
+                "tolerations": null
               },
               "csiDriverSpec": {
                 "fSGroupPolicy": "ReadWriteOnceWithFSType"
@@ -105,7 +107,9 @@ metadata:
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
                   }
-                ]
+                ],
+                "nodeSelector": null,
+                "tolerations": null
               },
               "replicas": 2,
               "sideCars": [
@@ -138,11 +142,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.2.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.3.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.2.0",
+                "configVersion": "v1.3.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -159,7 +163,7 @@ metadata:
                         "value": "powerscale"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.2.0",
+                    "image": "dellemc/dell-csi-replicator:v1.3.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -185,11 +189,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.2.0",
+                    "image": "dellemc/dell-replication-controller:v1.3.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.2.0",
+                "configVersion": "v1.3.0",
                 "enabled": false,
                 "name": "replication"
               }
