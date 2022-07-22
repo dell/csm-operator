@@ -89,6 +89,8 @@ jobs:
         run: docker build . -t csm-operator:latest
       - name: Scan controller Image
         uses: Azure/container-scan@v0
+        env: 
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
         with:
           image-name: csm-operator:latest
           severity-threshold: HIGH
