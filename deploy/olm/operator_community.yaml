@@ -5,7 +5,7 @@ metadata:
   namespace: test-csm-operator-olm
 spec:
   sourceType: grpc
-  image: dellemc/dell-csm-operator:v0.2.0
+  image: dellemc/dell-csm-operator:v0.3.0
 ---
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
