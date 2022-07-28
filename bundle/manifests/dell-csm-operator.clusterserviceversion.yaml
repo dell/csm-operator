@@ -780,7 +780,7 @@ spec:
           - volumeattachments/status
           verbs:
           - patch
-        serviceAccountName: dell-csm-operator-controller-manager
+        serviceAccountName: dell-csm-operator-manager-service-account
       deployments:
       - name: dell-csm-operator-controller-manager
         spec:
@@ -834,12 +834,12 @@ spec:
                     memory: 256Mi
                   requests:
                     cpu: 100m
-                    memory: 192Mi
+                    memory: 100Mi
                 securityContext:
                   allowPrivilegeEscalation: false
               securityContext:
                 runAsNonRoot: true
-              serviceAccountName: dell-csm-operator-controller-manager
+              serviceAccountName: dell-csm-operator-manager-service-account
               terminationGracePeriodSeconds: 10
     strategy: deployment
   installModes:
