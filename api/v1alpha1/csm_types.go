@@ -33,6 +33,7 @@ type ContainerStorageModuleSpec struct {
 }
 
 // ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
+// +k8s:openapi-gen=true
 type ContainerStorageModuleStatus struct {
 	// ControllerStatus is the status of Controller pods
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="ControllerStatus",xDescriptors="urn:alm:descriptor:com.tectonic.ui:podStatuses"
