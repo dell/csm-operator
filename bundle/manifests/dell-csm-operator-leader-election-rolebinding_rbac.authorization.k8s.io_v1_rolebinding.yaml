@@ -9,5 +9,5 @@ roleRef:
   name: dell-csm-operator-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
-  namespace: system
+  name: default
+  namespace: default
