@@ -3,7 +3,7 @@ kind: ServiceAccount
 metadata:
   labels:
     control-plane: controller-manager
-  name: dell-csm-operator-controller-manager
+  name: dell-csm-operator-manager-service-account
   namespace: dell-csm-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -389,8 +389,8 @@ roleRef:
   name: dell-csm-operator-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
-  namespace: system
+  name: default
+  namespace: dell-csm-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -402,7 +402,7 @@ roleRef:
   name: dell-csm-operator-manager-role
 subjects:
 - kind: ServiceAccount
-  name: dell-csm-operator-controller-manager
+  name: dell-csm-operator-manager-service-account
   namespace: dell-csm-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -415,8 +415,8 @@ roleRef:
   name: dell-csm-operator-proxy-role
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
-  namespace: system
+  name: default
+  namespace: dell-csm-operator
 ---
 apiVersion: v1
 data:
@@ -501,5 +501,5 @@ spec:
           allowPrivilegeEscalation: false
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: dell-csm-operator-controller-manager
+      serviceAccountName: dell-csm-operator-manager-service-account
       terminationGracePeriodSeconds: 10
