@@ -20,7 +20,8 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerScale driver v2.4.0
-      image: "dellemc/csi-isilon:v2.4.0"
+      #image: "dellemc/csi-isilon:v2.4.0"
+      image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -103,15 +104,6 @@ spec:
         - name: "CSI_LOG_LEVEL"
           value: "debug"
 
-        # CHECK_OWNER_REFERENCE
-        # Allowed values:
-        #   true: perform owner reference check
-        #   false: otherwise
-        # Default value: false
-        - name: "CHECK_OWNER_REFERENCE"
-          value: "false"
-
-
     controller:
       envs:
       # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota
@@ -146,30 +138,6 @@ spec:
       # Default value: false
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
-      
-      # nodeSelector: Define node selection constraints for pods of controller deployment.
-      # For the pod to be eligible to run on a node, the node must have each
-      # of the indicated key-value pairs as labels.
-      # Leave as blank to consider all nodes
-      # Allowed values: map of key-value pairs
-      # Default value: None
-      nodeSelector:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      #  node-role.kubernetes.io/master: ""
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      #  node-role.kubernetes.io/control-plane: ""
-
-      # tolerations: Define tolerations for the controller deployment, if required.
-      # Default value: None
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      tolerations:
-      # - key: "node-role.kubernetes.io/master"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      # - key: "node-role.kubernetes.io/control-plane"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
 
     node:
       envs:
@@ -200,39 +168,6 @@ spec:
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
 
-      # nodeSelector: Define node selection constraints for pods of node daemonset
-      # For the pod to be eligible to run on a node, the node must have each
-      # of the indicated key-value pairs as labels.
-      # Leave as blank to consider all nodes
-      # Allowed values: map of key-value pairs
-      # Default value: None
-      nodeSelector:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      #  node-role.kubernetes.io/master: ""
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      #  node-role.kubernetes.io/control-plane: ""
-
-      # tolerations: Define tolerations for the node daemonset, if required.
-      # Default value: None
-      tolerations:
-      #  - key: "node.kubernetes.io/memory-pressure"
-      #    operator: "Exists"
-      #    effect: "NoExecute"
-      #  - key: "node.kubernetes.io/disk-pressure"
-      #    operator: "Exists"
-      #    effect: "NoExecute"
-      #  - key: "node.kubernetes.io/network-unavailable"
-      #    operator: "Exists"
-      #    effect: "NoExecute"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      #  - key: "node-role.kubernetes.io/master"
-      #    operator: "Exists"
-      #    effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      #  - key: "node-role.kubernetes.io/control-plane"
-      #    operator: "Exists"
-      #    effect: "NoSchedule"
-
     sideCars:
       - name: provisioner
         args: ["--volume-name-prefix=csipscale"]
@@ -246,10 +181,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.3.0
+      configVersion: v1.2.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.3.0
+        image: dellemc/csm-authorization-sidecar:v1.2.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
@@ -267,13 +202,13 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.3.0
+      configVersion: v1.2.0
       components:
       - name: dell-csi-replicator
         # image: Image to use for dell-csi-replicator. This shouldn't be changed
         # Allowed values: string
         # Default value: None
-        image: dellemc/dell-csi-replicator:v1.3.0
+        image: dellemc/dell-csi-replicator:v1.2.0
         envs:
           # replicationPrefix: prefix to prepend to storage classes parameters
           # Allowed values: string
@@ -289,7 +224,7 @@ spec:
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.3.0
+        image: dellemc/dell-replication-controller:v1.2.0
         envs:
           # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
           # Allowed values: string
