@@ -8,5 +8,5 @@ powerscale:
       authorization: "v1.3.0"
       replication: "v1.3.0"
   v2.4.0:
-      authorization: "v1.3.0"
-      replication: "v1.3.0"
+      authorization: "v1.4.0"
+      replication: "v1.4.0"
