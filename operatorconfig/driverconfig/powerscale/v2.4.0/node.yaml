@@ -138,7 +138,7 @@ spec:
             - name: csi-isilon-config-params
               mountPath: /csi-isilon-config-params
         - name: registrar
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.4.0
+          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.5.1
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
