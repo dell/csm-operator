@@ -29,7 +29,7 @@ subcrd="subscriptions.operators.coreos.com"
 
 # print header information
 function header() {
-  echo "Installing Dell CSM Operator in an OLM environment"
+  echo "Installing Dell Container Storage Modules Operator in an OLM environment"
   echo
 }
 
@@ -73,7 +73,7 @@ function check_for_olm_components() {
 
 function check_existing_installation() {
   log separator
-  echo "Checking for existing installation of Dell CSM Operator"
+  echo "Checking for existing installation of Dell Container Storage Modules Operator"
   # get namespace from YAML file for deployment
   NS_STRING=$(cat ${MANIFEST_FILE} | grep "namespace:" | head -1)
   if [ -z "${NS_STRING}" ]; then
