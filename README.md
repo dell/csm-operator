@@ -29,39 +29,39 @@ Dell Technologies Container Storage Modules (CSM) Operator is an open-source Kub
 * [Maintainers](./docs/MAINTAINERS.md)
 * [Support](./docs/SUPPORT.md)
 * [Security](./docs/SECURITY.md)
-* [Dell CSM Operator](#dell-csm-operator)
+* [Dell Container Storage Modules Operator](#dell-csm-operator)
   * [Support](#support)
   * [Supported Platforms](#supported-platforms)
   * [Installation](#installation)
   * [Install CSI Drivers and CSM Modules](#install-csi-drivers-and-csm-modules)
   * [Uninstall CSI Drivers and CSM Modules](#uninstall-csi-drivers-and-csm-modules)
 
-# Dell CSM Operator
-Dell CSM Operator is a Kubernetes native application which helps in installing and managing CSI Drivers and CSM Modules provided by Dell Technologies for its various storage platforms. 
-Dell CSM Operator uses Kubernetes CRDs (Custom Resource Definitions) to define a manifest that describes the deployment specifications for each driver to be deployed.
+# Dell Container Storage Modules Operator
+Dell Container Storage Modules Operator is a Kubernetes native application which helps in installing and managing CSI Drivers and CSM Modules provided by Dell Technologies for its various storage platforms. 
+Dell Container Storage Modules Operator uses Kubernetes CRDs (Custom Resource Definitions) to define a manifest that describes the deployment specifications for each driver to be deployed.
 
-Dell CSM Operator is built using the [operator framework](https://github.com/operator-framework) and runs custom Kubernetes controllers to manage the driver installations. These controllers listen for any create/update/delete request for the respective CRDs and try to reconcile the request.
+Dell Container Storage Modules Operator is built using the [operator framework](https://github.com/operator-framework) and runs custom Kubernetes controllers to manage the driver installations. These controllers listen for any create/update/delete request for the respective CRDs and try to reconcile the request.
 
-Currently, the Dell CSM Operator can be used to deploy the following CSI drivers provided by Dell Technologies
+Currently, the Dell Container Storage Modules Operator can be used to deploy the following CSI drivers provided by Dell Technologies
 
 * CSI Driver for Dell Technologies PowerScale
   * CSM Authorization
   * CSM Replication
 
-**NOTE**: You can refer to additional information about the Dell CSM Operator on the new documentation website [here](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
+**NOTE**: You can refer to additional information about the Dell Container Storage Modules Operator on the new documentation website [here](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
 ## Support
-The Dell CSM Operator image is available on Dockerhub and is officially supported by Dell Technologies.
+The Dell Container Storage Modules Operator image is available on Dockerhub and is officially supported by Dell Technologies.
 For any CSM Operator and driver issues, questions or feedback, join the [Dell Technologies Container community](https://www.dell.com/community/Containers/bd-p/Containers) or the [Slack channel for Dell Container Storage Modules](https://dellemccsm.slack.com/).
 
 ## Supported Platforms
-Dell CSM Operator has been tested and qualified with 
+Dell Container Storage Modules Operator has been tested and qualified with 
 
     * Upstream Kubernetes cluster v1.22, v1.23, v1.24
     * OpenShift Clusters 4.9, 4.10 with RHEL 7.x (with OCP 4.9), RHEL 8.x (with OCP 4.10) & RHCOS worker nodes
 
 ## Installation
-To install Dell CSM Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
+To install Dell Container Storage Modules Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
 ## Install CSI Drivers and CSM Modules
 To install CSI drivers and CSM modules using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
