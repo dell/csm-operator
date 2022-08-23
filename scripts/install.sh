@@ -45,9 +45,9 @@ function warning() {
 # print header information
 function header() {
   if [ "$MODE" == "upgrade" ]; then
-    echo "Upgrading Dell CSM Operator"
+    echo "Upgrading Dell Container Storage Modules Operator"
   else
-    echo "Installing Dell CSM Operator"
+    echo "Installing Dell Container Storage Modules Operator"
   fi
 
   echo
@@ -74,7 +74,7 @@ function verify_prerequisites() {
 
 function check_existing_installation() {
   log separator
-  echo "Checking for existing installation of Dell CSM Operator"
+  echo "Checking for existing installation of Dell Container Storage Modules Operator"
   # get namespace from YAML file for deployment
   NS_STRING=$(cat ${DEPLOYDIR}/operator.yaml | grep "namespace:" | head -1)
   if [ -z "${NS_STRING}" ]; then
