@@ -16,7 +16,7 @@ The E2E tests will test the installation of Dell CSI Drivers and Dell CSM Module
 
 ### Prerequisite
 
-- A supported environment where Dell CSM Operator is running
+- A supported environment where Dell Container Storage Modules Operator is running
 - All prerequisite for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
 
 
