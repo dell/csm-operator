@@ -118,7 +118,7 @@ spec:
 
       containers:
         - name: resizer
-          image: k8s.gcr.io/sig-storage/csi-resizer:v1.3.0
+          image: k8s.gcr.io/sig-storage/csi-resizer:v1.4.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -152,7 +152,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: external-health-monitor
-          image: k8s.gcr.io/sig-storage/csi-external-health-monitor-controller:v0.5.1
+          image: k8s.gcr.io/sig-storage/csi-external-health-monitor-controller:v0.5.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
