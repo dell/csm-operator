@@ -5,7 +5,7 @@ export GINKGO_OPTS="-v"
 export KUBECONFIG=""
 
 # Must suply path to values file
-export VALUES_FILE="./values.yaml"
+export VALUES_FILE=""
 
 # [Optional] namespace of operator if you deployed it to a namespace diffrent form the one below.
 export OPERATOR_NAMESPACE="dell-csm-operator"
