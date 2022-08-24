@@ -186,6 +186,6 @@ spec:
           - name: "PROXY_HOST"
             value: ""
         
-          # insecure: Enable/Disable certificate validation of the csm-authorization server       
-          - name: "INSECURE"
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+          - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
