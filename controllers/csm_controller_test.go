@@ -152,7 +152,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 // test a happy path scenerio with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
-	suite.makeFakeCSM(csmName, suite.namespace, true, getReplicaModule())
+	suite.makeFakeCSM(csmName, suite.namespace, true, append(getReplicaModule(), getObservabilityModule()...))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
@@ -342,7 +342,7 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 
 			if tt.errorInjector != nil {
 				// need to create all objs before running removeDriver to hit unknown error
-				suite.makeFakeCSM(csmName, suite.namespace, true, getAuthModule())
+				suite.makeFakeCSM(csmName, suite.namespace, true, append(getAuthModule(), getObservabilityModule()...))
 				r.Reconcile(ctx, req)
 				*tt.errorInjector = true
 			}
@@ -444,6 +444,11 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// error in Observability
+	csm.Spec.Modules = getObservabilityModule()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
 	// error unsupported module
 	csm.Spec.Modules = []csmv1.Module{
 		{
@@ -452,6 +457,49 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 		},
 	}
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Annotations[configVersionKey] = configVersion
+
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	suite.fakeClient.Create(ctx, &csm)
+	reconciler := suite.createReconciler()
+
+	// error in Authorization
+	csm.Spec.Modules = getAuthModule()
+	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
+	err := reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Replication
+	csm.Spec.Modules = getReplicaModule()
+	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Observability
+	csm.Spec.Modules = getObservabilityModule()
+	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error unsupported module
+	csm.Spec.Modules = []csmv1.Module{
+		{
+			Name:    "Unsupported module",
+			Enabled: true,
+		},
+	}
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 }
 
@@ -732,6 +780,28 @@ func (suite *CSMControllerTestSuite) deleteCSM(csmName string) {
 	suite.fakeClient.Delete(ctx, csm)
 }
 
+func getObservabilityModule() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.Observability,
+			Enabled:       true,
+			ConfigVersion: "v1.3.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:    "topology",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "TOPOLOGY_LOG_LEVEL",
+							Value: "INFO",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func getReplicaModule() []csmv1.Module {
 	return []csmv1.Module{
 		{
@@ -778,7 +848,7 @@ func getAuthModule() []csmv1.Module {
 }
 
 func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
-	suite.makeFakeCSM(csmName, suite.namespace, true, getAuthModule())
+	suite.makeFakeCSM(csmName, suite.namespace, true, append(getAuthModule(), getObservabilityModule()...))
 	suite.runFakeCSMManager("", false)
 
 	updateCSMError = true
@@ -832,7 +902,7 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm.Spec.Driver.ForceRemoveDriver = true
 	csm.Annotations[configVersionKey] = configVersion
 
-	csm.Spec.Modules = getReplicaModule()
+	csm.Spec.Modules = append(getReplicaModule(), getObservabilityModule()...)
 	out, _ := json.Marshal(csm)
 	csm.Annotations[previouslyAppliedCustomResource] = string(out)
 
