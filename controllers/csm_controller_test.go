@@ -767,7 +767,7 @@ func getAuthModule() []csmv1.Module {
 					Name: "karavi-authorization-proxy",
 					Envs: []corev1.EnvVar{
 						{
-							Name:  "INSECURE",
+							Name:  "SKIP_CERTIFICATE_VALIDATION",
 							Value: "true",
 						},
 					},
