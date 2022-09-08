@@ -4,6 +4,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+source ./env-e2e-test.sh
+
 if [ -z "${VALUES_FILE-}" ]; then
     echo "!!!! FATAL: VALUES_FILE was not provided"
     exit 1
@@ -14,10 +16,13 @@ export GO111MODULE=on
 export ACK_GINKGO_DEPRECATIONS=1.16.4
 export ACK_GINKGO_RC=true
 
-if ! (cd tests/e2e && go mod vendor && go get -u github.com/onsi/ginkgo/ginkgo); then
+if ! (go mod vendor && go get -u github.com/onsi/ginkgo/ginkgo); then
     echo "go mod vendor or go get ginkgo error"
     exit 1
 fi
+
+# copy cert-csi binary into local folder
+cp $CERT_CSI .
 
 PATH=$PATH:$(go env GOPATH)/bin
 
@@ -29,7 +34,10 @@ else
     read -ra OPTS <<<"-v $GINKGO_OPTS"
 fi
 
-cd tests/e2e && ginkgo -mod=mod "${OPTS[@]}"
+pwd
+ginkgo -mod=mod "${OPTS[@]}"
+
+rm -f cert-csi
 
 # Checking for test status
 TEST_PASS=$?
