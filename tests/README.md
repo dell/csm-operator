@@ -12,20 +12,20 @@ To run unit test, go to the root directory of this project and run `make unit-te
 
 ## E2E Test
 
-The E2E tests will test the installation of Dell CSI Drivers and Dell CSM Modules. The prerequisites and execution of e2e tests are documented below:
+The E2E tests test the installation of Dell CSI Drivers and Dell CSM Modules.
 
-### Prerequisite
+### Prerequisites
 
-- A supported environment where Dell Container Storage Modules Operator is running
-- All prerequisite for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
+- A supported environment where the Dell Container Storage Modules Operator is running
+- All prerequisites for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
 
 
 ### Run
 
 To run e2e test, go through the following steps:
 
-- Ensure you meet all [prerequisites](#prerequisite)
-- Change to the root directory of this project
+- Ensure you meet all [prerequisites](#prerequisite).
+- Change to the `tests/e2e` directory.
 - Copy or modify the values file at [`tests/e2e/testfiles/values.yaml`](https://github.com/dell/csm-operator/blob/main/tests/e2e/testfiles/values.yaml). Review [Values File](#values-file) for more information.
 - Change to the `scripts` directory
 - Set your environment variables in the file `env-e2e-test.sh`. You MUST set `VALUES_FILE` to point to the path to the `values.yaml` we created above.
