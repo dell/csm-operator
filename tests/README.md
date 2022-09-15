@@ -39,7 +39,8 @@ An e2e test values file is a yaml file that defines all e2e tests to be ran. An 
 
 ```yaml
 - scenario: "Install PowerScale Driver(Standalone)"
-  path: "<path-to-cr-for-powerscale-with-auth-disabled>"
+  path: "testfiles/storage_csm_powerscale.yaml"
+  modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -53,11 +54,11 @@ An e2e test values file is a yaml file that defines all e2e tests to be ran. An 
     # name of custom test to run
     name: Cert CSI
     # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e test repo. 
+    # The command should be accessible from e2e_tes repo.
     # Example:
     #   ./hello_world.sh
     #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: cert-csi test vio --sc isilon-plain --chainNumber 2 --chainLength 2
+    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 ```
 
 Each test has:
