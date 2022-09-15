@@ -55,16 +55,12 @@ metadata:
                   {
                     "name": "CSI_LOG_LEVEL",
                     "value": "debug"
-                  },
-                  {
-                    "name": "CHECK_OWNER_REFERENCE",
-                    "value": "false"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.3.0",
+                "image": "dellemc/csi-isilon:v2.4.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.3.0",
+              "configVersion": "v2.4.0",
               "controller": {
                 "envs": [
                   {
@@ -138,15 +134,15 @@ metadata:
                         "value": ""
                       },
                       {
-                        "name": "INSECURE",
+                        "name": "SKIP_CERTIFICATE_VALIDATION",
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.3.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.4.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.3.0",
+                "configVersion": "v1.4.0",
                 "enabled": false,
                 "name": "authorization"
               },
