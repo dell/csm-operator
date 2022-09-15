@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 	"time"
+	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	step "github.com/dell/csm-operator/tests/e2e/steps"
@@ -21,13 +22,41 @@ import (
 const (
 	timeout  = time.Minute * 10
 	interval = time.Second * 10
+	valuesFileEnvVar = "E2E_VALUES_FILE"
 )
+
 
 var (
 	testResources []step.Resource
+	installedModules []string
 	stepRunner    *step.Runner
 	beautify      string
 )
+
+func Contains(slice []string, str string) bool {
+  for _, v := range slice {
+    if v == str {
+      return true
+    }
+  }
+  return false
+}
+
+func ContainsModules(modulesRequired []string, modulesInstalled []string) bool {
+    fmt.Println(modulesRequired)
+    fmt.Println(modulesInstalled)
+    if len(modulesRequired) == 0 && len(modulesInstalled) == 0 {
+        return true
+    }
+
+    for _, moduleName := range modulesRequired {
+	// check to see if we have modules required
+        if Contains(modulesInstalled, moduleName) == false {
+            return false
+        }
+    }
+    return true
+}
 
 // TestE2E -
 func TestE2E(t *testing.T) {
@@ -41,9 +70,17 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	moduleEnvVars := [2]string{"AUTHORIZATION", "REPLICATION"}
 	By("Getting test environment variables")
-	valuesFile := os.Getenv("E2E_VALUES_FILE")
+	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must both be set.")
+
+	for _, moduleEnvVar := range moduleEnvVars {
+		moduleEnvVar = os.Getenv(moduleEnvVar)
+		if moduleEnvVar != "" {
+			installedModules = append(installedModules, strings.ToLower(moduleEnvVar))
+		}
+	}
 
 	By("Reading values file")
 	res, err := step.GetTestResources(valuesFile)
@@ -75,6 +112,9 @@ var _ = Describe("[run-e2e-test]E2E Testing", func() {
 	It("Running all test Given Test Scenarios", func() {
 		for _, test := range testResources {
 			By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
+			if ContainsModules(test.Scenario.Modules, installedModules) == false {
+				continue;
+			}
 
 			for _, stepName := range test.Scenario.Steps {
 				By(fmt.Sprintf("%s Executing  %s", beautify, stepName))

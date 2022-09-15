@@ -25,6 +25,7 @@ type CustomTest struct {
 type Scenario struct {
 	Scenario   string     `json:"scenario" yaml:"scenario"`
 	Path       string     `json:"path" yaml:"path"`
+	Modules    []string   `json:"modules" yaml:"modules"`
 	Steps      []string   `json:"steps" yaml:"steps"`
 	CustomTest CustomTest `json:"customTest,omitempty" yaml:"customTest"`
 }
