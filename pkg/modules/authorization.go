@@ -84,9 +84,9 @@ func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, 
 			}
 
 			for _, env := range cnt.Env {
-				if *env.Name == "INSECURE" {
+				if *env.Name == "SKIP_CERTIFICATE_VALIDATION" {
 					if _, err := strconv.ParseBool(*env.Value); err != nil {
-						return fmt.Errorf("%s is an invalid value for INSECURE: %v", *env.Value, err)
+						return fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", *env.Value, err)
 					}
 				}
 				if *env.Name == "PROXY_HOST" && *env.Value == "" {
@@ -138,7 +138,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 
 	skipCertValid := false
 	for _, env := range authModule.Components[0].Envs {
-		if env.Name == "INSECURE" {
+		if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
 			skipCertValid, _ = strconv.ParseBool(env.Value)
 		}
 	}
@@ -187,7 +187,7 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfi
 
 	skipCertValid := false
 	for _, env := range auth.Envs {
-		if env.Name == "INSECURE" {
+		if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
 			skipCertValid, _ = strconv.ParseBool(env.Value)
 		}
 	}
@@ -282,10 +282,10 @@ func AuthorizationPrecheck(ctx context.Context, op utils.OperatorConfig, auth cs
 	// Check for secrets
 	skipCertValid := false
 	for _, env := range auth.Components[0].Envs {
-		if env.Name == "INSECURE" {
+		if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
 			b, err := strconv.ParseBool(env.Value)
 			if err != nil {
-				return fmt.Errorf("%s is an invalid value for INSECURE: %v", env.Value, err)
+				return fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
 			}
 			skipCertValid = b
 		}

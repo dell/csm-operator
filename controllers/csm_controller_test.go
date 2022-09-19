@@ -761,13 +761,13 @@ func getAuthModule() []csmv1.Module {
 		{
 			Name:          csmv1.Authorization,
 			Enabled:       true,
-			ConfigVersion: "v1.3.0",
+			ConfigVersion: "v1.4.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: "karavi-authorization-proxy",
 					Envs: []corev1.EnvVar{
 						{
-							Name:  "INSECURE",
+							Name:  "SKIP_CERTIFICATE_VALIDATION",
 							Value: "true",
 						},
 					},

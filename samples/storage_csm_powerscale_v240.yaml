@@ -158,6 +158,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # tolerations:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
@@ -205,6 +206,7 @@ spec:
 
       # tolerations: Define tolerations for the node daemonset, if required.
       # Default value: None
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
       tolerations:
       #  - key: "node.kubernetes.io/memory-pressure"
       #    operator: "Exists"
@@ -215,14 +217,14 @@ spec:
       #  - key: "node.kubernetes.io/network-unavailable"
       #    operator: "Exists"
       #    effect: "NoExecute"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      #  - key: "node-role.kubernetes.io/master"
-      #    operator: "Exists"
-      #    effect: "NoSchedule"
+      # - key: "node-role.kubernetes.io/master"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      #  - key: "node-role.kubernetes.io/control-plane"
-      #    operator: "Exists"
-      #    effect: "NoSchedule"
+      # tolerations:
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
 
     sideCars:
       - name: provisioner

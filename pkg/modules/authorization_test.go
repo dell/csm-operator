@@ -210,7 +210,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.3.0"
+			auth.ConfigVersion = "v1.4.0"
 
 			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
@@ -219,7 +219,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 
 			return true, auth, tmpCR, client
 		},
-		"fail - INSECURE is false but no cert": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+		"fail - SKIP_CERTIFICATE_VALIDATION is false but no cert": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -228,9 +228,9 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 
-			// set insecure to false
+			// set skipCertificateValidation to false
 			for i, env := range auth.Components[0].Envs {
-				if env.Name == "INSECURE" {
+				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
 					auth.Components[0].Envs[i].Value = "false"
 				}
 			}
@@ -241,16 +241,16 @@ func TestAuthorizationPreCheck(t *testing.T) {
 
 			return false, auth, tmpCR, client
 		},
-		"fail - invalid INSECURE value": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+		"fail - invalid SKIP_CERTIFICATE_VALIDATION value": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			// set insecure to false
+			// set skipCertificateValidation to false
 			for i, env := range auth.Components[0].Envs {
-				if env.Name == "INSECURE" {
+				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
 					auth.Components[0].Envs[i].Value = "1234"
 				}
 			}
