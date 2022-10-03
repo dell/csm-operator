@@ -31,7 +31,7 @@ To run e2e test, go through the following steps:
 - Ensure you meet all [prerequisites](#prerequisite).
 - Change to the `tests/e2e` directory.
 - Set your environment variables in the file `env-e2e-test.sh`. You MUST set `CERT-CSI` to point to a cert-csi executable.
-- If you want to test any modules, uncomment their environment variables.
+- If you want to test any modules, uncomment their environment variables in `env-e2e-test.sh`.
 - Run the e2e test by executing the commands below:
 
 ```bash
