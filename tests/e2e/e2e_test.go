@@ -3,9 +3,9 @@ package e2e
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
-	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
 	step "github.com/dell/csm-operator/tests/e2e/steps"
@@ -20,42 +20,40 @@ import (
 )
 
 const (
-	timeout  = time.Minute * 10
-	interval = time.Second * 10
+	timeout          = time.Minute * 10
+	interval         = time.Second * 10
 	valuesFileEnvVar = "E2E_VALUES_FILE"
 )
 
-
 var (
-	testResources []step.Resource
+	testResources    []step.Resource
 	installedModules []string
-	stepRunner    *step.Runner
-	beautify      string
+	stepRunner       *step.Runner
+	beautify         string
 )
 
 func Contains(slice []string, str string) bool {
-  for _, v := range slice {
-    if v == str {
-      return true
-    }
-  }
-  return false
+	for _, v := range slice {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
 
 func ContainsModules(modulesRequired []string, modulesInstalled []string) bool {
-    fmt.Println(modulesRequired)
-    fmt.Println(modulesInstalled)
-    if len(modulesRequired) == 0 && len(modulesInstalled) == 0 {
-        return true
-    }
+	if len(modulesRequired) == 0 && len(modulesInstalled) == 0 {
+		return true
+	}
 
-    for _, moduleName := range modulesRequired {
-	// check to see if we have modules required
-        if Contains(modulesInstalled, moduleName) == false {
-            return false
-        }
-    }
-    return true
+	for _, moduleName := range modulesRequired {
+		// check to see if we have modules required
+		if Contains(modulesInstalled, moduleName) == false {
+			By(fmt.Sprintf("Required module not installed: %s ", moduleName))
+			return false
+		}
+	}
+	return true
 }
 
 // TestE2E -
@@ -113,7 +111,9 @@ var _ = Describe("[run-e2e-test]E2E Testing", func() {
 		for _, test := range testResources {
 			By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
 			if ContainsModules(test.Scenario.Modules, installedModules) == false {
-				continue;
+				By("Required module not installed, skipping")
+				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
+				continue
 			}
 
 			for _, stepName := range test.Scenario.Steps {
@@ -122,9 +122,7 @@ var _ = Describe("[run-e2e-test]E2E Testing", func() {
 					return stepRunner.RunStep(stepName, test)
 				}, timeout, interval).Should(BeNil())
 			}
-			By(fmt.Sprintf("Ending: %s ", test.Scenario.Scenario))
-			By("")
-			By("")
+			By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 			time.Sleep(5 * time.Second)
 		}
 	})
