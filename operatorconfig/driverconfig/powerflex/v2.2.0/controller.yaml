@@ -214,29 +214,12 @@ spec:
               mountPath: /vxflexos-config
             - name: vxflexos-config-params
               mountPath: /vxflexos-config-params
-            - name: certs
-              mountPath: /certs
-              readOnly: true
       volumes:
         - name: socket-dir
           emptyDir:
         - name: vxflexos-config
           secret:
-            secretName: <DriverDefaultReleaseName>-config
+            secretName: vxflexos-config
         - name: vxflexos-config-params
           configMap:
-            name: <DriverDefaultReleaseName>-config-params
-        - name: karavi-authorization-config
-          secret:
-            secretName: karavi-authorization-config
-        - name: proxy-server-root-certificate
-          secret:
-            secretName: proxy-server-root-certificate
-        - name: certs
-          projected:
-            sources:
-              - secret:
-                  name: <DriverDefaultReleaseName>-certs-0
-                  items:
-                    - key: cert-0
-                      path: cert-0
+            name: vxflexos-config-params

@@ -9,6 +9,7 @@ spec:
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
+    forceRemoveDriver: true
     common:
       image: "dellemc/csi-vxflexos:v2.2.0"
       imagePullPolicy: IfNotPresent
