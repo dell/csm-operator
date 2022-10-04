@@ -171,7 +171,7 @@ func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
-	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
