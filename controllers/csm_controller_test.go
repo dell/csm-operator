@@ -394,7 +394,7 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 func (suite *CSMControllerTestSuite) TestCsmPreCheckTypeError() {
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
-	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Annotations[configVersionKey] = configVersion
 
