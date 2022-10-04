@@ -1,5 +1,5 @@
-apiVersion: storage.dell.com/v1
-kind: CSIVXFlexOS
+apiVersion: storage.dell.com/v1alpha1
+kind: ContainerStorageModule
 metadata:
   name: test-vxflexos
   namespace: test-vxflexos
