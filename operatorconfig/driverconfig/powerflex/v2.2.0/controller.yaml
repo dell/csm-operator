@@ -159,6 +159,15 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
+        - name: vg-snapshotter
+          image: dellemc/csi-volumegroup-snapshotter:v1.0.0
+          imagePullPolicy: IfNotPresent 
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
         - name: snapshotter
           image: k8s.gcr.io/sig-storage/csi-snapshotter:v5.0.1
           imagePullPolicy: IfNotPresent
@@ -187,7 +196,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-vxflexos:v2.4.0
+          image: dellemc/csi-vxflexos:v2.2.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:

@@ -23,6 +23,11 @@ spec:
           value: "true"
         - name: X_CSI_ALLOW_RWO_MULTI_POD_ACCESS
           value: "false"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: None
+        - name: KUBELET_CONFIG_DIR
+          value: "/var/lib/kubelet"
     sideCars:
     # comment the following section if you don't want to run the monitoring sidecar
       - name: sdc-monitor
@@ -32,10 +37,16 @@ spec:
         - name: MDM
           value: ""
 
-      # Uncomment the following to install 'external-health-monitor' sidecar to enable health monitor of CSI volumes from Controller plugin.
-      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
-      # - name: external-health-monitor
-      #   args: ["--monitor-interval=60s"]
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+      - name: csi-external-health-monitor-controller
+        enabled: false
+        args: ["--monitor-interval=60s"]
+
+    # vg-snapshotter is disabled by default, refer to driver documentation before enabling it
+      - name: vg-snapshotter
+        enabled: false
+        image: dellemc/csi-volumegroup-snapshotter:v1.0.1
 
     controller:
       envs:
