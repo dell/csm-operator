@@ -844,7 +844,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			}
 
 		} else {
-			if ischeckingOwnRef { // TODO(Michael): should be deprecated after 0.2.0
+			if ischeckingOwnRef {
 				return fmt.Errorf("Owner reference not found. Please re-install driver")
 			}
 		}
