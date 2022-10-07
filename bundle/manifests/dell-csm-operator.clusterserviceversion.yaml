@@ -1,11 +1,11 @@
-apiVersion: operators.coreos.com/v1alpha1
+apiVersion: operators.coreos.com/v1
 kind: ClusterServiceVersion
 metadata:
   annotations:
     alm-examples: |-
       [
         {
-          "apiVersion": "storage.dell.com/v1alpha1",
+          "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
             "name": "test-isilon",
@@ -468,7 +468,7 @@ spec:
         path: state
         x-descriptors:
         - urn:alm:descriptor:text
-      version: v1alpha1
+      version: v1
   description: "Dell Container Storage Modules (CSM) Operator is a Kubernetes Operator
     which can be \nused to install and manage Dell’s CSI drivers and CSM modules for
     Dell PowerScale.\nBy using Dell CSM Operator, enterprises can quickly and easily
