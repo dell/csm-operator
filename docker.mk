@@ -1,5 +1,5 @@
 # Registry for all images
-REGISTRY ?= dellemc
+REGISTRY ?= docker.io/dellemc
 
 # IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
 # This variable is used to construct full image tags for bundle and catalog images.
@@ -15,10 +15,10 @@ BUNDLE_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-bundle
 CATALOG_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-catalog
 
 # Operator version tagged with build number. For e.g. - v1.2.0.001
-VERSION ?= v0.3.0
+VERSION ?= v1.0.0
 
 # Bundle Version is the semantic version(required by operator-sdk)
-BUNDLE_VERSION ?= 0.3.0
+BUNDLE_VERSION ?= 1.0.0
 
 # Timestamp local builds
 TIMESTAMP := $(shell  date +%Y%m%d%H%M%S)
@@ -37,5 +37,5 @@ IMG ?= "$(REGISTRY)/$(IMAGE_TAG_BASE):$(VERSION)"
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMG ?= "$(REGISTRY)/$(BUNDLE_IMAGE_TAG_BASE_COMMUNITY):$(VERSION)"
 
-# The image tag given to the resulting catalog image (e.g. make catalog-build CATALOG_IMG=example.com/operator-catalog:v0.3.0).
+# The image tag given to the resulting catalog image (e.g. make catalog-build CATALOG_IMG=example.com/operator-catalog:v1.0.0).
 CATALOG_IMG ?= "$(REGISTRY)/$(CATALOG_IMAGE_TAG_BASE_COMMUNITY):$(VERSION)"
