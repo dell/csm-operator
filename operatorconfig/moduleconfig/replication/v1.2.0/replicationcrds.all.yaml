@@ -36,7 +36,7 @@ spec:
       jsonPath: .status.replicationLinkState.lastSuccessfulUpdate
       name: Last LinkState Update
       type: string
-    name: v1alpha1
+    name: v1
     schema:
       openAPIV3Schema:
         description: DellCSIReplicationGroup is the Schema for the dellcsireplicationgroups
