@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.18 as builder
+FROM golang:1.19 as builder
 
 WORKDIR /workspace
 
@@ -41,7 +41,7 @@ LABEL vendor="Dell Inc." \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
     description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
-    version="0.3.0" \
+    version="1.0.0" \
     license="Dell CSM Operator Apache License"
 
 
