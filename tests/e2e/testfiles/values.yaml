@@ -15,7 +15,7 @@
     # name of custom test to run
     name: Cert CSI
     # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_tes repo. 
+    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
     # Example:
     #   ./hello_world.sh
     #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
