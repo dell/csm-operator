@@ -46,6 +46,8 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["pods"]
+    verbs: ["get", "list", "watch", "update", "delete"]
+    verbs: ["get", "list", "watch"]
 # below for snapshotter
   - apiGroups: [""]
     resources: ["secrets"]
