@@ -327,3 +327,71 @@ spec:
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
               value: "INFO"           
+
+        - name: metrics-powerscale
+          # enabled: Enable/Disable PowerScale metrics
+          enabled: false
+          # image: Defines PowerScale metrics image. This shouldn't be changed
+          # Allowed values: string
+          image: dellemc/csm-metrics-powerscale:v1.0.0
+          envs:
+            # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERSCALE_MAX_CONCURRENT_QUERIES"
+              value: "10"
+            # POWERSCALE_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERSCALE_CAPACITY_METRICS_ENABLED"
+              value: "true"
+            # POWERSCALE_PERFORMANCE_METRICS_ENABLED: enable/disable collection of performance metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERSCALE_PERFORMANCE_METRICS_ENABLED"
+              value: "true"
+            # POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY"
+              value: "30"
+            # POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get cluster performance metrics data
+            # Allowed values: int
+            # Default value: 20
+            - name: "POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY"
+              value: "20"
+            # POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY: set polling frequency to get Quota capacity metrics data
+            # Allowed values: int
+            # Default value: 20
+            - name: "POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY"
+              value: "30"
+            # ISICLIENT_INSECURE: set true/false to skip/verify OneFS API server's certificates
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "ISICLIENT_INSECURE"
+              value: "true"
+            # ISICLIENT_AUTH_TYPE: set 0/1 to enables session-based/basic Authentication
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "ISICLIENT_AUTH_TYPE"
+              value: "1"
+            # ISICLIENT_VERBOSE: set 0/1/2 decide High/Medium/Low content of the OneFS REST API message should be logged in debug level logs
+            # Allowed values: 0,1,2
+            # Default value: 0
+            - name: "ISICLIENT_VERBOSE"
+              value: "0"
+            # PowerScale metrics log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "POWERSCALE_LOG_LEVEL"
+              value: "INFO"
+            # PowerScale Metrics Output logs in the specified format
+            # Valid values: TEXT, JSON
+            # Default value: "TEXT"
+            - name: "POWERSCALE_LOG_FORMAT"
+              value: "TEXT"
+            # Otel collector address
+            # Allowed values: String
+            # Default value: "otel-collector:55680"
+            - name: "COLLECTOR_ADDRESS"
+              value: "otel-collector:55680"

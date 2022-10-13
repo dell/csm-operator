@@ -663,6 +663,18 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		}
 	}
 
+	if utils.IsComponentEnabled(ctx, cr, r, csmv1.Observability, modules.ObservabilityMetricsPowerScaleName) {
+		log.Infow("Reconcile Otel Collector")
+		if err := modules.OtelCollector(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return err
+		}
+
+		log.Infow("Reconcile PowerScale metrics")
+		if err := modules.PowerScaleMetrics(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

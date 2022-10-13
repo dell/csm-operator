@@ -121,6 +121,10 @@ var (
 	operatorConfig = utils.OperatorConfig{
 		ConfigDirectory: "../operatorconfig",
 	}
+
+	fakeOperatorConfig = utils.OperatorConfig{
+		ConfigDirectory: "./operatorconfig",
+	}
 )
 
 // CSMContrllerTestSuite implements testify suite
@@ -163,7 +167,7 @@ func (suite *CSMControllerTestSuite) TestErrorInjection() {
 	// test csm not found. err should be nil
 	suite.runFakeCSMManager("", true)
 	// make a csm without finalizer
-	suite.makeFakeCSM(csmName, suite.namespace, false, getAuthModule())
+	suite.makeFakeCSM(csmName, suite.namespace, false, append(getAuthModule(), getObservabilityModule()...))
 	suite.reconcileWithErrorInjection(csmName, "")
 }
 
@@ -797,6 +801,16 @@ func getObservabilityModule() []csmv1.Module {
 						},
 					},
 				},
+				{
+					Name:    "metrics-powerscale",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "POWERSCALE_MAX_CONCURRENT_QUERIES",
+							Value: "10",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -861,7 +875,6 @@ func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
 
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool, modules []csmv1.Module) {
-
 	// make pre-requisite secrets
 	sec := shared.MakeSecret(name+"-creds", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
@@ -881,6 +894,10 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	sec = shared.MakeSecret("skip-replication-cluster-check", utils.ReplicationControllerNameSpace, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
+
+	// this secret required by observability isilon module
+	obsIsilonSec := shared.MakeSecret("isilon-creds", "karavi", configVersion)
+	suite.fakeClient.Create(ctx, obsIsilonSec)
 
 	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
