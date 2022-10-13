@@ -104,6 +104,8 @@ const (
 	ReplicationSideCarName = "dell-csi-replicator"
 	// DefaultSourceClusterID -
 	DefaultSourceClusterID = "default-source-cluster"
+	// ObservabilityNamespace - karavi
+	ObservabilityNamespace = "karavi"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -301,6 +303,76 @@ func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 			return ctrlObjects, err
 		}
 		switch meta.Kind {
+		case "ClusterRole":
+			var cr rbacv1.ClusterRole
+			if err := yaml.Unmarshal(raw, &cr); err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &cr)
+
+		case "ClusterRoleBinding":
+			var crb rbacv1.ClusterRoleBinding
+			if err := yaml.Unmarshal(raw, &crb); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &crb)
+
+		case "Service":
+
+			var sv corev1.Service
+			if err := yaml.Unmarshal(raw, &sv); err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &sv)
+
+		case "ConfigMap":
+
+			var cm corev1.ConfigMap
+			if err := yaml.Unmarshal(raw, &cm); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &cm)
+
+		case "Deployment":
+
+			var dp appsv1.Deployment
+			if err := yaml.Unmarshal(raw, &dp); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &dp)
+
+		}
+	}
+
+	return ctrlObjects, nil
+}
+
+// GetObservabilityComponentObj - get Observability component object from config yaml string
+func GetObservabilityComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
+	ctrlObjects := []crclient.Object{}
+
+	bufs, err := SplitYaml(CtrlBuf)
+	if err != nil {
+		return ctrlObjects, err
+	}
+
+	for _, raw := range bufs {
+		var meta metav1.TypeMeta
+		err = yaml.Unmarshal(raw, &meta)
+		if err != nil {
+			return ctrlObjects, err
+		}
+		switch meta.Kind {
+		case "ServiceAccount":
+			var sa corev1.ServiceAccount
+			err := yaml.Unmarshal(raw, &sa)
+			if err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &sa)
 		case "ClusterRole":
 			var cr rbacv1.ClusterRole
 			if err := yaml.Unmarshal(raw, &cr); err != nil {
@@ -653,4 +725,32 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 		}
 	}
 	return replicaEnabled, clusterClients, nil
+}
+
+// IsModuleEnabled - check if the module is enabled
+func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType) (bool, csmv1.Module) {
+	for _, m := range instance.Spec.Modules {
+		if m.Name == mod && m.Enabled {
+			return true, m
+		}
+	}
+
+	return false, csmv1.Module{}
+}
+
+// IsComponentEnabled - check if the component is enabled
+func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, compoenetType string) bool {
+	observabilityEnabled, obs := IsModuleEnabled(ctx, instance, r, mod)
+
+	if !observabilityEnabled {
+		return false
+	}
+
+	for _, c := range obs.Components {
+		if c.Name == compoenetType && *c.Enabled {
+			return true
+		}
+	}
+
+	return false
 }
