@@ -152,7 +152,9 @@
 
 
 - scenario: "Install PowerScale Driver(With Observability)"
-  path: "<path-to-cr-for-powerscale-with-observability-enabled>"
+  path: "testfiles/storage_csm_powerscale_observability.yaml"
+  modules:
+    - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -164,7 +166,9 @@
     - "Delete resources"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Observability"
-  path: "<path-to-cr-for-powerscale-with-observability-disabled>"
+  path: "testfiles/storage_csm_powerscale_observability.yaml"
+  modules:
+    - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -179,7 +183,9 @@
     - "Delete resources"
 
 - scenario: Install PowerScale Driver(With Observability), Disable Observability module"
-  path: "<path-to-cr-for-powerscale-with-observability-enabled>"
+  path: "testfiles/storage_csm_powerscale_observability.yaml"
+  modules:
+    - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"

@@ -68,7 +68,7 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	moduleEnvVars := [2]string{"AUTHORIZATION", "REPLICATION"}
+	moduleEnvVars := [3]string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must both be set.")
