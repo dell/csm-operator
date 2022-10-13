@@ -30,6 +30,9 @@ type DriverType string
 // ModuleType - type representing the type of the modules. e.g. - authorization, podmon
 type ModuleType string
 
+// ObservabilityComponentType - type representing the type of components inside observability module. e.g. - topology
+type ObservabilityComponentType string
+
 const (
 	// Replication - placeholder for replication constant
 	Replication ModuleType = "replication"
@@ -48,6 +51,9 @@ const (
 
 	// ReverseProxy - placeholder for constant csireverseproxy
 	ReverseProxy ModuleType = "csireverseproxy"
+
+	// Topology - placeholder for constant topology
+	Topology ObservabilityComponentType = "topology"
 
 	// PowerFlex - placeholder for constant powerflex
 	PowerFlex DriverType = "powerflex"
