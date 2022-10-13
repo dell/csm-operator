@@ -45,6 +45,7 @@ Currently, the Dell Container Storage Modules Operator can be used to deploy the
 * CSI Driver for Dell Technologies PowerScale
   * CSM Authorization
   * CSM Replication
+  * CSM Observability
 
 **NOTE**: You can refer to additional information about the Dell Container Storage Modules Operator on the new documentation website [here](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 

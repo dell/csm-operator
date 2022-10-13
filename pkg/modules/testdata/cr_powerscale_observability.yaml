@@ -1,0 +1,34 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: test-isilon
+  namespace: test-isilon
+spec:
+  driver:
+    csiDriverType: "isilon"
+    configVersion: v2.4.0
+    authSecret: test-isilon-creds 
+    replicas: 1
+    common:
+      image: "dellemc/csi-isilon:v2.4.0"
+      imagePullPolicy: IfNotPresent
+
+  modules:
+    # observability: allows to configure observability
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: true
+      configVersion: v1.3.0
+      components: 
+        - name: topology
+          # enabled: Enable/Disable topology
+          enabled: true
+          # image: Defines karavi-topology image. This shouldn't be changed
+          # Allowed values: string
+          image: dellemc/csm-topology:v1.3.0
+          envs:
+            # topology log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "TOPOLOGY_LOG_LEVEL"
+              value: "INFO"
