@@ -5,6 +5,7 @@ metadata:
   namespace: test-vxflexos
 spec:
   driver:
+    csiDriverType: "powerflex"
     configVersion: v2.2.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet

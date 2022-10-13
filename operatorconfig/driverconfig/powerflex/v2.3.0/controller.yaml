@@ -236,7 +236,7 @@ spec:
           emptyDir:
         - name: vxflexos-config
           secret:
-            secretName: vxflexos-config
+            secretName: <DriverDefaultReleaseName>-config
         - name: vxflexos-config-params
           configMap:
-            name: vxflexos-config-params
+            name: <DriverDefaultReleaseName>-config-params

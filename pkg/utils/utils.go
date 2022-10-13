@@ -19,6 +19,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	t1 "k8s.io/apimachinery/pkg/types"
@@ -46,6 +47,7 @@ type K8sImagesConfig struct {
 		Registrar             string `json:"registrar" yaml:"registrar"`
 		Resizer               string `json:"resizer" yaml:"resizer"`
 		Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
+		Sdc                   string `json:"sdc" yaml:"sdc"`
 	} `json:"images" yaml:"images"`
 }
 
@@ -164,6 +166,27 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 		*c.Image = img.Images.Resizer
 	case csmv1.Externalhealthmonitor:
 		*c.Image = img.Images.Externalhealthmonitor
+	case csmv1.Sdc:
+		*c.Image = img.Images.Sdc
+	}
+	return
+}
+
+func UpdateinitContainerApply(initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
+	for _, init := range initContainers {
+		if *c.Name == init.Name {
+			if init.Image != "" {
+				*c.Image = string(init.Image)
+			}
+			if init.ImagePullPolicy != "" {
+				*c.ImagePullPolicy = init.ImagePullPolicy
+			}
+			emptyEnv := make([]corev1.EnvVar, 0)
+			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, init.Envs)
+			c.Args = ReplaceAllArgs(c.Args, init.Args)
+
+		}
+
 	}
 	return
 }
@@ -653,4 +676,14 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 		}
 	}
 	return replicaEnabled, clusterClients, nil
+}
+
+// GetSecret -
+func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*corev1.Secret, error) {
+	found := &corev1.Secret{}
+	err := ctrlClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, found)
+	if err != nil && errors.IsNotFound(err) {
+		return nil, fmt.Errorf("no secrets found or error: %v", err)
+	}
+	return found, nil
 }

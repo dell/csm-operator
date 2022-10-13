@@ -150,7 +150,7 @@ spec:
             - name: MDM
               valueFrom:
                 secretKeyRef:
-                  name: vxflexos-config
+                  name: <DriverDefaultReleaseName>-config
                   key: MDM
             - name: MODE
               value: "monitoring"
@@ -179,7 +179,7 @@ spec:
             - name: MDM
               valueFrom:
                 secretKeyRef:
-                  name: vxflexos-config
+                  name: <DriverDefaultReleaseName>-config
                   key: MDM
             - name: HOST_DRV_CFG_PATH
               value: /opt/emc/scaleio/sdc/bin
@@ -233,10 +233,10 @@ spec:
             type: File
         - name: vxflexos-config
           secret:
-            secretName: vxflexos-config
+            secretName: <DriverDefaultReleaseName>-config
         - name: vxflexos-config-params
           configMap:
-            name: vxflexos-config-params
+            name: <DriverDefaultReleaseName>-config-params
         - name: usr-bin
           hostPath:
             path: /usr/bin

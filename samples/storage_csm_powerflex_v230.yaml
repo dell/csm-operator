@@ -5,12 +5,17 @@ metadata:
   namespace: test-vxflexos
 spec:
   driver:
+    csiDriverType: "powerflex"
+    csiDriverSpec:
+      # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
+      # Allowed values: ReadWriteOnceWithFSType, File , None
+      # Default value: ReadWriteOnceWithFSType
+      fSGroupPolicy: "File"
     configVersion: v2.3.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
-    fsGroupPolicy: File
     common:
       image: "dellemc/csi-vxflexos:v2.3.0"
       imagePullPolicy: IfNotPresent

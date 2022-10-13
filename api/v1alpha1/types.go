@@ -52,6 +52,9 @@ const (
 	// PowerFlex - placeholder for constant powerflex
 	PowerFlex DriverType = "powerflex"
 
+	// PowerFlex - placeholder for constant powerflex
+	PowerFlexName DriverType = "vxflexos"
+
 	// PowerMax - placeholder for constant powermax
 	PowerMax DriverType = "powermax"
 
@@ -81,6 +84,8 @@ const (
 	Sdcmonitor = "sdc-monitor"
 	// Externalhealthmonitor - placeholder for constant
 	Externalhealthmonitor = "external-health-monitor"
+	//sdc - placeholder for constant
+	Sdc = "sdc"
 
 	// EventDeleted - Deleted in event recorder
 	EventDeleted = "Deleted"
@@ -194,7 +199,7 @@ type Driver struct {
 	ForceRemoveDriver bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
 }
 
-//ContainerTemplate template
+// ContainerTemplate template
 type ContainerTemplate struct {
 
 	// Name is the name of Container
@@ -231,7 +236,7 @@ type ContainerTemplate struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty" yaml:"nodeSelector"`
 }
 
-//SnapshotClass struct
+// SnapshotClass struct
 type SnapshotClass struct {
 	// Name is the name of the Snapshot Class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Name"
@@ -242,7 +247,7 @@ type SnapshotClass struct {
 	Parameters map[string]string `json:"parameters,omitempty" yaml:"parameters"`
 }
 
-//CSIDriverSpec struct
+// CSIDriverSpec struct
 type CSIDriverSpec struct {
 	FSGroupPolicy string `json:"fSGroupPolicy,omitempty" yaml:"fSGroupPolicy,omitempty"`
 }
