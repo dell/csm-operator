@@ -134,7 +134,7 @@ spec:
             - "--leader-election=true"
             - "--timeout=120s"
             - "--v=5"
-            - "--default-fstype=ext4
+            - "--default-fstype=ext4"
             - "--extra-create-metadata"
           env:
             - name: ADDRESS
