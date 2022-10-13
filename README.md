@@ -24,9 +24,7 @@ Dell Technologies Container Storage Modules (CSM) Operator is an open-source Kub
 * [Maintainer Guide](./docs/MAINTAINER_GUIDE.md)
 * [Committer Guide](./docs/COMMITTER_GUIDE.md)
 * [Contributing Guide](./docs/CONTRIBUTING.md)
-* [Branching Strategy](./docs/BRANCHING.md)
 * [List of Adopters](./docs/ADOPTERS.md)
-* [Maintainers](./docs/MAINTAINERS.md)
 * [Support](./docs/SUPPORT.md)
 * [Security](./docs/SECURITY.md)
 * [Dell Container Storage Modules Operator](#dell-csm-operator)
@@ -47,6 +45,7 @@ Currently, the Dell Container Storage Modules Operator can be used to deploy the
 * CSI Driver for Dell Technologies PowerScale
   * CSM Authorization
   * CSM Replication
+  * CSM Observability
 
 **NOTE**: You can refer to additional information about the Dell Container Storage Modules Operator on the new documentation website [here](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 

@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	csmv1 "github.com/dell/csm-operator/api/v1"
 
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
@@ -139,6 +139,10 @@ func (step *Step) validateModuleInstalled(res Resource, module string) error {
 
 			case csmv1.Replication:
 				return step.validateReplicationInstalled(res)
+
+			case csmv1.Observability:
+				return step.validateObservabilityInstalled(res)
+
 			}
 		}
 	}
@@ -166,7 +170,58 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string) error 
 
 			case csmv1.Replication:
 				return step.validateReplicationNotInstalled(res)
+
+			case csmv1.Observability:
+				return step.validateObservabilityNotInstalled(res)
+
 			}
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateObservabilityInstalled(res Resource) error {
+	cr := res.CustomResource
+
+	// check installation for all replicas
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check observability in all clusters
+		if err := checkObservabilityRunningPods(utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed to check for observability installation in %s: %v", cluster.ClusterID, err)
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateObservabilityNotInstalled(res Resource) error {
+	cr := res.CustomResource
+
+	/* TODO(Michael): explore better way to handle this instead of using hacks*/
+	// check installation for all replicas
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check observability is not installed
+		if err := checkObservabilityNoRunningPods(utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed observability installation check %s: %v", cluster.ClusterID, err)
 		}
 	}
 
@@ -384,6 +439,12 @@ func (step *Step) disableModule(res Resource, module string) error {
 	for i, m := range found.Spec.Modules {
 		if m.Enabled && m.Name == csmv1.ModuleType(module) {
 			found.Spec.Modules[i].Enabled = false
+
+			if m.Name == csmv1.Observability {
+				for j := range m.Components {
+					found.Spec.Modules[i].Components[j].Enabled = &[]bool{false}[0]
+				}
+			}
 		}
 	}
 

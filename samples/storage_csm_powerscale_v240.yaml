@@ -1,4 +1,4 @@
-apiVersion: storage.dell.com/v1alpha1
+apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: test-isilon
@@ -308,3 +308,22 @@ spec:
           # Allowed values: time
           - name: "RETRY_INTERVAL_MAX"
             value: "5m"
+
+    # observability: allows to configure observability
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
+      configVersion: v1.3.0
+      components: 
+        - name: topology
+          # enabled: Enable/Disable topology
+          enabled: false
+          # image: Defines karavi-topology image. This shouldn't be changed
+          # Allowed values: string
+          image: dellemc/csm-topology:v1.3.0
+          envs:
+            # topology log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "TOPOLOGY_LOG_LEVEL"
+              value: "INFO"           

@@ -25,7 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	csmv1 "github.com/dell/csm-operator/api/v1alpha1"
+	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/resources/configmap"
@@ -497,6 +497,24 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 				}
 			}
 		}
+		// check if observability needs to be uninstalled
+		// NOTE: check if individual component need to be uninstalled
+		oldObservabilityEnabled, _ := utils.IsModuleEnabled(ctx, *oldCR, r, csmv1.Observability)
+		newObservabilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, r, csmv1.Observability)
+		if oldObservabilityEnabled && !newObservabilityEnabled {
+			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
+			if err != nil {
+				return err
+			}
+			for _, cluster := range clusterClients {
+				// remove module observability
+				log.Infow("Deleting observability")
+				if err = r.reconcileObservability(ctx, true, operatorConfig, *oldCR, cluster.ClusterCTRLClient); err != nil {
+					return err
+				}
+			}
+
+		}
 	}
 
 	annotations := newCR.GetAnnotations()
@@ -620,6 +638,29 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			}
 		}
 
+		// if Observability is enabled, create or update obs components: topology, metrics of PowerScale and PowerFlex
+		if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, cr, r, csmv1.Observability); observabilityEnabled {
+			log.Infow("Create/Update observability")
+
+			if err = r.reconcileObservability(ctx, false, operatorConfig, cr, cluster.ClusterCTRLClient); err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// reconcileObservability - Delete/Create/Update observability components
+// isDeleting - ture: Delete; false: Create/Update
+func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+	if utils.IsComponentEnabled(ctx, cr, r, csmv1.Observability, modules.ObservabilityTopologyName) {
+		log.Infow(fmt.Sprintf("Reconcile topology"))
+		if err := modules.ObservabilityTopology(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -780,6 +821,14 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 			}
 		}
 
+		// remove module observability
+		if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, instance, r, csmv1.Observability); observabilityEnabled {
+			log.Infow("Deleting observability")
+			if err = r.reconcileObservability(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -862,6 +911,12 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			case csmv1.Replication:
 				if err := modules.ReplicationPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed replication validation: %v", err)
+				}
+
+			case csmv1.Observability:
+				// observability precheck
+				if err := modules.ObservabilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+					return fmt.Errorf("failed observability validation: %v", err)
 				}
 
 			default:
