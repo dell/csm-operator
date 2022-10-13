@@ -58,7 +58,7 @@ const (
 	// PowerFlex - placeholder for constant powerflex
 	PowerFlex DriverType = "powerflex"
 
-	// PowerFlex - placeholder for constant powerflex
+	// PowerFlexName - placeholder for constant powerflex
 	PowerFlexName DriverType = "vxflexos"
 
 	// PowerMax - placeholder for constant powermax
@@ -90,7 +90,7 @@ const (
 	Sdcmonitor = "sdc-monitor"
 	// Externalhealthmonitor - placeholder for constant
 	Externalhealthmonitor = "external-health-monitor"
-	//sdc - placeholder for constant
+	//Sdc - placeholder for constant
 	Sdc = "sdc"
 
 	// EventDeleted - Deleted in event recorder

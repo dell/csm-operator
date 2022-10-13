@@ -52,6 +52,7 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 	return nil
 }
 
+// GetMDMFromSecret - Get MDM value from secret
 func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) (string, error) {
 
 	log := logger.GetLogger(ctx)

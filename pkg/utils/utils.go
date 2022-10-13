@@ -174,6 +174,7 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	return
 }
 
+// UpdateinitContainerApply -
 func UpdateinitContainerApply(initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
 	for _, init := range initContainers {
 		if *c.Name == init.Name {
