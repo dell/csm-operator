@@ -3,6 +3,7 @@ package steps
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
@@ -71,6 +72,61 @@ func checkAllRunningPods(namespace string, k8sClient kubernetes.Interface) error
 	if !allReady {
 		return fmt.Errorf(notReadyMessage)
 	}
+	return nil
+}
+
+func checkObservabilityRunningPods(namespace string, k8sClient kubernetes.Interface) error {
+	notReadyMessage := ""
+	allReady := true
+
+	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+	if err != nil {
+		return err
+	}
+	if len(pods) == 0 {
+		return fmt.Errorf("no pod was found in %s", namespace)
+	}
+	for _, pod := range pods {
+		if strings.Contains(pod.Name, "topology") {
+			if pod.Status.Phase == corev1.PodRunning {
+				for _, cntStat := range pod.Status.ContainerStatuses {
+					if cntStat.State.Running == nil {
+						allReady = false
+						notReadyMessage += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
+						break
+					}
+				}
+			} else {
+				allReady = false
+				notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
+			}
+		}
+	}
+
+	if !allReady {
+		return fmt.Errorf(notReadyMessage)
+	}
+	return nil
+}
+
+func checkObservabilityNoRunningPods(namespace string, k8sClient kubernetes.Interface) error {
+	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+	if err != nil {
+		return err
+	}
+
+	podsFound := ""
+	n := 0
+	for _, pod := range pods {
+		if strings.Contains(pod.Name, "topology") {
+			podsFound += (pod.Name + ",")
+			n++
+		}
+	}
+	if n != 0 {
+		return fmt.Errorf("found the following pods: %s", podsFound)
+	}
+
 	return nil
 }
 
