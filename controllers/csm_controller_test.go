@@ -167,7 +167,27 @@ func (suite *CSMControllerTestSuite) TestErrorInjection() {
 	suite.reconcileWithErrorInjection(csmName, "")
 }
 
-func (suite *CSMControllerTestSuite) TestCsmAnnotation() {
+func (suite *CSMControllerTestSuite) TestPowerScaleAnnotation() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
+
+}
+
+func (suite *CSMControllerTestSuite) TestPowerFlexAnnotation() {
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
