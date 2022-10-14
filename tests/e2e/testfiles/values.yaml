@@ -1,6 +1,7 @@
 # List of E2E Tests Scenarios
 - scenario: "Install PowerScale Driver(Standalone)"
-  path: "<path-to-cr-for-powerscale-with-auth-disabled>"
+  path: "testfiles/storage_csm_powerscale.yaml"
+  modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -14,15 +15,17 @@
     # name of custom test to run
     name: Cert CSI
     # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_tes repo. 
+    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
     # Example:
     #   ./hello_world.sh
     #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: cert-csi test vio --sc isilon-plain --chainNumber 2 --chainLength 2
+    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
 
 - scenario: "Install PowerScale Driver(With Authorization)"
-  path: "<path-to-cr-for-powerscale-with-auth-enabled>"
+  path: "testfiles/storage_csm_powerscale_auth.yaml"
+  modules:
+    - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -35,10 +38,12 @@
     - "Delete resources"
   customTest:
     name: Cert CSI
-    run: cert-csi test vio --sc isilon-plain --chainNumber 2 --chainLength 2
+    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization"
-  path: "<path-to-cr-for-powerscale-with-auth-disabled>"
+  path: "testfiles/storage_csm_powerscale.yaml"
+  modules:
+    - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -60,7 +65,9 @@
 
 
 - scenario: "Install PowerScale Driver(With Replication)"
-  path: "<path-to-cr-for-powerscale-with-replication-enabled>"
+  path: "testfiles/storage_csm_powerscale_replica.yaml"
+  modules:
+    - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -76,7 +83,9 @@
     run: "echo Hello && echo World"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Replication"
-  path: "<path-to-cr-for-powerscale-with-replication-disabled>"
+  path: "testfiles/storage_csm_powerscale.yaml"
+  modules:
+    - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -96,7 +105,8 @@
 
 
 - scenario: "Uninstall PowerScale Driver"
-  path: "<path-to-cr-for-powerscale-with-auth-disabled>"
+  path: "testfiles/storage_csm_powerscale.yaml"
+  modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -107,7 +117,9 @@
     - "Validate [powerscale] driver is not installed"
 
 - scenario: Install PowerScale Driver(With Authorization), Disable Authorization module"
-  path: "<path-to-cr-for-powerscale-with-auth-enabled>"
+  path: "testfiles/storage_csm_powerscale_auth.yaml"
+  modules:
+    - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -122,7 +134,9 @@
     - "Delete resources"
 
 - scenario: Install PowerScale Driver(With Replication), Disable Replication module"
-  path: "<path-to-cr-for-powerscale-with-replication-enabled>"
+  path: "testfiles/storage_csm_powerscale_replica.yaml"
+  modules:
+    - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -138,7 +152,9 @@
 
 
 - scenario: "Install PowerScale Driver(With Observability)"
-  path: "<path-to-cr-for-powerscale-with-observability-enabled>"
+  path: "testfiles/storage_csm_powerscale_observability.yaml"
+  modules:
+    - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -150,7 +166,9 @@
     - "Delete resources"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Observability"
-  path: "<path-to-cr-for-powerscale-with-observability-disabled>"
+  path: "testfiles/storage_csm_powerscale_observability.yaml"
+  modules:
+    - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -165,7 +183,9 @@
     - "Delete resources"
 
 - scenario: Install PowerScale Driver(With Observability), Disable Observability module"
-  path: "<path-to-cr-for-powerscale-with-observability-enabled>"
+  path: "testfiles/storage_csm_powerscale_observability.yaml"
+  modules:
+    - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
