@@ -3,6 +3,7 @@ package e2e
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,15 +20,41 @@ import (
 )
 
 const (
-	timeout  = time.Minute * 10
-	interval = time.Second * 10
+	timeout          = time.Minute * 10
+	interval         = time.Second * 10
+	valuesFileEnvVar = "E2E_VALUES_FILE"
 )
 
 var (
-	testResources []step.Resource
-	stepRunner    *step.Runner
-	beautify      string
+	testResources    []step.Resource
+	installedModules []string
+	stepRunner       *step.Runner
+	beautify         string
 )
+
+func Contains(slice []string, str string) bool {
+	for _, v := range slice {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
+func ContainsModules(modulesRequired []string, modulesInstalled []string) bool {
+	if len(modulesRequired) == 0 && len(modulesInstalled) == 0 {
+		return true
+	}
+
+	for _, moduleName := range modulesRequired {
+		// check to see if we have modules required
+		if Contains(modulesInstalled, moduleName) == false {
+			By(fmt.Sprintf("Required module not installed: %s ", moduleName))
+			return false
+		}
+	}
+	return true
+}
 
 // TestE2E -
 func TestE2E(t *testing.T) {
@@ -41,9 +68,17 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	moduleEnvVars := [3]string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY"}
 	By("Getting test environment variables")
-	valuesFile := os.Getenv("E2E_VALUES_FILE")
+	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must both be set.")
+
+	for _, moduleEnvVar := range moduleEnvVars {
+		moduleEnvVar = os.Getenv(moduleEnvVar)
+		if moduleEnvVar != "" {
+			installedModules = append(installedModules, strings.ToLower(moduleEnvVar))
+		}
+	}
 
 	By("Reading values file")
 	res, err := step.GetTestResources(valuesFile)
@@ -75,6 +110,11 @@ var _ = Describe("[run-e2e-test]E2E Testing", func() {
 	It("Running all test Given Test Scenarios", func() {
 		for _, test := range testResources {
 			By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
+			if ContainsModules(test.Scenario.Modules, installedModules) == false {
+				By("Required module not installed, skipping")
+				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
+				continue
+			}
 
 			for _, stepName := range test.Scenario.Steps {
 				By(fmt.Sprintf("%s Executing  %s", beautify, stepName))
@@ -82,9 +122,7 @@ var _ = Describe("[run-e2e-test]E2E Testing", func() {
 					return stepRunner.RunStep(stepName, test)
 				}, timeout, interval).Should(BeNil())
 			}
-			By(fmt.Sprintf("Ending: %s ", test.Scenario.Scenario))
-			By("")
-			By("")
+			By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 			time.Sleep(5 * time.Second)
 		}
 	})

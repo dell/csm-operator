@@ -12,30 +12,31 @@ To run unit test, go to the root directory of this project and run `make unit-te
 
 ## E2E Test
 
-The E2E tests will test the installation of Dell CSI Drivers and Dell CSM Modules. The prerequisites and execution of e2e tests are documented below:
+The E2E tests test the installation of Dell CSI Drivers and Dell CSM Modules.
 
-### Prerequisite
+### Prerequisites
 
-- A supported environment where Dell Container Storage Modules Operator is running
-- All prerequisite for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
-
+- A supported environment where the Dell Container Storage Modules Operator is running and a storageclass is installed.
+- All prerequisites for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
+- Ginkgo v1.16.5 is installed. To install, go to `tests/e2e` and run the following commands:
+```bash
+go install github.com/onsi/ginkgo/ginkgo
+go get github.com/onsi/gomega/...
+```
 
 ### Run
 
 To run e2e test, go through the following steps:
 
-- Ensure you meet all [prerequisites](#prerequisite)
-- Change to the root directory of this project
-- Copy or modify the values file at [`tests/e2e/testfiles/values.yaml`](https://github.com/dell/csm-operator/blob/main/tests/e2e/testfiles/values.yaml). Review [Values File](#values-file) for more information.
-- Change to the `scripts` directory
-- Set your environment variables in the file `env-e2e-test.sh`. You MUST set `VALUES_FILE` to point to the path to the `values.yaml` we created above.
+- Ensure you meet all [prerequisites](#prerequisite).
+- Change to the `tests/e2e` directory.
+- Set your environment variables in the file `env-e2e-test.sh`. You MUST set `CERT-CSI` to point to a cert-csi executable.
+- If you want to test any modules, uncomment their environment variables in `env-e2e-test.sh`.
 - Run the e2e test by executing the commands below:
 
 ```bash
-   ./env-e2e-test.sh
    ./run-e2e-test.sh
 ```
-
 
 #### Values File
 
@@ -43,7 +44,8 @@ An e2e test values file is a yaml file that defines all e2e tests to be ran. An 
 
 ```yaml
 - scenario: "Install PowerScale Driver(Standalone)"
-  path: "<path-to-cr-for-powerscale-with-auth-disabled>"
+  path: "testfiles/storage_csm_powerscale.yaml"
+  modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -57,11 +59,11 @@ An e2e test values file is a yaml file that defines all e2e tests to be ran. An 
     # name of custom test to run
     name: Cert CSI
     # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e test repo. 
+    # The command should be accessible from e2e_tes repo.
     # Example:
     #   ./hello_world.sh
     #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: cert-csi test vio --sc isilon-plain --chainNumber 2 --chainLength 2
+    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 ```
 
 Each test has:
