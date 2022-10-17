@@ -58,11 +58,19 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		readyPods := 0
 		failedCount := 0
 
-		//app=test-isilon-controller
+		//powerflex and powerscale use different label names for the controller name:
+                //app=test-isilon-controller
+                //name=test-vxflexos-controller
+		driver := instance.GetDriverType()
+		log.Infof("driver type: %s", driver)
+                controllerLabelName := "app"
+                if driver == "powerflex" {
+                        controllerLabelName = "name"
+		}
 		label := instance.GetNamespace() + "-controller"
 		opts := []client.ListOption{
 			client.InNamespace(instance.GetNamespace()),
-			client.MatchingLabels{"app": label},
+			client.MatchingLabels{controllerLabelName: label},
 		}
 
 		podList := &v1.PodList{}
