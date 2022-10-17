@@ -27,7 +27,6 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, cr.Spec.Driver.ConfigVersion)
 	}
 
-	//driver := cr.GetDriverType()
 	mdmVar, err := GetMDMFromSecret(ctx, cr, ct)
 	if err != nil {
 		return err
