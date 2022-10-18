@@ -856,6 +856,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powerscale validation: %v", err)
 		}
+	case csmv1.PowerFlex:
+		err := drivers.PrecheckPowerFlex(ctx, cr, operatorConfig, r.GetClient())
+		if err != nil {
+			return fmt.Errorf("failed powerflex validation: %v", err)
+		}
 
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
@@ -888,7 +893,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			}
 
 		} else {
-			if ischeckingOwnRef { // TODO(Michael): should be deprecated after 0.2.0
+			if ischeckingOwnRef {
 				return fmt.Errorf("Owner reference not found. Please re-install driver")
 			}
 		}

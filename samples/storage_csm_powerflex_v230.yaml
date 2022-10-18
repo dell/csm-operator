@@ -1,0 +1,138 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: test-vxflexos
+  namespace: test-vxflexos
+spec:
+  driver:
+    csiDriverType: "powerflex"
+    csiDriverSpec:
+      # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
+      # Allowed values: ReadWriteOnceWithFSType, File , None
+      # Default value: ReadWriteOnceWithFSType
+      fSGroupPolicy: "File"
+    configVersion: v2.3.0
+    replicas: 1
+    dnsPolicy: ClusterFirstWithHostNet
+    forceUpdate: false
+    forceRemoveDriver: true
+    common:
+      image: "dellemc/csi-vxflexos:v2.3.0"
+      imagePullPolicy: IfNotPresent
+      envs:
+        - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
+          value: "false"
+        - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
+          value: "false"
+        - name: X_CSI_DEBUG
+          value: "true"
+        - name: X_CSI_ALLOW_RWO_MULTI_POD_ACCESS
+          value: "false"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: None
+        - name: KUBELET_CONFIG_DIR
+          value: "/var/lib/kubelet"
+    sideCars:
+    # comment the following section if you don't want to run the monitoring sidecar
+      - name: sdc-monitor
+        envs:
+        - name: HOST_PID
+          value: "1"
+        - name: MDM
+          value: ""
+
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+      - name: csi-external-health-monitor-controller
+        enabled: false
+        args: ["--monitor-interval=60s"]
+
+    # vg-snapshotter is disabled by default, refer to driver documentation before enabling it
+      - name: vg-snapshotter
+        enabled: false
+        image: dellemc/csi-volumegroup-snapshotter:v1.0.1
+
+    controller:
+      envs:
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+
+      #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
+      # Leave as blank to use all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      # Examples:
+      #  node-role.kubernetes.io/control-plane: ""
+      nodeSelector:
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # "controller.tolerations" defines tolerations that would be applied to controller deployment
+      # Leave as blank to install controller on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint 
+      # - key: "node-role.kubernetes.io/master"   
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
+      # - key: "node-role.kubernetes.io/control-plane"   
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+
+    node:
+      envs:
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+
+      # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
+      # Leave as blank to use all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      # Examples:
+      #  node-role.kubernetes.io/control-plane: ""
+      nodeSelector:
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # "node.tolerations" defines tolerations that would be applied to node daemonset
+      # Leave as blank to install node driver only on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"   
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
+      # - key: "node-role.kubernetes.io/control-plane"   
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+
+    initContainers:
+      - image: dellemc/sdc:3.6
+        imagePullPolicy: IfNotPresent
+        name: sdc
+        envs:
+          - name: MDM
+            value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vxflexos-config-params
+  namespace: test-vxflexos
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: "debug"
+    CSI_LOG_FORMAT: "TEXT"
