@@ -181,6 +181,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 
 	containers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers
+  newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
@@ -189,13 +190,29 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				containers[i].Image = &image
 			}
 		}
-
-		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-		utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
-
+    removeContainer := false
+		for _, s := range cr.Spec.Driver.SideCars {
+			if s.Name == *c.Name {
+				if s.Enabled == nil {
+					log.Infow("Container to be enabled", "name", *c.Name)
+					break
+				} else if !*s.Enabled {
+					removeContainer = true
+					log.Infow("Container to be removed", "name", *c.Name)
+				} else {
+					log.Infow("Container to be enabled", "name", *c.Name)
+				}
+				break
+			}
+		}
+    if !removeContainer {
+			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
+			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
+			newcontainers = append(newcontainers, c)
+		}
 	}
 
-	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = containers
+	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = newcontainers
 
 	initcontainers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers
 	for i := range initcontainers {
