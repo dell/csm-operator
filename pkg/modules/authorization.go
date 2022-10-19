@@ -31,7 +31,11 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"isilon": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
-	}, // either powerscale or isilon are valid types
+	},
+	"vxflexos": {
+		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
+	},  // powerscale, isilon, & vxflexos are valid types
 }
 
 // CheckAnnotationAuth --
