@@ -181,7 +181,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 
 	containers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers
-  newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
+  	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
