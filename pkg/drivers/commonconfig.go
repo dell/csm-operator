@@ -202,7 +202,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				containers[i].Image = &image
 			}
 		}
-    removeContainer := false
+    		removeContainer := false
 		for _, s := range cr.Spec.Driver.SideCars {
 			if s.Name == *c.Name {
 				if s.Enabled == nil {
@@ -217,7 +217,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				break
 			}
 		}
-    if !removeContainer {
+    		if !removeContainer {
 			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
 			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
 			newcontainers = append(newcontainers, c)
