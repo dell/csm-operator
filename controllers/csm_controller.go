@@ -656,10 +656,20 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 // isDeleting - ture: Delete; false: Create/Update
 func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-	if utils.IsComponentEnabled(ctx, cr, r, csmv1.Observability, modules.ObservabilityTopologyName) {
-		log.Infow(fmt.Sprintf("Reconcile topology"))
-		if err := modules.ObservabilityTopology(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-			return err
+
+	comp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
+		modules.ObservabilityTopologyName:          modules.ObservabilityTopology,
+		modules.ObservabilityOtelCollectorName:     modules.OtelCollector,
+		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
+	}
+
+	for comp, reconFunc := range comp2reconFunc {
+		if utils.IsComponentEnabled(ctx, cr, r, csmv1.Observability, comp) {
+			log.Infow(fmt.Sprintf("reconcile %s", comp))
+			if err := reconFunc(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+				log.Errorf("failed to reconcile %s", comp)
+				return err
+			}
 		}
 	}
 
