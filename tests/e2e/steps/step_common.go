@@ -100,6 +100,32 @@ func checkObservabilityRunningPods(namespace string, k8sClient kubernetes.Interf
 				allReady = false
 				notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
 			}
+		} else if strings.Contains(pod.Name, "metrics") {
+			if pod.Status.Phase == corev1.PodRunning {
+				for _, cntStat := range pod.Status.ContainerStatuses {
+					if cntStat.State.Running == nil {
+						allReady = false
+						notReadyMessage += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
+						break
+					}
+				}
+			} else {
+				allReady = false
+				notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
+			}
+		} else if strings.Contains(pod.Name, "otel") {
+			if pod.Status.Phase == corev1.PodRunning {
+				for _, cntStat := range pod.Status.ContainerStatuses {
+					if cntStat.State.Running == nil {
+						allReady = false
+						notReadyMessage += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
+						break
+					}
+				}
+			} else {
+				allReady = false
+				notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
+			}
 		}
 	}
 
