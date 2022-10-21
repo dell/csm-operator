@@ -14,6 +14,7 @@ general:
     - CVE-2022-1271
     - CVE-2022-2526
     - CVE-2022-27664
+    - CVE-2022-3515
   bestPracticeViolations:
     # list of best practies violatied that needs a fix
     - 
