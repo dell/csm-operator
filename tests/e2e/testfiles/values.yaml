@@ -165,7 +165,7 @@
     - "Delete resources"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Observability"
-  path: "testfiles/storage_csm_powerscale_observability.yaml"
+  path: "testfiles/storage_csm_powerscale.yaml"
   modules:
     - "observability"
   steps:
