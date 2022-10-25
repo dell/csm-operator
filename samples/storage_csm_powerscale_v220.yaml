@@ -102,14 +102,6 @@ spec:
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
           value: "debug"
-  
-        # CHECK_OWNER_REFERENCE
-        # Allowed values:
-        #   true: perform owner reference check
-        #   false: otherwise
-        # Default value: false
-        - name: "CHECK_OWNER_REFERENCE"
-          value: "false"
 
 
     controller:
