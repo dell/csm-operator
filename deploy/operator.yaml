@@ -849,7 +849,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: 10.247.78.60:5000/csm-operator:test
+        image: docker.io/dellemc/dell-csm-operator:v1.0.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

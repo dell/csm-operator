@@ -618,7 +618,7 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Create(ctx, obj)
 		if err != nil {
-			return fmt.Errorf("unable to create object %s: %v", kind, err)
+			return err
 		}
 
 	} else if err != nil {
