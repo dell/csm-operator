@@ -80,16 +80,12 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 
 	if string(configBytes) != "" {
 		yamlConfig := make([]StorageArrayConfig, 0)
-		configs, _ := yaml.JSONToYAML(configBytes)
-		err := yaml.Unmarshal(configs, &yamlConfig)
-		log.Info("yamlConfig", yamlConfig)
+		configs, err := yaml.JSONToYAML(configBytes)
 		if err != nil {
 			return "", fmt.Errorf("unable to parse multi-array configuration[%v]", err)
 		}
-
-		if len(yamlConfig) == 0 {
-			return "", fmt.Errorf("Arrays details are not provided in vxflexos-config secret")
-		}
+		// Not checking the return value here because any invalid yaml would already be detected by the JSONToYAML function above
+		yaml.Unmarshal(configs, &yamlConfig)
 
 		var noOfDefaultArrays int
 		tempMapToFindDuplicates := make(map[string]interface{}, 0)

@@ -32,6 +32,7 @@ var (
 	configJSONFileBadMDM		= fmt.Sprintf("%s/driverconfig/%s/config-invalid-mdm.json", config.ConfigDirectory, csmv1.PowerFlex)
 	configJSONFileDuplSysID		= fmt.Sprintf("%s/driverconfig/%s/config-duplicate-sysid.json", config.ConfigDirectory, csmv1.PowerFlex)
 	configJSONFileEmpty		= fmt.Sprintf("%s/driverconfig/%s/config-empty.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileBad		= fmt.Sprintf("%s/driverconfig/%s/config-bad.json", config.ConfigDirectory, csmv1.PowerFlex)
 	powerFlexSecret                 = shared.MakeSecretWithJSON(pflexCredsName, pFlexTestNS, configJSONFileGood)
 	fakeSecret			= shared.MakeSecret("fake-secret", pFlexTestNS, shared.PFlexConfigVersion)
 
@@ -87,6 +88,7 @@ var (
 		{"bad mdm ip", csmForPowerFlexCustom("bad-mdm"), powerFlexClient, shared.MakeSecretWithJSON("bad-mdm-config", pFlexTestNS, configJSONFileBadMDM), "Invalid MDM value"},
 		{"duplicate system id", csmForPowerFlexCustom("dupl-sysid"), powerFlexClient, shared.MakeSecretWithJSON("dupl-sysid-config", pFlexTestNS, configJSONFileDuplSysID), "Duplicate SystemID"},
 		{"empty config", csmForPowerFlexCustom("empty"), powerFlexClient, shared.MakeSecretWithJSON("empty-config", pFlexTestNS, configJSONFileEmpty), "Arrays details are not provided"},
+		{"bad config", csmForPowerFlexCustom("bad"), powerFlexClient, shared.MakeSecretWithJSON("bad-config", pFlexTestNS, configJSONFileBad), "unable to parse"},
 	}
 )
 
@@ -137,7 +139,19 @@ func csmForPowerFlex() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM(pflexCSMName, pFlexTestNS, shared.PFlexConfigVersion)
 
 	// Add log level to cover some code in GetConfigMap
+	// JJL bruh can we delete this line
 	res.Spec.Driver.AuthSecret = pflexCredsName
+	
+	// Add sdc initcontainer
+	res.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{csmv1.ContainerTemplate{
+		Name: "sdc",
+		Enabled: &trueBool,
+		Image: "image",
+		ImagePullPolicy: "IfNotPresent",
+		Args: []string{},
+		Envs: []corev1.EnvVar{corev1.EnvVar{Name: "MDM"}},
+		Tolerations: []corev1.Toleration{},
+	}}
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = shared.PFlexConfigVersion
