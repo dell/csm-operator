@@ -17,8 +17,8 @@ import (
 
 const (
 	// PowerFlexPluginIdentifier -
-	PowerFlexPluginIdentifier = csmv1.PowerFlex
-	
+	PowerFlexPluginIdentifier = "powerflex"
+
 	// PowerFlexConfigParamsVolumeMount -
 	PowerFlexConfigParamsVolumeMount = "vxflexos-config-params"
 )

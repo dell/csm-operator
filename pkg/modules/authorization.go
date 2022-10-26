@@ -32,10 +32,14 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
+	"powerflex": {
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	},
 	"vxflexos": {
-		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
-		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
-	},  // powerscale, isilon, & vxflexos are valid types
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	}, // powerscale/isilon & powerflex/vxflexos are valid types
 }
 
 // CheckAnnotationAuth --
