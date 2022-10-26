@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"fmt"
-	"io/ioutil"
 	"log"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -41,7 +40,7 @@ func TestMain(m *testing.M) {
 }
 
 func getCustomResource(path string) (csmv1.ContainerStorageModule, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatalf("failed to read testdata: %v", err)
 

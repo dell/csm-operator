@@ -11,10 +11,11 @@ package modules
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
@@ -151,7 +152,7 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.Operat
 		return err
 	}
 
-	topoObjects, err := utils.GetObservabilityComponentObj([]byte(YamlString))
+	topoObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}
@@ -214,7 +215,7 @@ func OtelCollector(ctx context.Context, isDeleting bool, op utils.OperatorConfig
 		return err
 	}
 
-	powerscaleMetricsObjects, err := utils.GetObservabilityComponentObj([]byte(YamlString))
+	powerscaleMetricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}
@@ -277,7 +278,7 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		return err
 	}
 
-	powerscaleMetricsObjects, err := utils.GetObservabilityComponentObj([]byte(YamlString))
+	powerscaleMetricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}

@@ -16,7 +16,13 @@ import (
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	networking "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -135,7 +141,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			}
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - brownfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -311,6 +317,394 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			success, auth, tmpCR, client := tc(t)
 			// err := ReplicationPrecheck(context.TODO(), operatorConfig, replica, tmpCR, sourceClient)
 			err := AuthorizationPrecheck(context.TODO(), operatorConfig, auth, tmpCR, client)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestAuthorizationServerPreCheck(t *testing.T) {
+	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
+
+		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
+			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
+
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return true, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"success - version provided": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+			auth.ConfigVersion = "v1.4.0"
+			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
+			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return true, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"fail - unsupported authorization version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+			auth.ConfigVersion = "v100000.0.0"
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"fail - empty proxy host": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			for i, env := range auth.Components[0].Envs {
+				if env.Name == "PROXY_HOST" {
+					auth.Components[0].Envs[i].Value = ""
+				}
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+				return clusterClient, nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			defer func() {
+				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+			}()
+
+			success, auth, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
+			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			utils.NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
+				return nil, nil
+			}
+
+			fakeReconcile := utils.FakeReconcileCSM{
+				Client:    sourceClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+
+			err := AuthorizationServerPrecheck(context.TODO(), operatorConfig, auth, tmpCR, &fakeReconcile)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestAuthorizationProxyServerDeployment(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &corev1.ConfigMap{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ConfigMap",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "csm-config-params",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := AuthorizationServer(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestAuthorizationIngressRules(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			i1 := &networking.Ingress{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Ingress",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "proxy-server",
+				},
+			}
+
+			i2 := &networking.Ingress{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Ingress",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "tenant-service",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(i1, i2).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := AuthorizationIngress(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestAuthorizationPolicies(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &corev1.ConfigMap{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ConfigMap",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "common",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := InstallPolicies(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestAuthorizationNginxIngressController(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &networking.IngressClass{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "IngressClass",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nginx",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := NginxIngressController(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestAuthorizationCertManager(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "authorization-cert-manager",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := AuthorizationCertManager(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
 

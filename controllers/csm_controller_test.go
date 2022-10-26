@@ -887,6 +887,42 @@ func getAuthModule() []csmv1.Module {
 	}
 }
 
+func getAuthProxyServer() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.AuthorizationServer,
+			Enabled:       true,
+			ConfigVersion: "v1.4.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:    "karavi-authorization-proxy-server",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "PROXY_HOST",
+							Value: "csm-auth.com",
+						},
+						{
+							Name:  "AUTHORIZATION_LOG_LEVEL",
+							Value: "debug",
+						},
+					},
+				},
+				{
+					Name:    "cert-manager",
+					Enabled: &[]bool{true}[0],
+					Envs:    []corev1.EnvVar{},
+				},
+				{
+					Name:    "ingress-nginx",
+					Enabled: &[]bool{true}[0],
+					Envs:    []corev1.EnvVar{},
+				},
+			},
+		},
+	}
+}
+
 func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
 	suite.makeFakeCSM(csmName, suite.namespace, true, append(getAuthModule(), getObservabilityModule()...))
 	suite.runFakeCSMManager("", false)
@@ -922,6 +958,34 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	// Test for all components disabled
 	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
 	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.Nil(suite.T(), err)
+
+	// Restore the status
+	for _, c := range csm.Spec.Modules[0].Components {
+		c.Enabled = &[]bool{false}[0]
+	}
+}
+
+func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getAuthProxyServer()
+	reconciler := suite.createReconciler()
+	badOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
+	err := reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.Error(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.Nil(suite.T(), err)
 
 	// Restore the status

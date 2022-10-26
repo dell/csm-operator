@@ -10,7 +10,6 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
@@ -73,7 +72,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 			client.MatchingLabels{controllerLabelName: label},
 		}
 
-		podList := &v1.PodList{}
+		podList := &corev1.PodList{}
 		err = cluster.ClusterCTRLClient.List(ctx, podList, opts...)
 		if err != nil {
 			return deployment.Status.ReadyReplicas, csmv1.PodStatus{}, err
@@ -146,7 +145,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		}
 
 		failedCount := 0
-		podList := &v1.PodList{}
+		podList := &corev1.PodList{}
 		label := instance.GetNamespace() + "-node"
 		opts := []client.ListOption{
 			client.InNamespace(instance.GetNamespace()),
