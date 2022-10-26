@@ -85,7 +85,7 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 			return "", fmt.Errorf("unable to parse multi-array configuration[%v]", err)
 		}
 		// Not checking the return value here because any invalid yaml would already be detected by the JSONToYAML function above
-		yaml.Unmarshal(configs, &yamlConfig)
+		_ = yaml.Unmarshal(configs, &yamlConfig)
 
 		var noOfDefaultArrays int
 		tempMapToFindDuplicates := make(map[string]interface{}, 0)
