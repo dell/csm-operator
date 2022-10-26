@@ -134,12 +134,11 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 	} else {
 		return "", fmt.Errorf("Arrays details are not provided in vxflexos-config secret")
 	}
-	fmt.Printf("mdmValFin: %s", mdmVal)
 	return mdmVal, nil
 
 }
 
-// ValidateIPAddress -
+// ValidateIPAddress validates that a proper set of IPs has been provided
 func ValidateIPAddress(ipAdd string) (string, bool) {
 	trimIP := strings.Split(ipAdd, ",")
 	if len(trimIP) < 1 {
@@ -162,8 +161,7 @@ var (
 	ipRegex, _ = regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
 )
 
-// IsIpv4Regex - Matches Ipaddress with regex
-// returns error if the Ip Address doesn't match regex
+// IsIpv4Regex - Matches Ipaddress with regex and returns error if the Ip Address doesn't match regex
 func IsIpv4Regex(ipAddress string) bool {
 	return ipRegex.MatchString(ipAddress)
 }

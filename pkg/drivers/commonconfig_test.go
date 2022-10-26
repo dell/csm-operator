@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	csm   		= csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
-	
-	fakeDriver             csmv1.DriverType = "fakeDriver"
-	badDriver                csmv1.DriverType = "badDriver"
+	csm = csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
+
+	fakeDriver csmv1.DriverType = "fakeDriver"
+	badDriver  csmv1.DriverType = "badDriver"
 
 	tests = []struct {
 		// every single unit test name
@@ -105,4 +105,3 @@ func TestGetNode(t *testing.T) {
 		})
 	}
 }
-

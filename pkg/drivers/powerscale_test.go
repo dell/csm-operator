@@ -2,8 +2,8 @@ package drivers
 
 import (
 	"context"
-	"testing"
 	"fmt"
+	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	//"github.com/dell/csm-operator/pkg/utils"
@@ -17,14 +17,14 @@ import (
 )
 
 var (
-	csmPScale 					  = csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
-	powerScaleCSM                             = csmForPowerScale()
-	powerScaleCSMBadSkipCert                  = csmForPowerScaleBadSkipCert()
-	powerScaleCSMBadCertCnt                   = csmForPowerScaleBadCertCnt()
-	powerScaleCSMBadVersion                   = csmForPowerScaleBadVersion()
-	objects                                   = map[shared.StorageKey]runtime.Object{}
-	powerScaleClient                          = crclient.NewFakeClientNoInjector(objects)
-	powerScaleSecret                          = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
+	csmPScale                = csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
+	powerScaleCSM            = csmForPowerScale()
+	powerScaleCSMBadSkipCert = csmForPowerScaleBadSkipCert()
+	powerScaleCSMBadCertCnt  = csmForPowerScaleBadCertCnt()
+	powerScaleCSMBadVersion  = csmForPowerScaleBadVersion()
+	objects                  = map[shared.StorageKey]runtime.Object{}
+	powerScaleClient         = crclient.NewFakeClientNoInjector(objects)
+	powerScaleSecret         = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
 
 	powerScaleTests = []struct {
 		// every single unit test name
@@ -162,4 +162,3 @@ func csmForPowerScaleBadVersion() csmv1.ContainerStorageModule {
 
 	return res
 }
-

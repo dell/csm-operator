@@ -80,4 +80,3 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 
 	return res
 }
-
