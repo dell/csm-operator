@@ -15,7 +15,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -656,10 +655,20 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 // isDeleting - ture: Delete; false: Create/Update
 func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-	if utils.IsComponentEnabled(ctx, cr, r, csmv1.Observability, modules.ObservabilityTopologyName) {
-		log.Infow(fmt.Sprintf("Reconcile topology"))
-		if err := modules.ObservabilityTopology(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-			return err
+
+	comp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
+		modules.ObservabilityTopologyName:          modules.ObservabilityTopology,
+		modules.ObservabilityOtelCollectorName:     modules.OtelCollector,
+		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
+	}
+
+	for comp, reconFunc := range comp2reconFunc {
+		if utils.IsComponentEnabled(ctx, cr, r, csmv1.Observability, comp) {
+			log.Infow(fmt.Sprintf("reconcile %s", comp))
+			if err := reconFunc(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+				log.Errorf("failed to reconcile %s", comp)
+				return err
+			}
 		}
 	}
 
@@ -834,17 +843,6 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	return nil
 }
 
-func checkOwnerReference(cr csmv1.ContainerStorageModule) bool {
-	checkRef := false
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "CHECK_OWNER_REFERENCE" {
-			checkRef, _ = strconv.ParseBool(env.Value)
-			break
-		}
-	}
-	return checkRef
-}
-
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 
@@ -865,8 +863,6 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	default:
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
-
-	ischeckingOwnRef := checkOwnerReference(*cr)
 
 	upgradeValid, err := checkUpgrade(ctx, cr, operatorConfig)
 	if err != nil {
@@ -892,10 +888,6 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 				}
 			}
 
-		} else {
-			if ischeckingOwnRef {
-				return fmt.Errorf("Owner reference not found. Please re-install driver")
-			}
 		}
 	}
 

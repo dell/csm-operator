@@ -74,8 +74,8 @@ var _ = BeforeSuite(func() {
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must both be set.")
 
 	for _, moduleEnvVar := range moduleEnvVars {
-		moduleEnvVar = os.Getenv(moduleEnvVar)
-		if moduleEnvVar != "" {
+		enabled := os.Getenv(moduleEnvVar)
+		if enabled == "true" {
 			installedModules = append(installedModules, strings.ToLower(moduleEnvVar))
 		}
 	}
