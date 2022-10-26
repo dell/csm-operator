@@ -15,12 +15,12 @@ import (
 
 // ConfigVersions used for all unit tests
 const (
-	PFlexConfigVersion	 string = "v2.3.0"
+	PFlexConfigVersion       string = "v2.3.0"
 	ConfigVersion            string = "v2.2.0"
 	UpgradeConfigVersion     string = "v2.3.0"
 	JumpUpgradeConfigVersion string = "v2.4.0"
 	OldConfigVersion         string = "v2.1.0"
-	BadConfigVersion	 string = "v0"
+	BadConfigVersion         string = "v0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
@@ -104,7 +104,7 @@ func MakeSecret(name, ns, configVersion string) *corev1.Secret {
 	return secret
 }
 
-// MakeSecretFromJSON returns a driver pre-req secret array-config
+// MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
 	configJSON, _ := ioutil.ReadFile(configFile)
 	data := map[string][]byte{
