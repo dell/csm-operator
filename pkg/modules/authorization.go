@@ -63,6 +63,8 @@ const (
 
 	// AuthProxyHost -
 	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
+	// AuthProxyIngressHost -
+	AuthProxyIngressHost = "<PROXY_INGRESS_HOSTS>"
 	// AuthProxyIngressClassName -
 	AuthProxyIngressClassName = "<PROXY_INGRESS_CLASSNAME>"
 	// AuthTenantIngressClassName -
@@ -550,6 +552,10 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 	tenantIngressClassName := "nginx"
 	roleIngressClassName := "nginx"
 	storageIngressClassName := "nginx"
+	proxyIngressHost := utils.GetProxyIngressHost(auth)
+	if err != nil {
+		return proxyIngressHost, err
+	}
 
 	for _, component := range auth.Components {
 		if component.Name == AuthProxyServerComponent {
@@ -558,6 +564,8 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 					authNamespace = string(component.Name)
 				} else if strings.Contains(AuthProxyHost, env.Name) {
 					authHostname = env.Value
+				} else if strings.Contains(AuthProxyIngressHost, env.Name) {
+					proxyIngressHost = env.Value
 				} else if strings.Contains(AuthProxyIngressClassName, env.Name) {
 					proxyIngressClassName = env.Value
 				} else if strings.Contains(AuthTenantIngressClassName, env.Name) {
@@ -573,6 +581,7 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
+	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, proxyIngressHost)
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressClassName, proxyIngressClassName)
 	YamlString = strings.ReplaceAll(YamlString, AuthTenantIngressClassName, tenantIngressClassName)
 	YamlString = strings.ReplaceAll(YamlString, AuthRoleIngressClassName, roleIngressClassName)

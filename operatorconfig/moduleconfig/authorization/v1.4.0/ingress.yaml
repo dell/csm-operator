@@ -8,9 +8,20 @@ spec:
   tls:
   - hosts:
       - <AUTHORIZATION_HOSTNAME>
+      - <PROXY_INGRESS_HOSTS>
     secretName: karavi-auth-tls
   rules:
   - host: <AUTHORIZATION_HOSTNAME>
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: proxy-server
+              port:
+                number: 8080
+  - host: <PROXY_INGRESS_HOSTS>
     http:
       paths:
         - path: /

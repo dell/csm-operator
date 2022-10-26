@@ -887,3 +887,19 @@ func GetRedisStorage(auth csmv1.Module) string {
 	}
 	return storageClass
 }
+
+// GetProxyIngressHost -
+func GetProxyIngressHost(auth csmv1.Module) string {
+	var ingressHost string
+	for _, comp := range auth.Components {
+		if comp.Name == AuthProxyServerComponent {
+			for _, env := range comp.Envs {
+				if env.Name == "PROXY_INGRESS_HOSTS" && env.Value != "" {
+					ingressHost = env.Value
+					break
+				}
+			}
+		}
+	}
+	return ingressHost
+}
