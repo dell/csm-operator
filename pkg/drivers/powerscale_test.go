@@ -3,6 +3,7 @@ package drivers
 import (
 	"context"
 	"testing"
+	"fmt"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	//"github.com/dell/csm-operator/pkg/utils"
@@ -16,6 +17,7 @@ import (
 )
 
 var (
+	csmPScale 					  = csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
 	powerScaleCSM                             = csmForPowerScale()
 	powerScaleCSMBadSkipCert                  = csmForPowerScaleBadSkipCert()
 	powerScaleCSMBadCertCnt                   = csmForPowerScaleBadCertCnt()
@@ -94,6 +96,7 @@ func TestPrecheckPowerScale(t *testing.T) {
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
+				fmt.Printf("err: %+v\n", err)
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})

@@ -82,6 +82,7 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 		yamlConfig := make([]StorageArrayConfig, 0)
 		configs, _ := yaml.JSONToYAML(configBytes)
 		err := yaml.Unmarshal(configs, &yamlConfig)
+		log.Info("yamlConfig", yamlConfig)
 		if err != nil {
 			return "", fmt.Errorf("unable to parse multi-array configuration[%v]", err)
 		}
@@ -94,7 +95,7 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 		tempMapToFindDuplicates := make(map[string]interface{}, 0)
 		for i, config := range yamlConfig {
 			if config.SystemID == "" {
-				return "", fmt.Errorf("invalid value for ArrayID at index [%d]", i)
+				return "", fmt.Errorf("invalid value for SystemID at index [%d]", i)
 			}
 			if config.Username == "" {
 				return "", fmt.Errorf("invalid value for Username at index [%d]", i)
@@ -122,7 +123,7 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 			}
 
 			if _, ok := tempMapToFindDuplicates[config.SystemID]; ok {
-				return "", fmt.Errorf("Duplicate ArrayID [%s] found in storageArrayList parameter", config.SystemID)
+				return "", fmt.Errorf("Duplicate SystemID [%s] found in storageArrayList parameter", config.SystemID)
 			}
 			tempMapToFindDuplicates[config.SystemID] = nil
 
@@ -131,7 +132,7 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 			}
 
 			if noOfDefaultArrays > 1 {
-				return "", fmt.Errorf("'isDefaultArray' parameter located in multiple places ArrayID: %s. 'isDefaultArray' parameter should present only once in the storageArrayList", config.SystemID)
+				return "", fmt.Errorf("'isDefaultArray' parameter located in multiple places SystemID: %s. 'isDefaultArray' parameter should present only once in the storageArrayList", config.SystemID)
 			}
 		}
 	} else {

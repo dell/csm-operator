@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	//
-	fakeDriver               csmv1.DriverType = "fakeDriver"
+	csm   		= csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
+	
+	fakeDriver             csmv1.DriverType = "fakeDriver"
 	badDriver                csmv1.DriverType = "badDriver"
 
 	tests = []struct {

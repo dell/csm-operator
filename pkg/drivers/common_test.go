@@ -8,8 +8,6 @@ import (
 )
 
 var (
-	csm = csmWithTolerations()
-
 	// where to find all the yaml files
 	config = utils.OperatorConfig{
 		ConfigDirectory: "../../tests/config",
@@ -20,7 +18,7 @@ var (
 )
 
 // makes a csm object with tolerations
-func csmWithTolerations() csmv1.ContainerStorageModule {
+func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add tolerations to controller and node
@@ -49,10 +47,10 @@ func csmWithTolerations() csmv1.ContainerStorageModule {
 	res.Spec.Driver.Common.Image = "thisIsAnImage"
 
 	// Add pscale driver version
-	res.Spec.Driver.ConfigVersion = "v2.2.0"
+	res.Spec.Driver.ConfigVersion = version
 
-	// Add pscale driver version
-	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	// Add pscale driver type
+	res.Spec.Driver.CSIDriverType = driver
 
 	// Add NodeSelector to node and controller
 	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}

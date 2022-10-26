@@ -1,0 +1,20 @@
+[
+    {
+        "username": "admin",
+        "password": "password",
+        "systemID": "ID1",
+        "allSystemNames": "ID1-pflex-system",
+        "endpoint": "https://127.0.0.1",
+        "insecure": true,
+        "isDefault": true,
+        "mdm": "bruh"
+    },
+    {
+        "username": "admin",
+        "password": "password",
+        "systemID": "ID2",
+        "endpoint": "https://127.0.0.2",
+        "insecure": true,
+        "mdm": "10.0.0.3,10.0.0.4"
+    }
+]
