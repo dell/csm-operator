@@ -7,7 +7,7 @@
         "endpoint": "https://127.0.0.1",
         "insecure": true,
         "isDefault": true,
-        "mdm": "bruh"
+        "mdm": "invalidip"
     },
     {
         "username": "admin",

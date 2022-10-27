@@ -18,9 +18,6 @@ import (
 )
 
 const (
-	// PowerScalePluginIdentifier -
-	PowerScalePluginIdentifier = "powerscale"
-
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params"
 )
@@ -72,8 +69,6 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 		}
 	}
 
-	log.Debugw("preCheck", "secrets length", len(secrets), "secrets", secrets)
-
 	for _, name := range secrets {
 		found := &corev1.Secret{}
 		err := ct.Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
@@ -84,8 +79,6 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 			}
 		}
 	}
-
-	log.Debugw("yay")
 
 	return nil
 }
