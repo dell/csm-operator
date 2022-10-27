@@ -18,6 +18,9 @@ import (
 )
 
 const (
+	// PowerScalePluginIdentifier -
+	PowerScalePluginIdentifier = "powerscale"
+
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params"
 )

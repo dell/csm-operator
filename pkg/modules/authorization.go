@@ -25,11 +25,11 @@ import (
 // AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CMS Authorization. The key is driver name and the value is the driver plugin identifier
 var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
-		PluginIdentifier:              csmv1.PowerScaleName,
+		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
 	"isilon": {
-		PluginIdentifier:              csmv1.PowerScaleName,
+		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	}, // either powerscale or isilon are valid types
 }

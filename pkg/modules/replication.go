@@ -50,11 +50,11 @@ var (
 // ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CMS Replication. The key is driver name and the value is the driver plugin identifier
 var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
-		PluginIdentifier:              csmv1.PowerScaleName,
+		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
 	"isilon": {
-		PluginIdentifier:              csmv1.PowerScaleName,
+		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
 }
