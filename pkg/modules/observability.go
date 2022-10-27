@@ -100,11 +100,11 @@ const (
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CMS Replication. The key is driver name and the value is the driver plugin identifier
 var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
-		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
+		PluginIdentifier:              csmv1.PowerScaleName,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
 	"isilon": {
-		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
+		PluginIdentifier:              csmv1.PowerScaleName,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
 }
