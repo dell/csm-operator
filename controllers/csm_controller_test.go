@@ -384,6 +384,33 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 
 }
 
+func (suite *CSMControllerTestSuite) TestRemoveModule() {
+	r := suite.createReconciler()
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getAuthProxyServer()
+
+	var expectedErr string
+	var errorInjector *bool
+	suite.T().Run(csmName, func(t *testing.T) {
+		if errorInjector != nil {
+			suite.makeFakeCSM(csmName, suite.namespace, false, getAuthProxyServer())
+			r.Reconcile(ctx, req)
+			*errorInjector = true
+		}
+		err := r.removeModule(ctx, csm, operatorConfig, r.Client)
+		if expectedErr == "" {
+			assert.Nil(t, err)
+		} else {
+			assert.Error(t, err)
+			assert.Containsf(t, err.Error(), expectedErr, "expected error containing %q, got %s", expectedErr, err)
+		}
+		if errorInjector != nil {
+			*errorInjector = false
+			r.Client.(*crclient.Client).Clear()
+		}
+	})
+}
+
 func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 
 	// set bad version error
@@ -505,7 +532,7 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	err := reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
-	// error in Authorization
+	// error in Authorization Proxy Server
 	csm.Spec.Modules = getAuthProxyServer()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
@@ -930,6 +957,7 @@ func getAuthProxyServer() []csmv1.Module {
 					Envs:    []corev1.EnvVar{},
 				},
 			},
+			ForceRemoveModule: true,
 		},
 	}
 }
