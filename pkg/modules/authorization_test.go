@@ -459,7 +459,7 @@ func TestAuthorizationProxyServerDeployment(t *testing.T) {
 
 			tmpCR := customResource
 
-			cr := &corev1.ConfigMap{
+			cm := &corev1.ConfigMap{
 				TypeMeta: metav1.TypeMeta{
 					Kind: "ConfigMap",
 				},
@@ -468,7 +468,7 @@ func TestAuthorizationProxyServerDeployment(t *testing.T) {
 				},
 			}
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
@@ -483,6 +483,18 @@ func TestAuthorizationProxyServerDeployment(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
 		},
 	}
 	for name, tc := range tests {

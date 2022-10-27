@@ -857,6 +857,7 @@ func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModu
 	return false
 }
 
+// IsAuthorizationComponentEnabled - check if authorization proxy server components are enabled
 func IsAuthorizationComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
 	authorizationEnabled, auth := IsModuleEnabled(ctx, instance, r, mod)
 	if !authorizationEnabled {

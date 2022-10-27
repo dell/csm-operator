@@ -459,6 +459,11 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	err := reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// error in Authorization Proxy Server
+	csm.Spec.Modules = getAuthProxyServer()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
@@ -498,6 +503,12 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	csm.Spec.Modules = getAuthModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
 	err := reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Authorization
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
 	// error in Replication

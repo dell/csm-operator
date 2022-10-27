@@ -23,9 +23,9 @@ import (
 )
 
 const (
-	// AuthorizationDeploymentManifest - deployment resources and ingress rules for authorization module
+	// AuthDeploymentManifest - deployment resources and ingress rules for authorization module
 	AuthDeploymentManifest = "deployment.yaml"
-	// AuthorizationIngressManifest -
+	// AuthIngressManifest -
 	AuthIngressManifest = "ingress.yaml"
 	// AuthCertManagerManifest -
 	AuthCertManagerManifest = "cert-manager.yaml"
@@ -38,8 +38,8 @@ const (
 	AuthNamespace = "<NAMESPACE>"
 	// AuthLogLevel -
 	AuthLogLevel = "<AUTHORIZATION_LOG_LEVEL>"
-	// AuthZipkinCollectorUri -
-	AuthZipkinCollectorUri = "<AUTHORIZATION_ZIPKIN_COLLECTORURI>"
+	// AuthZipkinCollectorURI -
+	AuthZipkinCollectorURI = "<AUTHORIZATION_ZIPKIN_COLLECTORURI>"
 	// AuthZipkinProbability -
 	AuthZipkinProbability = "<AUTHORIZATION_ZIPKIN_PROBABILITY>"
 	// AuthServerImage -
@@ -58,13 +58,13 @@ const (
 	AuthRedisImage = "<AUTHORIZATION_REDIS_IMAGE>"
 	// AuthRedisCommanderImage -
 	AuthRedisCommanderImage = "<AUTHORIZATION_REDIS_COMMANDER_IMAGE>"
-	// AuthStorageClass -
+	// AuthRedisStorageClass -
 	AuthRedisStorageClass = "<REDIS_STORAGE_CLASS>"
 
 	// AuthProxyHost -
 	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
 	// AuthProxyIngressHost -
-	AuthProxyIngressHost = "<PROXY_INGRESS_HOSTS>"
+	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
 	// AuthProxyIngressClassName -
 	AuthProxyIngressClassName = "<PROXY_INGRESS_CLASSNAME>"
 	// AuthTenantIngressClassName -
@@ -439,7 +439,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	roleServiceImage := "dellemc/csm-authorization-role:v1.4.0"
 	storageServiceImage := "dellemc/csm-authorization-storage:v1.4.0"
 	logLevel := "debug"
-	zipkinCollectorUri := ""
+	zipkinCollectorURI := ""
 	zipkinProbability := ""
 	redisImage := "redis:6.0.8-alpine"
 	redisCommanderImage := "rediscommander/redis-commander:latest"
@@ -475,8 +475,8 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			for _, env := range component.Envs {
 				if strings.Contains(AuthLogLevel, env.Name) {
 					logLevel = env.Value
-				} else if strings.Contains(AuthZipkinCollectorUri, env.Name) {
-					zipkinCollectorUri = env.Value
+				} else if strings.Contains(AuthZipkinCollectorURI, env.Name) {
+					zipkinCollectorURI = env.Value
 				} else if strings.Contains(AuthZipkinProbability, env.Name) {
 					zipkinProbability = env.Value
 				} else if strings.Contains(AuthRedisStorageClass, env.Name) {
@@ -494,7 +494,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, roleServiceImage)
 	YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, storageServiceImage)
 	YamlString = strings.ReplaceAll(YamlString, AuthLogLevel, logLevel)
-	YamlString = strings.ReplaceAll(YamlString, AuthZipkinCollectorUri, zipkinCollectorUri)
+	YamlString = strings.ReplaceAll(YamlString, AuthZipkinCollectorURI, zipkinCollectorURI)
 	YamlString = strings.ReplaceAll(YamlString, AuthZipkinProbability, zipkinProbability)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, redisImage)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, redisCommanderImage)
