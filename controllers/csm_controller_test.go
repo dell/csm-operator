@@ -158,6 +158,13 @@ func (suite *CSMControllerTestSuite) TestReconcile() {
 	suite.runFakeCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
+	suite.makeFakeAuthServerCSM(csmName, suite.namespace, getAuthProxyServer())
+	suite.runFakeAuthCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeAuthCSMManager("", true)
+}
+
 // test error injection. Client get should fail
 func (suite *CSMControllerTestSuite) TestErrorInjection() {
 	// test csm not found. err should be nil
@@ -384,6 +391,33 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 
 }
 
+func (suite *CSMControllerTestSuite) TestRemoveModule() {
+	r := suite.createReconciler()
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getAuthProxyServer()
+
+	var expectedErr string
+	var errorInjector *bool
+	suite.T().Run(csmName, func(t *testing.T) {
+		if errorInjector != nil {
+			suite.makeFakeCSM(csmName, suite.namespace, false, getAuthProxyServer())
+			r.Reconcile(ctx, req)
+			*errorInjector = true
+		}
+		err := r.removeModule(ctx, csm, operatorConfig, r.Client)
+		if expectedErr == "" {
+			assert.Nil(t, err)
+		} else {
+			assert.Error(t, err)
+			assert.Containsf(t, err.Error(), expectedErr, "expected error containing %q, got %s", expectedErr, err)
+		}
+		if errorInjector != nil {
+			*errorInjector = false
+			r.Client.(*crclient.Client).Clear()
+		}
+	})
+}
+
 func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 
 	// set bad version error
@@ -459,6 +493,11 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	err := reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// error in Authorization Proxy Server
+	csm.Spec.Modules = getAuthProxyServer()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
@@ -498,6 +537,12 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	csm.Spec.Modules = getAuthModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
 	err := reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Authorization Proxy Server
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
 	// error in Replication
@@ -605,6 +650,36 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, recon
 	if !reconcileDelete {
 		suite.handleDaemonsetTest(reconciler, "csm-node")
 		suite.handleDeploymentTest(reconciler, "csm-controller")
+		suite.handlePodTest(reconciler, "csm-pod")
+		_, err = reconciler.Reconcile(ctx, req)
+		if expectedErr == "" {
+			assert.NoError(suite.T(), err)
+		} else {
+			assert.NotNil(suite.T(), err)
+		}
+	}
+}
+
+func (suite *CSMControllerTestSuite) runFakeAuthCSMManager(expectedErr string, reconcileDelete bool) {
+	reconciler := suite.createReconciler()
+
+	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
+	res, err := reconciler.Reconcile(ctx, req)
+
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+
+	if expectedErr == "" {
+		assert.NoError(suite.T(), err)
+	} else {
+		assert.NotNil(suite.T(), err)
+	}
+
+	if err != nil {
+		ctrl.Log.Error(err, "Error returned")
+		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
+	}
+
+	if !reconcileDelete {
 		suite.handlePodTest(reconciler, "csm-pod")
 		_, err = reconciler.Reconcile(ctx, req)
 		if expectedErr == "" {
@@ -887,6 +962,43 @@ func getAuthModule() []csmv1.Module {
 	}
 }
 
+func getAuthProxyServer() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.AuthorizationServer,
+			Enabled:       true,
+			ConfigVersion: "v1.4.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:    "karavi-authorization-proxy-server",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "PROXY_HOST",
+							Value: "csm-auth.com",
+						},
+						{
+							Name:  "AUTHORIZATION_LOG_LEVEL",
+							Value: "debug",
+						},
+					},
+				},
+				{
+					Name:    "cert-manager",
+					Enabled: &[]bool{true}[0],
+					Envs:    []corev1.EnvVar{},
+				},
+				{
+					Name:    "ingress-nginx",
+					Enabled: &[]bool{true}[0],
+					Envs:    []corev1.EnvVar{},
+				},
+			},
+			ForceRemoveModule: true,
+		},
+	}
+}
+
 func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
 	suite.makeFakeCSM(csmName, suite.namespace, true, append(getAuthModule(), getObservabilityModule()...))
 	suite.runFakeCSMManager("", false)
@@ -930,6 +1042,34 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	}
 }
 
+func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getAuthProxyServer()
+	reconciler := suite.createReconciler()
+	badOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
+	err := reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.Error(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.Nil(suite.T(), err)
+
+	// Restore the status
+	for _, c := range csm.Spec.Modules[0].Components {
+		c.Enabled = &[]bool{false}[0]
+	}
+}
+
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool, modules []csmv1.Module) {
 
@@ -945,6 +1085,21 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 
 	// this secret required by authorization module
 	sec = shared.MakeSecret("proxy-authz-tokens", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("karavi-config-secret", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("proxy-storage-secret", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("karavi-auth-tls", ns, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
@@ -994,6 +1149,34 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm.Spec.Modules = modules
 	out, _ = json.Marshal(csm)
 	csm.Annotations["kubectl.kubernetes.io/last-applied-configuration"] = string(out)
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+// helper method to create k8s objects
+func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, modules []csmv1.Module) {
+
+	// this secret required by authorization module
+	sec := shared.MakeSecret("karavi-config-secret", ns, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("proxy-storage-secret", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("karavi-auth-tls", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeModuleCSM(name, ns, configVersion)
+
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ForceRemoveModule = true
+	csm.Annotations[configVersionKey] = configVersion
 
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
