@@ -105,7 +105,7 @@ var (
 // +kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules/finalizers,verbs=update
 // +kubebuilder:rbac:groups="replication.storage.dell.com",resources=dellcsireplicationgroups,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="replication.storage.dell.com",resources=dellcsireplicationgroups/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=pods;services;services/finalizers;endpoints;persistentvolumeclaims;events;configmaps;secrets;serviceaccounts,verbs=*
+// +kubebuilder:rbac:groups="",resources=pods;services;services/finalizers;endpoints;persistentvolumeclaims;events;configmaps;secrets;serviceaccounts;roles;ingresses,verbs=*
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch;create;patch;update
 // +kubebuilder:rbac:groups="",resources=persistentvolumeclaims/status,verbs=update;patch;get
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch
@@ -113,6 +113,7 @@ var (
 // +kubebuilder:rbac:groups="apps",resources=deployments;daemonsets;replicasets;statefulsets,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles;clusterrolebindings;replicasets;rolebindings,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles/finalizers,verbs=get;list;watch;update;create;delete;patch
+// +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=subjectaccessreviews,verbs=create
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="monitoring.coreos.com",resources=servicemonitors,verbs=get;create
 // +kubebuilder:rbac:groups="",resources=deployments/finalizers,resourceNames=dell-csm-operator-controller-manager,verbs=update
@@ -124,13 +125,58 @@ var (
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotclasses;volumesnapshotcontents,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotcontents/status,verbs=update
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots;volumesnapshots/status,verbs=get;list;watch;update
-// +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=create;list;watch;delete;get
+// +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=*
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments/status,verbs=patch
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="security.openshift.io",resources=securitycontextconstraints,resourceNames=privileged,verbs=use
 // +kubebuilder:rbac:urls="/metrics",verbs=get
 // +kubebuilder:rbac:groups="authentication.k8s.io",resources=tokenreviews,verbs=create
 // +kubebuilder:rbac:groups="authorization.k8s.io",resources=subjectaccessreviews,verbs=create
+// +kubebuilder:rbac:groups="cert-manager.io",resources=issuers;issuers/status,verbs=update;get;list;watch
+// +kubebuilder:rbac:groups="cert-manager.io",resources=clusterissuers;clusterissuers/status,verbs=update;get;list;watch
+// +kubebuilder:rbac:groups="cert-manager.io",resources=certificates;certificaterequests;clusterissuers;issuers,verbs=*
+// +kubebuilder:rbac:groups="cert-manager.io",resources=certificates/finalizers;certificaterequests/finalizers,verbs=update
+// +kubebuilder:rbac:groups="cert-manager.io",resources=certificates/status;certificaterequests/status,verbs=update
+// +kubebuilder:rbac:groups="cert-manager.io",resources=certificates;certificaterequests;issuers,verbs=create;delete;deletecollection;patch;update
+// +kubebuilder:rbac:groups="cert-manager.io",resources=signers,resourceNames=issuers.cert-manager.io/*;clusterissuers.cert-manager.io/*,verbs=approve
+// +kubebuilder:rbac:groups="cert-manager.io",resources=*/*,verbs=*
+// +kubebuilder:rbac:groups="",resources=secrets,resourceNames=cert-manager-webhook-ca,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups="cert-manager.io",resources=configmaps,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=cert-manager-controller,verbs=get;update;patch
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-controller,verbs=get;update;patch
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=create
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders,verbs=create;delete;get;list;watch
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders;orders/status,verbs=update
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders;challenges,verbs=get;list;watch;create;delete;deletecollection;patch;update
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=clusterissuers;issuers,verbs=get;list;watch
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=challenges,verbs=create;delete
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders/finalizers,verbs=update
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=challenges;challenges/status,verbs=update;get;list;watch
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=challenges/finalizers,verbs=update
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=*/*,verbs=*
+// +kubebuilder:rbac:groups="networking.k8s.io",resources=ingresses,verbs=*
+// +kubebuilder:rbac:groups="networking.k8s.io",resources=ingresses/finalizers,verbs=update
+// +kubebuilder:rbac:groups="networking.k8s.io",resources=ingressclasses,verbs=create;get;list;watch;update;delete
+// +kubebuilder:rbac:groups="networking.k8s.io",resources=ingresses/status,verbs=update;get;list;watch
+// +kubebuilder:rbac:groups="networking.x-k8s.io",resources=httproutes,verbs=*
+// +kubebuilder:rbac:groups="networking.x-k8s.io",resources=httproutes;gateways,verbs=get;list;watch
+// +kubebuilder:rbac:groups="networking.x-k8s.io",resources=gateways/finalizers;httproutes/finalizers,verbs=update
+// +kubebuilder:rbac:groups="route.openshift.io",resources=routes/custom-host,verbs=create
+// +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources=validatingwebhookconfigurations;mutatingwebhookconfigurations,verbs=create;get;list;watch;update;delete;patch
+// +kubebuilder:rbac:groups="apiregistration.k8s.io",resources=apiservices,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups="apiregistration.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups="auditregistration.k8s.io",resources=auditsinks,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=ingress-controller-leader,verbs=get;update
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=ingress-controller-leader,verbs=get;update
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=create;list;watch
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
+// +kubebuilder:rbac:groups="discovery.k8s.io",resources=endpointslices,verbs=list;watch;get
+// +kubebuilder:rbac:groups="certificates.k8s.io",resources=certificatesigningrequests,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups="certificates.k8s.io",resources=certificatesigningrequests/status,verbs=update
+// +kubebuilder:rbac:groups="certificates.k8s.io",resources=signers,resourceNames=issuers.cert-manager.io/*;clusterissuers.cert-manager.io/*,verbs=sign
+// +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core;cert-manager-controller,verbs=get;update;patch
+// +kubebuilder:rbac:groups="batch",resources=jobs,verbs=list;watch;create;update;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -185,11 +231,23 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
-			// remove all resource deployed from CR by operator
+			// remove all resources deployed from CR by operator
 			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))
 				log.Errorw("remove driver", "error", err.Error())
-				return ctrl.Result{}, fmt.Errorf("error when deleteing driver: %v", err)
+				return ctrl.Result{}, fmt.Errorf("error when deleting driver: %v", err)
+			}
+		}
+
+		// check for force cleanup on standalone module
+		for _, m := range csm.Spec.Modules {
+			if m.ForceRemoveModule {
+				// remove all resources deployed from CR by operator
+				if err := r.removeModule(ctx, *csm, *operatorConfig, r.Client); err != nil {
+					r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove module: %s", err))
+					log.Errorw("remove module", "error", err.Error())
+					return ctrl.Result{}, fmt.Errorf("error when deleting module: %v", err)
+				}
 			}
 		}
 
@@ -232,13 +290,13 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		log.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
-	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig)
+	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig, r.Client)
 	if syncErr == nil {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update driver: %s completed OK", csm.Name)
+		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", csm.Name)
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
 	}
 
-	// Failed driver deployment
+	// Failed deployment
 	r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", syncErr.Error())
 
 	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, syncErr)
@@ -523,8 +581,17 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 }
 
 // SyncCSM - Sync the current installation - this can lead to a create or update
-func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
+
+	// Create/Update Authorization Proxy Server
+	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer); authorizationEnabled {
+		log.Infow("Create/Update authorization")
+		if err := r.reconcileAuthorization(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
+		}
+		return nil
+	}
 
 	// Get Driver resources
 	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig)
@@ -652,7 +719,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 }
 
 // reconcileObservability - Delete/Create/Update observability components
-// isDeleting - ture: Delete; false: Create/Update
+// isDeleting - true: Delete; false: Create/Update
 func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
@@ -679,6 +746,40 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		}
 	}
 
+	return nil
+}
+
+// reconcileAuthorization - deploy authorization proxy server
+func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+		log.Infow("Reconcile authorization proxy-server")
+		if err := modules.AuthorizationServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile authorization proxy server: %v", err)
+		}
+
+		if err := modules.AuthorizationIngress(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
+		}
+
+		if err := modules.InstallPolicies(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to install policies: %v", err)
+		}
+	}
+
+	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
+		log.Infow("Reconcile authorization cert-manager")
+		if err := modules.AuthorizationCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
+		}
+	}
+
+	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+		log.Infow("Reconcile authorization nginx ingress controller")
+		if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
+		}
+	}
 	return nil
 }
 
@@ -850,6 +951,19 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	return nil
 }
 
+// removeModule - remove authorization proxy server
+func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+
+	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.AuthorizationServer); authorizationEnabled {
+		log.Infow("Deleting Authorization Proxy Server")
+		if err := r.reconcileAuthorization(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 
@@ -868,6 +982,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		}
 
 	default:
+		for _, m := range cr.Spec.Modules {
+			if m.Name == csmv1.AuthorizationServer {
+				return nil
+			}
+		}
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
 
@@ -891,7 +1010,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 					log.Infow("Owner reference is found and matches")
 					break
 				} else {
-					return fmt.Errorf("Required Owner reference not found. Please re-install driver ")
+					return fmt.Errorf("required Owner reference not found. Please re-install driver ")
 				}
 			}
 
@@ -905,6 +1024,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			case csmv1.Authorization:
 				if err := modules.AuthorizationPrecheck(ctx, operatorConfig, m, *cr, r.GetClient()); err != nil {
 					return fmt.Errorf("failed authorization validation: %v", err)
+				}
+
+			case csmv1.AuthorizationServer:
+				if err := modules.AuthorizationServerPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+					return fmt.Errorf("failed authorization proxy server validation: %v", err)
 				}
 
 			case csmv1.Replication:
@@ -985,7 +1109,7 @@ func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.Containe
 		annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
 		isUpdated = true
 		instance.SetAnnotations(annotations)
-		log.Infof("Installing CSI Driver %s with config Version %s. Updating Annotations with Config Version",
+		log.Infof("Installing storage component %s with config Version %s. Updating Annotations with Config Version",
 			instance.GetName(), instance.Spec.Driver.ConfigVersion)
 	}
 	return isUpdated
