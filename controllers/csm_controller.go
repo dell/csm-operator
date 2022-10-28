@@ -585,7 +585,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	log := logger.GetLogger(ctx)
 
 	// Create/Update Authorization Proxy Server
-	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, r, csmv1.AuthorizationServer); authorizationEnabled {
+	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer); authorizationEnabled {
 		log.Infow("Create/Update authorization")
 		if err := r.reconcileAuthorization(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
@@ -955,7 +955,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
-	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, instance, r, csmv1.AuthorizationServer); authorizationEnabled {
+	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.AuthorizationServer); authorizationEnabled {
 		log.Infow("Deleting Authorization Proxy Server")
 		if err := r.reconcileAuthorization(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
 			return err

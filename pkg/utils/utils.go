@@ -22,8 +22,8 @@ import (
 	networking "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
-  t1 "k8s.io/apimachinery/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -584,9 +584,9 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, types.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
-	if err != nil && k8serrors.IsNotFound(err) {
+	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Object not found to delete", "Name:", name, "Kind:", kind, "Namespace:", obj.GetNamespace())
 		return nil
 	} else if err != nil {
@@ -595,7 +595,7 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	} else {
 		log.Infow("Deleting object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Delete(ctx, obj)
-		if err != nil && !k8serrors.IsNotFound(err) {
+		if err != nil && !k8serror.IsNotFound(err) {
 			return err
 		}
 	}
@@ -609,9 +609,9 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, types.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
-	if err != nil && k8serrors.IsNotFound(err) {
+	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Create(ctx, obj)
 		if err != nil {
@@ -856,7 +856,7 @@ func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModu
 
 // IsAuthorizationComponentEnabled - check if authorization proxy server components are enabled
 func IsAuthorizationComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
-	authorizationEnabled, auth := IsModuleEnabled(ctx, instance, r, mod)
+	authorizationEnabled, auth := IsModuleEnabled(ctx, instance, mod)
 	if !authorizationEnabled {
 		return false
 	}
