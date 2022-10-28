@@ -4,7 +4,6 @@ import (
 	"sync/atomic"
 
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -23,13 +22,13 @@ type ReconcileCSM interface {
 // FakeReconcileCSM -
 type FakeReconcileCSM struct {
 	reconcile.Reconciler
-	client.Client
+	crclient.Client
 	K8sClient   kubernetes.Interface
 	updateCount int32
 }
 
 // GetClient -
-func (r *FakeReconcileCSM) GetClient() client.Client {
+func (r *FakeReconcileCSM) GetClient() crclient.Client {
 	return r.Client
 }
 

@@ -19,6 +19,7 @@ import (
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/kubernetes/test/e2e/framework"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -27,6 +28,23 @@ var (
 	authString        = "karavi-authorization-proxy"
 	operatorNamespace = "dell-csm-operator"
 )
+
+var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
+	err := modules.CheckAnnotationAuth(annotations)
+	if err != nil {
+		return err
+	}
+
+	err = modules.CheckApplyVolumesAuth(vols)
+	if err != nil {
+		return err
+	}
+	err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType))
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // GetTestResources -- parse values file
 func GetTestResources(valuesFilePath string) ([]Resource, error) {
@@ -184,6 +202,14 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string) error 
 func (step *Step) validateObservabilityInstalled(res Resource) error {
 	cr := res.CustomResource
 
+	instance := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name}, instance,
+	); err != nil {
+		return err
+	}
+
 	// check installation for all replicas
 	fakeReconcile := utils.FakeReconcileCSM{
 		Client:    step.ctrlClient,
@@ -198,6 +224,24 @@ func (step *Step) validateObservabilityInstalled(res Resource) error {
 		// check observability in all clusters
 		if err := checkObservabilityRunningPods(utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for observability installation in %s: %v", cluster.ClusterID, err)
+		}
+
+		// check observability's authorization
+		driverType := cr.Spec.Driver.CSIDriverType
+		dpApply, err := getApplyObservabilityDeployment(utils.ObservabilityNamespace, driverType, cluster.ClusterCTRLClient)
+		if err != nil {
+			return err
+		}
+		if authorizationEnabled, _ := utils.IsModuleEnabled(context.TODO(), *instance, csmv1.Authorization); authorizationEnabled {
+			if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
+				return fmt.Errorf("failed to check for observability authorization installation in %s: %v", cluster.ClusterID, err)
+			}
+		} else {
+			for _, cnt := range dpApply.Spec.Template.Spec.Containers {
+				if *cnt.Name == authString {
+					return fmt.Errorf("found observability authorization in deployment: %v, err:%v", dpApply.Name, err)
+				}
+			}
 		}
 	}
 
@@ -321,33 +365,17 @@ func (step *Step) validateReplicationNotInstalled(res Resource) error {
 
 func (step *Step) validateAuthorizationInstalled(res Resource) error {
 	cr := res.CustomResource
-	correctlyInjected := func(annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
-		err := modules.CheckAnnotationAuth(annotations)
-		if err != nil {
-			return err
-		}
-
-		err = modules.CheckApplyVolumesAuth(vols)
-		if err != nil {
-			return err
-		}
-		err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType))
-		if err != nil {
-			return err
-		}
-		return nil
-	}
 
 	dpApply, dsApply, err := getApplyDeploymentDaemonSet(cr, step.ctrlClient)
 	if err != nil {
 		return err
 	}
 
-	if err := correctlyInjected(dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
+	if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
 		return err
 	}
 
-	return correctlyInjected(dsApply.Annotations, dsApply.Spec.Template.Spec.Volumes, dsApply.Spec.Template.Spec.Containers)
+	return correctlyAuthInjected(cr, dsApply.Annotations, dsApply.Spec.Template.Spec.Volumes, dsApply.Spec.Template.Spec.Containers)
 }
 
 func (step *Step) validateAuthorizationNotInstalled(res Resource) error {
@@ -407,6 +435,12 @@ func (step *Step) enableModule(res Resource, module string) error {
 	for i, m := range found.Spec.Modules {
 		if !m.Enabled && m.Name == csmv1.ModuleType(module) {
 			found.Spec.Modules[i].Enabled = true
+			//for observability, enable all components
+			if m.Name == csmv1.Observability {
+				for j := range m.Components {
+					found.Spec.Modules[i].Components[j].Enabled = pointer.Bool(true)
+				}
+			}
 		}
 	}
 
@@ -442,7 +476,7 @@ func (step *Step) disableModule(res Resource, module string) error {
 
 			if m.Name == csmv1.Observability {
 				for j := range m.Components {
-					found.Spec.Modules[i].Components[j].Enabled = &[]bool{false}[0]
+					found.Spec.Modules[i].Components[j].Enabled = pointer.Bool(false)
 				}
 			}
 		}
