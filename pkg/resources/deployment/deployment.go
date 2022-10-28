@@ -41,9 +41,8 @@ func SyncDeployment(ctx context.Context, deployment appsv1.DeploymentApplyConfig
 		log.Errorw("get SyncDeployment error", "Error", err.Error())
 	}
 	opts := metav1.ApplyOptions{FieldManager: "application/apply-patch"}
-	if found.Name == "" {
-		log.Infow("No existing Deployment", "Name:", found.Name)
-
+	if found == nil || found.Name == "" {
+		log.Infow("No existing Deployment", "Name:", deployment.Name)
 	} else {
 		log.Infow("found deployment", "image", found.Spec.Template.Spec.Containers[0].Image)
 	}
