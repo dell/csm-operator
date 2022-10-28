@@ -16,6 +16,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var defaultObservabilityDeploymentName = map[csmv1.DriverType]string{
+	csmv1.PowerScaleName: "karavi-metrics-powerscale",
+	csmv1.PowerScale:     "karavi-metrics-powerscale",
+}
+
 // CustomTest -
 type CustomTest struct {
 	Name string `json:"name" yaml:"name"`
@@ -88,6 +93,32 @@ func checkObservabilityRunningPods(namespace string, k8sClient kubernetes.Interf
 	}
 	for _, pod := range pods {
 		if strings.Contains(pod.Name, "topology") {
+			if pod.Status.Phase == corev1.PodRunning {
+				for _, cntStat := range pod.Status.ContainerStatuses {
+					if cntStat.State.Running == nil {
+						allReady = false
+						notReadyMessage += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
+						break
+					}
+				}
+			} else {
+				allReady = false
+				notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
+			}
+		} else if strings.Contains(pod.Name, "metrics") {
+			if pod.Status.Phase == corev1.PodRunning {
+				for _, cntStat := range pod.Status.ContainerStatuses {
+					if cntStat.State.Running == nil {
+						allReady = false
+						notReadyMessage += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
+						break
+					}
+				}
+			} else {
+				allReady = false
+				notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
+			}
+		} else if strings.Contains(pod.Name, "otel") {
 			if pod.Status.Phase == corev1.PodRunning {
 				for _, cntStat := range pod.Status.ContainerStatuses {
 					if cntStat.State.Running == nil {
@@ -201,4 +232,37 @@ func getDriverDaemonset(cr csmv1.ContainerStorageModule, ctrlClient client.Clien
 	}
 
 	return ds, nil
+}
+
+func getObservabilityDeployment(namespace string, driverType csmv1.DriverType, ctrlClient client.Client) (*appsv1.Deployment, error) {
+	dp := &appsv1.Deployment{}
+	dpName := defaultObservabilityDeploymentName[driverType]
+
+	if err := ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: namespace,
+		Name:      dpName}, dp); err != nil {
+		return nil, err
+	}
+
+	return dp, nil
+}
+
+func getApplyObservabilityDeployment(namespace string, driverType csmv1.DriverType, ctrlClient client.Client) (confv1.DeploymentApplyConfiguration, error) {
+	dp, err := getObservabilityDeployment(namespace, driverType, ctrlClient)
+	if err != nil {
+		return confv1.DeploymentApplyConfiguration{}, fmt.Errorf("failed to get deployment: %v", err)
+	}
+
+	dpBuf, err := yaml.Marshal(dp)
+	if err != nil {
+		return confv1.DeploymentApplyConfiguration{}, fmt.Errorf("failed to get deployment: %v", err)
+	}
+
+	var dpApply confv1.DeploymentApplyConfiguration
+	err = yaml.Unmarshal(dpBuf, &dpApply)
+	if err != nil {
+		return confv1.DeploymentApplyConfiguration{}, err
+	}
+
+	return dpApply, nil
 }

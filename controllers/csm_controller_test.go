@@ -817,6 +817,26 @@ func getObservabilityModule() []csmv1.Module {
 						},
 					},
 				},
+				{
+					Name:    "otel-collector",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "NGINX_PROXY_IMAGE",
+							Value: "nginxinc/nginx-unprivileged:1.20",
+						},
+					},
+				},
+				{
+					Name:    "metrics-powerscale",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "POWERSCALE_MAX_CONCURRENT_QUERIES",
+							Value: "10",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -879,6 +899,37 @@ func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
 	updateCSMError = false
 }
 
+func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getObservabilityModule()
+	reconciler := suite.createReconciler()
+	badOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
+	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
+	assert.NotNil(suite.T(), err)
+
+	// Only test for Otel component
+	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
+	assert.NotNil(suite.T(), err)
+
+	// Only test for Metrics component
+	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
+	assert.Error(suite.T(), err)
+
+	// Test for all components disabled
+	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
+	assert.Nil(suite.T(), err)
+
+	// Restore the status
+	for _, c := range csm.Spec.Modules[0].Components {
+		c.Enabled = &[]bool{false}[0]
+	}
+}
+
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool, modules []csmv1.Module) {
 
@@ -899,6 +950,20 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 
 	// replication secrets
 	sec = shared.MakeSecret("skip-replication-cluster-check", utils.ReplicationControllerNameSpace, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by observability isilon module
+	obsIsilonSec := shared.MakeSecret(name+"-creds", "karavi", configVersion)
+	suite.fakeClient.Create(ctx, obsIsilonSec)
+
+	// this secret required by observability authorization isilon module
+	sec = shared.MakeSecret("karavi-authorization-config", "karavi", configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by observability authorization isilon module
+	sec = shared.MakeSecret("proxy-authz-tokens", "karavi", configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 

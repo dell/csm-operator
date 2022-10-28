@@ -13,7 +13,7 @@ spec:
       fSGroupPolicy: "ReadWriteOnceWithFSType"
     # Config version for CSI PowerScale v2.4.0 driver
     configVersion: v2.4.0
-    authSecret: test-isilon-creds
+    authSecret: test-isilon-creds-auth
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
@@ -238,7 +238,7 @@ spec:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
-      enabled: false
+      enabled: true
       configVersion: v1.4.0
       components:
       - name: karavi-authorization-proxy
@@ -251,73 +251,15 @@ spec:
           # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
-    # replication: allows to configure replication
-    # Replication CRDs must be installed before installing driver
-    - name: replication
-      # enabled: Enable/Disable replication feature
-      # Allowed values:
-      #   true: enable replication feature(install dell-csi-replicator sidecar)
-      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
-      # Default value: false
-      enabled: false
-      configVersion: v1.3.0
-      components:
-      - name: dell-csi-replicator
-        # image: Image to use for dell-csi-replicator. This shouldn't be changed
-        # Allowed values: string
-        # Default value: None
-        image: dellemc/dell-csi-replicator:v1.3.0
-        envs:
-          # replicationPrefix: prefix to prepend to storage classes parameters
-          # Allowed values: string
-          # Default value: replication.storage.dell.com
-          - name: "X_CSI_REPLICATION_PREFIX"
-            value: "replication.storage.dell.com"
-          # replicationContextPrefix: prefix to use for naming of resources created by replication feature
-          # Allowed values: string
-          # Default value: powerstore
-          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-            value: "powerscale"
-      
-      - name: dell-replication-controller-manager
-        # image: Defines controller image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.3.0
-        envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
-          # Allowed values: string
-          - name: "TARGET_CLUSTERS_IDS"
-            value: "target-cluster-1"
-          # Replication log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "REPLICATION_CTRL_LOG_LEVEL"
-            value: "debug"
-          
-          # replicas: Defines number of controller replicas
-          # Allowed values: int
-          # Default value: 1
-          - name: "REPLICATION_CTRL_REPLICAS"
-            value: "1"
-          # retryIntervalMin: Initial retry interval of failed reconcile request.
-          # It doubles with each failure, upto retry-interval-max
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MIN"
-            value: "1s"
-          # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MAX"
-            value: "5m"
-
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
-      enabled: false
+      enabled: true
       configVersion: v1.3.0
       components: 
         - name: topology
           # enabled: Enable/Disable topology
-          enabled: false
+          enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/csm-topology:v1.3.0
@@ -330,7 +272,7 @@ spec:
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: false
+          enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
           image: otel/opentelemetry-collector:0.42.0
@@ -343,7 +285,7 @@ spec:
 
         - name: metrics-powerscale
           # enabled: Enable/Disable PowerScale metrics
-          enabled: false
+          enabled: true
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/csm-metrics-powerscale:v1.0.0
