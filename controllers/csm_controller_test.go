@@ -158,6 +158,13 @@ func (suite *CSMControllerTestSuite) TestReconcile() {
 	suite.runFakeCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
+	suite.makeFakeAuthServerCSM(csmName, suite.namespace, getAuthProxyServer())
+	suite.runFakeAuthCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeCSMManager("", true)
+}
+
 // test error injection. Client get should fail
 func (suite *CSMControllerTestSuite) TestErrorInjection() {
 	// test csm not found. err should be nil
@@ -653,6 +660,36 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, recon
 	}
 }
 
+func (suite *CSMControllerTestSuite) runFakeAuthCSMManager(expectedErr string, reconcileDelete bool) {
+	reconciler := suite.createReconciler()
+
+	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
+	res, err := reconciler.Reconcile(ctx, req)
+
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+
+	if expectedErr == "" {
+		assert.NoError(suite.T(), err)
+	} else {
+		assert.NotNil(suite.T(), err)
+	}
+
+	if err != nil {
+		ctrl.Log.Error(err, "Error returned")
+		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
+	}
+
+	if !reconcileDelete {
+		suite.handlePodTest(reconciler, "csm-pod")
+		_, err = reconciler.Reconcile(ctx, req)
+		if expectedErr == "" {
+			assert.NoError(suite.T(), err)
+		} else {
+			assert.NotNil(suite.T(), err)
+		}
+	}
+}
+
 // call reconcile with different injection errors in k8s client
 func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expectedErr string) {
 	reconciler := suite.createReconciler()
@@ -1051,6 +1088,21 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
+	// this secret required by authorization module
+	sec = shared.MakeSecret("karavi-config-secret", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("proxy-storage-secret", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("karavi-auth-tls", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
 	// replication secrets
 	sec = shared.MakeSecret("skip-replication-cluster-check", utils.ReplicationControllerNameSpace, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
@@ -1097,6 +1149,34 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm.Spec.Modules = modules
 	out, _ = json.Marshal(csm)
 	csm.Annotations["kubectl.kubernetes.io/last-applied-configuration"] = string(out)
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+// helper method to create k8s objects
+func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, modules []csmv1.Module) {
+
+	// this secret required by authorization module
+	sec := shared.MakeSecret("karavi-config-secret", ns, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("proxy-storage-secret", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("karavi-auth-tls", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeModuleCSM(name, ns, configVersion)
+
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ForceRemoveModule = true
+	csm.Annotations[configVersionKey] = configVersion
 
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
