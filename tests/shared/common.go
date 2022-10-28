@@ -1,6 +1,8 @@
 package shared
 
 import (
+	"io/ioutil"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -13,10 +15,12 @@ import (
 
 // ConfigVersions used for all unit tests
 const (
+	PFlexConfigVersion       string = "v2.3.0"
 	ConfigVersion            string = "v2.2.0"
 	UpgradeConfigVersion     string = "v2.3.0"
 	JumpUpgradeConfigVersion string = "v2.4.0"
 	OldConfigVersion         string = "v2.1.0"
+	BadConfigVersion         string = "v0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
@@ -94,6 +98,17 @@ func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 func MakeSecret(name, ns, configVersion string) *corev1.Secret {
 	data := map[string][]byte{
 		"config": []byte("csm"),
+	}
+	object := metav1.ObjectMeta{Name: name, Namespace: ns}
+	secret := &corev1.Secret{Data: data, ObjectMeta: object}
+	return secret
+}
+
+// MakeSecretWithJSON returns a driver pre-req secret array-config
+func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
+	configJSON, _ := ioutil.ReadFile(configFile)
+	data := map[string][]byte{
+		"config": configJSON,
 	}
 	object := metav1.ObjectMeta{Name: name, Namespace: ns}
 	secret := &corev1.Secret{Data: data, ObjectMeta: object}
