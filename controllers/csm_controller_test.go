@@ -162,7 +162,7 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.makeFakeAuthServerCSM(csmName, suite.namespace, getAuthProxyServer())
 	suite.runFakeAuthCSMManager("", false)
 	suite.deleteCSM(csmName)
-	suite.runFakeCSMManager("", true)
+	suite.runFakeAuthCSMManager("", true)
 }
 
 // test error injection. Client get should fail
