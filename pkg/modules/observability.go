@@ -11,16 +11,22 @@ package modules
 import (
 	"context"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
+	"strconv"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
+	"github.com/dell/csm-operator/pkg/resources/deployment"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -95,6 +101,9 @@ const (
 
 	// OtelCollectorYamlFile - Otel Collector yaml file
 	OtelCollectorYamlFile string = "karavi-otel-collector.yaml"
+
+	// DriverDefaultReleaseName constant
+	DriverDefaultReleaseName string = "<DriverDefaultReleaseName>"
 )
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CMS Replication. The key is driver name and the value is the driver plugin identifier
@@ -107,6 +116,11 @@ var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
+}
+
+var defaultVolumeConfigName = map[csmv1.DriverType]string{
+	csmv1.PowerScaleName: "isilon-creds",
+	csmv1.PowerScale:     "isilon-creds",
 }
 
 // ObservabilityPrecheck  - runs precheck for CSM Observability
@@ -126,21 +140,72 @@ func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csm
 	}
 
 	// Pre-check For PowerScale secrets
-	secrets := []string{"isilon-creds"}
+	// Check for secret only
+	secretName := cr.Name + "-creds"
 
-	for _, name := range secrets {
-		found := &corev1.Secret{}
-		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name,
-			Namespace: "karavi"}, found)
-		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
-			}
-			log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
+	if cr.Spec.Driver.AuthSecret != "" {
+		secretName = cr.Spec.Driver.AuthSecret
+	}
+
+	found := &corev1.Secret{}
+	err := r.GetClient().Get(ctx, types.NamespacedName{Name: secretName,
+		Namespace: utils.ObservabilityNamespace}, found)
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return fmt.Errorf("failed to find secret %s and certificate validation is requested", secretName)
+		}
+		log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
+	}
+
+	//precheck for CSM Observability's Authorization
+	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
+		if err := ObservabilityAuthPrecheck(ctx, cr, r.GetClient()); err != nil {
+			return fmt.Errorf("failed authorization validation for Observability: %v", err)
 		}
 	}
 
 	log.Infof("\nperformed pre checks for: %s", obs.Name)
+	return nil
+}
+
+// ObservabilityAuthPrecheck  - runs precheck for CSM Observability's Authorization
+func ObservabilityAuthPrecheck(ctx context.Context, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	auth := csmv1.Module{}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Authorization {
+			auth = m
+			break
+		}
+	}
+
+	secrets := []string{"karavi-authorization-config", "proxy-authz-tokens"}
+
+	// Check for secrets
+	for _, env := range auth.Components[0].Envs {
+		if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
+			skipCertValid, err := strconv.ParseBool(env.Value)
+			if err != nil {
+				return fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+			}
+
+			if !skipCertValid {
+				secrets = append(secrets, "proxy-server-root-certificate")
+			}
+			break
+		}
+	}
+
+	for _, name := range secrets {
+		found := &corev1.Secret{}
+		err := ctrlClient.Get(ctx, types.NamespacedName{Name: name,
+			Namespace: utils.ObservabilityNamespace}, found)
+		if err != nil {
+			if k8serrors.IsNotFound(err) {
+				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -214,12 +279,12 @@ func OtelCollector(ctx context.Context, isDeleting bool, op utils.OperatorConfig
 		return err
 	}
 
-	powerscaleMetricsObjects, err := utils.GetObservabilityComponentObj([]byte(YamlString))
+	otelObjects, err := utils.GetObservabilityComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}
 
-	for _, ctrlObj := range powerscaleMetricsObjects {
+	for _, ctrlObj := range otelObjects {
 		if isDeleting {
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
@@ -271,15 +336,36 @@ func getOtelCollector(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 }
 
 // PowerScaleMetrics - delete or update powerscale metrics objects
-func PowerScaleMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	YamlString, err := getPowerScaleMetrics(op, cr)
+func PowerScaleMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+	log := logger.GetLogger(ctx)
+
+	ObjectsYamlString, err := getPowerScaleMetricsObjects(op, cr)
 	if err != nil {
 		return err
 	}
 
-	powerscaleMetricsObjects, err := utils.GetObservabilityComponentObj([]byte(YamlString))
+	powerscaleMetricsObjects, err := utils.GetObservabilityComponentObj([]byte(ObjectsYamlString))
 	if err != nil {
 		return err
+	}
+
+	//update secret volume and inject authorization to deployment
+	var dpApply *confv1.DeploymentApplyConfiguration
+	foundDp := false
+	for i, obj := range powerscaleMetricsObjects {
+		if deployment, ok := obj.(*appsv1.Deployment); ok {
+			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr)
+			if err != nil {
+				return err
+			}
+			foundDp = true
+			powerscaleMetricsObjects[i] = powerscaleMetricsObjects[len(powerscaleMetricsObjects)-1]
+			powerscaleMetricsObjects = powerscaleMetricsObjects[:len(powerscaleMetricsObjects)-1]
+			break
+		}
+	}
+	if !foundDp {
+		return fmt.Errorf("could not find deployment obj")
 	}
 
 	for _, ctrlObj := range powerscaleMetricsObjects {
@@ -294,11 +380,33 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		}
 	}
 
+	// update Deployment
+	if isDeleting {
+		// Delete Deployment
+		deploymentKey := client.ObjectKey{
+			Namespace: *dpApply.Namespace,
+			Name:      *dpApply.Name,
+		}
+		deploymentObj := &appsv1.Deployment{}
+		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
+			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
+				return fmt.Errorf("error delete deployment: %v", err)
+			}
+		} else {
+			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
+		}
+	} else {
+		// Create/Update Deployment
+		if err = deployment.SyncDeployment(ctx, *dpApply, k8sClient, cr.Name); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-// getPowerScaleMetrics - get powerscale metrics yaml string
-func getPowerScaleMetrics(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+// getPowerScaleMetricsObjects - get powerscale metrics yaml string
+func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
 	obs, err := getObservabilityModule(cr)
@@ -374,7 +482,40 @@ func getPowerScaleMetrics(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	YamlString = strings.ReplaceAll(YamlString, IsiclientVerbose, clientVerbose)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
+	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
+
 	return YamlString, nil
+}
+
+// parseObservabilityMetricsDeployment - update secret volume and inject authorization to deployment
+func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1.Deployment, op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (*confv1.DeploymentApplyConfiguration, error) {
+	//parse deployment to DeploymentApplyConfiguration
+	dpBuf, err := yaml.Marshal(deployment)
+	if err != nil {
+		return nil, err
+	}
+	dpApply := &confv1.DeploymentApplyConfiguration{}
+	err = yaml.Unmarshal(dpBuf, dpApply)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update secret volume
+	for i, v := range dpApply.Spec.Template.Spec.Volumes {
+		if *v.Name == defaultVolumeConfigName[cr.GetDriverType()] && cr.Spec.Driver.AuthSecret != "" {
+			dpApply.Spec.Template.Spec.Volumes[i].Secret.SecretName = &cr.Spec.Driver.AuthSecret
+		}
+	}
+
+	//inject authorization to deployment
+	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
+		dpApply, err = AuthInjectDeployment(*dpApply, cr, op)
+		if err != nil {
+			return nil, fmt.Errorf("injecting auth into Observability metrics deployment: %v", err)
+		}
+	}
+
+	return dpApply, nil
 }
 
 // getObservabilityModule - get instance of observability module
