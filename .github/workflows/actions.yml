@@ -50,7 +50,7 @@ jobs:
       - name: Run unit tests and check package coverage
         uses: dell/common-github-actions/go-code-tester@csm-operator-drivers
         with:
-          threshold: 65
+          threshold: 95
   go_security_scan:
     name: Go security
     runs-on: ubuntu-latest

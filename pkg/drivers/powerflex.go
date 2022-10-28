@@ -80,21 +80,18 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 
 	if string(configBytes) != "" {
 		yamlConfig := make([]StorageArrayConfig, 0)
-		configs, _ := yaml.JSONToYAML(configBytes)
-		err := yaml.Unmarshal(configs, &yamlConfig)
+		configs, err := yaml.JSONToYAML(configBytes)
 		if err != nil {
 			return "", fmt.Errorf("unable to parse multi-array configuration[%v]", err)
 		}
-
-		if len(yamlConfig) == 0 {
-			return "", fmt.Errorf("Arrays details are not provided in vxflexos-config secret")
-		}
+		// Not checking the return value here because any invalid yaml would already be detected by the JSONToYAML function above
+		_ = yaml.Unmarshal(configs, &yamlConfig)
 
 		var noOfDefaultArrays int
 		tempMapToFindDuplicates := make(map[string]interface{}, 0)
 		for i, config := range yamlConfig {
 			if config.SystemID == "" {
-				return "", fmt.Errorf("invalid value for ArrayID at index [%d]", i)
+				return "", fmt.Errorf("invalid value for SystemID at index [%d]", i)
 			}
 			if config.Username == "" {
 				return "", fmt.Errorf("invalid value for Username at index [%d]", i)
@@ -122,7 +119,7 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 			}
 
 			if _, ok := tempMapToFindDuplicates[config.SystemID]; ok {
-				return "", fmt.Errorf("Duplicate ArrayID [%s] found in storageArrayList parameter", config.SystemID)
+				return "", fmt.Errorf("Duplicate SystemID [%s] found in storageArrayList parameter", config.SystemID)
 			}
 			tempMapToFindDuplicates[config.SystemID] = nil
 
@@ -131,18 +128,17 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 			}
 
 			if noOfDefaultArrays > 1 {
-				return "", fmt.Errorf("'isDefaultArray' parameter located in multiple places ArrayID: %s. 'isDefaultArray' parameter should present only once in the storageArrayList", config.SystemID)
+				return "", fmt.Errorf("'isDefaultArray' parameter located in multiple places SystemID: %s. 'isDefaultArray' parameter should present only once in the storageArrayList", config.SystemID)
 			}
 		}
 	} else {
 		return "", fmt.Errorf("Arrays details are not provided in vxflexos-config secret")
 	}
-	fmt.Printf("mdmValFin: %s", mdmVal)
 	return mdmVal, nil
 
 }
 
-// ValidateIPAddress -
+// ValidateIPAddress validates that a proper set of IPs has been provided
 func ValidateIPAddress(ipAdd string) (string, bool) {
 	trimIP := strings.Split(ipAdd, ",")
 	if len(trimIP) < 1 {
@@ -165,8 +161,7 @@ var (
 	ipRegex, _ = regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
 )
 
-// IsIpv4Regex - Matches Ipaddress with regex
-// returns error if the Ip Address doesn't match regex
+// IsIpv4Regex - Matches Ipaddress with regex and returns error if the Ip Address doesn't match regex
 func IsIpv4Regex(ipAddress string) bool {
 	return ipRegex.MatchString(ipAddress)
 }
