@@ -81,6 +81,17 @@ data:
 
 ---
 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: karavi
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: debug
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -127,7 +138,7 @@ spec:
       volumes:
         - name: isilon-creds
           secret:
-            secretName: isilon-creds
+            secretName: <DriverDefaultReleaseName>-creds
         - name: tls-secret
           secret:
             secretName: otel-collector-tls
@@ -137,6 +148,9 @@ spec:
         - name: karavi-metrics-powerscale-configmap
           configMap:
             name: karavi-metrics-powerscale-configmap
+        - name: csi-isilon-config-params
+          configMap:
+             name: <DriverDefaultReleaseName>-config-params
       restartPolicy: Always
 status: {}
 
