@@ -981,22 +981,22 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	badOperatorConfig := utils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
-	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
 	assert.NotNil(suite.T(), err)
 
 	// Only test for Otel component
 	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
 	assert.NotNil(suite.T(), err)
 
 	// Only test for Metrics component
 	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
 	assert.Error(suite.T(), err)
 
 	// Test for all components disabled
 	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
 	assert.Nil(suite.T(), err)
 
 	// Restore the status
@@ -1057,8 +1057,18 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	assert.Nil(suite.T(), err)
 
 	// this secret required by observability isilon module
-	obsIsilonSec := shared.MakeSecret("isilon-creds", "karavi", configVersion)
+	obsIsilonSec := shared.MakeSecret(name+"-creds", "karavi", configVersion)
 	suite.fakeClient.Create(ctx, obsIsilonSec)
+
+	// this secret required by observability authorization isilon module
+	sec = shared.MakeSecret("karavi-authorization-config", "karavi", configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by observability authorization isilon module
+	sec = shared.MakeSecret("proxy-authz-tokens", "karavi", configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
 
 	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"

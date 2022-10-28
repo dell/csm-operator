@@ -113,3 +113,17 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      components:
+      - name: karavi-authorization-proxy
+        image: dellemc/csm-authorization-sidecar:v1.4.0
+        envs:
+          # proxyHost: hostname of the csm-authorization server
+          - name: "PROXY_HOST"
+            value: "testing-proxy-host"
+        
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+          - name: "SKIP_CERTIFICATE_VALIDATION"
+            value: "true"

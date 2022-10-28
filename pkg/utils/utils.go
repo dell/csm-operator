@@ -22,8 +22,8 @@ import (
 	networking "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
+  t1 "k8s.io/apimachinery/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -153,7 +153,6 @@ func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.Container
 			c.Args = ReplaceAllArgs(c.Args, side.Args)
 		}
 	}
-	return
 }
 
 // ReplaceAllContainerImageApply -
@@ -174,7 +173,6 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case csmv1.Sdc:
 		*c.Image = img.Images.Sdc
 	}
-	return
 }
 
 // UpdateinitContainerApply -
@@ -194,7 +192,6 @@ func UpdateinitContainerApply(initContainers []csmv1.ContainerTemplate, c *acore
 		}
 
 	}
-	return
 }
 
 // ReplaceAllApplyCustomEnvs -
@@ -587,9 +584,9 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	err := ctrlClient.Get(ctx, types.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && k8serrors.IsNotFound(err) {
 		log.Infow("Object not found to delete", "Name:", name, "Kind:", kind, "Namespace:", obj.GetNamespace())
 		return nil
 	} else if err != nil {
@@ -598,7 +595,7 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	} else {
 		log.Infow("Deleting object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Delete(ctx, obj)
-		if err != nil && !k8serror.IsNotFound(err) {
+		if err != nil && !k8serrors.IsNotFound(err) {
 			return err
 		}
 	}
@@ -612,9 +609,9 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	err := ctrlClient.Get(ctx, types.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && k8serrors.IsNotFound(err) {
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Create(ctx, obj)
 		if err != nil {
@@ -830,7 +827,7 @@ func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.
 }
 
 // IsModuleEnabled - check if the module is enabled
-func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType) (bool, csmv1.Module) {
+func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType) (bool, csmv1.Module) {
 	for _, m := range instance.Spec.Modules {
 		if m.Name == mod && m.Enabled {
 			return true, m
@@ -841,15 +838,15 @@ func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule,
 }
 
 // IsComponentEnabled - check if the component is enabled
-func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, compoenetType string) bool {
-	observabilityEnabled, obs := IsModuleEnabled(ctx, instance, r, mod)
+func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+	observabilityEnabled, obs := IsModuleEnabled(ctx, instance, mod)
 
 	if !observabilityEnabled {
 		return false
 	}
 
 	for _, c := range obs.Components {
-		if c.Name == compoenetType && *c.Enabled {
+		if c.Name == componentType && *c.Enabled {
 			return true
 		}
 	}
