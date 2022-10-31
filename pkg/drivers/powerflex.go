@@ -27,6 +27,14 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const (
+	// PowerFlexPluginIdentifier -
+	PowerFlexPluginIdentifier = "powerflex"
+
+	// PowerFlexConfigParamsVolumeMount -
+	PowerFlexConfigParamsVolumeMount = "vxflexos-config-params"
+)
+
 // PrecheckPowerFlex do input validation
 func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) error {
 

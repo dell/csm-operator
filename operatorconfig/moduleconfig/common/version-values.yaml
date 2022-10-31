@@ -11,3 +11,12 @@ powerscale:
       authorization: "v1.4.0"
       replication: "v1.3.0"
       observability: "v1.3.0"
+powerflex:
+  # List of Driver versions and modules that supports the version
+  v2.3.0:
+      authorization: "v1.3.0"
+      replication: "v1.3.0"
+  v2.4.0:
+      authorization: "v1.4.0"
+      replication: "v1.3.0"
+      observability: "v1.3.0"
