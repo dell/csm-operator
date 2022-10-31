@@ -73,6 +73,26 @@ func MakeCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
 	return csmObj
 }
 
+// MakeModuleCSM returns a csm from given params
+func MakeModuleCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
+
+	moduleObj := MakeModule(configVersion)
+
+	csmObj := csmv1.ContainerStorageModule{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Namespace:   ns,
+			Annotations: make(map[string]string),
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{moduleObj},
+		},
+		Status: csmv1.ContainerStorageModuleStatus{},
+	}
+	return csmObj
+}
+
 // MakeDriver returns a driver object from given params
 func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 	driverObj := csmv1.Driver{
@@ -92,6 +112,30 @@ func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 	}
 
 	return driverObj
+}
+
+// MakeModule returns a module object from given params
+func MakeModule(configVersion string) csmv1.Module {
+	moduleObj := csmv1.Module{
+		ConfigVersion:     configVersion,
+		ForceRemoveModule: true,
+		Components: []csmv1.ContainerTemplate{
+			{
+				Envs: []corev1.EnvVar{
+					{
+						Name:  "PROXY_HOST",
+						Value: "csm-auth.com",
+					},
+					{
+						Name:  "AUTHORIZATION_LOG_LEVEL",
+						Value: "debug",
+					},
+				},
+			},
+		},
+	}
+
+	return moduleObj
 }
 
 // MakeSecret  returns a driver pre-req secret array-config
