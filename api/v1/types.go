@@ -50,6 +50,9 @@ const (
 	// Authorization - placeholder for constant authorization
 	Authorization ModuleType = "authorization"
 
+	// AuthorizationServer - placeholder for constant authorization proxy server
+	AuthorizationServer ModuleType = "authorization-proxy-server"
+
 	// ReverseProxy - placeholder for constant csireverseproxy
 	ReverseProxy ModuleType = "csireverseproxy"
 
@@ -115,7 +118,7 @@ const (
 	Failed CSMOperatorConditionType = "Failed"
 )
 
-// Module defines the desired state of a ContainerStorageModuleModules
+// Module defines the desired state of a ContainerStorageModule
 type Module struct {
 	// Name is name of ContainerStorageModule modules
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
@@ -125,13 +128,17 @@ type Module struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enabled"
 	Enabled bool `json:"enabled" yaml:"enabled"`
 
-	// ConfigVersion is the configuration version of the driver
+	// ConfigVersion is the configuration version of the module
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
 	ConfigVersion string `json:"configVersion,omitempty" yaml:"configVersion,omitempty"`
 
-	// Components is the specification for SM components containers
+	// Components is the specification for CSM components containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule components specification"
 	Components []ContainerTemplate `json:"components,omitempty" yaml:"components,omitempty"`
+
+	// ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Module"
+	ForceRemoveModule bool `json:"forceRemoveModule,omitempty" yaml:"forceRemoveModule"`
 }
 
 // PodStatus - Represents PodStatus in a daemonset or deployment

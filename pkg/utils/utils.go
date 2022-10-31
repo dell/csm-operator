@@ -16,7 +16,7 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
+	"os"
 
 	"fmt"
 	"path/filepath"
@@ -27,11 +27,15 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	goYAML "github.com/go-yaml/yaml"
 
+	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
-
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	networking "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -42,8 +46,6 @@ import (
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	k8sClient "github.com/dell/csm-operator/k8s"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // K8sImagesConfig -
@@ -117,6 +119,10 @@ const (
 	DefaultSourceClusterID = "default-source-cluster"
 	// ObservabilityNamespace - karavi
 	ObservabilityNamespace = "karavi"
+	// AuthorizationNamespace - authorization
+	AuthorizationNamespace = "authorization"
+	// AuthProxyServerComponent - karavi-authorization-proxy-server component
+	AuthProxyServerComponent = "karavi-authorization-proxy-server"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -380,8 +386,8 @@ func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 	return ctrlObjects, nil
 }
 
-// GetObservabilityComponentObj - get Observability component object from config yaml string
-func GetObservabilityComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
+// GetModuleComponentObj - get module component object from config yaml string
+func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 	ctrlObjects := []crclient.Object{}
 
 	bufs, err := SplitYaml(CtrlBuf)
@@ -396,6 +402,7 @@ func GetObservabilityComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			return ctrlObjects, err
 		}
 		switch meta.Kind {
+
 		case "ServiceAccount":
 			var sa corev1.ServiceAccount
 			err := yaml.Unmarshal(raw, &sa)
@@ -403,6 +410,7 @@ func GetObservabilityComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 				return ctrlObjects, err
 			}
 			ctrlObjects = append(ctrlObjects, &sa)
+
 		case "ClusterRole":
 			var cr rbacv1.ClusterRole
 			if err := yaml.Unmarshal(raw, &cr); err != nil {
@@ -418,6 +426,21 @@ func GetObservabilityComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 			ctrlObjects = append(ctrlObjects, &crb)
 
+		case "Role":
+			var r rbacv1.Role
+			if err := yaml.Unmarshal(raw, &r); err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &r)
+
+		case "RoleBinding":
+			var rb rbacv1.RoleBinding
+			if err := yaml.Unmarshal(raw, &rb); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &rb)
+
 		case "Service":
 
 			var sv corev1.Service
@@ -425,6 +448,54 @@ func GetObservabilityComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 				return ctrlObjects, err
 			}
 			ctrlObjects = append(ctrlObjects, &sv)
+
+		case "PersistentVolumeClaim":
+			var pvc corev1.PersistentVolumeClaim
+			err := yaml.Unmarshal(raw, &pvc)
+			if err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &pvc)
+
+		case "Job":
+			var j batchv1.Job
+			err := yaml.Unmarshal(raw, &j)
+			if err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &j)
+
+		case "IngressClass":
+			var ic networking.IngressClass
+			err := yaml.Unmarshal(raw, &ic)
+			if err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &ic)
+
+		case "Ingress":
+			var i networking.Ingress
+			err := yaml.Unmarshal(raw, &i)
+			if err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &i)
+
+		case "ValidatingWebhookConfiguration":
+			var vwc admissionregistration.ValidatingWebhookConfiguration
+			err := yaml.Unmarshal(raw, &vwc)
+			if err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &vwc)
+
+		case "MutatingWebhookConfiguration":
+			var mwc admissionregistration.MutatingWebhookConfiguration
+			err := yaml.Unmarshal(raw, &mwc)
+			if err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &mwc)
 
 		case "ConfigMap":
 
@@ -525,9 +596,9 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, types.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
-	if err != nil && k8serrors.IsNotFound(err) {
+	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Object not found to delete", "Name:", name, "Kind:", kind, "Namespace:", obj.GetNamespace())
 		return nil
 	} else if err != nil {
@@ -536,7 +607,7 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	} else {
 		log.Infow("Deleting object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Delete(ctx, obj)
-		if err != nil && !k8serrors.IsNotFound(err) {
+		if err != nil && !k8serror.IsNotFound(err) {
 			return err
 		}
 	}
@@ -550,9 +621,9 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, types.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
-	if err != nil && k8serrors.IsNotFound(err) {
+	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Create(ctx, obj)
 		if err != nil {
@@ -581,13 +652,13 @@ func LogBannerAndReturn(result reconcile.Result, err error) (reconcile.Result, e
 // GetModuleDefaultVersion -
 func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.DriverType, moduleType csmv1.ModuleType, path string) (string, error) {
 	configMapPath := fmt.Sprintf("%s/moduleconfig/common/version-values.yaml", path)
-	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
+	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return "", err
 	}
 
-	suppport := map[csmv1.DriverType]map[string]map[csmv1.ModuleType]string{}
-	err = yaml.Unmarshal(buf, &suppport)
+	support := map[csmv1.DriverType]map[string]map[csmv1.ModuleType]string{}
+	err = yaml.Unmarshal(buf, &support)
 	if err != nil {
 		return "", err
 	}
@@ -597,7 +668,7 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 		dType = "powerscale"
 	}
 
-	if driver, ok := suppport[dType]; ok {
+	if driver, ok := support[dType]; ok {
 		if modules, ok := driver[driverConfigVersion]; ok {
 			if moduleVer, ok := modules[moduleType]; ok {
 				return moduleVer, nil
@@ -669,9 +740,9 @@ func getClusterIDs(replica csmv1.Module) ([]string, error) {
 func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Client) ([]byte, error) {
 	log := logger.GetLogger(ctx)
 	secret := &corev1.Secret{}
-	if err := ctrlClient.Get(ctx, types.NamespacedName{Name: clusterID,
+	if err := ctrlClient.Get(ctx, t1.NamespacedName{Name: clusterID,
 		Namespace: ReplicationControllerNameSpace}, secret); err != nil {
-		if k8serrors.IsNotFound(err) {
+		if k8serror.IsNotFound(err) {
 			return []byte("error"), fmt.Errorf("failed to find secret %s", clusterID)
 		}
 		log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
@@ -760,8 +831,8 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 // GetSecret -
 func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*corev1.Secret, error) {
 	found := &corev1.Secret{}
-	err := ctrlClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, found)
-	if err != nil && k8serrors.IsNotFound(err) {
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: namespace}, found)
+	if err != nil && k8serror.IsNotFound(err) {
 		return nil, fmt.Errorf("no secrets found or error: %v", err)
 	}
 	return found, nil
@@ -793,4 +864,52 @@ func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModu
 	}
 
 	return false
+}
+
+// IsAuthorizationComponentEnabled - check if authorization proxy server components are enabled
+func IsAuthorizationComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
+	authorizationEnabled, auth := IsModuleEnabled(ctx, instance, mod)
+	if !authorizationEnabled {
+		return false
+	}
+
+	for _, c := range auth.Components {
+		if c.Name == componentType && *c.Enabled {
+			return true
+		}
+	}
+
+	return false
+}
+
+// GetRedisStorage - storage class for redis in authorization module
+func GetRedisStorage(auth csmv1.Module) string {
+	var storageClass string
+	for _, comp := range auth.Components {
+		if comp.Name == AuthProxyServerComponent {
+			for _, env := range comp.Envs {
+				if env.Name == "REDIS_STORAGE_CLASS" && env.Value != "" {
+					storageClass = env.Value
+					break
+				}
+			}
+		}
+	}
+	return storageClass
+}
+
+// GetProxyIngressHost -
+func GetProxyIngressHost(auth csmv1.Module) string {
+	var ingressHost string
+	for _, comp := range auth.Components {
+		if comp.Name == AuthProxyServerComponent {
+			for _, env := range comp.Envs {
+				if env.Name == "PROXY_INGRESS_HOSTS" && env.Value != "" {
+					ingressHost = env.Value
+					break
+				}
+			}
+		}
+	}
+	return ingressHost
 }

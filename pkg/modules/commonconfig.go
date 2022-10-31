@@ -14,7 +14,7 @@ package modules
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -35,7 +35,7 @@ type SupportedDriverParam struct {
 }
 
 func checkVersion(moduleType, givenVersion, configPath string) error {
-	files, err := ioutil.ReadDir(fmt.Sprintf("%s/moduleconfig/%s/", configPath, moduleType))
+	files, err := os.ReadDir(fmt.Sprintf("%s/moduleconfig/%s/", configPath, moduleType))
 	if err != nil {
 		return err
 	}
@@ -67,5 +67,5 @@ func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op uti
 	}
 
 	configMapPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, module.Name, moduleConfigVersion, filename)
-	return ioutil.ReadFile(filepath.Clean(configMapPath))
+	return os.ReadFile(filepath.Clean(configMapPath))
 }
