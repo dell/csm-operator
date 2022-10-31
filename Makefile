@@ -99,6 +99,9 @@ build: gen-semver fmt vet ## Build manager binary.
 run: generate gen-semver fmt vet static-manifests ## Run a controller from your host.
 	go run ./main.go
 
+podman-build: gen-semver ## Build podman image with the manager.
+	podman build . -t ${DEFAULT_IMG}
+
 docker-build: gen-semver ## Build docker image with the manager.
 	docker build . -t ${DEFAULT_IMG}
 
