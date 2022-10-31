@@ -93,7 +93,15 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"isilon": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
-	}, // either powerscale or isilon are valid types
+	},
+	"powerflex": {
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	},
+	"vxflexos": {
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	}, // powerscale/isilon & powerflex/vxflexos are valid types
 }
 
 func getAuthorizationModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
