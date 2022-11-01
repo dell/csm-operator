@@ -18,7 +18,7 @@ spec:
     forceRemoveDriver: true
     common:
       image: "dellemc/csi-vxflexos:v2.4.0"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
           value: "false"
@@ -135,12 +135,11 @@ spec:
         envs:
           - name: MDM
             value: "10.x.x.x,10.x.x.x"  #provide MDM value
-
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
-      enabled: false
+      enabled: true
       configVersion: v1.4.0
       components:
       - name: karavi-authorization-proxy
