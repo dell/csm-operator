@@ -68,6 +68,24 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 			break
 		}
 	}
+
+	for _, sidecar := range cr.Spec.Driver.SideCars {
+		if sidecar.Name == "sdc-monitor" {
+			sidenv := sidecar.Envs
+			var updatenv corev1.EnvVar
+			j := 0
+			for c, env := range sidenv {
+				if env.Name == "MDM" {
+					env.Value = mdmVar
+					updatenv = env
+					j = c
+					break
+				}
+			}
+			sidenv[j] = updatenv
+		}
+	}
+
 	return nil
 }
 
@@ -184,4 +202,31 @@ var (
 // IsIpv4Regex - Matches Ipaddress with regex and returns error if the Ip Address doesn't match regex
 func IsIpv4Regex(ipAddress string) bool {
 	return ipRegex.MatchString(ipAddress)
+}
+
+func Getmdmipforsdc(sidenv []corev1.EnvVar, mdmFin string) (corev1.EnvVar, error) {
+	var updatenv corev1.EnvVar
+	var mdmFound bool
+	for _, env := range sidenv {
+		if env.Name == "MDM" {
+			mdmFound = true
+			existingIP, ismdmip := ValidateIPAddress(env.Value)
+			if !ismdmip {
+				return updatenv, fmt.Errorf("Invalid MDM value, ip address should be nummeric, comma separated without space")
+			}
+			if mdmFin != existingIP {
+				env.Value = mdmFin
+				updatenv = env
+				fmt.Printf("inside mdmip env-value: %s", env.Value)
+				break
+			}
+		}
+	}
+	if !mdmFound {
+		updatenv = corev1.EnvVar{
+			Name:  "MDM",
+			Value: mdmFin,
+		}
+	}
+	return updatenv, nil
 }

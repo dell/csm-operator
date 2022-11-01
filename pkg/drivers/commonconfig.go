@@ -193,7 +193,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 
 	containers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers
-  	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
+	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
@@ -202,7 +202,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				containers[i].Image = &image
 			}
 		}
-    		removeContainer := false
+		removeContainer := false
 		for _, s := range cr.Spec.Driver.SideCars {
 			if s.Name == *c.Name {
 				if s.Enabled == nil {
@@ -217,7 +217,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				break
 			}
 		}
-    		if !removeContainer {
+		if !removeContainer {
 			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
 			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
 			newcontainers = append(newcontainers, c)
