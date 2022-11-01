@@ -204,6 +204,7 @@ func IsIpv4Regex(ipAddress string) bool {
 	return ipRegex.MatchString(ipAddress)
 }
 
+// Getmdmipforsdc - fetching mdmip from sdc initcontainer and passing it to sdc-monitor
 func Getmdmipforsdc(sidenv []corev1.EnvVar, mdmFin string) (corev1.EnvVar, error) {
 	var updatenv corev1.EnvVar
 	var mdmFound bool
