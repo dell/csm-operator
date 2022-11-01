@@ -36,11 +36,13 @@ spec:
     sideCars:
     # comment the following section if you don't want to run the monitoring sidecar
       - name: sdc-monitor
+        enabled: false
+        image: dellemc/sdc:3.6
         envs:
         - name: HOST_PID
           value: "1"
         - name: MDM
-          value: ""
+          value: "10.xx.xx.xx,10.xx.xx.xx"
 
       # health monitor is disabled by default, refer to driver documentation before enabling it
     # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
