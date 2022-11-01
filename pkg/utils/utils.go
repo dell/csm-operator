@@ -48,7 +48,7 @@ type K8sImagesConfig struct {
 		Resizer               string `json:"resizer" yaml:"resizer"`
 		Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
 		Sdc                   string `json:"sdc" yaml:"sdc"`
-    		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
+		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
 	} `json:"images" yaml:"images"`
 }
 
@@ -172,8 +172,8 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case csmv1.Sdc:
 		*c.Image = img.Images.Sdc
 	case csmv1.Sdcmonitor:
-    		*c.Image = img.Images.Sdcmonitor
-  }
+		*c.Image = img.Images.Sdcmonitor
+	}
 	return
 }
 
