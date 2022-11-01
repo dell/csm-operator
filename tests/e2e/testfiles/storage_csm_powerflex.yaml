@@ -136,6 +136,25 @@ spec:
           - name: MDM
             value: "10.x.x.x,10.x.x.x"  #provide MDM value
 
+  modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      configVersion: v1.4.0
+      components:
+      - name: karavi-authorization-proxy
+        image: dellemc/csm-authorization-sidecar:v1.4.0
+        envs:
+          # proxyHost: hostname of the csm-authorization server
+          - name: "PROXY_HOST"
+            value: ""
+
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+          - name: "SKIP_CERTIFICATE_VALIDATION"
+            value: "true"
+
+
 ---
 apiVersion: v1
 kind: ConfigMap
