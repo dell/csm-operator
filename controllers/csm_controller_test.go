@@ -416,7 +416,7 @@ func (suite *CSMControllerTestSuite) TestRemoveModule() {
 			r.Reconcile(ctx, req)
 			*errorInjector = true
 		}
-		err := r.removeModule(ctx, csm, operatorConfig, r.Client)
+		err := r.removeModule(ctx, csm, operatorConfig, r.Client, r.K8sClient)
 		if expectedErr == "" {
 			assert.Nil(t, err)
 		} else {

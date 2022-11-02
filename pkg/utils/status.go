@@ -251,7 +251,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 
 // SetStatus of csm
 func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
-
+	println("STUB: status is set: ", newStatus.State)
 	log := logger.GetLogger(ctx)
 	instance.GetCSMStatus().State = newStatus.State
 	log.Infow("Driver State", "Controller",

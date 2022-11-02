@@ -244,7 +244,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		for _, m := range csm.Spec.Modules {
 			if m.ForceRemoveModule {
 				// remove all resources deployed from CR by operator
-				if err := r.removeModule(ctx, *csm, *operatorConfig, r.Client); err != nil {
+				if err := r.removeModule(ctx, *csm, *operatorConfig, r.Client, r.K8sClient); err != nil {
 					r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove module: %s", err))
 					log.Errorw("remove module", "error", err.Error())
 					return ctrl.Result{}, fmt.Errorf("error when deleting module: %v", err)
@@ -528,6 +528,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 
 	var err error
 
+	log.Info("Start justify Annotation")
 	if oldCrJSON, ok := newCR.Annotations[previouslyAppliedCustomResource]; ok && oldCrJSON != "" {
 		oldCR := new(csmv1.ContainerStorageModule)
 		err = json.Unmarshal([]byte(oldCrJSON), &oldCR)
@@ -539,6 +540,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 		if replicaEnabled(oldCR) && !replicaEnabled(newCR) {
 			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
 			if err != nil {
+				log.Error("Get Default Cluster fails")
 				return err
 			}
 			for _, cluster := range clusterClients {
@@ -560,14 +562,17 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 		oldObservabilityEnabled, _ := utils.IsModuleEnabled(ctx, *oldCR, csmv1.Observability)
 		newObservabilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, csmv1.Observability)
 		if oldObservabilityEnabled && !newObservabilityEnabled {
+
 			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
 			if err != nil {
+				log.Errorf("OBSERVABILITY: Get Default Cluster fails: %s", err)
 				return err
 			}
 			for _, cluster := range clusterClients {
 				// remove module observability
 				log.Infow("Deleting observability")
 				if err = r.reconcileObservability(ctx, true, operatorConfig, *oldCR, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
+					log.Errorf("OBSERVABILITY: reconcile fails: %s", err)
 					return err
 				}
 			}
@@ -578,11 +583,29 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 	annotations := newCR.GetAnnotations()
 	newCR.Annotations[previouslyAppliedCustomResource] = newCR.Annotations["kubectl.kubernetes.io/last-applied-configuration"]
 	newCR.SetAnnotations(annotations)
-	return r.GetClient().Update(ctx, newCR)
+	println("STUB: normal enter checking")
+	err = r.GetClient().Update(ctx, newCR)
+	if err != nil {
+		fmt.Println("OLD CSM:")
+		fmt.Printf("%+v\n", newCR)
+
+		csm := new(csmv1.ContainerStorageModule)
+		err = r.GetClient().Get(ctx, t1.NamespacedName{Name: newCR.Name,
+			Namespace: newCR.GetNamespace()}, csm)
+		if err != nil {
+			fmt.Printf("Should Not Fail %s\n", err)
+			return err
+		}
+		fmt.Println("NEW CSM:")
+		fmt.Printf("%+v\n", csm)
+	}
+	return err
 }
 
 // SyncCSM - Sync the current installation - this can lead to a create or update
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
+	println("Entring Sync CSM")
+
 	log := logger.GetLogger(ctx)
 
 	// Create/Update Authorization Proxy Server
@@ -601,6 +624,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 	err = r.oldStandAloneModuleCleanup(ctx, &cr, operatorConfig, driverConfig)
 	if err != nil {
+		fmt.Errorf("clean up failed %s", err.Error())
 		return err
 	}
 
@@ -960,12 +984,17 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 }
 
 // removeModule - remove authorization proxy server
-func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
 	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.AuthorizationServer); authorizationEnabled {
 		log.Infow("Deleting Authorization Proxy Server")
 		if err := r.reconcileAuthorization(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+			return err
+		}
+	} else if obsEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.Observability); obsEnabled {
+		log.Infow("Deleting Obsverbility")
+		if err := r.reconcileObservability(ctx, true, operatorConfig, instance, ctrlClient, k8sClient); err != nil {
 			return err
 		}
 	}
