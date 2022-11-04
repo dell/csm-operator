@@ -203,31 +203,3 @@ var (
 func IsIpv4Regex(ipAddress string) bool {
 	return ipRegex.MatchString(ipAddress)
 }
-
-// GetMDMIpForSdc - fetching mdmip from sdc initcontainer and passing it to sdc-monitor
-func GetMDMIpForSdc(sidenv []corev1.EnvVar, mdmFin string) (corev1.EnvVar, error) {
-	var updatenv corev1.EnvVar
-	var mdmFound bool
-	for _, env := range sidenv {
-		if env.Name == "MDM" {
-			mdmFound = true
-			existingIP, ismdmip := ValidateIPAddress(env.Value)
-			if !ismdmip {
-				return updatenv, fmt.Errorf("Invalid MDM value, ip address should be nummeric, comma separated without space")
-			}
-			if mdmFin != existingIP {
-				env.Value = mdmFin
-				updatenv = env
-				fmt.Printf("inside mdmip env-value: %s", env.Value)
-				break
-			}
-		}
-	}
-	if !mdmFound {
-		updatenv = corev1.EnvVar{
-			Name:  "MDM",
-			Value: mdmFin,
-		}
-	}
-	return updatenv, nil
-}

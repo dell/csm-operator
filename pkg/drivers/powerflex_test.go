@@ -102,6 +102,17 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 		Tolerations:     []corev1.Toleration{},
 	}}
 
+	// Add sdc-monitor Sidecar
+	res.Spec.Driver.SideCars = []csmv1.ContainerTemplate{csmv1.ContainerTemplate{
+		Name:            "sdc-monitor",
+		Enabled:         &falseBool,
+		Image:           "image",
+		ImagePullPolicy: "IfNotPresent",
+		Args:            []string{},
+		Envs:            []corev1.EnvVar{corev1.EnvVar{Name: "MDM"}},
+		Tolerations:     []corev1.Toleration{},
+	}}
+
 	// Add pflex driver version
 	res.Spec.Driver.ConfigVersion = shared.PFlexConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerFlex
@@ -119,3 +130,5 @@ func csmForPowerFlexBadVersion() csmv1.ContainerStorageModule {
 
 	return res
 }
+
+ 
