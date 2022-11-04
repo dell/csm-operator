@@ -173,7 +173,7 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
-- scenario: "Install PowerScale Driver(Standalone), Enable Observability"
+- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Observability"
   paths: 
     - "testfiles/storage_csm_powerscale.yaml"
   modules:
@@ -187,6 +187,9 @@
     - "Enable [observability] module from CR [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
+    - "Disable [observability] module from CR [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -427,7 +430,7 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
-- scenario: "Install PowerFlex Driver(Standalone), Enable Observability"
+- scenario: "Install PowerFlex Driver(Standalone), Enable/Disable Observability"
   paths: 
     - "testfiles/storage_csm_powerflex.yaml"
   modules:
@@ -441,6 +444,9 @@
     - "Enable [observability] module from CR [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
+    - "Disable [observability] module from CR [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -462,6 +468,109 @@
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+
+- scenario: "Install PowerFlex Driver(With Authorization and Observability)"
+  paths: 
+    - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+  modules:
+    - "observability"
+    - "authorization"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    name: Cert CSI
+    run: ./cert-csi test vio --sc vxflexos --chainNumber 2 --chainLength 2
+
+- scenario: "Install PowerFlex Driver(Standalone), Enable Authorization, Enable Observability"
+  paths: 
+    - "testfiles/storage_csm_powerflex.yaml"
+  modules:
+    - "observability"
+    - "authorization"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is not installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Enable [authorization] module from CR [1]"
+    - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Enable [observability] module from CR [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
+  paths: 
+    - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+  modules:
+    - "observability"
+    - "authorization"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    - "Disable [observability] module from CR [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Disable [authorization] module from CR [1]"
+    - "Set secret for driver from CR [1] to [test-vxflexos-config]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is not installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
+  paths: 
+    - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+  modules:
+    - "observability"
+    - "authorization"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    - "Disable [authorization] module from CR [1]"
+    - "Set secret for driver from CR [1] to [test-vxflexos-config]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is not installed"
+    - "Validate [observability] module from CR [1] is installed"
+    - "Disable [observability] module from CR [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [authorization] module from CR [1] is not installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
 
 - scenario: "Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver"
   paths:
