@@ -25,9 +25,9 @@ var (
 		ConfigDirectory: "../../tests/config",
 	}
 
-	pflexCSMName              = "pflex-csm"
-	pflexCredsName            = pflexCSMName + "-config"
-	pFlexNS                   = "pflex-test"
+	pflexCSMName   = "pflex-csm"
+	pflexCredsName = pflexCSMName + "-config"
+	pFlexNS        = "pflex-test"
 
 	trueBool  bool = true
 	falseBool bool = false
@@ -57,7 +57,7 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
 
 	// Add FSGroupPolicy
-	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "ReadWriteOnceWithFSType"	
+	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "ReadWriteOnceWithFSType"
 
 	// Add DNS Policy for GetNode test
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
@@ -135,4 +135,3 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 
 	return res
 }
-

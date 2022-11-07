@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	csm = csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
+	csm      = csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
 	pFlexCSM = csmForPowerFlex(pflexCSMName)
 
 	fakeDriver csmv1.DriverType = "fakeDriver"
