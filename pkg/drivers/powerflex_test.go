@@ -26,9 +26,6 @@ import (
 )
 
 var (
-	pflexCSMName              = "pflex-csm"
-	pflexCredsName            = "pflex-csm-config"
-	pFlexNS                   = "pflex-test"
 	powerFlexCSM              = csmForPowerFlex(pflexCSMName)
 	powerFlexCSMBadVersion    = csmForPowerFlexBadVersion()
 	powerFlexClient           = crclient.NewFakeClientNoInjector(objects)
@@ -85,28 +82,6 @@ func TestPowerFlexGo(t *testing.T) {
 			}
 		})
 	}
-}
-
-// makes a pflex csm object
-func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
-	res := shared.MakeCSM(customCSMName, pFlexNS, shared.PFlexConfigVersion)
-
-	// Add sdc initcontainer
-	res.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{csmv1.ContainerTemplate{
-		Name:            "sdc",
-		Enabled:         &trueBool,
-		Image:           "image",
-		ImagePullPolicy: "IfNotPresent",
-		Args:            []string{},
-		Envs:            []corev1.EnvVar{corev1.EnvVar{Name: "MDM"}},
-		Tolerations:     []corev1.Toleration{},
-	}}
-
-	// Add pflex driver version
-	res.Spec.Driver.ConfigVersion = shared.PFlexConfigVersion
-	res.Spec.Driver.CSIDriverType = csmv1.PowerFlex
-
-	return res
 }
 
 // makes a csm object with a bad version

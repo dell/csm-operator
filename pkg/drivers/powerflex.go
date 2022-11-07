@@ -68,6 +68,24 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 			break
 		}
 	}
+
+	for _, sidecar := range cr.Spec.Driver.SideCars {
+		if sidecar.Name == "sdc-monitor" {
+			sidenv := sidecar.Envs
+			var updatenv corev1.EnvVar
+			j := 0
+			for c, env := range sidenv {
+				if env.Name == "MDM" {
+					env.Value = mdmVar
+					updatenv = env
+					j = c
+					break
+				}
+			}
+			sidenv[j] = updatenv
+		}
+	}
+
 	return nil
 }
 

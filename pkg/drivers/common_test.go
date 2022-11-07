@@ -25,6 +25,10 @@ var (
 		ConfigDirectory: "../../tests/config",
 	}
 
+	pflexCSMName   = "pflex-csm"
+	pflexCredsName = pflexCSMName + "-config"
+	pFlexNS        = "pflex-test"
+
 	trueBool  bool = true
 	falseBool bool = false
 )
@@ -51,6 +55,9 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 
 	// Add FSGroupPolicy
 	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+
+	// Add FSGroupPolicy
+	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "ReadWriteOnceWithFSType"
 
 	// Add DNS Policy for GetNode test
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
@@ -89,6 +96,42 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 	}
 	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
 	res.Spec.Driver.SideCars = sideCarList
+
+	return res
+}
+
+// JJL make a functino that uses the standard name and calls this function
+// makes a pflex csm object
+func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
+	res := shared.MakeCSM(customCSMName, pFlexNS, shared.PFlexConfigVersion)
+
+	// Add sdc initcontainer
+	res.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{csmv1.ContainerTemplate{
+		Name:            "sdc",
+		Enabled:         &trueBool,
+		Image:           "image",
+		ImagePullPolicy: "IfNotPresent",
+		Args:            []string{},
+		Envs:            []corev1.EnvVar{corev1.EnvVar{Name: "MDM"}},
+		Tolerations:     []corev1.Toleration{},
+	}}
+
+	// Add sdc-monitor Sidecar
+	res.Spec.Driver.SideCars = []csmv1.ContainerTemplate{csmv1.ContainerTemplate{
+		Name:            "sdc-monitor",
+		Enabled:         &falseBool,
+		Image:           "image",
+		ImagePullPolicy: "IfNotPresent",
+		Args:            []string{},
+		Envs:            []corev1.EnvVar{corev1.EnvVar{Name: "MDM"}},
+		Tolerations:     []corev1.Toleration{},
+	}}
+
+	//res.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "ReadWriteOnceWithFSType"
+
+	// Add pflex driver version
+	res.Spec.Driver.ConfigVersion = shared.PFlexConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 
 	return res
 }
