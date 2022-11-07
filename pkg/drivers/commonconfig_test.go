@@ -26,6 +26,7 @@ import (
 
 var (
 	csm = csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
+	pFlexCSM = csmForPowerFlex(pflexCSMName)
 
 	fakeDriver csmv1.DriverType = "fakeDriver"
 	badDriver  csmv1.DriverType = "badDriver"
@@ -42,7 +43,8 @@ var (
 		// expected error
 		expectedErr string
 	}{
-		{"happy path", csm, csmv1.PowerScaleName, "node.yaml", ""},
+		{"pscale happy path", csm, csmv1.PowerScaleName, "node.yaml", ""},
+		{"pflex happy path", pFlexCSM, csmv1.PowerFlex, "node.yaml", ""},
 		{"file does not exist", csm, fakeDriver, "NonExist.yaml", "no such file or directory"},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
 	}
