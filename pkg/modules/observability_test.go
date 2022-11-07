@@ -69,6 +69,27 @@ func TestObservabilityPrecheck(t *testing.T) {
 			return true, observability, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
+		"success - driver type PowerFlex": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			vxflexosCreds := getSecret("karavi", "test-vxflexos-config")
+
+			tmpCR := customResource
+			tmpCR.Spec.Driver.CSIDriverType = "powerflex"
+			observability := tmpCR.Spec.Modules[0]
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds).Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds).Build()
+				return clusterClient, nil
+			}
+
+			return true, observability, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+
 		"success - version provided": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
@@ -491,6 +512,73 @@ func TestOtelCollector(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := OtelCollector(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestPowerFlexMetrics(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &rbacv1.ClusterRole{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "karavi-metrics-powerflex-controller",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+			k8sClient := clientgoclient.NewFakeClient(sourceClient)
+			err := PowerFlexMetrics(context.TODO(), isDeleting, op, cr, sourceClient, k8sClient)
 			if success {
 				assert.NoError(t, err)
 

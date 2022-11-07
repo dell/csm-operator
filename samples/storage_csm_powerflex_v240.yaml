@@ -136,6 +136,96 @@ spec:
           - name: MDM
             value: "10.x.x.x,10.x.x.x"  #provide MDM value
 
+  modules:
+    # observability: allows to configure observability
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
+      configVersion: v1.3.0
+      components:
+        - name: topology
+          # enabled: Enable/Disable topology
+          enabled: false
+          # image: Defines karavi-topology image. This shouldn't be changed
+          # Allowed values: string
+          image: dellemc/csm-topology:v1.3.0
+          envs:
+            # topology log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "TOPOLOGY_LOG_LEVEL"
+              value: "INFO"
+
+        - name: otel-collector
+          # enabled: Enable/Disable OpenTelemetry Collector
+          enabled: false
+          # image: Defines otel-collector image. This shouldn't be changed
+          # Allowed values: string
+          image: otel/opentelemetry-collector:0.42.0
+          envs:
+            # image of nginx proxy image
+            # Allowed values: string
+            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            - name: "NGINX_PROXY_IMAGE"
+              value: "nginxinc/nginx-unprivileged:1.20"
+
+        - name: metrics-powerflex
+          # enabled: Enable/Disable PowerFlex metrics
+          enabled: false
+          # image: Defines PowerFlex metrics image. This shouldn't be changed
+          image: dellemc/csm-metrics-powerflex:v1.3.0
+          envs:
+            # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_MAX_CONCURRENT_QUERIES"
+              value: "10"
+            # POWERFLEX_SDC_METRICS_ENABLED: enable/disable collection of sdc metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_SDC_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_VOLUME_METRICS_ENABLED: enable/disable collection of volume metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_VOLUME_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_STORAGE_POOL_METRICS_ENABLED: enable/disable collection of storage pool metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_STORAGE_POOL_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_SDC_IO_POLL_FREQUENCY: set polling frequency to get sdc metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_SDC_IO_POLL_FREQUENCY"
+              value: "10"
+            # POWERFLEX_VOLUME_IO_POLL_FREQUENCY: set polling frequency to get volume metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_VOLUME_IO_POLL_FREQUENCY"
+              value: "10"
+            # POWERFLEX_STORAGE_POOL_POLL_FREQUENCY: set polling frequency to get Quota capacity metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_STORAGE_POOL_POLL_FREQUENCY"
+              value: "10"
+            # PowerFlex metrics log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "POWERFLEX_LOG_LEVEL"
+              value: "INFO"
+            # PowerFlex Metrics Output logs in the specified format
+            # Valid values: TEXT, JSON
+            # Default value: "TEXT"
+            - name: "POWERFLEX_LOG_FORMAT"
+              value: "TEXT"
+            # Otel collector address
+            # Allowed values: String
+            # Default value: "otel-collector:55680"
+            - name: "COLLECTOR_ADDRESS"
+              value: "otel-collector:55680"
+
 ---
 apiVersion: v1
 kind: ConfigMap
