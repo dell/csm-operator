@@ -15,7 +15,6 @@ package drivers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -39,7 +38,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	log.Debugw("GetController", "configMapPath", configMapPath)
-	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
+	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		log.Errorw("GetController failed", "Error", err.Error())
 		return nil, err
@@ -152,7 +151,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
 	log.Debugw("GetNode", "configMapPath", configMapPath)
-	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
+	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		log.Errorw("GetNode failed", "Error", err.Error())
 		return nil, err
@@ -260,12 +259,7 @@ func GetUpgradeInfo(ctx context.Context, operatorConfig utils.OperatorConfig, dr
 	upgradeInfoPath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, driverType, oldVersion)
 	log.Debugw("GetUpgradeInfo", "upgradeInfoPath", upgradeInfoPath)
 
-	if _, err := os.Stat(upgradeInfoPath); os.IsNotExist(err) {
-		log.Errorw("GetUpgradeInfo failed", "Error", err.Error())
-		return "", err
-	}
-
-	buf, err := ioutil.ReadFile(filepath.Clean(upgradeInfoPath))
+	buf, err := os.ReadFile(filepath.Clean(upgradeInfoPath))
 	if err != nil {
 		log.Errorw("GetUpgradeInfo failed", "Error", err.Error())
 		return "", err
@@ -290,12 +284,7 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	log.Debugw("GetConfigMap", "configMapPath", configMapPath)
 
-	if _, err := os.Stat(configMapPath); os.IsNotExist(err) {
-		log.Errorw("GetConfigMap failed", "Error", err.Error())
-		return nil, err
-	}
-
-	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
+	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		log.Errorw("GetConfigMap failed", "Error", err.Error())
 		return nil, err
@@ -326,7 +315,7 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	log.Debugw("GetCSIDriver", "configMapPath", configMapPath)
-	buf, err := ioutil.ReadFile(filepath.Clean(configMapPath))
+	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		log.Errorw("GetCSIDriver failed", "Error", err.Error())
 		return nil, err
