@@ -92,6 +92,36 @@ const (
 	// PowerScaleImage - PowerScale image name
 	PowerScaleImage string = "<POWERSCALE_OBS_IMAGE>"
 
+	// PowerflexImage - Powerflex image name
+	PowerflexImage string = "<POWERFLEX_OBS_IMAGE>"
+
+	// PowerflexSdcMetricsEnabled - enable/disable collection of sdc metrics
+	PowerflexSdcMetricsEnabled string = "<POWERFLEX_SDC_METRICS_ENABLED>"
+
+	// PowerflexVolumeMetricsEnabled - enable/disable collection of volume metrics
+	PowerflexVolumeMetricsEnabled string = "<POWERFLEX_VOLUME_METRICS_ENABLED>"
+
+	// PowerflexStoragePoolMetricsEnabled - enable/disable collection of storage pool metrics
+	PowerflexStoragePoolMetricsEnabled string = "<POWERFLEX_STORAGE_POOL_METRICS_ENABLED>"
+
+	// PowerflexSdcIoPollFrequency - polling frequency to get sdc data
+	PowerflexSdcIoPollFrequency string = "<POWERFLEX_SDC_IO_POLL_FREQUENCY>"
+
+	// PowerflexVolumeIoPollFrequency - polling frequency to get volume data
+	PowerflexVolumeIoPollFrequency string = "<POWERFLEX_VOLUME_IO_POLL_FREQUENCY>"
+
+	// PowerflexStoragePoolPollFrequency - polling frequency to get storage pool data
+	PowerflexStoragePoolPollFrequency string = "<POWERFLEX_STORAGE_POOL_POLL_FREQUENCY>"
+
+	// PowerflexMaxConcurrentQueries - max concurrent queries
+	PowerflexMaxConcurrentQueries string = "<POWERFLEX_MAX_CONCURRENT_QUERIES>"
+
+	// PowerflexLogLevel - the level for the PowerFlex metrics
+	PowerflexLogLevel string = "<POWERFLEX_LOG_LEVEL>"
+
+	// PowerflexLogFormat - log format
+	PowerflexLogFormat string = "<POWERFLEX_LOG_FORMAT>"
+
 	// NginxProxyImage - Nginx proxy image name
 	NginxProxyImage string = "<NGINX_PROXY_IMAGE>"
 
@@ -106,6 +136,9 @@ const (
 
 	// DriverDefaultReleaseName constant
 	DriverDefaultReleaseName string = "<DriverDefaultReleaseName>"
+
+	// PflexObsYamlFile - Otel Collector yaml file
+	PflexObsYamlFile string = "karavi-metrics-powerflex.yaml"
 )
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CMS Replication. The key is driver name and the value is the driver plugin identifier
@@ -118,11 +151,21 @@ var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
+	"powerflex": {
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	},
+	"vxflexos": {
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	},
 }
 
 var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerScaleName: "isilon-creds",
 	csmv1.PowerScale:     "isilon-creds",
+	csmv1.PowerFlexName:  "vxflexos-config",
+	csmv1.PowerFlex:      "vxflexos-config",
 }
 
 // ObservabilityPrecheck  - runs precheck for CSM Observability
@@ -143,7 +186,13 @@ func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csm
 
 	// Pre-check For PowerScale secrets
 	// Check for secret only
-	secretName := cr.Name + "-creds"
+	components2secrets := map[csmv1.DriverType]string{
+		csmv1.PowerScale:     cr.Name + "-creds",
+		csmv1.PowerScaleName: cr.Name + "-creds",
+		csmv1.PowerFlex:      cr.Name + "-config",
+		csmv1.PowerFlexName:  cr.Name + "-config",
+	}
+	secretName := components2secrets[cr.GetDriverType()]
 
 	if cr.Spec.Driver.AuthSecret != "" {
 		secretName = cr.Spec.Driver.AuthSecret
@@ -518,6 +567,149 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 	}
 
 	return dpApply, nil
+}
+
+// PowerFlexMetrics - delete or update powerflex metrics objects
+func PowerFlexMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+	log := logger.GetLogger(ctx)
+
+	YamlString, err := getPowerFlexMetricsObject(op, cr)
+	if err != nil {
+		return err
+	}
+
+	powerflexMetricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	//update secret volume and inject authorization to deployment
+	var dpApply *confv1.DeploymentApplyConfiguration
+	foundDp := false
+	for i, obj := range powerflexMetricsObjects {
+		if deployment, ok := obj.(*appsv1.Deployment); ok {
+			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr)
+			if err != nil {
+				return err
+			}
+			foundDp = true
+			powerflexMetricsObjects[i] = powerflexMetricsObjects[len(powerflexMetricsObjects)-1]
+			powerflexMetricsObjects = powerflexMetricsObjects[:len(powerflexMetricsObjects)-1]
+			break
+		}
+	}
+	if !foundDp {
+		return fmt.Errorf("could not find deployment obj")
+	}
+
+	for _, ctrlObj := range powerflexMetricsObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	// update Deployment
+	if isDeleting {
+		// Delete Deployment
+		deploymentKey := client.ObjectKey{
+			Namespace: *dpApply.Namespace,
+			Name:      *dpApply.Name,
+		}
+		deploymentObj := &appsv1.Deployment{}
+		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
+			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
+				return fmt.Errorf("error delete deployment: %v", err)
+			}
+		} else {
+			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
+		}
+	} else {
+		// Create/Update Deployment
+		if err = deployment.SyncDeployment(ctx, *dpApply, k8sClient, cr.Name); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// getPowerFlexMetricsObject - get powerflex metrics yaml string
+func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+
+	obs, err := getObservabilityModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	buf, err := readConfigFile(obs, cr, op, PflexObsYamlFile)
+	if err != nil {
+		return YamlString, err
+	}
+	YamlString = string(buf)
+
+	otelCollectorAddress := "otel-collector:55680"
+	pflexImage := "dellemc/dellemc/csm-metrics-powerflex:v1.3.0"
+	maxConcurrentQueries := "10"
+	sdcEnabled := "true"
+	volumeEnabled := "true"
+	storagePoolEnabled := "true"
+	sdcPollFrequency := "10"
+	volumePollFrequency := "10"
+	storagePoolPollFrequency := "10"
+	logFormat := "TEXT"
+	logLevel := "INFO"
+
+	for _, component := range obs.Components {
+		if component.Name == ObservabilityMetricsPowerFlexName {
+			if component.Image != "" {
+				pflexImage = string(component.Image)
+			}
+			for _, env := range component.Envs {
+				if strings.Contains(PowerflexLogLevel, env.Name) {
+					logLevel = env.Value
+				} else if strings.Contains(PowerflexMaxConcurrentQueries, env.Name) {
+					maxConcurrentQueries = env.Value
+				} else if strings.Contains(PowerflexSdcMetricsEnabled, env.Name) {
+					sdcEnabled = env.Value
+				} else if strings.Contains(PowerflexSdcIoPollFrequency, env.Name) {
+					sdcPollFrequency = env.Value
+				} else if strings.Contains(PowerflexVolumeMetricsEnabled, env.Name) {
+					volumeEnabled = env.Value
+				} else if strings.Contains(PowerflexVolumeIoPollFrequency, env.Name) {
+					volumePollFrequency = env.Value
+				} else if strings.Contains(PowerflexStoragePoolMetricsEnabled, env.Name) {
+					storagePoolEnabled = env.Value
+				} else if strings.Contains(PowerflexStoragePoolPollFrequency, env.Name) {
+					storagePoolPollFrequency = env.Value
+				} else if strings.Contains(PowerflexLogFormat, env.Name) {
+					logFormat = env.Value
+				} else if strings.Contains(OtelCollectorAddress, env.Name) {
+					otelCollectorAddress = env.Value
+				}
+			}
+		}
+	}
+
+	YamlString = strings.ReplaceAll(YamlString, PowerflexImage, pflexImage)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexLogLevel, logLevel)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexMaxConcurrentQueries, maxConcurrentQueries)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexSdcMetricsEnabled, sdcEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexSdcIoPollFrequency, sdcPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexVolumeMetricsEnabled, volumeEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexVolumeIoPollFrequency, volumePollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexStoragePoolMetricsEnabled, storagePoolEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexStoragePoolPollFrequency, storagePoolPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexLogFormat, logFormat)
+	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
+	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
+	return YamlString, nil
 }
 
 // getObservabilityModule - get instance of observability module
