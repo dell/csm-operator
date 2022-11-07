@@ -924,6 +924,16 @@ func getObservabilityModule() []csmv1.Module {
 						},
 					},
 				},
+				{
+					Name:    "metrics-powerflex",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "POWERFLEX_MAX_CONCURRENT_QUERIES",
+							Value: "10",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -1033,24 +1043,19 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
 	assert.NotNil(suite.T(), err)
 
-	// Only test for Otel component
-	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
-	assert.NotNil(suite.T(), err)
-
-	// Only test for Metrics component
-	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
-	assert.Error(suite.T(), err)
-
-	// Test for all components disabled
-	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
-	assert.Nil(suite.T(), err)
+	for i := range csm.Spec.Modules[0].Components {
+		csm.Spec.Modules[0].Components[i].Enabled = &[]bool{false}[0]
+		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
+		if i < len(csm.Spec.Modules[0].Components)-1 {
+			assert.NotNil(suite.T(), err)
+		} else {
+			assert.Nil(suite.T(), err)
+		}
+	}
 
 	// Restore the status
-	for _, c := range csm.Spec.Modules[0].Components {
-		c.Enabled = &[]bool{false}[0]
+	for i := range csm.Spec.Modules[0].Components {
+		csm.Spec.Modules[0].Components[i].Enabled = &[]bool{true}[0]
 	}
 }
 
@@ -1122,7 +1127,10 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 
 	// this secret required by observability isilon module
 	obsIsilonSec := shared.MakeSecret(name+"-creds", "karavi", configVersion)
+	// this secret required by observability vxflex module
+	obsVxflexosSec := shared.MakeSecret("vxflexos-config", "karavi", configVersion)
 	suite.fakeClient.Create(ctx, obsIsilonSec)
+	suite.fakeClient.Create(ctx, obsVxflexosSec)
 
 	// this secret required by observability authorization isilon module
 	sec = shared.MakeSecret("karavi-authorization-config", "karavi", configVersion)
