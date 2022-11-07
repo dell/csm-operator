@@ -739,11 +739,18 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		}
 	}
 
-	if utils.IsComponentEnabled(ctx, cr, csmv1.Observability, modules.ObservabilityMetricsPowerScaleName) {
-		log.Infow("Reconcile PowerScale metrics")
-		if err := modules.PowerScaleMetrics(ctx, isDeleting, op, cr, ctrlClient, k8sClient); err != nil {
-			log.Errorf("failed to deploy powerscale metrics")
-			return err
+	metricsComp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface) error{
+		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
+		modules.ObservabilityMetricsPowerFlexName:  modules.PowerFlexMetrics,
+	}
+
+	for comp, reconFunc := range metricsComp2reconFunc {
+		if utils.IsComponentEnabled(ctx, cr, csmv1.Observability, comp) {
+			log.Infow(fmt.Sprintf("reconcile %s", comp))
+			if err := reconFunc(ctx, isDeleting, op, cr, ctrlClient, k8sClient); err != nil {
+				log.Errorf("failed to reconcile %s", comp)
+				return err
+			}
 		}
 	}
 

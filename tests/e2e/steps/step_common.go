@@ -31,6 +31,8 @@ import (
 var defaultObservabilityDeploymentName = map[csmv1.DriverType]string{
 	csmv1.PowerScaleName: "karavi-metrics-powerscale",
 	csmv1.PowerScale:     "karavi-metrics-powerscale",
+	csmv1.PowerFlexName:  "karavi-metrics-powerflex",
+	csmv1.PowerFlex:      "karavi-metrics-powerflex",
 }
 
 // CustomTest -
