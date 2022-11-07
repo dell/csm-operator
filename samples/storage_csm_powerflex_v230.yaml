@@ -33,6 +33,9 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
+        - name: "CERT_SECRET_COUNT"
+          value: "0"
+
     sideCars:
     # comment the following section if you don't want to run the monitoring sidecar
       - name: sdc-monitor
