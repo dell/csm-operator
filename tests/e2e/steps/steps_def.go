@@ -173,6 +173,8 @@ func (step *Step) validateModuleInstalled(res Resource, module string) error {
 			case csmv1.Observability:
 				return step.validateObservabilityInstalled(res)
 
+			case csmv1.AuthorizationServer:
+				return step.validateAuthorizationProxyServerInstalled(res)
 			}
 		}
 	}
@@ -204,6 +206,8 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string) error 
 			case csmv1.Observability:
 				return step.validateObservabilityNotInstalled(res)
 
+			case csmv1.AuthorizationServer:
+				return step.validateAuthorizationProxyServerNotInstalled(res)
 			}
 		}
 	}
@@ -535,6 +539,60 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 
 	if !allReady {
 		return fmt.Errorf(notReadyMessage)
+	}
+
+	return nil
+}
+
+func (step *Step) validateAuthorizationProxyServerInstalled(res Resource) error {
+	cr := res.CustomResource
+
+	instance := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name}, instance,
+	); err != nil {
+		return err
+	}
+
+	// check installation for all AuthorizationProxyServer
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check AuthorizationProxyServer in all clusters
+		if err := checkAuthorizationProxyServerPods(utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed to check for AuthorizationProxyServer installation in %s: %v", cluster.ClusterID, err)
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateAuthorizationProxyServerNotInstalled(res Resource) error {
+	cr := res.CustomResource
+
+	// check installation for all AuthorizationProxyServer
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check AuthorizationProxyServer is not installed
+		if err := checkAuthorizationProxyServerNoRunningPods(utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed AuthorizationProxyServer installation check %s: %v", cluster.ClusterID, err)
+		}
 	}
 
 	return nil

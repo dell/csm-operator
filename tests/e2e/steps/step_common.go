@@ -280,3 +280,122 @@ func getApplyObservabilityDeployment(namespace string, driverType csmv1.DriverTy
 
 	return dpApply, nil
 }
+
+func checkAuthorizationProxyServerPods(namespace string, k8sClient kubernetes.Interface) error {
+	notReadyMessage := ""
+	allReady := true
+
+	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+	if err != nil {
+		return err
+	}
+	if len(pods) == 0 {
+		return fmt.Errorf("no pod was found in %s", namespace)
+	}
+	for _, pod := range pods {
+		errMsg := ""
+		if strings.Contains(pod.Name, "cert-manager") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "cert-manager-cainjector") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "cert-manager-webhook") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "ingress-nginx-controller") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "proxy-server") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "redis-commander") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "redis-primary") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "role-service") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "storage-service") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "tenant-service") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		}
+	}
+
+	if !allReady {
+		return fmt.Errorf(notReadyMessage)
+	}
+	return nil
+}
+
+func arePodsRunning(pod *corev1.Pod) (string, bool) {
+	notReadyMsg := ""
+	allReady := true
+
+	if pod.Status.Phase == corev1.PodRunning {
+		for _, cntStat := range pod.Status.ContainerStatuses {
+			if cntStat.State.Running == nil {
+				allReady = false
+				notReadyMsg += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
+				break
+			}
+		}
+	} else {
+		allReady = false
+		notReadyMsg += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
+	}
+	return notReadyMsg, allReady
+}
+
+func checkAuthorizationProxyServerNoRunningPods(namespace string, k8sClient kubernetes.Interface) error {
+	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+	if err != nil {
+		return err
+	}
+
+	podsFound := ""
+	n := 0
+	for _, pod := range pods {
+		if strings.Contains(pod.Name, "cert-manager") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "cert-manager-cainjector") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "cert-manager-webhook") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "ingress-nginx-controller") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "proxy-server") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "redis-commander") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "redis-primary") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "role-service") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "storage-service") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "tenant-service") {
+			podsFound += (pod.Name + ",")
+			n++
+		}
+	}
+	if n != 0 {
+		return fmt.Errorf("found the following pods: %s", podsFound)
+	}
+
+	return nil
+}
