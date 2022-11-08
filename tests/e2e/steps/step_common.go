@@ -42,7 +42,7 @@ type CustomTest struct {
 // Scenario -
 type Scenario struct {
 	Scenario   string     `json:"scenario" yaml:"scenario"`
-	Path       string     `json:"path" yaml:"path"`
+	Paths      []string   `json:"paths" yaml:"paths"`
 	Modules    []string   `json:"modules" yaml:"modules"`
 	Steps      []string   `json:"steps" yaml:"steps"`
 	CustomTest CustomTest `json:"customTest,omitempty" yaml:"customTest"`
@@ -51,7 +51,7 @@ type Scenario struct {
 // Resource -
 type Resource struct {
 	Scenario       Scenario
-	CustomResource csmv1.ContainerStorageModule
+	CustomResource []csmv1.ContainerStorageModule
 }
 
 // Step -
@@ -191,7 +191,6 @@ func checkNoRunningPods(namespace string, k8sClient kubernetes.Interface) error 
 }
 
 func getApplyDeploymentDaemonSet(cr csmv1.ContainerStorageModule, ctrlClient client.Client) (confv1.DeploymentApplyConfiguration, confv1.DaemonSetApplyConfiguration, error) {
-	//cr := res.CustomResource
 	dp, err := getDriverDeployment(cr, ctrlClient)
 	if err != nil {
 		return confv1.DeploymentApplyConfiguration{}, confv1.DaemonSetApplyConfiguration{}, fmt.Errorf("failed to get deployment: %v", err)
