@@ -45,7 +45,7 @@ spec:
         - name: HOST_PID
           value: "1"
         - name: MDM
-          value: "10.x.x.x,10.x.x.x" #provide MDM value
+          value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
 
     # health monitor is disabled by default, refer to driver documentation before enabling it
     # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
@@ -135,7 +135,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.x.x.x,10.x.x.x"  #provide MDM value
+            value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
 
   modules:
     # observability: allows to configure observability

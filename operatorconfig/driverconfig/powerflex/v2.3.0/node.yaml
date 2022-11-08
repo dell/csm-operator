@@ -154,11 +154,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: MDM
-              valueFrom:
-                secretKeyRef:
-                  name: <DriverDefaultReleaseName>-config
-                  key: MDM
             - name: MODE
               value: "monitoring"
           volumeMounts:
