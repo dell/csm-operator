@@ -98,7 +98,6 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 		if stepDef.Expr.MatchString(stepName) {
 			var values []reflect.Value
 			groups := stepDef.Expr.FindStringSubmatch(stepName)
-			//fmt.Printf("groups: %+v\n", groups)
 
 			typ := stepDef.Handler.Type()
 			numArgs := typ.NumIn()
@@ -107,8 +106,6 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 			}
 
 			values = append(values, reflect.ValueOf(res))
-			//fmt.Printf("values: %+v\n", values)
-			//fmt.Printf("res: %+v\n", res)
 			for i := 1; i < len(groups); i++ {
 				values = append(values, reflect.ValueOf(groups[i]))
 			}
@@ -117,12 +114,10 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 			if err, ok := res[0].Interface().(error); ok {
 				return err
 			}
-			//fmt.Printf("res: %+v\n", res)
 			return nil
 		}
 
 	}
 
 	return fmt.Errorf("no method for step: %s", stepName)
-
 }

@@ -17,8 +17,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
@@ -99,8 +99,8 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 // JJL uses Scenario
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum - 1]
-	crBuff, err := ioutil.ReadFile(res.Scenario.Paths[crNum - 1])
+	cr := res.CustomResource[crNum-1]
+	crBuff, err := ioutil.ReadFile(res.Scenario.Paths[crNum-1])
 	if err != nil {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
@@ -115,7 +115,7 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 
 func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum - 1]
+	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -132,7 +132,7 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum - 1]
+	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -149,17 +149,17 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	return checkAllRunningPods(res.CustomResource[crNum - 1].Namespace, step.clientSet)
+	return checkAllRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	return checkNoRunningPods(res.CustomResource[crNum - 1].Namespace, step.clientSet)
+	return checkNoRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum - 1]
+	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -191,7 +191,7 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum - 1]
+	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -438,7 +438,7 @@ func (step *Step) runCustomTest(res Resource) error {
 
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum - 1]
+	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -464,7 +464,7 @@ func (step *Step) enableModule(res Resource, module string, crNumStr string) err
 
 func (step *Step) setDriverSecret(res Resource, crNumStr string, driverSecretName string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum - 1]
+	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -478,7 +478,7 @@ func (step *Step) setDriverSecret(res Resource, crNumStr string, driverSecretNam
 
 func (step *Step) disableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum - 1]
+	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -504,7 +504,7 @@ func (step *Step) disableModule(res Resource, module string, crNumStr string) er
 
 func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum - 1]
+	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -545,4 +545,3 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 
 	return nil
 }
-
