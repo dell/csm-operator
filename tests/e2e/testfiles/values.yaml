@@ -1,6 +1,7 @@
 # List of E2E Tests Scenarios
 - scenario: "Install PowerScale Driver(Standalone)"
-  path: "testfiles/storage_csm_powerscale.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -22,7 +23,8 @@
     run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(With Authorization)"
-  path: "testfiles/storage_csm_powerscale_auth.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale_auth.yaml"
   modules:
     - "authorization"
   steps:
@@ -40,7 +42,8 @@
     run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization"
-  path: "testfiles/storage_csm_powerscale.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale.yaml"
   modules:
     - "authorization"
   steps:
@@ -64,7 +67,8 @@
 
 
 - scenario: "Install PowerScale Driver(With Replication)"
-  path: "testfiles/storage_csm_powerscale_replica.yaml"
+  paths:
+    - "testfiles/storage_csm_powerscale_replica.yaml"
   modules:
     - "replication"
   steps:
@@ -82,7 +86,8 @@
     run: "echo Hello && echo World"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Replication"
-  path: "testfiles/storage_csm_powerscale.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale.yaml"
   modules:
     - "replication"
   steps:
@@ -104,7 +109,8 @@
 
 
 - scenario: "Uninstall PowerScale Driver"
-  path: "testfiles/storage_csm_powerscale.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -116,7 +122,8 @@
     - "Validate [powerscale] driver from CR [1] is not installed"
 
 - scenario: Install PowerScale Driver(With Authorization), Disable Authorization module"
-  path: "testfiles/storage_csm_powerscale_auth.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale_auth.yaml"
   modules:
     - "authorization"
   steps:
@@ -133,7 +140,8 @@
     - "Delete custom resource [1]"
 
 - scenario: Install PowerScale Driver(With Replication), Disable Replication module"
-  path: "testfiles/storage_csm_powerscale_replica.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale_replica.yaml"
   modules:
     - "replication"
   steps:
@@ -151,7 +159,8 @@
 
 
 - scenario: "Install PowerScale Driver(With Observability)"
-  path: "testfiles/storage_csm_powerscale_observability.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale_observability.yaml"
   modules:
     - "observability"
   steps:
@@ -165,7 +174,8 @@
     - "Delete custom resource [1]"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Observability"
-  path: "testfiles/storage_csm_powerscale.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale.yaml"
   modules:
     - "observability"
   steps:
@@ -182,7 +192,8 @@
     - "Delete custom resource [1]"
 
 - scenario: Install PowerScale Driver(With Observability), Disable Observability module"
-  path: "testfiles/storage_csm_powerscale_observability.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale_observability.yaml"
   modules:
     - "observability"
   steps:
@@ -199,7 +210,8 @@
     - "Delete custom resource [1]"
 
 - scenario: "Install PowerScale Driver(With Authorization and Observability)"
-  path: "testfiles/storage_csm_powerscale_observability_auth.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "observability"
     - "authorization"
@@ -219,7 +231,8 @@
     run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization, Enable Observability"
-  path: "testfiles/storage_csm_powerscale.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale.yaml"
   modules:
     - "observability"
     - "authorization"
@@ -244,7 +257,8 @@
     - "Delete custom resource [1]"
 
 - scenario: Install PowerScale Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
-  path: "testfiles/storage_csm_powerscale_observability_auth.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "observability"
     - "authorization"
@@ -269,7 +283,8 @@
     - "Delete custom resource [1]"
 
 - scenario: Install PowerScale Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
-  path: "testfiles/storage_csm_powerscale_observability_auth.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "observability"
     - "authorization"
@@ -295,7 +310,8 @@
 
 
 - scenario: "Install PowerFlex Driver(Standalone)"
-  path: "testfiles/storage_csm_powerflex.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerflex.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -317,7 +333,8 @@
     run: ./cert-csi test vio --sc vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Uninstall PowerFlex Driver"
-  path: "testfiles/storage_csm_powerflex.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerflex.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -329,7 +346,8 @@
     - "Validate [powerflex] driver from CR [1] is not installed"
 
 - scenario: "Install PowerFlex Driver (With Authorization)"
-  path: "testfiles/storage_csm_powerflex_auth.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerflex_auth.yaml"
   modules:
     - "authorization"
   steps:
@@ -347,7 +365,8 @@
     run: ./cert-csi test vio --sc vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization"
-  path: "testfiles/storage_csm_powerflex.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerflex.yaml"
   modules:
     - "authorization"
   steps:
@@ -369,7 +388,8 @@
     run: ./cert-csi test vio --sc vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: Install PowerFlex Driver(With Authorization), Disable Authorization module"
-  path: "testfiles/storage_csm_powerflex_auth.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerflex_auth.yaml"
   modules:
     - "authorization"
   steps:
@@ -393,7 +413,8 @@
     run: ./cert-csi test vio --sc vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver(With Observability)"
-  path: "testfiles/storage_csm_powerflex_observability.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerflex_observability.yaml"
   modules:
     - "observability"
   steps:
@@ -407,7 +428,8 @@
     - "Delete custom resource [1]"
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Observability"
-  path: "testfiles/storage_csm_powerflex.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerflex.yaml"
   modules:
     - "observability"
   steps:
@@ -424,7 +446,8 @@
     - "Delete custom resource [1]"
 
 - scenario: Install PowerFlex Driver(With Observability), Disable Observability module"
-  path: "testfiles/storage_csm_powerflex_observability.yaml"
+  paths: 
+    - "testfiles/storage_csm_powerflex_observability.yaml"
   modules:
     - "observability"
   steps:
@@ -439,3 +462,25 @@
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+
+- scenario: "Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver"
+  paths:
+    - "testfiles/storage_csm_powerscale.yaml"
+    - "testfiles/storage_csm_powerflex.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Apply custom resource [2]"
+    - "Validate custom resource [1]"
+    - "Validate custom resource [2]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [2] is installed"
+    - "Enable forceRemoveDriver on CR [2]"
+    - "Delete custom resource [2]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [2] is not installed"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
