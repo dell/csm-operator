@@ -33,6 +33,9 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
+        - name: "CERT_SECRET_COUNT"
+          value: "0"
+
     sideCars:
     # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
