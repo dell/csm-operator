@@ -96,7 +96,6 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 	return resources, nil
 }
 
-// JJL uses Scenario
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
