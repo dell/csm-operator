@@ -43,23 +43,22 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 		clientSet:  clientSet,
 	}
 	runner.addStep(`^Given an environment with k8s or openshift, and CSM operator installed$`, step.validateTestEnvironment)
-	runner.addStep(`^Apply custom resources$`, step.applyCustomResource)
-	runner.addStep(`^Validate custom resources$`, step.validateCustomResourceStatus)
-	runner.addStep(`^Validate \[([^"]*)\] driver is installed$`, step.validateDriverInstalled)
-	runner.addStep(`^Validate \[([^"]*)\] driver is not installed$`, step.validateDriverNotInstalled)
+	runner.addStep(`^Apply custom resource \[(\d+)\]$`, step.applyCustomResource)
+	runner.addStep(`^Validate custom resource \[(\d+)\]$`, step.validateCustomResourceStatus)
+	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
+	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is not installed$`, step.validateDriverNotInstalled)
 
 	runner.addStep(`^Run custom test$`, step.runCustomTest)
-	runner.addStep(`^Enable forceRemoveDriver on CR$`, step.enableForceRemoveDriver)
-	runner.addStep(`^Delete resources$`, step.deleteCustomResource)
-	runner.addStep(`^Enable forceRemoveDriver on CR$`, step.enableForceRemoveDriver)
+	runner.addStep(`^Enable forceRemoveDriver on CR \[(\d+)\]$`, step.enableForceRemoveDriver)
+	runner.addStep(`^Delete custom resource \[(\d+)\]$`, step.deleteCustomResource)
 
-	runner.addStep(`^Validate \[([^"]*)\] module is installed$`, step.validateModuleInstalled)
-	runner.addStep(`^Validate \[([^"]*)\] module is not installed$`, step.validateModuleNotInstalled)
+	runner.addStep(`^Validate \[([^"]*)\] module from CR \[(\d+)\] is installed$`, step.validateModuleInstalled)
+	runner.addStep(`^Validate \[([^"]*)\] module from CR \[(\d+)\] is not installed$`, step.validateModuleNotInstalled)
 
-	runner.addStep(`^Enable \[([^"]*)\] module$`, step.enableModule)
-	runner.addStep(`^Disable \[([^"]*)\] module$`, step.disableModule)
+	runner.addStep(`^Enable \[([^"]*)\] module from CR \[(\d+)\]$`, step.enableModule)
+	runner.addStep(`^Disable \[([^"]*)\] module from CR \[(\d+)\]$`, step.disableModule)
 
-	runner.addStep(`^Set Driver secret to \[([^"]*)\]$`, step.setDriverSecret)
+	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
@@ -121,5 +120,4 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 	}
 
 	return fmt.Errorf("no method for step: %s", stepName)
-
 }
