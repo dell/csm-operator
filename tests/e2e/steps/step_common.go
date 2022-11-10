@@ -13,8 +13,10 @@
 package steps
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -398,4 +400,39 @@ func checkAuthorizationProxyServerNoRunningPods(namespace string, k8sClient kube
 	}
 
 	return nil
+}
+
+func getPortContainerizedAuth() (string, error) {
+	port := ""
+	b, err := exec.Command(
+		"kubectl", "get",
+		"service", "authorization-ingress-nginx-controller",
+		"-n", "authorization",
+		"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
+	).CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to perform helm install: %s", b)
+	}
+	port = strings.Replace(string(b), `"`, "", -1)
+	return port, nil
+}
+
+func ExecCommand(VMIP string, VMsUser string, VMsPassword string, args []string) ([]byte, error) {
+	args = append(
+		[]string{
+			"-p", VMsPassword,
+			"ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", fmt.Sprintf("%s@%s", VMsUser, VMIP)},
+		args...,
+	)
+
+	var buf bytes.Buffer
+	cmd := exec.Command("sshpass", args...)
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+
+	err := cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("%v: %s", err, buf.String())
+	}
+	return buf.Bytes(), err
 }

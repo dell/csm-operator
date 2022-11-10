@@ -35,6 +35,7 @@ fi
 
 # copy cert-csi binary into local folder
 cp $CERT_CSI .
+cp $KARAVICTL /usr/local/bin/
 
 PATH=$PATH:$(go env GOPATH)/bin
 
@@ -50,6 +51,7 @@ pwd
 ginkgo -mod=mod "${OPTS[@]}"
 
 rm -f cert-csi
+#rm -f /usr/local/bin/karavictl
 
 # Checking for test status
 TEST_PASS=$?
