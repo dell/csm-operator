@@ -33,14 +33,19 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
+        - name: "CERT_SECRET_COUNT"
+          value: "0"
+
     sideCars:
-    # comment the following section if you don't want to run the monitoring sidecar
+    # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
+        enabled: false
+        image: dellemc/sdc:3.6
         envs:
         - name: HOST_PID
           value: "1"
         - name: MDM
-          value: ""
+          value: "10.xx.xx.xx,10.xx.xx.xx"
 
       # health monitor is disabled by default, refer to driver documentation before enabling it
     # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
@@ -127,6 +132,23 @@ spec:
             value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
 
   modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      configVersion: v1.4.0
+      components:
+      - name: karavi-authorization-proxy
+        image: dellemc/csm-authorization-sidecar:v1.4.0
+        envs:
+          # proxyHost: hostname of the csm-authorization server
+          - name: "PROXY_HOST"
+            value: "csm-authorization.com"
+        
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+          - name: "SKIP_CERTIFICATE_VALIDATION"
+            value: "true"
+
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability

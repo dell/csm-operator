@@ -33,27 +33,26 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
-        - name: "CERT_SECRET_COUNT"
-          value: "0"
+
 
     sideCars:
-    # sdc-monitor is disabled by default, due to high CPU usage 
+      # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:3.6
         envs:
-        - name: HOST_PID
-          value: "1"
-        - name: MDM
-          value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
+          - name: HOST_PID
+            value: "1"
+          - name: MDM
+            value: "10.x.x.x,10.x.x.x" #provide MDM value
 
-    # health monitor is disabled by default, refer to driver documentation before enabling it
-    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
 
-    # vg-snapshotter is disabled by default, refer to driver documentation before enabling it
+      # vg-snapshotter is disabled by default, refer to driver documentation before enabling it
       - name: vg-snapshotter
         enabled: false
         image: dellemc/csi-volumegroup-snapshotter:v1.2.0
@@ -85,12 +84,12 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint 
-      # - key: "node-role.kubernetes.io/master"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      # - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
 
@@ -121,11 +120,11 @@ spec:
       # Default value: None
       tolerations:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      # - key: "node-role.kubernetes.io/master"   
+      # - key: "node-role.kubernetes.io/master"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      # - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
 
@@ -135,13 +134,13 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
+            value: "10.x.x.x,10.x.x.x"  #provide MDM value
 
   modules:
-    # Authorization: enable csm-authorization for RBAC
+      # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
-      enabled: false
+      enabled: true
       configVersion: v1.4.0
       components:
       - name: karavi-authorization-proxy
@@ -149,21 +148,20 @@ spec:
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
-            value: "csm-authorization.com"
+            value: ""
         
           # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
-
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
-      enabled: false
+      enabled: true
       configVersion: v1.3.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
-          enabled: false
+          enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/csm-topology:v1.3.0
@@ -176,7 +174,7 @@ spec:
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: false
+          enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
           image: otel/opentelemetry-collector:0.42.0
@@ -189,7 +187,7 @@ spec:
 
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
-          enabled: false
+          enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
           image: dellemc/csm-metrics-powerflex:v1.3.0
           envs:

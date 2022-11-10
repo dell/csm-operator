@@ -231,6 +231,9 @@ spec:
               mountPath: /vxflexos-config
             - name: vxflexos-config-params
               mountPath: /vxflexos-config-params
+            - name: certs
+              mountPath: /certs
+              readOnly: true
       volumes:
         - name: socket-dir
           emptyDir:
@@ -240,3 +243,11 @@ spec:
         - name: vxflexos-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: <DriverDefaultReleaseName>-certs-0
+                  items:
+                    - key: cert-0
+                      path: cert-0

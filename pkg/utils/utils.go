@@ -59,6 +59,7 @@ type K8sImagesConfig struct {
 		Resizer               string `json:"resizer" yaml:"resizer"`
 		Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
 		Sdc                   string `json:"sdc" yaml:"sdc"`
+		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
 	} `json:"images" yaml:"images"`
 }
 
@@ -184,7 +185,10 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 		*c.Image = img.Images.Externalhealthmonitor
 	case csmv1.Sdc:
 		*c.Image = img.Images.Sdc
+	case csmv1.Sdcmonitor:
+		*c.Image = img.Images.Sdcmonitor
 	}
+	return
 }
 
 // UpdateinitContainerApply -
@@ -643,6 +647,36 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	return nil
 }
 
+// ApplyCTRLObject -
+func ApplyCTRLObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
+
+	tempObj := obj.DeepCopyObject().(crclient.Object)
+	kind := tempObj.GetObjectKind().GroupVersionKind().Kind
+	name := tempObj.GetName()
+
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: tempObj.GetNamespace()}, tempObj)
+
+	if err != nil && k8serror.IsNotFound(err) {
+		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
+		err = ctrlClient.Create(ctx, obj)
+		if err != nil {
+			return err
+		}
+
+	} else if err != nil {
+		log.Errorw("Unknown error.", "Error", err.Error())
+		return err
+	} else {
+		log.Infow("Updating a new Object", "Name:", name, "Kind:", kind)
+		err = ctrlClient.Update(ctx, obj)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // LogBannerAndReturn -
 func LogBannerAndReturn(result reconcile.Result, err error) (reconcile.Result, error) {
 	fmt.Println("################End Reconcile##############")
@@ -912,4 +946,14 @@ func GetProxyIngressHost(auth csmv1.Module) string {
 		}
 	}
 	return ingressHost
+}
+
+// Contains -
+func Contains(slice []string, str string) bool {
+	for _, v := range slice {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }

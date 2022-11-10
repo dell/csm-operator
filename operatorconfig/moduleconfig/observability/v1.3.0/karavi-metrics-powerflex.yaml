@@ -78,6 +78,18 @@ data:
 
 ---
 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: karavi
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: debug
+    CSI_LOG_FORMAT: TEXT
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -134,5 +146,8 @@ spec:
         - name: karavi-metrics-powerflex-configmap
           configMap:
             name: karavi-metrics-powerflex-configmap
+        - name: vxflexos-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
       restartPolicy: Always
 status: {}
