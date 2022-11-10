@@ -430,6 +430,70 @@ func (suite *CSMControllerTestSuite) TestRemoveModule() {
 	})
 }
 
+func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
+	tests := map[string]func(t *testing.T) (csm *csmv1.ContainerStorageModule, errorInjector *bool, expectedErr string){
+		"Success - Enable all modules": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(getReplicaModule(), getObservabilityModule()...))
+
+			csm := &csmv1.ContainerStorageModule{}
+			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
+			err := suite.fakeClient.Get(ctx, key, csm)
+			assert.Nil(suite.T(), err)
+			csm.Spec.Modules = append(getReplicaModule(), getObservabilityModule()...)
+			return csm, &[]bool{false}[0], ""
+		},
+		"Success - Disable all modules": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(getReplicaModule(), getObservabilityModule()...))
+
+			csm := &csmv1.ContainerStorageModule{}
+			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
+			err := suite.fakeClient.Get(ctx, key, csm)
+			assert.Nil(suite.T(), err)
+			replica := getReplicaModule()
+			replica[0].Enabled = false
+			obs := getObservabilityModule()
+			obs[0].Enabled = false
+			csm.Spec.Modules = append(replica, obs...)
+			return csm, &[]bool{false}[0], ""
+		},
+		"Success - Disable Components": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(getReplicaModule(), getObservabilityModule()...))
+
+			csm := &csmv1.ContainerStorageModule{}
+			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
+			err := suite.fakeClient.Get(ctx, key, csm)
+			assert.Nil(suite.T(), err)
+			obs := getObservabilityModule()
+			obs[0].Components[0].Enabled = &[]bool{false}[0]
+			csm.Spec.Modules = append(getReplicaModule(), obs...)
+			return csm, &[]bool{false}[0], ""
+		},
+	}
+
+	r := suite.createReconciler()
+	for name, tc := range tests {
+		suite.T().Run(name, func(t *testing.T) {
+			csm, errorInjector, expectedErr := tc(t)
+			if errorInjector != nil {
+				*errorInjector = true
+			}
+			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig)
+			err := r.oldStandAloneModuleCleanup(ctx, csm, operatorConfig, driverConfig)
+
+			if expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Containsf(t, err.Error(), expectedErr, "expected error containing %q, got %s", expectedErr, err)
+			}
+
+			if errorInjector != nil {
+				r.Client.(*crclient.Client).Clear()
+			}
+		})
+	}
+}
+
 func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 
 	// set bad version error
@@ -1040,12 +1104,12 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	badOperatorConfig := utils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
-	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
 	assert.NotNil(suite.T(), err)
 
 	for i := range csm.Spec.Modules[0].Components {
 		csm.Spec.Modules[0].Components[i].Enabled = &[]bool{false}[0]
-		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, suite.fakeClient, suite.k8sClient)
+		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
 		if i < len(csm.Spec.Modules[0].Components)-1 {
 			assert.NotNil(suite.T(), err)
 		} else {
@@ -1125,23 +1189,6 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	// this secret required by observability isilon module
-	obsIsilonSec := shared.MakeSecret(name+"-creds", "karavi", configVersion)
-	// this secret required by observability vxflex module
-	obsVxflexosSec := shared.MakeSecret("vxflexos-config", "karavi", configVersion)
-	suite.fakeClient.Create(ctx, obsIsilonSec)
-	suite.fakeClient.Create(ctx, obsVxflexosSec)
-
-	// this secret required by observability authorization isilon module
-	sec = shared.MakeSecret("karavi-authorization-config", "karavi", configVersion)
-	err = suite.fakeClient.Create(ctx, sec)
-	assert.Nil(suite.T(), err)
-
-	// this secret required by observability authorization isilon module
-	sec = shared.MakeSecret("proxy-authz-tokens", "karavi", configVersion)
-	err = suite.fakeClient.Create(ctx, sec)
-	assert.Nil(suite.T(), err)
-
 	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
@@ -1162,13 +1209,9 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	csm.Spec.Driver.ForceRemoveDriver = true
 	csm.Annotations[configVersionKey] = configVersion
 
-	csm.Spec.Modules = append(getReplicaModule(), getObservabilityModule()...)
-	out, _ := json.Marshal(csm)
-	csm.Annotations[previouslyAppliedCustomResource] = string(out)
-
 	csm.Spec.Modules = modules
-	out, _ = json.Marshal(csm)
-	csm.Annotations["kubectl.kubernetes.io/last-applied-configuration"] = string(out)
+	out, _ := json.Marshal(&csm)
+	csm.Annotations[previouslyAppliedCustomResource] = string(out)
 
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
