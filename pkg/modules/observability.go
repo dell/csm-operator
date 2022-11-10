@@ -11,13 +11,11 @@ package modules
 import (
 	"context"
 	"fmt"
-
 	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
@@ -25,6 +23,7 @@ import (
 	"github.com/dell/csm-operator/pkg/resources/deployment"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -168,6 +167,15 @@ var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerFlex:      "vxflexos-config",
 }
 
+var defaultSecretsName = map[csmv1.DriverType]string{
+	csmv1.PowerScale:     "<DriverDefaultReleaseName>-creds",
+	csmv1.PowerScaleName: "<DriverDefaultReleaseName>-creds",
+	csmv1.PowerFlex:      "<DriverDefaultReleaseName>-config",
+	csmv1.PowerFlexName:  "<DriverDefaultReleaseName>-config",
+}
+
+var defaultAuthSecretsName = []string{"karavi-authorization-config", "proxy-authz-tokens", "proxy-server-root-certificate"}
+
 // ObservabilityPrecheck  - runs precheck for CSM Observability
 func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
@@ -184,79 +192,7 @@ func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csm
 		}
 	}
 
-	// Pre-check For PowerScale secrets
-	// Check for secret only
-	components2secrets := map[csmv1.DriverType]string{
-		csmv1.PowerScale:     cr.Name + "-creds",
-		csmv1.PowerScaleName: cr.Name + "-creds",
-		csmv1.PowerFlex:      cr.Name + "-config",
-		csmv1.PowerFlexName:  cr.Name + "-config",
-	}
-	secretName := components2secrets[cr.GetDriverType()]
-
-	if cr.Spec.Driver.AuthSecret != "" {
-		secretName = cr.Spec.Driver.AuthSecret
-	}
-
-	found := &corev1.Secret{}
-	err := r.GetClient().Get(ctx, types.NamespacedName{Name: secretName,
-		Namespace: utils.ObservabilityNamespace}, found)
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return fmt.Errorf("failed to find secret %s and certificate validation is requested", secretName)
-		}
-		log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
-	}
-
-	//precheck for CSM Observability's Authorization
-	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
-		if err := ObservabilityAuthPrecheck(ctx, cr, r.GetClient()); err != nil {
-			return fmt.Errorf("failed authorization validation for Observability: %v", err)
-		}
-	}
-
 	log.Infof("\nperformed pre checks for: %s", obs.Name)
-	return nil
-}
-
-// ObservabilityAuthPrecheck  - runs precheck for CSM Observability's Authorization
-func ObservabilityAuthPrecheck(ctx context.Context, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	auth := csmv1.Module{}
-	for _, m := range cr.Spec.Modules {
-		if m.Name == csmv1.Authorization {
-			auth = m
-			break
-		}
-	}
-
-	secrets := []string{"karavi-authorization-config", "proxy-authz-tokens"}
-
-	// Check for secrets
-	for _, env := range auth.Components[0].Envs {
-		if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
-			skipCertValid, err := strconv.ParseBool(env.Value)
-			if err != nil {
-				return fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
-			}
-
-			if !skipCertValid {
-				secrets = append(secrets, "proxy-server-root-certificate")
-			}
-			break
-		}
-	}
-
-	for _, name := range secrets {
-		found := &corev1.Secret{}
-		err := ctrlClient.Get(ctx, types.NamespacedName{Name: name,
-			Namespace: utils.ObservabilityNamespace}, found)
-		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -278,7 +214,7 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.Operat
 				return err
 			}
 		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := utils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		}
@@ -341,7 +277,7 @@ func OtelCollector(ctx context.Context, isDeleting bool, op utils.OperatorConfig
 				return err
 			}
 		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := utils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		}
@@ -419,13 +355,19 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		return fmt.Errorf("could not find deployment obj")
 	}
 
+	// append secret objects
+	powerscaleMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerscaleMetricsObjects, ctrlClient, k8sClient)
+	if err != nil {
+		return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
+	}
+
 	for _, ctrlObj := range powerscaleMetricsObjects {
 		if isDeleting {
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := utils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		}
@@ -540,7 +482,7 @@ func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStor
 
 // parseObservabilityMetricsDeployment - update secret volume and inject authorization to deployment
 func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1.Deployment, op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (*confv1.DeploymentApplyConfiguration, error) {
-	//parse deployment to DeploymentApplyConfiguration
+	// parse deployment to DeploymentApplyConfiguration
 	dpBuf, err := yaml.Marshal(deployment)
 	if err != nil {
 		return nil, err
@@ -558,11 +500,29 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 		}
 	}
 
-	//inject authorization to deployment
+	// inject authorization to deployment
 	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
 		dpApply, err = AuthInjectDeployment(*dpApply, cr, op)
 		if err != nil {
 			return nil, fmt.Errorf("injecting auth into Observability metrics deployment: %v", err)
+		}
+		// add prefix to secretName of auth volumes
+		for i, v := range dpApply.Spec.Template.Spec.Volumes {
+			if utils.Contains(defaultAuthSecretsName, *v.Name) {
+				name := getNewAuthSecretName(cr.GetDriverType(), *v.Secret.SecretName)
+				dpApply.Spec.Template.Spec.Volumes[i].Secret.SecretName = &name
+			}
+		}
+		// add prefix to secretName of proxy token
+		for i, c := range dpApply.Spec.Template.Spec.Containers {
+			if *c.Name == "karavi-authorization-proxy" {
+				for j, env := range c.Env {
+					if (*env.Name == "ACCESS_TOKEN" || *env.Name == "REFRESH_TOKEN") && utils.Contains(defaultAuthSecretsName, *env.ValueFrom.SecretKeyRef.Name) {
+						name := getNewAuthSecretName(cr.GetDriverType(), *env.ValueFrom.SecretKeyRef.Name)
+						dpApply.Spec.Template.Spec.Containers[i].Env[j].ValueFrom.SecretKeyRef.Name = &name
+					}
+				}
+			}
 		}
 	}
 
@@ -583,7 +543,7 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCon
 		return err
 	}
 
-	//update secret volume and inject authorization to deployment
+	// update secret volume and inject authorization to deployment
 	var dpApply *confv1.DeploymentApplyConfiguration
 	foundDp := false
 	for i, obj := range powerflexMetricsObjects {
@@ -602,13 +562,18 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCon
 		return fmt.Errorf("could not find deployment obj")
 	}
 
+	powerflexMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerflexMetricsObjects, ctrlClient, k8sClient)
+	if err != nil {
+		return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
+	}
+
 	for _, ctrlObj := range powerflexMetricsObjects {
 		if isDeleting {
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := utils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		}
@@ -721,4 +686,68 @@ func getObservabilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, erro
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("could not find observability module")
+}
+
+// appendObservabilitySecrets - append secrets from driver namespace including auth secrets, change their namespace to Observability Namespace
+func appendObservabilitySecrets(ctx context.Context, cr csmv1.ContainerStorageModule, objects []client.Object, ctrlClient client.Client, k8sClient kubernetes.Interface) ([]client.Object, error) {
+	driverSecretName := strings.ReplaceAll(defaultSecretsName[cr.GetDriverType()], DriverDefaultReleaseName, cr.Name)
+
+	if cr.Spec.Driver.AuthSecret != "" {
+		driverSecretName = cr.Spec.Driver.AuthSecret
+	}
+
+	driverSecret, err := utils.GetSecret(ctx, driverSecretName, cr.GetNamespace(), ctrlClient)
+	if err != nil {
+		return objects, fmt.Errorf("reading secret [%s] error [%s]", driverSecret, err)
+	}
+
+	newSecret := createObsSecretObj(*driverSecret, utils.ObservabilityNamespace, driverSecret.Name)
+	objects = append(objects, newSecret)
+
+	// authorization secrets
+	if authorizationEnabled, auth := utils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
+		skipCertValid := true
+		for _, env := range auth.Components[0].Envs {
+			if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
+				skipCertValid, err = strconv.ParseBool(env.Value)
+				if err != nil {
+					return objects, fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+				}
+				break
+			}
+		}
+		for _, s := range defaultAuthSecretsName {
+			if s == "proxy-server-root-certificate" && skipCertValid {
+				continue
+			}
+
+			found, err := utils.GetSecret(ctx, s, cr.GetNamespace(), ctrlClient)
+			if err != nil {
+				return objects, fmt.Errorf("reading secret [%s] error [%s]", s, err)
+			}
+			newSecretName := getNewAuthSecretName(cr.GetDriverType(), found.Name)
+			newAuthSecret := createObsSecretObj(*found, utils.ObservabilityNamespace, newSecretName)
+			objects = append(objects, newAuthSecret)
+		}
+	}
+
+	return objects, nil
+}
+
+// createObsSecretObj - Create new Observability Secret Object from driver Secret
+func createObsSecretObj(driverSecret corev1.Secret, newNameSpace, newSecretName string) *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      newSecretName,
+			Namespace: newNameSpace,
+		},
+		TypeMeta: driverSecret.TypeMeta,
+		Data:     driverSecret.Data,
+		Type:     driverSecret.Type,
+	}
+}
+
+// getNewAuthSecretName - add prefix to secretName
+func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string {
+	return fmt.Sprintf("%s-%s", driverType, secretName)
 }
