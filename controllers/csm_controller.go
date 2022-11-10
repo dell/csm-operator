@@ -530,7 +530,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 
 	if oldCrJSON, ok := newCR.Annotations[previouslyAppliedCustomResource]; ok && oldCrJSON != "" {
 		oldCR := new(csmv1.ContainerStorageModule)
-		err = json.Unmarshal([]byte(oldCrJSON), &oldCR)
+		err = json.Unmarshal([]byte(oldCrJSON), oldCR)
 		if err != nil {
 			return fmt.Errorf("error unmarshalling old annotation: %v", err)
 		}
@@ -556,10 +556,20 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 			}
 		}
 		// check if observability needs to be uninstalled
-		// NOTE: check if individual component need to be uninstalled
-		oldObservabilityEnabled, _ := utils.IsModuleEnabled(ctx, *oldCR, csmv1.Observability)
+		oldObservabilityEnabled, oldObs := utils.IsModuleEnabled(ctx, *oldCR, csmv1.Observability)
 		newObservabilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, csmv1.Observability)
-		if oldObservabilityEnabled && !newObservabilityEnabled {
+		// check if observability components need to be uninstalled
+		components := []string{}
+		if oldObservabilityEnabled && newObservabilityEnabled {
+			for _, comp := range oldObs.Components {
+				oldCompEnabled := utils.IsComponentEnabled(ctx, *oldCR, csmv1.Observability, comp.Name)
+				newCompEnabled := utils.IsComponentEnabled(ctx, *newCR, csmv1.Observability, comp.Name)
+				if oldCompEnabled && !newCompEnabled {
+					components = append(components, comp.Name)
+				}
+			}
+		}
+		if (oldObservabilityEnabled && !newObservabilityEnabled) || len(components) > 0 {
 			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
 			if err != nil {
 				return err
@@ -567,17 +577,24 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 			for _, cluster := range clusterClients {
 				// remove module observability
 				log.Infow("Deleting observability")
-				if err = r.reconcileObservability(ctx, true, operatorConfig, *oldCR, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
+				if err = r.reconcileObservability(ctx, true, operatorConfig, *oldCR, components, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
 					return err
 				}
 			}
-
 		}
 	}
 
-	annotations := newCR.GetAnnotations()
-	newCR.Annotations[previouslyAppliedCustomResource] = newCR.Annotations["kubectl.kubernetes.io/last-applied-configuration"]
-	newCR.SetAnnotations(annotations)
+	copyCR := newCR.DeepCopy()
+	delete(copyCR.Annotations, previouslyAppliedCustomResource)
+	delete(copyCR.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+	copyCR.ManagedFields = nil
+	copyCR.Status = csmv1.ContainerStorageModuleStatus{}
+	out, err := json.Marshal(copyCR)
+	if err != nil {
+		return fmt.Errorf("error marshalling CR to annotation: %v", err)
+	}
+	newCR.Annotations[previouslyAppliedCustomResource] = string(out)
+
 	return r.GetClient().Update(ctx, newCR)
 }
 
@@ -709,7 +726,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Observability); observabilityEnabled {
 			log.Infow("Create/Update observability")
 
-			if err = r.reconcileObservability(ctx, false, operatorConfig, cr, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
+			if err = r.reconcileObservability(ctx, false, operatorConfig, cr, nil, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
 				return err
 			}
 		}
@@ -721,36 +738,42 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 // reconcileObservability - Delete/Create/Update observability components
 // isDeleting - true: Delete; false: Create/Update
-func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
+	// if components is empty, reconcile all enabled components
+	if len(components) == 0 {
+		if enabled, obs := utils.IsModuleEnabled(ctx, cr, csmv1.Observability); enabled {
+			for _, comp := range obs.Components {
+				if utils.IsComponentEnabled(ctx, cr, csmv1.Observability, comp.Name) {
+					components = append(components, comp.Name)
+				}
+			}
+		}
+	}
 	comp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
 		modules.ObservabilityTopologyName:      modules.ObservabilityTopology,
 		modules.ObservabilityOtelCollectorName: modules.OtelCollector,
 	}
-
-	for comp, reconFunc := range comp2reconFunc {
-		if utils.IsComponentEnabled(ctx, cr, csmv1.Observability, comp) {
-			log.Infow(fmt.Sprintf("reconcile %s", comp))
-			if err := reconFunc(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-				log.Errorf("failed to reconcile %s", comp)
-				return err
-			}
-		}
-	}
-
 	metricsComp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface) error{
 		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
 		modules.ObservabilityMetricsPowerFlexName:  modules.PowerFlexMetrics,
 	}
 
-	for comp, reconFunc := range metricsComp2reconFunc {
-		if utils.IsComponentEnabled(ctx, cr, csmv1.Observability, comp) {
-			log.Infow(fmt.Sprintf("reconcile %s", comp))
-			if err := reconFunc(ctx, isDeleting, op, cr, ctrlClient, k8sClient); err != nil {
-				log.Errorf("failed to reconcile %s", comp)
-				return err
-			}
+	for _, comp := range components {
+		log.Infow(fmt.Sprintf("reconcile %s", comp))
+		var err error
+		switch comp {
+		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName:
+			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
+		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName:
+			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
+		default:
+			err = fmt.Errorf("unsupported component type: %v", comp)
+		}
+		if err != nil {
+			log.Errorf("failed to reconcile %s", comp)
+			return err
 		}
 	}
 
@@ -949,7 +972,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		// remove module observability
 		if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.Observability); observabilityEnabled {
 			log.Infow("Deleting observability")
-			if err = r.reconcileObservability(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
+			if err = r.reconcileObservability(ctx, true, operatorConfig, instance, nil, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
 				return err
 			}
 		}
