@@ -416,7 +416,7 @@ func getPortContainerizedAuth() (string, error) {
 	return port, nil
 }
 
-func ExecCommand(VMIP string, VMsUser string, VMsPassword string, args []string) ([]byte, error) {
+func execCommand(VMIP string, VMsUser string, VMsPassword string, args []string) ([]byte, error) {
 	args = append(
 		[]string{
 			"-p", VMsPassword,

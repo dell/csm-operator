@@ -629,7 +629,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		password        = ""
 		storageType     = ""
 		pool            = ""
-		controlPlaneIp  = ""
+		controlPlaneIP  = ""
 		driverNamespace = ""
 	)
 
@@ -653,7 +653,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		storageType = os.Getenv("STORAGE_TYPE")
 	}
 	if os.Getenv("CONTROL_PLANE_IP") != "" {
-		controlPlaneIp = os.Getenv("CONTROL_PLANE_IP")
+		controlPlaneIP = os.Getenv("CONTROL_PLANE_IP")
 	}
 	if os.Getenv("DRIVER_NAMESPACE") != "" {
 		driverNamespace = os.Getenv("DRIVER_NAMESPACE")
@@ -754,13 +754,13 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	}
 
 	wrtArgs := []string{fmt.Sprintf(`cat > /tmp/token.yaml << EOF %s`, token.Token+"EOF")}
-	if b, err := ExecCommand(controlPlaneIp, "dellemc", "dangerous", wrtArgs); err != nil {
-		return fmt.Errorf("failed to copy token to %s: %v\nErrMessage:\n%s", controlPlaneIp, err, string(b))
+	if b, err := execCommand(controlPlaneIP, "dellemc", "dangerous", wrtArgs); err != nil {
+		return fmt.Errorf("failed to copy token to %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
 	}
 
 	kApplyArgs := []string{"kubectl", "apply", "-f", "/tmp/token.yaml", "-n", driverNamespace}
-	if b, err := ExecCommand(controlPlaneIp, "dellemc", "dangerous", kApplyArgs); err != nil {
-		return fmt.Errorf("failed to apply token in %s: %v\nErrMessage:\n%s", controlPlaneIp, err, string(b))
+	if b, err := execCommand(controlPlaneIP, "dellemc", "dangerous", kApplyArgs); err != nil {
+		return fmt.Errorf("failed to apply token in %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
 	}
 
 	return nil
