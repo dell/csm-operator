@@ -192,7 +192,7 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 				return step.validateObservabilityInstalled(cr)
 
 			case csmv1.AuthorizationServer:
-				return step.validateAuthorizationProxyServerInstalled(res)
+				return step.validateAuthorizationProxyServerInstalled(cr)
 			}
 		}
 	}
@@ -226,7 +226,7 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 				return step.validateObservabilityNotInstalled(cr)
 
 			case csmv1.AuthorizationServer:
-				return step.validateAuthorizationProxyServerNotInstalled(res)
+				return step.validateAuthorizationProxyServerNotInstalled(cr)
 			}
 		}
 	}
@@ -558,8 +558,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 	return nil
 }
 
-func (step *Step) validateAuthorizationProxyServerInstalled(res Resource) error {
-	cr := res.CustomResource
+func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerStorageModule) error {
 
 	instance := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -586,15 +585,16 @@ func (step *Step) validateAuthorizationProxyServerInstalled(res Resource) error 
 		}
 	}
 
-	if err := configureAuthorizationProxyServer(res); err != nil {
+	// provide few seconds for cluster to settle down
+	time.Sleep(20 * time.Second)
+	if err := configureAuthorizationProxyServer(cr); err != nil {
 		return fmt.Errorf("failed AuthorizationProxyServer configuration check: %v", err)
 	}
 
 	return nil
 }
 
-func (step *Step) validateAuthorizationProxyServerNotInstalled(res Resource) error {
-	cr := res.CustomResource
+func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.ContainerStorageModule) error {
 
 	// check installation for all AuthorizationProxyServer
 	fakeReconcile := utils.FakeReconcileCSM{
@@ -616,7 +616,7 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(res Resource) err
 	return nil
 }
 
-func configureAuthorizationProxyServer(res Resource) error {
+func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	var b []byte
@@ -663,10 +663,7 @@ func configureAuthorizationProxyServer(res Resource) error {
 		return err
 	}
 
-	//for _, ip := range cd.ProfileInfo.AuthorizationIPs {
-	// Create Storage
 	fmt.Println("=== Creating Storage ===")
-
 	cmd := exec.Command("karavictl",
 		"storage", "create",
 		"--type", storageType,
