@@ -594,5 +594,5 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources [1]"
-    - "Validate [authorization-proxy-server] module is installed"
-#    - "Delete resources [2]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Delete resources [1]"
