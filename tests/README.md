@@ -23,6 +23,7 @@ The E2E tests test the installation of Dell CSI Drivers and Dell CSM Modules.
 go install github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega/...
 ```
+- For CSM for Authorization, a storage class is needed for redis, either create or use existing
 
 ### Run
 
