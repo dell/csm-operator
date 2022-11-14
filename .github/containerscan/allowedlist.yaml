@@ -1,28 +1,8 @@
 general:
   vulnerabilities:
     # list of CVEs that are currently unfixed
-    - CVE-2021-3121
-    - CVE-2020-29652
-    - CVE-2022-25315
-    - CVE-2022-25235
-    - CVE-2022-25236
-    - CVE-2021-44568
-    - CVE-2022-24407
-    - CVE-2022-0778
-    - CVE-2022-26280 
-    - CVE-2018-25032
-    - CVE-2022-1271
-    - CVE-2022-2526
-    - CVE-2022-27664
-    - CVE-2022-3515
-    - CVE-2022-42898
+
   bestPracticeViolations:
     # list of best practies violatied that needs a fix
-    # CIS-DI-0009 is being violated in the UBI image
-    - DKL-DI-0006
-    - CIS-DI-0005
-    - CIS-DI-0006
-    - CIS-DI-0009
-    - CIS-DI-0008
-    - DKL-LI-0003
+    
 
