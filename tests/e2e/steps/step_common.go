@@ -410,7 +410,7 @@ func getPortContainerizedAuth() (string, error) {
 		"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
 	).CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to perform helm install: %s", b)
+		return "", fmt.Errorf("failed to get authorization-ingress-nginx-controller port: %s", b)
 	}
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil

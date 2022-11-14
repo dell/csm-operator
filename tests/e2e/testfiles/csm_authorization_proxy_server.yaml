@@ -74,7 +74,7 @@ spec:
 
           # Specify storage class for redis. Otherwise, default storage class is used
           - name: "REDIS_STORAGE_CLASS"
-            value: "vxflexos"
+            value: "local"
 
       # enabled: Enable/Disable nginx ingress
       # Allowed values:

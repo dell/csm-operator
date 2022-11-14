@@ -30,3 +30,21 @@ export CERT_CSI="/root/cert-csi"
 
 # [Optional] namespace of operator if you deployed it to a namespace diffrent form the one below.
 # export OPERATOR_NAMESPACE="dell-csm-operator"
+
+# USER MODIFICATION REQUIRED: must supply path to your karavictl binary
+# export KARAVICTL="/root/karavictl"
+
+# Must supply storage details to values file if different from testfiles/values.yaml
+# stotage type are like powerscale, powerflex, powermax
+# export STORAGE_TYPE="powerscale"
+# export END_POINT="1.1.1.1:8080"
+# export SYSTEM_ID="xxxxxx"
+# export STORAGE_USER="xxxx"
+# export STORAGE_PASSWORD="xxxxx"
+# export STORAGE_POOL="pool"
+
+# User must add control-plane IP
+# export CONTROL_PLANE_IP="1.1.1.1"
+
+# User must specify and create driver namespace
+# export DRIVER_NAMESPACE="namespace"
