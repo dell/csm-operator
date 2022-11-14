@@ -14,11 +14,14 @@ package steps
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
@@ -37,9 +40,15 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const (
+	roleName   = "CSIGold"
+	tenantName = "PancakeGroup"
+)
+
 var (
 	authString        = "karavi-authorization-proxy"
 	operatorNamespace = "dell-csm-operator"
+	quotaLimit        = "30000000"
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -182,6 +191,8 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 			case csmv1.Observability:
 				return step.validateObservabilityInstalled(cr)
 
+			case csmv1.AuthorizationServer:
+				return step.validateAuthorizationProxyServerInstalled(cr)
 			}
 		}
 	}
@@ -214,6 +225,8 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 			case csmv1.Observability:
 				return step.validateObservabilityNotInstalled(cr)
 
+			case csmv1.AuthorizationServer:
+				return step.validateAuthorizationProxyServerNotInstalled(cr)
 			}
 		}
 	}
@@ -540,6 +553,214 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 
 	if !allReady {
 		return fmt.Errorf(notReadyMessage)
+	}
+
+	return nil
+}
+
+func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerStorageModule) error {
+
+	instance := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name}, instance,
+	); err != nil {
+		return err
+	}
+
+	// check installation for all AuthorizationProxyServer
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check AuthorizationProxyServer in all clusters
+		if err := checkAuthorizationProxyServerPods(utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed to check for AuthorizationProxyServer installation in %s: %v", cluster.ClusterID, err)
+		}
+	}
+
+	// provide few seconds for cluster to settle down
+	time.Sleep(20 * time.Second)
+	if err := configureAuthorizationProxyServer(cr); err != nil {
+		return fmt.Errorf("failed AuthorizationProxyServer configuration check: %v", err)
+	}
+
+	return nil
+}
+
+func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.ContainerStorageModule) error {
+
+	// check installation for all AuthorizationProxyServer
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check AuthorizationProxyServer is not installed
+		if err := checkAuthorizationProxyServerNoRunningPods(utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed AuthorizationProxyServer installation check %s: %v", cluster.ClusterID, err)
+		}
+	}
+
+	return nil
+}
+
+func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
+	fmt.Println("=== Configuring Authorization Proxy Server ===")
+
+	var b []byte
+	var err error
+
+	var (
+		endpoint        = ""
+		sysID           = ""
+		user            = ""
+		password        = ""
+		storageType     = ""
+		pool            = ""
+		controlPlaneIP  = ""
+		driverNamespace = ""
+	)
+
+	// get env variables
+	if os.Getenv("END_POINT") != "" {
+		endpoint = os.Getenv("END_POINT")
+	}
+	if os.Getenv("SYSTEM_ID") != "" {
+		sysID = os.Getenv("SYSTEM_ID")
+	}
+	if os.Getenv("STORAGE_USER") != "" {
+		user = os.Getenv("STORAGE_USER")
+	}
+	if os.Getenv("STORAGE_PASSWORD") != "" {
+		password = os.Getenv("STORAGE_PASSWORD")
+	}
+	if os.Getenv("STORAGE_POOL") != "" {
+		pool = os.Getenv("STORAGE_POOL")
+	}
+	if os.Getenv("STORAGE_TYPE") != "" {
+		storageType = os.Getenv("STORAGE_TYPE")
+	}
+	if os.Getenv("CONTROL_PLANE_IP") != "" {
+		controlPlaneIP = os.Getenv("CONTROL_PLANE_IP")
+	}
+	if os.Getenv("DRIVER_NAMESPACE") != "" {
+		driverNamespace = os.Getenv("DRIVER_NAMESPACE")
+	}
+	port, err := getPortContainerizedAuth()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("=== Creating Storage ===")
+	cmd := exec.Command("karavictl",
+		"storage", "create",
+		"--type", storageType,
+		"--endpoint", fmt.Sprintf("https://%s", endpoint),
+		"--system-id", sysID,
+		"--user", user,
+		"--password", password,
+		"--array-insecure",
+		"--insecure", "--addr", fmt.Sprintf("storage.csm-authorization.com:%s", port),
+	)
+	fmt.Println("=== Storage === ", cmd.String())
+	b, err = cmd.CombinedOutput()
+
+	if err != nil {
+		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+	}
+
+	// Create Tenant
+	fmt.Println("=== Creating Tenant ===")
+	cmd = exec.Command("karavictl",
+		"tenant", "create",
+		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("tenant.csm-authorization.com:%s", port),
+	)
+	b, err = cmd.CombinedOutput()
+	fmt.Println("=== Tenant === ", cmd.String())
+
+	if err != nil && !strings.Contains(string(b), "tenant already exists") {
+		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
+	}
+
+	// Create Role
+	if storageType == "powerscale" {
+		quotaLimit = "0"
+	}
+	cmd = exec.Command("karavictl",
+		"role", "create",
+		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
+			roleName, storageType, sysID, pool, quotaLimit),
+		"--insecure", "--addr", fmt.Sprintf("role.csm-authorization.com:%s", port),
+	)
+
+	fmt.Println("=== Creating Role", cmd.String())
+	b, err = cmd.CombinedOutput()
+
+	if err != nil {
+		return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
+	}
+
+	// role creation take few seconds
+	time.Sleep(5 * time.Second)
+
+	// Bind role
+	cmd = exec.Command("karavictl",
+		"rolebinding", "create",
+		"--tenant", tenantName,
+		"--role", roleName,
+		"--insecure", "--addr", fmt.Sprintf("tenant.csm-authorization.com:%s", port),
+	)
+	fmt.Println("=== Binding Role", cmd.String())
+	b, err = cmd.CombinedOutput()
+
+	if err != nil {
+		return fmt.Errorf("failed to create rolebinding %s: %v\nErrMessage:\n%s", roleName, err, string(b))
+	}
+
+	// Generate token
+	fmt.Println("=== Generating token ===")
+	cmd = exec.Command("karavictl",
+		"generate", "token",
+		"--tenant", tenantName,
+		"--insecure", "--addr", fmt.Sprintf("tenant.csm-authorization.com:%s", port),
+	)
+	fmt.Println("=== Token", cmd.String())
+	b, err = cmd.CombinedOutput()
+
+	if err != nil {
+		return fmt.Errorf("failed to generate token for %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
+	}
+
+	// Apply token to CSI driver host
+	fmt.Println("=== Applying token ===")
+	var token struct {
+		Token string `json:"Token"`
+	}
+	err = json.Unmarshal(b, &token)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal token %s: %v", string(b), err)
+	}
+
+	wrtArgs := []string{fmt.Sprintf(`cat > /tmp/token.yaml << EOF %s`, token.Token+"EOF")}
+	if b, err := execCommand(controlPlaneIP, "dellemc", "dangerous", wrtArgs); err != nil {
+		return fmt.Errorf("failed to copy token to %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
+	}
+
+	kApplyArgs := []string{"kubectl", "apply", "-f", "/tmp/token.yaml", "-n", driverNamespace}
+	if b, err := execCommand(controlPlaneIP, "dellemc", "dangerous", kApplyArgs); err != nil {
+		return fmt.Errorf("failed to apply token in %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
 	}
 
 	return nil

@@ -64,8 +64,6 @@
     name: HelloWorld 
     run: "echo Hello && echo World"
 
-
-
 - scenario: "Install PowerScale Driver(With Replication)"
   paths:
     - "testfiles/storage_csm_powerscale_replica.yaml"
@@ -106,7 +104,6 @@
   customTest:
     name: HelloWorld 
     run: "echo Hello && echo World"
-
 
 - scenario: "Uninstall PowerScale Driver"
   paths: 
@@ -156,7 +153,6 @@
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-
 
 - scenario: "Install PowerScale Driver(With Observability)"
   paths: 
@@ -310,7 +306,6 @@
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-
 
 - scenario: "Install PowerFlex Driver(Standalone)"
   paths: 
@@ -571,7 +566,6 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
-
 - scenario: "Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
@@ -593,3 +587,12 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
+- scenario: "Install Authorization Proxy Server"
+  path: "testfiles/csm_authorization_proxy_server.yaml"
+  modules:
+    - "authorizationproxyserver"
+  steps:
+    - "Given an environment with k8s, and CSM operator installed"
+    - "Apply custom resources [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Delete resources [1]"
