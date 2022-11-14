@@ -36,7 +36,7 @@ COPY tests/ tests/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
 # Tag corresponding to digest c5ffdf5938d73283cec018f2adf59f0ed9f8c376d93e415a27b16c3c6aad6f45 is 8.6-994
-FROM registry.access.redhat.com/ubi8/ubi-minimal@sha256:33931dce809712888d1a8061bfa676963f517daca993984afed3251bc1fb5987
+FROM registry.access.redhat.com/ubi8/ubi-minimal@sha256:c5ffdf5938d73283cec018f2adf59f0ed9f8c376d93e415a27b16c3c6aad6f45
 
 RUN microdnf install yum \
     && yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical \
