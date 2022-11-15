@@ -562,8 +562,11 @@ func TestAuthorizationIngressRules(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 
 			success, isDeleting, cr, sourceClient, op := tc(t)
-
-			err := AuthorizationIngress(context.TODO(), isDeleting, op, cr, sourceClient)
+			fakeReconcile := utils.FakeReconcileCSM{
+				Client:    sourceClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+			err := AuthorizationIngress(context.TODO(), isDeleting, op, cr, &fakeReconcile, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {

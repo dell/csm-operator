@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
@@ -611,17 +612,24 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 }
 
 // AuthorizationIngress - apply/delete ingress objects
-func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
 	YamlString, err := getAuthorizationIngressRules(op, cr)
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	ingressObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}
 
-	for _, ctrlObj := range deployObjects {
+	// Wait for NGINX ingress controller to be ready before creating Ingresses
+	if !isDeleting {
+		if err := utils.WaitForNginxController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
+			return fmt.Errorf("NGINX ingress controller is not ready: %v", err)
+		}
+	}
+
+	for _, ctrlObj := range ingressObjects {
 		if isDeleting {
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
