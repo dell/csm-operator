@@ -52,9 +52,9 @@ spec:
           # Default value: nginx
           - name: "PROXY_INGRESS_CLASSNAME"
             value: "nginx"
-          # Additional host rules for the proxy-server ingress
+          # An additional host rule for the proxy-server ingress
           # Default value: authorization-ingress-nginx-controller.namespace.svc.cluster.local
-          - name: "PROXY_INGRESS_HOSTS"
+          - name: "PROXY_INGRESS_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
 
           # Tenant-service ingress configuration
