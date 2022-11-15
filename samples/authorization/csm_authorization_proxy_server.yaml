@@ -13,6 +13,7 @@ spec:
       forceRemoveModule: true
       components:
       - name: karavi-authorization-proxy-server
+        # enable: Enable/Disable csm-authorization proxy server
         enabled: true
         image: dellemc/csm-authorization-proxy:v1.4.0
         image: dellemc/csm-authorization-tenant:v1.4.0
@@ -54,7 +55,7 @@ spec:
             value: "nginx"
           # Additional host rules for the proxy-server ingress
           # Default value: authorization-ingress-nginx-controller.namespace.svc.cluster.local
-          - name: "PROXY_INGRESS_HOSTS"
+          - name: "PROXY_INGRESS_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
 
           # Tenant-service ingress configuration
@@ -72,9 +73,10 @@ spec:
           - name: "STORAGE_INGRESS_CLASSNAME"
             value: "nginx" 
 
-          # Specify storage class for redis. Otherwise, default storage class is used
+          # Specify storage class for redis. Otherwise, default storage class is used.
+          # Default value: None
           - name: "REDIS_STORAGE_CLASS"
-            value: "local-storage"
+            value: ""
 
       # enabled: Enable/Disable nginx ingress
       # Allowed values:

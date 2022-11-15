@@ -16,18 +16,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
 	"sync"
 
 	t1 "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -333,4 +336,49 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		return reconcile.Result{}, nil
 	}
 	return LogBannerAndReturn(reconcile.Result{}, nil)
+}
+
+func GetNginxControllerStatus(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) wait.ConditionFunc {
+	return func() (bool, error) {
+		deployment := &appsv1.Deployment{}
+		labelKey := "app.kubernetes.io/name"
+		label := "ingress-nginx"
+		name := instance.GetNamespace() + "-ingress-nginx-controller"
+
+		err := r.GetClient().Get(ctx, t1.NamespacedName{
+			Name:      name,
+			Namespace: instance.GetNamespace()}, deployment)
+		if err != nil {
+			if k8serrors.IsNotFound(err) {
+				return false, err
+			}
+			return false, err
+		}
+
+		opts := []client.ListOption{
+			client.InNamespace(instance.GetNamespace()),
+			client.MatchingLabels{labelKey: label},
+		}
+
+		deploymentList := &appsv1.DeploymentList{}
+		err = r.GetClient().List(ctx, deploymentList, opts...)
+		if err != nil {
+			return false, err
+		}
+
+		for _, deployment := range deploymentList.Items {
+			if deployment.Status.ReadyReplicas == *deployment.Spec.Replicas {
+				return true, nil
+			}
+		}
+
+		return false, err
+	}
+}
+
+func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, timeout time.Duration) error {
+	log := logger.GetLogger(ctx)
+	log.Infow("Polling status of NGINX ingress controller")
+
+	return wait.PollImmediate(time.Second, timeout, GetNginxControllerStatus(ctx, instance, r))
 }
