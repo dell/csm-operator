@@ -172,7 +172,7 @@ func (suite *CSMControllerTestSuite) TestReconcile() {
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.makeFakeAuthServerCSM(csmName, suite.namespace, getAuthProxyServer())
-	suite.runFakeAuthCSMManager("", false)
+	suite.runFakeAuthCSMManager("timed out waiting for the condition", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true)
 }
@@ -901,12 +901,12 @@ func (suite *CSMControllerTestSuite) handleDaemonsetTest(r *ContainerStorageModu
 }
 
 func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageModuleReconciler, name string) {
-	deployement := &appsv1.Deployment{}
-	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployement)
+	deployment := &appsv1.Deployment{}
+	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployment)
 	assert.Nil(suite.T(), err)
-	deployement.Spec.Template.Labels = map[string]string{"csm": "csm"}
+	deployment.Spec.Template.Labels = map[string]string{"csm": "csm"}
 
-	r.handleDeploymentUpdate(deployement, deployement)
+	r.handleDeploymentUpdate(deployment, deployment)
 
 	//Make Pod and set pod status
 	pod := shared.MakePod(name, suite.namespace)
