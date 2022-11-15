@@ -338,6 +338,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 	return LogBannerAndReturn(reconcile.Result{}, nil)
 }
 
+// GetNginxControllerStatus - gets deployment status of the NGINX ingress controller
 func GetNginxControllerStatus(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) wait.ConditionFunc {
 	return func() (bool, error) {
 		deployment := &appsv1.Deployment{}
@@ -376,6 +377,7 @@ func GetNginxControllerStatus(ctx context.Context, instance csmv1.ContainerStora
 	}
 }
 
+// WaitForNginxController - polls deployment status
 func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, timeout time.Duration) error {
 	log := logger.GetLogger(ctx)
 	log.Infow("Polling status of NGINX ingress controller")
