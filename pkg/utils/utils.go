@@ -938,7 +938,7 @@ func GetProxyIngressHost(auth csmv1.Module) string {
 	for _, comp := range auth.Components {
 		if comp.Name == AuthProxyServerComponent {
 			for _, env := range comp.Envs {
-				if env.Name == "PROXY_INGRESS_HOSTS" && env.Value != "" {
+				if env.Name == "PROXY_INGRESS_HOST" && env.Value != "" {
 					ingressHost = env.Value
 					break
 				}
