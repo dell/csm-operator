@@ -596,3 +596,27 @@
     - "Apply custom resources [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Delete resources [1]"
+
+- scenario: "Install Authorization Proxy Server with PowerScale csi driver"
+  paths:
+    - "testfiles/csm_authorization_proxy_server.yaml"
+    - "testfiles/storage_csm_powerscale_auth.yaml"
+  modules:
+    - "authorizationproxyserver"
+    - "authorization"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Apply custom resource [2]"
+    - "Validate custom resource [2]"
+    - "Validate [powerscale] driver from CR [2] is installed"
+    - "Validate [authorization] module from CR [2] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [2]"
+    - "Delete custom resource [2]"
+    - "Delete resource [1]"
+  customTest:
+    name: Cert CSI
+    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
