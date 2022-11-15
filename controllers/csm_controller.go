@@ -789,10 +789,6 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 			return fmt.Errorf("unable to reconcile authorization proxy server: %v", err)
 		}
 
-		if err := modules.AuthorizationIngress(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
-		}
-
 		if err := modules.InstallPolicies(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to install policies: %v", err)
 		}
@@ -811,6 +807,15 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 			return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
 		}
 	}
+
+	// Authorization Ingress rules are applied after NGINX ingress controller is installed
+	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+		log.Infow("Reconcile authorization Ingresses")
+		if err := modules.AuthorizationIngress(ctx, isDeleting, op, cr, r, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
+		}
+	}
+
 	return nil
 }
 

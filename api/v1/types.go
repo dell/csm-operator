@@ -124,7 +124,7 @@ type Module struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
 	Name ModuleType `json:"name" yaml:"name"`
 
-	// Enabled is used to indicate wether or not to deploy a module
+	// Enabled is used to indicate whether or not to deploy a module
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enabled"
 	Enabled bool `json:"enabled" yaml:"enabled"`
 

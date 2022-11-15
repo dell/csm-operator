@@ -890,7 +890,7 @@ spec:
                       description: ConfigVersion is the configuration version of the module
                       type: string
                     enabled:
-                      description: Enabled is used to indicate wether or not to deploy a module
+                      description: Enabled is used to indicate whether or not to deploy a module
                       type: boolean
                     forceRemoveModule:
                       description: ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted

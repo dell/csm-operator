@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	"github.com/dell/csm-operator/tests/shared"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -98,6 +99,8 @@ func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client
 	switch list.(type) {
 	case *corev1.PodList:
 		return f.listPodList(list.(*corev1.PodList))
+	case *appsv1.DeploymentList:
+		return f.listDeploymentList(ctx, &appsv1.DeploymentList{})
 	default:
 		return fmt.Errorf("fake client unknown type: %s", reflect.TypeOf(list))
 	}
@@ -107,6 +110,15 @@ func (f Client) listPodList(list *corev1.PodList) error {
 	for k, v := range f.Objects {
 		if k.Kind == "Pod" {
 			list.Items = append(list.Items, *v.(*corev1.Pod))
+		}
+	}
+	return nil
+}
+
+func (f Client) listDeploymentList(ctx context.Context, list *appsv1.DeploymentList) error {
+	for k, v := range f.Objects {
+		if k.Kind == "Deployment" {
+			list.Items = append(list.Items, *v.(*appsv1.Deployment))
 		}
 	}
 	return nil

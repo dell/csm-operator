@@ -1273,7 +1273,7 @@ spec:
                         module
                       type: string
                     enabled:
-                      description: Enabled is used to indicate wether or not to deploy
+                      description: Enabled is used to indicate whether or not to deploy
                         a module
                       type: boolean
                     forceRemoveModule:
