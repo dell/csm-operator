@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	csmPScale                = csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
+	csmPScale                = csmWithTolerations(csmv1.PowerScaleName, "shared.ConfigVersion")
 	powerScaleCSM            = csmForPowerScale()
 	powerScaleCSMBadSkipCert = csmForPowerScaleBadSkipCert()
 	powerScaleCSMBadCertCnt  = csmForPowerScaleBadCertCnt()
@@ -125,7 +125,7 @@ func csmForPowerScale() csmv1.ContainerStorageModule {
 	res.Spec.Driver.AuthSecret = "csm-creds"
 
 	// Add pscale driver version
-	res.Spec.Driver.ConfigVersion = "v2.2.0"
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res
@@ -141,7 +141,7 @@ func csmForPowerScaleBadSkipCert() csmv1.ContainerStorageModule {
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
 	// Add pscale driver version
-	res.Spec.Driver.ConfigVersion = "v2.2.0"
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res
@@ -157,7 +157,7 @@ func csmForPowerScaleBadCertCnt() csmv1.ContainerStorageModule {
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
 	// Add pscale driver version
-	res.Spec.Driver.ConfigVersion = "v2.2.0"
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res

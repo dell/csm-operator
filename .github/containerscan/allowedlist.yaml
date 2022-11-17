@@ -15,12 +15,14 @@ general:
     - CVE-2022-2526
     - CVE-2022-27664
     - CVE-2022-3515
+    - CVE-2022-42898
   bestPracticeViolations:
     # list of best practies violatied that needs a fix
-    - 
+    # CIS-DI-0009 is being violated in the UBI image
     - DKL-DI-0006
     - CIS-DI-0005
     - CIS-DI-0006
+    - CIS-DI-0009
     - CIS-DI-0008
     - DKL-LI-0003
 

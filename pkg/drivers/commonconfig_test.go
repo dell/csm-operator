@@ -17,15 +17,12 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	//"github.com/dell/csm-operator/tests/shared/crclient"
+	"github.com/dell/csm-operator/tests/shared"
 	"github.com/stretchr/testify/assert"
-	//"k8s.io/apimachinery/pkg/runtime"
-	//"sigs.k8s.io/controller-runtime/pkg/client"
-	//"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 var (
-	csm      = csmWithTolerations(csmv1.PowerScaleName, "v2.2.0")
+	csm      = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion)
 	pFlexCSM = csmForPowerFlex(pflexCSMName)
 
 	fakeDriver csmv1.DriverType = "fakeDriver"
