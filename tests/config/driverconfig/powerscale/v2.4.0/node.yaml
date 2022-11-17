@@ -77,11 +77,11 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-isilon:v2.2.0
+          image: dellemc/csi-isilon:v2.4.0
           imagePullPolicy: IfNotPresent
           env:
             - name: CSI_ENDPOINT
-              value: /var/lib/kubelet/plugins/csi-isilon/csi_sock
+              value: <KUBELET_CONFIG_DIR>/plugins/csi-isilon/csi_sock
             - name: X_CSI_MODE
               value: node
             - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
@@ -91,7 +91,7 @@ spec:
             - name: X_CSI_VERBOSE
               value: "1"
             - name: X_CSI_PRIVATE_MOUNT_DIR
-              value: "/var/lib/kubelet/plugins/csi-isilon/disks"
+              value: "<KUBELET_CONFIG_DIR>/plugins/csi-isilon/disks"
             - name: X_CSI_ISI_PORT
               value: "8080"
             - name: X_CSI_ISI_PATH
@@ -122,11 +122,11 @@ spec:
               value: "false"
           volumeMounts:
             - name: driver-path
-              mountPath: /var/lib/kubelet/plugins/csi-isilon
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
             - name: volumedevices-path
-              mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi/volumeDevices
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
             - name: pods-path
-              mountPath: /var/lib/kubelet/pods
+              mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
             - name: dev
               mountPath: /dev
@@ -138,12 +138,12 @@ spec:
             - name: csi-isilon-config-params
               mountPath: /csi-isilon-config-params
         - name: registrar
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.4.0
+          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.5.1
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi-isilon/csi_sock
+            - --kubelet-registration-path=<KUBELET_CONFIG_DIR>/plugins/csi-isilon/csi_sock
           env:
             - name: ADDRESS
               value: /csi/csi_sock
@@ -160,19 +160,19 @@ spec:
       volumes:
         - name: registration-dir
           hostPath:
-            path: /var/lib/kubelet/plugins_registry/
+            path: <KUBELET_CONFIG_DIR>/plugins_registry/
             type: DirectoryOrCreate
         - name: driver-path
           hostPath:
-            path: /var/lib/kubelet/plugins/csi-isilon
+            path: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
             type: DirectoryOrCreate
         - name: volumedevices-path
           hostPath:
-            path: /var/lib/kubelet/plugins/kubernetes.io/csi/volumeDevices
+            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
             type: DirectoryOrCreate
         - name: pods-path
           hostPath:
-            path: /var/lib/kubelet/pods
+            path: <KUBELET_CONFIG_DIR>/pods
             type: Directory
         - name: dev
           hostPath:
@@ -192,4 +192,3 @@ spec:
         - name: csi-isilon-config-params
           configMap:
              name: <DriverDefaultReleaseName>-config-params
-
