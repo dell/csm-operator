@@ -23,7 +23,7 @@ import (
 )
 
 // SyncServiceAccount - Syncs a ServiceAccount
-//func SyncServiceAccount(ctx context.Context, sa *corev1.ServiceAccount, client client.Client, csmName string, trcID string) error {
+// func SyncServiceAccount(ctx context.Context, sa *corev1.ServiceAccount, client client.Client, csmName string, trcID string) error {
 func SyncServiceAccount(ctx context.Context, sa corev1.ServiceAccount, client client.Client) error {
 	log := logger.GetLogger(ctx)
 	found := &corev1.ServiceAccount{}

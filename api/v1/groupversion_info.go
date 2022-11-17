@@ -11,8 +11,8 @@
 //  limitations under the License.
 
 // Package v1 contains API Schema definitions for the storage v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=storage.dell.com
+// +kubebuilder:object:generate=true
+// +groupName=storage.dell.com
 package v1
 
 import (
