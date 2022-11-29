@@ -1,4 +1,4 @@
-apiVersion: operators.coreos.com/v1
+apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
@@ -57,10 +57,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.4.0",
+                "image": "dellemc/csi-isilon:v2.5.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.4.0",
+              "configVersion": "v2.5.0",
               "controller": {
                 "envs": [
                   {
@@ -131,18 +131,18 @@ metadata:
                     "envs": [
                       {
                         "name": "PROXY_HOST",
-                        "value": ""
+                        "value": "csm-authorization.com"
                       },
                       {
                         "name": "SKIP_CERTIFICATE_VALIDATION",
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.4.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.5.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.4.0",
+                "configVersion": "v1.5.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -192,6 +192,302 @@ metadata:
                 "configVersion": "v1.3.0",
                 "enabled": false,
                 "name": "replication"
+              },
+              {
+                "components": [
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "TOPOLOGY_LOG_LEVEL",
+                        "value": "INFO"
+                      }
+                    ],
+                    "image": "dellemc/csm-topology:v1.4.0",
+                    "name": "topology"
+                  },
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "NGINX_PROXY_IMAGE",
+                        "value": "nginxinc/nginx-unprivileged:1.20"
+                      }
+                    ],
+                    "image": "otel/opentelemetry-collector:0.42.0",
+                    "name": "otel-collector"
+                  },
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "POWERSCALE_MAX_CONCURRENT_QUERIES",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERSCALE_CAPACITY_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERSCALE_PERFORMANCE_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY",
+                        "value": "30"
+                      },
+                      {
+                        "name": "POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY",
+                        "value": "20"
+                      },
+                      {
+                        "name": "POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY",
+                        "value": "30"
+                      },
+                      {
+                        "name": "ISICLIENT_INSECURE",
+                        "value": "true"
+                      },
+                      {
+                        "name": "ISICLIENT_AUTH_TYPE",
+                        "value": "1"
+                      },
+                      {
+                        "name": "ISICLIENT_VERBOSE",
+                        "value": "0"
+                      },
+                      {
+                        "name": "POWERSCALE_LOG_LEVEL",
+                        "value": "INFO"
+                      },
+                      {
+                        "name": "POWERSCALE_LOG_FORMAT",
+                        "value": "TEXT"
+                      },
+                      {
+                        "name": "COLLECTOR_ADDRESS",
+                        "value": "otel-collector:55680"
+                      }
+                    ],
+                    "image": "dellemc/csm-metrics-powerscale:v1.1.0",
+                    "name": "metrics-powerscale"
+                  }
+                ],
+                "configVersion": "v1.4.0",
+                "enabled": false,
+                "name": "observability"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "storage.dell.com/v1",
+          "kind": "ContainerStorageModule",
+          "metadata": {
+            "name": "test-vxflexos",
+            "namespace": "test-vxflexos"
+          },
+          "spec": {
+            "driver": {
+              "common": {
+                "envs": [
+                  {
+                    "name": "X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_DEBUG",
+                    "value": "true"
+                  },
+                  {
+                    "name": "X_CSI_ALLOW_RWO_MULTI_POD_ACCESS",
+                    "value": "false"
+                  },
+                  {
+                    "name": "KUBELET_CONFIG_DIR",
+                    "value": "/var/lib/kubelet"
+                  },
+                  {
+                    "name": "CERT_SECRET_COUNT",
+                    "value": "0"
+                  }
+                ],
+                "image": "dellemc/csi-vxflexos:v2.5.0",
+                "imagePullPolicy": "IfNotPresent"
+              },
+              "configVersion": "v2.5.0",
+              "controller": {
+                "envs": [
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  }
+                ],
+                "nodeSelector": null,
+                "tolerations": null
+              },
+              "csiDriverSpec": {
+                "fSGroupPolicy": "File"
+              },
+              "csiDriverType": "powerflex",
+              "dnsPolicy": "ClusterFirstWithHostNet",
+              "forceRemoveDriver": true,
+              "forceUpdate": false,
+              "initContainers": [
+                {
+                  "envs": [
+                    {
+                      "name": "MDM",
+                      "value": "10.xx.xx.xx,10.xx.xx.xx"
+                    }
+                  ],
+                  "image": "dellemc/sdc:3.6",
+                  "imagePullPolicy": "IfNotPresent",
+                  "name": "sdc"
+                }
+              ],
+              "node": {
+                "envs": [
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  }
+                ],
+                "nodeSelector": null,
+                "tolerations": null
+              },
+              "replicas": 1,
+              "sideCars": [
+                {
+                  "enabled": false,
+                  "envs": [
+                    {
+                      "name": "HOST_PID",
+                      "value": "1"
+                    },
+                    {
+                      "name": "MDM",
+                      "value": "10.xx.xx.xx,10.xx.xx.xx"
+                    }
+                  ],
+                  "image": "dellemc/sdc:3.6",
+                  "name": "sdc-monitor"
+                },
+                {
+                  "args": [
+                    "--monitor-interval=60s"
+                  ],
+                  "enabled": false,
+                  "name": "csi-external-health-monitor-controller"
+                },
+                {
+                  "enabled": false,
+                  "image": "dellemc/csi-volumegroup-snapshotter:v1.2.0",
+                  "name": "vg-snapshotter"
+                }
+              ]
+            },
+            "modules": [
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "PROXY_HOST",
+                        "value": "csm-authorization.com"
+                      },
+                      {
+                        "name": "SKIP_CERTIFICATE_VALIDATION",
+                        "value": "true"
+                      }
+                    ],
+                    "image": "dellemc/csm-authorization-sidecar:v1.5.0",
+                    "name": "karavi-authorization-proxy"
+                  }
+                ],
+                "configVersion": "v1.5.0",
+                "enabled": false,
+                "name": "authorization"
+              },
+              {
+                "components": [
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "TOPOLOGY_LOG_LEVEL",
+                        "value": "INFO"
+                      }
+                    ],
+                    "image": "dellemc/csm-topology:v1.4.0",
+                    "name": "topology"
+                  },
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "NGINX_PROXY_IMAGE",
+                        "value": "nginxinc/nginx-unprivileged:1.20"
+                      }
+                    ],
+                    "image": "otel/opentelemetry-collector:0.42.0",
+                    "name": "otel-collector"
+                  },
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "POWERFLEX_MAX_CONCURRENT_QUERIES",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERFLEX_SDC_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERFLEX_VOLUME_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERFLEX_STORAGE_POOL_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERFLEX_SDC_IO_POLL_FREQUENCY",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERFLEX_VOLUME_IO_POLL_FREQUENCY",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERFLEX_STORAGE_POOL_POLL_FREQUENCY",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERFLEX_LOG_LEVEL",
+                        "value": "INFO"
+                      },
+                      {
+                        "name": "POWERFLEX_LOG_FORMAT",
+                        "value": "TEXT"
+                      },
+                      {
+                        "name": "COLLECTOR_ADDRESS",
+                        "value": "otel-collector:55680"
+                      }
+                    ],
+                    "image": "dellemc/csm-metrics-powerflex:v1.4.0",
+                    "name": "metrics-powerflex"
+                  }
+                ],
+                "configVersion": "v1.4.0",
+                "enabled": false,
+                "name": "observability"
               }
             ]
           }
@@ -202,7 +498,7 @@ metadata:
     containerImage: docker.io/dellemc/dell-csm-operator:v1.0.0
     createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
-    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.10"}]'
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.11"}]'
     operators.operatorframework.io/builder: operator-sdk-v1.14.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/dell/csm-operator
@@ -412,7 +708,7 @@ spec:
       - description: TLSCertSecret is the name of the TLS Cert secret
         displayName: TLSCert Secret
         path: driver.tlsCertSecret
-      - description: Components is the specification for SM components containers
+      - description: Components is the specification for CSM components containers
         displayName: ContainerStorageModule components specification
         path: modules[0].components
       - description: Args is the set of arguments for the container
@@ -443,12 +739,16 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: modules[0].components[0].tolerations
-      - description: ConfigVersion is the configuration version of the driver
+      - description: ConfigVersion is the configuration version of the module
         displayName: Config Version
         path: modules[0].configVersion
-      - description: Enabled is used to indicate wether or not to deploy a module
+      - description: Enabled is used to indicate whether or not to deploy a module
         displayName: Enabled
         path: modules[0].enabled
+      - description: ForceRemoveModule is the boolean flag used to remove authorization
+          proxy server deployment when CR is deleted
+        displayName: Force Remove Module
+        path: modules[0].forceRemoveModule
       - description: Name is name of ContainerStorageModule modules
         displayName: Name
         path: modules[0].name
@@ -513,12 +813,45 @@ spec:
           - get
         - apiGroups:
           - ""
+          resourceNames:
+          - cert-manager-cainjector-leader-election
+          - cert-manager-cainjector-leader-election-core
+          - cert-manager-controller
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - ""
+          resourceNames:
+          - cert-manager-controller
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - ""
+          resourceNames:
+          - ingress-controller-leader
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - update
+        - apiGroups:
+          - ""
           resources:
           - configmaps
           - endpoints
           - events
+          - ingresses
           - persistentvolumeclaims
           - pods
+          - roles
           - secrets
           - serviceaccounts
           - services
@@ -573,14 +906,127 @@ spec:
           - update
           - watch
         - apiGroups:
-          - apiextensions.k8s.io
+          - ""
+          resourceNames:
+          - cert-manager-webhook-ca
           resources:
-          - customresourcedefinitions
+          - secrets
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - acme.cert-manager.io
+          resources:
+          - '*/*'
+          verbs:
+          - '*'
+        - apiGroups:
+          - acme.cert-manager.io
+          resources:
+          - challenges
+          verbs:
+          - create
+          - delete
+        - apiGroups:
+          - acme.cert-manager.io
+          resources:
+          - challenges
+          - challenges/status
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - acme.cert-manager.io
+          resources:
+          - challenges
+          - orders
+          verbs:
+          - create
+          - delete
+          - deletecollection
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - acme.cert-manager.io
+          resources:
+          - challenges/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - acme.cert-manager.io
+          resources:
+          - clusterissuers
+          - issuers
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - acme.cert-manager.io
+          resources:
+          - orders
           verbs:
           - create
           - delete
           - get
           - list
+          - watch
+        - apiGroups:
+          - acme.cert-manager.io
+          resources:
+          - orders
+          - orders/status
+          verbs:
+          - update
+        - apiGroups:
+          - acme.cert-manager.io
+          resources:
+          - orders/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - admissionregistration.k8s.io
+          resources:
+          - mutatingwebhookconfigurations
+          - validatingwebhookconfigurations
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - apiextensions.k8s.io
+          resources:
+          - customresourcedefinitions
+          verbs:
+          - '*'
+        - apiGroups:
+          - apiregistration.k8s.io
+          resources:
+          - apiservices
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - apiregistration.k8s.io
+          resources:
+          - customresourcedefinitions
+          verbs:
+          - get
+          - list
+          - update
           - watch
         - apiGroups:
           - apps
@@ -598,6 +1044,15 @@ spec:
           - update
           - watch
         - apiGroups:
+          - auditregistration.k8s.io
+          resources:
+          - auditsinks
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews
@@ -610,6 +1065,121 @@ spec:
           verbs:
           - create
         - apiGroups:
+          - batch
+          resources:
+          - jobs
+          verbs:
+          - create
+          - delete
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - cert-manager.io
+          resources:
+          - '*/*'
+          verbs:
+          - '*'
+        - apiGroups:
+          - cert-manager.io
+          resources:
+          - certificaterequests
+          - certificates
+          - clusterissuers
+          - issuers
+          verbs:
+          - '*'
+        - apiGroups:
+          - cert-manager.io
+          resources:
+          - certificaterequests
+          - certificates
+          - issuers
+          verbs:
+          - create
+          - delete
+          - deletecollection
+          - patch
+          - update
+        - apiGroups:
+          - cert-manager.io
+          resources:
+          - certificaterequests/finalizers
+          - certificates/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - cert-manager.io
+          resources:
+          - certificaterequests/status
+          - certificates/status
+          verbs:
+          - update
+        - apiGroups:
+          - cert-manager.io
+          resources:
+          - clusterissuers
+          - clusterissuers/status
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - cert-manager.io
+          resourceNames:
+          - cert-manager-cainjector-leader-election
+          - cert-manager-cainjector-leader-election-core
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - cert-manager.io
+          resources:
+          - issuers
+          - issuers/status
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - cert-manager.io
+          resourceNames:
+          - clusterissuers.cert-manager.io/*
+          - issuers.cert-manager.io/*
+          resources:
+          - signers
+          verbs:
+          - approve
+        - apiGroups:
+          - certificates.k8s.io
+          resources:
+          - certificatesigningrequests
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - certificates.k8s.io
+          resources:
+          - certificatesigningrequests/status
+          verbs:
+          - update
+        - apiGroups:
+          - certificates.k8s.io
+          resourceNames:
+          - clusterissuers.cert-manager.io/*
+          - issuers.cert-manager.io/*
+          resources:
+          - signers
+          verbs:
+          - sign
+        - apiGroups:
           - coordination.k8s.io
           resources:
           - leases
@@ -621,9 +1191,47 @@ spec:
           - update
           - watch
         - apiGroups:
+          - coordination.k8s.io
+          resourceNames:
+          - cert-manager-cainjector-leader-election
+          - cert-manager-cainjector-leader-election-core
+          resources:
+          - leases
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - coordination.k8s.io
+          resourceNames:
+          - cert-manager-controller
+          resources:
+          - leases
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - coordination.k8s.io
+          resourceNames:
+          - ingress-controller-leader
+          resources:
+          - leases
+          verbs:
+          - get
+          - update
+        - apiGroups:
           - csi.storage.k8s.io
           resources:
           - csinodeinfos
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - discovery.k8s.io
+          resources:
+          - endpointslices
           verbs:
           - get
           - list
@@ -635,6 +1243,60 @@ spec:
           verbs:
           - create
           - get
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - ingressclasses
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - ingresses
+          verbs:
+          - '*'
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - ingresses/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - ingresses/status
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - networking.x-k8s.io
+          resources:
+          - gateways
+          - httproutes
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - networking.x-k8s.io
+          resources:
+          - gateways/finalizers
+          - httproutes/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - networking.x-k8s.io
+          resources:
+          - httproutes
+          verbs:
+          - '*'
         - apiGroups:
           - rbac.authorization.k8s.io
           resources:
@@ -675,6 +1337,12 @@ spec:
           - update
           - watch
         - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        - apiGroups:
           - replication.storage.dell.com
           resources:
           - dellcsireplicationgroups
@@ -695,6 +1363,12 @@ spec:
           - patch
           - update
         - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes/custom-host
+          verbs:
+          - create
+        - apiGroups:
           - security.openshift.io
           resourceNames:
           - privileged
@@ -712,6 +1386,7 @@ spec:
           - delete
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
@@ -719,7 +1394,11 @@ spec:
           resources:
           - volumesnapshotcontents/status
           verbs:
+          - get
+          - list
+          - patch
           - update
+          - watch
         - apiGroups:
           - snapshot.storage.k8s.io
           resources:
@@ -728,6 +1407,7 @@ spec:
           verbs:
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
@@ -806,6 +1486,17 @@ spec:
           - volumeattachments/status
           verbs:
           - patch
+        - apiGroups:
+          - volumegroup.storage.dell.com
+          resources:
+          - dellcsivolumegroupsnapshots
+          - dellcsivolumegroupsnapshots/status
+          verbs:
+          - create
+          - delete
+          - list
+          - update
+          - watch
         serviceAccountName: dell-csm-operator-manager-service-account
       deployments:
       - name: dell-csm-operator-controller-manager
