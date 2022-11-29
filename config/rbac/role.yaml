@@ -585,6 +585,7 @@ rules:
   - delete
   - get
   - list
+  - patch
   - update
   - watch
 - apiGroups:
@@ -592,7 +593,11 @@ rules:
   resources:
   - volumesnapshotcontents/status
   verbs:
+  - get
+  - list
+  - patch
   - update
+  - watch
 - apiGroups:
   - snapshot.storage.k8s.io
   resources:
@@ -601,6 +606,7 @@ rules:
   verbs:
   - get
   - list
+  - patch
   - update
   - watch
 - apiGroups:
@@ -679,3 +685,14 @@ rules:
   - volumeattachments/status
   verbs:
   - patch
+- apiGroups:
+  - volumegroup.storage.dell.com
+  resources:
+  - dellcsivolumegroupsnapshots
+  - dellcsivolumegroupsnapshots/status
+  verbs:
+  - create
+  - delete
+  - list
+  - update
+  - watch
