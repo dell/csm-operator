@@ -11,13 +11,13 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.4.0
+    configVersion: v2.5.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.4.0"
+      image: "dellemc/csi-vxflexos:v2.5.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -141,10 +141,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.4.0
+      configVersion: v1.5.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.4.0
+        image: dellemc/csm-authorization-sidecar:v1.5.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
@@ -157,14 +157,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.3.0
+      configVersion: v1.4.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.3.0
+          image: dellemc/csm-topology:v1.4.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -189,7 +189,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:v1.3.0
+          image: dellemc/csm-metrics-powerflex:v1.4.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int

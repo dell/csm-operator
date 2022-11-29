@@ -1067,10 +1067,10 @@ spec:
                 description: Modules is list of Container Storage Module modules you
                   want to deploy
                 items:
-                  description: Module defines the desired state of a ContainerStorageModuleModules
+                  description: Module defines the desired state of a ContainerStorageModule
                   properties:
                     components:
-                      description: Components is the specification for SM components
+                      description: Components is the specification for CSM components
                         containers
                       items:
                         description: ContainerTemplate template
@@ -1268,11 +1268,15 @@ spec:
                       type: array
                     configVersion:
                       description: ConfigVersion is the configuration version of the
-                        driver
+                        module
                       type: string
                     enabled:
-                      description: Enabled is used to indicate wether or not to deploy
+                      description: Enabled is used to indicate whether or not to deploy
                         a module
+                      type: boolean
+                    forceRemoveModule:
+                      description: ForceRemoveModule is the boolean flag used to remove
+                        authorization proxy server deployment when CR is deleted
                       type: boolean
                     name:
                       description: Name is name of ContainerStorageModule modules

@@ -7,8 +7,8 @@ spec:
   driver:
     csiDriverType: "isilon"
         
-    # Config version for CSI PowerScale v2.3.0 driver
-    configVersion: v2.3.0
+    # Config version for CSI PowerScale v2.5.0 driver
+    configVersion: v2.5.0
 
     authSecret: test-isilon-creds-auth
 
@@ -16,8 +16,8 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     common:
-      # Image for CSI PowerScale driver v2.3.0
-      image: "dellemc/csi-isilon:v2.3.0"
+      # Image for CSI PowerScale driver v2.5.0
+      image: "dellemc/csi-isilon:v2.5.0"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -177,10 +177,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.4.0
+      configVersion: v1.5.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.4.0
+        image: dellemc/csm-authorization-sidecar:v1.5.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
