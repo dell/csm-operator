@@ -345,7 +345,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:3.6",
+                  "image": "dellemc/sdc:3.6.0.6",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "sdc"
                 }
@@ -374,7 +374,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:3.6",
+                  "image": "dellemc/sdc:3.6.0.6",
                   "name": "sdc-monitor"
                 },
                 {
