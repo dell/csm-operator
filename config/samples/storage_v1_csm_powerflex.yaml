@@ -40,7 +40,7 @@ spec:
     # sdc-monitor is disabled by default, due to high CPU usage 
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:3.6
+        image: dellemc/sdc:3.6.0.6
         envs:
         - name: HOST_PID
           value: "1"
@@ -126,7 +126,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:3.6
+      - image: dellemc/sdc:3.6.0.6
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -239,14 +239,3 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test-vxflexos-config-params
-  namespace: test-vxflexos
-data:
-  driver-config-params.yaml: |
-    CSI_LOG_LEVEL: "debug"
-    CSI_LOG_FORMAT: "TEXT"
