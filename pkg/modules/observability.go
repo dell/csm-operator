@@ -239,7 +239,7 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	YamlString = string(buf)
 
 	logLevel := "INFO"
-	topologyImage := "dellemc/csm-topology:v1.3.0"
+	topologyImage := "dellemc/csm-topology:v1.4.0"
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityTopologyName {

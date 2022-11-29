@@ -453,12 +453,12 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	YamlString = utils.ModifyCommonCR(string(buf), cr)
 
 	authNamespace := cr.Namespace
-	proxyServerImage := "dellemc/csm-authorization-proxy:v1.4.0"
+	proxyServerImage := "dellemc/csm-authorization-proxy:v1.5.0"
 	opaImage := "openpolicyagent/opa"
 	opaKubeMgmtImage := "openpolicyagent/kube-mgmt:0.11"
-	tenantServiceImage := "dellemc/csm-authorization-tenant:v1.4.0"
-	roleServiceImage := "dellemc/csm-authorization-role:v1.4.0"
-	storageServiceImage := "dellemc/csm-authorization-storage:v1.4.0"
+	tenantServiceImage := "dellemc/csm-authorization-tenant:v1.5.0"
+	roleServiceImage := "dellemc/csm-authorization-role:v1.5.0"
+	storageServiceImage := "dellemc/csm-authorization-storage:v1.5.0"
 	logLevel := "debug"
 	zipkinCollectorURI := ""
 	zipkinProbability := ""

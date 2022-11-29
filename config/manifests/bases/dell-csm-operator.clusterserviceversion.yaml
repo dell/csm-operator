@@ -8,7 +8,7 @@ metadata:
     containerImage: docker.io/dellemc/dell-csm-operator:v1.0.0
     createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
-    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.10"}]'
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.11"}]'
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
   name: dell-csm-operator.v1.0.0
@@ -216,7 +216,7 @@ spec:
       - description: TLSCertSecret is the name of the TLS Cert secret
         displayName: TLSCert Secret
         path: driver.tlsCertSecret
-      - description: Components is the specification for SM components containers
+      - description: Components is the specification for CSM components containers
         displayName: ContainerStorageModule components specification
         path: modules[0].components
       - description: Args is the set of arguments for the container
@@ -247,12 +247,16 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: modules[0].components[0].tolerations
-      - description: ConfigVersion is the configuration version of the driver
+      - description: ConfigVersion is the configuration version of the module
         displayName: Config Version
         path: modules[0].configVersion
-      - description: Enabled is used to indicate wether or not to deploy a module
+      - description: Enabled is used to indicate whether or not to deploy a module
         displayName: Enabled
         path: modules[0].enabled
+      - description: ForceRemoveModule is the boolean flag used to remove authorization
+          proxy server deployment when CR is deleted
+        displayName: Force Remove Module
+        path: modules[0].forceRemoveModule
       - description: Name is name of ContainerStorageModule modules
         displayName: Name
         path: modules[0].name
