@@ -207,7 +207,7 @@ spec:
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.3.0
+        image: dellemc/dell-replication-controller:v1.3.1
         envs:
           # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
           # Allowed values: string
