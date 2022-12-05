@@ -198,7 +198,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
 			if string(cr.Spec.Driver.Common.Image) != "" {
 				image := string(cr.Spec.Driver.Common.Image)
-				containers[i].Image = &image
+				c.Image = &image
 			}
 		}
 		removeContainer := false
