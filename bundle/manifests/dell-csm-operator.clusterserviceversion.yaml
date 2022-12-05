@@ -1581,7 +1581,7 @@ spec:
   maintainers:
   - email: dell.csm.operator@dell.com
     name: Dell Container Storage Modules
-  maturity: alpha
+  maturity: stable
   minKubeVersion: 1.21.0
   provider:
     name: Dell Technologies
