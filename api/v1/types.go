@@ -143,9 +143,9 @@ type Module struct {
 
 // PodStatus - Represents PodStatus in a daemonset or deployment
 type PodStatus struct {
-	Available string `json:"available,omitempty"`
-	Desired   string `json:"desired,omitempty"`
-	Failed    string `json:"failed,omitempty"`
+	Available []string `json:"available,omitempty"`
+	Starting  []string `json:"starting,omitempty"`
+	Failed    []string `json:"failed,omitempty"`
 }
 
 // Driver of CSIDriver

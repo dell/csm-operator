@@ -50,13 +50,13 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 
 	var err error
 	var msg string
-	totalReplicas := int32(0)
-	totalReadyPods := 0
-	totalFailedCount := 0
+	var readyPods, startingPods, failedPods []string
+	replicaCount := int32(0)
+	failedCount := 0
 
 	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
 	if err != nil {
-		return int32(totalReplicas), csmv1.PodStatus{}, err
+		return int32(replicaCount), csmv1.PodStatus{}, err
 	}
 
 	for _, cluster := range clusterClients {
@@ -68,9 +68,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		if err != nil {
 			return 0, csmv1.PodStatus{}, err
 		}
-		replicas := getInt32(deployment.Spec.Replicas)
-		readyPods := 0
-		failedCount := 0
+		replicaCount = getInt32(deployment.Spec.Replicas)
 
 		//powerflex and powerscale use different label names for the controller name:
 		//app=test-isilon-controller
@@ -95,10 +93,10 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 
 		for _, pod := range podList.Items {
 
-			log.Infof("deployment pod count %d name %s status %s", readyPods, pod.Name, pod.Status.Phase)
+			log.Infof("deployment pod name %s status %s", pod.Name, pod.Status.Phase)
 			if pod.Status.Phase == corev1.PodRunning {
-				readyPods++
-			} else if pod.Status.Phase == corev1.PodPending {
+				readyPods = append(readyPods, pod.Name)
+			} else if pod.Status.Phase == corev1.PodPending || pod.Status.Phase == corev1.PodUnknown || pod.Status.Phase == corev1.PodFailed {
 				failedCount++
 				errMap := make(map[string]string)
 				for _, cs := range pod.Status.ContainerStatuses {
@@ -107,9 +105,11 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 						shortMsg := strings.Replace(cs.State.Waiting.Message,
 							constants.PodStatusRemoveString, "", 1)
 						errMap[cs.State.Waiting.Reason] = shortMsg
+						failedPods = append(failedPods, pod.Name)
 					}
 					if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
 						errMap[cs.State.Waiting.Reason] = constants.PendingCreate
+						startingPods = append(startingPods, pod.Name)
 					}
 				}
 				for k, v := range errMap {
@@ -117,20 +117,16 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 				}
 			}
 		}
-
-		totalReplicas += replicas
-		totalReadyPods += readyPods
-		totalFailedCount += failedCount
 	}
 
-	if totalFailedCount > 0 {
+	if failedCount > 0 {
 		err = errors.New(msg)
 	}
 
-	return totalReplicas, csmv1.PodStatus{
-		Available: fmt.Sprintf("%d", totalReadyPods),
-		Desired:   fmt.Sprintf("%d", totalReplicas),
-		Failed:    fmt.Sprintf("%d", totalFailedCount),
+	return replicaCount, csmv1.PodStatus{
+		Available: readyPods,
+		Starting:  startingPods,
+		Failed:    failedPods,
 	}, err
 }
 
@@ -138,28 +134,25 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	log := logger.GetLogger(ctx)
 
 	var msg string
-
-	totalAvialable := int32(0)
-	totalDesired := int32(0)
-	totalFailedCount := 0
+	var readyPods, startingPods, failedPods []string
+	failedCount := 0
 
 	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
 	}
 
+	ds := &appsv1.DaemonSet{}
 	for _, cluster := range clusterClients {
 		log.Infof("\ndaemonset status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
-		ds := &appsv1.DaemonSet{}
 		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetNodeName(),
 			Namespace: instance.GetNamespace()}, ds)
 		if err != nil {
 			return 0, csmv1.PodStatus{}, err
 		}
 
-		failedCount := 0
 		podList := &corev1.PodList{}
 		label := instance.GetNamespace() + "-node"
 		opts := []client.ListOption{
@@ -175,7 +168,9 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		errMap := make(map[string]string)
 		for _, pod := range podList.Items {
 			log.Infof("daemonset pod %s : %s", pod.Name, pod.Status.Phase)
-			if pod.Status.Phase == corev1.PodPending {
+			if pod.Status.Phase == corev1.PodRunning {
+				readyPods = append(readyPods, pod.Name)
+			} else if pod.Status.Phase == corev1.PodPending || pod.Status.Phase == corev1.PodUnknown || pod.Status.Phase == corev1.PodFailed {
 				failedCount++
 				for _, cs := range pod.Status.ContainerStatuses {
 					if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
@@ -185,10 +180,12 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 						shortMsg := strings.Replace(cs.State.Waiting.Message,
 							constants.PodStatusRemoveString, "", 1)
 						errMap[cs.State.Waiting.Reason] = shortMsg
+						failedPods = append(failedPods, pod.Name)
 					}
 					if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
 						log.Infof("daemonset pod container %s : %s", pod.Name, pod.Status.Phase)
 						errMap[cs.State.Waiting.Reason] = constants.PendingCreate
+						startingPods = append(startingPods, pod.Name)
 					}
 				}
 			}
@@ -196,24 +193,15 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		for k, v := range errMap {
 			msg += k + "=" + v
 		}
-
-		log.Infof("daemonset status available pods %d", ds.Status.NumberAvailable)
-		log.Infof("daemonset status failedCount pods %d", failedCount)
-		log.Infof("daemonset status desired pods %d", ds.Status.DesiredNumberScheduled)
-
-		totalAvialable += ds.Status.NumberAvailable
-		totalDesired += ds.Status.DesiredNumberScheduled
-		totalFailedCount += failedCount
-
 	}
 
-	if totalFailedCount > 0 {
+	if failedCount > 0 {
 		err = errors.New(msg)
 	}
-	return totalDesired, csmv1.PodStatus{
-		Available: fmt.Sprintf("%d", totalAvialable),
-		Desired:   fmt.Sprintf("%d", totalDesired),
-		Failed:    fmt.Sprintf("%d", totalFailedCount),
+	return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{
+		Available: readyPods,
+		Starting:  startingPods,
+		Failed:    failedPods,
 	}, err
 }
 
@@ -227,12 +215,12 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 
 	newStatus.State = constants.Failed
 	log.Infof("deployment controllerReplicas [%d]", controllerReplicas)
-	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
+	log.Infof("deployment controllerStatus.Available [%s]", len(controllerStatus.Available))
 
 	log.Infof("daemonset expected [%d]", expected)
-	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
+	log.Infof("daemonset nodeStatus.Available [%s]", len(nodeStatus.Available))
 
-	if (fmt.Sprintf("%d", controllerReplicas) == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
+	if ((controllerReplicas != 0) && (controllerReplicas == int32(len(controllerStatus.Available)))) && ((expected != 0) && (expected == int32(len(nodeStatus.Available)))) {
 		running = true
 		newStatus.State = constants.Succeeded
 	}

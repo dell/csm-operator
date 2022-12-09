@@ -1292,21 +1292,33 @@ spec:
                 description: ControllerStatus is the status of Controller pods
                 properties:
                   available:
-                    type: string
-                  desired:
-                    type: string
+                    items:
+                      type: string
+                    type: array
                   failed:
-                    type: string
+                    items:
+                      type: string
+                    type: array
+                  starting:
+                    items:
+                      type: string
+                    type: array
                 type: object
               nodeStatus:
                 description: NodeStatus is the status of Controller pods
                 properties:
                   available:
-                    type: string
-                  desired:
-                    type: string
+                    items:
+                      type: string
+                    type: array
                   failed:
-                    type: string
+                    items:
+                      type: string
+                    type: array
+                  starting:
+                    items:
+                      type: string
+                    type: array
                 type: object
               state:
                 description: State is the state of the driver installation
