@@ -26,7 +26,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
+	//"strings"
 	"sync"
 
 	t1 "k8s.io/apimachinery/pkg/types"
@@ -102,9 +102,9 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 				for _, cs := range pod.Status.ContainerStatuses {
 					if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
 						log.Infow("container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
-						shortMsg := strings.Replace(cs.State.Waiting.Message,
-							constants.PodStatusRemoveString, "", 1)
-						errMap[cs.State.Waiting.Reason] = shortMsg
+						//shortMsg := strings.Replace(cs.State.Waiting.Message,
+						//	constants.PodStatusRemoveString, "", 1)
+						errMap[cs.State.Waiting.Reason] = cs.State.Waiting.Message
 						failedPods = append(failedPods, pod.Name)
 					}
 					if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
@@ -177,9 +177,9 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 						//message: Back-off pulling image "dellec/csi-isilon:xxxx"
 						//reason: ImagePullBackOff
 						log.Infow("daemonset pod container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
-						shortMsg := strings.Replace(cs.State.Waiting.Message,
-							constants.PodStatusRemoveString, "", 1)
-						errMap[cs.State.Waiting.Reason] = shortMsg
+						//shortMsg := strings.Replace(cs.State.Waiting.Message,
+						//	constants.PodStatusRemoveString, "", 1)
+						errMap[cs.State.Waiting.Reason] = cs.State.Waiting.Message
 						failedPods = append(failedPods, pod.Name)
 					}
 					if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
