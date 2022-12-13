@@ -215,10 +215,10 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 
 	newStatus.State = constants.Failed
 	log.Infof("deployment controllerReplicas [%d]", controllerReplicas)
-	log.Infof("deployment controllerStatus.Available [%s]", len(controllerStatus.Available))
+	//log.Infof("deployment controllerStatus.Available [%s]", len(controllerStatus.Available))
 
 	log.Infof("daemonset expected [%d]", expected)
-	log.Infof("daemonset nodeStatus.Available [%s]", len(nodeStatus.Available))
+	//log.Infof("daemonset nodeStatus.Available [%s]", len(nodeStatus.Available))
 
 	if ((controllerReplicas != 0) && (controllerReplicas == int32(len(controllerStatus.Available)))) && ((expected != 0) && (expected == int32(len(nodeStatus.Available)))) {
 		running = true
