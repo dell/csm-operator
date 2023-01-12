@@ -53,9 +53,11 @@ LABEL vendor="Dell Inc." \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
     description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
-    version="1.0.0" \
+    version="1.1.0" \
     license="Dell CSM Operator Apache License"
 
+# copy the licenses folder
+COPY licenses /licenses
 
 ENTRYPOINT ["/manager"]
 USER ${USER_UID}

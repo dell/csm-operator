@@ -14,6 +14,9 @@ LABEL operators.operatorframework.io.metrics.project_layout=go.kubebuilder.io/v3
 # Labels for testing.
 LABEL operators.operatorframework.io.test.mediatype.v1=scorecard+v1
 LABEL operators.operatorframework.io.test.config.v1=tests/scorecard/
+LABEL com.redhat.openshift.versions=v4.10
+LABEL com.redhat.delivery.backport=false
+LABEL com.redhat.delivery.operator.bundle=true
 
 # Copy files to locations specified by labels.
 COPY bundle/manifests /manifests/
