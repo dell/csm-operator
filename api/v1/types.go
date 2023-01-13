@@ -80,6 +80,9 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// PowerStoreName - placeholder for constant PowerStore
+	PowerStoreName DriverType = "powerstore"
+
 	// Provisioner - placeholder for constant
 	Provisioner = "provisioner"
 	// Attacher - placeholder for constant
