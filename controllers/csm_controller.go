@@ -465,7 +465,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 // ContentWatch - watch updates on deployment and deamonset
 func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
-	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(15*time.Minute))
+	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(4*time.Minute))
 
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
 	daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
