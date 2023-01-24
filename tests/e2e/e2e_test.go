@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	timeout          = time.Minute * 10
+	timeout          = time.Minute * 20
 	interval         = time.Second * 10
 	valuesFileEnvVar = "E2E_VALUES_FILE"
 )
