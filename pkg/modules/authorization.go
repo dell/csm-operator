@@ -51,7 +51,7 @@ const (
 	AuthNamespace = "<NAMESPACE>"
 	// AuthLogLevel -
 	AuthLogLevel = "<AUTHORIZATION_LOG_LEVEL>"
-	// AuthConcurrentPowerFlexRequests
+	// AuthConcurrentPowerFlexRequests -
 	AuthConcurrentPowerFlexRequests = "<AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS>"
 	// AuthZipkinCollectorURI -
 	AuthZipkinCollectorURI = "<AUTHORIZATION_ZIPKIN_COLLECTORURI>"
