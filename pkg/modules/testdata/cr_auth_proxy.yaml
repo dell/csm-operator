@@ -39,6 +39,11 @@ spec:
           - name: "AUTHORIZATION_LOG_LEVEL"
             value: "debug"
 
+          # Concurrent PowerFlex requests in the Authorization storage-service
+          # Default value: "10"
+          - name: "AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS"
+            value: "10"
+
           # Zipkin tracing configuration
           # this can be updated on the fly via the csm-config-params configMap
           # Default value: None 
