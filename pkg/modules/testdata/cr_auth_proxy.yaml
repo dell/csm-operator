@@ -39,7 +39,8 @@ spec:
           - name: "AUTHORIZATION_LOG_LEVEL"
             value: "debug"
 
-          # Concurrent PowerFlex requests in the Authorization storage-service
+          # Number, as a string, of concurrent requests for the storage-service to make to PowerFlex
+          # Currently only used with dellctl to list tenant volumes
           # Default value: "10"
           - name: "AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS"
             value: "10"
