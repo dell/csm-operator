@@ -82,7 +82,7 @@ spec:
           # Specify storage class for redis. Otherwise, default storage class is used.
           # Default value: None
           - name: "REDIS_STORAGE_CLASS"
-            value: "local-sc"
+            value: ""
 
       # enabled: Enable/Disable nginx ingress
       # Allowed values:
