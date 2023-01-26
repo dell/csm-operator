@@ -15,10 +15,10 @@ spec:
       - name: karavi-authorization-proxy-server
         # enable: Enable/Disable csm-authorization proxy server
         enabled: true
-        image: dellemc/csm-authorization-proxy:v1.4.0
-        image: dellemc/csm-authorization-tenant:v1.4.0
-        image: dellemc/csm-authorization-role:v1.4.0
-        image: 10.247.98.98:5000/storage-service:aaron
+        image: dellemc/csm-authorization-proxy::v1.5.0
+        image: dellemc/csm-authorization-tenant::v1.5.0
+        image: dellemc/csm-authorization-role::v1.5.0
+        image: dellemc/csm-authorization-storage:v1.5.0
         image: redis:6.0.8-alpine
         image: rediscommander/redis-commander:latest
         image: openpolicyagent/opa
