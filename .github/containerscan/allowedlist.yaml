@@ -2,7 +2,7 @@ general:
   vulnerabilities:
     # list of CVEs that are currently unfixed
     - CVE-2022-42898
-    - CVE-2022-47629
+    - CVE-2022-47629 # this will be removed with the libskba library is updated in the UBI image
 
   bestPracticeViolations:
     # list of best practies violatied that needs a fix
