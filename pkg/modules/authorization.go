@@ -51,6 +51,8 @@ const (
 	AuthNamespace = "<NAMESPACE>"
 	// AuthLogLevel -
 	AuthLogLevel = "<AUTHORIZATION_LOG_LEVEL>"
+	// AuthConcurrentPowerFlexRequests -
+	AuthConcurrentPowerFlexRequests = "<AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS>"
 	// AuthZipkinCollectorURI -
 	AuthZipkinCollectorURI = "<AUTHORIZATION_ZIPKIN_COLLECTORURI>"
 	// AuthZipkinProbability -
@@ -460,6 +462,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	roleServiceImage := "dellemc/csm-authorization-role:v1.5.0"
 	storageServiceImage := "dellemc/csm-authorization-storage:v1.5.0"
 	logLevel := "debug"
+	concurrentPowerFlexRequests := "10"
 	zipkinCollectorURI := ""
 	zipkinProbability := ""
 	redisImage := "redis:6.0.8-alpine"
@@ -496,6 +499,8 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			for _, env := range component.Envs {
 				if strings.Contains(AuthLogLevel, env.Name) {
 					logLevel = env.Value
+				} else if strings.Contains(AuthConcurrentPowerFlexRequests, env.Name) {
+					concurrentPowerFlexRequests = env.Value
 				} else if strings.Contains(AuthZipkinCollectorURI, env.Name) {
 					zipkinCollectorURI = env.Value
 				} else if strings.Contains(AuthZipkinProbability, env.Name) {
@@ -515,6 +520,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, roleServiceImage)
 	YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, storageServiceImage)
 	YamlString = strings.ReplaceAll(YamlString, AuthLogLevel, logLevel)
+	YamlString = strings.ReplaceAll(YamlString, AuthConcurrentPowerFlexRequests, concurrentPowerFlexRequests)
 	YamlString = strings.ReplaceAll(YamlString, AuthZipkinCollectorURI, zipkinCollectorURI)
 	YamlString = strings.ReplaceAll(YamlString, AuthZipkinProbability, zipkinProbability)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, redisImage)
