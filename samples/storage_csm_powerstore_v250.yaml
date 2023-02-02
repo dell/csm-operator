@@ -10,7 +10,7 @@ spec:
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
-      fSGroupPolicy: "File"
+      fSGroupPolicy: "ReadWriteOnceWithFSType"
     # Config version for CSI PowerStore v2.5.0 driver
     configVersion: v2.5.0
     # Controller count
@@ -72,8 +72,6 @@ spec:
       # Allowed values: map of key-value pairs
       # Default value: None
       nodeSelector:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      #  node-role.kubernetes.io/master: ""
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       #  node-role.kubernetes.io/control-plane: ""
 
@@ -81,10 +79,6 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      # - key: "node-role.kubernetes.io/master"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
@@ -110,8 +104,6 @@ spec:
       # Allowed values: map of key-value pairs
       # Default value: None
       nodeSelector:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      #  node-role.kubernetes.io/master: ""
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       #  node-role.kubernetes.io/control-plane: ""
 
@@ -119,10 +111,6 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      # - key: "node-role.kubernetes.io/master"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
