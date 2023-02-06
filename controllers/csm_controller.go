@@ -179,6 +179,7 @@ var (
 // +kubebuilder:rbac:groups="certificates.k8s.io",resources=signers,resourceNames=issuers.cert-manager.io/*;clusterissuers.cert-manager.io/*,verbs=sign
 // +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core;cert-manager-controller,verbs=get;update;patch
 // +kubebuilder:rbac:groups="batch",resources=jobs,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups="storage.k8s.io",resources=csistoragecapacities,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -1017,7 +1018,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powerflex validation: %v", err)
 		}
-
+	case csmv1.PowerStore:
+		err := drivers.PrecheckPowerStore(ctx, cr, operatorConfig, r.GetClient())
+		if err != nil {
+			return fmt.Errorf("failed powerstore validation: %v", err)
+		}
 	default:
 		for _, m := range cr.Spec.Modules {
 			if m.Name == csmv1.AuthorizationServer {
