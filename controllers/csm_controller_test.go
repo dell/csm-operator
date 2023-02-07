@@ -226,6 +226,26 @@ func (suite *CSMControllerTestSuite) TestPowerFlexAnnotation() {
 
 }
 
+func (suite *CSMControllerTestSuite) TestPowerStoreAnnotation() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
+
+}
+
 func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -1066,10 +1086,6 @@ func getAuthProxyServer() []csmv1.Module {
 						{
 							Name:  "AUTHORIZATION_LOG_LEVEL",
 							Value: "debug",
-						},
-						{
-							Name:  "AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS",
-							Value: "10",
 						},
 					},
 				},
