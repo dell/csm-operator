@@ -1,4 +1,4 @@
-# Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ while getopts ":h-:" optchar; do
   esac
 done
 
-rm -f cert-csi isilon.db vxflexos.db
+rm -f cert-csi isilon.db vxflexos.db powerstore.db
 
 if [ -z "$KEEPLOGS" ]; then
     rm -f error.log fatal.log info.log report.path
