@@ -235,7 +235,7 @@ func (suite *CSMControllerTestSuite) TestPowerStoreAnnotation() {
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
 	suite.fakeClient.Create(ctx, &csm)
-	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, configVersion)
 	suite.fakeClient.Create(ctx, sec)
 
 	reconciler := suite.createReconciler()

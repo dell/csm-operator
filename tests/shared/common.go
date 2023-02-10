@@ -33,7 +33,7 @@ const (
 	JumpUpgradeConfigVersion string = "v2.5.0"
 	OldConfigVersion         string = "v2.2.0"
 	BadConfigVersion         string = "v0"
-	PStoreConfigVersion      string = "v2.5.0"
+	PStoreConfigVersion      string = "v2.6.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
