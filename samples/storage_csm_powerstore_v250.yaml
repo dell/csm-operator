@@ -13,6 +13,7 @@ spec:
       fSGroupPolicy: "ReadWriteOnceWithFSType"
     # Config version for CSI PowerStore v2.5.0 driver
     configVersion: v2.5.0
+    authSecret: test-powerstore-config
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
@@ -115,13 +116,3 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test-powerstore-config-params
-  namespace: test-powerstore
-data:
-  driver-config-params.yaml: |
-    CSI_LOG_LEVEL: "debug"
-    CSI_LOG_FORMAT: "JSON"
