@@ -116,13 +116,4 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test-powerstore-config-params
-  namespace: test-powerstore
-data:
-  driver-config-params.yaml: |
-    CSI_LOG_LEVEL: "debug"
-    CSI_LOG_FORMAT: "JSON"
+
