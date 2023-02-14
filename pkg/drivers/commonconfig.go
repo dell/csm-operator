@@ -45,6 +45,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	}
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	if cr.Spec.Driver.CSIDriverType == "powerstore" {
+		YamlString = ModifyPowerstoreCR(YamlString, cr, "Controller")
+	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "Deployment")
 	if err != nil {
@@ -158,6 +161,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	if cr.Spec.Driver.CSIDriverType == "powerstore" {
+		YamlString = ModifyPowerstoreCR(YamlString, cr, "Node")
+	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
 	if err != nil {
