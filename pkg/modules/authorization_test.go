@@ -560,8 +560,8 @@ func TestAuthorizationIngressRules(t *testing.T) {
 					Kind: "Deployment",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name: 		name,
-					Namespace: 	namespace,
+					Name:      name,
+					Namespace: namespace,
 				},
 				Spec: appsv1.DeploymentSpec{
 					Selector: &metav1.LabelSelector{

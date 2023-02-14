@@ -100,12 +100,12 @@ const (
 )
 
 var (
-	redisStorageClass 		string
-	authHostname 			string
-	proxyIngressHost 		string
-	proxyIngressClassName 	string
-	tenantIngressClassName 	string
-	roleIngressClassName 	string
+	redisStorageClass       string
+	authHostname            string
+	proxyIngressHost        string
+	proxyIngressClassName   string
+	tenantIngressClassName  string
+	roleIngressClassName    string
 	storageIngressClassName string
 )
 
@@ -460,9 +460,8 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	if err != nil {
 		return YamlString, err
 	}
-	
-	YamlString = string(buf)
 
+	YamlString = string(buf)
 	authNamespace := cr.Namespace
 
 	for _, component := range auth.Components {
@@ -496,7 +495,6 @@ func AuthorizationServer(ctx context.Context, isDeleting bool, op utils.Operator
 	if err != nil {
 		return err
 	}
-
 	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
@@ -533,7 +531,6 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 	}
 
 	YamlString = string(buf)
-
 	authNamespace := cr.Namespace
 
 	for _, component := range auth.Components {
