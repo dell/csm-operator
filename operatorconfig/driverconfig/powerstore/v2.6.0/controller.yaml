@@ -107,13 +107,13 @@ spec:
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
+          - labelSelector:
               matchExpressions:
-                - key: "name"
+                - key: name
                   operator: In
                   values:
-                    - <DriverDefaultReleaseName>-controller
-              topologyKey: "kubernetes.io/hostname"
+                  - <DriverDefaultReleaseName>-controller
+            topologyKey: kubernetes.io/hostname 
       containers:
         - name: attacher
           image: k8s.gcr.io/sig-storage/csi-attacher:v4.0.0
@@ -226,7 +226,7 @@ spec:
             - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
               value: "None"
             - name: X_CSI_NFS_ACLS
-              value: "0777"
+              value: "<X_CSI_NFS_ACLS>"
             - name: X_CSI_POWERSTORE_CONFIG_PATH
               value: /powerstore-config/config
             - name: X_CSI_POWERSTORE_CONFIG_PARAMS_PATH
@@ -238,7 +238,7 @@ spec:
             - name: X_CSI_PODMON_API_PORT
               value: 8083
             - name: X_CSI_HEALTH_MONITOR_ENABLED
-              value: "false"
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
