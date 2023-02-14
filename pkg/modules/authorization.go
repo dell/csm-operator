@@ -100,12 +100,12 @@ const (
 )
 
 var (
-	redisStorageClass string
-	authHostname string
-	proxyIngressHost string
-	proxyIngressClassName string
-	tenantIngressClassName string
-	roleIngressClassName string
+	redisStorageClass 		string
+	authHostname 			string
+	proxyIngressHost 		string
+	proxyIngressClassName 	string
+	tenantIngressClassName 	string
+	roleIngressClassName 	string
 	storageIngressClassName string
 )
 
