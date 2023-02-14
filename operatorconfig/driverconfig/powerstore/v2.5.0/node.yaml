@@ -123,6 +123,15 @@ spec:
               mountPropagation: "Bidirectional"
             - name: pods-path
               mountPath: /var/lib/kubelet/pods
+              value: "false"
+          volumeMounts:
+            - name: driver-path
+              mountPath: var/lib/kubelet/plugins/csi-powerstore.dellemc.com
+            - name: csi-path
+              mountPath: var/lib/kubelet/plugins/kubernetes.io/csi
+              mountPropagation: "Bidirectional"
+            - name: pods-path
+              mountPath: var/lib/kubelet/pods
               mountPropagation: "Bidirectional"
             - name: dev
               mountPath: /dev
