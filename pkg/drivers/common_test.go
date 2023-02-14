@@ -148,10 +148,10 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	// Add image name
 	res.Spec.Driver.Common.Image = "thisIsAnImage"
 
-	// Add pscale driver version
+	// Add pstore driver version
 	res.Spec.Driver.ConfigVersion = version
 
-	// Add pscale driver type
+	// Add pstore driver type
 	res.Spec.Driver.CSIDriverType = driver
 
 	// Add NodeSelector to node and controller
