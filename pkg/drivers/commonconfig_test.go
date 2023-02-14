@@ -24,7 +24,7 @@ import (
 var (
 	csm       = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion)
 	pFlexCSM  = csmForPowerFlex(pflexCSMName)
-	pStoreCSM = csmWithTolerations(csmv1.PowerStore, shared.PStoreConfigVersion)
+	pStoreCSM = csmWithPowerstore(csmv1.PowerStore, shared.PStoreConfigVersion)
 
 	fakeDriver csmv1.DriverType = "fakeDriver"
 	badDriver  csmv1.DriverType = "badDriver"
