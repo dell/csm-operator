@@ -480,7 +480,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 				if env.Name == "REDIS_STORAGE_CLASS" {
 					redisStorageClass = env.Value
 				}
-			} 
+			}
 		}
 	}
 
