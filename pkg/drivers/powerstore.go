@@ -37,7 +37,7 @@ const (
 	// CsiPowerstoreNodeNamePrefix - Node Name Prefix
 	CsiPowerstoreNodeNamePrefix = "<X_CSI_POWERSTORE_NODE_NAME_PREFIX>"
 
-	// CsiFcPortFilterFilePath- Fc Port Filter File Path
+	// CsiFcPortFilterFilePath - Fc Port Filter File Path
 	CsiFcPortFilterFilePath = "<X_CSI_FC_PORTS_FILTER_FILE_PATH>"
 
 	// CsiNfsAcls - variable setting the permissions on NFS mount directory
