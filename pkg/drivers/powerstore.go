@@ -15,15 +15,16 @@ package drivers
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 const (
@@ -33,19 +34,19 @@ const (
 	// PowerStoreConfigParamsVolumeMount -
 	PowerStoreConfigParamsVolumeMount = "csi-powerstore-config-params"
 
-	// Powerstore Node Name Prefix
+	// CsiPowerstoreNodeNamePrefix - Node Name Prefix
 	CsiPowerstoreNodeNamePrefix = "<X_CSI_POWERSTORE_NODE_NAME_PREFIX>"
 
-	// Powerstore Fc Port Filter File Path
+	// CsiFcPortFilterFilePath- Fc Port Filter File Path
 	CsiFcPortFilterFilePath = "<X_CSI_FC_PORTS_FILTER_FILE_PATH>"
 
-	// Powerstore variable setting the permissions on NFS mount directory
-	CsiNfsAcls= "<X_CSI_NFS_ACLS>"
+	// CsiNfsAcls - variable setting the permissions on NFS mount directory
+	CsiNfsAcls = "<X_CSI_NFS_ACLS>"
 
-	// Powerstore health monitor
+	// CsiHealthMonitorEnabled - health monitor flag
 	CsiHealthMonitorEnabled = "<X_CSI_HEALTH_MONITOR_ENABLED>"
 
-	// Powerstore CHAP
+	// CsiPowerstoreEnableChap -  CHAP flag
 	CsiPowerstoreEnableChap = "<X_CSI_POWERSTORE_ENABLE_CHAP>"
 )
 
@@ -79,7 +80,7 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 }
 
 // ModifyPowerstoreCR -
-func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule,  fileType string) string {
+func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
 	// Parameters to initialise CR values
 	nodePrefix := ""
 	fcPortFilter := ""
@@ -96,7 +97,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule,  fil
 			}
 			if env.Name == "X_CSI_FC_PORTS_FILTER_FILE_PATH" {
 				fcPortFilter = env.Value
-			}	
+			}
 		}
 		for _, env := range cr.Spec.Driver.Node.Envs {
 			if env.Name == "X_CSI_POWERSTORE_ENABLE_CHAP" {
@@ -109,7 +110,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule,  fil
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreNodeNamePrefix, nodePrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiFcPortFilterFilePath, fcPortFilter)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreEnableChap, chap)
-		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)		
+		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Controller.Envs {
 			if env.Name == "X_CSI_NFS_ACLS" {
