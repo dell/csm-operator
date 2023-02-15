@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: <DriverDefaultReleaseName>-controller
-  namespace: <DriverDefaultReleaseNamespace>
+  namespace: <DriverDefaultReleaseName>
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -119,7 +119,7 @@ spec:
       serviceAccountName: <DriverDefaultReleaseName>-controller
       containers:
         - name: attacher
-          image: k8s.gcr.io/sig-storage/csi-attacher:v3.4.0
+          image: k8s.gcr.io/sig-storage/csi-attacher:v4.0.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -132,7 +132,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: k8s.gcr.io/sig-storage/csi-provisioner:v3.1.0
+          image: k8s.gcr.io/sig-storage/csi-provisioner:v3.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -151,7 +151,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: vg-snapshotter
-          image: dellemc/csi-volumegroup-snapshotter:v1.0.1
+          image: dellemc/csi-volumegroup-snapshotter:v1.2.0
           imagePullPolicy: IfNotPresent 
           env:
             - name: ADDRESS
@@ -160,7 +160,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: csi-external-health-monitor-controller
-          image: gcr.io/k8s-staging-sig-storage/csi-external-health-monitor-controller:v0.5.0
+          image: k8s.gcr.io/sig-storage/csi-external-health-monitor-controller:v0.7.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -177,7 +177,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: k8s.gcr.io/sig-storage/csi-snapshotter:v5.0.1
+          image: k8s.gcr.io/sig-storage/csi-snapshotter:v6.1.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -191,7 +191,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: resizer
-          image: k8s.gcr.io/sig-storage/csi-resizer:v1.4.0
+          image: k8s.gcr.io/sig-storage/csi-resizer:v1.6.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -204,7 +204,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-vxflexos:v2.3.0
+          image: dellemc/csi-vxflexos:v2.6.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:
