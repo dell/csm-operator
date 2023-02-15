@@ -174,8 +174,7 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	nfsAclsParam := corev1.EnvVar{Name: "X_CSI_NFS_ACLS"}
 	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{nfsAclsParam, healthMonitor}
 
-	// Uncomment after storagecapacity is added
-	// res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
 
 	return res
 }
