@@ -552,10 +552,37 @@ func TestAuthorizationIngressRules(t *testing.T) {
 			}
 
 			tmpCR := customResource
+			namespace := customResource.Namespace
+			name := namespace + "-ingress-nginx-controller"
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			dp := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Spec: appsv1.DeploymentSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"app.kubernetes.io/name": "ingress-nginx"},
+					},
+				},
+			}
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			pod := &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Pod",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(dp, pod).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 	}
 	for name, tc := range tests {
