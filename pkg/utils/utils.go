@@ -916,38 +916,6 @@ func IsAuthorizationComponentEnabled(ctx context.Context, instance csmv1.Contain
 	return false
 }
 
-// GetRedisStorage - storage class for redis in authorization module
-func GetRedisStorage(auth csmv1.Module) string {
-	var storageClass string
-	for _, comp := range auth.Components {
-		if comp.Name == AuthProxyServerComponent {
-			for _, env := range comp.Envs {
-				if env.Name == "REDIS_STORAGE_CLASS" && env.Value != "" {
-					storageClass = env.Value
-					break
-				}
-			}
-		}
-	}
-	return storageClass
-}
-
-// GetProxyIngressHost -
-func GetProxyIngressHost(auth csmv1.Module) string {
-	var ingressHost string
-	for _, comp := range auth.Components {
-		if comp.Name == AuthProxyServerComponent {
-			for _, env := range comp.Envs {
-				if env.Name == "PROXY_INGRESS_HOST" && env.Value != "" {
-					ingressHost = env.Value
-					break
-				}
-			}
-		}
-	}
-	return ingressHost
-}
-
 // Contains -
 func Contains(slice []string, str string) bool {
 	for _, v := range slice {

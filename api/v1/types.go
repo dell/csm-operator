@@ -248,6 +248,38 @@ type ContainerTemplate struct {
 	// Selector which must match a node's labels for the pod to be scheduled on that node.
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="NodeSelector"
 	NodeSelector map[string]string `json:"nodeSelector,omitempty" yaml:"nodeSelector"`
+
+	// ProxyService is the image tag for the Container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Service Container Image"
+	ProxyService string `json:"proxyService,omitempty" yaml:"proxyService,omitempty"`
+
+	// TenantService is the image tag for the Container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Tenant Service Container Image"
+	TenantService string `json:"tenantService,omitempty" yaml:"tenantService,omitempty"`
+
+	// RoleService is the image tag for the Container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Role Service Container Image"
+	RoleService string `json:"roleService,omitempty" yaml:"roleService,omitempty"`
+
+	// StorageService is the image tag for the Container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Storage Service Container Image"
+	StorageService string `json:"storageService,omitempty" yaml:"storageService,omitempty"`
+
+	// Redis is the image tag for the Container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Redis Container Image"
+	Redis string `json:"redis,omitempty" yaml:"redis,omitempty"`
+
+	// Commander is the image tag for the Container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Commander Container Image"
+	Commander string `json:"commander,omitempty" yaml:"commander,omitempty"`
+
+	// Opa is the image tag for the Container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Opa Container Image"
+	Opa string `json:"opa,omitempty" yaml:"opa,omitempty"`
+
+	// OpaKubeMgmt is the image tag for the Container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Opa Kube Management Container Image"
+	OpaKubeMgmt string `json:"opaKubeMgmt,omitempty" yaml:"opaKubeMgmt,omitempty"`
 }
 
 // SnapshotClass struct

@@ -9,19 +9,20 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.5.0
+      configVersion: v1.6.0
       forceRemoveModule: true
       components:
       - name: karavi-authorization-proxy-server
+        # enable: Enable/Disable csm-authorization proxy server
         enabled: true
-        image: dellemc/csm-authorization-proxy:v1.5.0
-        image: dellemc/csm-authorization-tenant:v1.5.0
-        image: dellemc/csm-authorization-role:v1.5.0
-        image: dellemc/csm-authorization-storage:v1.5.0
-        image: redis:6.0.8-alpine
-        image: rediscommander/redis-commander:latest
-        image: openpolicyagent/opa
-        image: openpolicyagent/kube-mgmt:0.11
+        proxyService: dellemc/csm-authorization-proxy:v1.6.0
+        tenantService: dellemc/csm-authorization-tenant:v1.6.0
+        roleService: dellemc/csm-authorization-role:v1.6.0
+        storageService: dellemc/csm-authorization-storage:v1.6.0
+        redis: redis:6.0.8-alpine
+        commander: rediscommander/redis-commander:latest
+        opa: openpolicyagent/opa
+        opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
         envs:
           # base hostname for the ingress rules that expose the services
           # the proxy-server ingress will use this hostname
@@ -32,26 +33,6 @@ spec:
           # Default value: csm-authorization.com
           - name: "PROXY_HOST"
             value: "csm-authorization.com"
-
-          # Authorization log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "AUTHORIZATION_LOG_LEVEL"
-            value: "debug"
-
-          # Concurrent PowerFlex requests in the Authorization storage-service
-          # Default value: "10"
-          - name: "AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS"
-            value: "10"
-
-          # Zipkin tracing configuration
-          # this can be updated on the fly via the csm-config-params configMap
-          # Default value: None 
-          - name: "AUTHORIZATION_ZIPKIN_COLLECTORURI"
-            value: ""          
-          # Default value: None 
-          - name: "AUTHORIZATION_ZIPKIN_PROBABILITY"
-            value: ""
 
           # Proxy-service ingress configuration
           # Default value: nginx
@@ -77,7 +58,8 @@ spec:
           - name: "STORAGE_INGRESS_CLASSNAME"
             value: "nginx" 
 
-          # Specify storage class for redis. Otherwise, default storage class is used
+          # Specify storage class for redis. Otherwise, default storage class is used.
+          # Default value: None
           - name: "REDIS_STORAGE_CLASS"
             value: "local"
 
@@ -97,3 +79,13 @@ spec:
       - name: cert-manager
         enabled: true
 
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csm-config-params
+  namespace: authorization
+data:
+  csm-config-params.yaml: |
+    CONCURRENT_POWERFLEX_REQUESTS: 10
+    LOG_LEVEL: debug

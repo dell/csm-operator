@@ -99,6 +99,16 @@ const (
 	AuthCertManagerComponent = "cert-manager"
 )
 
+var (
+	redisStorageClass       string
+	authHostname            string
+	proxyIngressHost        string
+	proxyIngressClassName   string
+	tenantIngressClassName  string
+	roleIngressClassName    string
+	storageIngressClassName string
+)
+
 // AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
 var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
@@ -437,10 +447,9 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 	return nil
 }
 
-// getAuthorizationServerDeployment - update deployment manifest
+// getAuthorizationServerDeployment - updates deployment manifest with authorization CRD values
 func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (string, error) {
 	YamlString := ""
-
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return YamlString, err
@@ -452,60 +461,22 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 		return YamlString, err
 	}
 
-	YamlString = utils.ModifyCommonCR(string(buf), cr)
-
+	YamlString = string(buf)
 	authNamespace := cr.Namespace
-	proxyServerImage := "dellemc/csm-authorization-proxy:v1.5.0"
-	opaImage := "openpolicyagent/opa"
-	opaKubeMgmtImage := "openpolicyagent/kube-mgmt:0.11"
-	tenantServiceImage := "dellemc/csm-authorization-tenant:v1.5.0"
-	roleServiceImage := "dellemc/csm-authorization-role:v1.5.0"
-	storageServiceImage := "dellemc/csm-authorization-storage:v1.5.0"
-	logLevel := "debug"
-	concurrentPowerFlexRequests := "10"
-	zipkinCollectorURI := ""
-	zipkinProbability := ""
-	redisImage := "redis:6.0.8-alpine"
-	redisCommanderImage := "rediscommander/redis-commander:latest"
-
-	redisStorageClass := utils.GetRedisStorage(auth)
-	if err != nil {
-		return redisStorageClass, err
-	}
 
 	for _, component := range auth.Components {
 		if component.Name == AuthProxyServerComponent {
-			if component.Image != "" {
-				if strings.Contains(AuthNamespace, component.Name) {
-					authNamespace = string(component.Name)
-				} else if strings.Contains(AuthServerImage, component.Name) {
-					proxyServerImage = string(component.Image)
-				} else if strings.Contains(AuthOpaImage, component.Name) {
-					opaImage = string(component.Image)
-				} else if strings.Contains(AuthOpaKubeMgmtImage, component.Name) {
-					opaKubeMgmtImage = string(component.Image)
-				} else if strings.Contains(AuthTenantServiceImage, component.Name) {
-					tenantServiceImage = string(component.Image)
-				} else if strings.Contains(AuthRoleServiceImage, component.Name) {
-					roleServiceImage = string(component.Image)
-				} else if strings.Contains(AuthStorageServiceImage, component.Name) {
-					storageServiceImage = string(component.Image)
-				} else if strings.Contains(AuthRedisImage, component.Name) {
-					redisImage = string(component.Image)
-				} else if strings.Contains(AuthRedisCommanderImage, component.Name) {
-					redisCommanderImage = string(component.Image)
-				}
-			}
+			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, component.ProxyService)
+			YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, component.Opa)
+			YamlString = strings.ReplaceAll(YamlString, AuthOpaKubeMgmtImage, component.OpaKubeMgmt)
+			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, component.TenantService)
+			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
+			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
+
 			for _, env := range component.Envs {
-				if strings.Contains(AuthLogLevel, env.Name) {
-					logLevel = env.Value
-				} else if strings.Contains(AuthConcurrentPowerFlexRequests, env.Name) {
-					concurrentPowerFlexRequests = env.Value
-				} else if strings.Contains(AuthZipkinCollectorURI, env.Name) {
-					zipkinCollectorURI = env.Value
-				} else if strings.Contains(AuthZipkinProbability, env.Name) {
-					zipkinProbability = env.Value
-				} else if strings.Contains(AuthRedisStorageClass, env.Name) {
+				if env.Name == "REDIS_STORAGE_CLASS" {
 					redisStorageClass = env.Value
 				}
 			}
@@ -513,18 +484,6 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-	YamlString = strings.ReplaceAll(YamlString, AuthServerImage, proxyServerImage)
-	YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, opaImage)
-	YamlString = strings.ReplaceAll(YamlString, AuthOpaKubeMgmtImage, opaKubeMgmtImage)
-	YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, tenantServiceImage)
-	YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, roleServiceImage)
-	YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, storageServiceImage)
-	YamlString = strings.ReplaceAll(YamlString, AuthLogLevel, logLevel)
-	YamlString = strings.ReplaceAll(YamlString, AuthConcurrentPowerFlexRequests, concurrentPowerFlexRequests)
-	YamlString = strings.ReplaceAll(YamlString, AuthZipkinCollectorURI, zipkinCollectorURI)
-	YamlString = strings.ReplaceAll(YamlString, AuthZipkinProbability, zipkinProbability)
-	YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, redisImage)
-	YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, redisCommanderImage)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisStorageClass, redisStorageClass)
 
 	return YamlString, nil
@@ -571,35 +530,23 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 		return YamlString, err
 	}
 
-	YamlString = utils.ModifyCommonCR(string(buf), cr)
-
+	YamlString = string(buf)
 	authNamespace := cr.Namespace
-	authHostname := "csm-authorization.com"
-	proxyIngressClassName := "nginx"
-	tenantIngressClassName := "nginx"
-	roleIngressClassName := "nginx"
-	storageIngressClassName := "nginx"
-	proxyIngressHost := utils.GetProxyIngressHost(auth)
-	if err != nil {
-		return proxyIngressHost, err
-	}
 
 	for _, component := range auth.Components {
 		if component.Name == AuthProxyServerComponent {
 			for _, env := range component.Envs {
-				if strings.Contains(AuthNamespace, component.Name) {
-					authNamespace = string(component.Name)
-				} else if strings.Contains(AuthProxyHost, env.Name) {
+				if env.Name == "PROXY_HOST" {
 					authHostname = env.Value
-				} else if strings.Contains(AuthProxyIngressHost, env.Name) {
+				} else if env.Name == "PROXY_INGRESS_HOST" {
 					proxyIngressHost = env.Value
-				} else if strings.Contains(AuthProxyIngressClassName, env.Name) {
+				} else if env.Name == "PROXY_INGRESS_CLASSNAME" {
 					proxyIngressClassName = env.Value
-				} else if strings.Contains(AuthTenantIngressClassName, env.Name) {
+				} else if env.Name == "TENANT_INGRESS_CLASSNAME" {
 					tenantIngressClassName = env.Value
-				} else if strings.Contains(AuthRoleIngressClassName, env.Name) {
+				} else if env.Name == "ROLE_INGRESS_CLASSNAME" {
 					roleIngressClassName = env.Value
-				} else if strings.Contains(AuthStorageIngressClassName, env.Name) {
+				} else if env.Name == "STORAGE_INGRESS_CLASSNAME" {
 					storageIngressClassName = env.Value
 				}
 			}
@@ -664,17 +611,8 @@ func getCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 		return YamlString, err
 	}
 
+	YamlString = string(buf)
 	authNamespace := cr.Namespace
-
-	for _, component := range auth.Components {
-		if component.Name == AuthProxyServerComponent {
-			if strings.Contains(AuthNamespace, component.Name) {
-				authNamespace = string(component.Name)
-			}
-		}
-	}
-
-	YamlString = utils.ModifyCommonCR(string(buf), cr)
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 
 	return YamlString, nil
@@ -722,17 +660,8 @@ func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorag
 		return YamlString, err
 	}
 
+	YamlString = string(buf)
 	authNamespace := cr.Namespace
-
-	for _, component := range auth.Components {
-		if component.Name == AuthProxyServerComponent {
-			if strings.Contains(AuthNamespace, component.Name) {
-				authNamespace = string(component.Name)
-			}
-		}
-	}
-
-	YamlString = utils.ModifyCommonCR(string(buf), cr)
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 
 	return YamlString, nil
@@ -780,18 +709,10 @@ func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 		return YamlString, err
 	}
 
+	YamlString = string(buf)
 	authNamespace := cr.Namespace
-
-	for _, component := range auth.Components {
-		if component.Name == AuthProxyServerComponent {
-			if strings.Contains(AuthNamespace, component.Name) {
-				authNamespace = string(component.Name)
-			}
-		}
-	}
-
-	YamlString = utils.ModifyCommonCR(string(buf), cr)
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
+
 	return YamlString, nil
 }
 
