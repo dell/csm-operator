@@ -14,14 +14,7 @@
 #
 #
 
-apiVersion: storage.k8s.io/v1
-kind: CSIDriver
-metadata:
-  name: csi-powerstore.dellemc.com
-spec:
-  storageCapacity: false
-  podInfoOnMount: true
-  fsGroupPolicy: ReadWriteOnceWithFSType
-  volumeLifecycleModes:
-    - Persistent
-    - Ephemeral
+minUpgradePath: v2.3.0
+
+
+
