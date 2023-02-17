@@ -48,6 +48,9 @@ const (
 
 	// CsiPowerstoreEnableChap -  CHAP flag
 	CsiPowerstoreEnableChap = "<X_CSI_POWERSTORE_ENABLE_CHAP>"
+
+	// CsiPowerstoreExternalAccess -  External Access flag
+	CsiPowerstoreExternalAccess = "<X_CSI_POWERSTORE_EXTERNAL_ACCESS>"
 )
 
 // PrecheckPowerStore do input validation
@@ -88,6 +91,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	healthMonitorController := ""
 	chap := ""
 	healthMonitorNode := ""
+	powerstoreExternalAccess := ""
 
 	switch fileType {
 	case "Node":
@@ -119,9 +123,13 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorController = env.Value
 			}
+			if env.Name == "X_CSI_POWERSTORE_EXTERNAL_ACCESS" {
+				powerstoreExternalAccess = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
 	}
 	return yamlString
 }

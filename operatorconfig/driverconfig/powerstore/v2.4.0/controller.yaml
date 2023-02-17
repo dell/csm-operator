@@ -227,7 +227,7 @@ spec:
             - name: X_CSI_DRIVER_NAME
               value: "csi-powerstore.dellemc.com"
             - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
-              value: "None"
+              value: <X_CSI_POWERSTORE_EXTERNAL_ACCESS>
             - name: X_CSI_NFS_ACLS
               value: "<X_CSI_NFS_ACLS>"
             - name: X_CSI_POWERSTORE_CONFIG_PATH
