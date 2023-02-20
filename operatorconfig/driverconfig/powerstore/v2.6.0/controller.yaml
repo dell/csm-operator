@@ -62,7 +62,7 @@ rules:
     verbs: ["update", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshots", "volumesnapshots/status"]
-    verbs: ["get", "list", "watch", "update", "create", "delete"]
+    verbs: ["get", "list", "watch", "update"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments/status"]
     verbs: ["patch"]
@@ -79,16 +79,6 @@ rules:
   - apiGroups: [""]
     resources: ["persistentvolumeclaims/status"]
     verbs: ["update", "patch"]
-  # below for dell-csi-replicator
-  - apiGroups: ["replication.storage.dell.com"]
-    resources: ["dellcsireplicationgroups"]
-    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-  - apiGroups: ["replication.storage.dell.com"]
-    resources: ["dellcsireplicationgroups/status"]
-    verbs: ["get", "patch", "update"]
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
   # Permissions for CSIStorageCapacity
   - apiGroups: ["storage.k8s.io"]
     resources: ["csistoragecapacities"]
@@ -132,13 +122,13 @@ spec:
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
+          - labelSelector:
               matchExpressions:
-                - key: "name"
+                - key: name
                   operator: In
                   values:
-                    - <DriverDefaultReleaseName>-controller
-              topologyKey: "kubernetes.io/hostname"
+                  - <DriverDefaultReleaseName>-controller
+            topologyKey: kubernetes.io/hostname 
       containers:
         - name: attacher
           image: k8s.gcr.io/sig-storage/csi-attacher:v4.0.0
@@ -212,39 +202,6 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
-        - name: vg-snapshotter
-          image: dellemc/csi-volumegroup-snapshotter:v1.1.0
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: ADDRESS
-              value: /var/run/csi/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/run/csi
-        - name: dell-csi-replicator
-          image: dellemc/dell-csi-replicator:v1.3.0
-          imagePullPolicy: IfNotPresent
-          args:
-            - "--csi-address=$(ADDRESS)"
-            - "--leader-election=true"
-            - "--worker-threads=2"
-            - "--retry-interval-start=1s"
-            - "--retry-interval-max=300s"
-            - "--timeout=300s"
-            - "--context-prefix=powerstore"
-            - "--prefix=replication.storage.dell.com"
-          env:
-            - name: ADDRESS
-              value: /var/run/csi/csi.sock
-            - name: X_CSI_REPLICATION_CONFIG_DIR
-              value: /powerstore-config-params
-            - name: X_CSI_REPLICATION_CONFIG_FILE_NAME
-              value: driver-config-params.yaml
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/run/csi
-            - name: powerstore-config-params
-              mountPath: /powerstore-config-params
         - name: external-health-monitor
           image: k8s.gcr.io/sig-storage/csi-external-health-monitor-controller:v0.7.0
           imagePullPolicy: IfNotPresent
@@ -265,20 +222,8 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
-        - name: csi-metadata-retriever
-          image: dellemc/csi-metadata-retriever:v1.2.0
-          imagePullPolicy: IfNotPresent
-          command: [ "/csi-metadata-retriever" ]
-          env:
-            - name: ENABLE_TRACING
-              value: false
-            - name: CSI_RETRIEVER_ENDPOINT
-              value: /var/run/csi/csi_retriever.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-powerstore:v2.5.0
+          image: dellemc/csi-powerstore:v2.6.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-powerstore" ]
           args:
@@ -289,16 +234,14 @@ spec:
               value:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
-            - name: CSI_RETRIEVER_ENDPOINT
-              value: /var/run/csi/csi_retriever.sock
             - name: X_CSI_MODE
               value: controller
             - name: X_CSI_DRIVER_NAME
               value: "csi-powerstore.dellemc.com"
             - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
-              value:
+              value: <X_CSI_POWERSTORE_EXTERNAL_ACCESS>
             - name: X_CSI_NFS_ACLS
-              value: "0777"
+              value: "<X_CSI_NFS_ACLS>"
             - name: X_CSI_POWERSTORE_CONFIG_PATH
               value: /powerstore-config/config
             - name: X_CSI_POWERSTORE_CONFIG_PARAMS_PATH
@@ -308,7 +251,7 @@ spec:
             - name: CSI_AUTO_ROUND_OFF_FILESYSTEM_SIZE
               value: false
             - name: X_CSI_HEALTH_MONITOR_ENABLED
-              value: "true"
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
