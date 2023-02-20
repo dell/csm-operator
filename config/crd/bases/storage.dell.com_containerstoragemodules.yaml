@@ -497,6 +497,8 @@ spec:
                     properties:
                       fSGroupPolicy:
                         type: string
+                      storageCapacity:
+                        type: boolean
                     type: object
                   csiDriverType:
                     description: CSIDriverType is the CSI Driver type for Dell Technologies

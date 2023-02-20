@@ -238,8 +238,6 @@ spec:
               value: true
             - name: CSI_AUTO_ROUND_OFF_FILESYSTEM_SIZE
               value: false
-            - name: X_CSI_PODMON_API_PORT
-              value: 8083
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
           volumeMounts:
