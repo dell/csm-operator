@@ -159,7 +159,7 @@ metadata:
                         "value": "powerscale"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.3.0",
+                    "image": "dellemc/dell-csi-replicator:v1.4.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -185,11 +185,21 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.3.1",
+                    "image": "dellemc/dell-replication-controller:v1.4.0",
                     "name": "dell-replication-controller-manager"
+                  },
+                  {
+                    "envs": [
+                      {
+                        "name": "TARGET_CLUSTERS_IDS",
+                        "value": "target-cluster-1"
+                      }
+                    ],
+                    "image": "dellemc/dell-replication-init:v1.0.0",
+                    "name": "dell-replication-controller-init"
                   }
                 ],
-                "configVersion": "v1.3.0",
+                "configVersion": "v1.4.0",
                 "enabled": false,
                 "name": "replication"
               },
