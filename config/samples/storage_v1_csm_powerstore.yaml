@@ -31,7 +31,7 @@ spec:
       # Allowed values:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
-      storageCapacity: true
+      storageCapacity: false
     # Config version for CSI PowerStore v2.6.0 driver
     configVersion: v2.6.0
     authSecret: test-powerstore-config

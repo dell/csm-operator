@@ -27,7 +27,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-      storageCapacity: true
+      storageCapacity: false
     # Config version for CSI PowerStore v2.5.0 driver
     configVersion: v2.5.0
     authSecret: test-powerstore-config
