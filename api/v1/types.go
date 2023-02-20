@@ -295,5 +295,6 @@ type SnapshotClass struct {
 
 // CSIDriverSpec struct
 type CSIDriverSpec struct {
-	FSGroupPolicy string `json:"fSGroupPolicy,omitempty" yaml:"fSGroupPolicy,omitempty"`
+	FSGroupPolicy   string `json:"fSGroupPolicy,omitempty" yaml:"fSGroupPolicy,omitempty"`
+	StorageCapacity bool   `json:"storageCapacity,omitempty" yaml:"storageCapacity"`
 }

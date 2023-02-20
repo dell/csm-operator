@@ -51,6 +51,8 @@ const (
 
 	// CsiPowerstoreExternalAccess -  External Access flag
 	CsiPowerstoreExternalAccess = "<X_CSI_POWERSTORE_EXTERNAL_ACCESS>"
+	// CsiStorageCapacityEnabled - Storage capacity flag
+	CsiStorageCapacityEnabled = "false"
 )
 
 // PrecheckPowerStore do input validation
@@ -92,6 +94,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	chap := ""
 	healthMonitorNode := ""
 	powerstoreExternalAccess := ""
+	storageCapacity := "false"
 
 	switch fileType {
 	case "Node":
@@ -130,6 +133,11 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
+	case "CSIDriverSpec":
+		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+			storageCapacity = "true"
+		}
+		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
 	}
 	return yamlString
 }
