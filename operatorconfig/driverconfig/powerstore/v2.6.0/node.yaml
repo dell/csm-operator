@@ -28,7 +28,7 @@ rules:
     resources: ["persistentvolumes"]
     verbs: ["create", "delete", "get", "list", "watch", "update"]
   - apiGroups: [""]
-    resources: ["persistentvolumesclaims"]
+    resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "update"]
   - apiGroups: [""]
     resources: ["events"]
@@ -90,7 +90,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-powerstore:v2.5.0
+          image: dellemc/csi-powerstore:v2.6.0
           imagePullPolicy:  IfNotPresent
           command: [ "/csi-powerstore" ]
           args:
@@ -98,7 +98,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
           env:
             - name: ENABLE_TRACING
-              value: false
+              value:
             - name: CSI_ENDPOINT
               value: unix:///var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock
             - name: X_CSI_MODE
@@ -109,19 +109,19 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
             - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
-              value: csi-node
+              value: <X_CSI_POWERSTORE_NODE_NAME_PREFIX>
             - name: X_CSI_POWERSTORE_NODE_ID_PATH
               value: /node-id
             - name: X_CSI_POWERSTORE_NODE_CHROOT_PATH
               value: /noderoot
             - name: X_CSI_POWERSTORE_TMP_DIR
-              value: var/lib/kubelet/plugins/csi-powerstore.dellemc.com/tmp
+              value: /var/lib/kubelet/plugins/csi-powerstore.dellemc.com/tmp
             - name: X_CSI_DRIVER_NAME
-              value: "csi-powerstore"
+              value: "csi-powerstore.dellemc.com"
             - name: X_CSI_FC_PORTS_FILTER_FILE_PATH
-              value: /etc/fc-ports-filter
+              value: <X_CSI_FC_PORTS_FILTER_FILE_PATH>
             - name: X_CSI_POWERSTORE_ENABLE_CHAP
-              value: "true"
+              value: "<X_CSI_POWERSTORE_ENABLE_CHAP>"
             - name: X_CSI_POWERSTORE_CONFIG_PATH
               value: /powerstore-config/config
             - name: X_CSI_POWERSTORE_CONFIG_PARAMS_PATH
@@ -129,15 +129,15 @@ spec:
             - name: GOPOWERSTORE_DEBUG
               value: "true"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
-              value: "true"
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
           volumeMounts:
             - name: driver-path
-              mountPath: var/lib/kubelet/plugins/csi-powerstore.dellemc.com
+              mountPath: /var/lib/kubelet/plugins/csi-powerstore.dellemc.com
             - name: csi-path
-              mountPath: var/lib/kubelet/plugins/kubernetes.io/csi
+              mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi
               mountPropagation: "Bidirectional"
             - name: pods-path
-              mountPath: var/lib/kubelet/pods
+              mountPath: /var/lib/kubelet/pods
               mountPropagation: "Bidirectional"
             - name: dev
               mountPath: /dev
@@ -163,7 +163,7 @@ spec:
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
-            - --kubelet-registration-path=var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock
           env:
             - name: ADDRESS
               value: /csi/csi_sock
