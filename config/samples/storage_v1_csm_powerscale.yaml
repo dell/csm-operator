@@ -11,16 +11,16 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    # Config version for CSI PowerScale v2.5.0 driver
-    configVersion: v2.5.0
+    # Config version for CSI PowerScale v2.6.0 driver
+    configVersion: v2.6.0
     authSecret: test-isilon-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerScale driver v2.5.0
-      image: "dellemc/csi-isilon:v2.5.0"
+      # Image for CSI PowerScale driver v2.6.0
+      image: "dellemc/csi-isilon:v2.6.0"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -138,6 +138,22 @@ spec:
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
 
+      # X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS: Ignore unresolvable hosts on the OneFS.
+      # When set to true, OneFS allows new host to add to existing export list though any of the existing hosts from the
+      # same exports are unresolvable/doesn't exist anymore.
+      # Allowed values:
+      #   true: ignore existing unresolvable hosts and append new host to the existing export
+      #   false: exhibits OneFS default behavior i.e. if any of existing hosts are unresolvable while adding new one it fails
+      # Default value: false
+      - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
+        value: "false"
+
+      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+      # Default value: 192
+      # Examples: 192, 256
+      - name: X_CSI_MAX_PATH_LIMIT
+        value: "192"
+
       # nodeSelector: Define node selection constraints for pods of controller deployment.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -145,18 +161,12 @@ spec:
       # Allowed values: map of key-value pairs
       # Default value: None
       nodeSelector:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      #  node-role.kubernetes.io/master: ""
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       #  node-role.kubernetes.io/control-plane: ""
 
       # tolerations: Define tolerations for the controller deployment, if required.
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      # - key: "node-role.kubernetes.io/master"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
@@ -191,6 +201,12 @@ spec:
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
 
+      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+      # Default value: 192
+      # Examples: 192, 256
+      - name: X_CSI_MAX_PATH_LIMIT
+        value: "192"
+
       # nodeSelector: Define node selection constraints for pods of node daemonset
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -198,8 +214,6 @@ spec:
       # Allowed values: map of key-value pairs
       # Default value: None
       nodeSelector:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      #  node-role.kubernetes.io/master: ""
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       #  node-role.kubernetes.io/control-plane: ""
 
@@ -215,10 +229,6 @@ spec:
       # - key: "node.kubernetes.io/network-unavailable"
       #   operator: "Exists"
       #   effect: "NoExecute"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      # - key: "node-role.kubernetes.io/master"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
