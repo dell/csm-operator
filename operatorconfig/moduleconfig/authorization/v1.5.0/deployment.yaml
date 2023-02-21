@@ -21,8 +21,8 @@ spec:
         image: <AUTHORIZATION_PROXY_SERVER_IMAGE>
         imagePullPolicy: Always
         args:
-          - "--redis-host=redis.authorization.svc.cluster.local:6379"
-          - "--tenant-service=tenant-service.authorization.svc.cluster.local:50051"
+          - "--redis-host=redis.<NAMESPACE>.svc.cluster.local:6379"
+          - "--tenant-service=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
         ports:
         - containerPort: 8080
         volumeMounts:
@@ -97,7 +97,7 @@ spec:
         image: <AUTHORIZATION_TENANT_SERVICE_IMAGE>
         imagePullPolicy: Always
         args:
-          - "--redis-host=redis.authorization.svc.cluster.local:6379"
+          - "--redis-host=redis.<NAMESPACE>.svc.cluster.local:6379"
         ports:
         - containerPort: 50051
           name: grpc
@@ -369,7 +369,7 @@ spec:
         imagePullPolicy: IfNotPresent
         env:
         - name: REDIS_HOSTS
-          value: "rbac:redis.authorization.svc.cluster.local:6379"
+          value: "rbac:redis.<NAMESPACE>.svc.cluster.local:6379"
         - name: K8S_SIGTERM
           value: "1"
         ports:
