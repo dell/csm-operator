@@ -101,12 +101,6 @@ spec:
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: false
-            - name: X_CSI_APPROVE_SDC_ENABLED
-              value: false
-            - name: X_CSI_RENAME_SDC_ENABLED
-              value: false
-            - name: X_CSI_RENAME_SDC_PREFIX
-              value: sdc-test
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
