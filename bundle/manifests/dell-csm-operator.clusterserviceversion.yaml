@@ -284,6 +284,92 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
+            "name": "test-powerstore",
+            "namespace": "test-powerstore"
+          },
+          "spec": {
+            "driver": {
+              "authSecret": "test-powerstore-config",
+              "common": {
+                "envs": [
+                  {
+                    "name": "X_CSI_POWERSTORE_NODE_NAME_PREFIX",
+                    "value": "csi-node"
+                  },
+                  {
+                    "name": "X_CSI_FC_PORTS_FILTER_FILE_PATH",
+                    "value": "/etc/fc-ports-filter"
+                  },
+                  {
+                    "name": "KUBELET_CONFIG_DIR",
+                    "value": "/var/lib/kubelet"
+                  },
+                  {
+                    "name": "CSI_LOG_LEVEL",
+                    "value": "debug"
+                  }
+                ],
+                "image": "dellemc/csi-powerstore:v2.6.0",
+                "imagePullPolicy": "IfNotPresent"
+              },
+              "configVersion": "v2.6.0",
+              "controller": {
+                "envs": [
+                  {
+                    "name": "X_CSI_NFS_ACLS",
+                    "value": "0777"
+                  },
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_POWERSTORE_EXTERNAL_ACCESS",
+                    "value": null
+                  }
+                ],
+                "nodeSelector": null,
+                "tolerations": null
+              },
+              "csiDriverSpec": {
+                "fSGroupPolicy": "ReadWriteOnceWithFSType",
+                "storageCapacity": false
+              },
+              "csiDriverType": "powerstore",
+              "dnsPolicy": "ClusterFirstWithHostNet",
+              "forceRemoveDriver": true,
+              "forceUpdate": true,
+              "node": {
+                "envs": [
+                  {
+                    "name": "X_CSI_POWERSTORE_ENABLE_CHAP",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  }
+                ],
+                "nodeSelector": null,
+                "tolerations": null
+              },
+              "replicas": 2,
+              "sideCars": [
+                {
+                  "args": [
+                    "--monitor-interval=60s"
+                  ],
+                  "enabled": false,
+                  "name": "external-health-monitor"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "apiVersion": "storage.dell.com/v1",
+          "kind": "ContainerStorageModule",
+          "metadata": {
             "name": "test-vxflexos",
             "namespace": "test-vxflexos"
           },
@@ -525,6 +611,9 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.common.args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: driver.common.commander
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.common.enabled
@@ -547,6 +636,27 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.common.nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: driver.common.opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: driver.common.opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: driver.common.proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: driver.common.redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: driver.common.roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: driver.common.storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: driver.common.tenantService
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.common.tolerations
@@ -559,6 +669,9 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.controller.args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: driver.controller.commander
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.controller.enabled
@@ -581,6 +694,27 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.controller.nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: driver.controller.opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: driver.controller.opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: driver.controller.proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: driver.controller.redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: driver.controller.roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: driver.controller.storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: driver.controller.tenantService
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.controller.tolerations
@@ -605,6 +739,9 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.initContainers[0].args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: driver.initContainers[0].commander
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.initContainers[0].enabled
@@ -627,6 +764,27 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.initContainers[0].nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: driver.initContainers[0].opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: driver.initContainers[0].opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: driver.initContainers[0].proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: driver.initContainers[0].redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: driver.initContainers[0].roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: driver.initContainers[0].storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: driver.initContainers[0].tenantService
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.initContainers[0].tolerations
@@ -636,6 +794,9 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.node.args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: driver.node.commander
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.node.enabled
@@ -658,6 +819,27 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.node.nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: driver.node.opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: driver.node.opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: driver.node.proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: driver.node.redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: driver.node.roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: driver.node.storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: driver.node.tenantService
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.node.tolerations
@@ -670,6 +852,9 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.sideCars[0].args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: driver.sideCars[0].commander
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.sideCars[0].enabled
@@ -692,6 +877,27 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.sideCars[0].nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: driver.sideCars[0].opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: driver.sideCars[0].opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: driver.sideCars[0].proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: driver.sideCars[0].redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: driver.sideCars[0].roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: driver.sideCars[0].storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: driver.sideCars[0].tenantService
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.sideCars[0].tolerations
@@ -714,6 +920,9 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: modules[0].components[0].args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: modules[0].components[0].commander
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: modules[0].components[0].enabled
@@ -736,6 +945,27 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: modules[0].components[0].nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: modules[0].components[0].opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: modules[0].components[0].opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: modules[0].components[0].proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: modules[0].components[0].redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: modules[0].components[0].roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: modules[0].components[0].storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: modules[0].components[0].tenantService
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: modules[0].components[0].tolerations
@@ -1456,6 +1686,18 @@ spec:
           - create
           - get
           - list
+          - update
+          - watch
+        - apiGroups:
+          - storage.k8s.io
+          resources:
+          - csistoragecapacities
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
           - update
           - watch
         - apiGroups:

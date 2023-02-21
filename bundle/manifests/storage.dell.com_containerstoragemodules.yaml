@@ -69,6 +69,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      commander:
+                        description: Commander is the image tag for the Container
+                        type: string
                       enabled:
                         description: Enabled is used to indicate wether or not to
                           deploy a module
@@ -205,6 +208,27 @@ spec:
                           for the pod to fit on a node. Selector which must match
                           a node's labels for the pod to be scheduled on that node.
                         type: object
+                      opa:
+                        description: Opa is the image tag for the Container
+                        type: string
+                      opaKubeMgmt:
+                        description: OpaKubeMgmt is the image tag for the Container
+                        type: string
+                      proxyService:
+                        description: ProxyService is the image tag for the Container
+                        type: string
+                      redis:
+                        description: Redis is the image tag for the Container
+                        type: string
+                      roleService:
+                        description: RoleService is the image tag for the Container
+                        type: string
+                      storageService:
+                        description: StorageService is the image tag for the Container
+                        type: string
+                      tenantService:
+                        description: TenantService is the image tag for the Container
+                        type: string
                       tolerations:
                         description: Tolerations is the list of tolerations for the
                           driver pods
@@ -262,6 +286,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      commander:
+                        description: Commander is the image tag for the Container
+                        type: string
                       enabled:
                         description: Enabled is used to indicate wether or not to
                           deploy a module
@@ -398,6 +425,27 @@ spec:
                           for the pod to fit on a node. Selector which must match
                           a node's labels for the pod to be scheduled on that node.
                         type: object
+                      opa:
+                        description: Opa is the image tag for the Container
+                        type: string
+                      opaKubeMgmt:
+                        description: OpaKubeMgmt is the image tag for the Container
+                        type: string
+                      proxyService:
+                        description: ProxyService is the image tag for the Container
+                        type: string
+                      redis:
+                        description: Redis is the image tag for the Container
+                        type: string
+                      roleService:
+                        description: RoleService is the image tag for the Container
+                        type: string
+                      storageService:
+                        description: StorageService is the image tag for the Container
+                        type: string
+                      tenantService:
+                        description: TenantService is the image tag for the Container
+                        type: string
                       tolerations:
                         description: Tolerations is the list of tolerations for the
                           driver pods
@@ -447,6 +495,8 @@ spec:
                     properties:
                       fSGroupPolicy:
                         type: string
+                      storageCapacity:
+                        type: boolean
                     type: object
                   csiDriverType:
                     description: CSIDriverType is the CSI Driver type for Dell Technologies
@@ -474,6 +524,9 @@ spec:
                           items:
                             type: string
                           type: array
+                        commander:
+                          description: Commander is the image tag for the Container
+                          type: string
                         enabled:
                           description: Enabled is used to indicate wether or not to
                             deploy a module
@@ -611,6 +664,27 @@ spec:
                             for the pod to fit on a node. Selector which must match
                             a node's labels for the pod to be scheduled on that node.
                           type: object
+                        opa:
+                          description: Opa is the image tag for the Container
+                          type: string
+                        opaKubeMgmt:
+                          description: OpaKubeMgmt is the image tag for the Container
+                          type: string
+                        proxyService:
+                          description: ProxyService is the image tag for the Container
+                          type: string
+                        redis:
+                          description: Redis is the image tag for the Container
+                          type: string
+                        roleService:
+                          description: RoleService is the image tag for the Container
+                          type: string
+                        storageService:
+                          description: StorageService is the image tag for the Container
+                          type: string
+                        tenantService:
+                          description: TenantService is the image tag for the Container
+                          type: string
                         tolerations:
                           description: Tolerations is the list of tolerations for
                             the driver pods
@@ -665,6 +739,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      commander:
+                        description: Commander is the image tag for the Container
+                        type: string
                       enabled:
                         description: Enabled is used to indicate wether or not to
                           deploy a module
@@ -801,6 +878,27 @@ spec:
                           for the pod to fit on a node. Selector which must match
                           a node's labels for the pod to be scheduled on that node.
                         type: object
+                      opa:
+                        description: Opa is the image tag for the Container
+                        type: string
+                      opaKubeMgmt:
+                        description: OpaKubeMgmt is the image tag for the Container
+                        type: string
+                      proxyService:
+                        description: ProxyService is the image tag for the Container
+                        type: string
+                      redis:
+                        description: Redis is the image tag for the Container
+                        type: string
+                      roleService:
+                        description: RoleService is the image tag for the Container
+                        type: string
+                      storageService:
+                        description: StorageService is the image tag for the Container
+                        type: string
+                      tenantService:
+                        description: TenantService is the image tag for the Container
+                        type: string
                       tolerations:
                         description: Tolerations is the list of tolerations for the
                           driver pods
@@ -860,6 +958,9 @@ spec:
                           items:
                             type: string
                           type: array
+                        commander:
+                          description: Commander is the image tag for the Container
+                          type: string
                         enabled:
                           description: Enabled is used to indicate wether or not to
                             deploy a module
@@ -997,6 +1098,27 @@ spec:
                             for the pod to fit on a node. Selector which must match
                             a node's labels for the pod to be scheduled on that node.
                           type: object
+                        opa:
+                          description: Opa is the image tag for the Container
+                          type: string
+                        opaKubeMgmt:
+                          description: OpaKubeMgmt is the image tag for the Container
+                          type: string
+                        proxyService:
+                          description: ProxyService is the image tag for the Container
+                          type: string
+                        redis:
+                          description: Redis is the image tag for the Container
+                          type: string
+                        roleService:
+                          description: RoleService is the image tag for the Container
+                          type: string
+                        storageService:
+                          description: StorageService is the image tag for the Container
+                          type: string
+                        tenantService:
+                          description: TenantService is the image tag for the Container
+                          type: string
                         tolerations:
                           description: Tolerations is the list of tolerations for
                             the driver pods
@@ -1080,6 +1202,9 @@ spec:
                             items:
                               type: string
                             type: array
+                          commander:
+                            description: Commander is the image tag for the Container
+                            type: string
                           enabled:
                             description: Enabled is used to indicate wether or not
                               to deploy a module
@@ -1219,6 +1344,27 @@ spec:
                               match a node's labels for the pod to be scheduled on
                               that node.
                             type: object
+                          opa:
+                            description: Opa is the image tag for the Container
+                            type: string
+                          opaKubeMgmt:
+                            description: OpaKubeMgmt is the image tag for the Container
+                            type: string
+                          proxyService:
+                            description: ProxyService is the image tag for the Container
+                            type: string
+                          redis:
+                            description: Redis is the image tag for the Container
+                            type: string
+                          roleService:
+                            description: RoleService is the image tag for the Container
+                            type: string
+                          storageService:
+                            description: StorageService is the image tag for the Container
+                            type: string
+                          tenantService:
+                            description: TenantService is the image tag for the Container
+                            type: string
                           tolerations:
                             description: Tolerations is the list of tolerations for
                               the driver pods
