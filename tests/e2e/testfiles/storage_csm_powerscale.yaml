@@ -138,6 +138,40 @@ spec:
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
 
+      # X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS: Ignore unresolvable hosts on the OneFS.
+      # When set to true, OneFS allows new host to add to existing export list though any of the existing hosts from the
+      # same exports are unresolvable/doesn't exist anymore.
+      # Allowed values:
+      #   true: ignore existing unresolvable hosts and append new host to the existing export
+      #   false: exhibits OneFS default behavior i.e. if any of existing hosts are unresolvable while adding new one it fails
+      # Default value: false
+      - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
+        value: "false"
+
+      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+      # Default value: 192
+      # Examples: 192, 256
+      - name: X_CSI_MAX_PATH_LIMIT
+        value: "192"
+
+      # nodeSelector: Define node selection constraints for pods of controller deployment.
+      # For the pod to be eligible to run on a node, the node must have each
+      # of the indicated key-value pairs as labels.
+      # Leave as blank to consider all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # tolerations: Define tolerations for the controller deployment, if required.
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+
     node:
       envs:
       # X_CSI_MAX_VOLUMES_PER_NODE: Specify default value for maximum number of volumes that controller can publish to the node.
@@ -167,6 +201,39 @@ spec:
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
 
+      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+      # Default value: 192
+      # Examples: 192, 256
+      - name: X_CSI_MAX_PATH_LIMIT
+        value: "192"
+
+      # nodeSelector: Define node selection constraints for pods of node daemonset
+      # For the pod to be eligible to run on a node, the node must have each
+      # of the indicated key-value pairs as labels.
+      # Leave as blank to consider all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # tolerations: Define tolerations for the node daemonset, if required.
+      # Default value: None
+      tolerations:
+      # - key: "node.kubernetes.io/memory-pressure"
+      #   operator: "Exists"
+      #   effect: "NoExecute"
+      # - key: "node.kubernetes.io/disk-pressure"
+      #   operator: "Exists"
+      #   effect: "NoExecute"
+      # - key: "node.kubernetes.io/network-unavailable"
+      #   operator: "Exists"
+      #   effect: "NoExecute"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+
     sideCars:
       - name: provisioner
         args: ["--volume-name-prefix=csipscale"]
@@ -187,7 +254,7 @@ spec:
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
-            value: ""
+            value: "csm-authorization.com"
         
           # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
           - name: "SKIP_CERTIFICATE_VALIDATION"
@@ -228,7 +295,7 @@ spec:
           # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
           # Allowed values: string
           - name: "TARGET_CLUSTERS_IDS"
-            value: "cluster-151"
+            value: "target-cluster-1"
           # Replication log level
           # Allowed values: "error", "warn"/"warning", "info", "debug"
           # Default value: "debug"
@@ -249,6 +316,7 @@ spec:
           # Allowed values: time
           - name: "RETRY_INTERVAL_MAX"
             value: "5m"
+
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
@@ -266,7 +334,7 @@ spec:
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
-              value: "INFO"              
+              value: "INFO"           
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
@@ -286,7 +354,7 @@ spec:
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-metrics-powerscale:v1.0.0
+          image: dellemc/csm-metrics-powerscale:v1.1.0
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int
