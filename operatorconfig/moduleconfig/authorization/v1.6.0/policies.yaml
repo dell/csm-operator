@@ -52,6 +52,18 @@ data:
       common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] >= to_number(input.request.volumeSizeInKb)
       y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
     }
+
+    permitted_roles[v] = y {
+      claimed_roles := split(input.claims.roles, ",")
+
+      some i
+      a := claimed_roles[i]
+      common.roles[a]
+
+      v := claimed_roles[i]
+      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] == 0
+      y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
+    }
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -167,18 +179,6 @@ data:
 
       v := claimed_roles[i]
       common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] >= to_number(input.request.volumeSizeInKb)
-      y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
-    }
-
-    permitted_roles[v] = y {
-      claimed_roles := split(input.claims.roles, ",")
-
-      some i
-      a := claimed_roles[i]
-      common.roles[a]
-
-      v := claimed_roles[i]
-      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] == 0
       y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
     }
 ---
