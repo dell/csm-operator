@@ -111,7 +111,9 @@ data:
         "GET /api/instances/StoragePool::[a-f0-9]+/relationships/Statistics/",
         "POST /api/instances/Volume::[a-f0-9]+/action/addMappedSdc/",
         "POST /api/instances/Volume::[a-f0-9]+/action/removeMappedSdc/",
-        "POST /api/instances/Volume::[a-f0-9]+/action/removeVolume/"
+        "POST /api/instances/Volume::[a-f0-9]+/action/removeVolume/",
+        "POST /api/instances/Sdc::[a-f0-9]+/action/setSdcName/",
+        "POST /api/instances/System::[a-f0-9]/action/approveSdc/"
     ]
 
     default allow = true
@@ -341,6 +343,40 @@ data:
     deny[msg] {
       common.roles == {}
       msg := sprintf("no role data found", [])
+    }
+
+    default claims = {}
+    claims = input.claims
+    deny[msg] {
+      claims == {}
+      msg := sprintf("missing claims", [])
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sdc-approve
+  namespace: <NAMESPACE>
+data:
+  sdc-approve.rego: |
+    package karavi.sdc.approve
+
+    import data.karavi.common
+
+    # Allow requests by default.
+    default allow = true
+
+    default response = {
+      "allowed": true
+    }
+    response = {
+       "allowed": false,
+       "status": {
+          "reason": reason,
+       },
+    } {
+        reason = concat(", ", deny)
+        reason != ""
     }
 
     default claims = {}
