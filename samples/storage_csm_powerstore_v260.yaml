@@ -37,7 +37,7 @@ spec:
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: true
+    forceUpdate: false
     forceRemoveDriver: true
     common:
       # Image for CSI PowerStore driver v2.6.0
