@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: <DriverDefaultReleaseName>-node
-  namespace: <DriverDefaultReleaseName>
+  namespace: <DriverDefaultReleaseNamespace>
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -74,16 +74,15 @@ spec:
       serviceAccount: <DriverDefaultReleaseName>-node
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
-      hostPID: true
       hostPID: false
-      containers:
+      containers:  
         - name: driver
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: dellemc/csi-vxflexos:v2.3.0
+          image: dellemc/csi-vxflexos:v2.6.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:
@@ -117,8 +116,11 @@ spec:
               mountPath: /vxflexos-config
             - name: vxflexos-config-params
               mountPath: /vxflexos-config-params
+            - name: certs
+              mountPath: /certs
+              readOnly: true
         - name: registrar
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.5.1
+          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.6.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -144,18 +146,13 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: HOST_PID
-              value: "0"
+              value: "1"
             - name: HOST_NET
               value: "1"
             - name: NODENAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: MDM
-              valueFrom:
-                secretKeyRef:
-                  name: <DriverDefaultReleaseName>-config
-                  key: MDM
             - name: MODE
               value: "monitoring"
           volumeMounts:
@@ -253,3 +250,11 @@ spec:
           hostPath:
             path: /var/run
             type: Directory
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: <DriverDefaultReleaseName>-certs-0
+                  items:
+                    - key: cert-0
+                      path: cert-0
