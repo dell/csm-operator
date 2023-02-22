@@ -12,118 +12,6 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: powermax-urls
-  namespace: <NAMESPACE>
-data:
-  powermax-url.rego: |
-    package karavi.authz.powermax.url
-
-    allowlist = [
-      "GET /univmax/restapi/version",
-      "GET /univmax/restapi/(90|91)/system/symmetrix/[a-f0-9A-F]+",
-      "GET /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/srp",
-      "GET /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/storagegroup",
-      "POST /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/storagegroup",
-      "GET /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/storagegroup/(.+)",
-      "PUT /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/storagegroup/(.+)",
-      "GET /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/volume",
-      "GET /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/volume/[a-f0-9A-F]+",
-      "PUT /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/volume/[a-f0-9A-F]+",
-      "DELETE /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/volume/[a-f0-9A-F]+",
-      "DELETE /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/storagegroup/[a-f0-9A-F]+",
-      "GET /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/volume/[a-f0-9A-F]+/snapshot",
-      "GET /univmax/restapi/91/sloprovisioning/symmetrix/[a-f0-9A-F]+/portgroup/(.+)",
-      "GET /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/initiator",
-      "GET /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/host/(.+)",
-      "GET /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/maskingview/(.+)",
-      "GET /univmax/restapi/(90|91)/system/symmetrix",
-      "GET /univmax/restapi/private/(90|91)/replication/symmetrix/[a-f0-9A-F]+/volume/[a-f0-9A-F]+/snapshot",
-      "GET /univmax/restapi/private/(90|91)/replication/symmetrix/[a-f0-9A-F]+/volume/",
-      "DELETE /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/maskingview/(.+)",
-      "GET /univmax/restapi/(90|91)/replication/capabilities/symmetrix/",
-      "POST /univmax/restapi/(90|91)/sloprovisioning/symmetrix/[a-f0-9A-F]+/maskingview",
-    ]
-
-    default allow = true
-
-    allow {
-      regex.match(allowlist[_], sprintf("%s %s", [input.method, input.url]))
-    }
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: powerscale-urls
-  namespace: <NAMESPACE>
-data:
-  powerscale-url.rego: |
-    package karavi.authz.powerscale.url
-
-    allowlist = [
-        "GET /platform/latest/",
-        "GET /platform/[0-9]/cluster/config/",
-        "GET /namespace/(.+)",
-        "GET /platform/[0-9]/protocols/nfs/exports/?(.+)",
-        "PUT /namespace/(.+)",
-        "GET /platform/[0-9]/quota/license/",
-        "POST /platform/[0-9]/quota/quotas/",
-        "POST /platform/[0-9]/protocols/nfs/exports/?(.+)",
-        "GET /platform/[0-9]/protocols/nfs/exports/[0-9]+?(.+)",
-        "PUT /platform/[0-9]/protocols/nfs/exports/[0-9]+?(.+)",
-        "DELETE /platform/[0-9]/quota/quotas/[a-z0-9A-Z]+/",
-        "DELETE /platform/[0-9]/protocols/nfs/exports/[0-9]+?(.+)",
-        "DELETE /namespace/(.+)",
-        "GET /platform/[0-9]/snapshot/snapshots/(.+)",
-        "POST /platform/[0-9]/snapshot/snapshots",
-        "DELETE /platform/[0-9]/snapshot/snapshots/(.+)",
-        "POST /session/[0-9]/session/",
-        "GET /session/[0-9]/session/",
-        "POST /proxy/refresh-token/"
-    ]
-
-    default allow = true
-    allow {
-      regex.match(allowlist[_], sprintf("%s %s", [input.method, input.url]))
-    }
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: powerflex-urls
-  namespace: <NAMESPACE>
-data:
-  url.rego: |
-    package karavi.authz.url
-
-    allowlist = [
-        "GET /api/login/",
-        "POST /proxy/refresh-token/",
-        "GET /api/version/",
-        "GET /api/types/System/instances/",
-        "GET /api/types/StoragePool/instances/",
-        "POST /api/types/Volume/instances/",
-        "GET /api/instances/Volume::[a-f0-9]+/$",
-        "POST /api/types/Volume/instances/action/queryIdByKey/",
-        "GET /api/instances/System::[a-f0-9]+/relationships/Sdc/",
-        "GET /api/instances/Sdc::[a-f0-9]+/relationships/Statistics/",
-        "GET /api/instances/Sdc::[a-f0-9]+/relationships/Volume/",
-        "GET /api/instances/Volume::[a-f0-9]+/relationships/Statistics/",
-        "GET /api/instances/StoragePool::[a-f0-9]+/relationships/Statistics/",
-        "POST /api/instances/Volume::[a-f0-9]+/action/addMappedSdc/",
-        "POST /api/instances/Volume::[a-f0-9]+/action/removeMappedSdc/",
-        "POST /api/instances/Volume::[a-f0-9]+/action/removeVolume/",
-        "POST /api/instances/Sdc::[a-f0-9]+/action/setSdcName/",
-        "POST /api/instances/System::[a-f0-9]/action/approveSdc/"
-    ]
-
-    default allow = true
-    allow {
-      regex.match(allowlist[_], sprintf("%s %s", [input.method, input.url]))
-    }
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
   name: volumes-create
   namespace: <NAMESPACE>
 data:
@@ -162,6 +50,18 @@ data:
 
       v := claimed_roles[i]
       common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] >= to_number(input.request.volumeSizeInKb)
+      y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
+    }
+
+    permitted_roles[v] = y {
+      claimed_roles := split(input.claims.roles, ",")
+
+      some i
+      a := claimed_roles[i]
+      common.roles[a]
+
+      v := claimed_roles[i]
+      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] == 0
       y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
     }
 ---
@@ -281,28 +181,6 @@ data:
       common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] >= to_number(input.request.volumeSizeInKb)
       y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
     }
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: powerscale-volumes-create
-  namespace: <NAMESPACE>
-data:
-  volumes-powerscale-create.rego: |
-    package karavi.volumes.powerscale.create
-
-    import data.karavi.common
-
-    default allow = false
-
-    allow {
-      count(deny) == 0
-    }
-
-    deny[msg] {
-      common.roles == {}
-      msg := sprintf("no configured roles", [])
-    }
 
     permitted_roles[v] = y {
       claimed_roles := split(input.claims.roles, ",")
@@ -312,7 +190,7 @@ data:
       common.roles[a]
 
       v := claimed_roles[i]
-      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] >= to_number(input.request.volumeSizeInKb)
+      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] == 0
       y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
     }
 ---
