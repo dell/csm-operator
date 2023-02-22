@@ -259,6 +259,7 @@ spec:
           # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
+
     # replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
@@ -316,6 +317,16 @@ spec:
           # Allowed values: time
           - name: "RETRY_INTERVAL_MAX"
             value: "5m"
+      
+      - name: dell-replication-controller-init
+        # image: Defines replication init container image. This shouldn't be changed
+        # Allowed values: string
+        image: dellemc/dell-replication-init:v1.0.0
+        envs:
+          # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
+          # Allowed values: string
+          - name: "TARGET_CLUSTERS_IDS"
+            value: "target-cluster-1"
 
     # observability: allows to configure observability
     - name: observability

@@ -233,4 +233,14 @@ spec:
           # Allowed values: time
           - name: "RETRY_INTERVAL_MAX"
             value: "5m"
+      
+      - name: dell-replication-controller-init
+        # image: Defines replication init container image. This shouldn't be changed
+        # Allowed values: string
+        image: dellemc/dell-replication-init:v1.0.0
+        envs:
+          # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
+          # Allowed values: string
+          - name: "TARGET_CLUSTERS_IDS"
+            value: "target-cluster-1"
            
