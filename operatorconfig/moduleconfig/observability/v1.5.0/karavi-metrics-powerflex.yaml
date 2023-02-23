@@ -37,7 +37,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -76,6 +75,18 @@ data:
     POWERFLEX_MAX_CONCURRENT_QUERIES: <POWERFLEX_MAX_CONCURRENT_QUERIES>
     LOG_LEVEL: <POWERFLEX_LOG_LEVEL>
     LOG_FORMAT: <POWERFLEX_LOG_FORMAT>
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: karavi
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: debug
+    CSI_LOG_FORMAT: TEXT
 
 ---
 
@@ -135,5 +146,8 @@ spec:
         - name: karavi-metrics-powerflex-configmap
           configMap:
             name: karavi-metrics-powerflex-configmap
+        - name: vxflexos-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
       restartPolicy: Always
 status: {}
