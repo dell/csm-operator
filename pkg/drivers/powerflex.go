@@ -42,8 +42,6 @@ const (
 
 	// CsiPrefixRenameSdc - String to rename SDC
 	CsiPrefixRenameSdc = "<X_CSI_RENAME_SDC_PREFIX>"
-
-
 )
 
 // PrecheckPowerFlex do input validation
@@ -221,7 +219,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	approvesdcvalue := ""
 	renamesdcenable := ""
 	prefixrenamesdc := ""
-
 
 	switch fileType {
 	case "Node":
