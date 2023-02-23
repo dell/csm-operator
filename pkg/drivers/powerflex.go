@@ -216,26 +216,26 @@ func IsIpv4Regex(ipAddress string) bool {
 // ModifyPowerflexCR - Set environment variables provided in CR
 func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
 
-	approvesdcvalue := ""
-	renamesdcenable := ""
-	prefixrenamesdc := ""
+	approveSdcEnabled := ""
+	renameSdcEnabled := ""
+	renameSdcPrefix := ""
 
 	switch fileType {
 	case "Node":
 		for _, env := range cr.Spec.Driver.Node.Envs {
 			if env.Name == "X_CSI_APPROVE_SDC_ENABLED" {
-				approvesdcvalue = env.Value
+				approveSdcEnabled = env.Value
 			}
 			if env.Name == "X_CSI_RENAME_SDC_ENABLED" {
-				renamesdcenable = env.Value
+				renameSdcEnabled = env.Value
 			}
 			if env.Name == "X_CSI_RENAME_SDC_PREFIX" {
-				prefixrenamesdc = env.Value
+				renameSdcPrefix = env.Value
 			}
 		}
-		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approvesdcvalue)
-		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renamesdcenable)
-		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, prefixrenamesdc)
+		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 	}
 	return yamlString
 }
