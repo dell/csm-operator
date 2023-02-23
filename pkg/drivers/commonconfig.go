@@ -164,6 +164,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	if cr.Spec.Driver.CSIDriverType == "powerstore" {
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "Node")
 	}
+	if cr.Spec.Driver.CSIDriverType == "powerflex" {
+		YamlString = ModifyPowerflexCR(YamlString, cr, "Node")
+	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
 	if err != nil {
