@@ -123,7 +123,7 @@ spec:
         # Default value: none
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
-          value: "sdc-test"
+          value: ""
           
 
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
