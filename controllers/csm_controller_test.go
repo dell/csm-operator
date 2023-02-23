@@ -1034,7 +1034,7 @@ func getReplicaModule() []csmv1.Module {
 					Name: utils.ReplicationSideCarName,
 				},
 				{
-					Name: "dell-replication-controller-manager",
+					Name: utils.ReplicationControllerManager,
 					Envs: []corev1.EnvVar{
 						{
 							Name:  "TARGET_CLUSTERS_IDS",
@@ -1043,13 +1043,7 @@ func getReplicaModule() []csmv1.Module {
 					},
 				},
 				{
-					Name: "dell-replication-controller-init",
-					Envs: []corev1.EnvVar{
-						{
-							Name:  "TARGET_CLUSTERS_IDS",
-							Value: "skip-replication-cluster-check",
-						},
-					},
+					Name: utils.ReplicationControllerInit,
 				},
 			},
 		},
