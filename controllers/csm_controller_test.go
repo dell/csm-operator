@@ -1028,19 +1028,22 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.3.0",
+			ConfigVersion: "v1.4.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ReplicationSideCarName,
 				},
 				{
-					Name: "dell-replication-controller-manager",
+					Name: utils.ReplicationControllerManager,
 					Envs: []corev1.EnvVar{
 						{
 							Name:  "TARGET_CLUSTERS_IDS",
 							Value: "skip-replication-cluster-check",
 						},
 					},
+				},
+				{
+					Name: utils.ReplicationControllerInit,
 				},
 			},
 		},
