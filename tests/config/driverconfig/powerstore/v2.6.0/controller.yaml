@@ -222,7 +222,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: dell-csi-replicator
-          image: dellemc/dell-csi-replicator:v1.3.0
+          image: dellemc/dell-csi-replicator:v1.4.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
