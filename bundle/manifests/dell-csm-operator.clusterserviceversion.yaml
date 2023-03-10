@@ -57,10 +57,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.5.0",
+                "image": "dellemc/csi-isilon:v2.6.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.5.0",
+              "configVersion": "v2.6.0",
               "controller": {
                 "envs": [
                   {
@@ -78,6 +78,14 @@ metadata:
                   {
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_MAX_PATH_LIMIT",
+                    "value": "192"
                   }
                 ],
                 "nodeSelector": null,
@@ -102,6 +110,10 @@ metadata:
                   {
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_MAX_PATH_LIMIT",
+                    "value": "192"
                   }
                 ],
                 "nodeSelector": null,
@@ -138,11 +150,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.5.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -207,7 +219,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.4.0",
+                    "image": "dellemc/csm-topology:v1.5.0",
                     "name": "topology"
                   },
                   {
@@ -273,11 +285,11 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "dellemc/csm-metrics-powerscale:v1.1.0",
+                    "image": "dellemc/csm-metrics-powerscale:v1.2.0",
                     "name": "metrics-powerscale"
                   }
                 ],
-                "configVersion": "v1.4.0",
+                "configVersion": "v1.5.0",
                 "enabled": false,
                 "name": "observability"
               }
@@ -342,7 +354,7 @@ metadata:
               "csiDriverType": "powerstore",
               "dnsPolicy": "ClusterFirstWithHostNet",
               "forceRemoveDriver": true,
-              "forceUpdate": true,
+              "forceUpdate": false,
               "node": {
                 "envs": [
                   {
@@ -406,10 +418,10 @@ metadata:
                     "value": "0"
                   }
                 ],
-                "image": "dellemc/csi-vxflexos:v2.5.0",
+                "image": "dellemc/csi-vxflexos:v2.6.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.5.0",
+              "configVersion": "v2.6.0",
               "controller": {
                 "envs": [
                   {
@@ -445,6 +457,18 @@ metadata:
                   {
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_APPROVE_SDC_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_RENAME_SDC_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_RENAME_SDC_PREFIX",
+                    "value": ""
                   }
                 ],
                 "nodeSelector": null,
@@ -495,11 +519,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.5.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -513,7 +537,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.4.0",
+                    "image": "dellemc/csm-topology:v1.5.0",
                     "name": "topology"
                   },
                   {
@@ -571,11 +595,11 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "dellemc/csm-metrics-powerflex:v1.4.0",
+                    "image": "dellemc/csm-metrics-powerflex:v1.5.0",
                     "name": "metrics-powerflex"
                   }
                 ],
-                "configVersion": "v1.4.0",
+                "configVersion": "v1.5.0",
                 "enabled": false,
                 "name": "observability"
               }
@@ -1818,8 +1842,11 @@ spec:
   - Dell Container Storage Modules
   - Dell CSI Driver
   - Dell CSM Modules
+  - Powerflex
   - Powerscale
+  - Powerstore
   - Authorization
+  - Observability
   - Replication
   links:
   - name: Documentation
