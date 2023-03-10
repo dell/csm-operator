@@ -10,7 +10,7 @@ powerscale:
       replication: "v1.3.0"
       observability: "v1.4.0"
   v2.6.0:
-      authorization: "v1.5.0"
+      authorization: "v1.6.0"
       replication: "v1.4.0"
       observability: "v1.5.0"
 powerflex:
@@ -22,5 +22,5 @@ powerflex:
       authorization: "v1.5.0"
       observability: "v1.4.0"
   v2.6.0:
-      authorization: "v1.5.0"
+      authorization: "v1.6.0"
       observability: "v1.5.0"

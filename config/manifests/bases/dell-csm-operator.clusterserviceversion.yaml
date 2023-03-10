@@ -472,8 +472,11 @@ spec:
   - Dell Container Storage Modules
   - Dell CSI Driver
   - Dell CSM Modules
+  - Powerflex
   - Powerscale
+  - Powerstore
   - Authorization
+  - Observability
   - Replication
   links:
   - name: Documentation
