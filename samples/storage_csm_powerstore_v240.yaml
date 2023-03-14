@@ -29,7 +29,6 @@ spec:
       fSGroupPolicy: "ReadWriteOnceWithFSType"
     # Config version for CSI PowerStore v2.4.0 driver
     configVersion: v2.4.0
-    authSecret: test-powerstore-config
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet

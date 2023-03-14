@@ -33,7 +33,6 @@ spec:
       storageCapacity: false
     # Config version for CSI PowerStore v2.6.0 driver
     configVersion: v2.6.0
-    authSecret: test-powerstore-config
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
