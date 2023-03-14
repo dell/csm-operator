@@ -34,6 +34,8 @@ spec:
       storageCapacity: false
     # Config version for CSI PowerStore v2.5.0 driver
     configVersion: v2.5.0
+    # authSecret: This is the secret used to validate the default PowerStore secret used for installation
+    # Allowed values: <metadataName>-config
     authSecret: test-powerstore-config
     # Controller count
     replicas: 2
