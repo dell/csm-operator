@@ -30,7 +30,8 @@ spec:
     # Config version for CSI PowerStore v2.4.0 driver
     configVersion: v2.4.0
     # authSecret: This is the secret used to validate the default PowerStore secret used for installation
-    # Allowed values: <metadataName>-config
+    # Allowed values: <metadataName specified in the Manifest>-config
+    # For example: If the metadataName is set to test-powerstore, authSecret value should be set to test-powerstore-config
     authSecret: test-powerstore-config
     # Controller count
     replicas: 2
