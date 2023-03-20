@@ -406,10 +406,6 @@ metadata:
                     "value": "true"
                   },
                   {
-                    "name": "X_CSI_ALLOW_RWO_MULTI_POD_ACCESS",
-                    "value": "false"
-                  },
-                  {
                     "name": "KUBELET_CONFIG_DIR",
                     "value": "/var/lib/kubelet"
                   },
@@ -454,10 +450,6 @@ metadata:
               ],
               "node": {
                 "envs": [
-                  {
-                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
-                    "value": "false"
-                  },
                   {
                     "name": "X_CSI_APPROVE_SDC_ENABLED",
                     "value": "false"
