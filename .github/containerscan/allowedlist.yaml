@@ -4,6 +4,7 @@ general:
     - CVE-2022-42898
     - CVE-2022-47629 # this will be removed with the libskba library is updated in the UBI image
     - CVE-2019-1010022
+    - CVE-2023-0286
 
   bestPracticeViolations:
     # list of best practies violatied that needs a fix
