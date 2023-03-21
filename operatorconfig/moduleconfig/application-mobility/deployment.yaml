@@ -1,0 +1,177 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "velero.fullname" . }}
+  namespace: <NAMESPACE>
+  annotations:
+  labels:
+    app.kubernetes.io/name: {{ include "velero.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "velero.chart" . }}
+    component: velero
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ include "velero.name" . }}
+  template:
+    metadata:
+      labels:
+        name: velero
+        app.kubernetes.io/name: {{ include "velero.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        helm.sh/chart: {{ include "velero.chart" . }}
+      annotations:
+      {{- with .Values.podAnnotations }}
+      {{- with .Values.metrics.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+    spec:
+      imagePullSecrets: 
+      {{- range .Values.image.imagePullSecrets }}
+        - name: {{ . }}
+      restartPolicy: Always
+      serviceAccountName: {{ include "velero.serverServiceAccount" . }}
+      priorityClassName: {{ include "velero.priorityClassName" . }}
+      terminationGracePeriodSeconds: <TERMINATION_GRACE_PERIOD_SECONDS>
+      containers:
+        - name: velero
+          image: <IMAGE_REPOSITORY>@<IMAGE_DIGEST>
+          image: <IMAGE_REPOSITORY>:<IMAGE_TAG>
+          imagePullPolicy: <IMAGE_PULLPOLICY>
+          ports:
+            - name: http-monitoring
+              containerPort: 8085
+          command:
+            - /velero
+          args:
+            - server
+            ### Flags
+          {{- with .Values.configuration }}
+            - --uploader-type={{ default "restic" .uploaderType }}
+            {{- with .backupSyncPeriod }}
+            - --backup-sync-period={{ . }}
+            {{- with .fsBackupTimeout }}
+            - --fs-backup-timeout={{ . }}
+            {{- with .clientBurst }}
+            - --client-burst={{ . }}
+            {{- with .clientPageSize }}
+            - --client-page-size={{ . }}
+            {{- with .clientQPS }}
+            - --client-qps={{ . }}
+            {{- with .defaultBackupStorageLocation }}
+            - --default-backup-storage-location={{ . }}
+            {{- with .defaultBackupTTL }}
+            - --default-backup-ttl={{ . }}
+            {{- with .defaultVolumeSnapshotLocations }}
+            - --default-volume-snapshot-locations={{ . }}
+            {{- if .defaultVolumesToFsBackup }}
+            - --default-volumes-to-fs-backup
+            {{- with .defaultRepoMaintainFrequency }}
+            - --default-repo-maintain-frequency={{ . }}
+            {{- with .disableControllers }}
+            - --disable-controllers={{ . }}
+            {{- with .garbageCollectionFrequency }}
+            - --garbage-collection-frequency={{ . }}
+            {{- with .logFormat }}
+            - --log-format={{ . }}
+            {{- with .logLevel }}
+            - --log-level={{ . }}
+            {{- with .metricsAddress }}
+            - --metrics-address={{ . }}
+            {{- with .pluginDir }}
+            - --plugin-dir={{ . }}
+            {{- with .profilerAddress }}
+            - --profiler-address={{ . }}
+            - --restore-only
+            {{- with .restoreResourcePriorities }}
+            - --restore-resource-priorities={{ . }}
+            {{- with .storeValidationFrequency }}
+            - --store-validation-frequency={{ . }}
+            {{- with .terminatingResourceTimeout }}
+            - --terminating-resource-timeout={{ . }}
+            ### Global Flags
+            {{- with .features }}
+            - --features={{ . }}
+            {{- with .namespace }}
+            - --namespace={{ . }}
+          {{- with .Values.resources }}
+          resources:
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+          volumeMounts:
+            - name: plugins
+              mountPath: /plugins
+            - name: cloud-credentials
+              mountPath: /credentials
+            - name: scratch
+              mountPath: /scratch
+            - name: tmpdir
+              mountPath: /tmp
+          envFrom:
+          - secretRef:
+              name: <CREDENTIAL_EXTRASECRET_REF>
+          env:
+            - name: VELERO_SCRATCH_DIR
+              value: /scratch
+            - name: VELERO_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: LD_LIBRARY_PATH
+              value: /plugins
+            - name: AWS_SHARED_CREDENTIALS_FILE
+              value: /credentials/cloud
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /credentials/cloud
+            - name: AZURE_CREDENTIALS_FILE
+              value: /credentials/cloud
+            - name: ALIBABA_CLOUD_CREDENTIALS_FILE
+              value: /credentials/cloud
+          {{- with .Values.configuration.extraEnvVars }}
+          {{- range $key, $value := . }}
+            - name: {{ default "none" $key }}
+              value: {{ default "none" $value | quote }}
+          {{- with .Values.credentials.extraEnvVars }}
+          {{- range $key, $value := . }}
+            - name: {{ default "none" $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "velero.secretName" $ }}
+                  key: {{ default "none" $key }}
+          lifecycle:
+      dnsPolicy: {{ .Values.dnsPolicy }}
+      initContainers:
+        {{- if eq (typeOf .Values.initContainers) "string" }}
+        {{- tpl .Values.initContainers . | nindent 8 }}
+        {{- else }}
+        {{- toYaml .Values.initContainers | nindent 8 }}
+ 
+      volumes:
+        - name: cloud-credentials
+          secret:
+            secretName: {{ include "velero.secretName" . }}
+        - name: plugins
+          emptyDir: {}
+        - name: scratch
+          emptyDir: {}
+        - name: tmpdir
+          emptyDir: {}
+      securityContext:
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+    {{- with .Values.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
