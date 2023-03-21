@@ -633,6 +633,8 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
+	resiliencyEnabled := utils.IsResiliencyModuleEnabled(ctx, cr, r)
+	fmt.Println("resiliency module is enabled? ", resiliencyEnabled)
 	for _, m := range cr.Spec.Modules {
 		if m.Enabled {
 			switch m.Name {
@@ -650,6 +652,21 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				node.DaemonSetApplyConfig = *ds
+			case csmv1.Resiliency:
+				log.Info("Injecting CSM Resiliency")
+				// for controller-pod
+				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driver.Name)
+				if err != nil {
+					return fmt.Errorf("injecting replication into deployment: %v", err)
+				}
+				controller.Deployment = *dp
+				// for node-pod
+				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driver.Name)
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into deamonset: %v", err)
+				}
+				node.DaemonSetApplyConfig = *ds
+
 			case csmv1.Replication:
 				log.Info("Injecting CSM Replication")
 				dp, err := modules.ReplicationInjectDeployment(controller.Deployment, cr, operatorConfig)
@@ -1076,6 +1093,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			case csmv1.Replication:
 				if err := modules.ReplicationPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed replication validation: %v", err)
+				}
+
+			case csmv1.Resiliency:
+				if err := modules.ResiliencyPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+					return fmt.Errorf("failed resiliency validation: %v", err)
 				}
 
 			case csmv1.Observability:

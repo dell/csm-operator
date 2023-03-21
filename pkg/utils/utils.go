@@ -118,6 +118,8 @@ const (
 	ReplicationControllerInit = "dell-replication-controller-init"
 	// ReplicationSideCarName -
 	ReplicationSideCarName = "dell-csi-replicator"
+	// ResiliecnySideCarName -
+	ResiliecnySideCarName = "podmon"
 	// DefaultSourceClusterID -
 	DefaultSourceClusterID = "default-source-cluster"
 	// ObservabilityNamespace - karavi
@@ -818,6 +820,19 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 
 	return NewK8sClientWrapper(clusterConfigData)
 
+}
+
+// IsResiliencyModuleEnabled - check if resiliency module is enabled or not
+func IsResiliencyModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) bool {
+	// TODO - check if r as an input is required
+	// resiliencyEnabled := false
+	for _, m := range instance.Spec.Modules {
+		if m.Name == csmv1.Resiliency && m.Enabled {
+			// resiliencyEnabled = true
+			return true
+		}
+	}
+	return false
 }
 
 // GetDefaultClusters -
