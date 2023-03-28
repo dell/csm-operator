@@ -660,6 +660,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 					return fmt.Errorf("injecting replication into deployment: %v", err)
 				}
 				controller.Deployment = *dp
+
+				clusterRole, err := modules.ResiliencyInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig, "controller")
+				if err != nil {
+					return fmt.Errorf("injecting replication into controller cluster role: %v", err)
+				}
+
+				controller.Rbac.ClusterRole = *clusterRole
+
 				// for node-pod
 				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driver.Name)
 				if err != nil {
@@ -667,6 +675,12 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				node.DaemonSetApplyConfig = *ds
 
+				clusterRoleForNode, err := modules.ResiliencyInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig, "node")
+				if err != nil {
+					return fmt.Errorf("injecting replication into node cluster role: %v", err)
+				}
+
+				node.Rbac.ClusterRole = *clusterRoleForNode
 			case csmv1.Replication:
 				log.Info("Injecting CSM Replication")
 				dp, err := modules.ReplicationInjectDeployment(controller.Deployment, cr, operatorConfig)
