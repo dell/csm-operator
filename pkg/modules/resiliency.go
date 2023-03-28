@@ -94,7 +94,7 @@ func ResiliencyPrecheck(ctx context.Context, op utils.OperatorConfig, resiliency
 func ResiliencyInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, mode string) (*rbacv1.ClusterRole, error) {
 	var err error
 	roleFileName := "controller-roles.yaml"
-	resiliencyModule, err := getReplicaModule(cr)
+	resiliencyModule, err := getResiliencyModule(cr)
 	if err != nil {
 		return nil, err
 	}

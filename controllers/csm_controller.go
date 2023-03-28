@@ -657,13 +657,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				// for controller-pod
 				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driver.Name)
 				if err != nil {
-					return fmt.Errorf("injecting replication into deployment: %v", err)
+					return fmt.Errorf("injecting resiliency into deployment: %v", err)
 				}
 				controller.Deployment = *dp
 
 				clusterRole, err := modules.ResiliencyInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig, "controller")
 				if err != nil {
-					return fmt.Errorf("injecting replication into controller cluster role: %v", err)
+					return fmt.Errorf("injecting resiliency into controller cluster role: %v", err)
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
@@ -677,7 +677,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 				clusterRoleForNode, err := modules.ResiliencyInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig, "node")
 				if err != nil {
-					return fmt.Errorf("injecting replication into node cluster role: %v", err)
+					return fmt.Errorf("injecting resiliency into node cluster role: %v", err)
 				}
 
 				node.Rbac.ClusterRole = *clusterRoleForNode
