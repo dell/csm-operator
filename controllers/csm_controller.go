@@ -654,6 +654,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				node.DaemonSetApplyConfig = *ds
 			case csmv1.Resiliency:
 				log.Info("Injecting CSM Resiliency")
+				driver.Name = "powerstore"
 				// for controller-pod
 				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driver.Name)
 				if err != nil {

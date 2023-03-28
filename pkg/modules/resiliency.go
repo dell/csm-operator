@@ -157,7 +157,7 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConf
 			break
 		}
 	}
-	fileToRead := "container-" + driverType + mode + ".yaml"
+	fileToRead := "container-" + driverType + "-" + mode + ".yaml"
 	buf, err := readConfigFile(resiliencyModule, cr, op, fileToRead)
 	if err != nil {
 		return nil, nil, err
