@@ -1,0 +1,35 @@
+name: podmon
+image: dellemc/podmon:v1.5.0
+imagePullPolicy: IfNotPresent
+args:
+  - "--csisock=unix:/var/run/csi/csi.sock"
+  - "--labelvalue=csi-vxflexos"
+  - "--mode=controller"
+  - "--skipArrayConnectionValidation=false"
+  - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+  - "--driverPodLabelValue=dell-storage"
+  - "--ignoreVolumelessPods=false"
+env:
+  - name: MY_NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: MY_POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: MY_POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  - name: X_CSI_PODMON_ENABLED
+    value: "true"
+  - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE
+    value: <PodmonArrayConnectivityPollRate>
+  - name: X_CSI_PODMON_API_PORT
+    value: <PodmonAPIPort>
+volumeMounts:
+  - name: socket-dir
+    mountPath: /var/run/csi
+  - name: vxflexos-config-params
+    mountPath: /vxflexos-config-params

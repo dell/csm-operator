@@ -1,0 +1,57 @@
+name: podmon
+image: dellemc/podmon:v1.5.0
+imagePullPolicy: IfNotPresent
+args:
+  - "--csisock=unix:/var/lib/kubelet/plugins/csi-csi-isilon.dellemc.com/csi_sock"
+  - "--labelvalue=csi-csi-isilon"
+  - "--arrayConnectivityPollRate=60"
+  - "--driverPath=csi-csi-isilon.dellemc.com"
+  - "--mode=node"
+  - "--leaderelection=false"
+  - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+  - "--driverPodLabelValue=dell-storage"
+  - "--ignoreVolumelessPods=false"
+env:
+  - name: KUBE_NODE_NAME
+    valueFrom:
+      fieldRef:
+        apiVersion: v1
+        fieldPath: spec.nodeName
+  - name: X_CSI_PRIVATE_MOUNT_DIR
+    value: /var/lib/kubelet
+  - name: MY_NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: MY_POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: MY_POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  - name: X_CSI_PODMON_ENABLED
+    value: "true"
+  - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE
+    value: <PodmonArrayConnectivityPollRate>
+  - name: X_CSI_PODMON_API_PORT
+    value: <PodmonAPIPort>
+volumeMounts:
+  - name: kubelet-pods
+    mountPath: /var/lib/kubelet/pods
+    mountPropagation: "Bidirectional"
+  - name: driver-path
+    mountPath: /var/lib/kubelet/plugins/csi-csi-isilon.dellemc.com
+    mountPropagation: "Bidirectional"
+  - name: csi-path
+    mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi
+    mountPropagation: "Bidirectional"
+  - name: dev
+    mountPath: /dev
+  - name: usr-bin
+    mountPath: /usr-bin
+  - name: var-run
+    mountPath: /var/run
+  - name: csi-isilon-config-params
+    mountPath: /csi-isilon-config-params 
