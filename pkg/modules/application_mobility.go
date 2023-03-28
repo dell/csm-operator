@@ -12,27 +12,17 @@
 
 package modules
 
-// TODO JJL by EOD 3/24 remove unnecessary imports
 import (
 	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
-	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
-	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
-	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -55,21 +45,21 @@ func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error)
 // TODO JJL modify to getAppMobilityModuleDeployment
 func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, appMob csmv1.Module) (string, error) {
 	YamlString := ""
-	auth, err := getAuthorizationModule(cr)
+	auth, err := getAppMobilityModule(cr)
 	if err != nil {
 		return YamlString, err
 	}
 
-	deploymentPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthDeploymentManifest)
+	deploymentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthDeploymentManifest)
 	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
 	if err != nil {
 		return YamlString, err
 	}
 
 	YamlString = string(buf)
-	authNamespace := cr.Namespace
+	appMobNamespace := cr.Namespace
 
-	for _, component := range auth.Components {
+	for _, component := range appMob.Components {
 		if component.Name == AuthProxyServerComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, component.ProxyService)
 			YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, component.Opa)
@@ -79,17 +69,10 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
-
-			for _, env := range component.Envs {
-				if env.Name == "REDIS_STORAGE_CLASS" {
-					redisStorageClass = env.Value
-				}
-			}
 		}
 	}
 
-	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-	YamlString = strings.ReplaceAll(YamlString, AuthRedisStorageClass, redisStorageClass)
+	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
 
 	return YamlString, nil
 }
