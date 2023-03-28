@@ -26,6 +26,20 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const (
+	// DefaultPodmonArrayConnectivityPollRate -
+	DefaultPodmonArrayConnectivityPollRate = "<PodmonArrayConnectivityPollRate>"
+	// DefaultPodmonAPIPort -
+	DefaultPodmonAPIPort = "<PodmonAPIPort>"
+)
+
+var (
+	// XCSIPodmonArrayConnectivityPollRate -
+	XCSIPodmonArrayConnectivityPollRate = "X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE"
+	// XCSIPodmonAPIPort -
+	XCSIPodmonAPIPort = "X_CSI_PODMON_API_PORT"
+)
+
 // ResiliencySupportedDrivers is a map containing the CSI Drivers supported by CMS Resiliency. The key is driver name and the value is the driver plugin identifier
 var ResiliencySupportedDrivers = map[string]SupportedDriverParam{
 	"powerstore": {
