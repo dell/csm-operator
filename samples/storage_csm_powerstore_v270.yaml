@@ -146,7 +146,7 @@ spec:
       #   effect: "NoSchedule"
   
   modules:
-    - name: replication
+    - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:
       #   true: enable Resiliency feature(deploy podmon sidecar)
