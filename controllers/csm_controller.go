@@ -633,8 +633,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
-	resiliencyEnabled := utils.IsResiliencyModuleEnabled(ctx, cr, r)
-	fmt.Println("resiliency module is enabled? ", resiliencyEnabled)
 	for _, m := range cr.Spec.Modules {
 		if m.Enabled {
 			switch m.Name {
@@ -654,9 +652,10 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				node.DaemonSetApplyConfig = *ds
 			case csmv1.Resiliency:
 				log.Info("Injecting CSM Resiliency")
-				driver.Name = "powerstore"
+
 				// for controller-pod
-				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driver.Name)
+				driverName := string(cr.Spec.Driver.CSIDriverType)
+				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driverName)
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into deployment: %v", err)
 				}
@@ -670,7 +669,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				controller.Rbac.ClusterRole = *clusterRole
 
 				// for node-pod
-				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driver.Name)
+				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into deamonset: %v", err)
 				}
