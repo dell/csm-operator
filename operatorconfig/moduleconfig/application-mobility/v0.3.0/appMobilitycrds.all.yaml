@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ .Release.Name }}-serving-cert
+    cert-manager.io/inject-ca-from: <NAMESPACE>/<NAMESPACE>-serving-cert
     controller-gen.kubebuilder.io/version: v0.7.0
   name: backups.mobility.storage.dell.com
 spec:
@@ -12,8 +12,8 @@ spec:
     webhook:
       clientConfig:
         service:
-          name: {{ .Release.Name }}-webhook-service
-          namespace: {{ .Release.Namespace }}
+          name: <NAMESPACE>-webhook-service
+          namespace: <NAMESPACE>
           path: /convert
       conversionReviewVersions:
       - v1

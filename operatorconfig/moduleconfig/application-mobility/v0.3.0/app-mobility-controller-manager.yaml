@@ -3,8 +3,8 @@ kind: Deployment
 metadata:
   labels:
     control-plane: controller-manager
-  name: {{ .Release.Name }}-controller-manager
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-controller-manager
+  namespace: <NAMESPACE>
 spec:
   replicas: 1
   selector:
@@ -33,13 +33,13 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
-        - --app-mobility-namespace={{ .Release.Namespace }}
-        - --velero-namespace={{ include "velero.namespace" . }}
-        - --secret-name={{ include "objectstore.secretname" . }}
-        - --license-name={{ .Values.licenseName }}
+        - --app-mobility-namespace=<NAMESPACE>
+        - --velero-namespace=<VALERO>
+        - --secret-name=<SECRET-NAME>
+        - --license-name=<LICENSE>
         command:
         - /manager
-        image: {{ .Values.controller.image }}
+        image: <CONTROLLER-IMAGE>
         livenessProbe:
           httpGet:
             path: /healthz
@@ -72,7 +72,7 @@ spec:
           readOnly: true
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: {{ .Release.Name }}-controller-manager
+      serviceAccountName: <NAMESPACE>-controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
       - name: cert
@@ -83,14 +83,14 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Release.Name }}-controller-manager
-  namespace: {{ .Release.Namespace }} 
+  name: <NAMESPACE>-controller-manager
+  namespace: <NAMESPACE> 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: {{ .Release.Name }}-manager-role
+  name: <NAMESPACE>-manager-role
 rules:
 - apiGroups:
   - ""
@@ -472,22 +472,22 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ .Release.Name }}-manager-rolebinding
+  name: <NAMESPACE>-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ .Release.Name }}-manager-role
+  name: <NAMESPACE>-manager-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Release.Name }}-controller-manager
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-controller-manager
+  namespace: <NAMESPACE>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   creationTimestamp: null
-  name: {{ .Release.Name }}-manager-role
-  namespace:  {{ .Release.Namespace }}
+  name: <NAMESPACE>-manager-role
+  namespace:  <NAMESPACE>
 rules:
 - apiGroups:
   - ""
@@ -513,21 +513,21 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ .Release.Name }}-leader-election-rolebinding
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-leader-election-rolebinding
+  namespace: <NAMESPACE>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Release.Name }}-leader-election-role
+  name: <NAMESPACE>-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Release.Name }}-controller-manager
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-controller-manager
+  namespace: <NAMESPACE>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ .Release.Name }}-proxy-role
+  name: <NAMESPACE>-proxy-role
 rules:
 - apiGroups:
   - authentication.k8s.io
@@ -545,21 +545,21 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ .Release.Name }}-proxy-rolebinding
+  name: <NAMESPACE>-proxy-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ .Release.Name }}-proxy-role
+  name: <NAMESPACE>-proxy-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Release.Name }}-controller-manager
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-controller-manager
+  namespace: <NAMESPACE>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ .Release.Name }}-leader-election-role
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-leader-election-role
+  namespace: <NAMESPACE>
 rules:
 - apiGroups:
   - ""
@@ -596,21 +596,21 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ .Release.Name }}-leader-election-rolebinding
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-leader-election-rolebinding
+  namespace: <NAMESPACE>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Release.Name }}-leader-election-role
+  name: <NAMESPACE>-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Release.Name }}-controller-manager
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-controller-manager
+  namespace: <NAMESPACE>
 ---
 apiVersion: v1
 data:
   controller_manager_config.yaml: "apiVersion: controller-runtime.sigs.k8s.io/v1alpha1\r\nkind: ControllerManagerConfig\r\nhealth:\r\n  healthProbeBindAddress: :8081\r\nmetrics:\r\n  bindAddress: 127.0.0.1:8080\r\nwebhook:\r\n  port: 9443\r\nleaderElection:\r\n  leaderElect: true\r\n  resourceName: 50a66265.storage.dell.com\r\n"
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-manager-config
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-manager-config
+  namespace: <NAMESPACE>

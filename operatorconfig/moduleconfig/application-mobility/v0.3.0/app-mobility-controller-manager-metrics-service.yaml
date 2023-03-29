@@ -3,8 +3,8 @@ kind: Service
 metadata:
   labels:
     control-plane: controller-manager
-  name: {{ .Release.Name }}-controller-manager-metrics-service
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-controller-manager-metrics-service
+  namespace: <NAMESPACE>
 spec:
   ports:
   - name: https
@@ -17,7 +17,7 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ .Release.Name }}-metrics-reader
+  name: <NAMESPACE>-metrics-reader
 rules:
 - nonResourceURLs:
   - /metrics

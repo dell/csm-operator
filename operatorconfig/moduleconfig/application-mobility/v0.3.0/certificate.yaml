@@ -1,21 +1,21 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: {{ .Release.Name }}-selfsigned-issuer
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-selfsigned-issuer
+  namespace: <NAMESPACE>
 spec:
   selfSigned: {}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ .Release.Name }}-serving-cert
-  namespace: {{ .Release.Namespace }}
+  name: <NAMESPACE>-serving-cert
+  namespace: <NAMESPACE>
 spec:
   dnsNames:
-  - {{ .Release.Name }}-webhook-service.{{ .Release.Namespace }}.svc
-  - {{ .Release.Name }}-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
+  - <NAMESPACE>-webhook-service.<NAMESPACE>.svc
+  - <NAMESPACE>-webhook-service.<NAMESPACE>.svc.cluster.local
   issuerRef:
     kind: Issuer
-    name: {{ .Release.Name }}-selfsigned-issuer
+    name: <NAMESPACE>-selfsigned-issuer
   secretName: webhook-server-cert
