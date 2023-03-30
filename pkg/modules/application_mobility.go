@@ -73,13 +73,12 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 	for _, component := range appMob.Components {
 		if component.Name == AuthProxyServerComponent {
-			YamlString = strings.ReplaceAll(YamlString, AppMobReplicaCount, )
-			YamlString = strings.ReplaceAll(YamlString, AppMobImagePullPolicy, )
-			YamlString = strings.ReplaceAll(YamlString, AppMobControllerImage, )
-			// In samples/config
-			YamlString = strings.ReplaceAll(YamlString, VeleroNamespace, )
-			YamlString = strings.ReplaceAll(YamlString, AppMobObjStoreSecretName, )
-			YamlString = strings.ReplaceAll(YamlString, AppMobLicenseName, )
+			YamlString = strings.ReplaceAll(YamlString, AppMobReplicaCount, component.ReplicaCount)
+			YamlString = strings.ReplaceAll(YamlString, AppMobImagePullPolicy, component.ImagePullPolicy)
+			YamlString = strings.ReplaceAll(YamlString, AppMobControllerImage, component.Controller)
+			YamlString = strings.ReplaceAll(YamlString, VeleroNamespace, component.VeleroNamespace)
+			YamlString = strings.ReplaceAll(YamlString, AppMobObjStoreSecretName, component.ObjectStoreSecretName)
+			YamlString = strings.ReplaceAll(YamlString, AppMobLicenseName, component.LicenseName)
 		}
 	}
 
