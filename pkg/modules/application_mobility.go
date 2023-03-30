@@ -26,8 +26,21 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var (
-	redisStorageClass       string
+const (
+        // Velero-related
+        VeleroNamespace = "<VELERO_NAMESPACE>"
+
+        // Application mobility-related
+	// Number of replicas
+        AppMobReplicaCount = "<APPLICATION_MOBILITY_REPLICA_COUNT>"
+	// Name of license
+	AppMobLicenseName = "<APPLICATION_MOBILITY_LICENSE_NAME>"
+	// Image pull policy for app-mob image
+	AppMobImagePullPolicy = "<APPLICATION_MOBILITY_IMAGE_PULL_POLICY>"
+	// App-mobility controller image
+	AppMobControllerImage = "<APPLICATION_MOBILITY_CONROLLER_IMAGE>"
+	// Secret name for the object store
+	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
 )
 
 // getAppMobilityModule - TODO Abrar update this comment
@@ -50,7 +63,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 		return YamlString, err
 	}
 
-	deploymentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthDeploymentManifest)
+	deploymentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobDeploymentManifest)
 	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
 	if err != nil {
 		return YamlString, err
@@ -61,14 +74,13 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 	for _, component := range appMob.Components {
 		if component.Name == AuthProxyServerComponent {
-			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, component.ProxyService)
-			YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, component.Opa)
-			YamlString = strings.ReplaceAll(YamlString, AuthOpaKubeMgmtImage, component.OpaKubeMgmt)
-			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, component.TenantService)
-			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
-			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
+			YamlString = strings.ReplaceAll(YamlString, AppMobReplicaCount, )
+			YamlString = strings.ReplaceAll(YamlString, AppMobImagePullPolicy, )
+			YamlString = strings.ReplaceAll(YamlString, AppMobControllerImage, )
+			// In samples/config
+			YamlString = strings.ReplaceAll(YamlString, VeleroNamespace, )
+			YamlString = strings.ReplaceAll(YamlString, AppMobObjStoreSecretName, )
+			YamlString = strings.ReplaceAll(YamlString, AppMobLicenseName, )
 		}
 	}
 
