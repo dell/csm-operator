@@ -40,15 +40,14 @@ var (
 	redisStorageClass       string
 )
 
-// getAppMobilityModule - TODO Abrar update this comment
-// TODO Abrar modify code inside to be getAppMobilityModule
+// getAppMobilityModule - get instance of app mobility module
 func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 	for _, m := range cr.Spec.Modules {
-		if m.Name == csmv1.AuthorizationServer {
+		if m.Name == csmv1.ApplicationMobility {
 			return m, nil
 		}
 	}
-	return csmv1.Module{}, fmt.Errorf("authorization module not found")
+	return csmv1.Module{}, fmt.Errorf("Application Mobility module not found")
 }
 
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
