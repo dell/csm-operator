@@ -4,7 +4,7 @@ image: dellemc/csm-authorization-sidecar:v1.7.0
 env:
   - name: PROXY_HOST
     value: ""
-  - name: SKIP_CERTIFICATE_VALIDATION
+  - name: INSECURE
     value: "true"
   - name: PLUGIN_IDENTIFIER
     value: <DriverPluginIdentifier>
