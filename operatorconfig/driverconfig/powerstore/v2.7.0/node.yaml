@@ -76,6 +76,7 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+        driver.dellemc.com: dell-storage
     spec:
       #nodeSelector:
       #tolerations:
@@ -227,3 +228,15 @@ spec:
         - name: powerstore-config
           secret:
             secretName: <DriverDefaultReleaseName>-config
+        - name: usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+        - name: kubelet-pods
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: var-run
+          hostPath:
+            path: /var/run
+            type: Directory
