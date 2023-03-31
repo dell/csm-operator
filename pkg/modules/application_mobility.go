@@ -35,12 +35,10 @@ const (
         AppMobReplicaCount = "<APPLICATION_MOBILITY_REPLICA_COUNT>"
 	// Name of license
 	AppMobLicenseName = "<APPLICATION_MOBILITY_LICENSE_NAME>"
-	// Image pull policy for app-mob image
-	AppMobImagePullPolicy = "<APPLICATION_MOBILITY_IMAGE_PULL_POLICY>"
-	// App-mobility controller image
-	AppMobControllerImage = "<APPLICATION_MOBILITY_CONROLLER_IMAGE>"
-	// Secret name for the object store
+	// Secret name for object store
 	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
+	// AppMobComponent - component name in cr for app-mobility controller-manager
+	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
 )
 
 // getAppMobilityModule - get instance of app mobility module
@@ -54,7 +52,6 @@ func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error)
 }
 
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
-// TODO JJL modify to getAppMobilityModuleDeployment
 func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, appMob csmv1.Module) (string, error) {
 	YamlString := ""
 	auth, err := getAppMobilityModule(cr)
@@ -72,7 +69,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	appMobNamespace := cr.Namespace
 
 	for _, component := range appMob.Components {
-		if component.Name == AuthProxyServerComponent {
+		if component.Name == AppMobCtrlMgrComponent {
 			YamlString = strings.ReplaceAll(YamlString, AppMobReplicaCount, component.ReplicaCount)
 			YamlString = strings.ReplaceAll(YamlString, AppMobImagePullPolicy, component.ImagePullPolicy)
 			YamlString = strings.ReplaceAll(YamlString, AppMobControllerImage, component.Controller)
