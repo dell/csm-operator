@@ -38,6 +38,8 @@ const (
 	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
+	// AppMobDeploymentManifest - filename of deployment manifest for app-mobility
+	AppMobDeploymentManifest = "deployment.yaml"
 )
 
 // getAppMobilityModule - get instance of app mobility module
