@@ -34,9 +34,9 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --app-mobility-namespace=<NAMESPACE>
-        - --velero-namespace=<VALERO>
+        - --velero-namespace=<VELERO-NAMESPACE>
         - --secret-name=<SECRET-NAME>
-        - --license-name=<LICENSE>
+        - --license-name=<LICENSE-NAME>
         command:
         - /manager
         image: <CONTROLLER-IMAGE>
