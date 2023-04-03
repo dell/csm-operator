@@ -299,10 +299,6 @@ type ContainerTemplate struct {
 	// ObjectStoreSecretName is the name of the secret for the object store for app-mobility
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Object Store Secret"
 	ObjectStoreSecretName string `json:"objectStoreSecretName,omitempty" yaml:"objectStoreSecretName,omitempty"`
-
-	// Controller is the image for the controller for app-mobility
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Controller Image"
-	Controller string `json:"controller,omitempty" yaml:"controller,omitempty"`
 }
 
 // SnapshotClass struct

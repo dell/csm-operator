@@ -27,17 +27,16 @@ import (
 )
 
 const (
-        // Velero-related
-        VeleroNamespace = "<VELERO_NAMESPACE>"
+	// VeleroNamespace - namespace Velero is installed in
+	VeleroNamespace = "<VELERO_NAMESPACE>"
 
-        // Application mobility-related
-	// Number of replicas
-        AppMobReplicaCount = "<APPLICATION_MOBILITY_REPLICA_COUNT>"
-	// Name of license
+	// AppMobReplicaCount - Number of replicas
+	AppMobReplicaCount = "<APPLICATION_MOBILITY_REPLICA_COUNT>"
+	// AppMobLicenseName - Name of license for app-mobility
 	AppMobLicenseName = "<APPLICATION_MOBILITY_LICENSE_NAME>"
-	// Secret name for object store
+	// AppMobObjStoreSecretName - Secret name for object store
 	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
-	// AppMobComponent - component name in cr for app-mobility controller-manager
+	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
 )
 
@@ -71,8 +70,6 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	for _, component := range appMob.Components {
 		if component.Name == AppMobCtrlMgrComponent {
 			YamlString = strings.ReplaceAll(YamlString, AppMobReplicaCount, component.ReplicaCount)
-			YamlString = strings.ReplaceAll(YamlString, AppMobImagePullPolicy, component.ImagePullPolicy)
-			YamlString = strings.ReplaceAll(YamlString, AppMobControllerImage, component.Controller)
 			YamlString = strings.ReplaceAll(YamlString, VeleroNamespace, component.VeleroNamespace)
 			YamlString = strings.ReplaceAll(YamlString, AppMobObjStoreSecretName, component.ObjectStoreSecretName)
 			YamlString = strings.ReplaceAll(YamlString, AppMobLicenseName, component.LicenseName)
@@ -83,4 +80,3 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 	return YamlString, nil
 }
-
