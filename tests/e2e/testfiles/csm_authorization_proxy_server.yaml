@@ -26,7 +26,6 @@ spec:
         envs:
           # base hostname for the ingress rules that expose the services
           # the proxy-server ingress will use this hostname
-          # the tenant-service ingress will use tenant.hostname
           # the role-service ingress will use role.hostname
           # the storage-service ingress will use storage.hostname
           # Allowed values: string
@@ -42,11 +41,6 @@ spec:
           # Default value: authorization-ingress-nginx-controller.namespace.svc.cluster.local
           - name: "PROXY_INGRESS_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-
-          # Tenant-service ingress configuration
-          # Default value: nginx
-          - name: "TENANT_INGRESS_CLASSNAME"
-            value: "nginx"
 
           # Role-service ingress configuration
           # Default value: nginx
