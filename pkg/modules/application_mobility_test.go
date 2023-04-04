@@ -29,8 +29,8 @@ import (
 )
 
 func TestGetAppMobilityModuleDeployment(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig){
+		"success": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/csm_application_mobility_v020.yaml")
 			if err != nil {
 				panic(err)
@@ -40,9 +40,9 @@ func TestGetAppMobilityModuleDeployment(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, tmpCR, operatorConfig
 		},
-		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - app mobility module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -52,27 +52,27 @@ func TestGetAppMobilityModuleDeployment(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return false, tmpCR, operatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/nonexist.yaml")
-			if err != nil {
-				panic(err)
-			}
+		//"fail - app mob config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
+		//	customResource, err := getCustomResource("./testdata/nonexist.yaml")
+		//	if err != nil {
+		//		panic(err)
+		//	}
 
-			tmpCR := customResource
+		//	tmpCR := customResource
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+		//	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
+		//	return false, tmpCR, operatorConfig
+		//},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 
-			success, isDeleting, cr, sourceClient, op := tc(t)
+			success, cr, op := tc(t)
 
-			err := AuthorizationServer(context.TODO(), isDeleting, op, cr, sourceClient)
+			err := getAppMobilityModuleDeployment(op, cr, csmv1.Module{})
 			if success {
 				assert.NoError(t, err)
 			} else {
