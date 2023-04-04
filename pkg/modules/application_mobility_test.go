@@ -19,8 +19,8 @@ import (
 
 func TestGetAppMobilityModuleDeployment(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig){
-		"success": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/csm_application_mobility_v020.yaml")
+		"happy path": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/csm_application_mobility_v030.yaml")
 			if err != nil {
 				panic(err)
 			}

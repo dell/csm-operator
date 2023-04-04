@@ -57,7 +57,7 @@ const (
 	ReverseProxy ModuleType = "csireverseproxy"
 	
 	// ApplicationMobility - placeholder for constant application-mobility
-	ApplicationMobility ModuleType = "application-mobility"
+	ApplicationMobility ModuleType = "application-mobility-controller-manager"
 
 	// Topology - placeholder for constant topology
 	Topology ObservabilityComponentType = "topology"

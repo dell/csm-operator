@@ -35,7 +35,7 @@ const (
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
 	// AppMobDeploymentManifest - filename of deployment manifest for app-mobility
-	AppMobDeploymentManifest = "deployment.yaml"
+	AppMobDeploymentManifest = "app-mobility-controller-manager.yaml"
 )
 
 // getAppMobilityModule - get instance of app mobility module
