@@ -13,17 +13,13 @@
 package modules
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
-	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -55,7 +51,7 @@ func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error)
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
 func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, appMob csmv1.Module) (string, error) {
 	YamlString := ""
-	auth, err := getAppMobilityModule(cr)
+	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
 		return YamlString, err
 	}
@@ -67,7 +63,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	}
 
 	YamlString = string(buf)
-	appMobNamespace := cr.Namespace
+	//appMobNamespace := cr.Namespace
 
 	for _, component := range appMob.Components {
 		if component.Name == AppMobCtrlMgrComponent {
@@ -78,7 +74,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 		}
 	}
 
-	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
+	//YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
 
 	return YamlString, nil
 }
