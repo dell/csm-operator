@@ -39,18 +39,18 @@ func TestGetAppMobilityModuleDeployment(t *testing.T) {
 
 			return false, tmpCR, operatorConfig
 		},
-		//"fail - app mob config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
-		//	customResource, err := getCustomResource("./testdata/nonexist.yaml")
-		//	if err != nil {
-		//		panic(err)
-		//	}
+		"fail - app mob config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/csm_application_mobility_v030.yaml")
+			if err != nil {
+				panic(err)
+			}
 
-		//	tmpCR := customResource
+			tmpCR := customResource
 
-		//	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
 
-		//	return false, tmpCR, operatorConfig
-		//},
+			return false, tmpCR, badOperatorConfig
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {

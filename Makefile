@@ -91,6 +91,9 @@ controller-unit-test:
 driver-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/drivers
 
+module-unit-test:
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/modules
+
 ##@ Build
 
 build: gen-semver fmt vet ## Build manager binary.
