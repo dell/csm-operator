@@ -9,18 +9,11 @@
 package modules
 
 import (
-	"context"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	drivers "github.com/dell/csm-operator/pkg/drivers"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	networking "k8s.io/api/networking/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
@@ -38,8 +31,6 @@ func TestGetAppMobilityModuleDeployment(t *testing.T) {
 
 			tmpCR := customResource
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
 			return true, tmpCR, operatorConfig
 		},
 		"fail - app mobility module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
@@ -49,8 +40,6 @@ func TestGetAppMobilityModuleDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, tmpCR, operatorConfig
 		},
