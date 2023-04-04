@@ -14,11 +14,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/fake"
 
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestGetAppMobilityModuleDeployment(t *testing.T) {
@@ -61,7 +57,7 @@ func TestGetAppMobilityModuleDeployment(t *testing.T) {
 
 			success, cr, op := tc(t)
 
-			err := getAppMobilityModuleDeployment(op, cr, csmv1.Module{})
+			_, err := getAppMobilityModuleDeployment(op, cr, csmv1.Module{})
 			if success {
 				assert.NoError(t, err)
 			} else {
