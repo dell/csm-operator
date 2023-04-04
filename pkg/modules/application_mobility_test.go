@@ -30,28 +30,19 @@ import (
 
 func TestGetAppMobilityModuleDeployment(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+		"success": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/csm_application_mobility_v020.yaml")
 			if err != nil {
 				panic(err)
 			}
 
 			tmpCR := customResource
 
-			cm := &corev1.ConfigMap{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "ConfigMap",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "csm-config-params",
-				},
-			}
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -63,8 +54,8 @@ func TestGetAppMobilityModuleDeployment(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/nonexist.yaml")
 			if err != nil {
 				panic(err)
 			}
