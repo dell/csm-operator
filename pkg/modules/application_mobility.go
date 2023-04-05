@@ -13,6 +13,7 @@
 package modules
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,6 +21,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	"github.com/dell/csm-operator/tests/shared/crclient"
 )
 
 const (
@@ -77,4 +79,30 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	//YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
 
 	return YamlString, nil
+}
+
+func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+
+	YamlString, err := getAppMobilityModuleDeployment(op, cr, csmv1.Module{})
+	if err != nil {
+		return err
+	}
+	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range deployObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }
