@@ -24,6 +24,7 @@ import (
 
 var (
 	operatorConfig utils.OperatorConfig
+	badOperatorConfig utils.OperatorConfig
 )
 
 func TestMain(m *testing.M) {

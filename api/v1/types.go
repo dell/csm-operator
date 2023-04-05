@@ -57,7 +57,7 @@ const (
 	ReverseProxy ModuleType = "csireverseproxy"
 	
 	// ApplicationMobility - placeholder for constant application-mobility
-	ApplicationMobility ModuleType = "application-mobility"
+	ApplicationMobility ModuleType = "application-mobility-controller-manager"
 
 	// Topology - placeholder for constant topology
 	Topology ObservabilityComponentType = "topology"
@@ -283,6 +283,22 @@ type ContainerTemplate struct {
 	// OpaKubeMgmt is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Opa Kube Management Container Image"
 	OpaKubeMgmt string `json:"opaKubeMgmt,omitempty" yaml:"opaKubeMgmt,omitempty"`
+
+	// ReplicaCount is the replica count for app mobility
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Replica Count"
+	ReplicaCount string `json:"replicaCount,omitempty" yaml:"replicaCount,omitempty"`
+
+	// VeleroNamespace is the namespace that Velero is installed in
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Velero namespace"
+	VeleroNamespace string `json:"veleroNamespace,omitempty" yaml:"veleroNamespace,omitempty"`
+
+	// LicenseName is the name of the license for app-mobility
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="License Name for Application Mobility"
+	LicenseName string `json:"licenseName,omitempty" yaml:"licenseName,omitempty"`
+
+	// ObjectStoreSecretName is the name of the secret for the object store for app-mobility
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Object Store Secret"
+	ObjectStoreSecretName string `json:"objectStoreSecretName,omitempty" yaml:"objectStoreSecretName,omitempty"`
 }
 
 // SnapshotClass struct
