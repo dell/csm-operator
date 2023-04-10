@@ -42,7 +42,7 @@ const (
 func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) error {
 	log := logger.GetLogger(ctx)
 	// Check for secret only
-	config := cr.Name + "-config"
+	config := cr.Name + "-creds"
 
 	if cr.Spec.Driver.AuthSecret != "" {
 		config = cr.Spec.Driver.AuthSecret

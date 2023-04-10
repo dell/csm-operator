@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Release.Name }}-controller
-  namespace: {{ .Release.Namespace }}
+  name: <DriverDefaultReleaseName>-controller
+  namespace: <DriverDefaultReleaseNamespace>
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ .Release.Name }}-controller  
+  name: <DriverDefaultReleaseName>-controller  
 rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
@@ -17,6 +17,7 @@ rules:
     verbs: ["list", "watch", "create", "update", "patch"]
   - apiGroups: [""]
     resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "create", "delete", "update","patch"]
@@ -28,6 +29,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update","patch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["csinodes"]
     verbs: ["get", "list", "watch", "update"]
@@ -39,6 +41,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["pods"]
+    verbs: ["get", "list", "watch"]
 # below for snapshotter
   - apiGroups: [""]
     resources: ["secrets"]
@@ -172,7 +175,7 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
-        - name: csi-external-health-monitor-controller
+        - name: external-health-monitor
           image: k8s.gcr.io/sig-storage/csi-external-health-monitor-controller:v0.7.0
           imagePullPolicy: IfNotPresent
           args:
