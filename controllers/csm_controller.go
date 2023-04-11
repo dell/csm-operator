@@ -613,6 +613,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return nil
 	}
 
+	if appmobilityEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ApplicationMobility); appmobilityEnabled {
+		log.Infow("Create/Update application mobility")
+		if err := r.reconcileAppMobility(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+			return fmt.Errorf("failed to deploy application mobility: %v", err)
+		}
+		return nil
+	}
+
 	// Get Driver resources
 	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig)
 	if err != nil {
@@ -815,6 +823,28 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		log.Infow("Reconcile authorization Ingresses")
 		if err := modules.AuthorizationIngress(ctx, isDeleting, op, cr, r, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// reconcileAppMobility - deploy Application Mobility
+func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+	// AppMobility installs cert-manager
+	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
+		log.Infow("Reconcile application mobility cert-manager")
+		if err := modules.AppMobilityCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile cert-manager for Application Mobility: %v", err)
+		}
+	}
+
+	// Appmobility installs velero
+	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobVeleroComponent) {
+		log.Infow("Reconcile application mobility velero")
+		if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile velero for Application Mobility: %v", err)
 		}
 	}
 
@@ -1082,6 +1112,12 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 				// observability precheck
 				if err := modules.ObservabilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed observability validation: %v", err)
+				}
+
+			case csmv1.ApplicationMobility:
+				//ApplicationMobility precheck
+				if err := modules.AppMobilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+					return fmt.Errorf("failed Appmobility validation: %v", err)
 				}
 
 			default:

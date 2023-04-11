@@ -20,13 +20,21 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
-	"github.com/dell/csm-operator/tests/shared/crclient"
+
+	//"github.com/dell/csm-operator/tests/shared/crclient"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	// VeleroNamespace - namespace Velero is installed in
 	VeleroNamespace = "<VELERO_NAMESPACE>"
+	// VeleroManifest -
+	VeleroManifest = "velero.yaml"
+
+	// AppMobNamespace - namespace Application Mobility is installed in
+	AppMobNamespace = "<NAMESPACE>"
 
 	// AppMobReplicaCount - Number of replicas
 	AppMobReplicaCount = "<APPLICATION_MOBILITY_REPLICA_COUNT>"
@@ -38,6 +46,10 @@ const (
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
 	// AppMobDeploymentManifest - filename of deployment manifest for app-mobility
 	AppMobDeploymentManifest = "app-mobility-controller-manager.yaml"
+	// AppMobCertManagerComponent - cert-manager component
+	AppMobCertManagerComponent = "cert-manager"
+	// AppMobVeleroComponent - velero component
+	AppMobVeleroComponent = "velero"
 )
 
 // getAppMobilityModule - get instance of app mobility module
@@ -105,4 +117,104 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 	}
 
 	return nil
+}
+
+// AppMobilityServerPrecheck  - runs precheck for CSM Application Mobility
+func AppMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appmobility csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+	log := logger.GetLogger(ctx)
+
+	if appmobility.ConfigVersion != "" {
+		err := checkVersion(string(csmv1.ApplicationMobility), appmobility.ConfigVersion, op.ConfigDirectory)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Check for secrets
+	/*proxyServerSecrets := []string{"karavi-config-secret", "karavi-storage-secret", "karavi-auth-tls"}
+	for _, name := range proxyServerSecrets {
+		found := &corev1.Secret{}
+		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
+		if err != nil {
+			if k8serrors.IsNotFound(err) {
+				return fmt.Errorf("failed to find secret %s", name)
+			}
+		}
+	}*/
+
+	log.Infof("preformed pre-checks for %s", appmobility.Name)
+	return nil
+}
+
+// AppMobilityCertManager - Install/Delete cert-manager
+func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getCertManager(op, cr)
+	if err != nil {
+		return err
+	}
+
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range ctrlObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// AppMobilityVelero - Install/Delete velero
+func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getVelero(op, cr)
+	if err != nil {
+		return err
+	}
+
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range ctrlObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	VeleroPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, VeleroManifest)
+	buf, err := os.ReadFile(filepath.Clean(VeleroPath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	appmobNamespace := cr.Namespace
+	YamlString = strings.ReplaceAll(YamlString, appmobNamespace, VeleroNamespace)
+
+	return YamlString, nil
 }

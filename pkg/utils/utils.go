@@ -918,6 +918,22 @@ func IsAuthorizationComponentEnabled(ctx context.Context, instance csmv1.Contain
 	return false
 }
 
+// IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
+func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
+	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)
+	if !appMobilityEnabled {
+		return false
+	}
+
+	for _, c := range appmobility.Components {
+		if c.Name == componentType && *c.Enabled {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Contains -
 func Contains(slice []string, str string) bool {
 	for _, v := range slice {

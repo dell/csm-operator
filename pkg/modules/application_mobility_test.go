@@ -9,55 +9,59 @@
 package modules
 
 import (
+	"context"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
-
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestGetAppMobilityModuleDeployment(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig){
-		"happy path": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
+func TestAppMobilityModuleDeployment(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"happy path": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/csm_application_mobility_v030.yaml")
 			if err != nil {
 				panic(err)
 			}
 
 			tmpCR := customResource
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, tmpCR, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mobility module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
+		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
 			}
 
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			tmpCR := customResource
 
-			return false, tmpCR, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, utils.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/csm_application_mobility_v030.yaml")
 			if err != nil {
 				panic(err)
 			}
 
 			tmpCR := customResource
-
 			badOperatorConfig.ConfigDirectory = "invalid-dir"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, tmpCR, badOperatorConfig
+			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 
-			success, cr, op := tc(t)
+			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			_, err := getAppMobilityModuleDeployment(op, cr, csmv1.Module{})
+			err := AppMobilityDeployment(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {
