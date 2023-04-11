@@ -84,8 +84,6 @@ const (
 	AuthProxyIngressClassName = "<PROXY_INGRESS_CLASSNAME>"
 	// AuthRoleIngressClassName -
 	AuthRoleIngressClassName = "<ROLE_INGRESS_CLASSNAME>"
-	// AuthStorageIngressClassName -
-	AuthStorageIngressClassName = "<STORAGE_INGRESS_CLASSNAME>"
 
 	// AuthProxyServerComponent - karavi-authorization-proxy-server component
 	AuthProxyServerComponent = "karavi-authorization-proxy-server"
@@ -98,12 +96,11 @@ const (
 )
 
 var (
-	redisStorageClass       string
-	authHostname            string
-	proxyIngressHost        string
-	proxyIngressClassName   string
-	roleIngressClassName    string
-	storageIngressClassName string
+	redisStorageClass     string
+	authHostname          string
+	proxyIngressHost      string
+	proxyIngressClassName string
+	roleIngressClassName  string
 )
 
 // AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
@@ -541,8 +538,6 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 					proxyIngressClassName = env.Value
 				} else if env.Name == "ROLE_INGRESS_CLASSNAME" {
 					roleIngressClassName = env.Value
-				} else if env.Name == "STORAGE_INGRESS_CLASSNAME" {
-					storageIngressClassName = env.Value
 				}
 			}
 		}
@@ -553,7 +548,6 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, proxyIngressHost)
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressClassName, proxyIngressClassName)
 	YamlString = strings.ReplaceAll(YamlString, AuthRoleIngressClassName, roleIngressClassName)
-	YamlString = strings.ReplaceAll(YamlString, AuthStorageIngressClassName, storageIngressClassName)
 
 	return YamlString, nil
 }
