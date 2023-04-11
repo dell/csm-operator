@@ -672,7 +672,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"--user", user,
 		"--password", password,
 		"--array-insecure",
-		"--insecure", "--addr", fmt.Sprintf("storage.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
 	)
 	fmt.Println("=== Storage === ", cmd.String())
 	b, err = cmd.CombinedOutput()
