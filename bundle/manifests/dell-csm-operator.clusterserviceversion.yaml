@@ -422,6 +422,10 @@ metadata:
                     "name": "CSI_LOG_LEVEL",
                     "value": "debug"
                   }
+                  {
+                    "name": "TENANT_NAME",
+                    "value": ""
+                  }
                 ],
                 "image": "dellemc/csi-unity:v2.6.0",
                 "imagePullPolicy": "IfNotPresent"

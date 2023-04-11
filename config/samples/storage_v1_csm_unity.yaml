@@ -46,6 +46,8 @@ spec:
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
           value: debug
+        - name: TENANT_NAME
+          value: ""
 
     sideCars:
       # health monitor is disabled by default, refer to driver documentation before enabling it
