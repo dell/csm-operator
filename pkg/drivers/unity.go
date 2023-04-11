@@ -31,11 +31,18 @@ const (
 	// UnityPluginIdentifier -
 	UnityPluginIdentifier = "unity"
 
-	// PowerStoreConfigParamsVolumeMount -
+	// UnityConfigParamsVolumeMount -
 	UnityConfigParamsVolumeMount = "csi-unity-config-params"
 
-	// CsiPowerstoreNodeNamePrefix - Node Name Prefix
+	// CsiUnityNodeNamePrefix - Node Name Prefix
 	CsiUnityNodeNamePrefix = "<X_CSI_UNITY_NODENAME_PREFIX>"
+
+	CsiLogLevel            = "<CSI_LOG_LEVEL>"
+	AllowRWOMultipodAccess = "<ALLOW_RWO_MULTIPOD_ACCESS>"
+
+	MaxUnityVolumesPerNode   = "<MAX_UNITY_VOLUMES_PER_NODE>"
+	SyncNodeInfoTimeInterval = "<SYNC_NODE_INFO_TIME_INTERVAL>"
+	TenantName               = "<TENANT_NAME>"
 )
 
 // PrecheckUnity do input validation
@@ -49,7 +56,7 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 	}
 
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/powerstore/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/unity/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckUnity failed in version check", "Error", err.Error())
 		return fmt.Errorf("%s %s not supported", csmv1.Unity, cr.Spec.Driver.ConfigVersion)
@@ -91,7 +98,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 				healthMonitorNode = env.Value
 			}
 		}
-		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreNodeNamePrefix, nodePrefix)
+		yamlString = strings.ReplaceAll(yamlString, CsiUnityNodeNamePrefix, nodePrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -101,6 +108,34 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+	case "CSIDriverSpec":
+		logLevel := ""
+		allowRWOMultipodAccess := "false"
+		maxUnityVolumesPerNode := "0"
+		syncNodeInfoTimeInterval := "15"
+		tenantName := ""
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "CSI_LOG_LEVEL" {
+				logLevel = env.Value
+			}
+			if env.Name == "ALLOW_RWO_MULTIPOD_ACCESS" {
+				allowRWOMultipodAccess = env.Value
+			}
+			if env.Name == "MAX_UNITY_VOLUMES_PER_NODE" {
+				maxUnityVolumesPerNode = env.Value
+			}
+			if env.Name == "SYNC_NODE_INFO_TIME_INTERVAL" {
+				syncNodeInfoTimeInterval = env.Value
+			}
+			if env.Name == "TENANT_NAME" {
+				tenantName = env.Value
+			}
+		}
+		yamlString = strings.ReplaceAll(yamlString, CsiLogLevel, logLevel)
+		yamlString = strings.ReplaceAll(yamlString, AllowRWOMultipodAccess, allowRWOMultipodAccess)
+		yamlString = strings.ReplaceAll(yamlString, MaxUnityVolumesPerNode, maxUnityVolumesPerNode)
+		yamlString = strings.ReplaceAll(yamlString, SyncNodeInfoTimeInterval, syncNodeInfoTimeInterval)
+		yamlString = strings.ReplaceAll(yamlString, TenantName, tenantName)
 	}
 	return yamlString
 }
