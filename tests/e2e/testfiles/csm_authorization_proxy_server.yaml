@@ -47,11 +47,6 @@ spec:
           - name: "ROLE_INGRESS_CLASSNAME"
             value: "nginx" 
 
-          # Storage-service ingress configuration
-          # Default value: nginx
-          - name: "STORAGE_INGRESS_CLASSNAME"
-            value: "nginx" 
-
           # Specify storage class for redis. Otherwise, default storage class is used.
           # Default value: None
           - name: "REDIS_STORAGE_CLASS"
