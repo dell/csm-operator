@@ -56,28 +56,3 @@ spec:
             name: role-service
             port:
               number: 50051
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: storage-service
-  namespace: <NAMESPACE>
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
-spec:
-  ingressClassName: <STORAGE_INGRESS_CLASSNAME>
-  tls:
-  - hosts:
-      - storage.<AUTHORIZATION_HOSTNAME>
-    secretName: karavi-auth-tls
-  rules:
-  - host: storage.<AUTHORIZATION_HOSTNAME>
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: storage-service
-            port:
-              number: 50051
