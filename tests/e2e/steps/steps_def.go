@@ -702,7 +702,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"role", "create",
 		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
 			roleName, storageType, sysID, pool, quotaLimit),
-		"--insecure", "--addr", fmt.Sprintf("role.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
 	)
 
 	fmt.Println("=== Creating Role", cmd.String())
