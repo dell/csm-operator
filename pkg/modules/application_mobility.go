@@ -74,7 +74,7 @@ func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error)
 }
 
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
-func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, appMob csmv1.Module) (string, error) {
+func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
@@ -105,8 +105,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 }
 
 func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
-	YamlString, err := getAppMobilityModuleDeployment(op, cr, csmv1.Module{})
+	YamlString, err := getAppMobilityModuleDeployment(op, cr)
 	if err != nil {
 		return err
 	}
@@ -130,8 +129,7 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 	return nil
 }
 
-func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, appMob csmv1.Module) (string, error) {
-
+func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -152,8 +150,7 @@ func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.Contain
 }
 
 func controllerManagerMetricService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
-	YamlString, err := getControllerManagerMetricService(op, cr, csmv1.Module{})
+	YamlString, err := getControllerManagerMetricService(op, cr)
 	if err != nil {
 		return err
 	}
@@ -178,7 +175,7 @@ func controllerManagerMetricService(ctx context.Context, isDeleting bool, op uti
 }
 
 // getAppMobilityWebhookService - gets the app mobility webhook service manifest
-func getAppMobilityWebhookService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, appMob csmv1.Module) (string, error) {
+func getAppMobilityWebhookService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
@@ -199,7 +196,7 @@ func getAppMobilityWebhookService(op utils.OperatorConfig, cr csmv1.ContainerSto
 
 // AppMobilityWebhookService-  apply/delete app mobility's webhook service
 func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getAppMobilityWebhookService(op, cr, csmv1.Module{})
+	YamlString, err := getAppMobilityWebhookService(op, cr)
 	if err != nil {
 		return err
 	}
