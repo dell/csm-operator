@@ -36,6 +36,8 @@ const (
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
 	// AppMobDeploymentManifest - filename of deployment manifest for app-mobility
 	AppMobDeploymentManifest = "app-mobility-controller-manager.yaml"
+	// AppMobWebhookManifest - filename of Webhook manifest for app-mobility
+	AppMobWebhookService = "app-mobility-webhook-service.yaml"
 )
 
 // getAppMobilityModule - get instance of app mobility module
@@ -77,4 +79,50 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	//YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
 
 	return YamlString, nil
+}
+
+// getAppMobilityWebhookService - gets the app mobility webhook service manifest
+func getAppMobilityWebhookService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	webhookServicePath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobWebhookService)
+	buf, err := os.ReadFile(filepath.Clean(webhookServicePath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, cr.Namespace)
+
+	return YamlString, nil
+}
+
+// AppMobilityWebhookService-  apply/delete app mobility's webhook service
+func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getAppMobilityWebhookService(op, cr, csmv1.Module{})
+	if err != nil {
+		return err
+	}
+	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range deployObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
