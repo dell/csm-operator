@@ -307,10 +307,6 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	}
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
-	if cr.Spec.Driver.CSIDriverType == "unity" {
-		YamlString = ModifyUnityCR(YamlString, cr, "ConfigMap")
-	}
-
 	var configMap corev1.ConfigMap
 	err = yaml.Unmarshal([]byte(YamlString), &configMap)
 	if err != nil {
@@ -325,6 +321,9 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 			}
 			break
 		}
+	}
+	if cr.Spec.Driver.CSIDriverType == "unity" {
+		configMap.Data = ModifyUnityConfigMap(ctx, cr)
 	}
 	return &configMap, nil
 

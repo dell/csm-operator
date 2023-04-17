@@ -78,18 +78,13 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 	return nil
 }
 
-// ModifyPowerstoreCR -
+// ModifyUnityCR - Configuring CR parameters
 func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
 	// Parameters to initialise CR values
 	nodePrefix := ""
 	healthMonitorNode := ""
 	healthMonitorController := ""
-	allowRWOMultipodAccess := ""
-	maxUnityVolumesPerNode := ""
-	syncNodeInfoTimeInterval := ""
-	tenantName := ""
 
-	var configMap corev1.ConfigMap
 	switch fileType {
 	case "Node":
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -113,33 +108,38 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
-	case "ConfigMap":
-		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "ALLOW_RWO_MULTIPOD_ACCESS" {
-				configMap.Data = map[string]string{
-					"driver-config-params.yaml": fmt.Sprintf("%s: %s", env.Name, env.Value),
-				}
-			}
-			if env.Name == "MAX_UNITY_VOLUMES_PER_NODE" {
-				configMap.Data = map[string]string{
-					"driver-config-params.yaml": fmt.Sprintf("%s: %s", env.Name, env.Value),
-				}
-			}
-			if env.Name == "SYNC_NODE_INFO_TIME_INTERVAL" {
-				configMap.Data = map[string]string{
-					"driver-config-params.yaml": fmt.Sprintf("%s: %s", env.Name, env.Value),
-				}
-			}
-			if env.Name == "TENANT_NAME" {
-				configMap.Data = map[string]string{
-					"driver-config-params.yaml": fmt.Sprintf("%s: %s", env.Name, env.Value),
-				}
-			}
-		}
-		yamlString = strings.ReplaceAll(yamlString, AllowRWOMultipodAccess, allowRWOMultipodAccess)
-		yamlString = strings.ReplaceAll(yamlString, MaxUnityVolumesPerNode, maxUnityVolumesPerNode)
-		yamlString = strings.ReplaceAll(yamlString, SyncNodeInfoTimeInterval, syncNodeInfoTimeInterval)
-		yamlString = strings.ReplaceAll(yamlString, TenantName, tenantName)
+
 	}
 	return yamlString
+}
+
+// ModifyUnityConfigMap - Modify the Configmap parameters
+func ModifyUnityConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule) map[string]string {
+	keyValue := ""
+	var configMapData map[string]string
+	for _, env := range cr.Spec.Driver.Common.Envs {
+
+		if env.Name == "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS" {
+			keyValue += fmt.Sprintf("\n %s: %s", "ALLOW_MULTI_POD_ACCESS", env.Value)
+
+		}
+		if env.Name == "MAX_UNITY_VOLUMES_PER_NODE" {
+			keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
+		}
+		if env.Name == "X_CSI_UNITY_SYNC_NODEINFO_INTERVAL" {
+			keyValue += fmt.Sprintf("\n %s: %s", "SYNC_NODE_INFO_TIME_INTERVAL", env.Value)
+		}
+		if env.Name == "TENANT_NAME" {
+			keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
+		}
+		if env.Name == "CSI_LOG_LEVEL" {
+			keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
+		}
+	}
+	configMapData = map[string]string{
+		"driver-config-params.yaml": keyValue,
+	}
+
+	return configMapData
+
 }

@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: <DriverDefaultReleaseName>-config-params
-  namespace: <DriverDefaultReleaseName>
-data:
-  driver-config-params.yaml: |
-    CSI_LOG_LEVEL: "debug"
-    CSI_LOG_FORMAT: "JSON"
