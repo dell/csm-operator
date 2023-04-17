@@ -48,6 +48,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if cr.Spec.Driver.CSIDriverType == "powerstore" {
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "Controller")
 	}
+	log.Debugw("DriverSpec ", cr.Spec)
 	if cr.Spec.Driver.CSIDriverType == "unity" {
 		YamlString = ModifyUnityCR(YamlString, cr, "Controller")
 	}
@@ -306,6 +307,10 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	}
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
+	if cr.Spec.Driver.CSIDriverType == "unity" {
+		YamlString = ModifyUnityCR(YamlString, cr, "ConfigMap")
+	}
+
 	var configMap corev1.ConfigMap
 	err = yaml.Unmarshal([]byte(YamlString), &configMap)
 	if err != nil {
@@ -358,9 +363,9 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	if cr.Spec.Driver.CSIDriverType == "powerstore" {
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "CSIDriverSpec")
 	}
-	if cr.Spec.Driver.CSIDriverType == "unity" {
-		YamlString = ModifyUnityCR(YamlString, cr, "CSIDriverSpec")
-	}
+	// if cr.Spec.Driver.CSIDriverType == "unity" {
+	// 	YamlString = ModifyUnityCR(YamlString, cr, "CSIDriverSpec")
+	// }
 	err = yaml.Unmarshal([]byte(YamlString), &csidriver)
 	if err != nil {
 		log.Errorw("GetCSIDriver yaml marshall failed", "Error", err.Error())

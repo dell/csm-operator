@@ -38,10 +38,10 @@ const (
 	CsiUnityNodeNamePrefix = "<X_CSI_UNITY_NODENAME_PREFIX>"
 
 	CsiLogLevel            = "<CSI_LOG_LEVEL>"
-	AllowRWOMultipodAccess = "<ALLOW_RWO_MULTIPOD_ACCESS>"
+	AllowRWOMultipodAccess = "<X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS>"
 
 	MaxUnityVolumesPerNode   = "<MAX_UNITY_VOLUMES_PER_NODE>"
-	SyncNodeInfoTimeInterval = "<SYNC_NODE_INFO_TIME_INTERVAL>"
+	SyncNodeInfoTimeInterval = "<X_CSI_UNITY_SYNC_NODEINFO_INTERVAL>"
 	TenantName               = "<TENANT_NAME>"
 )
 
@@ -84,7 +84,12 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 	nodePrefix := ""
 	healthMonitorNode := ""
 	healthMonitorController := ""
+	allowRWOMultipodAccess := ""
+	maxUnityVolumesPerNode := ""
+	syncNodeInfoTimeInterval := ""
+	tenantName := ""
 
+	var configMap corev1.ConfigMap
 	switch fileType {
 	case "Node":
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -108,30 +113,29 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
-	case "CSIDriverSpec":
-		logLevel := ""
-		allowRWOMultipodAccess := "false"
-		maxUnityVolumesPerNode := "0"
-		syncNodeInfoTimeInterval := "15"
-		tenantName := ""
+	case "ConfigMap":
 		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "CSI_LOG_LEVEL" {
-				logLevel = env.Value
-			}
 			if env.Name == "ALLOW_RWO_MULTIPOD_ACCESS" {
-				allowRWOMultipodAccess = env.Value
+				configMap.Data = map[string]string{
+					"driver-config-params.yaml": fmt.Sprintf("%s: %s", env.Name, env.Value),
+				}
 			}
 			if env.Name == "MAX_UNITY_VOLUMES_PER_NODE" {
-				maxUnityVolumesPerNode = env.Value
+				configMap.Data = map[string]string{
+					"driver-config-params.yaml": fmt.Sprintf("%s: %s", env.Name, env.Value),
+				}
 			}
 			if env.Name == "SYNC_NODE_INFO_TIME_INTERVAL" {
-				syncNodeInfoTimeInterval = env.Value
+				configMap.Data = map[string]string{
+					"driver-config-params.yaml": fmt.Sprintf("%s: %s", env.Name, env.Value),
+				}
 			}
 			if env.Name == "TENANT_NAME" {
-				tenantName = env.Value
+				configMap.Data = map[string]string{
+					"driver-config-params.yaml": fmt.Sprintf("%s: %s", env.Name, env.Value),
+				}
 			}
 		}
-		yamlString = strings.ReplaceAll(yamlString, CsiLogLevel, logLevel)
 		yamlString = strings.ReplaceAll(yamlString, AllowRWOMultipodAccess, allowRWOMultipodAccess)
 		yamlString = strings.ReplaceAll(yamlString, MaxUnityVolumesPerNode, maxUnityVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, SyncNodeInfoTimeInterval, syncNodeInfoTimeInterval)
