@@ -88,7 +88,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	}
 
 	YamlString = string(buf)
-	//appMobNamespace := cr.Namespace
+	appMobNamespace := cr.Namespace
 
 	for _, component := range appMob.Components {
 		if component.Name == AppMobCtrlMgrComponent {
@@ -99,7 +99,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 		}
 	}
 
-	//YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
+	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
 
 	return YamlString, nil
 }

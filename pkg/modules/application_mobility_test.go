@@ -77,7 +77,7 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 func TestAppMobilityWebhookService(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_app_mob_webhook_service.yaml")
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -97,7 +97,7 @@ func TestAppMobilityWebhookService(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_app_mob_webhook_service.yaml")
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
 			}
