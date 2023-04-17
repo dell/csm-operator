@@ -22,12 +22,22 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	//"github.com/dell/csm-operator/tests/shared/crclient"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
+
+	// AppMobDeploymentManifest - filename of deployment manifest for app-mobility
+	AppMobDeploymentManifest = "app-mobility-controller-manager.yaml"
+	// AppMobMetricService - filename of MetricService manifest for app-mobility
+	AppMobMetricService = "app-mobility-controller-manager-metrics-service.yaml"
+	// AppMobWebhookManifest - filename of Webhook manifest for app-mobility
+	AppMobWebhookService = "app-mobility-webhook-service.yaml"
 	// VeleroNamespace - namespace Velero is installed in
 	VeleroNamespace = "<VELERO_NAMESPACE>"
 	// VeleroManifest -
@@ -46,8 +56,7 @@ const (
 	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
-	// AppMobDeploymentManifest - filename of deployment manifest for app-mobility
-	AppMobDeploymentManifest = "app-mobility-controller-manager.yaml"
+
 	// AppMobCertManagerComponent - cert-manager component
 	AppMobCertManagerComponent = "cert-manager"
 	// AppMobVeleroComponent - velero component
@@ -65,7 +74,7 @@ func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error)
 }
 
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
-func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, appMob csmv1.Module) (string, error) {
+func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
@@ -96,8 +105,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 }
 
 func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
-	YamlString, err := getAppMobilityModuleDeployment(op, cr, csmv1.Module{})
+	YamlString, err := getAppMobilityModuleDeployment(op, cr)
 	if err != nil {
 		return err
 	}
@@ -121,20 +129,111 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 	return nil
 }
 
+func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	metricServicePath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobMetricService)
+	buf, err := os.ReadFile(filepath.Clean(metricServicePath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, cr.Namespace)
+
+	return YamlString, nil
+}
+
+func controllerManagerMetricService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getControllerManagerMetricService(op, cr)
+	if err != nil {
+		return err
+	}
+	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range deployObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// getAppMobilityWebhookService - gets the app mobility webhook service manifest
+func getAppMobilityWebhookService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	webhookServicePath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobWebhookService)
+	buf, err := os.ReadFile(filepath.Clean(webhookServicePath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, cr.Namespace)
+
+	return YamlString, nil
+}
+
+// AppMobilityWebhookService-  apply/delete app mobility's webhook service
+func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getAppMobilityWebhookService(op, cr)
+	if err != nil {
+		return err
+	}
+	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range deployObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // AppMobilityServerPrecheck  - runs precheck for CSM Application Mobility
-func AppMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appmobility csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+func AppMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
-	if appmobility.ConfigVersion != "" {
-		err := checkVersion(string(csmv1.ApplicationMobility), appmobility.ConfigVersion, op.ConfigDirectory)
+	if appMob.ConfigVersion != "" {
+		err := checkVersion(string(csmv1.ApplicationMobility), appMob.ConfigVersion, op.ConfigDirectory)
 		if err != nil {
 			return err
 		}
 	}
 
 	// Check for secrets
-	/*proxyServerSecrets := []string{"karavi-config-secret", "karavi-storage-secret", "karavi-auth-tls"}
-	for _, name := range proxyServerSecrets {
+	appMobilitySecrets := []string{"application-mobility-cert-manager-webhook-ca", "webhook-server-cert", "license", "velero-restic-credentials"}
+	for _, name := range appMobilitySecrets {
 		found := &corev1.Secret{}
 		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
 		if err != nil {
@@ -142,9 +241,9 @@ func AppMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appmobili
 				return fmt.Errorf("failed to find secret %s", name)
 			}
 		}
-	}*/
+	}
 
-	log.Infof("preformed pre-checks for %s", appmobility.Name)
+	log.Infof("preformed pre-checks for %s", appMob.Name)
 	return nil
 }
 
