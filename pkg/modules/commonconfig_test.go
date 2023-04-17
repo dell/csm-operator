@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	operatorConfig utils.OperatorConfig
+	operatorConfig    utils.OperatorConfig
 	badOperatorConfig utils.OperatorConfig
 )
 

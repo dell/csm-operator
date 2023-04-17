@@ -835,17 +835,17 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 	// AppMobility installs cert-manager
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
 		log.Infow("Reconcile application mobility cert-manager")
-		if err := modules.AppMobilityCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		/*if err := modules.AppMobilityCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile cert-manager for Application Mobility: %v", err)
-		}
+		}*/
 	}
 
 	// Appmobility installs velero
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobVeleroComponent) {
 		log.Infow("Reconcile application mobility velero")
-		if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		/*if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile velero for Application Mobility: %v", err)
-		}
+		}*/
 	}
 
 	return nil
@@ -1026,6 +1026,13 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.AuthorizationServer); authorizationEnabled {
 		log.Infow("Deleting Authorization Proxy Server")
 		if err := r.reconcileAuthorization(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+			return err
+		}
+	}
+
+	if appMobilityEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ApplicationMobility); appMobilityEnabled {
+		log.Infow("Deleting Application Mobility")
+		if err := r.reconcileAppMobility(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
 			return err
 		}
 	}

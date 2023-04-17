@@ -45,4 +45,4 @@ spec:
       #   false: disable deployment of cert-manager only if it's already deployed
       # Default value: false
       - name: cert-manager
-        enabled: false
+        enabled: true
