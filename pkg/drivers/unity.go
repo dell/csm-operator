@@ -28,21 +28,29 @@ import (
 )
 
 const (
-	// UnityPluginIdentifier -
+	// UnityPluginIdentifier
 	UnityPluginIdentifier = "unity"
 
-	// UnityConfigParamsVolumeMount -
+	// UnityConfigParamsVolumeMount
 	UnityConfigParamsVolumeMount = "csi-unity-config-params"
 
 	// CsiUnityNodeNamePrefix - Node Name Prefix
 	CsiUnityNodeNamePrefix = "<X_CSI_UNITY_NODENAME_PREFIX>"
 
-	CsiLogLevel            = "<CSI_LOG_LEVEL>"
+	// CsiLogLevel - Defines the log level
+	CsiLogLevel = "<CSI_LOG_LEVEL>"
+
+	// AllowRWOMultipodAccess - Defines if multiple pod should have access to a volume
 	AllowRWOMultipodAccess = "<X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS>"
 
-	MaxUnityVolumesPerNode   = "<MAX_UNITY_VOLUMES_PER_NODE>"
+	// MaxUnityVolumesPerNode - Max volumes per node
+	MaxUnityVolumesPerNode = "<MAX_UNITY_VOLUMES_PER_NODE>"
+
+	// SyncNodeInfoTimeInterval - Interval to sync node info
 	SyncNodeInfoTimeInterval = "<X_CSI_UNITY_SYNC_NODEINFO_INTERVAL>"
-	TenantName               = "<TENANT_NAME>"
+
+	// TenantName - Name of the tenant
+	TenantName = "<TENANT_NAME>"
 )
 
 // PrecheckUnity do input validation
