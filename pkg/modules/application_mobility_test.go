@@ -15,6 +15,8 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -72,10 +74,10 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 	}
 }
 
-/*func TestAppMobilityCertManager(t *testing.T) {
+func TestAppMobilityWebhookService(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			customResource, err := getCustomResource("./testdata/cr_app_mob_webhook_service.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -84,10 +86,10 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 
 			cr := &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
-					Kind: "Deployment",
+					Kind: "Service",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "appmobility-cert-manager",
+					Name: "app-mobility-webhook-service",
 				},
 			}
 
@@ -95,7 +97,7 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			customResource, err := getCustomResource("./testdata/cr_app_mob_webhook_service.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -111,7 +113,7 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := AppMobilityCertManager(context.TODO(), isDeleting, op, cr, sourceClient)
+			err := AppMobilityWebhookService(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
 
@@ -121,4 +123,4 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 
 		})
 	}
-}*/
+}
