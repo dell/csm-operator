@@ -13,6 +13,8 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -64,6 +66,57 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 			err := AppMobilityDeployment(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestAppMobilityWebhookService(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_app_mob_webhook_service.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Service",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "app-mobility-webhook-service",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_app_mob_webhook_service.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := AppMobilityWebhookService(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+
 			} else {
 				assert.Error(t, err)
 			}
