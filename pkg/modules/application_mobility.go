@@ -32,6 +32,8 @@ const (
 	VeleroNamespace = "<VELERO_NAMESPACE>"
 	// VeleroManifest -
 	VeleroManifest = "velero.yaml"
+	// AppMobCertManagerManifest -
+	AppMobCertManagerManifest = "cert-manager.yaml"
 
 	// AppMobNamespace - namespace Application Mobility is installed in
 	AppMobNamespace = "<NAMESPACE>"
@@ -147,8 +149,8 @@ func AppMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appmobili
 }
 
 // AppMobilityCertManager - Install/Delete cert-manager
-func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getCertManager(op, cr)
+/*func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getAppMobCertManager(op, cr)
 	if err != nil {
 		return err
 	}
@@ -170,6 +172,27 @@ func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.Opera
 		}
 	}
 	return nil
+}
+
+func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	certManagerPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobCertManagerManifest)
+	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	appMobNamespace := cr.Namespace
+	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
+
+	return YamlString, nil
 }
 
 // AppMobilityVelero - Install/Delete velero
@@ -217,4 +240,4 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	YamlString = strings.ReplaceAll(YamlString, appmobNamespace, VeleroNamespace)
 
 	return YamlString, nil
-}
+}*/
