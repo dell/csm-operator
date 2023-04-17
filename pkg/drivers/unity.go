@@ -28,10 +28,10 @@ import (
 )
 
 const (
-	// UnityPluginIdentifier
+	// UnityPluginIdentifier - Unity Plugin Identifier
 	UnityPluginIdentifier = "unity"
 
-	// UnityConfigParamsVolumeMount
+	// UnityConfigParamsVolumeMount - Volume mount
 	UnityConfigParamsVolumeMount = "csi-unity-config-params"
 
 	// CsiUnityNodeNamePrefix - Node Name Prefix
