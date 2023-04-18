@@ -205,7 +205,7 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 
 			tmpCR := customResource
 			appMobility := tmpCR.Spec.Modules[0]
-			appMobility.ConfigVersion = "v10.0.0"
+			appMobility.ConfigVersion = "v10.10.10"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
@@ -213,6 +213,23 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 			}
 
 			return false, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"Success - working app-mobility version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			appMobility := tmpCR.Spec.Modules[0]
+			appMobility.ConfigVersion = "v0.3.0"
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
+			}
+
+			return true, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 	}
 	for name, tc := range tests {
