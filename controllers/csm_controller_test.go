@@ -246,6 +246,26 @@ func (suite *CSMControllerTestSuite) TestPowerStoreAnnotation() {
 
 }
 
+func (suite *CSMControllerTestSuite) TestUnityAnnotation() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.Unity
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
+
+}
+
 func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
