@@ -18,7 +18,7 @@ spec:
     # For example: If the metadataName is set to test-unity, authSecret value should be set to test-unity-config
     authSecret: test-unity-creds
     # Controller count
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
@@ -40,9 +40,9 @@ spec:
         - name: KUBELET_CONFIG_DIR
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
-          value: "info"
+          value: debug
         - name: TENANT_NAME
-          value: "csi_unity_tenant"
+          value: ""
 
     sideCars:
       # health monitor is disabled by default, refer to driver documentation before enabling it
