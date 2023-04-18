@@ -48,6 +48,10 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if cr.Spec.Driver.CSIDriverType == "powerstore" {
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "Controller")
 	}
+	log.Debugw("DriverSpec ", cr.Spec)
+	if cr.Spec.Driver.CSIDriverType == "unity" {
+		YamlString = ModifyUnityCR(YamlString, cr, "Controller")
+	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "Deployment")
 	if err != nil {
@@ -166,6 +170,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 	if cr.Spec.Driver.CSIDriverType == "powerflex" {
 		YamlString = ModifyPowerflexCR(YamlString, cr, "Node")
+	}
+	if cr.Spec.Driver.CSIDriverType == "unity" {
+		YamlString = ModifyUnityCR(YamlString, cr, "Node")
 	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
@@ -314,6 +321,9 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 			}
 			break
 		}
+	}
+	if cr.Spec.Driver.CSIDriverType == "unity" {
+		configMap.Data = ModifyUnityConfigMap(ctx, cr)
 	}
 	return &configMap, nil
 
