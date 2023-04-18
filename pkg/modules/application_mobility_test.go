@@ -17,14 +17,37 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestAppMobilityModuleDeployment(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		/*"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			//namespace := customResource.Namespace
+
+			cm := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "application-mobility-controller-manager",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},*/
+
 		"happy path": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
@@ -223,8 +246,9 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 			tmpCR := customResource
 			appMobility := tmpCR.Spec.Modules[0]
 			appMobility.ConfigVersion = "v0.3.0"
+			licenceCred := getSecret(customResource.Namespace, "license")
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
