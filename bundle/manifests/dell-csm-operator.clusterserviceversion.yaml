@@ -1043,7 +1043,7 @@ spec:
     additional snapshot capabilities such as group/crash \n  consistent snapshots
     with referential integrity\n\nThese modules are available for various storage
     platforms in the Dell portfolio, \nsuch as Dell PowerStore, Dell PowerMax, Dell
-    PowerFlex, Dell PowerScale, and Unity XT.\n\nFor more information, visit [Dell’s
+    PowerFlex, and Dell PowerScale.\n\nFor more information, visit [Dell’s
     Container Storage Module web page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kubernetes-storage.htm)\n\nAdditional
     Materials\n*\t[CSM Operator GitHub Page](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)\n*\t[CSM
     Introduction Video](https://www.youtube.com/watch?v=NtNSKdF9Iyo)\n*\t[CSM Solution
