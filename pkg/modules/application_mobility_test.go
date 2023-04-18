@@ -19,6 +19,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestAppMobilityModuleDeployment(t *testing.T) {
@@ -73,11 +75,10 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 		})
 	}
 }
-
 func TestAppMobilityWebhookService(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_app_mob_webhook_service.yaml")
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -89,7 +90,7 @@ func TestAppMobilityWebhookService(t *testing.T) {
 					Kind: "Service",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "app-mobility-webhook-service",
+					Name: "application-mobility-webhook-service",
 				},
 			}
 
@@ -97,7 +98,56 @@ func TestAppMobilityWebhookService(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_app_mob_webhook_service.yaml")
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := AppMobilityWebhookService(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+func TestControllerManagerMetricService(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Service",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "application-mobility-controller-manager-metrics-service",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -113,7 +163,76 @@ func TestAppMobilityWebhookService(t *testing.T) {
 
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := AppMobilityWebhookService(context.TODO(), isDeleting, op, cr, sourceClient)
+			err := controllerManagerMetricService(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+func TestApplicationMobilityPrecheck(t *testing.T) {
+	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
+		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			licenceCred := getSecret(customResource.Namespace, "license")
+
+			tmpCR := customResource
+			appMobility := tmpCR.Spec.Modules[0]
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+				return clusterClient, nil
+			}
+
+			return true, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"Fail - unsupported app-mobility version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			appMobility := tmpCR.Spec.Modules[0]
+			appMobility.ConfigVersion = "v10.0.0"
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
+			}
+
+			return false, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			defer func() {
+				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+			}()
+			success, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
+			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			utils.NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
+				return nil, nil
+			}
+			fakeReconcile := utils.FakeReconcileCSM{
+				Client:    sourceClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+			err := ApplicationMobilityPrecheck(context.TODO(), operatorConfig, appMobility, tmpCR, &fakeReconcile)
 			if success {
 				assert.NoError(t, err)
 

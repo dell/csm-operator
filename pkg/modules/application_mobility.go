@@ -88,7 +88,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	}
 
 	YamlString = string(buf)
-	//appMobNamespace := cr.Namespace
+	appMobNamespace := cr.Namespace
 
 	for _, component := range appMob.Components {
 		if component.Name == AppMobCtrlMgrComponent {
@@ -99,7 +99,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 		}
 	}
 
-	//YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
+	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
 
 	return YamlString, nil
 }
@@ -221,9 +221,10 @@ func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.Op
 }
 
 // AppMobilityServerPrecheck  - runs precheck for CSM Application Mobility
-func AppMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
+	// check if provided version is supported
 	if appMob.ConfigVersion != "" {
 		err := checkVersion(string(csmv1.ApplicationMobility), appMob.ConfigVersion, op.ConfigDirectory)
 		if err != nil {
@@ -232,7 +233,7 @@ func AppMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob cs
 	}
 
 	// Check for secrets
-	appMobilitySecrets := []string{"application-mobility-cert-manager-webhook-ca", "webhook-server-cert", "license", "velero-restic-credentials"}
+	appMobilitySecrets := []string{"license"}
 	for _, name := range appMobilitySecrets {
 		found := &corev1.Secret{}
 		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
