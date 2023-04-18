@@ -200,6 +200,9 @@ spec:
                         description: ImagePullPolicy is the image pull policy for
                           the image
                         type: string
+                      licenseName:
+                        description: LicenseName is the name of the license for app-mobility
+                        type: string
                       name:
                         description: Name is the name of Container
                         type: string
@@ -210,6 +213,10 @@ spec:
                           for the pod to fit on a node. Selector which must match
                           a node's labels for the pod to be scheduled on that node.
                         type: object
+                      objectStoreSecretName:
+                        description: ObjectStoreSecretName is the name of the secret
+                          for the object store for app-mobility
+                        type: string
                       opa:
                         description: Opa is the image tag for the Container
                         type: string
@@ -221,6 +228,9 @@ spec:
                         type: string
                       redis:
                         description: Redis is the image tag for the Container
+                        type: string
+                      replicaCount:
+                        description: ReplicaCount is the replica count for app mobility
                         type: string
                       roleService:
                         description: RoleService is the image tag for the Container
@@ -274,6 +284,10 @@ spec:
                               type: string
                           type: object
                         type: array
+                      veleroNamespace:
+                        description: VeleroNamespace is the namespace that Velero
+                          is installed in
+                        type: string
                     type: object
                   configVersion:
                     description: ConfigVersion is the configuration version of the
@@ -417,6 +431,9 @@ spec:
                         description: ImagePullPolicy is the image pull policy for
                           the image
                         type: string
+                      licenseName:
+                        description: LicenseName is the name of the license for app-mobility
+                        type: string
                       name:
                         description: Name is the name of Container
                         type: string
@@ -427,6 +444,10 @@ spec:
                           for the pod to fit on a node. Selector which must match
                           a node's labels for the pod to be scheduled on that node.
                         type: object
+                      objectStoreSecretName:
+                        description: ObjectStoreSecretName is the name of the secret
+                          for the object store for app-mobility
+                        type: string
                       opa:
                         description: Opa is the image tag for the Container
                         type: string
@@ -438,6 +459,9 @@ spec:
                         type: string
                       redis:
                         description: Redis is the image tag for the Container
+                        type: string
+                      replicaCount:
+                        description: ReplicaCount is the replica count for app mobility
                         type: string
                       roleService:
                         description: RoleService is the image tag for the Container
@@ -491,6 +515,10 @@ spec:
                               type: string
                           type: object
                         type: array
+                      veleroNamespace:
+                        description: VeleroNamespace is the namespace that Velero
+                          is installed in
+                        type: string
                     type: object
                   csiDriverSpec:
                     description: CSIDriverSpec is the specification for CSIDriver
@@ -656,6 +684,10 @@ spec:
                           description: ImagePullPolicy is the image pull policy for
                             the image
                           type: string
+                        licenseName:
+                          description: LicenseName is the name of the license for
+                            app-mobility
+                          type: string
                         name:
                           description: Name is the name of Container
                           type: string
@@ -666,6 +698,10 @@ spec:
                             for the pod to fit on a node. Selector which must match
                             a node's labels for the pod to be scheduled on that node.
                           type: object
+                        objectStoreSecretName:
+                          description: ObjectStoreSecretName is the name of the secret
+                            for the object store for app-mobility
+                          type: string
                         opa:
                           description: Opa is the image tag for the Container
                           type: string
@@ -677,6 +713,9 @@ spec:
                           type: string
                         redis:
                           description: Redis is the image tag for the Container
+                          type: string
+                        replicaCount:
+                          description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
@@ -731,6 +770,10 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        veleroNamespace:
+                          description: VeleroNamespace is the namespace that Velero
+                            is installed in
+                          type: string
                       type: object
                     type: array
                   node:
@@ -870,6 +913,9 @@ spec:
                         description: ImagePullPolicy is the image pull policy for
                           the image
                         type: string
+                      licenseName:
+                        description: LicenseName is the name of the license for app-mobility
+                        type: string
                       name:
                         description: Name is the name of Container
                         type: string
@@ -880,6 +926,10 @@ spec:
                           for the pod to fit on a node. Selector which must match
                           a node's labels for the pod to be scheduled on that node.
                         type: object
+                      objectStoreSecretName:
+                        description: ObjectStoreSecretName is the name of the secret
+                          for the object store for app-mobility
+                        type: string
                       opa:
                         description: Opa is the image tag for the Container
                         type: string
@@ -891,6 +941,9 @@ spec:
                         type: string
                       redis:
                         description: Redis is the image tag for the Container
+                        type: string
+                      replicaCount:
+                        description: ReplicaCount is the replica count for app mobility
                         type: string
                       roleService:
                         description: RoleService is the image tag for the Container
@@ -944,6 +997,10 @@ spec:
                               type: string
                           type: object
                         type: array
+                      veleroNamespace:
+                        description: VeleroNamespace is the namespace that Velero
+                          is installed in
+                        type: string
                     type: object
                   replicas:
                     description: Replicas is the count of controllers for Controller
@@ -1090,6 +1147,10 @@ spec:
                           description: ImagePullPolicy is the image pull policy for
                             the image
                           type: string
+                        licenseName:
+                          description: LicenseName is the name of the license for
+                            app-mobility
+                          type: string
                         name:
                           description: Name is the name of Container
                           type: string
@@ -1100,6 +1161,10 @@ spec:
                             for the pod to fit on a node. Selector which must match
                             a node's labels for the pod to be scheduled on that node.
                           type: object
+                        objectStoreSecretName:
+                          description: ObjectStoreSecretName is the name of the secret
+                            for the object store for app-mobility
+                          type: string
                         opa:
                           description: Opa is the image tag for the Container
                           type: string
@@ -1111,6 +1176,9 @@ spec:
                           type: string
                         redis:
                           description: Redis is the image tag for the Container
+                          type: string
+                        replicaCount:
+                          description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
@@ -1165,6 +1233,10 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        veleroNamespace:
+                          description: VeleroNamespace is the namespace that Velero
+                            is installed in
+                          type: string
                       type: object
                     type: array
                   snapshotClass:
@@ -1335,6 +1407,10 @@ spec:
                             description: ImagePullPolicy is the image pull policy
                               for the image
                             type: string
+                          licenseName:
+                            description: LicenseName is the name of the license for
+                              app-mobility
+                            type: string
                           name:
                             description: Name is the name of Container
                             type: string
@@ -1346,6 +1422,10 @@ spec:
                               match a node's labels for the pod to be scheduled on
                               that node.
                             type: object
+                          objectStoreSecretName:
+                            description: ObjectStoreSecretName is the name of the
+                              secret for the object store for app-mobility
+                            type: string
                           opa:
                             description: Opa is the image tag for the Container
                             type: string
@@ -1357,6 +1437,10 @@ spec:
                             type: string
                           redis:
                             description: Redis is the image tag for the Container
+                            type: string
+                          replicaCount:
+                            description: ReplicaCount is the replica count for app
+                              mobility
                             type: string
                           roleService:
                             description: RoleService is the image tag for the Container
@@ -1412,6 +1496,10 @@ spec:
                                   type: string
                               type: object
                             type: array
+                          veleroNamespace:
+                            description: VeleroNamespace is the namespace that Velero
+                              is installed in
+                            type: string
                         type: object
                       type: array
                     configVersion:

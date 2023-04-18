@@ -1123,7 +1123,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 
 			case csmv1.ApplicationMobility:
 				//ApplicationMobility precheck
-				if err := modules.AppMobilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+				if err := modules.ApplicationMobilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed Appmobility validation: %v", err)
 				}
 
