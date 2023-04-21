@@ -179,3 +179,39 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 
 	return res
 }
+
+func csmWithUnity(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add FSGroupPolicy
+	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+
+	// Add DNS Policy for GetNode test
+	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
+
+	// Add image name
+	res.Spec.Driver.Common.Image = "thisIsAnImage"
+
+	// Add pstore driver version
+	res.Spec.Driver.ConfigVersion = version
+
+	// Add pstore driver type
+	res.Spec.Driver.CSIDriverType = driver
+
+	// Add NodeSelector to node and controller
+	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+
+	// Add node name prefix to cover some code in GetNode
+	// nodeNamePrefix := corev1.EnvVar{Name: "X_CSI_UNITY_NODENAME_PREFIX"}
+
+	// Add node fields specific to powerstore
+	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
+	res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor}
+
+	// Add controller fields specific
+	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
+	// res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+
+	return res
+}

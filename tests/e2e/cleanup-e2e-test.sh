@@ -54,7 +54,7 @@ while getopts ":h-:" optchar; do
   esac
 done
 
-rm -f cert-csi isilon.db vxflexos.db powerstore.db
+rm -f cert-csi isilon.db vxflexos.db powerstore.db  unity.db
 
 if [ -z "$KEEPLOGS" ]; then
     rm -f error.log fatal.log info.log report.path

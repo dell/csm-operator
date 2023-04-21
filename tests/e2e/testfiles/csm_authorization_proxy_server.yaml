@@ -26,7 +26,6 @@ spec:
         envs:
           # base hostname for the ingress rules that expose the services
           # the proxy-server ingress will use this hostname
-          # the role-service ingress will use role.hostname
           # the storage-service ingress will use storage.hostname
           # Allowed values: string
           # Default value: csm-authorization.com
@@ -41,16 +40,6 @@ spec:
           # Default value: authorization-ingress-nginx-controller.namespace.svc.cluster.local
           - name: "PROXY_INGRESS_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-
-          # Role-service ingress configuration
-          # Default value: nginx
-          - name: "ROLE_INGRESS_CLASSNAME"
-            value: "nginx" 
-
-          # Storage-service ingress configuration
-          # Default value: nginx
-          - name: "STORAGE_INGRESS_CLASSNAME"
-            value: "nginx" 
 
           # Specify storage class for redis. Otherwise, default storage class is used.
           # Default value: None
