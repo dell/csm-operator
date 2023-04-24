@@ -75,9 +75,10 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 
-	// Add log level to cover some code in GetConfigMap
-	envVarLogLevel := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel}
+	// Add CSI_LOG_LEVEL environment variables
+	envVar := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
+        res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar}
+
 	// Add sidecars to trigger code in controller
 	sideCarObjEnabledNil := csmv1.ContainerTemplate{
 		Name:    "driver",
@@ -192,20 +193,28 @@ func csmWithUnity(driver csmv1.DriverType, version string) csmv1.ContainerStorag
 	// Add image name
 	res.Spec.Driver.Common.Image = "thisIsAnImage"
 
-	// Add pstore driver version
+	// Add unity driver version
 	res.Spec.Driver.ConfigVersion = version
 
-	// Add pstore driver type
+	// Add unity driver type
 	res.Spec.Driver.CSIDriverType = driver
 
 	// Add NodeSelector to node and controller
 	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 
+	// Add environment variables
+        envVar1 := corev1.EnvVar{Name: "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS", Value: "false"}
+        envVar2 := corev1.EnvVar{Name: "MAX_UNITY_VOLUMES_PER_NODE", Value: "0"}
+        envVar3 := corev1.EnvVar{Name: "X_CSI_UNITY_SYNC_NODEINFO_INTERVAL", Value: "15"}
+        envVar4 := corev1.EnvVar{Name: "TENANT_NAME", Value: ""}
+        envVar5 := corev1.EnvVar{Name: "CSI_LOG_LEVEL", Value: "debug"}
+        res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3, envVar4, envVar5}
+
 	// Add node name prefix to cover some code in GetNode
 	// nodeNamePrefix := corev1.EnvVar{Name: "X_CSI_UNITY_NODENAME_PREFIX"}
 
-	// Add node fields specific to powerstore
+	// Add node fields specific to unity
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
 	res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor}
 
