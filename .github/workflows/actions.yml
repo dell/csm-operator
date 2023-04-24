@@ -38,10 +38,9 @@ jobs:
           repository: 'dell/csm-operator'
           path: 'csm-operator'
       - name: Run unit tests and check package coverage
-        uses: dell/common-github-actions/go-code-tester@main
+        uses: dell/common-github-actions/go-code-tester@csm-operator-controllers
         with:
           threshold: 90
-          skip-list: "pkg/drivers/,pkg/modules/"
   test_driver:
     name: Run Go unit tests on drivers and check package coverage
     runs-on: ubuntu-latest
