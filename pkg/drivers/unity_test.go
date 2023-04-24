@@ -28,6 +28,7 @@ import (
 var (
 	csmUnity                = csmForUnity("csm")
 	unityCSMBadVersion      = csmForUnityBadVersion()
+	unityCSMBadConfig       = csmForUnityBadConfig()
 	unityClient             = crclient.NewFakeClientNoInjector(objects)
 	configJSONFileGoodUnity = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.Unity)
 	unitySecret             = shared.MakeSecretWithJSON("csm-creds", "driver-test", configJSONFileGoodUnity)
@@ -48,6 +49,7 @@ var (
 
 		{"happy path", csmUnity, unityClient, unitySecret, ""},
 		{"bad version", unityCSMBadVersion, unityClient, unitySecret, "not supported"},
+		{"bad config", unityCSMBadConfig, unityClient, unitySecret, "failed to find secret"},
 	}
 
 	unityPrecheckTests = []struct {
@@ -96,9 +98,23 @@ func TestPrecheckUnity(t *testing.T) {
 func csmForUnityBadVersion() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.UnityConfigVersion)
 
-	// Add pstore driver version
+	// Add unity driver version
 	res.Spec.Driver.ConfigVersion = shared.BadConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.Unity
+
+	return res
+}
+
+// makes a csm object with a bad auth secret
+func csmForUnityBadConfig() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.UnityConfigVersion)
+
+	// Add unity driver version
+	res.Spec.Driver.ConfigVersion = shared.UnityConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.Unity
+
+	// Add bad auth secret name
+	res.Spec.Driver.AuthSecret = "notARealSecret"
 
 	return res
 }
@@ -108,7 +124,7 @@ func csmForUnity(customCSMName string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM(customCSMName, "driver-test", shared.UnityConfigVersion)
 	res.Spec.Driver.AuthSecret = "csm-creds"
 
-	// Add pstore driver version
+	// Add unity driver version
 	res.Spec.Driver.ConfigVersion = shared.UnityConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.Unity
 
