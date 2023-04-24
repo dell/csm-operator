@@ -77,7 +77,7 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 
 	// Add CSI_LOG_LEVEL environment variables
 	envVar := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
-        res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar}
 
 	// Add sidecars to trigger code in controller
 	sideCarObjEnabledNil := csmv1.ContainerTemplate{
@@ -204,12 +204,12 @@ func csmWithUnity(driver csmv1.DriverType, version string) csmv1.ContainerStorag
 	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 
 	// Add environment variables
-        envVar1 := corev1.EnvVar{Name: "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS", Value: "false"}
-        envVar2 := corev1.EnvVar{Name: "MAX_UNITY_VOLUMES_PER_NODE", Value: "0"}
-        envVar3 := corev1.EnvVar{Name: "X_CSI_UNITY_SYNC_NODEINFO_INTERVAL", Value: "15"}
-        envVar4 := corev1.EnvVar{Name: "TENANT_NAME", Value: ""}
-        envVar5 := corev1.EnvVar{Name: "CSI_LOG_LEVEL", Value: "debug"}
-        res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3, envVar4, envVar5}
+	envVar1 := corev1.EnvVar{Name: "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS", Value: "false"}
+	envVar2 := corev1.EnvVar{Name: "MAX_UNITY_VOLUMES_PER_NODE", Value: "0"}
+	envVar3 := corev1.EnvVar{Name: "X_CSI_UNITY_SYNC_NODEINFO_INTERVAL", Value: "15"}
+	envVar4 := corev1.EnvVar{Name: "TENANT_NAME", Value: ""}
+	envVar5 := corev1.EnvVar{Name: "CSI_LOG_LEVEL", Value: "debug"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3, envVar4, envVar5}
 
 	// Add node name prefix to cover some code in GetNode
 	// nodeNamePrefix := corev1.EnvVar{Name: "X_CSI_UNITY_NODENAME_PREFIX"}
