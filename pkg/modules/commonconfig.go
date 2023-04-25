@@ -13,12 +13,15 @@
 package modules
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -26,6 +29,8 @@ const (
 	DefaultPluginIdentifier = "<DriverPluginIdentifier>"
 	// DefaultDriverConfigParamsVolumeMount - string placeholder for Driver ConfigParamsVolumeMount
 	DefaultDriverConfigParamsVolumeMount = "<DriverConfigParamsVolumeMount>"
+	// CertManagerManifest -
+	CertManagerManifest = "cert-manager.yaml"
 )
 
 // SupportedDriverParam -
@@ -68,4 +73,48 @@ func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op uti
 
 	configMapPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, module.Name, moduleConfigVersion, filename)
 	return os.ReadFile(filepath.Clean(configMapPath))
+}
+
+// getCertManager - configure cert-manager with the specified namespace before installation
+func getCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+
+	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/cert-manager/%s", op.ConfigDirectory, CertManagerManifest)
+	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	certNamespace := cr.Namespace
+	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, certNamespace)
+
+	return YamlString, nil
+}
+
+// CommonCertManager - apply/delete cert-manager objects
+func CommonCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getCertManager(op, cr)
+	if err != nil {
+		return err
+	}
+
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range ctrlObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
