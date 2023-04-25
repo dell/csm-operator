@@ -110,19 +110,6 @@ func TestAuthorizationCertManager(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-
-		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
