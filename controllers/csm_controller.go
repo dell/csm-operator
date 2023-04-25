@@ -798,7 +798,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 
 	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
 		log.Infow("Reconcile authorization cert-manager")
-		if err := modules.AuthorizationCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
 		}
 	}
