@@ -21,12 +21,74 @@ import (
 	networking "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+func TestCheckAnnotationAuth(t *testing.T) {
+	t.Run("it handles an empty annotation", func(t *testing.T) {
+		var empty map[string]string
+		err := CheckAnnotationAuth(empty)
+		if err == nil {
+			t.Errorf("expected non-nil err, got %v", err)
+		}
+	})
+
+	t.Run("it handles an incorrect auth annotation", func(t *testing.T) {
+		want := "com.dell.karavi-authorization-proxy"
+		invalid := map[string]string{
+			"annotation": "test.proxy",
+		}
+		got := CheckAnnotationAuth(invalid)
+		if got == nil {
+			t.Errorf("got %v, expected annotation to be %s", got, want)
+		}
+	})
+
+	t.Run("it handles an invalid annotation", func(t *testing.T) {
+		got := map[string]string{
+			"com.dell.karavi-authorization-proxy": "false",
+		}
+		err := CheckAnnotationAuth(got)
+		if err == nil {
+			t.Errorf("got %v, expected annotation to be true %s", got, err)
+		}
+	})
+}
+
+func TestCheckApplyVolumesAuth(t *testing.T) {
+	got := []acorev1.VolumeApplyConfiguration{}
+	err := CheckApplyVolumesAuth(got)
+	if err == nil {
+		t.Errorf("got %v, expected karavi-authorization-config volume", got)
+	}
+}
+
+func TestCheckApplyContainersAuth(t *testing.T) {
+	t.Run("it handles no volume mount", func(t *testing.T) {
+		got := []acorev1.ContainerApplyConfiguration{
+			*acorev1.Container().WithName("karavi-authorization-proxy"),
+		}
+		driver := "powerscale"
+		err := CheckApplyContainersAuth(got, driver)
+		if err == nil {
+			t.Errorf("got %v, expected karavi-authorization-config to be injected", got)
+		}
+	})
+
+	t.Run("it handles an empty container", func(t *testing.T) {
+		got := []acorev1.ContainerApplyConfiguration{}
+		driver := "powerscale"
+		err := CheckApplyContainersAuth(got, driver)
+		if err == nil {
+			t.Errorf("got %v, expected karavi-authorization-config to be injected", got)
+		}
+	})
+}
 
 func TestAuthInjectDaemonset(t *testing.T) {
 	ctx := context.Background()
@@ -60,7 +122,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 
 			return true, nodeYAML.DaemonSetApplyConfig, operatorConfig
 		},
-		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
+		"success - brownfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -111,6 +173,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 		})
 	}
 }
+
 func TestAuthInjectDeployment(t *testing.T) {
 	ctx := context.Background()
 	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration, drivertype string) error {
@@ -315,7 +378,6 @@ func TestAuthorizationPreCheck(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, auth, tmpCR, client := tc(t)
-			// err := ReplicationPrecheck(context.TODO(), operatorConfig, replica, tmpCR, sourceClient)
 			err := AuthorizationPrecheck(context.TODO(), operatorConfig, auth, tmpCR, client)
 			if success {
 				assert.NoError(t, err)
@@ -449,7 +511,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 	}
 }
 
-func TestAuthorizationProxyServerDeployment(t *testing.T) {
+func TestAuthorizationServerDeployment(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
@@ -502,7 +564,7 @@ func TestAuthorizationProxyServerDeployment(t *testing.T) {
 
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := AuthorizationServer(context.TODO(), isDeleting, op, cr, sourceClient)
+			err := AuthorizationServerDeployment(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -513,7 +575,7 @@ func TestAuthorizationProxyServerDeployment(t *testing.T) {
 	}
 }
 
-func TestAuthorizationIngressRules(t *testing.T) {
+func TestAuthorizationIngress(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
@@ -584,6 +646,19 @@ func TestAuthorizationIngressRules(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
+
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -604,7 +679,7 @@ func TestAuthorizationIngressRules(t *testing.T) {
 	}
 }
 
-func TestAuthorizationPolicies(t *testing.T) {
+func TestInstallPolicies(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
@@ -639,6 +714,19 @@ func TestAuthorizationPolicies(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -656,7 +744,7 @@ func TestAuthorizationPolicies(t *testing.T) {
 	}
 }
 
-func TestAuthorizationNginxIngressController(t *testing.T) {
+func TestNginxIngressController(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
@@ -688,6 +776,19 @@ func TestAuthorizationNginxIngressController(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
 		},
 	}
 	for name, tc := range tests {
@@ -739,6 +840,19 @@ func TestAuthorizationCertManager(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
 		},
 	}
 	for name, tc := range tests {
