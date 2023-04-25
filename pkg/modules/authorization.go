@@ -137,7 +137,7 @@ func CheckAnnotationAuth(annotation map[string]string) error {
 			return errors.New("com.dell.karavi-authorization-proxy is missing from annotation")
 		}
 		if annotation["com.dell.karavi-authorization-proxy"] != "true" {
-			return fmt.Errorf("extpected notation value to be true but got %s", annotation["com.dell.karavi-authorization-proxy"])
+			return fmt.Errorf("expected notation value to be true but got %s", annotation["com.dell.karavi-authorization-proxy"])
 		}
 		return nil
 	}
@@ -438,7 +438,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 	return nil
 }
 
-// getAuthorizationServerDeployment - updates deployment manifest with authorization CRD values
+// getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
 func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (string, error) {
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
@@ -480,8 +480,8 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	return YamlString, nil
 }
 
-// AuthorizationServer - apply/delete deployment objects
-func AuthorizationServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+// AuthorizationServerDeployment - apply/delete deployment objects
+func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getAuthorizationServerDeployment(op, cr, csmv1.Module{})
 	if err != nil {
 		return err
@@ -506,7 +506,7 @@ func AuthorizationServer(ctx context.Context, isDeleting bool, op utils.Operator
 	return nil
 }
 
-// getAuthorizationIngressRules - update ingress manifest
+// getAuthorizationIngressRules - apply dynamic values to the Ingress manifest before installation
 func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
@@ -579,6 +579,7 @@ func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.Operato
 	return nil
 }
 
+// getCertManager - configure cert-manager with the specified namespace before installation
 func getCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
@@ -627,7 +628,7 @@ func AuthorizationCertManager(ctx context.Context, isDeleting bool, op utils.Ope
 	return nil
 }
 
-// getNginxIngressController - install nginx ingress controller
+// getNginxIngressController - configure nginx ingress controller with the specified namespace before installation
 func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
@@ -676,7 +677,7 @@ func NginxIngressController(ctx context.Context, isDeleting bool, op utils.Opera
 	return nil
 }
 
-// getPolicies -
+// getPolicies - configure policies with the specified namespace before installation
 func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
@@ -698,7 +699,7 @@ func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	return YamlString, nil
 }
 
-// InstallPolicies -
+// InstallPolicies - apply/delete authorization opa policy objects
 func InstallPolicies(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getPolicies(op, cr)
 	if err != nil {

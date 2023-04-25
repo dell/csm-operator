@@ -13,7 +13,7 @@
 package shared
 
 import (
-	"io/ioutil"
+	"os"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -168,7 +168,7 @@ func MakeSecret(name, ns, configVersion string) *corev1.Secret {
 
 // MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
-	configJSON, _ := ioutil.ReadFile(configFile)
+	configJSON, _ := os.ReadFile(configFile)
 	data := map[string][]byte{
 		"config": configJSON,
 	}
