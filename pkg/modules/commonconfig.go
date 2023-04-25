@@ -31,6 +31,8 @@ const (
 	DefaultDriverConfigParamsVolumeMount = "<DriverConfigParamsVolumeMount>"
 	// CertManagerManifest -
 	CertManagerManifest = "cert-manager.yaml"
+	// CommonNamespace -
+	CommonNamespace = "<NAMESPACE>"
 )
 
 // SupportedDriverParam -
@@ -87,7 +89,7 @@ func getCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 
 	YamlString = string(buf)
 	certNamespace := cr.Namespace
-	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, certNamespace)
+	YamlString = strings.ReplaceAll(YamlString, CommonNamespace, certNamespace)
 
 	return YamlString, nil
 }
