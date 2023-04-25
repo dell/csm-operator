@@ -42,7 +42,7 @@ jobs:
         with:
           threshold: 90
   test_driver:
-    name: Run Go unit tests on drivers and check package coverage
+    name: Run Go unit tests on driver and check package coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
@@ -53,7 +53,7 @@ jobs:
           threshold: 95
           test-folder: "pkg/drivers/"
   test_module:
-    name: Run Go unit tests on modules and check package coverage
+    name: Run Go unit tests on module and check package coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
