@@ -25,6 +25,32 @@
     #   ./hello_world.sh
     run: ./verify-app-mobility.sh
 
+- scenario: "Install App Mobility with APPLICATION_MOBILITY_REPLICA_COUNT set to 2"
+  paths: 
+    - "testfiles/csm_application_mobility_replica_2.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install [velero]"
+    - "Install [cert-manager]"
+    #- "Apply custom resource [1]"
+    #- "Validate custom resource [1]"
+    #- "Validate [application-mobility] module from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Uninstall [velero]"
+    - "Uninstall [cert-manager]"
+    #- "Enable forceRemoveModule on CR [1]"
+    #- "Delete custom resource [1]"
+  customTest:
+    # name of custom test to run
+    name: verify app-mobility
+    # Provide command-line argument to run. Ginkgo will run the command and return output
+    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
+    # Example:
+    #   ./hello_world.sh
+    run: ./verify-app-mobility.sh
+
 #- scenario: "Install PowerScale Driver(Standalone)"
 #  paths: 
 #    - "testfiles/storage_csm_powerscale.yaml"
