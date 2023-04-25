@@ -122,6 +122,7 @@ var (
 	oldConfigVersion         = shared.OldConfigVersion
 	upgradeConfigVersion     = shared.UpgradeConfigVersion
 	jumpUpgradeConfigVersion = shared.JumpUpgradeConfigVersion
+	invalidConfigVersion     = shared.BadConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -364,7 +365,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
 		annotations = make(map[string]string)
 	}
 	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = jumpUpgradeConfigVersion
+		annotations[configVersionKey] = invalidConfigVersion
 		csm.SetAnnotations(annotations)
 	}
 
