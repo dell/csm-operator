@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Run the formatter, linter, and vetter
         uses: dell/common-github-actions/go-code-formatter-linter-vetter@main
         with:
@@ -21,7 +21,7 @@ jobs:
   #  runs-on: ubuntu-latest
   #  steps:
   #    - name: Checkout the code
-  #      uses: actions/checkout@v2
+  #      uses: actions/checkout@v3
   #    - name: Run the forbidden words scan
   #      uses: dell/common-github-actions/code-sanitizer@main
   #      with:
@@ -31,9 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Checkout csm-operator
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: 'dell/csm-operator'
           path: 'csm-operator'
@@ -46,17 +46,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Run unit tests and check package coverage
-        uses: dell/common-github-actions/go-code-tester@csm-operator-drivers
+        uses: dell/common-github-actions/go-code-tester@main
         with:
           threshold: 95
+          test-folder: "pkg/drivers/"
+  test_module:
+    name: Run Go unit tests on module and check package coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v3
+      - name: Run unit tests and check package coverage
+        uses: dell/common-github-actions/go-code-tester@main
+        with:
+          threshold: 90
+          test-folder: "pkg/modules/"
   go_security_scan:
     name: Go security
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Run Go Security
         uses: securego/gosec@master
         with:
@@ -66,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Run malware scan
         uses: dell/common-github-actions/malware-scanner@main
         with:
@@ -79,12 +91,12 @@ jobs:
       BASE_IMG : ubuntu:latest
     steps:
       - name: Set up Go 1.20+
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: ^1.20
         id: go
       - name: Checkout the code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build Docker Images
         run: docker build . -t csm-operator:latest
       - name: Scan controller Image
