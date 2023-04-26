@@ -835,9 +835,9 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 	// AppMobility installs cert-manager
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
 		log.Infow("Reconcile application mobility cert-manager")
-		/*if err := modules.AppMobilityCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		if err := modules.AppMobilityCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile cert-manager for Application Mobility: %v", err)
-		}*/
+		}
 	}
 
 	// Appmobility installs velero
@@ -1062,7 +1062,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		}
 	default:
 		for _, m := range cr.Spec.Modules {
-			if m.Name == csmv1.AuthorizationServer {
+			if m.Name == csmv1.AuthorizationServer || m.Name == csmv1.ApplicationMobility {
 				return nil
 			}
 		}
