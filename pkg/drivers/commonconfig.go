@@ -66,11 +66,13 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Controller.Tolerations {
 			toleration := acorev1.Toleration()
-			toleration.WithEffect(t.Effect)
 			toleration.WithKey(t.Key)
-			toleration.WithValue(t.Value)
 			toleration.WithOperator(t.Operator)
-			toleration.WithTolerationSeconds(*t.TolerationSeconds)
+			toleration.WithValue(t.Value)
+			toleration.WithEffect(t.Effect)
+			if t.TolerationSeconds != nil {
+				toleration.WithTolerationSeconds(*t.TolerationSeconds)
+			}
 			tols = append(tols, *toleration)
 		}
 
@@ -191,12 +193,15 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	if len(cr.Spec.Driver.Node.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Node.Tolerations {
+			fmt.Printf("[BRUH] toleration t: %+v\n", t)
 			toleration := acorev1.Toleration()
-			toleration.WithEffect(t.Effect)
 			toleration.WithKey(t.Key)
-			toleration.WithValue(t.Value)
 			toleration.WithOperator(t.Operator)
-			toleration.WithTolerationSeconds(*t.TolerationSeconds)
+			toleration.WithValue(t.Value)
+			toleration.WithEffect(t.Effect)
+			if t.TolerationSeconds != nil {
+				toleration.WithTolerationSeconds(*t.TolerationSeconds)
+			}
 			tols = append(tols, *toleration)
 		}
 
