@@ -3,14 +3,11 @@ kind: DaemonSet
 metadata:
   name: node-agent
   namespace: <NAMESPACE>
-  {{- with .Values.nodeAgent.annotations }}
-  annotations:
+  annotations: <NODEAGENT_ANNOTATION>
   labels:
-    app.kubernetes.io/name: {{ include "velero.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ include "velero.chart" . }}
-    {{- with .Values.nodeAgent.labels }}
 spec:
   selector:
     matchLabels:
@@ -19,20 +16,17 @@ spec:
     metadata:
       labels:
         name: node-agent
-        app.kubernetes.io/name: {{ include "velero.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/name: application-mobility-velero
+        app.kubernetes.io/instance: application-mobility
         app.kubernetes.io/managed-by: {{ .Release.Service }}
-        helm.sh/chart: {{ include "velero.chart" . }}
-      {{- with .Values.podAnnotations }}
-      annotations:
+      annotations: <POD_ANNOTATIONS>
     spec:
       imagePullSecrets:
-      {{- range .Values.image.imagePullSecrets }}
-        - name: {{ . }}
-      serviceAccountName: {{ include "velero.serverServiceAccount" . }}
-      {{- with .Values.nodeAgent.podSecurityContext }}
-      securityContext:
-      priorityClassName: {{ include "velero.nodeAgent.priorityClassName" . }}
+       <IMAGE_PULL_SECRETS> 
+        - name: <IMAGE_PULL_SECRET_NAME>
+      serviceAccountName: <SERVICE_ACCOUNT_NAME>
+      securityContext: <POD_SECURITY_CONTEXT>
+      priorityClassName: <PRIORITY_CLASS_NAME>
       terminationGracePeriodSeconds: <TERMINATION_GRACE_PERIOD_SECONDS>
       volumes:
         - name: cloud-credentials
@@ -103,14 +97,8 @@ spec:
           lifecycle: 
           securityContext:
             privileged: <NODEAGENT_PRIVILEGED>
-            {{- with $containerSecurityContext }}
-          {{- with .Values.nodeAgent.resources }}
-          resources:
-      {{- with .Values.nodeAgent.tolerations }}
-      tolerations:
-      {{- with .Values.nodeAgent.nodeSelector }}
-      nodeSelector:
-      {{- with .Values.nodeAgent.affinity }}
-      affinity:    
-    {{- with .Values.nodeAgent.dnsConfig }}
-    dnsConfig:
+          resources: <NODEAGENT_PRIVILEGED>
+      tolerations: <NODEAGENT_TOLERATIONS>
+      nodeSelector: <NODEAGENT_NODESELECTOR>
+      affinity: <NODEAGENT_AFFINITY>
+    dnsConfig: <NODEAGENT_DNSCONFIG>

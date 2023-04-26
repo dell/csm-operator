@@ -1,22 +1,20 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "velero.fullname" . }}
+  name: velero
   namespace: <NAMESPACE>
-  {{- with .Values.metrics.serviceMonitor.annotations }}
-  annotations:
+  annotations: <SERVICE_MONITOR_ANNOTATIONS>
   labels:
-    app.kubernetes.io/name: {{ include "velero.name" . }}
+    app.kubernetes.io/name: velero
     app.kubernetes.io/instance: application-mobility
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ include "velero.chart" . }}
 spec:
   namespaceSelector:
     matchNames:
       - <NAMESPACE>
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "velero.name" . }}
+      app.kubernetes.io/name: velero
       app.kubernetes.io/instance: application-mobility
   endpoints:
   - port: http-monitoring

@@ -1,19 +1,17 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  name: {{ include "velero.fullname" . }}-server
-  namespace: <NMAESPACE>
+  name: velero-server
   labels:
     app.kubernetes.io/component: server
-    app.kubernetes.io/name: {{ include "velero.name" . }}
+    app.kubernetes.io/name: velero
     app.kubernetes.io/instance: application-mobility
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ include "velero.chart" . }}
 subjects:
   - kind: ServiceAccount
     namespace: <NAMESPACE>
-    name: {{ include "velero.serverServiceAccount" . }}
+    name: <SERVICE_ACCOUNT_NAME>
 roleRef:
-  kind: Role
-  name: {{ include "velero.fullname" . }}-server
+  kind: ClusterRole
+  name: <RBAC_CLUSTERADMINISTRATOR_NAME>
   apiGroup: rbac.authorization.k8s.io
