@@ -263,7 +263,7 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 }
 
 // AppMobilityCertManager - Install/Delete cert-manager
-/*func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getAppMobCertManager(op, cr)
 	if err != nil {
 		return err
@@ -291,12 +291,7 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
-	appMob, err := getAppMobilityModule(cr)
-	if err != nil {
-		return YamlString, err
-	}
-
-	certManagerPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobCertManagerManifest)
+	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/%s", op.ConfigDirectory, AppMobCertManagerManifest)
 	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
 	if err != nil {
 		return YamlString, err
@@ -310,7 +305,7 @@ func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 }
 
 // AppMobilityVelero - Install/Delete velero
-func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+/*func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
