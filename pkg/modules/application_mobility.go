@@ -38,25 +38,24 @@ const (
 	AppMobMetricService = "app-mobility-controller-manager-metrics-service.yaml"
 	// AppMobWebhookManifest - filename of Webhook manifest for app-mobility
 	AppMobWebhookService = "app-mobility-webhook-service.yaml"
-	// VeleroNamespace - namespace Velero is installed in
-	VeleroNamespace = "<VELERO_NAMESPACE>"
 	// VeleroManifest -
 	VeleroManifest = "velero.yaml"
 	// AppMobCertManagerManifest -
 	AppMobCertManagerManifest = "cert-manager.yaml"
 
+	//ControllerImg - image for app-mobility-controller
+	ControllerImg = "<CONTROLLER_IMAGE>"
 	// AppMobNamespace - namespace Application Mobility is installed in
 	AppMobNamespace = "<NAMESPACE>"
-
 	// AppMobReplicaCount - Number of replicas
 	AppMobReplicaCount = "<APPLICATION_MOBILITY_REPLICA_COUNT>"
 	// AppMobLicenseName - Name of license for app-mobility
-	AppMobLicenseName = "<APPLICATION_MOBILITY_LICENSE_NAME>"
+	AppMobLicenseName = "<LICENSE_NAME>"
 	// AppMobObjStoreSecretName - Secret name for object store
-	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
+	AppMobObjStoreSecretName = "<OBJ_SECRET_NAME>"
+
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
-
 	// AppMobCertManagerComponent - cert-manager component
 	AppMobCertManagerComponent = "cert-manager"
 	// AppMobVeleroComponent - velero component
@@ -88,22 +87,35 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	}
 
 	YamlString = string(buf)
-	appMobNamespace := cr.Namespace
+	controllerImage := ""
+	license_name := ""
+	object_secret_name := ""
 
 	for _, component := range appMob.Components {
 		if component.Name == AppMobCtrlMgrComponent {
-			YamlString = strings.ReplaceAll(YamlString, AppMobReplicaCount, component.ReplicaCount)
-			YamlString = strings.ReplaceAll(YamlString, VeleroNamespace, component.VeleroNamespace)
-			YamlString = strings.ReplaceAll(YamlString, AppMobObjStoreSecretName, component.ObjectStoreSecretName)
-			YamlString = strings.ReplaceAll(YamlString, AppMobLicenseName, component.LicenseName)
+			if component.Image != "" {
+				controllerImage = string(component.Image)
+			}
+			for _, env := range component.Envs {
+				if strings.Contains(AppMobLicenseName, env.Name) {
+					license_name = env.Value
+				}
+				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
+					object_secret_name = env.Value
+				}
+			}
 		}
 	}
 
-	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
+	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, cr.Namespace)
+	YamlString = strings.ReplaceAll(YamlString, ControllerImg, controllerImage)
+	YamlString = strings.ReplaceAll(YamlString, AppMobLicenseName, license_name)
+	YamlString = strings.ReplaceAll(YamlString, AppMobObjStoreSecretName, object_secret_name)
 
 	return YamlString, nil
 }
 
+// AppMobilityDeployment - apply and delete controller manager deployment
 func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getAppMobilityModuleDeployment(op, cr)
 	if err != nil {
@@ -129,6 +141,7 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 	return nil
 }
 
+// getControllerManagerMetricService - updates metric manifest with app mobility CRD values
 func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
@@ -149,6 +162,7 @@ func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.Contain
 	return YamlString, nil
 }
 
+// AppMobilityDeployment - apply and delete Controller manager metric service deployment
 func controllerManagerMetricService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getControllerManagerMetricService(op, cr)
 	if err != nil {
@@ -244,7 +258,7 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 		}
 	}
 
-	log.Infof("preformed pre-checks for %s", appMob.Name)
+	log.Infof("performed pre-checks for %s", appMob.Name)
 	return nil
 }
 
