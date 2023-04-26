@@ -79,6 +79,18 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
+                "fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+                        customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+                        if err != nil {
+                                panic(err)
+                        }
+
+                        tmpCR := customResource
+                        badOperatorConfig.ConfigDirectory = "./testdata/badYaml"
+                        sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+                        return false, false, tmpCR, sourceClient, badOperatorConfig
+                },
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -139,6 +151,30 @@ func TestAppMobilityWebhookService(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
+		},
+                "fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+                        customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+                        if err != nil {
+                                panic(err)
+                        }
+
+                        tmpCR := customResource
+                        badOperatorConfig.ConfigDirectory = "./testdata/badYaml"
+                        sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+                        return false, false, tmpCR, sourceClient, badOperatorConfig
+                },
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -201,6 +237,30 @@ func TestControllerManagerMetricService(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
+		},
+                "fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+                        customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+                        if err != nil {
+                                panic(err)
+                        }
+
+                        tmpCR := customResource
+                        badOperatorConfig.ConfigDirectory = "./testdata/badYaml"
+                        sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+                        return false, false, tmpCR, sourceClient, badOperatorConfig
+                },
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
