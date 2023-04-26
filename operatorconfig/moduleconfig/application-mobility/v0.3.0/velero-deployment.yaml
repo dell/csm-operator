@@ -1,14 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "velero.fullname" . }}
+  name: velero
   namespace: <NAMESPACE>
   annotations:
   labels:
-    app.kubernetes.io/name: {{ include "velero.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: velero
+    app.kubernetes.io/instance: application-mobility
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ include "velero.chart" . }}
     component: velero
 spec:
   replicas: 1
@@ -16,27 +15,24 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app.kubernetes.io/instance: {{ .Release.Name }}
-      app.kubernetes.io/name: {{ include "velero.name" . }}
+      app.kubernetes.io/instance: application-mobility
+      app.kubernetes.io/name: velero
   template:
     metadata:
       labels:
         name: velero
-        app.kubernetes.io/name: {{ include "velero.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/name: velero
+        app.kubernetes.io/instance: application-mobility
         app.kubernetes.io/managed-by: {{ .Release.Service }}
-        helm.sh/chart: {{ include "velero.chart" . }}
       annotations:
-      {{- with .Values.podAnnotations }}
-      {{- with .Values.metrics.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
+      <POD_ANNOTATIONS>
+      <METRICS_PODANNOTATIONS>
     spec:
-      imagePullSecrets: 
-      {{- range .Values.image.imagePullSecrets }}
-        - name: {{ . }}
+      imagePullSecrets: <PULL_SECRET>
+        - name: <PULL_SCRET_NAME>
       restartPolicy: Always
-      serviceAccountName: {{ include "velero.serverServiceAccount" . }}
-      priorityClassName: {{ include "velero.priorityClassName" . }}
+      serviceAccountName: <SERVICE_ACCOUNT_NAME>
+      priorityClassName: <NODEAGENT_PRIORITYCLASSNAME>
       terminationGracePeriodSeconds: <TERMINATION_GRACE_PERIOD_SECONDS>
       containers:
         - name: velero
@@ -99,10 +95,8 @@ spec:
             - --features={{ . }}
             {{- with .namespace }}
             - --namespace={{ . }}
-          {{- with .Values.resources }}
-          resources:
-          {{- with .Values.containerSecurityContext }}
-          securityContext:
+          resources: <RESOURCES>
+          securityContext: <SECURITY_CONTEXT>
           volumeMounts:
             - name: plugins
               mountPath: /plugins
@@ -145,12 +139,8 @@ spec:
                   name: {{ include "velero.secretName" $ }}
                   key: {{ default "none" $key }}
           lifecycle:
-      dnsPolicy: {{ .Values.dnsPolicy }}
-      initContainers:
-        {{- if eq (typeOf .Values.initContainers) "string" }}
-        {{- tpl .Values.initContainers . | nindent 8 }}
-        {{- else }}
-        {{- toYaml .Values.initContainers | nindent 8 }}
+      dnsPolicy: <DNS_POLICY>
+      initContainers: {}
  
       volumes:
         - name: cloud-credentials
@@ -163,15 +153,8 @@ spec:
         - name: tmpdir
           emptyDir: {}
       securityContext:
-    {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-    {{- with .Values.dnsConfig }}
-      dnsConfig:
-        {{- toYaml . | nindent 8 }}
-    {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
+      nodeSelector: <NDE_SELECTOR>
+      dnsConfig: <DNS_CONFIG>
+      tolerations: <TOLERATIONS>
+      affinity: <AFFINITY>
+

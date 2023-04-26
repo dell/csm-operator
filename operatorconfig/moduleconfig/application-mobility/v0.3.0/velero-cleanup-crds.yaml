@@ -3,34 +3,31 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "velero.fullname" . }}-cleanup-crds
+  name: velero-cleanup-crds
   namespace: <NAMESPACE>
   annotations:
     "helm.sh/hook": pre-delete
     "helm.sh/hook-delete-policy": hook-succeeded
   labels:
-    app.kubernetes.io/name: {{ include "velero.name" . }}
+    app.kubernetes.io/name: velero
     app.kubernetes.io/instance: application-mobility
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ include "velero.chart" . }}
 spec:
   backoffLimit: 3
   template:
     metadata:
       name: velero-cleanup-crds
-      {{- with .Values.kubectl.labels }}
       labels:
-      {{- with .Values.kubectl.annotations }}
       annotations:
     spec:
       imagePullSecrets:
         - name: 
-      serviceAccountName: {{ include "velero.serverServiceAccount" . }}
+      serviceAccountName: <SERVICE_ACCOUNT_NAME>
       containers:
         - name: kubectl
           image: <KUBECTL_IMAGEREPOSITORY>@<KUBECTL_IMAGEDIGEST>
           image: <KUBECTL_IMAGEREPOSITORY>:<KUBECTL_IMAGETAG>
-          image: <KUBECTL_IMAGEREPOSITORY>:{{ template "chart.KubernetesVersion" . }}"
+          image: <KUBECTL_IMAGEREPOSITORY>:<KUBECTL_VERSION>
           imagePullPolicy: <IMAGE_PULLPOLICY>
           command:
             - /bin/sh
@@ -45,15 +42,7 @@ spec:
           securityContext: 
           resources:
       restartPolicy: OnFailure
-      {{- with $podSecurityContext }}
-      securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- with .Values.nodeSelector }}
+      securityContext: 
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- with .Values.tolerations }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- with .Values.affinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}

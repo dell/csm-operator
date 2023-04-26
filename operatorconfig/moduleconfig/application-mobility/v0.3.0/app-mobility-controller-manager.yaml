@@ -35,8 +35,8 @@ spec:
         - --leader-elect
         - --app-mobility-namespace=<NAMESPACE>
         - --velero-namespace=<NAMESPACE>
-        - --secret-name=<OBJ_SECRET_NAME>
-        - --license-name=<LICENSE_NAME>
+        - --secret-name=<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
+        - --license-name=<APPLICATION_MOBILITY_LICENSE_NAME>
         command:
         - /manager
         image: <CONTROLLER_IMAGE>

@@ -50,9 +50,9 @@ const (
 	// AppMobReplicaCount - Number of replicas
 	AppMobReplicaCount = "<APPLICATION_MOBILITY_REPLICA_COUNT>"
 	// AppMobLicenseName - Name of license for app-mobility
-	AppMobLicenseName = "<LICENSE_NAME>"
+	AppMobLicenseName = "<APPLICATION_MOBILITY_LICENSE_NAME>"
 	// AppMobObjStoreSecretName - Secret name for object store
-	AppMobObjStoreSecretName = "<OBJ_SECRET_NAME>"
+	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
