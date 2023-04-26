@@ -40,16 +40,26 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 	// Add tolerations to controller and node
 	res.Spec.Driver.Node.Tolerations = []corev1.Toleration{
 		{
-			Key:               "123",
+			Key:               "notNil",
 			Value:             "123",
 			TolerationSeconds: new(int64),
+		},
+		{
+			Key:               "nil",
+			Value:             "123",
+			TolerationSeconds: nil,
 		},
 	}
 	res.Spec.Driver.Controller.Tolerations = []corev1.Toleration{
 		{
-			Key:               "123",
+			Key:               "notNil",
 			Value:             "123",
 			TolerationSeconds: new(int64),
+		},
+		{
+			Key:               "nil",
+			Value:             "123",
+			TolerationSeconds: nil,
 		},
 	}
 
