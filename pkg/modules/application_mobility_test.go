@@ -25,15 +25,13 @@ import (
 
 func TestAppMobilityModuleDeployment(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		/*"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
 			}
 
 			tmpCR := customResource
-			//namespace := customResource.Namespace
-
 			cm := &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Deployment",
@@ -46,8 +44,7 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
-		},*/
-
+		},
 		"happy path": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
@@ -120,6 +117,18 @@ func TestAppMobilityWebhookService(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
+		"fail - bad yaml found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+			tmpCR := customResource
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
+		},
 		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
@@ -168,6 +177,18 @@ func TestControllerManagerMetricService(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - bad yaml found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
 		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
@@ -229,10 +250,11 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 			tmpCR := customResource
 			appMobility := tmpCR.Spec.Modules[0]
 			appMobility.ConfigVersion = "v10.10.10"
+			licenceCred := getSecret(customResource.Namespace, "license")
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
+				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
 			}
 
 			return false, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
@@ -250,10 +272,27 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
+				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
 			}
 
 			return true, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"failed to find secret": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			appMobility := tmpCR.Spec.Modules[0]
+			licenceCred := getSecret(customResource.Namespace, "licenses")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
+			}
+
+			return false, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 	}
 	for name, tc := range tests {
