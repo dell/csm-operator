@@ -386,6 +386,95 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
+            "name": "test-unity",
+            "namespace": "test-unity"
+          },
+          "spec": {
+            "driver": {
+              "authSecret": "test-unity-creds",
+              "common": {
+                "envs": [
+                  {
+                    "name": "X_CSI_UNITY_NODENAME_PREFIX",
+                    "value": "csi-node"
+                  },
+                  {
+                    "name": "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_EPHEMERAL_STAGING_PATH",
+                    "value": "/var/lib/kubelet/plugins/kubernetes.io/csi/pv/"
+                  },
+                  {
+                    "name": "X_CSI_ISCSI_CHROOT",
+                    "value": "/noderoot"
+                  },
+                  {
+                    "name": "X_CSI_UNITY_SYNC_NODEINFO_INTERVAL",
+                    "value": "15"
+                  },
+                  {
+                    "name": "KUBELET_CONFIG_DIR",
+                    "value": "/var/lib/kubelet"
+                  },
+                  {
+                    "name": "CSI_LOG_LEVEL",
+                    "value": "debug"
+                  },
+                  {
+                    "name": "TENANT_NAME",
+                    "value": ""
+                  }
+                ],
+                "image": "dellemc/csi-unity:v2.6.0",
+                "imagePullPolicy": "IfNotPresent"
+              },
+              "configVersion": "v2.6.0",
+              "controller": {
+                "envs": [
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  }
+                ],
+                "nodeSelector": null,
+                "tolerations": null
+              },
+              "csiDriverSpec": {
+                "fSGroupPolicy": "ReadWriteOnceWithFSType"
+              },
+              "csiDriverType": "unity",
+              "dnsPolicy": "ClusterFirstWithHostNet",
+              "forceRemoveDriver": true,
+              "forceUpdate": false,
+              "node": {
+                "envs": [
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  }
+                ],
+                "nodeSelector": null,
+                "tolerations": null
+              },
+              "replicas": 2,
+              "sideCars": [
+                {
+                  "args": [
+                    "--monitor-interval=60s"
+                  ],
+                  "enabled": false,
+                  "name": "external-health-monitor"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "apiVersion": "storage.dell.com/v1",
+          "kind": "ContainerStorageModule",
+          "metadata": {
             "name": "test-vxflexos",
             "namespace": "test-vxflexos"
           },
@@ -1837,6 +1926,7 @@ spec:
   - Powerflex
   - Powerscale
   - Powerstore
+  - Unity
   - Authorization
   - Observability
   - Replication
