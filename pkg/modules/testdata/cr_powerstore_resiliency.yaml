@@ -15,6 +15,7 @@ spec:
 
   modules:
     - name: resiliency
+      configVersion: "v1.6.0"
       enabled: true
       components:
       - name: podmon

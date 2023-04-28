@@ -15,6 +15,7 @@ package modules
 import (
 	"context"
 	"testing"
+
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	utils "github.com/dell/csm-operator/pkg/utils"
@@ -41,6 +42,21 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			}
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
+		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore)
+			if err != nil {
+				panic(err)
+			}
+			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerStore))
+			if err != nil {
+				panic(err)
+			}
+			return true, *newDeployment, operatorConfig, customResource
+		},
 		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
@@ -58,7 +74,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, dp, opConfig, cr := tc(t)
-			newDeployment, err := ResiliencyInjectDeployment(dp, cr, opConfig, "powerstore")
+			newDeployment, err := ResiliencyInjectDeployment(dp, cr, opConfig, string(csmv1.PowerStore))
 			if success {
 				assert.NoError(t, err)
 				if newDeployment == nil {
@@ -128,7 +144,6 @@ func TestResiliencyPrecheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.6.0"
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
@@ -182,7 +197,7 @@ func TestResiliencyPrecheck(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			tmpCR.Spec.Driver.CSIDriverType = "powerstore"
+			tmpCR.Spec.Driver.CSIDriverType = csmv1.PowerStore
 			replica := tmpCR.Spec.Modules[0]
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
@@ -251,7 +266,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := ResiliencyInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, "powerstore")
+			newDaemonSet, err := ResiliencyInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, string(csmv1.PowerStore))
 			if err != nil {
 				panic(err)
 			}
@@ -279,12 +294,12 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := ResiliencyInjectDaemonset(ds, customResource, opConfig, "powerstore")
+			newDaemonSet, err := ResiliencyInjectDaemonset(ds, customResource, opConfig, string(csmv1.PowerStore))
 			if success {
 				assert.NoError(t, err)
 				if newDaemonSet == nil {
 					panic(err)
-				}				
+				}
 			} else {
 				assert.Error(t, err)
 			}

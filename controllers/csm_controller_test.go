@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/tests/shared"
@@ -178,7 +179,7 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 }
 
 func (suite *CSMControllerTestSuite) TestResiliencyReconcile() {
-	suite.makeFakeResiliencyCSM(csmName, suite.namespace, true, append(getResiliencyModule(), getResiliencyModule()...), "powerstore")
+	suite.makeFakeResiliencyCSM(csmName, suite.namespace, true, append(getResiliencyModule(), getResiliencyModule()...), string(v1.PowerStore))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
@@ -1086,7 +1087,7 @@ func getResiliencyModule() []csmv1.Module {
 			ConfigVersion: "v1.6.0",
 			Components: []csmv1.ContainerTemplate{
 				{
-					Name: utils.ResiliecnySideCarName,					
+					Name: utils.ResiliecnySideCarName,
 				},
 			},
 		},
@@ -1285,7 +1286,6 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
 }
-
 
 func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, withFinalizer bool, modules []csmv1.Module, driverType string) {
 
