@@ -75,7 +75,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-unity:v2.6.0
+          image: dellemc/csi-unity:v2.5.0
           imagePullPolicy:  IfNotPresent
           args:
             - "--driver-name=csi-unity.dellemc.com"
