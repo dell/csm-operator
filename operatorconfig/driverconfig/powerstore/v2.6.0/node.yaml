@@ -191,8 +191,8 @@ spec:
             path: /var/lib/kubelet/plugins/kubernetes.io/csi
         - name: pods-path
           hostPath:
-          path: /var/lib/kubelet/pods
-          type: Directory
+            path: /var/lib/kubelet/pods
+            type: Directory
         - name: dev
           hostPath:
             path: /dev
