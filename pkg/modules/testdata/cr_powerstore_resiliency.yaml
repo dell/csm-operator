@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerstore"
-    configVersion: v2.6.0
+    configVersion: v2.7.0
     authSecret: test-powerstore-creds 
     replicas: 1
     common:
@@ -14,35 +14,14 @@ spec:
       imagePullPolicy: IfNotPresent
 
   modules:
-    - name: replication
+    - name: resiliency
+      configVersion: "v1.6.0"
       enabled: true
       components:
-      - name: dell-csi-replicator
-        image: dellemc/dell-csi-replicator:v1.3.0
+      - name: podmon
+        image: dellemc/podmon:v1.6.0
         envs:
-          - name: "X_CSI_REPLICATION_PREFIX"
-            value: "replication.storage.dell.com"
-          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-            value: "powerscale"
-      
-      
-      - name: dell-replication-controller-manager
-        image: dellemc/dell-replication-controller:v1.3.0
-        envs:
-          - name: "TARGET_CLUSTERS_IDS"
-            value: "test-target-cluster-1,test-target-cluster-2"
-
-          - name: "REPLICATION_CTRL_LOG_LEVEL"
-            value: "debug"
-          
-          - name: "REPLICATION_CTRL_REPLICAS"
-            value: "1"
-
-          - name: "LEADER_ELECTION"
-            value: "true"
-
-          - name: "RETRY_INTERVAL_MIN"
-            value: "1s"
-
-          - name: "RETRY_INTERVAL_MAX"
-            value: "5m"
+          - name: "X_CSI_PODMON_API_PORT"
+            value: "8083"
+          - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE"
+            value: "60"
