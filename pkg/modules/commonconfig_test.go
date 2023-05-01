@@ -28,7 +28,8 @@ import (
 )
 
 var (
-	operatorConfig utils.OperatorConfig
+	operatorConfig    utils.OperatorConfig
+	badOperatorConfig utils.OperatorConfig
 )
 
 func TestMain(m *testing.M) {
@@ -109,6 +110,19 @@ func TestAuthorizationCertManager(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
 	}
 	for name, tc := range tests {
