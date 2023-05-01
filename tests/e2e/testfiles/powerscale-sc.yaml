@@ -18,7 +18,7 @@ parameters:
   # Optional: true
   # Default value: value specified in values.yaml for isiPath
   # Examples: /ifs/data/csi, /ifs/engineering
-  IsiPath: /ifs/data/test
+  IsiPath: /ifs/data/csi
 
   # The permissions for isi volume directory path
   # This value overrides the isiVolumePathPermissions attribute of corresponding cluster config in secret, if present
