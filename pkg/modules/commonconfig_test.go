@@ -78,7 +78,7 @@ func getSecret(namespace, secretName string) *corev1.Secret {
 	}
 }
 
-func TestAuthorizationCertManager(t *testing.T) {
+func TestCommonCertManager(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
