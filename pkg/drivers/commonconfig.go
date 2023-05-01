@@ -65,6 +65,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if len(cr.Spec.Driver.Controller.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Controller.Tolerations {
+			log.Debugw("Adding toleration", "t", t)
 			toleration := acorev1.Toleration()
 			toleration.WithKey(t.Key)
 			toleration.WithOperator(t.Operator)
