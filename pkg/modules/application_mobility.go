@@ -263,7 +263,7 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 }
 
 // AppMobilityCertManager - Install/Delete cert-manager
-/*func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getAppMobCertManager(op, cr)
 	if err != nil {
 		return err
@@ -326,17 +326,17 @@ func AppInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Conta
 
 	container := *containerPtr
 
-	vols, err := getAppMobApplyVolumes(cr, op, authModule.Components[0])
+	/*vols, err := getAppMobApplyVolumes(cr, op, authModule.Components[0])
 	if err != nil {
 		return nil, err
 	}
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
 	return &dp, nil
-}*/
+}
 
 // AppMobilityVelero - Install/Delete velero
-func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+/*func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err

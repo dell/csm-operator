@@ -840,6 +840,12 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 // reconcileAppMobility - deploy Application Mobility
 func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
+	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
+		log.Infow("Reconcile Application Mobility Controller Manager")
+		if err := modules.AppMobilityDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile Application Mobility controller Manager: %v", err)
+		}
+	}
 	// AppMobility installs cert-manager
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
 		log.Infow("Reconcile application mobility cert-manager")
