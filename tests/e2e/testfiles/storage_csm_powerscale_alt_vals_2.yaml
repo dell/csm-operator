@@ -54,7 +54,7 @@ spec:
         #   false: probe all PowerScale clusters during driver initialization
         # Default value: false
         - name: X_CSI_ISI_NO_PROBE_ON_START
-          value: "true"
+          value: "false"
 
         # X_CSI_ISI_AUTOPROBE: automatically probe the PowerScale cluster if not done already during CSI calls.
         # Allowed values:

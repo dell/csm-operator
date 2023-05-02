@@ -134,7 +134,7 @@ spec:
       # Default value: "0777"
       # Examples: "0777", "777", "0755"
       - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
-        value: "0755"
+        value: "757"
 
       # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
       # Install the 'external-health-monitor' sidecar accordingly.
