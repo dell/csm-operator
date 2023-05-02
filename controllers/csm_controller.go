@@ -672,6 +672,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
+
+				/*case csmv1.ApplicationMobility:
+				log.Info("Injecting CSM Application Mobility")
+				dp, err := modules.AppInjectDeployment(controller.Deployment, cr, operatorConfig)
+				if err != nil {
+					return fmt.Errorf("injecting app-mobility into deployment: %v", err)
+				}
+				controller.Deployment = *dp*/
 			}
 
 		}
