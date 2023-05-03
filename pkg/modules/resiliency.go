@@ -152,6 +152,12 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConf
 			break
 		}
 	}
+	if driverType == string(csmv1.PowerScale) {
+		driverType = string(csmv1.PowerScaleName)
+	}
+	if driverType == string(csmv1.PowerFlexName) {
+		driverType = string(csmv1.PowerFlex)
+	}
 	fileToRead := "container-" + driverType + "-" + mode + ".yaml"
 	buf, err := readConfigFile(resiliencyModule, cr, op, fileToRead)
 	if err != nil {
