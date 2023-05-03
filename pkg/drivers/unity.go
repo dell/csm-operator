@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -69,7 +70,24 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 		log.Errorw("PreCheckUnity failed in version check", "Error", err.Error())
 		return fmt.Errorf("%s %s not supported", csmv1.Unity, cr.Spec.Driver.ConfigVersion)
 	}
+
+	certCount := 1
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == "CERT_SECRET_COUNT" {
+			d, err := strconv.ParseInt(env.Value, 0, 8)
+			if err != nil {
+				return fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+			}
+			certCount = int(d)
+		}
+	}
+
 	secrets := []string{config}
+	log.Debugw("preCheck", "secrets", len(secrets), "certCount", certCount)
+
+	for i := 0; i < certCount; i++ {
+		secrets = append(secrets, fmt.Sprintf("%s-certs-%d", cr.Name, i))
+	}
 
 	for _, name := range secrets {
 		found := &corev1.Secret{}
@@ -82,7 +100,6 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 		}
 	}
 
-	log.Debugw("preCheck", "secrets", len(secrets))
 	return nil
 }
 

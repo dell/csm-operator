@@ -425,6 +425,10 @@ metadata:
                   {
                     "name": "TENANT_NAME",
                     "value": ""
+                  },
+                  {
+                    "name": "CERT_SECRET_COUNT"
+                    "value": "1"
                   }
                 ],
                 "image": "dellemc/csi-unity:v2.6.0",
