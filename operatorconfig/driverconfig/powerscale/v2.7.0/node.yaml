@@ -77,7 +77,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-isilon:v2.4.0
+          image: dellemc/csi-isilon:v2.7.0
           imagePullPolicy: IfNotPresent
           env:
             - name: CSI_ENDPOINT
@@ -120,6 +120,8 @@ spec:
               value: "0"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "false"
+            - name: X_CSI_MAX_PATH_LIMIT
+              value: "false"
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
@@ -138,7 +140,7 @@ spec:
             - name: csi-isilon-config-params
               mountPath: /csi-isilon-config-params
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.5.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.3
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
