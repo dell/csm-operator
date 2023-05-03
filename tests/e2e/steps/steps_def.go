@@ -672,7 +672,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"--user", user,
 		"--password", password,
 		"--array-insecure",
-		"--insecure", "--addr", fmt.Sprintf("storage.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
 	)
 	fmt.Println("=== Storage === ", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -685,7 +685,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	fmt.Println("=== Creating Tenant ===")
 	cmd = exec.Command("karavictl",
 		"tenant", "create",
-		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("tenant.csm-authorization.com:%s", port),
+		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === ", cmd.String())
@@ -702,7 +702,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"role", "create",
 		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
 			roleName, storageType, sysID, pool, quotaLimit),
-		"--insecure", "--addr", fmt.Sprintf("role.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
 	)
 
 	fmt.Println("=== Creating Role", cmd.String())
@@ -720,7 +720,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"rolebinding", "create",
 		"--tenant", tenantName,
 		"--role", roleName,
-		"--insecure", "--addr", fmt.Sprintf("tenant.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
 	)
 	fmt.Println("=== Binding Role", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -734,7 +734,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	cmd = exec.Command("karavictl",
 		"generate", "token",
 		"--tenant", tenantName,
-		"--insecure", "--addr", fmt.Sprintf("tenant.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
 	)
 	fmt.Println("=== Token", cmd.String())
 	b, err = cmd.CombinedOutput()

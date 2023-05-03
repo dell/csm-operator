@@ -818,7 +818,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 	log := logger.GetLogger(ctx)
 	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization proxy-server")
-		if err := modules.AuthorizationServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		if err := modules.AuthorizationServerDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization proxy server: %v", err)
 		}
 
@@ -829,7 +829,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 
 	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
 		log.Infow("Reconcile authorization cert-manager")
-		if err := modules.AuthorizationCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
 		}
 	}
@@ -872,7 +872,9 @@ func getDriverConfig(ctx context.Context,
 		// use powerscale instead of isilon as the folder name is powerscale
 		driverType = csmv1.PowerScaleName
 	}
-
+	if driverType == csmv1.Unity {
+		driverType = csmv1.Unity
+	}
 	configMap, err = drivers.GetConfigMap(ctx, cr, operatorConfig, driverType)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s configMap: %v", driverType, err)
@@ -1054,6 +1056,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powerstore validation: %v", err)
 		}
+	case csmv1.Unity:
+		err := drivers.PrecheckUnity(ctx, cr, operatorConfig, r.GetClient())
+		if err != nil {
+			return fmt.Errorf("failed unity validation: %v", err)
+		}
 	default:
 		for _, m := range cr.Spec.Modules {
 			if m.Name == csmv1.AuthorizationServer {
@@ -1138,6 +1145,7 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 		// use powerscale instead of isilon as the folder name is powerscale
 		driverType = csmv1.PowerScaleName
 	}
+
 	// If it is an upgrade/downgrade, check to see if we meet the minimum version using GetUpgradeInfo, which returns the minimum version required
 	// for the desired upgrade. If the upgrade path is not valid fail
 	// Existing version

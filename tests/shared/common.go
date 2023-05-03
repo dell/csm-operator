@@ -13,7 +13,7 @@
 package shared
 
 import (
-	"io/ioutil"
+	"os"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,6 +34,7 @@ const (
 	OldConfigVersion         string = "v2.2.0"
 	BadConfigVersion         string = "v0"
 	PStoreConfigVersion      string = "v2.6.0"
+	UnityConfigVersion       string = "v2.6.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
@@ -167,7 +168,7 @@ func MakeSecret(name, ns, configVersion string) *corev1.Secret {
 
 // MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
-	configJSON, _ := ioutil.ReadFile(configFile)
+	configJSON, _ := os.ReadFile(configFile)
 	data := map[string][]byte{
 		"config": configJSON,
 	}

@@ -1,0 +1,240 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: <DriverDefaultReleaseName>-controller
+  namespace: <DriverDefaultReleaseNamespace>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-controller  
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete", "update","patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "create", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update","patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments/status"]
+    verbs: ["patch"]
+  - apiGroups: ["csi.storage.k8s.io"]
+    resources: ["csinodeinfos"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+# below for snapshotter
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["create", "get", "list", "watch", "update", "delete", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots/status"]
+    verbs: ["update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments/status"]
+    verbs: ["patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["create", "list", "watch", "delete"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents/status"]
+    verbs: ["update", "patch"]
+  # below for resizer
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["update", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-controller
+subjects:
+  - kind: ServiceAccount
+    name: <DriverDefaultReleaseName>-controller
+    namespace: <DriverDefaultReleaseNamespace>
+roleRef:
+  kind: ClusterRole
+  name: <DriverDefaultReleaseName>-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: <DriverDefaultReleaseName>-controller
+  namespace: <DriverDefaultReleaseNamespace>
+spec:
+  selector:
+    matchLabels:
+      app: <DriverDefaultReleaseName>-controller
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: <DriverDefaultReleaseName>-controller
+    spec:
+      serviceAccountName: <DriverDefaultReleaseName>-controller
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - <DriverDefaultReleaseName>-controller
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: attacher
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.0.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=5"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
+        - name: provisioner
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.3.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--volume-name-prefix=csivol"
+            - "--volume-name-uuid-length=10"
+            - "--timeout=180s"
+            - "--worker-threads=6"
+            - "--v=5"
+            - "--feature-gates=Topology=true"
+            - "--strict-topology=true"
+            - "--leader-election"
+            - "--leader-election-namespace=<DriverDefaultReleaseNamespace>"
+            - "--default-fstype=ext4"
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
+        - name: snapshotter
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.1.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--snapshot-name-prefix=csi-snap"
+            - "--snapshot-name-uuid-length=10"
+            - "--timeout=360s"
+            - "--v=5"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
+        - name: resizer
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.6.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=5"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
+        - name: external-health-monitor
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.8.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
+            - "--http-endpoint=:8080"
+            - "--enable-node-watcher=true"
+            - "--monitor-interval=60s"
+            - "--timeout=180s"
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
+        - name: driver
+          image: dellemc/csi-unity:v2.6.0
+          args:
+            - "--driver-name=csi-unity.dellemc.com"
+            - "--driver-config=/unity-config/driver-config-params.yaml"
+            - "--driver-secret=/unity-secret/config"
+            - "--leader-election"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CSI_ENDPOINT
+              value: /var/run/csi/csi.sock
+            - name: X_CSI_MODE
+              value: controller
+            - name: X_CSI_UNITY_AUTOPROBE
+              value: "true"
+            - name: SSL_CERT_DIR
+              value: /certs
+            - name: X_CSI_HEALTH_MONITOR_ENABLED
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            - name: unity-config
+              mountPath: /unity-config
+            - name: unity-secret
+              mountPath: /unity-secret
+      volumes:
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: <DriverDefaultReleaseName>-certs-0
+                  items:
+                    - key: cert-0
+                      path: cert-0
+        - name: socket-dir
+          emptyDir:
+        - name: unity-config
+          configMap:
+              name: <DriverDefaultReleaseName>-config-params
+        - name: unity-secret
+          secret:
+              secretName: <DriverDefaultReleaseName>-creds

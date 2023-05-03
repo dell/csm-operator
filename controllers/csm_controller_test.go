@@ -123,6 +123,7 @@ var (
 	oldConfigVersion         = shared.OldConfigVersion
 	upgradeConfigVersion     = shared.UpgradeConfigVersion
 	jumpUpgradeConfigVersion = shared.JumpUpgradeConfigVersion
+	invalidConfigVersion     = shared.BadConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -265,6 +266,26 @@ func (suite *CSMControllerTestSuite) TestPowerStoreAnnotation() {
 
 }
 
+func (suite *CSMControllerTestSuite) TestUnityAnnotation() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.Unity
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
+
+}
+
 func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -363,7 +384,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
 		annotations = make(map[string]string)
 	}
 	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = jumpUpgradeConfigVersion
+		annotations[configVersionKey] = invalidConfigVersion
 		csm.SetAnnotations(annotations)
 	}
 
@@ -1119,7 +1140,7 @@ func getAuthProxyServer() []csmv1.Module {
 		{
 			Name:          csmv1.AuthorizationServer,
 			Enabled:       true,
-			ConfigVersion: "v1.5.0",
+			ConfigVersion: "v1.7.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "karavi-authorization-proxy-server",
