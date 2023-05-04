@@ -125,15 +125,11 @@ func getResiliencyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) 
 }
 
 func getResiliencyEnv(resiliencyModule csmv1.Module, driverType csmv1.DriverType) string {
-	// podmonArrayConnectivityPollRate := DefaultPodmonArrayConnectivityPollRate
 	podmonAPIPort := DefaultPodmonAPIPort
 
 	for _, component := range resiliencyModule.Components {
 		if component.Name == utils.PodmonNodeComponent {
 			for _, env := range component.Envs {
-				/* if env.Name == XCSIPodmonArrayConnectivityPollRate {
-					podmonArrayConnectivityPollRate = env.Value
-				} */
 				if env.Name == XCSIPodmonAPIPort {
 					podmonAPIPort = env.Value
 				}
@@ -152,9 +148,9 @@ func getResiliencyArgs(m csmv1.Module, mode string) []string {
 			return component.Args
 		}
 	}
-	// log.Infof("Unable to read arguments from the resiliency module's component %s", mode)
 	return nil
 }
+
 func getPollRateFromArgs(args []string) string {
 	for _, arg := range args {
 		if strings.Contains(arg, "arrayConnectivityPollRate") {
@@ -182,9 +178,6 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConf
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
-	/* podmonArrayConnectivityPollRate, podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
-	YamlString = strings.ReplaceAll(YamlString, DefaultPodmonArrayConnectivityPollRate, podmonArrayConnectivityPollRate)
-	YamlString = strings.ReplaceAll(YamlString, DefaultPodmonAPIPort, podmonAPIPort) */
 	// read args from the respective components
 	args := getResiliencyArgs(resiliencyModule, mode)
 
