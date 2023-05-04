@@ -432,9 +432,6 @@ spec:
           configVersion: v1.6.0
           components:
             - name: podmon-controller
-              # image: Image to use for podmon. This shouldn't be changed
-              # Allowed values: string
-              # Default value: None
               args:
                 - "--csisock=unix:/var/run/csi/csi.sock"
                 - "--labelvalue=csi-isilon"
@@ -446,9 +443,6 @@ spec:
                 - "--driverPodLabelValue=dell-storage"
                 - "--ignoreVolumelessPods=false"
             - name: podmon-node
-              # image: Image to use for podmon. This shouldn't be changed
-              # Allowed values: string
-              # Default value: None
               envs:
                 # podmonAPIPort: Defines the port to be used within the kubernetes cluster
                 # Allowed values: Any valid and free port (string)
