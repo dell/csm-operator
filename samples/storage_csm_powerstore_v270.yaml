@@ -155,19 +155,39 @@ spec:
       enabled: false
       configVersion: v1.6.0
       components:
-      - name: podmon
-        # image: Image to use for podmon. This shouldn't be changed
-        # Allowed values: string
-        # Default value: None
-        image: dellemc/podmon:v1.5.0
-        envs:
-          # podmonAPIPort: Defines the port to be used within the kubernetes cluster
-          # Allowed values: Any valid and free port (string)
-          # Default value: 8083
-          - name: "X_CSI_PODMON_API_PORT"
-            value: "8083"
-          # arrayConnectivityPollRate: indicates the polling frequency to check array connectivity
+        - name: podmon-controller
+          # image: Image to use for podmon. This shouldn't be changed
           # Allowed values: string
-          # Default value: 60
-          - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE"
-            value: "60"
+          # Default value: None
+          # image: dellemc/podmon:v1.5.0
+          args:
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--labelvalue=csi-powerstore"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-powerstore.dellemc.com"
+            - "--mode=controller"
+            - "--skipArrayConnectionValidation=false"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+        - name: podmon-node
+          # image: Image to use for podmon. This shouldn't be changed
+          # Allowed values: string
+          # Default value: None
+          # image: dellemc/podmon:v1.5.0
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+          args:
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
+            - "--labelvalue=csi-powerstore"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-powerstore.dellemc.com"
+            - "--mode=node"
+            - "--leaderelection=false"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"

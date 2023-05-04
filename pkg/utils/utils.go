@@ -129,6 +129,10 @@ const (
 	AuthorizationNamespace = "authorization"
 	// AuthProxyServerComponent - karavi-authorization-proxy-server component
 	AuthProxyServerComponent = "karavi-authorization-proxy-server"
+	// PodmonControllerComponent - podmon-controller
+	PodmonControllerComponent = "podmon-controller"
+	// PodmonNodeComponent - podmon-node
+	PodmonNodeComponent = "podmon-node"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
