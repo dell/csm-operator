@@ -127,6 +127,8 @@ spec:
               mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
+            - name: csi-path
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
@@ -160,10 +162,25 @@ spec:
             - name: driver-path
               mountPath: /csi
       volumes:
+        - name: usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+        - name: kubelet-pods
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: var-run
+          hostPath:
+            path: /var/run
+            type: Directory
         - name: registration-dir
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins_registry/
             type: DirectoryOrCreate
+        - name: csi-path
+          hostPath:
+            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
         - name: driver-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
