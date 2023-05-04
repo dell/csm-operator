@@ -579,55 +579,6 @@ func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.Operato
 	return nil
 }
 
-// getCertManager - configure cert-manager with the specified namespace before installation
-func getCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
-
-	auth, err := getAuthorizationModule(cr)
-	if err != nil {
-		return YamlString, err
-	}
-
-	certManagerPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthCertManagerManifest)
-	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
-	if err != nil {
-		return YamlString, err
-	}
-
-	YamlString = string(buf)
-	authNamespace := cr.Namespace
-	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-
-	return YamlString, nil
-}
-
-// AuthorizationCertManager - apply/delete cert-manager objects
-func AuthorizationCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getCertManager(op, cr)
-	if err != nil {
-		return err
-	}
-
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
-	if err != nil {
-		return err
-	}
-
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
 // getNginxIngressController - configure nginx ingress controller with the specified namespace before installation
 func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
