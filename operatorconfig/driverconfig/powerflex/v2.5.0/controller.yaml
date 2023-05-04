@@ -52,6 +52,7 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "list"]
+# uncomment this when VGS support is added
 #  - apiGroups: ["volumegroup.storage.dell.com"]
 #    resources: ["dellcsivolumegroupsnapshots","dellcsivolumegroupsnapshots/status"]
 #    verbs: ["create", "list", "watch", "delete", "update"]
