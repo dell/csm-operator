@@ -147,15 +147,6 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
-#        - name: vg-snapshotter
-#          image: dellemc/csi-volumegroup-snapshotter:v1.2.0
-#          imagePullPolicy: IfNotPresent 
-#          env:
-#            - name: ADDRESS
-#              value: /var/run/csi/csi.sock
-#          volumeMounts:
-#            - name: socket-dir
-#              mountPath: /var/run/csi
         - name: csi-external-health-monitor-controller
           image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.6.0
           imagePullPolicy: IfNotPresent
