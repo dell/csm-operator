@@ -1,6 +1,11 @@
 name: podmon
 image: dellemc/podmon:v1.5.0
 imagePullPolicy: IfNotPresent
+securityContext:
+  privileged: true
+  capabilities:
+    add: ["SYS_ADMIN"]
+  allowPrivilegeEscalation: true
 env:
   - name: KUBE_NODE_NAME
     valueFrom:
