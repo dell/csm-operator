@@ -124,26 +124,44 @@ func getResiliencyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) 
 	return csmv1.Module{}, fmt.Errorf("could not find resiliency module")
 }
 
-func getResiliencyEnv(resiliencyModule csmv1.Module, driverType csmv1.DriverType) (string, string) {
-	podmonArrayConnectivityPollRate := DefaultPodmonArrayConnectivityPollRate
+func getResiliencyEnv(resiliencyModule csmv1.Module, driverType csmv1.DriverType) string {
 	podmonAPIPort := DefaultPodmonAPIPort
 
 	for _, component := range resiliencyModule.Components {
-		if component.Name == utils.ResiliecnySideCarName {
+		if component.Name == utils.PodmonNodeComponent {
 			for _, env := range component.Envs {
-				if env.Name == XCSIPodmonArrayConnectivityPollRate {
-					podmonArrayConnectivityPollRate = env.Value
-				}
 				if env.Name == XCSIPodmonAPIPort {
 					podmonAPIPort = env.Value
 				}
 			}
 		}
 	}
-
-	return podmonArrayConnectivityPollRate, podmonAPIPort
+	return podmonAPIPort
 }
 
+func getResiliencyArgs(m csmv1.Module, mode string) []string {
+	for _, component := range m.Components {
+		if component.Name == utils.PodmonControllerComponent && mode == "controller" {
+			return component.Args
+		}
+		if component.Name == utils.PodmonNodeComponent && mode == "node" {
+			return component.Args
+		}
+	}
+	return nil
+}
+
+func getPollRateFromArgs(args []string) string {
+	for _, arg := range args {
+		if strings.Contains(arg, "arrayConnectivityPollRate") {
+			sub := strings.Split(arg, "=")
+			if len(sub) == 2 {
+				return strings.Split(arg, "=")[1]
+			}
+		}
+	}
+	return "60"
+}
 func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	resiliencyModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -166,15 +184,16 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConf
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
-	podmonArrayConnectivityPollRate, podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
-	YamlString = strings.ReplaceAll(YamlString, DefaultPodmonArrayConnectivityPollRate, podmonArrayConnectivityPollRate)
-	YamlString = strings.ReplaceAll(YamlString, DefaultPodmonAPIPort, podmonAPIPort)
+	// read args from the respective components
+	args := getResiliencyArgs(resiliencyModule, mode)
 
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
 	if err != nil {
 		return nil, nil, err
 	}
+	// set arguments
+	container.Args = args
 	return &resiliencyModule, &container, nil
 }
 
@@ -189,7 +208,9 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
-	podmonArrayConnectivityPollRate, podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
+	podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
+	// read args pollrate from args of component, don't use env here..optimize
+	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 	enabled := "true"
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if *cnt.Name == "driver" {
@@ -219,9 +240,9 @@ func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.
 
 	ds.Spec.Template.Spec.Containers = append(ds.Spec.Template.Spec.Containers, container)
 
-	podmonArrayConnectivityPollRate, podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
+	podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
 	enabled := "true"
-
+	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 	for i, cnt := range ds.Spec.Template.Spec.Containers {
 		if *cnt.Name == "driver" {
 			ds.Spec.Template.Spec.Containers[i].Env = append(ds.Spec.Template.Spec.Containers[i].Env,
