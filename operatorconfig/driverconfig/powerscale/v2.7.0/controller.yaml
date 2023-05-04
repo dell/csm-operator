@@ -118,7 +118,7 @@ spec:
 
       containers:
         - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.5.0
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.7.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -135,7 +135,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v3.5.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.2.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -152,7 +152,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: external-health-monitor
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.6.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.8.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -172,7 +172,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.2.1
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.4.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -194,7 +194,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.0.1
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.2.1
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -212,7 +212,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-isilon:v2.4.0
+          image: dellemc/csi-isilon:v2.7.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-isilon" ]
           args:
@@ -246,6 +246,8 @@ spec:
               value: "/ifs/data/csi"
             - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
               value: "0777"
+            - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
+              value: "false"
             - name: X_CSI_ISI_NO_PROBE_ON_START
               value: "false"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
@@ -258,6 +260,8 @@ spec:
               value: /certs
             - name: X_CSI_ISI_CONFIG_PATH
               value: /isilon-configs/config
+            - name: X_CSI_MAX_PATH_LIMIT
+              value: "false"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
