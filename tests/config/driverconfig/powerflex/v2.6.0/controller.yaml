@@ -51,10 +51,6 @@ rules:
 # below for snapshotter
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list"]
-  - apiGroups: ["volumegroup.storage.dell.com"]
-    resources: ["dellcsivolumegroupsnapshots","dellcsivolumegroupsnapshots/status"]
-    verbs: ["create", "list", "watch", "delete", "update"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
     verbs: ["get", "list", "watch"]
