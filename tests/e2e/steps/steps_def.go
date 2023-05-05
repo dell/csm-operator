@@ -49,6 +49,7 @@ var (
 	authString        = "karavi-authorization-proxy"
 	operatorNamespace = "dell-csm-operator"
 	quotaLimit        = "30000000"
+	pflexSecretMap    = map[string]string{"REPLACE_USER":"PFLEX_USER", "REPLACE_PASS":"PFLEX_PASS", "REPLACE_SYSTEMID":"PFLEX_SYSTEMID", "REPLACE_ENDPOINT":"PFLEX_ENDPOINT", "REPLACE_MDM":"PFLEX_MDM",}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -424,6 +425,46 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 	}
 
 	return nil
+}
+
+//this will be used to change pflex secret -> auth pflex secret 
+func (step *Step) replaceDriverSecret(res Resource, oldSecret, newSecret string) error {
+	cmd := exec.Command("kubectl", "delete", "-f", oldSecret)
+	err := cmd.Run()
+	if err != nil {
+    		return fmt.Errorf("failed to delete secret from file: %s:  %v", oldSecret, err)
+	}
+	cmd = exec.Command("kubectl", "create", "-f", newSecret)
+	err = cmd.Run()
+        if err != nil {
+                return fmt.Errorf("failed to create secret from file: %s :  %v", newSecret,  err)
+        }
+	return nil 
+}
+
+func (step *Step) fillInSecretTemplate(res Resource, templateFile string) error {
+	for key := range pflexSecretMap {
+		err  := replaceInFile(key, os.Getenv(pflexSecretMap[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+	
+	//err := replaceInFile("REPLACE_USER", os.Getenv("PFLEX_USER"), templateFile)
+	//err  = replaceInFile("REPLACE_PASS", os.Getenv("PFLEX_PASS"), templateFile)
+	
+	return nil 
+}
+
+func replaceInFile(old, new, templateFile string) error {
+	cmdString := "s/" + old + "/" + new + "/g"
+	cmd := exec.Command("sed", "-i", cmdString, templateFile)
+	err := cmd.Run()
+	if err != nil {
+                return fmt.Errorf("failed to substitute %s with %s in file %s: %s", old, new, templateFile, err.Error())
+        }
+        return nil
+
 }
 
 // Uses scenario
