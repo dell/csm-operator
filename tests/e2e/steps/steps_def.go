@@ -165,6 +165,28 @@ func (step *Step) validateDriverNotInstalled(res Resource, driverName string, cr
 	return checkNoRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
+func (step *Step) setNodeLabel(res Resource, label string) error {
+	if label == "control-plane" {
+		setNodeLabel("node-role.kubernetes.io/control-plane", "")
+	} else {
+		return fmt.Errorf("Setting worker node role to %s not supported, feel free to add support", label)
+	}
+
+	return nil
+}
+
+func (step *Step) removeNodeLabel(res Resource, label string) error {
+	fmt.Printf("-------- step.resetNodeLabel called ---------\n")
+
+	if label == "control-plane" {
+		removeNodeLabel("node-role.kubernetes.io/control-plane")
+	} else {
+		return fmt.Errorf("Setting worker node role to %s not supported, feel free to add support", label)
+	}
+
+	return nil
+}
+
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]

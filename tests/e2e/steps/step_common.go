@@ -23,8 +23,11 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	//"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -36,6 +39,8 @@ var defaultObservabilityDeploymentName = map[csmv1.DriverType]string{
 	csmv1.PowerFlexName:  "karavi-metrics-powerflex",
 	csmv1.PowerFlex:      "karavi-metrics-powerflex",
 }
+
+var defaultLabels map[string]map[string]string
 
 // CustomTest -
 type CustomTest struct {
@@ -351,6 +356,71 @@ func arePodsRunning(pod *corev1.Pod) (string, bool) {
 		notReadyMsg += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
 	}
 	return notReadyMsg, allReady
+}
+
+// setWorkerNodeRole sets a role for a worker node and saves it so it can be cleared at the end of the test
+func removeNodeLabel(labelName string) error {
+	fmt.Printf("-------- resetNodeLabel --------\n")
+	updateOpts := metav1.UpdateOptions{}
+
+	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// create the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: labelName})
+	for _, node := range nodes.Items {
+		_, nodeExists := defaultLabels[node.Name]
+		// If the node has been modified, reset it
+		if nodeExists {
+			delete(node.ObjectMeta.Labels, labelName)
+			_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
+			if err != nil {
+				fmt.Errorf("label update failed with the following error: %s", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// setWorkerNodeRole sets a role for a worker node and saves it so it can be cleared at the end of the test
+func setNodeLabel(labelName, labelValue string) error {
+	updateOpts := metav1.UpdateOptions{}
+
+	if defaultLabels == nil {
+		defaultLabels = make(map[string]map[string]string)
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// create the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: "!" + labelName})
+	for _, node := range nodes.Items {
+		defaultLabels[node.Name] = node.ObjectMeta.Labels
+		node.ObjectMeta.Labels[labelName] = labelValue
+
+		_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
+		if err != nil {
+			fmt.Errorf("label update failed with the following error: %s", err)
+		}
+	}
+
+	return nil
 }
 
 func checkAuthorizationProxyServerNoRunningPods(namespace string, k8sClient kubernetes.Interface) error {

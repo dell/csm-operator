@@ -62,7 +62,7 @@ spec:
         #   false: disable auto probe.
         # Default value: false
         - name: X_CSI_ISI_AUTOPROBE
-          value: "false"
+          value: "true"
 
         # X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: Specify whether the PowerScale OneFS API server's certificate chain and host name should be verified.
         # Formerly this attribute was named as "X_CSI_ISI_INSECURE"
@@ -101,8 +101,8 @@ spec:
         # Allowed values: "error", "warn"/"warning", "info", "debug"
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
-          value: "warn"
-          #value: "debug"
+          #value: "warn"
+          value: "debug"
 
     controller:
       envs:
@@ -216,7 +216,7 @@ spec:
       # Default value: None
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-        node-role.kubernetes.io/control-plane: ""
+      #  node-role.kubernetes.io/control-plane: ""
 
       # tolerations: Define tolerations for the node daemonset, if required.
       # Default value: None
@@ -231,9 +231,9 @@ spec:
       #   operator: "Exists"
       #   effect: "NoExecute"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      - key: "node-role.kubernetes.io/control-plane"
-        operator: "Exists"
-        effect: "NoSchedule"
+      #- key: "node-role.kubernetes.io/control-plane"
+      #  operator: "Exists"
+      #  effect: "NoSchedule"
 
     sideCars:
       - name: provisioner

@@ -17,7 +17,7 @@ spec:
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
-    forceRemoveDriver: false
+    forceRemoveDriver: false 
     common:
       # Image for CSI PowerScale driver v2.5.0
       image: "dellemc/csi-isilon:v2.5.0"
@@ -216,24 +216,24 @@ spec:
       # Default value: None
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      #  node-role.kubernetes.io/control-plane: ""
+        node-role.kubernetes.io/control-plane: ""
 
       # tolerations: Define tolerations for the node daemonset, if required.
       # Default value: None
       tolerations:
-      # - key: "node.kubernetes.io/memory-pressure"
-      #   operator: "Exists"
-      #   effect: "NoExecute"
-      # - key: "node.kubernetes.io/disk-pressure"
-      #   operator: "Exists"
-      #   effect: "NoExecute"
-      # - key: "node.kubernetes.io/network-unavailable"
-      #   operator: "Exists"
-      #   effect: "NoExecute"
+      - key: "node.kubernetes.io/memory-pressure"
+        operator: "Exists"
+        effect: "NoExecute"
+      - key: "node.kubernetes.io/disk-pressure"
+        operator: "Exists"
+        effect: "NoExecute"
+      - key: "node.kubernetes.io/network-unavailable"
+        operator: "Exists"
+        effect: "NoExecute"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      # - key: "node-role.kubernetes.io/control-plane"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
 
     sideCars:
       - name: provisioner
