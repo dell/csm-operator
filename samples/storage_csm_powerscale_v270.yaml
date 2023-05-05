@@ -450,7 +450,7 @@ spec:
             - name: "X_CSI_PODMON_API_PORT"
               value: "8083"
           args:
-            - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon.dellemc.com/csi_sock"
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
             - "--labelvalue=csi-isilon"
             - "--arrayConnectivityPollRate=60"
             - "--driverPath=csi-isilon.dellemc.com"

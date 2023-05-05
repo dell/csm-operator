@@ -28,13 +28,13 @@ env:
         fieldPath: metadata.namespace
 volumeMounts:
   - name: kubelet-pods
-    mountPath: /var/lib/kubelet/pods
+    mountPath: <KUBELET_CONFIG_DIR>/pods
     mountPropagation: "Bidirectional"
   - name: driver-path
-    mountPath: /var/lib/kubelet/plugins/csi-isilon.dellemc.com
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
     mountPropagation: "Bidirectional"
   - name: csi-path
-    mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
     mountPropagation: "Bidirectional"
   - name: dev
     mountPath: /dev
