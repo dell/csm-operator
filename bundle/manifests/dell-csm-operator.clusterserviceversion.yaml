@@ -578,11 +578,6 @@ metadata:
                   ],
                   "enabled": false,
                   "name": "csi-external-health-monitor-controller"
-                },
-                {
-                  "enabled": false,
-                  "image": "dellemc/csi-volumegroup-snapshotter:v1.2.0",
-                  "name": "vg-snapshotter"
                 }
               ]
             },
