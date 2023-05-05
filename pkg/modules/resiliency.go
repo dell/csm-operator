@@ -209,7 +209,6 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
 	podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
-	// read args pollrate from args of component, don't use env here..optimize
 	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 	enabled := "true"
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
