@@ -101,7 +101,7 @@ spec:
             - name: ENABLE_TRACING
               value:
             - name: CSI_ENDPOINT
-              value: unix:///var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock
+              value: unix://<KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com/csi_sock
             - name: X_CSI_MODE
               value: node
             - name: X_CSI_POWERSTORE_KUBE_NODE_NAME
@@ -116,7 +116,7 @@ spec:
             - name: X_CSI_POWERSTORE_NODE_CHROOT_PATH
               value: /noderoot
             - name: X_CSI_POWERSTORE_TMP_DIR
-              value: /var/lib/kubelet/plugins/csi-powerstore.dellemc.com/tmp
+              value: <KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com/tmp
             - name: X_CSI_DRIVER_NAME
               value: "csi-powerstore.dellemc.com"
             - name: X_CSI_FC_PORTS_FILTER_FILE_PATH
@@ -133,12 +133,12 @@ spec:
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
           volumeMounts:
             - name: driver-path
-              mountPath: /var/lib/kubelet/plugins/csi-powerstore.dellemc.com
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com
             - name: csi-path
-              mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
               mountPropagation: "Bidirectional"
             - name: pods-path
-              mountPath: /var/lib/kubelet/pods
+              mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
             - name: dev
               mountPath: /dev
@@ -164,7 +164,7 @@ spec:
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock
+            - --kubelet-registration-path=<KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com/csi_sock
           env:
             - name: ADDRESS
               value: /csi/csi_sock
@@ -181,19 +181,19 @@ spec:
       volumes:
         - name: registration-dir
           hostPath:
-            path: /var/lib/kubelet/plugins_registry/
+            path: <KUBELET_CONFIG_DIR>/plugins_registry/
             type: DirectoryOrCreate
         - name: driver-path
           hostPath:
-            path: /var/lib/kubelet/plugins/csi-powerstore.dellemc.com
+            path: <KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com
             type: DirectoryOrCreate
         - name: csi-path
           hostPath:
-            path: /var/lib/kubelet/plugins/kubernetes.io/csi
+            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
         - name: pods-path
           hostPath:
-          path: /var/lib/kubelet/pods
-          type: Directory
+            path: <KUBELET_CONFIG_DIR>/pods
+            type: Directory
         - name: dev
           hostPath:
             path: /dev
