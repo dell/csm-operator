@@ -54,11 +54,6 @@ spec:
         enabled: false
         args: ["--monitor-interval=60s"]
 
-      # vg-snapshotter is disabled by default, refer to driver documentation before enabling it
-      - name: vg-snapshotter
-        enabled: false
-        image: dellemc/csi-volumegroup-snapshotter:v1.2.0
-
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
