@@ -59,7 +59,9 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Disable \[([^"]*)\] module from CR \[(\d+)\]$`, step.disableModule)
 
 	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
-	runner.addStep(`^Fill in secret template \[([^"]*)\]`, step.fillInSecretTemplate)
+	runner.addStep(`^Set up secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
+	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
+
 	runner.addStep(`^Replace secret \[([^"]*)\] with secret \[([^"]*)\]`, step.replaceDriverSecret)
 }
 
@@ -111,7 +113,7 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 			for i := 1; i < len(groups); i++ {
 				values = append(values, reflect.ValueOf(groups[i]))
 			}
-			
+
 			res := stepDef.Handler.Call(values)
 			if err, ok := res[0].Interface().(error); ok {
 				return err
