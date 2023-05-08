@@ -1,28 +1,28 @@
 # List of E2E Tests Scenarios
-#- scenario: "Install PowerScale Driver(Standalone)"
-#  paths: 
-#    - "testfiles/storage_csm_powerscale.yaml"
-#  modules:
-#  steps:
-#    - "Given an environment with k8s or openshift, and CSM operator installed"
-#    - "Apply custom resource [1]"
-#    - "Validate custom resource [1]"
-#    - "Validate [powerscale] driver from CR [1] is installed"
-#    - "Run custom test"
-#    # Last two steps perform Clean Up
-#    - "Enable forceRemoveDriver on CR [1]"
-#    - "Delete custom resource [1]"
-#  customTest:
-#    # name of custom test to run
-#    name: Cert CSI
-#    # Provide command-line argument to run. Ginkgo will run the command and return output
-#    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
-#    # Example:
-#    #   ./hello_world.sh
-#    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-#    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
+- scenario: "Install PowerScale Driver(Standalone)"
+  paths: 
+    - "testfiles/storage_csm_powerscale.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    # name of custom test to run
+    name: Cert CSI
+    # Provide command-line argument to run. Ginkgo will run the command and return output
+    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
+    # Example:
+    #   ./hello_world.sh
+    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
+    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerScale Driver with first set of alternate config values"
+- scenario: "Install PowerScale Driver with first alternate sample file"
   paths: 
     - "testfiles/storage_csm_powerscale_alt_vals_1.yaml"
   modules:
@@ -45,7 +45,7 @@
     #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
     run: ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerScale Driver with second set of alternate config values"
+- scenario: "Install PowerScale Driver with second alternate sample file"
   paths: 
     - "testfiles/storage_csm_powerscale_alt_vals_2.yaml"
   modules:
@@ -68,7 +68,7 @@
     #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
     run: ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerScale Driver with third set of alternate config values"
+- scenario: "Install PowerScale Driver with third alternate sample file"
   paths: 
     - "testfiles/storage_csm_powerscale_alt_vals_3.yaml"
   modules:
