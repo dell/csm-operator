@@ -443,6 +443,36 @@ func (step *Step) replaceDriverSecret(res Resource, oldSecret, newSecret string)
 	return nil
 }
 
+func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
+	// find which map to use for secret values
+	mapValues := determineMap(crType)
+	if len(mapValues) == 0 {
+		return fmt.Errorf("type: %s is not supported", crType)
+	}
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command("kubectl", "get", "sc", scName)
+	err := cmd.Run()
+	if err == nil {
+		cmd = exec.Command("kubectl", "delete", "sc", scName)
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+	cmd = exec.Command("kubectl", "create", "-f", templateFile)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
 
 	// find which map to use for secret values
