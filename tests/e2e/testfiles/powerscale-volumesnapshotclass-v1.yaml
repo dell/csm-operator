@@ -16,4 +16,4 @@ parameters:
   # The base path of the volumes on Isilon cluster for which snapshot is being created.
   # This path should be same as the IsiPath from the storageClass.
   # Optional: false
-  IsiPath: /ifs/data/test
+  IsiPath: /ifs/data/csi

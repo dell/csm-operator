@@ -101,7 +101,6 @@ spec:
         # Allowed values: "error", "warn"/"warning", "info", "debug"
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
-          #value: "debug"
           value: "info"
 
     controller:

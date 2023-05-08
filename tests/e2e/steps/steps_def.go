@@ -176,8 +176,6 @@ func (step *Step) setNodeLabel(res Resource, label string) error {
 }
 
 func (step *Step) removeNodeLabel(res Resource, label string) error {
-	fmt.Printf("-------- step.resetNodeLabel called ---------\n")
-
 	if label == "control-plane" {
 		removeNodeLabel(label, "node-role.kubernetes.io/control-plane")
 	} else {

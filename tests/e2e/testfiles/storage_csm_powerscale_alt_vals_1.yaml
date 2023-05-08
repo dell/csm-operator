@@ -16,15 +16,13 @@ spec:
     authSecret: csm-creds
     # currently fails with something about nodes taints etc
     replicas: 3
-    #replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
       # Image for CSI PowerScale driver v2.5.0
       image: "dellemc/csi-isilon:v2.5.0"
-      #imagePullPolicy: Always
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
         # Allowed Values:
@@ -33,8 +31,7 @@ spec:
         #   2: log only 1st line of the HTTP request and response
         # Default value: 0
         - name: X_CSI_VERBOSE
-          value: "0"
-          #value: "1"
+          value: "1"
 
         # X_CSI_ISI_PORT: Specify the HTTPs port number of the PowerScale OneFS API server
         # This value acts as a default value for endpointPort, if not specified for a cluster config in secret

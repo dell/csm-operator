@@ -25,7 +25,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
-	//"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
@@ -356,10 +355,8 @@ func arePodsRunning(pod *corev1.Pod) (string, bool) {
 	return notReadyMsg, allReady
 }
 
-// setWorkerNodeRole sets a role for a worker node and saves it so it can be cleared at the end of the test
+// removeNodelabel clears a node label set by setNodeLabel
 func removeNodeLabel(testName, labelName string) error {
-	updateOpts := metav1.UpdateOptions{}
-
 	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
 	if err != nil {
 		return fmt.Errorf("kube config creation failed with %s", err)
@@ -371,6 +368,10 @@ func removeNodeLabel(testName, labelName string) error {
 		return fmt.Errorf("Clientset creation failed with %s", err)
 	}
 
+	// Need empty UpdateOptions for node Update() call
+	updateOpts := metav1.UpdateOptions{}
+
+	// Go through all nodes labeled as modified by e2e test and remove both labels to restore nodes to before-test state
 	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: "e2e-added-" + testName})
 	for _, node := range nodes.Items {
 		delete(node.ObjectMeta.Labels, labelName)
@@ -384,24 +385,27 @@ func removeNodeLabel(testName, labelName string) error {
 	return nil
 }
 
-// setWorkerNodeRole sets a role for a worker node and saves it so it can be cleared at the end of the test
+// setNodeLabel adds a label to all nodes without it and marks them as modified so they can be reset at the end of the test
 func setNodeLabel(testName, labelName, labelValue string) error {
-	updateOpts := metav1.UpdateOptions{}
-
+	// Get K8s config
 	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
 	if err != nil {
 		return fmt.Errorf("kube config creation failed with %s", err)
 	}
 
-	// create the clientset
+	// create the clientset from K8s config
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return fmt.Errorf("Clientset creation failed with %s", err)
 	}
 
-	// Get only the nodes that do not have the label	
+	// Need empty UpdateOptions for node Update() call
+	updateOpts := metav1.UpdateOptions{}
+
+	// Get only the nodes that do not already have the label	
 	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: "!" + labelName})
 	for _, node := range nodes.Items {
+		// Add both the label and a label indicating this node was modified by the e2e test
 		node.ObjectMeta.Labels[labelName] = labelValue
 		node.ObjectMeta.Labels["e2e-added-" + testName] = ""
 
