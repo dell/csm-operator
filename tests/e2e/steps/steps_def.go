@@ -167,7 +167,7 @@ func (step *Step) validateDriverNotInstalled(res Resource, driverName string, cr
 
 func (step *Step) setNodeLabel(res Resource, label string) error {
 	if label == "control-plane" {
-		setNodeLabel("node-role.kubernetes.io/control-plane", "")
+		setNodeLabel(label, "node-role.kubernetes.io/control-plane", "")
 	} else {
 		return fmt.Errorf("Setting worker node role to %s not supported, feel free to add support", label)
 	}
@@ -179,7 +179,7 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 	fmt.Printf("-------- step.resetNodeLabel called ---------\n")
 
 	if label == "control-plane" {
-		removeNodeLabel("node-role.kubernetes.io/control-plane")
+		removeNodeLabel(label, "node-role.kubernetes.io/control-plane")
 	} else {
 		return fmt.Errorf("Setting worker node role to %s not supported, feel free to add support", label)
 	}

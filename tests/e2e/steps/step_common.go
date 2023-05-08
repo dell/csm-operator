@@ -40,8 +40,6 @@ var defaultObservabilityDeploymentName = map[csmv1.DriverType]string{
 	csmv1.PowerFlex:      "karavi-metrics-powerflex",
 }
 
-var defaultLabels map[string]map[string]string
-
 // CustomTest -
 type CustomTest struct {
 	Name string `json:"name" yaml:"name"`
@@ -359,31 +357,27 @@ func arePodsRunning(pod *corev1.Pod) (string, bool) {
 }
 
 // setWorkerNodeRole sets a role for a worker node and saves it so it can be cleared at the end of the test
-func removeNodeLabel(labelName string) error {
-	fmt.Printf("-------- resetNodeLabel --------\n")
+func removeNodeLabel(testName, labelName string) error {
 	updateOpts := metav1.UpdateOptions{}
 
 	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("kube config creation failed with %s", err)
 	}
 
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("Clientset creation failed with %s", err)
 	}
 
-	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: labelName})
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: "e2e-added-" + testName})
 	for _, node := range nodes.Items {
-		_, nodeExists := defaultLabels[node.Name]
-		// If the node has been modified, reset it
-		if nodeExists {
-			delete(node.ObjectMeta.Labels, labelName)
-			_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
-			if err != nil {
-				fmt.Errorf("label update failed with the following error: %s", err)
-			}
+		delete(node.ObjectMeta.Labels, labelName)
+		delete(node.ObjectMeta.Labels, testName)
+		_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
+		if err != nil {
+			fmt.Errorf("%s label removal failed with the following error: %s", testName, err)
 		}
 	}
 
@@ -391,28 +385,25 @@ func removeNodeLabel(labelName string) error {
 }
 
 // setWorkerNodeRole sets a role for a worker node and saves it so it can be cleared at the end of the test
-func setNodeLabel(labelName, labelValue string) error {
+func setNodeLabel(testName, labelName, labelValue string) error {
 	updateOpts := metav1.UpdateOptions{}
-
-	if defaultLabels == nil {
-		defaultLabels = make(map[string]map[string]string)
-	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("kube config creation failed with %s", err)
 	}
 
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("Clientset creation failed with %s", err)
 	}
 
+	// Get only the nodes that do not have the label	
 	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: "!" + labelName})
 	for _, node := range nodes.Items {
-		defaultLabels[node.Name] = node.ObjectMeta.Labels
 		node.ObjectMeta.Labels[labelName] = labelValue
+		node.ObjectMeta.Labels["e2e-added-" + testName] = ""
 
 		_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
 		if err != nil {
