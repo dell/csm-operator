@@ -1,16 +1,11 @@
 name: podmon
 image: dellemc/podmon:v1.5.0
 imagePullPolicy: IfNotPresent
-args:
-  - "--csisock=unix:/var/lib/kubelet/plugins/csi-vxflexos.dellemc.com/csi_sock"
-  - "--labelvalue=csi-vxflexos"
-  - "--arrayConnectivityPollRate=60"
-  - "--driverPath=csi-vxflexos.dellemc.com"
-  - "--mode=node"
-  - "--leaderelection=false"
-  - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
-  - "--driverPodLabelValue=dell-storage"
-  - "--ignoreVolumelessPods=false"
+securityContext:
+  privileged: true
+  capabilities:
+    add: ["SYS_ADMIN"]
+  allowPrivilegeEscalation: true
 env:
   - name: KUBE_NODE_NAME
     valueFrom:
@@ -31,21 +26,12 @@ env:
     valueFrom:
       fieldRef:
         fieldPath: metadata.namespace
-  - name: X_CSI_PODMON_ENABLED
-    value: "true"
-  - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE
-    value: <PodmonArrayConnectivityPollRate>
-  - name: X_CSI_PODMON_API_PORT
-    value: <PodmonAPIPort>
 volumeMounts:
   - name: kubelet-pods
-    mountPath: /var/lib/kubelet/pods
+    mountPath: <KUBELET_CONFIG_DIR>/pods
     mountPropagation: "Bidirectional"
   - name: driver-path
-    mountPath: /var/lib/kubelet/plugins/csi-vxflexos.dellemc.com
-    mountPropagation: "Bidirectional"
-  - name: csi-path
-    mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi
+    mountPath: /var/lib/kubelet/plugins/vxflexos.emc.dell.com
     mountPropagation: "Bidirectional"
   - name: dev
     mountPath: /dev
