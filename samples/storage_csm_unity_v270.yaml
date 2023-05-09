@@ -45,6 +45,8 @@ spec:
           value: ""
         - name: CERT_SECRET_COUNT
           value: "1"
+        - name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"
+          value: "true"
 
     sideCars:
       # health monitor is disabled by default, refer to driver documentation before enabling it

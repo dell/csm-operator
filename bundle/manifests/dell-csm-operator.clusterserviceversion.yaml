@@ -427,8 +427,12 @@ metadata:
                     "value": ""
                   },
                   {
-                    "name": "CERT_SECRET_COUNT"
+                    "name": "CERT_SECRET_COUNT",
                     "value": "1"
+                  },
+                  {
+                    "name": "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"
+                    "value": "true"
                   }
                 ],
                 "image": "dellemc/csi-unity:v2.6.0",
