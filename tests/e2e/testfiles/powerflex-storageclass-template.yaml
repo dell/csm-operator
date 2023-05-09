@@ -1,0 +1,19 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: op-e2e-vxflexos
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: csi-vxflexos.dellemc.com
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  storagepool: pool1
+  systemID: REPLACE_SYSTEMID 
+  csi.storage.k8s.io/fstype: ext4
+volumeBindingMode: WaitForFirstConsumer
+allowedTopologies:
+- matchLabelExpressions:
+  - key: csi-vxflexos.dellemc.com/REPLACE_SYSTEMID
+    values:
+    - csi-vxflexos.dellemc.com
