@@ -43,8 +43,6 @@ spec:
           value: debug
         - name: TENANT_NAME
           value: ""
-        - name: CERT_SECRET_COUNT
-          value: "1"
 
     sideCars:
       # health monitor is disabled by default, refer to driver documentation before enabling it

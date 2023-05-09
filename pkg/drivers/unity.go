@@ -72,7 +72,7 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 		return fmt.Errorf("%s %s not supported", csmv1.Unity, cr.Spec.Driver.ConfigVersion)
 	}
 
-	skipCertValid := false
+	skipCertValid := true
 	certCount := 1
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION" {
@@ -180,7 +180,7 @@ func ModifyUnityConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule) 
 }
 
 func getApplyCertVolumeUnity(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {
-	skipCertValid := false
+	skipCertValid := true
 	certCount := 1
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION" {

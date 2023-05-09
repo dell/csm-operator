@@ -45,6 +45,12 @@ spec:
           value: ""
         - name: CERT_SECRET_COUNT
           value: "1"
+        # X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: Specifies if the driver is going to validate unisphere certs while connecting to the Unisphere REST API interface.
+        # If it is set to false, then a secret unity-certs has to be created with an X.509 certificate of CA which signed the Unisphere certificate
+        # Allowed values:
+        #   true: skip Unisphere API server's certificate verification
+        #   false: verify Unisphere API server's certificates 
+        # Default value: true	
         - name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"
           value: "true"
 
