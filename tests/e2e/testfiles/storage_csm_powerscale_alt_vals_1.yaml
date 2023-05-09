@@ -194,6 +194,8 @@ spec:
       # CIDR format should be used
       # eg: "[192.168.1.0/24, 192.168.100.0/22]"
       - name: X_CSI_ALLOWED_NETWORKS
+        #value: "[10.247.0.0/24, 10.134.0.0/24]"
+        #value: "[0.0.0.0/0]"
         value: ""
 
       # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.

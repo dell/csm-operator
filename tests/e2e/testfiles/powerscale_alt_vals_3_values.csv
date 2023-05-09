@@ -1,4 +1,3 @@
 parameter name, grep option for paramater value, parameter value,resource to describe
-Force Remove Driver,,false,csm
 Node-Selectors,-v,none,node
 Tolerations,-v,none,node

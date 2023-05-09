@@ -36,14 +36,10 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    # name of custom test to run
     name: Cert CSI
-    # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
-    # Example:
-    #   ./hello_world.sh
-    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+      - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_1_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with second alternate sample file"
   paths: 
@@ -59,14 +55,10 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    # name of custom test to run
     name: Cert CSI
-    # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
-    # Example:
-    #   ./hello_world.sh
-    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+      - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_2_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with third alternate sample file"
   paths: 
@@ -84,14 +76,10 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    # name of custom test to run
     name: Cert CSI
-    # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
-    # Example:
-    #   ./hello_world.sh
-    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+      - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_3_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with health monitor"
   paths: 
@@ -107,14 +95,10 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    # name of custom test to run
     name: Cert CSI
-    # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
-    # Example:
-    #   ./hello_world.sh
-    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+      - /bin/bash check_parameters.sh testfiles/powerscale_health_monitor_values.csv dell powerscale
 
 #- scenario: "Install PowerScale Driver(With Authorization)"
 #  paths: 

@@ -218,6 +218,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
+			c.Env = containers[i].Env
 			if string(cr.Spec.Driver.Common.Image) != "" {
 				image := string(cr.Spec.Driver.Common.Image)
 				c.Image = &image

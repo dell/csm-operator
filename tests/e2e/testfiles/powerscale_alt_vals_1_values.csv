@@ -19,4 +19,4 @@ X_CSI_ISI_ACCESS_ZONE,,Zone,controller
 X_CSI_ISI_VOLUME_PATH_PERMISSIONS,,757,controller
 X_CSI_HEALTH_MONITOR_ENABLED,,false,controller
 Tolerations,-v,none,controller
-X_CSI_MAX_VOLUMES_PER_NODE,,20,controller
+X_CSI_MAX_VOLUMES_PER_NODE,,20,node

@@ -41,8 +41,8 @@ var defaultObservabilityDeploymentName = map[csmv1.DriverType]string{
 
 // CustomTest -
 type CustomTest struct {
-	Name string `json:"name" yaml:"name"`
-	Run  string `json:"run" yaml:"run"`
+	Name string   `json:"name" yaml:"name"`
+	Run  []string `json:"run" yaml:"run"`
 }
 
 // Scenario -
@@ -402,12 +402,12 @@ func setNodeLabel(testName, labelName, labelValue string) error {
 	// Need empty UpdateOptions for node Update() call
 	updateOpts := metav1.UpdateOptions{}
 
-	// Get only the nodes that do not already have the label	
+	// Get only the nodes that do not already have the label
 	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: "!" + labelName})
 	for _, node := range nodes.Items {
 		// Add both the label and a label indicating this node was modified by the e2e test
 		node.ObjectMeta.Labels[labelName] = labelValue
-		node.ObjectMeta.Labels["e2e-added-" + testName] = ""
+		node.ObjectMeta.Labels["e2e-added-"+testName] = ""
 
 		_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
 		if err != nil {
