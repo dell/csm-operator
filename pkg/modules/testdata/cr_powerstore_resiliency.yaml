@@ -1,7 +1,7 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-
+  name: test-powerstore
   namespace: test-powerstore
 spec:
   driver:
@@ -18,7 +18,15 @@ spec:
       configVersion: "v1.6.0"
       enabled: true
       components:
-      - name: podmon
+      - name: podmon-controller
+        image: dellemc/podmon:v1.6.0
+        envs:
+          - name: "X_CSI_PODMON_API_PORT"
+            value: "8083"
+          - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE"
+            value: "60"
+        args: ["arrayConnectivityPollRate=60"]
+      - name: podmon-node
         image: dellemc/podmon:v1.6.0
         envs:
           - name: "X_CSI_PODMON_API_PORT"
