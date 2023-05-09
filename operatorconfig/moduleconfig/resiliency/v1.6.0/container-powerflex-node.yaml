@@ -31,7 +31,7 @@ volumeMounts:
     mountPath: <KUBELET_CONFIG_DIR>/pods
     mountPropagation: "Bidirectional"
   - name: driver-path
-    mountPath: /var/lib/kubelet/plugins/vxflexos.emc.dell.com
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
     mountPropagation: "Bidirectional"
   - name: dev
     mountPath: /dev
