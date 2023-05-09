@@ -78,7 +78,7 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 		if env.Name == "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION" {
 			b, err := strconv.ParseBool(env.Value)
 			if err != nil {
-				return fmt.Errorf("%s is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+				return fmt.Errorf("%s is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
 			}
 			skipCertValid = b
 		}
@@ -186,7 +186,7 @@ func getApplyCertVolumeUnity(cr csmv1.ContainerStorageModule) (*acorev1.VolumeAp
 		if env.Name == "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION" {
 			b, err := strconv.ParseBool(env.Value)
 			if err != nil {
-				return nil, fmt.Errorf("%s is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+				return nil, fmt.Errorf("%s is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
 			}
 			skipCertValid = b
 		}
