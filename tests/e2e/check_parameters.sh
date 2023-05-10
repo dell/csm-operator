@@ -41,7 +41,7 @@ kubectl describe csm $3 -n $2 > csm-describe
     if [ "$RET" == "0" ]; then
       echo "$paramName with value $paramValue found in $k8sResource"
     else
-      echo "$paramName with value $paramValue NOT found in $k8sResource"
+      echo "ERROR: $paramName with value $paramValue NOT found in $k8sResource"
       exit 1
     fi
   done 

@@ -38,7 +38,7 @@
   customTest:
     name: Cert CSI
     run: 
-      - ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+      - ./cert-csi test vio --sc powerscale-ifse2e --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_1_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with second alternate sample file"

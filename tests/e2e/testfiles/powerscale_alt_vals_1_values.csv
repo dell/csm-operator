@@ -9,14 +9,14 @@ Force Remove Driver,,true,csm
 Image Pull Policy,,Always,csm
 X_CSI_VERBOSE,,1,controller
 X_CSI_ISI_PORT,,8080,controller
-X_CSI_ISI_PATH,,/ifs/data/csi,controller
+X_CSI_ISI_PATH,,/ifs/e2etest,controller
 X_CSI_ISI_NO_PROBE_ON_START,,true,controller
 X_CSI_ISI_AUTOPROBE,,true,controller
 X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION,,true,controller
 X_CSI_CUSTOM_TOPOLOGY_ENABLED,,false,controller
 X_CSI_ISI_QUOTA_ENABLED,,false,controller
-X_CSI_ISI_ACCESS_ZONE,,Zone,controller
-X_CSI_ISI_VOLUME_PATH_PERMISSIONS,,757,controller
+X_CSI_ISI_ACCESS_ZONE,,E2eTestZone,controller
+X_CSI_ISI_VOLUME_PATH_PERMISSIONS,,777,controller
 X_CSI_HEALTH_MONITOR_ENABLED,,false,controller
 Tolerations,-v,none,controller
 X_CSI_MAX_VOLUMES_PER_NODE,,20,node

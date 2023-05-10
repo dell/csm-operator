@@ -43,11 +43,13 @@ spec:
         # X_CSI_ISI_PATH: The base path for the volumes to be created on PowerScale cluster.
         # This value acts as a default value for isiPath, if not specified for a cluster config in secret
         # Ensure that this path exists on PowerScale cluster.
+        # If this test fails, go to the OneFS storage admin dashboard and navigate to File System -> File system explorer
+        # and select zone "E2eTestZone from the dropdown to check to see if "ifs/e2etest" exists. If it doesn't, create it.
         # Allowed values: unix absolute path
         # Default value: /ifs
         # Examples: /ifs/data/csi, /ifs/engineering
         - name: X_CSI_ISI_PATH
-          value: "/ifs/data/csi"
+          value: "/ifs/e2etest"
 
         # X_CSI_ISI_NO_PROBE_ON_START: Indicates whether the controller/node should probe all the PowerScale clusters during driver initialization
         # Allowed values:
@@ -120,10 +122,12 @@ spec:
 
       # X_CSI_ISI_ACCESS_ZONE: The name of the access zone a volume can be created in.
       # If storageclass is missing with AccessZone parameter, then value of X_CSI_ISI_ACCESS_ZONE is used for the same.
+      # If this test fails, go to the OneFS Storage Administration dashboard and navigate to Access -> Access zones
+      # to check if the "E2eTestZone" exists. If it doesn't, create it with base directory /ifs and whatever groupnet is offered.
       # Default value: System
       # Examples: System, zone1
       - name: X_CSI_ISI_ACCESS_ZONE
-        value: "Zone"
+        value: "E2eTestZone"
 
       # X_CSI_ISI_VOLUME_PATH_PERMISSIONS: The permissions for isi volume directory path
       # This value acts as a default value for isiVolumePathPermissions, if not specified for a cluster config in secret
@@ -131,7 +135,7 @@ spec:
       # Default value: "0777"
       # Examples: "0777", "777", "0755"
       - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
-        value: "757"
+        value: "777"
 
       # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
       # Install the 'external-health-monitor' sidecar accordingly.
