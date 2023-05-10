@@ -124,18 +124,16 @@ func getResiliencyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) 
 }
 
 func getResiliencyEnv(resiliencyModule csmv1.Module, driverType csmv1.DriverType) string {
-	podmonAPIPort := DefaultPodmonAPIPort
-
 	for _, component := range resiliencyModule.Components {
 		if component.Name == utils.PodmonNodeComponent {
 			for _, env := range component.Envs {
 				if env.Name == XCSIPodmonAPIPort {
-					podmonAPIPort = env.Value
+					return env.Value
 				}
 			}
 		}
 	}
-	return podmonAPIPort
+	return DefaultPodmonAPIPort
 }
 
 func getResiliencyArgs(m csmv1.Module, mode string) []string {
