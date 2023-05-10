@@ -29,9 +29,9 @@ import (
 
 const (
 	// DefaultPodmonArrayConnectivityPollRate -
-	DefaultPodmonArrayConnectivityPollRate = "<PodmonArrayConnectivityPollRate>"
+	DefaultPodmonArrayConnectivityPollRate = "60"
 	// DefaultPodmonAPIPort -
-	DefaultPodmonAPIPort = "<PodmonAPIPort>"
+	DefaultPodmonAPIPort = "8083"
 )
 
 var (
@@ -41,7 +41,6 @@ var (
 	XCSIPodmonAPIPort = "X_CSI_PODMON_API_PORT"
 	// XCSIPodmonEnabled -
 	XCSIPodmonEnabled = "X_CSI_PODMON_ENABLED"
-	defaultPollRate   = "60"
 )
 
 // ResiliencySupportedDrivers is a map containing the CSI Drivers supported by CMS Resiliency. The key is driver name and the value is the driver plugin identifier
@@ -160,7 +159,7 @@ func getPollRateFromArgs(args []string) string {
 			}
 		}
 	}
-	return defaultPollRate
+	return DefaultPodmonArrayConnectivityPollRate
 }
 func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	resiliencyModule := csmv1.Module{}
