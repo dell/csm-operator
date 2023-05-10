@@ -41,6 +41,7 @@ var (
 	XCSIPodmonAPIPort = "X_CSI_PODMON_API_PORT"
 	// XCSIPodmonEnabled -
 	XCSIPodmonEnabled = "X_CSI_PODMON_ENABLED"
+	defaultPollRate   = "60"
 )
 
 // ResiliencySupportedDrivers is a map containing the CSI Drivers supported by CMS Resiliency. The key is driver name and the value is the driver plugin identifier
@@ -67,7 +68,7 @@ var ResiliencySupportedDrivers = map[string]SupportedDriverParam{
 	},
 }
 
-// ResiliencyPrecheck - Resiliency
+// ResiliencyPrecheck - Resiliency module precheck for supported versions
 func ResiliencyPrecheck(ctx context.Context, op utils.OperatorConfig, resiliency csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
@@ -98,7 +99,7 @@ func ResiliencyInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Contai
 	if err != nil {
 		return nil, err
 	}
-
+	// roleFiles are under moduleConfig for node & controller mode
 	buf, err := readConfigFile(resiliencyModule, cr, op, roleFileName)
 	if err != nil {
 		return nil, err
@@ -118,7 +119,6 @@ func getResiliencyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) 
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.Resiliency {
 			return m, nil
-
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("could not find resiliency module")
@@ -160,7 +160,7 @@ func getPollRateFromArgs(args []string) string {
 			}
 		}
 	}
-	return "60"
+	return defaultPollRate
 }
 func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	resiliencyModule := csmv1.Module{}
@@ -204,7 +204,6 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 		return nil, err
 	}
 	container := *containerPtr
-	fmt.Printf("container specs are %+v", container)
 
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
@@ -233,7 +232,6 @@ func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.
 	}
 
 	container := *containerPtr
-	fmt.Printf("daemon container specs are %+v", container)
 	utils.UpdateSideCarApply(resiliencyModule.Components, &container)
 	// Get the controller arguments
 

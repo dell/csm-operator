@@ -1,7 +1,7 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-
+  name: test-powerstore
   namespace: test-powerstore
 spec:
   driver:
@@ -10,7 +10,7 @@ spec:
     authSecret: test-powerstore-creds 
     replicas: 1
     common:
-      image: "dellemc/csi-powerstore:v2.6.0"
+      image: "dellemc/csi-powerstore:v2.7.0"
       imagePullPolicy: IfNotPresent
 
   modules:
@@ -18,10 +18,31 @@ spec:
       configVersion: "v1.6.0"
       enabled: true
       components:
-      - name: podmon
-        image: dellemc/podmon:v1.6.0
-        envs:
-          - name: "X_CSI_PODMON_API_PORT"
-            value: "8083"
-          - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE"
-            value: "60"
+        - name: podmon-controller
+          args:
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--labelvalue=csi-powerstore"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-powerstore.dellemc.com"
+            - "--mode=controller"
+            - "--skipArrayConnectionValidation=false"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+        - name: podmon-node
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+          args:
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
+            - "--labelvalue=csi-powerstore"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-powerstore.dellemc.com"
+            - "--mode=node"
+            - "--leaderelection=false"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"

@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -831,11 +831,8 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 
 // IsResiliencyModuleEnabled - check if resiliency module is enabled or not
 func IsResiliencyModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) bool {
-	// TODO - check if r as an input is required
-	// resiliencyEnabled := false
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Resiliency && m.Enabled {
-			// resiliencyEnabled = true
 			return true
 		}
 	}
