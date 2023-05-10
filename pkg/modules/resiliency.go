@@ -29,9 +29,9 @@ import (
 
 const (
 	// DefaultPodmonArrayConnectivityPollRate -
-	DefaultPodmonArrayConnectivityPollRate = "<PodmonArrayConnectivityPollRate>"
+	DefaultPodmonArrayConnectivityPollRate = "60"
 	// DefaultPodmonAPIPort -
-	DefaultPodmonAPIPort = "<PodmonAPIPort>"
+	DefaultPodmonAPIPort = "8083"
 )
 
 var (
@@ -67,7 +67,7 @@ var ResiliencySupportedDrivers = map[string]SupportedDriverParam{
 	},
 }
 
-// ResiliencyPrecheck - Resiliency
+// ResiliencyPrecheck - Resiliency module precheck for supported versions
 func ResiliencyPrecheck(ctx context.Context, op utils.OperatorConfig, resiliency csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
@@ -98,7 +98,7 @@ func ResiliencyInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Contai
 	if err != nil {
 		return nil, err
 	}
-
+	// roleFiles are under moduleConfig for node & controller mode
 	buf, err := readConfigFile(resiliencyModule, cr, op, roleFileName)
 	if err != nil {
 		return nil, err
@@ -118,25 +118,22 @@ func getResiliencyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) 
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.Resiliency {
 			return m, nil
-
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("could not find resiliency module")
 }
 
 func getResiliencyEnv(resiliencyModule csmv1.Module, driverType csmv1.DriverType) string {
-	podmonAPIPort := DefaultPodmonAPIPort
-
 	for _, component := range resiliencyModule.Components {
 		if component.Name == utils.PodmonNodeComponent {
 			for _, env := range component.Envs {
 				if env.Name == XCSIPodmonAPIPort {
-					podmonAPIPort = env.Value
+					return env.Value
 				}
 			}
 		}
 	}
-	return podmonAPIPort
+	return DefaultPodmonAPIPort
 }
 
 func getResiliencyArgs(m csmv1.Module, mode string) []string {
@@ -160,7 +157,7 @@ func getPollRateFromArgs(args []string) string {
 			}
 		}
 	}
-	return "60"
+	return DefaultPodmonArrayConnectivityPollRate
 }
 func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	resiliencyModule := csmv1.Module{}
@@ -204,7 +201,6 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 		return nil, err
 	}
 	container := *containerPtr
-	fmt.Printf("container specs are %+v", container)
 
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
@@ -233,7 +229,6 @@ func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.
 	}
 
 	container := *containerPtr
-	fmt.Printf("daemon container specs are %+v", container)
 	utils.UpdateSideCarApply(resiliencyModule.Components, &container)
 	// Get the controller arguments
 
