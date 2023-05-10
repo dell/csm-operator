@@ -169,7 +169,7 @@ func (step *Step) setNodeLabel(res Resource, label string) error {
 	if label == "control-plane" {
 		setNodeLabel(label, "node-role.kubernetes.io/control-plane", "")
 	} else {
-		return fmt.Errorf("Setting worker node role to %s not supported, feel free to add support", label)
+		return fmt.Errorf("Adding node label %s not supported, feel free to add support", label)
 	}
 
 	return nil
@@ -179,7 +179,7 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 	if label == "control-plane" {
 		removeNodeLabel(label, "node-role.kubernetes.io/control-plane")
 	} else {
-		return fmt.Errorf("Setting worker node role to %s not supported, feel free to add support", label)
+		return fmt.Errorf("Removing node label %s not supported, feel free to add support", label)
 	}
 
 	return nil
