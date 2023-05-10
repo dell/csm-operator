@@ -429,21 +429,6 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 	return nil
 }
 
-// this will be used to change pflex secret -> auth pflex secret
-func (step *Step) replaceDriverSecret(res Resource, oldSecret, newSecret string) error {
-	cmd := exec.Command("kubectl", "delete", "-f", oldSecret)
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to delete secret from file: %s:  %s", oldSecret, err.Error())
-	}
-	cmd = exec.Command("kubectl", "create", "-f", newSecret)
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to create secret from file: %s :  %s", newSecret, err.Error())
-	}
-	return nil
-}
-
 func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
 	// find which map to use for secret values
 	mapValues := determineMap(crType)

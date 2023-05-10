@@ -63,7 +63,6 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
 	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
 
-	runner.addStep(`^Replace secret \[([^"]*)\] with secret \[([^"]*)\]`, step.replaceDriverSecret)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
