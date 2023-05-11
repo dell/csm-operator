@@ -372,7 +372,7 @@ func ReplicationManagerController(ctx context.Context, isDeleting bool, op utils
 		return err
 	}
 
-	ctrlObjects, err := utils.GetCTRLObject([]byte(YamlString))
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}
