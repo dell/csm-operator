@@ -466,8 +466,8 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 		return fmt.Errorf("failed to get deployment: %v", err)
 	}
 	for _, cnt := range dp.Spec.Template.Spec.Containers {
-		if cnt.Name == utils.ResiliecnySideCarName {
-			return fmt.Errorf("found %s: %v", utils.ResiliecnySideCarName, err)
+		if cnt.Name == utils.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
 		}
 	}
 
@@ -477,8 +477,8 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 		return fmt.Errorf("failed to get daemonset: %v", err)
 	}
 	for _, cnt := range ds.Spec.Template.Spec.Containers {
-		if cnt.Name == utils.ResiliecnySideCarName {
-			return fmt.Errorf("found %s: %v", utils.ResiliecnySideCarName, err)
+		if cnt.Name == utils.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
 		}
 	}
 	return nil

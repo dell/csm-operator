@@ -274,7 +274,7 @@ func CheckApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 	podmonArrayConnectivityPollRate := getPollRateFromArgs(args)
 
 	for _, cnt := range containers {
-		if *cnt.Name == utils.ResiliecnySideCarName {
+		if *cnt.Name == utils.ResiliencySideCarName {
 
 			// check argument in resiliency sidecar(podmon)
 			foundPodmonArrayConnectivityPollRate := false
