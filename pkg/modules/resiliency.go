@@ -43,25 +43,25 @@ var (
 	XCSIPodmonEnabled = "X_CSI_PODMON_ENABLED"
 )
 
-// ResiliencySupportedDrivers is a map containing the CSI Drivers supported by CMS Resiliency. The key is driver name and the value is the driver plugin identifier
+// ResiliencySupportedDrivers is a map containing the CSI Drivers supported by CSM Resiliency. The key is driver name and the value is the driver plugin identifier
 var ResiliencySupportedDrivers = map[string]SupportedDriverParam{
-	"powerstore": {
+	string(csmv1.PowerStore): {
 		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
 	},
-	"powerscale": {
+	string(csmv1.PowerScaleName): {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
-	"isilon": {
+	string(csmv1.PowerScale): {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
-	"powerflex": {
+	string(csmv1.PowerFlex): {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
 	},
-	"vxflexos": {
+	string(csmv1.PowerFlexName): {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
 	},

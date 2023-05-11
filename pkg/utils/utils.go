@@ -119,8 +119,8 @@ const (
 	ReplicationControllerInit = "dell-replication-controller-init"
 	// ReplicationSideCarName -
 	ReplicationSideCarName = "dell-csi-replicator"
-	// ResiliecnySideCarName -
-	ResiliecnySideCarName = "podmon"
+	// ResiliencySideCarName -
+	ResiliencySideCarName = "podmon"
 	// DefaultSourceClusterID -
 	DefaultSourceClusterID = "default-source-cluster"
 	// ObservabilityNamespace - karavi

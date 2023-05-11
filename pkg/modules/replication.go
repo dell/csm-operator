@@ -61,7 +61,7 @@ var (
 	XCSIReplicaPrefix = "X_CSI_REPLICATION_PREFIX"
 )
 
-// ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CMS Replication. The key is driver name and the value is the driver plugin identifier
+// ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
 var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,

@@ -671,7 +671,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				// for node-pod
 				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
 				if err != nil {
-					return fmt.Errorf("injecting resiliency into deamonset: %v", err)
+					return fmt.Errorf("injecting resiliency into daemonset: %v", err)
 				}
 				node.DaemonSetApplyConfig = *ds
 

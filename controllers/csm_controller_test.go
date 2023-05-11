@@ -1108,7 +1108,7 @@ func getResiliencyModule() []csmv1.Module {
 			ConfigVersion: "v1.6.0",
 			Components: []csmv1.ContainerTemplate{
 				{
-					Name: utils.ResiliecnySideCarName,
+					Name: utils.ResiliencySideCarName,
 				},
 			},
 		},
