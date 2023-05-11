@@ -27,6 +27,8 @@
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [powerscale-altifs] and template [testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -34,10 +36,12 @@
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml] for [pscale]"
   customTest:
     name: Cert CSI and check_parameters.sh
     run: 
-      - ./cert-csi test vio --sc powerscale-ifse2e --chainNumber 2 --chainLength 2
+      - ./cert-csi test vio --sc powerscale-altifs --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_1_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with second alternate sample file"
@@ -46,6 +50,8 @@
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -53,10 +59,12 @@
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI and check_parameters.sh
     run: 
-      - ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_2_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with third alternate sample file"
@@ -66,6 +74,8 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set [control-plane] node label"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -74,10 +84,12 @@
     - "Remove [control-plane] node label"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI and check_parameters.sh
     run: 
-      - ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_3_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with health monitor"
@@ -86,6 +98,8 @@
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -93,10 +107,12 @@
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI and check_parameters.sh
     run: 
-      - ./cert-csi test vio --sc powerscale --chainNumber 2 --chainLength 2
+      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_health_monitor_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver(With Authorization)"
