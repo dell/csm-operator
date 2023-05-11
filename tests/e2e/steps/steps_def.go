@@ -46,9 +46,12 @@ const (
 )
 
 var (
-	authString        = "karavi-authorization-proxy"
-	operatorNamespace = "dell-csm-operator"
-	quotaLimit        = "30000000"
+	authString         = "karavi-authorization-proxy"
+	operatorNamespace  = "dell-csm-operator"
+	quotaLimit         = "30000000"
+	pflexSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pflexAuthSecretMap = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pscaleSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -424,6 +427,119 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 	}
 
 	return nil
+}
+
+func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
+	// find which map to use for secret values
+	mapValues := determineMap(crType)
+	if len(mapValues) == 0 {
+		return fmt.Errorf("type: %s is not supported", crType)
+	}
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command("kubectl", "get", "sc", scName)
+	err := cmd.Run()
+	if err == nil {
+		cmd = exec.Command("kubectl", "delete", "sc", scName)
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+	cmd = exec.Command("kubectl", "create", "-f", templateFile)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
+
+	// find which map to use for secret values
+	mapValues := determineMap(crType)
+	if len(mapValues) == 0 {
+		return fmt.Errorf("type: %s is not supported", crType)
+	}
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	//if secret exists- delete it
+	if secretExists(namespace, name) {
+		cmd := exec.Command("kubectl", "delete", "secret", "-n", namespace, name)
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to delete secret: %s", err.Error())
+		}
+	}
+
+	// create new secret
+	fileArg := "--from-file=config=" + templateFile
+	cmd := exec.Command("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create secret with template file: %s:  %s", templateFile, err.Error())
+	}
+
+	return nil
+}
+
+func (step *Step) restoreTemplate(res Resource, templateFile, crType string) error {
+	mapValues := determineMap(crType)
+	if len(mapValues) == 0 {
+		return fmt.Errorf("type: %s is not supported", crType)
+	}
+	for key := range mapValues {
+		err := replaceInFile(os.Getenv(mapValues[key]), key, templateFile)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func determineMap(crType string) map[string]string {
+	mapValues := map[string]string{}
+	if crType == "pflex" {
+		mapValues = pflexSecretMap
+	}
+	if crType == "pflexAuth" {
+		mapValues = pflexAuthSecretMap
+	}
+	if crType == "pscale" {
+		mapValues = pscaleSecretMap
+	}
+
+	return mapValues
+}
+
+func secretExists(namespace, name string) bool {
+	cmd := exec.Command("kubectl", "get", "secret", "-n", namespace, name)
+	err := cmd.Run()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func replaceInFile(old, new, templateFile string) error {
+	cmdString := "s/" + old + "/" + new + "/g"
+	cmd := exec.Command("sed", "-i", cmdString, templateFile)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to substitute %s with %s in file %s: %s", old, new, templateFile, err.Error())
+	}
+	return nil
+
 }
 
 // Uses scenario
