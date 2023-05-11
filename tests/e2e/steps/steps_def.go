@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -193,6 +193,9 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 
 			case csmv1.AuthorizationServer:
 				return step.validateAuthorizationProxyServerInstalled(cr)
+
+			case csmv1.Resiliency:
+				return step.validateResiliencyInstalled(cr)
 			}
 		}
 	}
@@ -227,6 +230,9 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 
 			case csmv1.AuthorizationServer:
 				return step.validateAuthorizationProxyServerNotInstalled(cr)
+
+			case csmv1.Resiliency:
+				return step.validateResiliencyNotInstalled(cr)
 			}
 		}
 	}
@@ -423,6 +429,58 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 
 	}
 
+	return nil
+}
+
+func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) error {
+	dpApply, dsApply, err := getApplyDeploymentDaemonSet(cr, step.ctrlClient)
+	if err != nil {
+		return err
+	}
+
+	// args & env check applicable for powerstore & powerscale
+	driverType := cr.Spec.Driver.CSIDriverType
+	if driverType == string(csmv1.PowerScale) {
+		driverType = string(csmv1.PowerScaleName)
+	}
+
+	if driverType == string(csmv1.PowerScaleName) || driverType == string(csmv1.PowerStore) {
+			// return error if resiliency sidecar(podmon) is not present in deployment configuration: for controller
+			if err := modules.CheckApplyContainersResiliency(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
+			return err
+		}
+			// return error if resiliency sidecar(podmon) is not present in daemonset configuration: for node
+			if err := modules.CheckApplyContainersResiliency(dsApply.Spec.Template.Spec.Containers, cr); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule) error {
+
+	// check that resiliency sidecar(podmon) is not in cluster: for controller
+	dp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name == utils.ResiliecnySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliecnySideCarName, err)
+		}
+	}
+
+	// check that resiliency sidecar(podmon) is not in cluster: for node
+	ds, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+	for _, cnt := range ds.Spec.Template.Spec.Containers {
+		if cnt.Name == utils.ResiliecnySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliecnySideCarName, err)
+		}
+	}
 	return nil
 }
 

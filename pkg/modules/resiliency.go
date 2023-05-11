@@ -255,3 +255,62 @@ func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.
 
 	return &ds, nil
 }
+
+// CheckApplyContainersResiliency - check container configuration for resiliency
+func CheckApplyContainersResiliency(containers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
+	resiliencyModule, err := getResiliencyModule(cr)
+	if err != nil {
+		return err
+	}
+
+	driverString := "driver"
+
+	// fetch podmonAPIPort
+	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
+
+	// fetch podmonArrayConnectivityPollRate
+	args := getResiliencyArgs(resiliencyModule, "node")
+	podmonArrayConnectivityPollRate := getPollRateFromArgs(args)
+
+	for _, cnt := range containers {
+		if *cnt.Name == utils.ResiliecnySideCarName {
+
+			// check argument in resiliency sidecar(podmon)
+			foundPodmonArrayConnectivityPollRate := false
+			for _, arg := range cnt.Args {
+				if fmt.Sprintf("--arrayConnectivityPollRate=%s", podmonArrayConnectivityPollRate) == arg {
+					foundPodmonArrayConnectivityPollRate = true
+				}
+			}
+			if !foundPodmonArrayConnectivityPollRate {
+				return fmt.Errorf("missing the following argument %s", podmonArrayConnectivityPollRate)
+			}
+
+		} else if *cnt.Name == driverString {
+			// check envs in driver sidecar
+			foundPodmonAPIPort := false
+			foundPodmonArrayConnectivityPollRate := false
+			for _, env := range cnt.Env {
+				if *env.Name == XCSIPodmonAPIPort {
+					foundPodmonAPIPort = true
+					if *env.Value != podmonAPIPort {
+						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIPodmonAPIPort, podmonAPIPort, *env.Value)
+					}
+				}
+				if *env.Name == XCSIPodmonArrayConnectivityPollRate {
+					foundPodmonArrayConnectivityPollRate = true
+					if *env.Value != podmonArrayConnectivityPollRate {
+						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIPodmonArrayConnectivityPollRate, podmonArrayConnectivityPollRate, *env.Value)
+					}
+				}
+			}
+			if !foundPodmonAPIPort {
+				return fmt.Errorf("missing the following argument %s", podmonAPIPort)
+			}
+			if !foundPodmonArrayConnectivityPollRate {
+				return fmt.Errorf("missing the following argument %s", podmonArrayConnectivityPollRate)
+			}
+		}
+	}
+	return nil
+}
