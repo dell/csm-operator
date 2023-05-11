@@ -62,6 +62,10 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Remove \[([^"]*)\] node label$`, step.removeNodeLabel)
 
 	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
+	runner.addStep(`^Set up secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
+	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
+	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
+
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
