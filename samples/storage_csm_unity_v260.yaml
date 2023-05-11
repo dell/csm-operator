@@ -29,20 +29,45 @@ spec:
       envs:
         - name: X_CSI_UNITY_NODENAME_PREFIX
           value: "csi-node"
+          # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
+          # Allowed values: boolean
+          # Default value: "false"
+          # Examples : "true" , "false"
         - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
           value: "false"
         - name: X_CSI_EPHEMERAL_STAGING_PATH
           value: "/var/lib/kubelet/plugins/kubernetes.io/csi/pv/"
+        # X_CSI_ISCSI_CHROOT is the path to which the driver will chroot before
+        # running any iscsi commands. This value should only be set when instructed
+        # by technical support
         - name: X_CSI_ISCSI_CHROOT
           value: "/noderoot"
+        # X_CSI_UNITY_SYNC_NODEINFO_INTERVAL - Time interval to add node info to array. Default 15 minutes. Minimum value should be 1.
+        # Allowed values: integer
+        # Default value: 15
+        # Examples : 0 , 2
         - name: X_CSI_UNITY_SYNC_NODEINFO_INTERVAL
           value: "15"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: /var/lib/kubelet
+        # CSI_LOG_LEVEL is used to set the logging level of the driver.
+        # Allowed values: "error", "warn"/"warning", "info", "debug"
+        # Default value: "info"
         - name: CSI_LOG_LEVEL
           value: debug
+        # TENANT_NAME - Tenant name that need to added while adding host entry to the array.
+        # Allowed values: string
+        # Default value: ""
+        # Examples : "tenant2" , "tenant3"
         - name: TENANT_NAME
           value: ""
+        # CERT_SECRET_COUNT: Represents number of certificate secrets, which user is going to create for
+        # ssl authentication. (unity-cert-0..unity-cert-n)
+        # Allowed values: n, where n > 0
+        # Default value: None          
         - name: CERT_SECRET_COUNT
           value: "1"
         # X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: Specifies if the driver is going to validate unisphere certs while connecting to the Unisphere REST API interface.
