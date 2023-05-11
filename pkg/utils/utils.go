@@ -521,6 +521,15 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 			ctrlObjects = append(ctrlObjects, &cm)
 
+		case "Secret":
+
+			var s corev1.Secret
+			if err := yaml.Unmarshal(raw, &s); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &s)
+
 		case "Deployment":
 
 			var dp appsv1.Deployment
