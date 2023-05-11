@@ -27,13 +27,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	// DefaultPodmonArrayConnectivityPollRate -
-	DefaultPodmonArrayConnectivityPollRate = "60"
-	// DefaultPodmonAPIPort -
-	DefaultPodmonAPIPort = "8083"
-)
-
 var (
 	// XCSIPodmonArrayConnectivityPollRate -
 	XCSIPodmonArrayConnectivityPollRate = "X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE"
@@ -133,7 +126,7 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, driverType csmv1.DriverType
 			}
 		}
 	}
-	return DefaultPodmonAPIPort
+	return ""
 }
 
 func getResiliencyArgs(m csmv1.Module, mode string) []string {
@@ -157,7 +150,7 @@ func getPollRateFromArgs(args []string) string {
 			}
 		}
 	}
-	return DefaultPodmonArrayConnectivityPollRate
+	return ""
 }
 func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	resiliencyModule := csmv1.Module{}
@@ -204,20 +197,33 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
-	podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
-	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
-	enabled := "true"
-	for i, cnt := range dp.Spec.Template.Spec.Containers {
-		if *cnt.Name == "driver" {
-			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
-				acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonArrayConnectivityPollRate, Value: &podmonArrayConnectivityPollRate},
-				acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonAPIPort, Value: &podmonAPIPort},
-				acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonEnabled, Value: &enabled},
-			)
-			break
+	if driverType == string(csmv1.PowerScale) {
+		driverType = string(csmv1.PowerScaleName)
+	}
+	// we need to set these ENV for PowerStore & PowerScale only
+	if driverType == string(csmv1.PowerScaleName) || driverType == string(csmv1.PowerStore) {
+		for i, cnt := range dp.Spec.Template.Spec.Containers {
+			if *cnt.Name == "driver" {
+				podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
+				podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
+				enabled := "true"
+				dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
+					acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonEnabled, Value: &enabled},
+				)
+				if podmonArrayConnectivityPollRate != "" {
+					dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
+						acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonArrayConnectivityPollRate, Value: &podmonArrayConnectivityPollRate},
+					)
+				}
+				if podmonAPIPort != "" {
+					dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
+						acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonAPIPort, Value: &podmonAPIPort},
+					)
+				}
+				break
+			}
 		}
 	}
-
 	return &dp, nil
 }
 
