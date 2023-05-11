@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -671,7 +671,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				// for node-pod
 				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
 				if err != nil {
-					return fmt.Errorf("injecting resiliency into deamonset: %v", err)
+					return fmt.Errorf("injecting resiliency into daemonset: %v", err)
 				}
 				node.DaemonSetApplyConfig = *ds
 

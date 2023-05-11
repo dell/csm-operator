@@ -1,4 +1,4 @@
-//  Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -1108,7 +1108,7 @@ func getResiliencyModule() []csmv1.Module {
 			ConfigVersion: "v1.6.0",
 			Components: []csmv1.ContainerTemplate{
 				{
-					Name: utils.ResiliecnySideCarName,
+					Name: utils.ResiliencySideCarName,
 				},
 			},
 		},

@@ -42,7 +42,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			}
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - brownfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -257,7 +257,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 
 			return true, nodeYAML.DaemonSetApplyConfig, operatorConfig
 		},
-		"success - brownfiled injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
+		"success - brownfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)

@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -119,8 +119,8 @@ const (
 	ReplicationControllerInit = "dell-replication-controller-init"
 	// ReplicationSideCarName -
 	ReplicationSideCarName = "dell-csi-replicator"
-	// ResiliecnySideCarName -
-	ResiliecnySideCarName = "podmon"
+	// ResiliencySideCarName -
+	ResiliencySideCarName = "podmon"
 	// DefaultSourceClusterID -
 	DefaultSourceClusterID = "default-source-cluster"
 	// ObservabilityNamespace - karavi
@@ -521,6 +521,15 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 			ctrlObjects = append(ctrlObjects, &cm)
 
+		case "Secret":
+
+			var s corev1.Secret
+			if err := yaml.Unmarshal(raw, &s); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &s)
+
 		case "Deployment":
 
 			var dp appsv1.Deployment
@@ -831,11 +840,8 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 
 // IsResiliencyModuleEnabled - check if resiliency module is enabled or not
 func IsResiliencyModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) bool {
-	// TODO - check if r as an input is required
-	// resiliencyEnabled := false
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Resiliency && m.Enabled {
-			// resiliencyEnabled = true
 			return true
 		}
 	}
