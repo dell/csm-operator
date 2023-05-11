@@ -68,7 +68,7 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 	// Check if driver version is supported by doing a stat on a config file
 	configFilePath := fmt.Sprintf("%s/driverconfig/unity/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		log.Errorw("PreCheckUnity failed in version check", "Error", err.Error())
+		log.Errorw("PreCheckUnity failed in version check", "Error", err.Error(), "Namespace", cr.Namespace)
 		return fmt.Errorf("%s %s not supported", csmv1.Unity, cr.Spec.Driver.ConfigVersion)
 	}
 
@@ -92,7 +92,7 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 	}
 
 	secrets := []string{config}
-	log.Debugw("preCheck", "secrets", len(secrets), "certCount", certCount)
+	log.Debugw("preCheck", "secrets", len(secrets), "certCount", certCount, "Namespace", cr.Namespace)
 	if !skipCertValid {
 		for i := 0; i < certCount; i++ {
 			secrets = append(secrets, fmt.Sprintf("%s-certs-%d", cr.Name, i))
@@ -103,7 +103,7 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 		found := &corev1.Secret{}
 		err := ct.Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
 		if err != nil {
-			log.Error(err, "Failed query for secret ", name)
+			log.Error(err, " Failed query for secret ", name, "Namespace", cr.Namespace)
 			if errors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s", name)
 			}
