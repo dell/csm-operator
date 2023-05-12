@@ -82,7 +82,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		if (driver == "powerflex") || (driver == "powerstore") {
 			controllerLabelName = "name"
 		}
-		label := instance.GetNamespace() + "-controller"
+		label := instance.GetName() + "-controller"
 		opts := []client.ListOption{
 			client.InNamespace(instance.GetNamespace()),
 			client.MatchingLabels{controllerLabelName: label},
@@ -162,7 +162,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 
 		failedCount := 0
 		podList := &corev1.PodList{}
-		label := instance.GetNamespace() + "-node"
+		label := instance.GetName() + "-node"
 		opts := []client.ListOption{
 			client.InNamespace(instance.GetNamespace()),
 			client.MatchingLabels{"app": label},
