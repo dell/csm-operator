@@ -168,6 +168,26 @@ func (step *Step) validateDriverNotInstalled(res Resource, driverName string, cr
 	return checkNoRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
+func (step *Step) setNodeLabel(res Resource, label string) error {
+	if label == "control-plane" {
+		setNodeLabel(label, "node-role.kubernetes.io/control-plane", "")
+	} else {
+		return fmt.Errorf("Adding node label %s not supported, feel free to add support", label)
+	}
+
+	return nil
+}
+
+func (step *Step) removeNodeLabel(res Resource, label string) error {
+	if label == "control-plane" {
+		removeNodeLabel(label, "node-role.kubernetes.io/control-plane")
+	} else {
+		return fmt.Errorf("Removing node label %s not supported, feel free to add support", label)
+	}
+
+	return nil
+}
+
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
@@ -542,7 +562,6 @@ func replaceInFile(old, new, templateFile string) error {
 
 }
 
-// Uses scenario
 func (step *Step) runCustomTest(res Resource) error {
 	var (
 		stdout string
@@ -550,17 +569,19 @@ func (step *Step) runCustomTest(res Resource) error {
 		err    error
 	)
 
-	args := strings.Split(res.Scenario.CustomTest.Run, " ")
-	if len(args) == 1 {
-		stdout, stderr, err = framework.RunCmd(args[0])
+	for testNum, customTest := range res.Scenario.CustomTest.Run {
+		args := strings.Split(customTest, " ")
+		if len(args) == 1 {
+			stdout, stderr, err = framework.RunCmd(args[0])
+		} else {
+			stdout, stderr, err = framework.RunCmd(args[0], args[1:]...)
+		}
 
-	} else {
-		stdout, stderr, err = framework.RunCmd(args[0], args[1:]...)
+		if err != nil {
+			return fmt.Errorf("error running custom test #%d. Error: %v \n stdout: %s \n stderr: %s", testNum, err, stdout, stderr)
+		}
 	}
 
-	if err != nil {
-		return fmt.Errorf("error running customs test. Error: %v \n stdout: %s \n stderr: %s", err, stdout, stderr)
-	}
 	return nil
 }
 
