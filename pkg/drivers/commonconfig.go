@@ -65,6 +65,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if len(cr.Spec.Driver.Controller.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Controller.Tolerations {
+			log.Debugw("Adding toleration", "t", t)
 			toleration := acorev1.Toleration()
 			toleration.WithKey(t.Key)
 			toleration.WithOperator(t.Operator)
@@ -217,6 +218,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
+			c.Env = containers[i].Env
 			if string(cr.Spec.Driver.Common.Image) != "" {
 				image := string(cr.Spec.Driver.Common.Image)
 				c.Image = &image
