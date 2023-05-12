@@ -23,8 +23,10 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -39,8 +41,8 @@ var defaultObservabilityDeploymentName = map[csmv1.DriverType]string{
 
 // CustomTest -
 type CustomTest struct {
-	Name string `json:"name" yaml:"name"`
-	Run  string `json:"run" yaml:"run"`
+	Name string   `json:"name" yaml:"name"`
+	Run  []string `json:"run" yaml:"run"`
 }
 
 // Scenario -
@@ -351,6 +353,69 @@ func arePodsRunning(pod *corev1.Pod) (string, bool) {
 		notReadyMsg += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
 	}
 	return notReadyMsg, allReady
+}
+
+// removeNodelabel clears a node label set by setNodeLabel
+func removeNodeLabel(testName, labelName string) error {
+	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
+	if err != nil {
+		return fmt.Errorf("kube config creation failed with %s", err)
+	}
+
+	// create the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("Clientset creation failed with %s", err)
+	}
+
+	// Need empty UpdateOptions for node Update() call
+	updateOpts := metav1.UpdateOptions{}
+
+	// Go through all nodes labeled as modified by e2e test and remove both labels to restore nodes to before-test state
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: "e2e-added-" + testName})
+	for _, node := range nodes.Items {
+		delete(node.ObjectMeta.Labels, labelName)
+		delete(node.ObjectMeta.Labels, testName)
+		_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
+		if err != nil {
+			fmt.Errorf("%s label removal failed with the following error: %s", testName, err)
+		}
+	}
+
+	return nil
+}
+
+// setNodeLabel adds a label to all nodes without it and marks them as modified so they can be reset at the end of the test
+func setNodeLabel(testName, labelName, labelValue string) error {
+	// Get K8s config
+	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
+	if err != nil {
+		return fmt.Errorf("kube config creation failed with %s", err)
+	}
+
+	// create the clientset from K8s config
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("Clientset creation failed with %s", err)
+	}
+
+	// Need empty UpdateOptions for node Update() call
+	updateOpts := metav1.UpdateOptions{}
+
+	// Get only the nodes that do not already have the label
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: "!" + labelName})
+	for _, node := range nodes.Items {
+		// Add both the label and a label indicating this node was modified by the e2e test
+		node.ObjectMeta.Labels[labelName] = labelValue
+		node.ObjectMeta.Labels["e2e-added-"+testName] = ""
+
+		_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
+		if err != nil {
+			fmt.Errorf("label update failed with the following error: %s", err)
+		}
+	}
+
+	return nil
 }
 
 func checkAuthorizationProxyServerNoRunningPods(namespace string, k8sClient kubernetes.Interface) error {

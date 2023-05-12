@@ -18,7 +18,102 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+
+- scenario: "Install PowerScale Driver with first alternate sample file"
+  paths: 
+    - "testfiles/storage_csm_powerscale_alt_vals_1.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [powerscale-altifs] and template [testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml] for [pscale]"
+  customTest:
+    name: Cert CSI and check_parameters.sh
+    run: 
+      - ./cert-csi test vio --sc powerscale-altifs --chainNumber 2 --chainLength 2
+      - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_1_values.csv dell powerscale
+
+- scenario: "Install PowerScale Driver with second alternate sample file"
+  paths: 
+    - "testfiles/storage_csm_powerscale_alt_vals_2.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+  customTest:
+    name: Cert CSI and check_parameters.sh
+    run: 
+      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_2_values.csv dell powerscale
+
+- scenario: "Install PowerScale Driver with third alternate sample file"
+  paths: 
+    - "testfiles/storage_csm_powerscale_alt_vals_3.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set [control-plane] node label"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Run custom test"
+    # Last four steps perform Clean Up. Need to reinstall pscale with forceRemoveDriver to fully clean delete
+    - "Remove [control-plane] node label"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+  customTest:
+    name: Cert CSI and check_parameters.sh
+    run: 
+      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_3_values.csv dell powerscale
+
+- scenario: "Install PowerScale Driver with health monitor"
+  paths: 
+    - "testfiles/storage_csm_powerscale_health_monitor.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+  customTest:
+    name: Cert CSI and check_parameters.sh
+    run: 
+      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - /bin/bash check_parameters.sh testfiles/powerscale_health_monitor_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver(With Authorization)"
   paths: 
@@ -37,7 +132,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization"
   paths: 
@@ -60,7 +156,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: HelloWorld 
-    run: "echo Hello && echo World"
+    run: 
+      - "echo Hello && echo World"
 
 - scenario: "Install PowerScale Driver(With Replication)"
   paths:
@@ -79,7 +176,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: HelloWorld 
-    run: "echo Hello && echo World"
+    run: 
+      - "echo Hello && echo World"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Replication"
   paths: 
@@ -101,7 +199,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: HelloWorld 
-    run: "echo Hello && echo World"
+    run: 
+      - "echo Hello && echo World"
 
 - scenario: "Uninstall PowerScale Driver"
   paths:
@@ -227,7 +326,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization, Enable Observability"
   paths: 
@@ -326,7 +426,8 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Uninstall PowerFlex Driver"
   paths:
@@ -363,7 +464,8 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization"
   paths:
@@ -391,7 +493,8 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: Install PowerFlex Driver(With Authorization), Disable Authorization module"
   paths:
@@ -420,7 +523,8 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver(With Observability)"
   paths: 
@@ -496,7 +600,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc vxflexos --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization, Enable Observability"
   paths: 
@@ -635,7 +740,8 @@
     - "Delete resource [1]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerStore Driver(Standalone)"
   paths: 
@@ -651,14 +757,9 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    # name of custom test to run
     name: Cert CSI
-    # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
-    # Example:
-    #   ./hello_world.sh
-    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: ./cert-csi test vio --sc powerstore --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc powerstore --chainNumber 2 --chainLength 2
 
 - scenario: "Install Unity Driver(Standalone)"
   paths: 
@@ -674,11 +775,6 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    # name of custom test to run
     name: Cert CSI
-    # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
-    # Example:
-    #   ./hello_world.sh
-    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: ./cert-csi test vio --sc unity --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc unity --chainNumber 2 --chainLength 2
