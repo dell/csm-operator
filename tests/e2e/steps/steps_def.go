@@ -438,19 +438,35 @@ func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) e
 		return err
 	}
 
-	// args & env check applicable for powerstore & powerscale
-	driverType := cr.Spec.Driver.CSIDriverType
-	if driverType == string(csmv1.PowerScale) {
-		driverType = string(csmv1.PowerScaleName)
+	var presentInNode, presentInController bool
+	// check whether podmon container is present in cluster or not: for controller
+	for _, cnt := range dpApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == "podmon" {
+			presentInController = true
+			break
+		}
 	}
 
-	if driverType == string(csmv1.PowerScaleName) || driverType == string(csmv1.PowerStore) {
-			// return error if resiliency sidecar(podmon) is not present in deployment configuration: for controller
-			if err := modules.CheckApplyContainersResiliency(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
+	// check whether podmon container is present in cluster or not: for node
+	for _, cnt := range dsApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == "podmon" {
+			presentInNode = true
+			break
+		}
+	}
+
+	if !presentInNode || !presentInController {
+		return fmt.Errorf("podmon container not found either in controller or node pod")
+	}
+
+	// validating args & env presence for powerstore & powerscale
+	driverType := cr.Spec.Driver.CSIDriverType
+
+	if driverType == csmv1.PowerScaleName || driverType == csmv1.PowerStore || driverType == csmv1.PowerScale {
+		if err := modules.CheckApplyContainersResiliency(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
 			return err
 		}
-			// return error if resiliency sidecar(podmon) is not present in daemonset configuration: for node
-			if err := modules.CheckApplyContainersResiliency(dsApply.Spec.Template.Spec.Containers, cr); err != nil {
+		if err := modules.CheckApplyContainersResiliency(dsApply.Spec.Template.Spec.Containers, cr); err != nil {
 			return err
 		}
 	}
