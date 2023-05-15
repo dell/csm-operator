@@ -191,7 +191,7 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	return res
 }
 
-func csmWithUnity(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
+func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add FSGroupPolicy
@@ -219,7 +219,12 @@ func csmWithUnity(driver csmv1.DriverType, version string) csmv1.ContainerStorag
 	envVar3 := corev1.EnvVar{Name: "X_CSI_UNITY_SYNC_NODEINFO_INTERVAL", Value: "15"}
 	envVar4 := corev1.EnvVar{Name: "TENANT_NAME", Value: ""}
 	envVar5 := corev1.EnvVar{Name: "CSI_LOG_LEVEL", Value: "debug"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3, envVar4, envVar5}
+	envVar6 := corev1.EnvVar{Name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
+	envVar7 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "1"}
+	if certProvided {
+		envVar6 = corev1.EnvVar{Name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
+	}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3, envVar4, envVar5, envVar6, envVar7}
 
 	// Add node name prefix to cover some code in GetNode
 	// nodeNamePrefix := corev1.EnvVar{Name: "X_CSI_UNITY_NODENAME_PREFIX"}

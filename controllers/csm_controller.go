@@ -841,9 +841,6 @@ func getDriverConfig(ctx context.Context,
 		// use powerscale instead of isilon as the folder name is powerscale
 		driverType = csmv1.PowerScaleName
 	}
-	if driverType == csmv1.Unity {
-		driverType = csmv1.Unity
-	}
 	configMap, err = drivers.GetConfigMap(ctx, cr, operatorConfig, driverType)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s configMap: %v", driverType, err)
