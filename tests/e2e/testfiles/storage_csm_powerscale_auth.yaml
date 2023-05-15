@@ -7,8 +7,8 @@ spec:
   driver:
     csiDriverType: "isilon"
         
-    # Config version for CSI PowerScale v2.5.0 driver
-    configVersion: v2.5.0
+    # Config version for CSI PowerScale v2.7.0 driver
+    configVersion: v2.7.0
 
     authSecret: test-isilon-creds-auth
 
@@ -16,8 +16,8 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     common:
-      # Image for CSI PowerScale driver v2.5.0
-      image: "dellemc/csi-isilon:v2.5.0"
+      # Image for CSI PowerScale driver v2.6.1
+      image: "dellemc/csi-isilon:v2.6.1"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -32,9 +32,9 @@ spec:
         # X_CSI_ISI_PORT: Specify the HTTPs port number of the PowerScale OneFS API server
         # This value acts as a default value for endpointPort, if not specified for a cluster config in secret
         # Allowed value: valid port number
-        # Default value: 8080	
+        # Default value: 8080
         - name: X_CSI_ISI_PORT
-          value: "8080"
+          value: ""
 
         # X_CSI_ISI_PATH: The base path for the volumes to be created on PowerScale cluster.
         # This value acts as a default value for isiPath, if not specified for a cluster config in secret

@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -45,12 +45,15 @@ const (
 )
 
 var (
-	authString         = "karavi-authorization-proxy"
-	operatorNamespace  = "dell-csm-operator"
-	quotaLimit         = "30000000"
-	pflexSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
-	pflexAuthSecretMap = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
-	pscaleSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
+	authString             = "karavi-authorization-proxy"
+	operatorNamespace      = "dell-csm-operator"
+	quotaLimit             = "30000000"
+	pflexSecretMap         = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pflexAuthSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
+	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_AUTH_ENDPOINT"}
+	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT"}
+	authSidecarRootCertMap = map[string]string{}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -451,10 +454,11 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 
 func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
 	// find which map to use for secret values
-	mapValues := determineMap(crType)
-	if len(mapValues) == 0 {
-		return fmt.Errorf("type: %s is not supported", crType)
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
 	}
+
 	for key := range mapValues {
 		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
 		if err != nil {
@@ -463,7 +467,7 @@ func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType s
 	}
 
 	cmd := exec.Command("kubectl", "get", "sc", scName)
-	err := cmd.Run()
+	err = cmd.Run()
 	if err == nil {
 		cmd = exec.Command("kubectl", "delete", "sc", scName)
 		err = cmd.Run()
@@ -482,10 +486,11 @@ func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType s
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
 
 	// find which map to use for secret values
-	mapValues := determineMap(crType)
-	if len(mapValues) == 0 {
-		return fmt.Errorf("type: %s is not supported", crType)
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
 	}
+
 	for key := range mapValues {
 		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
 		if err != nil {
@@ -505,7 +510,7 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 	// create new secret
 	fileArg := "--from-file=config=" + templateFile
 	cmd := exec.Command("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to create secret with template file: %s:  %s", templateFile, err.Error())
 	}
@@ -514,10 +519,11 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 }
 
 func (step *Step) restoreTemplate(res Resource, templateFile, crType string) error {
-	mapValues := determineMap(crType)
-	if len(mapValues) == 0 {
-		return fmt.Errorf("type: %s is not supported", crType)
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
 	}
+
 	for key := range mapValues {
 		err := replaceInFile(os.Getenv(mapValues[key]), key, templateFile)
 		if err != nil {
@@ -527,19 +533,25 @@ func (step *Step) restoreTemplate(res Resource, templateFile, crType string) err
 	return nil
 }
 
-func determineMap(crType string) map[string]string {
+func determineMap(crType string) (map[string]string, error) {
 	mapValues := map[string]string{}
 	if crType == "pflex" {
 		mapValues = pflexSecretMap
-	}
-	if crType == "pflexAuth" {
+	} else if crType == "pflexAuth" {
 		mapValues = pflexAuthSecretMap
-	}
-	if crType == "pscale" {
+	} else if crType == "pscale" {
 		mapValues = pscaleSecretMap
+	} else if crType == "pscaleAuth" {
+		mapValues = pscaleAuthSecretMap
+	} else if crType == "authSidecar" {
+		mapValues = pscaleAuthSidecarMap
+	} else if crType == "authSidecarCert" {
+		mapValues = authSidecarRootCertMap
+	} else {
+		return mapValues, fmt.Errorf("type: %s is not supported", crType)
 	}
 
-	return mapValues
+	return mapValues, nil
 }
 
 func secretExists(namespace, name string) bool {
@@ -774,7 +786,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	fmt.Println("=== Creating Authorization Proxy Server Prerequisites ===")
 
 	cmd := exec.Command("kubectl", "get", "ns", "authorization")
-	b, err := cmd.CombinedOutput()
+	err := cmd.Run()
 	if err == nil {
 		cmd = exec.Command("kubectl", "delete", "ns", "authorization")
 		b, err := cmd.CombinedOutput()
@@ -786,7 +798,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	cmd = exec.Command("kubectl", "create",
 		"ns", "authorization",
 	)
-	b, err = cmd.CombinedOutput()
+	b, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create authorization namespace: %v\nErrMessage:\n%s", err, string(b))
 	}

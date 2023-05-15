@@ -1,0 +1,9 @@
+[{
+    "username":"-",
+    "password":"-",
+    "intendedEndpoint":"https://REPLACE_ENDPOINT",
+    "endpoint":"https://REPLACE_AUTH_ENDPOINT",
+    "systemID": "REPLACE_CLUSTERNAME",
+    "skipCertificateValidation":true,
+    "isDefault":true
+}]
