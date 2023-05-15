@@ -625,6 +625,65 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
+- scenario: "Install PowerScale Driver(With Resiliency)"
+  paths:
+    - "testfiles/storage_csm_powerscale_resiliency.yaml"
+  modules:
+    - "resiliency"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    name: HelloWorld 
+    run: "echo Hello && echo World"
+
+- scenario: "Install PowerScale Driver(Standalone), Enable Resiliency"
+  paths: 
+    - "testfiles/storage_csm_powerscale.yaml"
+  modules:
+    - "resiliency"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is not installed"
+    - "Enable [resiliency] module from CR [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    name: HelloWorld 
+    run: "echo Hello && echo World"
+
+- scenario: Install PowerScale Driver(With Resiliency), Disable Resiliency module"
+  paths: 
+    - "testfiles/storage_csm_powerscale_resiliency.yaml"
+  modules:
+    - "resiliency"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    - "Disable [resiliency] module from CR [1]"
+    - "Validate [resiliency] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is not installed"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
 - scenario: "Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"

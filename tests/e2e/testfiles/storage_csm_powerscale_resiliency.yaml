@@ -1,3 +1,18 @@
+#
+#
+# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
@@ -20,8 +35,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerScale driver v2.7.0
-      # @TO-DO replace the version to point out to v2.7.0
-      image: "dellemc/csi-isilon:v2.6.0"
+      image: "dellemc/csi-isilon:v2.7.0"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -244,185 +258,6 @@ spec:
         args: ["--monitor-interval=60s"]
 
   modules:
-    # Authorization: enable csm-authorization for RBAC
-    - name: authorization
-      # enable: Enable/Disable csm-authorization
-      enabled: false
-      configVersion: v1.5.0
-      components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.5.0
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "csm-authorization.com"
-        
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
-
-    # replication: allows to configure replication
-    # Replication CRDs must be installed before installing driver
-    - name: replication
-      # enabled: Enable/Disable replication feature
-      # Allowed values:
-      #   true: enable replication feature(install dell-csi-replicator sidecar)
-      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
-      # Default value: false
-      enabled: false
-      configVersion: v1.4.0
-      components:
-      - name: dell-csi-replicator
-        # image: Image to use for dell-csi-replicator. This shouldn't be changed
-        # Allowed values: string
-        # Default value: None
-        image: dellemc/dell-csi-replicator:v1.4.0
-        envs:
-          # replicationPrefix: prefix to prepend to storage classes parameters
-          # Allowed values: string
-          # Default value: replication.storage.dell.com
-          - name: "X_CSI_REPLICATION_PREFIX"
-            value: "replication.storage.dell.com"
-          # replicationContextPrefix: prefix to use for naming of resources created by replication feature
-          # Allowed values: string
-          # Default value: powerstore
-          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-            value: "powerscale"
-      
-      - name: dell-replication-controller-manager
-        # image: Defines controller image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.4.0
-        envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
-          # Allowed values: string
-          - name: "TARGET_CLUSTERS_IDS"
-            value: "target-cluster-1"
-          # Replication log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "REPLICATION_CTRL_LOG_LEVEL"
-            value: "debug"
-          
-          # replicas: Defines number of controller replicas
-          # Allowed values: int
-          # Default value: 1
-          - name: "REPLICATION_CTRL_REPLICAS"
-            value: "1"
-          # retryIntervalMin: Initial retry interval of failed reconcile request.
-          # It doubles with each failure, upto retry-interval-max
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MIN"
-            value: "1s"
-          # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MAX"
-            value: "5m"
-      
-      - name: dell-replication-controller-init
-        # image: Defines replication init container image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-init:v1.0.0
-
-    # observability: allows to configure observability
-    - name: observability
-      # enabled: Enable/Disable observability
-      enabled: false
-      configVersion: v1.4.0
-      components: 
-        - name: topology
-          # enabled: Enable/Disable topology
-          enabled: false
-          # image: Defines karavi-topology image. This shouldn't be changed
-          # Allowed values: string
-          image: dellemc/csm-topology:v1.4.0
-          envs:
-            # topology log level
-            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-            # Default value: "INFO"
-            - name: "TOPOLOGY_LOG_LEVEL"
-              value: "INFO"           
-
-        - name: otel-collector
-          # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: false
-          # image: Defines otel-collector image. This shouldn't be changed
-          # Allowed values: string
-          image: otel/opentelemetry-collector:0.42.0
-          envs:
-            # image of nginx proxy image
-            # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
-            - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
-
-        - name: metrics-powerscale
-          # enabled: Enable/Disable PowerScale metrics
-          enabled: false
-          # image: Defines PowerScale metrics image. This shouldn't be changed
-          # Allowed values: string
-          image: dellemc/csm-metrics-powerscale:v1.1.0
-          envs:
-            # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
-            # Allowed values: int
-            # Default value: 10
-            - name: "POWERSCALE_MAX_CONCURRENT_QUERIES"
-              value: "10"
-            # POWERSCALE_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
-            # Allowed values: ture, false
-            # Default value: true
-            - name: "POWERSCALE_CAPACITY_METRICS_ENABLED"
-              value: "true"
-            # POWERSCALE_PERFORMANCE_METRICS_ENABLED: enable/disable collection of performance metrics
-            # Allowed values: ture, false
-            # Default value: true
-            - name: "POWERSCALE_PERFORMANCE_METRICS_ENABLED"
-              value: "true"
-            # POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
-            # Allowed values: int
-            # Default value: 30
-            - name: "POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY"
-              value: "30"
-            # POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get cluster performance metrics data
-            # Allowed values: int
-            # Default value: 20
-            - name: "POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY"
-              value: "20"
-            # POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY: set polling frequency to get Quota capacity metrics data
-            # Allowed values: int
-            # Default value: 20
-            - name: "POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY"
-              value: "30"
-            # ISICLIENT_INSECURE: set true/false to skip/verify OneFS API server's certificates
-            # Allowed values: ture, false
-            # Default value: true
-            - name: "ISICLIENT_INSECURE"
-              value: "true"
-            # ISICLIENT_AUTH_TYPE: set 0/1 to enables session-based/basic Authentication
-            # Allowed values: ture, false
-            # Default value: true
-            - name: "ISICLIENT_AUTH_TYPE"
-              value: "1"
-            # ISICLIENT_VERBOSE: set 0/1/2 decide High/Medium/Low content of the OneFS REST API message should be logged in debug level logs
-            # Allowed values: 0,1,2
-            # Default value: 0
-            - name: "ISICLIENT_VERBOSE"
-              value: "0"
-            # PowerScale metrics log level
-            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-            # Default value: "INFO"
-            - name: "POWERSCALE_LOG_LEVEL"
-              value: "INFO"
-            # PowerScale Metrics Output logs in the specified format
-            # Valid values: TEXT, JSON
-            # Default value: "TEXT"
-            - name: "POWERSCALE_LOG_FORMAT"
-              value: "TEXT"
-            # Otel collector address
-            # Allowed values: String
-            # Default value: "otel-collector:55680"
-            - name: "COLLECTOR_ADDRESS"
-              value: "otel-collector:55680"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:
