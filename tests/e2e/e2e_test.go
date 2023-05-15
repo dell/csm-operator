@@ -124,7 +124,7 @@ var _ = Describe("[run-e2e-test]E2E Testing", func() {
 		for _, test := range testResources {
 			By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
 			if ContainsModules(test.Scenario.Modules, installedModules) == false {
-				By("Required module not installed, skipping")
+				By(fmt.Sprintf("Required module %s not installed, skipping", test.Scenario.Modules))
 				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 				continue
 			}

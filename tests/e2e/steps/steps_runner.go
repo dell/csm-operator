@@ -65,6 +65,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
 	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
 	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
+	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
 
 }
 
@@ -119,7 +120,7 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 
 			res := stepDef.Handler.Call(values)
 			if err, ok := res[0].Interface().(error); ok {
-				return err
+				return fmt.Errorf("\nerr: %v", err)
 			}
 			return nil
 		}

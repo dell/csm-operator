@@ -500,3 +500,16 @@ func execCommand(VMIP string, VMsUser string, VMsPassword string, args []string)
 	}
 	return buf.Bytes(), err
 }
+
+func runCmd(cmd *exec.Cmd) ([]byte, error) {
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+
+	err := cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("%v: %s", err, buf.String())
+	}
+
+	return buf.Bytes(), nil
+}
