@@ -29,10 +29,13 @@ var (
 	csmUnity                = csmForUnity("csm")
 	unityCSMBadVersion      = csmForUnityBadVersion()
 	unityCSMBadConfig       = csmForUnityBadConfig()
+	unityCSMBadSkipCert     = csmForUnityBadSkipCert()
+	unityCSMBadCertCnt      = csmForUnityBadCertCnt()
 	unityClient             = crclient.NewFakeClientNoInjector(objects)
 	configJSONFileGoodUnity = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.Unity)
 	unitySecret             = shared.MakeSecretWithJSON("csm-creds", "driver-test", configJSONFileGoodUnity)
 	fakeSecretUnity         = shared.MakeSecret("fake-secret", "fake-ns", shared.UnityConfigVersion)
+	skipCertValidIsFalse    = csmForUnitySkipCertISFalse()
 
 	unityTests = []struct {
 		// every single unit test name
@@ -50,6 +53,8 @@ var (
 		{"happy path", csmUnity, unityClient, unitySecret, ""},
 		{"bad version", unityCSMBadVersion, unityClient, unitySecret, "not supported"},
 		{"bad config", unityCSMBadConfig, unityClient, unitySecret, "failed to find secret"},
+		{"invalid value for skip cert validation", unityCSMBadSkipCert, unityClient, unitySecret, "is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"},
+		{"invalid value for cert secret cnt", unityCSMBadCertCnt, unityClient, unitySecret, "is an invalid value for CERT_SECRET_COUNT"},
 	}
 
 	unityPrecheckTests = []struct {
@@ -65,6 +70,7 @@ var (
 		expectedErr string
 	}{
 		{"missing secret", csmUnity, unityClient, fakeSecretUnity, "failed to find secret"},
+		{"should check for certs in driver namespace when X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION is false ", skipCertValidIsFalse, unityClient, fakeSecretUnity, "failed to find secret"},
 	}
 )
 
@@ -123,6 +129,57 @@ func csmForUnityBadConfig() csmv1.ContainerStorageModule {
 func csmForUnity(customCSMName string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM(customCSMName, "driver-test", shared.UnityConfigVersion)
 	res.Spec.Driver.AuthSecret = "csm-creds"
+
+	// Add unity driver version
+	res.Spec.Driver.ConfigVersion = shared.UnityConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.Unity
+	envVar1 := corev1.EnvVar{Name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
+	envVar2 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "1"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2}
+
+	return res
+}
+
+// makes a csm object with bad cert skip validation input
+func csmForUnityBadSkipCert() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.UnityConfigVersion)
+
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION", Value: "NotABool"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
+
+	// Add unity driver version
+	res.Spec.Driver.ConfigVersion = shared.UnityConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.Unity
+
+	return res
+}
+
+// makes a csm object with bad cert count input
+func csmForUnityBadCertCnt() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.UnityConfigVersion)
+
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "thisIsNotANumber"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
+
+	// Add unity driver version
+	res.Spec.Driver.ConfigVersion = shared.UnityConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.Unity
+
+	return res
+}
+
+// makes a csm object with bad cert skip validation input
+func csmForUnitySkipCertISFalse() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.UnityConfigVersion)
+
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION", Value: "False"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
 	// Add unity driver version
 	res.Spec.Driver.ConfigVersion = shared.UnityConfigVersion
