@@ -1,4 +1,4 @@
-# Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,21 +34,17 @@ export CERT_CSI="/root/cert-csi"
 # USER MODIFICATION REQUIRED: must supply path to your karavictl binary
 # export KARAVICTL="/root/karavictl"
 
-# Must supply storage details to values file if different from testfiles/values.yaml
-# stotage type are like powerscale, powerflex, powermax
+# The following are Authorization Proxy Server specific:
+# Must supply storage array details
+# Storage type examples - powerscale, powerflex, powermax
 # export STORAGE_TYPE="powerscale"
 # export END_POINT="1.1.1.1:8080"
 # export SYSTEM_ID="xxxxxx"
 # export STORAGE_USER="xxxx"
 # export STORAGE_PASSWORD="xxxxx"
 # export STORAGE_POOL="pool"
-
-# User must add control-plane IP
-# export CONTROL_PLANE_IP="1.1.1.1"
-
-# User must specify and create driver namespace
+# Must specify and manually create driver namespace
 # export DRIVER_NAMESPACE="namespace"
-
 
 # The following are for creating PFlex secret/storage class
 # do not include "https://" in the endpoint

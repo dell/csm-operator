@@ -120,7 +120,8 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 
 			res := stepDef.Handler.Call(values)
 			if err, ok := res[0].Interface().(error); ok {
-				return fmt.Errorf("\nerr: %v", err)
+				fmt.Printf("\nerr: %+v\n", err)
+				return err
 			}
 			return nil
 		}

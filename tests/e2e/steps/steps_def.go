@@ -16,7 +16,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -774,10 +773,20 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error {
 	fmt.Println("=== Creating Authorization Proxy Server Prerequisites ===")
 
-	cmd := exec.Command("kubectl", "create",
+	cmd := exec.Command("kubectl", "get", "ns", "authorization")
+	b, err := cmd.CombinedOutput()
+	if err == nil {
+		cmd = exec.Command("kubectl", "delete", "ns", "authorization")
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to delete authorization namespace: %v\nErrMessage:\n%s", err, string(b))
+		}
+	}
+
+	cmd = exec.Command("kubectl", "create",
 		"ns", "authorization",
 	)
-	b, err := cmd.CombinedOutput()
+	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create authorization namespace: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -842,7 +851,6 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		password        = ""
 		storageType     = ""
 		pool            = ""
-		controlPlaneIP  = ""
 		driverNamespace = ""
 	)
 
@@ -864,9 +872,6 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	}
 	if os.Getenv("STORAGE_TYPE") != "" {
 		storageType = os.Getenv("STORAGE_TYPE")
-	}
-	if os.Getenv("CONTROL_PLANE_IP") != "" {
-		controlPlaneIP = os.Getenv("CONTROL_PLANE_IP")
 	}
 	if os.Getenv("DRIVER_NAMESPACE") != "" {
 		driverNamespace = os.Getenv("DRIVER_NAMESPACE")
@@ -990,14 +995,18 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		return fmt.Errorf("failed to unmarshal token %s: %v", string(b), err)
 	}
 
-	wrtArgs = []string{fmt.Sprintf(`echo '%s' | cat > /tmp/token.yaml `, token.Token)}
-	if b, err := execCommand(controlPlaneIP, "root", "dangerous", wrtArgs); err != nil {
-		return fmt.Errorf("failed to copy token to %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
+	wrtArgs = []string{"-c", fmt.Sprintf(`echo '%s' | cat > /tmp/token.yaml `, token.Token)}
+	if b, err = runCmd(exec.CommandContext(context.Background(), "bash", wrtArgs...)); err != nil {
+		return fmt.Errorf("failed to copy token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	kApplyArgs := []string{"kubectl", "apply", "-f", "/tmp/token.yaml", "-n", driverNamespace}
-	if b, err := execCommand(controlPlaneIP, "root", "dangerous", kApplyArgs); err != nil {
-		return fmt.Errorf("failed to apply token in %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
+	cmd = exec.Command("kubectl", "apply",
+		"-f", "/tmp/token.yaml",
+		"-n", driverNamespace,
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to apply token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	fmt.Println("=== Token Applied ===\n ")

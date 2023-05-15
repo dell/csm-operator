@@ -787,16 +787,16 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
 
 - scenario: "Install Authorization Proxy Server"
-  path:
+  paths:
     - "testfiles/csm_authorization_proxy_server.yaml"
   modules:
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resources [1]"
+    - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Delete resources [1]"
+    - "Delete custom resource [1]"
 
 - scenario: "Install PowerStore Driver(Standalone)"
   paths: 
