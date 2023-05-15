@@ -700,7 +700,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: HelloWorld 
-    run: "echo Hello && echo World"
+    run:
+     - "echo Hello && echo World"
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Resiliency"
   paths: 
@@ -722,7 +723,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: HelloWorld 
-    run: "echo Hello && echo World"
+    run:
+     - "echo Hello && echo World"
 
 - scenario: Install PowerFlex Driver(With Resiliency), Disable Resiliency module"
   paths: 
@@ -759,7 +761,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: HelloWorld 
-    run: "echo Hello && echo World"
+    run:
+     - "echo Hello && echo World"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Resiliency"
   paths: 
@@ -781,7 +784,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: HelloWorld 
-    run: "echo Hello && echo World"
+    run:
+     - "echo Hello && echo World"
 
 - scenario: Install PowerScale Driver(With Resiliency), Disable Resiliency module"
   paths: 
@@ -896,7 +900,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: HelloWorld 
-    run: "echo Hello && echo World"
+    run:
+     - "echo Hello && echo World"
 
 - scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
   paths: 
@@ -918,7 +923,8 @@
     - "Delete custom resource [1]"
   customTest:
     name: HelloWorld 
-    run: "echo Hello && echo World"
+    run:
+     - "echo Hello && echo World"
 
 - scenario: Install PowerStore Driver(With Resiliency), Disable Resiliency module"
   paths: 
