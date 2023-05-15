@@ -46,9 +46,12 @@ const (
 )
 
 var (
-	authString        = "karavi-authorization-proxy"
-	operatorNamespace = "dell-csm-operator"
-	quotaLimit        = "30000000"
+	authString         = "karavi-authorization-proxy"
+	operatorNamespace  = "dell-csm-operator"
+	quotaLimit         = "30000000"
+	pflexSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pflexAuthSecretMap = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pscaleSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -163,6 +166,26 @@ func (step *Step) validateDriverInstalled(res Resource, driverName string, crNum
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	return checkNoRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
+}
+
+func (step *Step) setNodeLabel(res Resource, label string) error {
+	if label == "control-plane" {
+		setNodeLabel(label, "node-role.kubernetes.io/control-plane", "")
+	} else {
+		return fmt.Errorf("Adding node label %s not supported, feel free to add support", label)
+	}
+
+	return nil
+}
+
+func (step *Step) removeNodeLabel(res Resource, label string) error {
+	if label == "control-plane" {
+		removeNodeLabel(label, "node-role.kubernetes.io/control-plane")
+	} else {
+		return fmt.Errorf("Removing node label %s not supported, feel free to add support", label)
+	}
+
+	return nil
 }
 
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
@@ -432,75 +455,119 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 	return nil
 }
 
-func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) error {
-	dpApply, dsApply, err := getApplyDeploymentDaemonSet(cr, step.ctrlClient)
+func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
+	// find which map to use for secret values
+	mapValues := determineMap(crType)
+	if len(mapValues) == 0 {
+		return fmt.Errorf("type: %s is not supported", crType)
+	}
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command("kubectl", "get", "sc", scName)
+	err := cmd.Run()
+	if err == nil {
+		cmd = exec.Command("kubectl", "delete", "sc", scName)
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+	cmd = exec.Command("kubectl", "create", "-f", templateFile)
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
-	var presentInNode, presentInController bool
-	// check whether podmon container is present in cluster or not: for controller
-	for _, cnt := range dpApply.Spec.Template.Spec.Containers {
-		if *cnt.Name == "podmon" {
-			presentInController = true
-			break
-		}
+func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
+
+	// find which map to use for secret values
+	mapValues := determineMap(crType)
+	if len(mapValues) == 0 {
+		return fmt.Errorf("type: %s is not supported", crType)
 	}
-
-	// check whether podmon container is present in cluster or not: for node
-	for _, cnt := range dsApply.Spec.Template.Spec.Containers {
-		if *cnt.Name == "podmon" {
-			presentInNode = true
-			break
-		}
-	}
-
-	if !presentInNode || !presentInController {
-		return fmt.Errorf("podmon container not found either in controller or node pod")
-	}
-
-	// validating args & env presence for powerstore & powerscale
-	driverType := cr.Spec.Driver.CSIDriverType
-
-	if driverType == csmv1.PowerScaleName || driverType == csmv1.PowerStore || driverType == csmv1.PowerScale {
-		if err := modules.CheckApplyContainersResiliency(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
 			return err
 		}
-		if err := modules.CheckApplyContainersResiliency(dsApply.Spec.Template.Spec.Containers, cr); err != nil {
-			return err
+	}
+
+	//if secret exists- delete it
+	if secretExists(namespace, name) {
+		cmd := exec.Command("kubectl", "delete", "secret", "-n", namespace, name)
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to delete secret: %s", err.Error())
 		}
+	}
+
+	// create new secret
+	fileArg := "--from-file=config=" + templateFile
+	cmd := exec.Command("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create secret with template file: %s:  %s", templateFile, err.Error())
 	}
 
 	return nil
 }
 
-func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule) error {
-
-	// check that resiliency sidecar(podmon) is not in cluster: for controller
-	dp, err := getDriverDeployment(cr, step.ctrlClient)
-	if err != nil {
-		return fmt.Errorf("failed to get deployment: %v", err)
+func (step *Step) restoreTemplate(res Resource, templateFile, crType string) error {
+	mapValues := determineMap(crType)
+	if len(mapValues) == 0 {
+		return fmt.Errorf("type: %s is not supported", crType)
 	}
-	for _, cnt := range dp.Spec.Template.Spec.Containers {
-		if cnt.Name == utils.ResiliencySideCarName {
-			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
-		}
-	}
-
-	// check that resiliency sidecar(podmon) is not in cluster: for node
-	ds, err := getDriverDaemonset(cr, step.ctrlClient)
-	if err != nil {
-		return fmt.Errorf("failed to get daemonset: %v", err)
-	}
-	for _, cnt := range ds.Spec.Template.Spec.Containers {
-		if cnt.Name == utils.ResiliencySideCarName {
-			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
+	for key := range mapValues {
+		err := replaceInFile(os.Getenv(mapValues[key]), key, templateFile)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-// Uses scenario
+func determineMap(crType string) map[string]string {
+	mapValues := map[string]string{}
+	if crType == "pflex" {
+		mapValues = pflexSecretMap
+	}
+	if crType == "pflexAuth" {
+		mapValues = pflexAuthSecretMap
+	}
+	if crType == "pscale" {
+		mapValues = pscaleSecretMap
+	}
+
+	return mapValues
+}
+
+func secretExists(namespace, name string) bool {
+	cmd := exec.Command("kubectl", "get", "secret", "-n", namespace, name)
+	err := cmd.Run()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func replaceInFile(old, new, templateFile string) error {
+	cmdString := "s/" + old + "/" + new + "/g"
+	cmd := exec.Command("sed", "-i", cmdString, templateFile)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to substitute %s with %s in file %s: %s", old, new, templateFile, err.Error())
+	}
+	return nil
+
+}
+
 func (step *Step) runCustomTest(res Resource) error {
 	var (
 		stdout string
@@ -508,17 +575,19 @@ func (step *Step) runCustomTest(res Resource) error {
 		err    error
 	)
 
-	args := strings.Split(res.Scenario.CustomTest.Run, " ")
-	if len(args) == 1 {
-		stdout, stderr, err = framework.RunCmd(args[0])
+	for testNum, customTest := range res.Scenario.CustomTest.Run {
+		args := strings.Split(customTest, " ")
+		if len(args) == 1 {
+			stdout, stderr, err = framework.RunCmd(args[0])
+		} else {
+			stdout, stderr, err = framework.RunCmd(args[0], args[1:]...)
+		}
 
-	} else {
-		stdout, stderr, err = framework.RunCmd(args[0], args[1:]...)
+		if err != nil {
+			return fmt.Errorf("error running custom test #%d. Error: %v \n stdout: %s \n stderr: %s", testNum, err, stdout, stderr)
+		}
 	}
 
-	if err != nil {
-		return fmt.Errorf("error running customs test. Error: %v \n stdout: %s \n stderr: %s", err, stdout, stderr)
-	}
 	return nil
 }
 
@@ -837,5 +906,73 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		return fmt.Errorf("failed to apply token in %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
 	}
 
+	return nil
+}
+
+func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) error {
+	dpApply, dsApply, err := getApplyDeploymentDaemonSet(cr, step.ctrlClient)
+	if err != nil {
+		return err
+	}
+
+	var presentInNode, presentInController bool
+	// check whether podmon container is present in cluster or not: for controller
+	for _, cnt := range dpApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == "podmon" {
+			presentInController = true
+			break
+		}
+	}
+
+	// check whether podmon container is present in cluster or not: for node
+	for _, cnt := range dsApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == "podmon" {
+			presentInNode = true
+			break
+		}
+	}
+
+	if !presentInNode || !presentInController {
+		return fmt.Errorf("podmon container not found either in controller or node pod")
+	}
+
+	// validating args & env presence for powerstore & powerscale
+	driverType := cr.Spec.Driver.CSIDriverType
+
+	if driverType == csmv1.PowerScaleName || driverType == csmv1.PowerStore || driverType == csmv1.PowerScale {
+		if err := modules.CheckApplyContainersResiliency(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
+			return err
+		}
+		if err := modules.CheckApplyContainersResiliency(dsApply.Spec.Template.Spec.Containers, cr); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule) error {
+
+	// check that resiliency sidecar(podmon) is not in cluster: for controller
+	dp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name == utils.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
+		}
+	}
+
+	// check that resiliency sidecar(podmon) is not in cluster: for node
+	ds, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+	for _, cnt := range ds.Spec.Template.Spec.Containers {
+		if cnt.Name == utils.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
+		}
+	}
 	return nil
 }
