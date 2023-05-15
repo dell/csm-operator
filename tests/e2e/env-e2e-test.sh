@@ -49,3 +49,20 @@ export CERT_CSI="/root/cert-csi"
 
 # User must specify and create driver namespace
 # export DRIVER_NAMESPACE="namespace"
+
+
+# The following are for creating PFlex secret/storage class
+# do not include "https://" in the endpoint
+export PFLEX_USER=""
+export PFLEX_PASS=""
+export PFLEX_SYSTEMID=""
+export PFLEX_ENDPOINT=""
+export PFLEX_MDM=""
+export PFLEX_AUTH_ENDPOINT=""  
+
+# The following are for creating PScale secret/storage class
+# do not include "https://" in the endpoint
+export PSCALE_CLUSTER=""
+export PSCALE_USER=""
+export PSCALE_PASS=""
+export PSCALE_ENDPOINT=""
