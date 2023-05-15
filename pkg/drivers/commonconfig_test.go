@@ -22,10 +22,11 @@ import (
 )
 
 var (
-	csm       = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion)
-	pFlexCSM  = csmForPowerFlex(pflexCSMName)
-	pStoreCSM = csmWithPowerstore(csmv1.PowerStore, shared.PStoreConfigVersion)
-	unityCSM  = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion)
+	csm                  = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion)
+	pFlexCSM             = csmForPowerFlex(pflexCSMName)
+	pStoreCSM            = csmWithPowerstore(csmv1.PowerStore, shared.PStoreConfigVersion)
+	unityCSM             = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, false)
+	unityCSMCertProvided = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, true)
 
 	fakeDriver csmv1.DriverType = "fakeDriver"
 	badDriver  csmv1.DriverType = "badDriver"
@@ -46,6 +47,7 @@ var (
 		{"pflex happy path", pFlexCSM, csmv1.PowerFlex, "node.yaml", ""},
 		{"pstore happy path", pStoreCSM, csmv1.PowerStore, "node.yaml", ""},
 		{"unity happy path", unityCSM, csmv1.Unity, "node.yaml", ""},
+		{"unity happy path when secrets with certificates provided", unityCSMCertProvided, csmv1.Unity, "node.yaml", ""},
 		{"file does not exist", csm, fakeDriver, "NonExist.yaml", "no such file or directory"},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
 	}
