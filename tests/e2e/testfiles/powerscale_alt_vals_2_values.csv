@@ -1,0 +1,8 @@
+parameter name, grep option for paramater value, parameter value,resource to describe
+F S Group Policy,,None,csm
+Replicas,,1,csm
+X_CSI_VERBOSE,,2,controller
+X_CSI_ISI_VOLUME_PATH_PERMISSIONS,,757,controller
+X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION,,true,controller
+Node-Selectors,-v,none,controller
+Tolerations,-v,none,controller
