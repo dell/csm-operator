@@ -288,13 +288,6 @@ spec:
           - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
             value: "powerscale"
 
-      - name: metadataretriever
-        # image: Image to use for csi-metadata-retriever. This shouldn't be changed
-        image: dellemc/csi-metadata-retriever:v1.3.0
-        envs:
-          - name: "CSI_RETRIEVER_ENDPOINT"
-            value: "/var/run/csi/csi_retriever.sock"
-
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
