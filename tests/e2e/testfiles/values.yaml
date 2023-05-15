@@ -429,6 +429,74 @@
     run: 
       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
+- scenario: "Install PowerFlex Driver with first set of alternate values"
+  paths:
+    - "testfiles/storage_csm_powerflex_alt_vals_1.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerscale-config] in namespace [dell] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+  customTest:
+    name: Cert CSI
+    run: 
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+
+- scenario: "Install PowerFlex Driver with second set of alternate values"
+  paths:
+    - "testfiles/storage_csm_powerflex_alt_vals_2.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerscale-config] in namespace [dell] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+  customTest:
+    name: Cert CSI
+    run: 
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+
+- scenario: "Install PowerFlex Driver with third set of alternate values"
+  paths:
+    - "testfiles/storage_csm_powerflex_alt_vals_3.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set [control-plane] node label"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerscale-config] in namespace [dell] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Remove [control-plane] node label"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+  customTest:
+    name: Cert CSI
+    run: 
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+
 - scenario: "Uninstall PowerFlex Driver"
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
