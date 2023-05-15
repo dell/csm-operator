@@ -154,7 +154,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.247.13.202,10.247.13.204"
+            value: "10.x.x.x,10.x.x.x" #provide MDM value
 
   modules:
     # Authorization: enable csm-authorization for RBAC
