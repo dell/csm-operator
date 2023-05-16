@@ -38,6 +38,9 @@ const (
 	// Replication - placeholder for replication constant
 	Replication ModuleType = "replication"
 
+	// Resiliency - placeholder for resiliency constant
+	Resiliency ModuleType = "resiliency"
+
 	// Observability - placeholder for constant observability
 	Observability ModuleType = "observability"
 
