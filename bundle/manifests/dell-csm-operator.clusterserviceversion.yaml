@@ -92,7 +92,8 @@ metadata:
                 "tolerations": null
               },
               "csiDriverSpec": {
-                "fSGroupPolicy": "ReadWriteOnceWithFSType"
+                "fSGroupPolicy": "ReadWriteOnceWithFSType",
+                "storageCapacity": false
               },
               "csiDriverType": "isilon",
               "dnsPolicy": "ClusterFirstWithHostNet",
