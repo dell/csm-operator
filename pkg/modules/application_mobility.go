@@ -269,6 +269,7 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 
 // AppMobilityCertManager - Install/Delete cert-manager
 func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+
 	YamlString, err := getAppMobCertManager(op, cr)
 	if err != nil {
 		return err
@@ -309,42 +310,8 @@ func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	return YamlString, nil
 }
 
-/*func getAppMobApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
-
-	appMobModule := csmv1.Module{}
-	for _, m := range cr.Spec.Modules {
-		if m.Name == csmv1.ApplicationMobility {
-			appMobModule = m
-			break
-		}
-	}
-
-	//Need to decide how to get configverion check or skip it
-
-}
-
-func AppInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
-	appModule, containerPtr, err := getAppMobApplyCR(cr, op)
-	if err != nil {
-		return nil, err
-	}
-
-	container := *containerPtr
-
-	//vols, err := getAppMobApplyVolumes(cr, op, authModule.Components[0])
-	//if err != nil {
-	//	return nil, err
-	//}
-	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
-
-	return &dp, nil
-}*/
-
 // AppMobilityVelero - Install/Delete velero
 /*func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getVelero(op, cr)
-	if err != nil {
-		return err
 	}
 
 	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
