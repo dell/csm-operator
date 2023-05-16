@@ -235,13 +235,3 @@ spec:
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
 
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test-vxflexos-config-params
-  namespace: test-vxflexos
-data:
-  driver-config-params.yaml: |
-    CSI_LOG_LEVEL: "debug"
-    CSI_LOG_FORMAT: "TEXT"
