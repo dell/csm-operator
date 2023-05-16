@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ type K8sImagesConfig struct {
 		Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
 		Sdc                   string `json:"sdc" yaml:"sdc"`
 		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
+		Podmon                string `json:"podmon" yaml:"podmon"`
 	} `json:"images" yaml:"images"`
 }
 
@@ -118,6 +119,8 @@ const (
 	ReplicationControllerInit = "dell-replication-controller-init"
 	// ReplicationSideCarName -
 	ReplicationSideCarName = "dell-csi-replicator"
+	// ResiliencySideCarName -
+	ResiliencySideCarName = "podmon"
 	// DefaultSourceClusterID -
 	DefaultSourceClusterID = "default-source-cluster"
 	// ObservabilityNamespace - karavi
@@ -126,6 +129,10 @@ const (
 	AuthorizationNamespace = "authorization"
 	// AuthProxyServerComponent - karavi-authorization-proxy-server component
 	AuthProxyServerComponent = "karavi-authorization-proxy-server"
+	// PodmonControllerComponent - podmon-controller
+	PodmonControllerComponent = "podmon-controller"
+	// PodmonNodeComponent - podmon-node
+	PodmonNodeComponent = "podmon-node"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -189,6 +196,8 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 		*c.Image = img.Images.Sdc
 	case csmv1.Sdcmonitor:
 		*c.Image = img.Images.Sdcmonitor
+	case string(csmv1.Resiliency):
+		*c.Image = img.Images.Podmon
 	}
 	return
 }
@@ -827,6 +836,16 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 
 	return NewK8sClientWrapper(clusterConfigData)
 
+}
+
+// IsResiliencyModuleEnabled - check if resiliency module is enabled or not
+func IsResiliencyModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) bool {
+	for _, m := range instance.Spec.Modules {
+		if m.Name == csmv1.Resiliency && m.Enabled {
+			return true
+		}
+	}
+	return false
 }
 
 // GetDefaultClusters -

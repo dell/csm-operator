@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ var (
 // +kubebuilder:rbac:groups="",resources=deployments/finalizers,resourceNames=dell-csm-operator-controller-manager,verbs=update
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csidrivers,verbs=get;list;watch;create;update;delete;patch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=storageclasses,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments,verbs=get;list;watch;create;update;patch
+// +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csinodes,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups="csi.storage.k8s.io",resources=csinodeinfos,verbs=get;list;watch
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotclasses;volumesnapshotcontents,verbs=get;list;watch;create;update;delete;patch
@@ -650,6 +650,37 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				node.DaemonSetApplyConfig = *ds
+			case csmv1.Resiliency:
+				log.Info("Injecting CSM Resiliency")
+
+				// for controller-pod
+				driverName := string(cr.Spec.Driver.CSIDriverType)
+				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driverName)
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into deployment: %v", err)
+				}
+				controller.Deployment = *dp
+
+				clusterRole, err := modules.ResiliencyInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig, "controller")
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into controller cluster role: %v", err)
+				}
+
+				controller.Rbac.ClusterRole = *clusterRole
+
+				// for node-pod
+				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into daemonset: %v", err)
+				}
+				node.DaemonSetApplyConfig = *ds
+
+				clusterRoleForNode, err := modules.ResiliencyInjectClusterRole(node.Rbac.ClusterRole, cr, operatorConfig, "node")
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into node cluster role: %v", err)
+				}
+
+				node.Rbac.ClusterRole = *clusterRoleForNode
 			case csmv1.Replication:
 				log.Info("Injecting CSM Replication")
 				dp, err := modules.ReplicationInjectDeployment(controller.Deployment, cr, operatorConfig)
@@ -1080,6 +1111,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			case csmv1.Replication:
 				if err := modules.ReplicationPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed replication validation: %v", err)
+				}
+
+			case csmv1.Resiliency:
+				if err := modules.ResiliencyPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+					return fmt.Errorf("failed resiliency validation: %v", err)
 				}
 
 			case csmv1.Observability:
