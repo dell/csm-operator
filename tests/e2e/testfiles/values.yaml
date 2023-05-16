@@ -1,5 +1,4 @@
-
-# List of E2E Tests Scenarios#
+# List of E2E Tests Scenarios
 - scenario: "Install PowerScale Driver(Standalone)"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
@@ -129,7 +128,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds-auth] in namespace [test-isilon] for [pscaleAuth]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [test-isilon-creds-auth] in namespace [test-isilon] for [pscaleAuth]"
     - "Set up secret with template [testfiles/powerscale-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-isilon] for [authSidecar]"
     - "Set up secret with template [testfiles/powerscale-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
     - "Apply custom resource [2]"
@@ -141,13 +140,13 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscaleAuth]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/csm-authorization-config.json] for [authSidecar]"
   customTest:
     name: Cert CSI
     run: 
-      - ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
+      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization"
   paths:
@@ -257,7 +256,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds-auth] in namespace [test-isilon] for [pscaleAuth]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [test-isilon-creds-auth] in namespace [test-isilon] for [pscaleAuth]"
     - "Set up secret with template [testfiles/powerscale-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-isilon] for [authSidecar]"
     - "Set up secret with template [testfiles/powerscale-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
     - "Apply custom resource [2]"
@@ -272,7 +271,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscaleAuth]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/csm-authorization-config.json] for [authSidecar]"
 

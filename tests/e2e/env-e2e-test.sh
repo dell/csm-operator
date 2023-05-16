@@ -61,4 +61,6 @@ export PSCALE_CLUSTER=""
 export PSCALE_USER=""
 export PSCALE_PASS=""
 export PSCALE_ENDPOINT=""
-export PSCALE_AUTH_ENDPOINT=""  
+export PSCALE_AUTH_ENDPOINT=""
+export PSCALE_AUTH_PORT=""
+
