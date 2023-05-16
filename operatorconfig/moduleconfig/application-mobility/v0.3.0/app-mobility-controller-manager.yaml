@@ -162,17 +162,17 @@ rules:
   verbs:
   - get
   - list
-- apiGroups:
+- apiGroups: 
   - mobility.storage.dell.com
-  resources:
+  resources: 
   - backups
-  verbs:
-  - create
-  - delete
+  verbs: 
+  - create 
+  - delete 
   - get
   - list
-  - patch
-  - update
+  - patch 
+  - update 
   - watch
 - apiGroups:
   - mobility.storage.dell.com
@@ -266,7 +266,7 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
+- apiGroups: 
   - mobility.storage.dell.com
   resources:
   - clusterconfigs
@@ -449,25 +449,63 @@ rules:
   - update
   - watch
 - apiGroups:
-    - mobility.storage.dell.com
+  - mobility.storage.dell.com
   resources:
-    - schedules
+  - schedules
   verbs:
-    - create
-    - delete
-    - get
-    - list
-    - patch
-    - update
-    - watch
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
-    - mobility.storage.dell.com
+  - mobility.storage.dell.com
   resources:
-    - schedules/status
+  - schedules/status
   verbs:
-    - get
-    - patch
-    - update
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: <NAMESPACE>-leader-election-role
+  namespace: application-mobility
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -514,7 +552,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: <NAMESPACE>-leader-election-rolebinding
-  namespace: <NAMESPACE>
+  namespace: application-mobility
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -522,7 +560,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: <NAMESPACE>-controller-manager
-  namespace: <NAMESPACE>
+  namespace: application-mobility
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -554,44 +592,6 @@ subjects:
 - kind: ServiceAccount
   name: <NAMESPACE>-controller-manager
   namespace: <NAMESPACE>
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: <NAMESPACE>-leader-election-role
-  namespace: <NAMESPACE>
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
 ---
 apiVersion: v1
 data:

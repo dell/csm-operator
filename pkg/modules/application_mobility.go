@@ -80,6 +80,8 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 		return YamlString, err
 	}
 
+	fmt.Printf("***** INSIDE APPLICATION DEPLOYMENT ******")
+
 	deploymentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobDeploymentManifest)
 	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
 	if err != nil {
@@ -121,6 +123,7 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 	if err != nil {
 		return err
 	}
+	fmt.Printf("**** NEED TO RUN DEPLOYMENT****")
 	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
@@ -130,10 +133,11 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 		if isDeleting {
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
-			} else {
-				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
+			}
+		} else {
+			fmt.Printf("**** INSIDE APPLY OBJECT *****")
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
 			}
 		}
 	}
@@ -238,6 +242,7 @@ func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.Op
 func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
+	fmt.Printf("**** GETTING INSIDE PRECHECK*****")
 	// check if provided version is supported
 	if appMob.ConfigVersion != "" {
 		err := checkVersion(string(csmv1.ApplicationMobility), appMob.ConfigVersion, op.ConfigDirectory)
@@ -326,14 +331,14 @@ func AppInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Conta
 
 	container := *containerPtr
 
-	/*vols, err := getAppMobApplyVolumes(cr, op, authModule.Components[0])
-	if err != nil {
-		return nil, err
-	}
+	//vols, err := getAppMobApplyVolumes(cr, op, authModule.Components[0])
+	//if err != nil {
+	//	return nil, err
+	//}
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
 	return &dp, nil
-}
+}*/
 
 // AppMobilityVelero - Install/Delete velero
 /*func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
