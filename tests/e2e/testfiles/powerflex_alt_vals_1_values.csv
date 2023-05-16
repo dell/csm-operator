@@ -1,0 +1,18 @@
+parameter name, grep option for paramater value, parameter value,resource to describe,number of occurences of parameter name
+Name,,powerflex,controller,4
+Namespace,,dell,controller,1
+F S Group Policy,,ReadWriteOnceWithFSType,csm,1
+Replicas,,2,csm,1
+Dns Policy,,ClusterFirstWithHostNet,csm,1
+Force Update,,true,csm,1
+Force Remove Driver,,true,csm,1
+Image Pull Policy,,Always,csm,2
+X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT,,true,controller,1
+X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE,,true,controller,1
+X_CSI_HEALTH_MONITOR_ENABLED,,false,controller,1
+Tolerations,-v,none,controller,1
+X_CSI_APPROVE_SDC_ENABLED,,true,node,1
+X_CSI_RENAME_SDC_ENABLED,,true,node,1
+X_CSI_RENAME_SDC_PREFIX,,sdc,node,1
+X_CSI_HEALTH_MONITOR_ENABLED,,false,controller,1
+Tolerations,-v,none,node,1
