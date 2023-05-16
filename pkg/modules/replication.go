@@ -63,13 +63,21 @@ var (
 
 // ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
 var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
-	"powerscale": {
+	string(csmv1.PowerScaleName): {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
-	"isilon": {
+	string(csmv1.PowerScale): {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
+	},
+	string(csmv1.PowerFlex): {
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	},
+	string(csmv1.PowerFlexName): {
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
 	},
 }
 
@@ -296,6 +304,13 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 			err = drivers.PrecheckPowerScale(ctx, &tmpCR, op, cluster.ClusterCTRLClient)
 			if err != nil {
 				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClusterID)
+			}
+		case csmv1.PowerFlex:
+			tmpCR := cr
+			log.Infof("\nperforming pre checks for: %s", cluster.ClusterID)
+			err = drivers.PrecheckPowerFlex(ctx, &tmpCR, op, cluster.ClusterCTRLClient)
+			if err != nil {
+				return fmt.Errorf("failed powerflex validation: %v for cluster %s", err, cluster.ClusterID)
 			}
 		}
 	}

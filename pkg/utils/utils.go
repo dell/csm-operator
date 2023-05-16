@@ -797,7 +797,7 @@ func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Cl
 	if err := ctrlClient.Get(ctx, t1.NamespacedName{Name: clusterID,
 		Namespace: ReplicationControllerNameSpace}, secret); err != nil {
 		if k8serror.IsNotFound(err) {
-			return []byte("error"), fmt.Errorf("failed to find secret %s", clusterID)
+			return []byte("error"), fmt.Errorf("failed to find secret %s in namespace %s", clusterID, ReplicationControllerNameSpace)
 		}
 		log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
 	}
@@ -868,10 +868,12 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 			}
 
 			for _, clusterID := range clusterIDs {
-				/*Hack: skip check for for csm_controller unit test*/
-				if clusterID == "skip-replication-cluster-check" {
+				/*Hack: skip-replication-cluster-check - skips check for for csm_controller unit test
+				self - skips check for stretched cluster*/
+				if clusterID == "skip-replication-cluster-check" || clusterID == "self" {
 					return replicaEnabled, clusterClients, nil
 				}
+
 				targetCtrlClient, err := getClusterCtrlClient(ctx, clusterID, r.GetClient())
 				if err != nil {
 					return replicaEnabled, clusterClients, err
