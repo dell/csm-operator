@@ -1,4 +1,4 @@
 parameter name, grep option for paramater value, parameter value,resource to describe
-external-health-monitor,,,controller,1
+external-health-monitor,,,controller,6
 X_CSI_HEALTH_MONITOR_ENABLED,,true,controller,1
 X_CSI_HEALTH_MONITOR_ENABLED,,true,node,1

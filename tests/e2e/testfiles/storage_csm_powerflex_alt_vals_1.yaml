@@ -150,7 +150,7 @@ spec:
 
     initContainers:
       - image: dellemc/sdc:3.6.0.6
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: sdc
         envs:
           - name: MDM
