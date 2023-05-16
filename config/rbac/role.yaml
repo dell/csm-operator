@@ -686,6 +686,7 @@ rules:
   - volumeattachments
   verbs:
   - create
+  - delete
   - get
   - list
   - patch

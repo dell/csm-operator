@@ -1,6 +1,6 @@
 
 <!--
-Copyright (c) 2022 Dell Inc., or its subsidiaries. All Rights Reserved.
+Copyright (c) 2022 - 2023 Dell Inc., or its subsidiaries. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ Currently, the Dell Container Storage Modules Operator can be used to deploy the
   * CSM Authorization
   * CSM Replication
   * CSM Observability
+  * CSM Resiliency
 
 **NOTE**: You can refer to additional information about the Dell Container Storage Modules Operator on the new documentation website [here](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
 
