@@ -266,7 +266,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	for i, v := range nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes {
 		newV := new(acorev1.VolumeApplyConfiguration)
 		if *v.Name == "certs" {
-			if cr.Spec.Driver.CSIDriverType == "isilon" {
+			if cr.Spec.Driver.CSIDriverType == "isilon" || cr.Spec.Driver.CSIDriverType == "powerflex" {
 				newV, err = getApplyCertVolume(cr)
 			}
 			if cr.Spec.Driver.CSIDriverType == "unity" {
