@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/tests/shared"
@@ -176,6 +177,24 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.runFakeAuthCSMManager("timed out waiting for the condition", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true)
+}
+
+func (suite *CSMControllerTestSuite) TestResiliencyReconcile() {
+	suite.makeFakeResiliencyCSM(csmName, suite.namespace, true, append(getResiliencyModule(), getResiliencyModule()...), string(v1.PowerStore))
+	suite.runFakeCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeCSMManager("", true)
+}
+
+func (suite *CSMControllerTestSuite) TestResiliencyReconcileError() {
+
+	suite.makeFakeResiliencyCSM(csmName, suite.namespace, false, append(getResiliencyModule(), getResiliencyModule()...), "unsupported-driver")
+	reconciler := suite.createReconciler()
+	res, err := reconciler.Reconcile(ctx, req)
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+	if err != nil {
+		assert.Error(suite.T(), err)
+	}
 }
 
 // test error injection. Client get should fail
@@ -620,6 +639,11 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// error in Resiliency
+	csm.Spec.Modules = getResiliencyModule()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
 	// error in Observability
 	csm.Spec.Modules = getObservabilityModule()
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
@@ -664,6 +688,12 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
+	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Resiliency
+	csm.Spec.Modules = getResiliencyModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
@@ -1070,7 +1100,20 @@ func getReplicaModule() []csmv1.Module {
 		},
 	}
 }
-
+func getResiliencyModule() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.Resiliency,
+			Enabled:       true,
+			ConfigVersion: "v1.6.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: utils.ResiliencySideCarName,
+				},
+			},
+		},
+	}
+}
 func getAuthModule() []csmv1.Module {
 	return []csmv1.Module{
 		{
@@ -1243,6 +1286,41 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	truebool := true
 	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
 		Name:            "provisioner",
+		Enabled:         &truebool,
+		Image:           "image2",
+		ImagePullPolicy: "IfNotPresent",
+		Args:            []string{"--volume-name-prefix=k8s"},
+	}
+	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledTrue}
+	csm.Spec.Driver.SideCars = sideCarList
+	if withFinalizer {
+		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	}
+	// remove driver when deleting csm
+	csm.Spec.Driver.ForceRemoveDriver = true
+	csm.Annotations[configVersionKey] = configVersion
+
+	csm.Spec.Modules = modules
+	out, _ := json.Marshal(&csm)
+	csm.Annotations[previouslyAppliedCustomResource] = string(out)
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, withFinalizer bool, modules []csmv1.Module, driverType string) {
+
+	sec := shared.MakeSecret(name+"-config", ns, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeCSM(name, ns, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = v1.DriverType(driverType)
+
+	truebool := true
+	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
+		Name:            "podmon",
 		Enabled:         &truebool,
 		Image:           "image2",
 		ImagePullPolicy: "IfNotPresent",
