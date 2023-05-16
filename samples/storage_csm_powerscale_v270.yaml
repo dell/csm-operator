@@ -422,3 +422,40 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.6.0
+      components:
+        - name: podmon-controller
+          args:
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--labelvalue=csi-isilon"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-isilon.dellemc.com"
+            - "--mode=controller"
+            - "--skipArrayConnectionValidation=false"
+            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+        - name: podmon-node
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+          args:
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
+            - "--labelvalue=csi-isilon"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-isilon.dellemc.com"
+            - "--mode=node"
+            - "--leaderelection=false"
+            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
