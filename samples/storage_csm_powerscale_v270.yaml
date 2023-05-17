@@ -287,13 +287,14 @@ spec:
           # Default value: powerstore
           - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
             value: "powerscale"
-      
+
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
         image: dellemc/dell-replication-controller:v1.4.0
         envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
+          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
+          # Set the value to "self" in case of stretched/single cluster configuration
           # Allowed values: string
           - name: "TARGET_CLUSTERS_IDS"
             value: "target-cluster-1"
