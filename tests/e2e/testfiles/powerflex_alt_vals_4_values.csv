@@ -1,5 +1,5 @@
 parameter name, grep option for paramater value, parameter value,resource to describe,number of occurences of parameter name
-image,,dellemc/csi-noexist:v2.6.0,csm,1
+Image,,dellemc/csi-noexist:v2.6.0,csm,1
 Image Pull Policy,,Never,csm,1
-image,,dellemc/csi-noexist:v2.6.0,initContainer,1
+Image,,dellemc/csi-noexist-init:v2.6.0,initContainer,1
 Image Pull Policy,,Never,initContainer,1

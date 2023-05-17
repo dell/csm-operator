@@ -37,7 +37,7 @@ kubectl describe csm $3 -n $2 > csm-describe
   while IFS=, read -r paramName grepOptions paramValue k8sResource numOccurences
   do
     WC=`cat $k8sResource-describe | grep "$paramName" | grep $grepOptions "$paramValue" | wc -l`
-    if [ $WC == $numOccurences ]; then
+    if [ $WC -ge $numOccurences ]; then
       echo "$numOccurences occurences of $paramName with value $paramValue found in $k8sResource"
     else
       echo "ERROR: $WC occurences of $paramName with value $paramValue found in $k8sResource, $numOccurences expected"

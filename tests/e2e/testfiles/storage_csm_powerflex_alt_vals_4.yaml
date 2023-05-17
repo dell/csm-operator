@@ -148,7 +148,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/noexist:3.6
+      - image: dellemc/noexist-init:3.6
         imagePullPolicy: Never
         name: sdc
         envs:
