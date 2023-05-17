@@ -141,7 +141,6 @@
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/csm-authorization-config.json] for [authSidecar]"
   customTest:
     name: Cert CSI
@@ -177,8 +176,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
-    -  "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/csm-authorization-config.json] for [authSidecar]"
   customTest:
     name: HelloWorld 
@@ -272,7 +270,6 @@
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/csm-authorization-config.json] for [authSidecar]"
 
 - scenario: Install PowerScale Driver(With Replication), Disable Replication module"
