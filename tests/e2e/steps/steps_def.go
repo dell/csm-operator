@@ -816,7 +816,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		"secret", "generic",
 		"karavi-config-secret",
 		"-n", "authorization",
-		"--from-file=config.yaml=testfiles/csm_authorization_config.yaml",
+		"--from-file=config.yaml=testfiles/authorization-templates/csm_authorization_config.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -824,15 +824,25 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	}
 
 	cmd = exec.Command("kubectl", "create",
-		"-f", "testfiles/csm_authorization_storage_secret.yaml",
+		"-f", "testfiles/authorization-templates/csm_authorization_storage_secret.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create storage secret: %v\nErrMessage:\n%s", err, string(b))
 	}
 
+	cmd = exec.Command("kubectl", "get", "sc", "local-storage")
+	err = cmd.Run()
+	if err == nil {
+		cmd = exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/csm_authorization_local_storage.yaml")
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to delete local storage: %v\nErrMessage:\n%s", err, string(b))
+		}
+	}
+
 	cmd = exec.Command("kubectl", "create",
-		"-f", "testfiles/csm_authorization_local_storage.yaml",
+		"-f", "testfiles/authorization-templates/csm_authorization_local_storage.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -840,7 +850,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	}
 
 	cmd = exec.Command("kubectl", "create",
-		"-f", "testfiles/csm_authorization_certificate.yaml",
+		"-f", "testfiles/authorization-templates/csm_authorization_certificate.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
