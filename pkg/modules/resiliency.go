@@ -264,7 +264,7 @@ func CheckApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 		return err
 	}
 
-	driverString := "driver"
+	driverContainerName := "driver"
 
 	// fetch podmonAPIPort
 	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
@@ -287,7 +287,7 @@ func CheckApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 				return fmt.Errorf("missing the following argument %s", podmonArrayConnectivityPollRate)
 			}
 
-		} else if *cnt.Name == driverString {
+		} else if *cnt.Name == driverContainerName {
 			// check envs in driver sidecar
 			foundPodmonAPIPort := false
 			foundPodmonArrayConnectivityPollRate := false
