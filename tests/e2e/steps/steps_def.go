@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -216,6 +216,9 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 
 			case csmv1.AuthorizationServer:
 				return step.validateAuthorizationProxyServerInstalled(cr)
+
+			case csmv1.Resiliency:
+				return step.validateResiliencyInstalled(cr)
 			}
 		}
 	}
@@ -250,6 +253,9 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 
 			case csmv1.AuthorizationServer:
 				return step.validateAuthorizationProxyServerNotInstalled(cr)
+
+			case csmv1.Resiliency:
+				return step.validateResiliencyNotInstalled(cr)
 			}
 		}
 	}
@@ -900,5 +906,73 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		return fmt.Errorf("failed to apply token in %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
 	}
 
+	return nil
+}
+
+func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) error {
+	dpApply, dsApply, err := getApplyDeploymentDaemonSet(cr, step.ctrlClient)
+	if err != nil {
+		return err
+	}
+
+	var presentInNode, presentInController bool
+	// check whether podmon container is present in cluster or not: for controller
+	for _, cnt := range dpApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == "podmon" {
+			presentInController = true
+			break
+		}
+	}
+
+	// check whether podmon container is present in cluster or not: for node
+	for _, cnt := range dsApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == "podmon" {
+			presentInNode = true
+			break
+		}
+	}
+
+	if !presentInNode || !presentInController {
+		return fmt.Errorf("podmon container not found either in controller or node pod")
+	}
+
+	// validating args & env presence for powerstore & powerscale
+	driverType := cr.Spec.Driver.CSIDriverType
+
+	if driverType == csmv1.PowerScaleName || driverType == csmv1.PowerStore || driverType == csmv1.PowerScale {
+		if err := modules.CheckApplyContainersResiliency(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
+			return err
+		}
+		if err := modules.CheckApplyContainersResiliency(dsApply.Spec.Template.Spec.Containers, cr); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule) error {
+
+	// check that resiliency sidecar(podmon) is not in cluster: for controller
+	dp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name == utils.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
+		}
+	}
+
+	// check that resiliency sidecar(podmon) is not in cluster: for node
+	ds, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+	for _, cnt := range ds.Spec.Template.Spec.Containers {
+		if cnt.Name == utils.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
+		}
+	}
 	return nil
 }

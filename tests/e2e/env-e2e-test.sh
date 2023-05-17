@@ -1,4 +1,4 @@
-# Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2022 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ export CERT_CSI="/root/cert-csi"
 # export REPLICATION=true
 # export OBSERVABILITY=true
 # export AUTHORIZATIONPROXYSERVER=true
+# export RESILIENCY=true
 
 # [Optional] namespace of operator if you deployed it to a namespace diffrent form the one below.
 # export OPERATOR_NAMESPACE="dell-csm-operator"
