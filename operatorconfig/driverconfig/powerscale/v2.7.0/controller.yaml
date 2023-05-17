@@ -211,6 +211,26 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
+        - name: csi-metadata-retriever
+          image: dellemc/csi-metadata-retriever:v1.3.0
+          imagePullPolicy: Always
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=120s"
+            - "--v=5"
+            - "--leader-election"
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+          command: [ "/csi-metadata-retriever" ]
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+            - name: CSI_RETRIEVER_ENDPOINT
+              value: /var/run/csi/csi_retriever.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
         - name: driver
           image: dellemc/csi-isilon:v2.7.0
           imagePullPolicy: IfNotPresent
@@ -224,6 +244,8 @@ spec:
           env:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
+            - name: CSI_RETRIEVER_ENDPOINT
+              value: /var/run/csi/csi_retriever.sock
             - name: X_CSI_MODE
               value: controller
             - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
