@@ -40,8 +40,9 @@ import (
 )
 
 const (
-	roleName   = "CSIGold"
-	tenantName = "PancakeGroup"
+	roleName           = "CSIGold"
+	tenantName         = "PancakeGroup"
+	certManagerVersion = "v1.11.0"
 )
 
 var (
@@ -220,7 +221,7 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 				return step.validateAuthorizationProxyServerInstalled(cr)
 
 			default:
-				return fmt.Errorf("%s module is not not found", module)
+				return fmt.Errorf("%s module is not found", module)
 			}
 		}
 	}
@@ -543,7 +544,7 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pscaleSecretMap
 	} else if crType == "pscaleAuth" {
 		mapValues = pscaleAuthSecretMap
-	} else if crType == "authSidecar" {
+	} else if crType == "pscaleAuthSidecar" {
 		mapValues = pscaleAuthSidecarMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
@@ -718,7 +719,7 @@ func (step *Step) createPrereqs(res Resource, module string, crNumStr string) er
 				return step.authProxyServerPrereqs(cr)
 
 			default:
-				return fmt.Errorf("%s module is not not found", module)
+				return fmt.Errorf("%s module is not found", module)
 			}
 		}
 	}
@@ -805,7 +806,8 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 
 	cmd = exec.Command("kubectl", "apply",
 		"--validate=false", "-f",
-		"https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.crds.yaml",
+		fmt.Sprintf("https://github.com/jetstack/cert-manager/releases/download/%s/cert-manager.crds.yaml",
+			certManagerVersion),
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -916,10 +918,10 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	fmt.Println("=== Copying Admin Token to Tmp File ===\n ")
-	wrtArgs := []string{"-c", fmt.Sprintf(`echo '%s' | cat > /tmp/adminToken.yaml `, b)}
-	if b, err = runCmd(exec.CommandContext(context.Background(), "bash", wrtArgs...)); err != nil {
-		return fmt.Errorf("failed to copy admin token: %v\nErrMessage:\n%s", err, string(b))
+	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	fmt.Println("=== Creating Storage ===\n ")
@@ -1018,9 +1020,9 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		return fmt.Errorf("failed to unmarshal token %s: %v", string(b), err)
 	}
 
-	wrtArgs = []string{"-c", fmt.Sprintf(`echo '%s' | cat > /tmp/token.yaml `, token.Token)}
-	if b, err = runCmd(exec.CommandContext(context.Background(), "bash", wrtArgs...)); err != nil {
-		return fmt.Errorf("failed to copy token: %v\nErrMessage:\n%s", err, string(b))
+	err = os.WriteFile("/tmp/token.yaml", []byte(token.Token), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	cmd = exec.Command("kubectl", "apply",
