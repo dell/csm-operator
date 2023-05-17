@@ -74,7 +74,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 
 		//powerflex and powerscale use different label names for the controller name:
 		//app=test-isilon-controller
-		//name=test-vxflexos-controller
+		//name=vxflexos-controller
 		//name=test-powerstore-controller
 		driver := instance.GetDriverType()
 		log.Infof("driver type: %s", driver)
