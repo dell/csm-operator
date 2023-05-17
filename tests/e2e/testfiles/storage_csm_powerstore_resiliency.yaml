@@ -38,7 +38,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerStore driver v2.7.0
-      image: "dellemc/csi-powerstore:v2.6.0"
+      image: "dellemc/csi-powerstore:latest"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
