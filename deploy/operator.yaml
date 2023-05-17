@@ -114,6 +114,7 @@ rules:
   resources:
   - namespaces
   verbs:
+  - create
   - get
   - list
   - watch
@@ -253,6 +254,15 @@ rules:
   - customresourcedefinitions
   verbs:
   - '*'
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions/status
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
 - apiGroups:
   - apiregistration.k8s.io
   resources:
@@ -646,6 +656,17 @@ rules:
   - snapshot.storage.k8s.io
   resources:
   - volumesnapshots
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
   - volumesnapshots/status
   verbs:
   - get
