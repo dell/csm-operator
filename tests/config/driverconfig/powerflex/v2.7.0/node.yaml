@@ -82,7 +82,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: dellemc/csi-vxflexos:v2.6.0
+          image: dellemc/csi-vxflexos:v2.7.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:
@@ -126,7 +126,7 @@ spec:
               mountPath: /certs
               readOnly: true
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.3
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
