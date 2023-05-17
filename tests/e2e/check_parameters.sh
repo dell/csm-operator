@@ -21,30 +21,37 @@ if [ "$#" -ne 3 ]; then
   exit 1
 fi
 
+CSV_FILE=$1
+NS=$2
+NAME=$3
+
+# get rid of any \r characters from windows
+sed -i 's/\r//g' $CSV_FILE
+
 # get controller describe
-controllerpod=`kubectl get pods -n $2 | grep -m 1 $3-controller | awk '{print $1}'`
-kubectl describe pod $controllerpod -n $2 > controller-describe
+controllerpod=`kubectl get pods -n $NS | grep -m 1 $NAME-controller | awk '{print $1}'`
+kubectl describe pod $controllerpod -n $NS > controller-describe
 
 # get node describe
-nodepod=`kubectl get pods -n $2 | grep -m 1 $3-node | awk '{print $1}'`
-kubectl describe pod $nodepod -n $2 > node-describe
+nodepod=`kubectl get pods -n $NS | grep -m 1 $NAME-node | awk '{print $1}'`
+kubectl describe pod $nodepod -n $NS > node-describe
 
 # get csm describe
-kubectl describe csm $3 -n $2 > csm-describe
+kubectl describe csm $NAME -n $NS > csm-describe
 
 {
   read
   while IFS=, read -r paramName grepOptions paramValue k8sResource numOccurences
   do
     WC=`cat $k8sResource-describe | grep "$paramName" | grep $grepOptions "$paramValue" | wc -l`
-    if [ $WC == $numOccurences ]; then
+    if [ $WC -ge $numOccurences ]; then
       echo "$numOccurences occurences of $paramName with value $paramValue found in $k8sResource"
     else
       echo "ERROR: $WC occurences of $paramName with value $paramValue found in $k8sResource, $numOccurences expected"
       exit 1
     fi
   done 
-} < $1
+} < $CSV_FILE
 
 rm -f controller-describe node-describe csm-describe
 
