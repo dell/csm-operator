@@ -13,13 +13,4 @@
 # limitations under the License.
 #
 #
-
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: <DriverDefaultReleaseName>-config-params
-  namespace: <DriverDefaultReleaseNamespace>
-data:
-  driver-config-params.yaml: |
-    CSI_LOG_LEVEL: "debug"
-    CSI_LOG_FORMAT: "JSON"
+minUpgradePath: v2.6.0

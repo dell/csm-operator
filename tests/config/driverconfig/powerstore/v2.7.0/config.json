@@ -1,0 +1,12 @@
+[
+    {
+        "username": "admin",
+        "password": "password",
+        "globalID": "unique" ,
+        "blockProtocol": "auto",
+        "endpoint": "https://10.0.0.1/api/rest",
+        "skipCertificateValidation": true,
+        "nasName": "nas-server" ,
+        "nfsAcls": "0777"
+    }
+]
