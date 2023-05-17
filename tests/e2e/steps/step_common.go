@@ -480,16 +480,3 @@ func getPortContainerizedAuth() (string, error) {
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil
 }
-
-func runCmd(cmd *exec.Cmd) ([]byte, error) {
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
-
-	err := cmd.Run()
-	if err != nil {
-		return nil, fmt.Errorf("%v: %s", err, buf.String())
-	}
-
-	return buf.Bytes(), nil
-}
