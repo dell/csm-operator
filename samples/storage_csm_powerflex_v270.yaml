@@ -249,6 +249,7 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
+
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
