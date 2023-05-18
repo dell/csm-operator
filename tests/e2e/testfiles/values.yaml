@@ -799,7 +799,7 @@
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is installed"
     - "Disable [resiliency] module from CR [1]"
-    - "Validate [resiliency] driver from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is not installed"
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
@@ -860,7 +860,7 @@
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is installed"
     - "Disable [resiliency] module from CR [1]"
-    - "Validate [resiliency] driver from CR [1] is installed"
+    - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is not installed"
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
@@ -999,7 +999,7 @@
     - "Validate [powerstore] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is installed"
     - "Disable [resiliency] module from CR [1]"
-    - "Validate [resiliency] driver from CR [1] is installed"
+    - "Validate [powerstore] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is not installed"
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
