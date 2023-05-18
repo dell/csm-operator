@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -378,7 +378,7 @@ func removeNodeLabel(testName, labelName string) error {
 		delete(node.ObjectMeta.Labels, testName)
 		_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
 		if err != nil {
-			fmt.Errorf("%s label removal failed with the following error: %s", testName, err)
+			return fmt.Errorf("%s label removal failed with the following error: %s", testName, err)
 		}
 	}
 
@@ -411,7 +411,7 @@ func setNodeLabel(testName, labelName, labelValue string) error {
 
 		_, err := clientset.CoreV1().Nodes().Update(context.TODO(), &node, updateOpts)
 		if err != nil {
-			fmt.Errorf("label update failed with the following error: %s", err)
+			return fmt.Errorf("label update failed with the following error: %s", err)
 		}
 	}
 
@@ -479,24 +479,4 @@ func getPortContainerizedAuth() (string, error) {
 	}
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil
-}
-
-func execCommand(VMIP string, VMsUser string, VMsPassword string, args []string) ([]byte, error) {
-	args = append(
-		[]string{
-			"-p", VMsPassword,
-			"ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", fmt.Sprintf("%s@%s", VMsUser, VMIP)},
-		args...,
-	)
-
-	var buf bytes.Buffer
-	cmd := exec.Command("sshpass", args...)
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
-
-	err := cmd.Run()
-	if err != nil {
-		return nil, fmt.Errorf("%v: %s", err, buf.String())
-	}
-	return buf.Bytes(), err
 }
