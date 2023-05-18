@@ -33,7 +33,7 @@ const (
 	JumpUpgradeConfigVersion string = "v2.7.0"
 	OldConfigVersion         string = "v2.2.0"
 	BadConfigVersion         string = "v0"
-	PStoreConfigVersion      string = "v2.6.0"
+	PStoreConfigVersion      string = "v2.7.0"
 	UnityConfigVersion       string = "v2.6.0"
 )
 
