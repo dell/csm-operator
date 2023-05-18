@@ -54,6 +54,7 @@ var (
 	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
+	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
 )
 
@@ -546,6 +547,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pscaleAuthSecretMap
 	} else if crType == "pscaleAuthSidecar" {
 		mapValues = pscaleAuthSidecarMap
+	} else if crType == "pflexAuthSidecar" {
+		mapValues = pflexAuthSidecarMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
 	} else {
