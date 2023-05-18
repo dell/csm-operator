@@ -13,8 +13,4 @@
 # limitations under the License.
 #
 #
-
-minUpgradePath: v2.3.0
-
-
-
+minUpgradePath: v2.6.0
