@@ -12,7 +12,7 @@ To run unit test, go to the root directory of this project and run `make unit-te
 
 ## E2E Test
 
-The E2E tests test the installation of Dell CSI Drivers and Dell CSM Modules.
+The E2E tests test the installation of Dell CSM Drivers and Modules.
 
 ### Prerequisites
 
