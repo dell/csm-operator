@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	moduleEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER"}
+	moduleEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must both be set.")
