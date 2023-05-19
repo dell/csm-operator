@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -357,18 +358,25 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 
 	csm := new(csmv1.ContainerStorageModule)
 	err := r.Client.Get(ctx, namespacedName, csm)
+
 	if err != nil {
 		log.Error("deployment get csm", "error", err.Error())
 	}
 
 	newStatus := csm.GetCSMStatus()
+
+	// Updating controller status manually as controller runtime API is not updating csm object with latest data
+	// TODO: Can remove this once the controller runtime repo has a fix for updating the object passed
+	newStatus.ControllerStatus.Available = strconv.Itoa(int(available))
+	newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
+	newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
+
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
 	if err != nil {
 		log.Debugw("deployment status ", "pods", err.Error())
 	} else {
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
 	}
-
 }
 
 func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, obj interface{}) {
