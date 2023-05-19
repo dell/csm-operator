@@ -110,6 +110,10 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 				if newDeployment == nil {
 					panic(err)
 				}
+				err = CheckApplyContainersResiliency(dp.Spec.Template.Spec.Containers, cr)
+				if err != nil {
+					panic(err)
+				}
 			} else {
 				assert.Error(t, err)
 			}
