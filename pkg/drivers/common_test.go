@@ -290,9 +290,6 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 	}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3, envVar4, envVar5, envVar6, envVar7}
 
-	// Add node name prefix to cover some code in GetNode
-	// nodeNamePrefix := corev1.EnvVar{Name: "X_CSI_UNITY_NODENAME_PREFIX"}
-
 	// Add node fields specific to unity
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
 	res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor}
