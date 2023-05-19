@@ -13,7 +13,6 @@
 package steps
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
