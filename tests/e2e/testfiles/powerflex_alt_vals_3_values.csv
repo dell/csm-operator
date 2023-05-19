@@ -1,0 +1,3 @@
+parameter name, grep option for paramater value, parameter value,resource to describe,number of occurences of parameter name
+Node-Selectors,-v,none,node,1
+Tolerations,-v,none,node,1
