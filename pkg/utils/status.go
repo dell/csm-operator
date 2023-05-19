@@ -128,6 +128,8 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		err = errors.New(msg)
 	}
 
+	log.Infof("Deployment totalReplicas count %d totalReadyPods %d totalFailedCount %d", totalReplicas, totalReadyPods, totalFailedCount)
+
 	return totalReplicas, csmv1.PodStatus{
 		Available: fmt.Sprintf("%d", totalReadyPods),
 		Desired:   fmt.Sprintf("%d", totalReplicas),
@@ -221,33 +223,46 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := false
-	controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
+	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
+	// TODO: Can be uncommented once this issues gets sorted out
+	/* controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
+	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 	newStatus.ControllerStatus = controllerStatus
+	newStatus.NodeStatus = nodeStatus */
 	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 	newStatus.NodeStatus = nodeStatus
+	controllerReplicas := newStatus.ControllerStatus.Desired
+	controllerStatus := newStatus.ControllerStatus
 
 	newStatus.State = constants.Failed
-	log.Infof("deployment controllerReplicas [%d]", controllerReplicas)
+	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
 	log.Infof("daemonset expected [%d]", expected)
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
-	if (fmt.Sprintf("%d", controllerReplicas) == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
+	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
 		running = true
 		newStatus.State = constants.Succeeded
 	}
 	log.Infof("calculate overall state [%s]", newStatus.State)
-	var err error
-	if controllerErr != nil {
-		err = controllerErr
-	}
+	var err error = nil
+	// TODO: Uncomment this when the controller runtime API gets fixed
+	/*
+		if controllerErr != nil {
+			err = controllerErr
+		}
+		if daemonSetErr != nil {
+			err = daemonSetErr
+		}
+		if daemonSetErr != nil && controllerErr != nil {
+			err = fmt.Errorf("ControllerError: %s, Daemonseterror: %s", controllerErr.Error(), daemonSetErr.Error())
+			log.Infof("calculate overall error msg [%s]", err.Error())
+		} */
+
 	if daemonSetErr != nil {
 		err = daemonSetErr
-	}
-	if daemonSetErr != nil && controllerErr != nil {
-		err = fmt.Errorf("ControllerError: %s, Daemonseterror: %s", controllerErr.Error(), daemonSetErr.Error())
-		log.Infof("calculate overall error msg [%s]", err.Error())
+		log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
 	}
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err
@@ -284,6 +299,12 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	if err != nil {
 		return err
 	}
+
+	log.Infow("instance - new controller Status", "desired", instance.Status.ControllerStatus.Desired)
+	log.Infow("instance - new controller Status", "Available", instance.Status.ControllerStatus.Available)
+	log.Infow("instance - new controller Status", "numberUnavailable", instance.Status.ControllerStatus.Failed)
+	log.Infow("instance - new controller Status", "State", instance.Status.State)
+
 	csm.Status = instance.Status
 	err = r.GetClient().Status().Update(ctx, csm)
 	if err != nil {
