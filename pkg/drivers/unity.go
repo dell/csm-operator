@@ -36,9 +36,6 @@ const (
 	// UnityConfigParamsVolumeMount - Volume mount
 	UnityConfigParamsVolumeMount = "csi-unity-config-params"
 
-	// CsiUnityNodeNamePrefix - Node Name Prefix
-	CsiUnityNodeNamePrefix = "<X_CSI_UNITY_NODENAME_PREFIX>"
-
 	// CsiLogLevel - Defines the log level
 	CsiLogLevel = "<CSI_LOG_LEVEL>"
 
@@ -116,24 +113,17 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 // ModifyUnityCR - Configuring CR parameters
 func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
 	// Parameters to initialise CR values
-	nodePrefix := ""
 	healthMonitorNode := ""
 	healthMonitorController := ""
 
 	switch fileType {
 	case "Node":
-		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "X_CSI_UNITY_NODENAME_PREFIX" {
-				nodePrefix = env.Value
-			}
-		}
 		for _, env := range cr.Spec.Driver.Node.Envs {
 
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorNode = env.Value
 			}
 		}
-		yamlString = strings.ReplaceAll(yamlString, CsiUnityNodeNamePrefix, nodePrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Controller.Envs {
