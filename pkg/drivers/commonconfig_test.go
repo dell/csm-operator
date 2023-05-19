@@ -25,6 +25,7 @@ var (
 	csm                  = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion)
 	pFlexCSM             = csmForPowerFlex(pflexCSMName)
 	pStoreCSM            = csmWithPowerstore(csmv1.PowerStore, shared.PStoreConfigVersion)
+	pScaleCSM            = csmWithPowerScale(csmv1.PowerScale, shared.PScaleConfigVersion)
 	unityCSM             = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, false)
 	unityCSMCertProvided = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, true)
 
@@ -44,6 +45,7 @@ var (
 		expectedErr string
 	}{
 		{"pscale happy path", csm, csmv1.PowerScaleName, "node.yaml", ""},
+		{"powerscale happy path", pScaleCSM, csmv1.PowerScaleName, "node.yaml", ""},
 		{"pflex happy path", pFlexCSM, csmv1.PowerFlex, "node.yaml", ""},
 		{"pstore happy path", pStoreCSM, csmv1.PowerStore, "node.yaml", ""},
 		{"unity happy path", unityCSM, csmv1.Unity, "node.yaml", ""},
