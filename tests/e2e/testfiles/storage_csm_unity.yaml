@@ -1,8 +1,8 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-unity
-  namespace: test-unity
+  name: unity
+  namespace: unity
 spec:
   driver:
     csiDriverType: "unity"
@@ -15,8 +15,8 @@ spec:
     configVersion: v2.6.0
     # authSecret: This is the secret used to validate the default Unity secret used for installation
     # Allowed values: <metadataName specified in the Manifest>-config
-    # For example: If the metadataName is set to test-unity, authSecret value should be set to test-unity-config
-    authSecret: test-unity-creds
+    # For example: If the metadataName is set to unity, authSecret value should be set to unity-config
+    authSecret: unity-creds
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
@@ -27,8 +27,6 @@ spec:
       image: "dellemc/csi-unity:v2.6.0"
       imagePullPolicy: IfNotPresent
       envs:
-        - name: X_CSI_UNITY_NODENAME_PREFIX
-          value: "csi-node"
         - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
           value: "false"
         - name: X_CSI_EPHEMERAL_STAGING_PATH
