@@ -506,7 +506,6 @@
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set [control-plane] node label"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
     - "Apply custom resource [1]"
@@ -514,7 +513,6 @@
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
-    - "Remove [control-plane] node label"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
@@ -531,7 +529,6 @@
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set [control-plane] node label"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
     - "Apply custom resource [1]"
@@ -539,7 +536,6 @@
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
-    - "Remove [control-plane] node label"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
