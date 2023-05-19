@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
 	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
 	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
+	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
 
 }
 
@@ -119,6 +120,7 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 
 			res := stepDef.Handler.Call(values)
 			if err, ok := res[0].Interface().(error); ok {
+				fmt.Printf("\nerr: %+v\n", err)
 				return err
 			}
 			return nil

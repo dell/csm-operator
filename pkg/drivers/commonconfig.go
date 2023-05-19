@@ -122,8 +122,14 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	controllerYAML.Deployment.Spec.Template.Spec.Containers = newcontainers
 	// Update volumes
 	for i, v := range controllerYAML.Deployment.Spec.Template.Spec.Volumes {
+		newV := new(acorev1.VolumeApplyConfiguration)
 		if *v.Name == "certs" {
-			newV, err := getApplyCertVolume(cr)
+			if cr.Spec.Driver.CSIDriverType == "isilon" || cr.Spec.Driver.CSIDriverType == "powerflex" {
+				newV, err = getApplyCertVolume(cr)
+			}
+			if cr.Spec.Driver.CSIDriverType == "unity" {
+				newV, err = getApplyCertVolumeUnity(cr)
+			}
 			if err != nil {
 				log.Errorw("GetController spec template volumes", "Error", err.Error())
 				return nil, err
@@ -258,8 +264,14 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	// Update volumes
 	for i, v := range nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes {
+		newV := new(acorev1.VolumeApplyConfiguration)
 		if *v.Name == "certs" {
-			newV, err := getApplyCertVolume(cr)
+			if cr.Spec.Driver.CSIDriverType == "isilon" || cr.Spec.Driver.CSIDriverType == "powerflex" {
+				newV, err = getApplyCertVolume(cr)
+			}
+			if cr.Spec.Driver.CSIDriverType == "unity" {
+				newV, err = getApplyCertVolumeUnity(cr)
+			}
 			if err != nil {
 				log.Errorw("GetNode apply cert Volume failed", "Error", err.Error())
 				return nil, err
@@ -366,8 +378,11 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	}
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
-	if cr.Spec.Driver.CSIDriverType == "powerstore" {
+	switch cr.Spec.Driver.CSIDriverType {
+	case "powerstore":
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "CSIDriverSpec")
+	case "isilon":
+		YamlString = ModifyPowerScaleCR(YamlString, cr, "CSIDriverSpec")
 	}
 	err = yaml.Unmarshal([]byte(YamlString), &csidriver)
 	if err != nil {

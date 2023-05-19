@@ -5,12 +5,17 @@ metadata:
   namespace: test-isilon
 spec:
   driver:
-    csiDriverType: "isilon" 
+    csiDriverType: "isilon"
     csiDriverSpec:
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: false
     # Config version for CSI PowerScale v2.7.0 driver
     configVersion: v2.7.0
     authSecret: test-isilon-creds
@@ -89,7 +94,7 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
-        
+
         # certSecretCount: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (isilon-cert-0..isilon-cert-n)
         # Allowed values: n, where n > 0
@@ -241,6 +246,11 @@ spec:
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
+      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+      # Configure when the storageCapacity is set as "true"
+      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+      #- name: provisioner
+      #  args: ["--capacity-poll-interval=5m"]
 
   modules:
     # Authorization: enable csm-authorization for RBAC
@@ -255,7 +265,7 @@ spec:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
             value: "csm-authorization.com"
-        
+
           # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
@@ -287,13 +297,14 @@ spec:
           # Default value: powerstore
           - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
             value: "powerscale"
-      
+
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
         image: dellemc/dell-replication-controller:v1.4.0
         envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
+          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
+          # Set the value to "self" in case of stretched/single cluster configuration
           # Allowed values: string
           - name: "TARGET_CLUSTERS_IDS"
             value: "target-cluster-1"
@@ -302,7 +313,7 @@ spec:
           # Default value: "debug"
           - name: "REPLICATION_CTRL_LOG_LEVEL"
             value: "debug"
-          
+
           # replicas: Defines number of controller replicas
           # Allowed values: int
           # Default value: 1
@@ -328,7 +339,7 @@ spec:
       # enabled: Enable/Disable observability
       enabled: false
       configVersion: v1.5.0
-      components: 
+      components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: false
@@ -340,7 +351,7 @@ spec:
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
-              value: "INFO"           
+              value: "INFO"
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
@@ -422,3 +433,40 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.6.0
+      components:
+        - name: podmon-controller
+          args:
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--labelvalue=csi-isilon"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-isilon.dellemc.com"
+            - "--mode=controller"
+            - "--skipArrayConnectionValidation=false"
+            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+        - name: podmon-node
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+          args:
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
+            - "--labelvalue=csi-isilon"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-isilon.dellemc.com"
+            - "--mode=node"
+            - "--leaderelection=false"
+            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"

@@ -101,14 +101,14 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-            - name: X_CSI_UNITY_NODENAME_PREFIX
-              value: <X_CSI_UNITY_NODENAME_PREFIX>
             - name: SSL_CERT_DIR
               value: /certs
             - name: X_CSI_UNITY_SYNC_NODEINFO_INTERVAL
               value: "15"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
+              value: "true"
           volumeMounts:
             - name: driver-path
               mountPath: /var/lib/kubelet/plugins/unity.emc.dell.com
@@ -130,7 +130,7 @@ spec:
             - name: unity-secret
               mountPath: /unity-secret
         - name: registrar
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.6.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"

@@ -11,6 +11,11 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: false
     # Config version for CSI PowerScale v2.7.0 driver
     configVersion: v2.7.0
     authSecret: test-isilon-creds
@@ -293,7 +298,8 @@ spec:
         # Allowed values: string
         image: dellemc/dell-replication-controller:v1.4.0
         envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of clusters id of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster id
+          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
+          # Set the value to "self" in case of stretched/single cluster configuration
           # Allowed values: string
           - name: "TARGET_CLUSTERS_IDS"
             value: "target-cluster-1"

@@ -1,8 +1,8 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-vxflexos
-  namespace: test-vxflexos
+  name: vxflexos
+  namespace: vxflexos
 spec:
   driver:
     csiDriverType: "powerflex"
@@ -11,13 +11,13 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.4.0
+    configVersion: v2.7.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.4.0"
+      image: "dellemc/csi-vxflexos:v2.7.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -88,6 +88,30 @@ spec:
     node:
       envs:
 
+        # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
+        # Allowed values:
+        #    true: enable SDC approval
+        #    false: disable SDC approval
+        # Default value: false
+        - name: X_CSI_APPROVE_SDC_ENABLED
+          value: "false"  
+
+        # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
+        # Allowed values:
+        #   true: enable renaming
+        #   false: disable renaming
+        # Default value: false
+        - name: X_CSI_RENAME_SDC_ENABLED
+          value: "false"
+
+        # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
+        # "prefix" + "worker_node_hostname" should not exceed 31 chars.
+        # Default value: none
+        # Examples: "rhel-sdc", "sdc-test"
+        - name: X_CSI_RENAME_SDC_PREFIX
+          value: ""
+          
+
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -124,10 +148,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.4.0
+      configVersion: v1.6.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.4.0
+        image: dellemc/csm-authorization-sidecar:v1.6.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
@@ -141,14 +165,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.3.0
+      configVersion: v1.5.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.3.0
+          image: dellemc/csm-topology:v1.5.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -173,7 +197,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:v1.3.0
+          image: dellemc/csm-metrics-powerflex:v1.5.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -225,3 +249,65 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
+
+    # Replication: allows to configure replication
+    # Replication CRDs must be installed before installing driver
+    - name: replication
+      # enabled: Enable/Disable replication feature
+      # Allowed values:
+      #   true: enable replication feature(install dell-csi-replicator sidecar)
+      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.4.0
+      components:
+      - name: dell-csi-replicator
+        # image: Image to use for dell-csi-replicator. This shouldn't be changed
+        # Allowed values: string
+        # Default value: None
+        image: dellemc/dell-csi-replicator:v1.4.0
+        envs:
+          # replicationPrefix: prefix to prepend to storage classes parameters
+          # Allowed values: string
+          # Default value: replication.storage.dell.com
+          - name: "X_CSI_REPLICATION_PREFIX"
+            value: "replication.storage.dell.com"
+          # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+          # Allowed values: string
+          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+            value: "powerflex"
+      
+      - name: dell-replication-controller-manager
+        # image: Defines controller image. This shouldn't be changed
+        # Allowed values: string
+        image: dellemc/dell-replication-controller:v1.4.0
+        envs:
+          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
+          # Set the value to "self" in case of stretched/single cluster configuration
+          # Allowed values: string
+          - name: "TARGET_CLUSTERS_IDS"
+            value: "target-cluster-1"
+          # Replication log level
+          # Allowed values: "error", "warn"/"warning", "info", "debug"
+          # Default value: "debug"
+          - name: "REPLICATION_CTRL_LOG_LEVEL"
+            value: "debug"
+          
+          # replicas: Defines number of controller replicas
+          # Allowed values: int
+          # Default value: 1
+          - name: "REPLICATION_CTRL_REPLICAS"
+            value: "1"
+          # retryIntervalMin: Initial retry interval of failed reconcile request.
+          # It doubles with each failure, upto retry-interval-max
+          # Allowed values: time
+          - name: "RETRY_INTERVAL_MIN"
+            value: "1s"
+          # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
+          # Allowed values: time
+          - name: "RETRY_INTERVAL_MAX"
+            value: "5m"
+      - name: dell-replication-controller-init
+        # image: Defines replication init container image. This shouldn't be changed
+        # Allowed values: string
+        image: dellemc/dell-replication-init:v1.0.0          

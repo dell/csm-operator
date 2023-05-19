@@ -92,7 +92,8 @@ metadata:
                 "tolerations": null
               },
               "csiDriverSpec": {
-                "fSGroupPolicy": "ReadWriteOnceWithFSType"
+                "fSGroupPolicy": "ReadWriteOnceWithFSType",
+                "storageCapacity": false
               },
               "csiDriverType": "isilon",
               "dnsPolicy": "ClusterFirstWithHostNet",
@@ -386,18 +387,14 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "test-unity",
-            "namespace": "test-unity"
+            "name": "unity",
+            "namespace": "unity"
           },
           "spec": {
             "driver": {
-              "authSecret": "test-unity-creds",
+              "authSecret": "unity-creds",
               "common": {
                 "envs": [
-                  {
-                    "name": "X_CSI_UNITY_NODENAME_PREFIX",
-                    "value": "csi-node"
-                  },
                   {
                     "name": "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS",
                     "value": "false"
@@ -425,6 +422,14 @@ metadata:
                   {
                     "name": "TENANT_NAME",
                     "value": ""
+                  },
+                  {
+                    "name": "CERT_SECRET_COUNT",
+                    "value": "1"
+                  },
+                  {
+                    "name": "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"
+                    "value": "true"
                   }
                 ],
                 "image": "dellemc/csi-unity:v2.6.0",
@@ -475,8 +480,8 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "test-vxflexos",
-            "namespace": "test-vxflexos"
+            "name": "vxflexos",
+            "namespace": "vxflexos"
           },
           "spec": {
             "driver": {
@@ -1127,7 +1132,7 @@ spec:
     additional snapshot capabilities such as group/crash \n  consistent snapshots
     with referential integrity\n\nThese modules are available for various storage
     platforms in the Dell portfolio, \nsuch as Dell PowerStore, Dell PowerMax, Dell
-    PowerFlex, and Dell PowerScale.\n\nFor more information, visit [Dell’s
+    PowerFlex, Dell PowerScale, and Unity XT.\n\nFor more information, visit [Dell’s
     Container Storage Module web page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kubernetes-storage.htm)\n\nAdditional
     Materials\n*\t[CSM Operator GitHub Page](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)\n*\t[CSM
     Introduction Video](https://www.youtube.com/watch?v=NtNSKdF9Iyo)\n*\t[CSM Solution
@@ -1205,6 +1210,7 @@ spec:
           resources:
           - namespaces
           verbs:
+          - create
           - get
           - list
           - watch
@@ -1344,6 +1350,15 @@ spec:
           - customresourcedefinitions
           verbs:
           - '*'
+        - apiGroups:
+          - apiextensions.k8s.io
+          resources:
+          - customresourcedefinitions/status
+          verbs:
+          - get
+          - list
+          - patch
+          - watch
         - apiGroups:
           - apiregistration.k8s.io
           resources:
@@ -1737,6 +1752,17 @@ spec:
           - snapshot.storage.k8s.io
           resources:
           - volumesnapshots
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - snapshot.storage.k8s.io
+          resources:
           - volumesnapshots/status
           verbs:
           - get

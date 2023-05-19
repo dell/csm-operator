@@ -113,7 +113,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
         - name: attacher
-          image: k8s.gcr.io/sig-storage/csi-attacher:v4.0.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.0.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -126,7 +126,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: k8s.gcr.io/sig-storage/csi-provisioner:v3.3.0
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -147,7 +147,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: k8s.gcr.io/sig-storage/csi-snapshotter:v6.1.0
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.1.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -163,7 +163,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: resizer
-          image: k8s.gcr.io/sig-storage/csi-resizer:v1.6.0
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.6.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -176,7 +176,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: external-health-monitor
-          image: k8s.gcr.io/sig-storage/csi-external-health-monitor-controller:v0.7.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.7.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -211,6 +211,8 @@ spec:
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
+              value: "true"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
