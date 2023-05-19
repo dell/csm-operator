@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -147,4 +148,19 @@ func getApplyCertVolume(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyCo
 	}
 
 	return &volume, nil
+}
+
+// ModifyPowerScaleCR - It modifies the CR of powerscale/isilon (currently for Storage Capacity Tracking
+func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
+	// Parameters to initialise CR values
+	storageCapacity := "false"
+
+	switch fileType {
+	case "CSIDriverSpec":
+		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+			storageCapacity = "true"
+		}
+		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
+	}
+	return yamlString
 }
