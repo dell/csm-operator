@@ -14,5 +14,6 @@ Tolerations,-v,none,controller,1
 X_CSI_APPROVE_SDC_ENABLED,,true,node,1
 X_CSI_RENAME_SDC_ENABLED,,true,node,1
 X_CSI_RENAME_SDC_PREFIX,,sdc,node,1
+X_CSI_ALLOW_RWO_MULTI_POD_ACCESS,,true,node,1
 X_CSI_HEALTH_MONITOR_ENABLED,,false,controller,1
 Tolerations,-v,none,node,1
