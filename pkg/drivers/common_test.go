@@ -191,6 +191,107 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	return res
 }
 
+func csmWithPowermax(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", version)
+
+	// Add FSGroupPolicy
+	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "ReadWriteOnceWithFSType"
+
+	// Add DNS Policy for GetNode test
+	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
+
+	// Add image name
+	res.Spec.Driver.Common.Image = "thisIsAnImage"
+
+	// Add pstore driver version
+	res.Spec.Driver.ConfigVersion = version
+
+	// Add pstore driver type
+	res.Spec.Driver.CSIDriverType = driver
+
+	// Add NodeSelector to node and controller
+	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+
+	// Add common envs
+	commonEnvs := getPmaxCommonEnvs()
+	res.Spec.Driver.Common.Envs = commonEnvs
+
+	// Add node fields specific to powermax
+	enableChap := corev1.EnvVar{Name: "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP", Value: "true"}
+	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
+	nodeTopology := corev1.EnvVar{Name: "X_CSI_TOPOLOGY_CONTROL_ENABLED", Value: "true"}
+	res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, nodeTopology}
+
+	// Add controller fields specific to powermax
+	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
+
+	// Add CSI Driver specific fields
+	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+
+	// Add reverseproxy module
+	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
+	res.Spec.Modules = []csmv1.Module{revproxy}
+	return res
+}
+
+func getPmaxCommonEnvs() []corev1.EnvVar {
+	return []corev1.EnvVar{
+		{
+			Name:  "X_CSI_MANAGED_ARRAYS",
+			Value: "00000000001",
+		},
+		{
+			Name:  "X_CSI_POWERMAX_ENDPOINT",
+			Value: "hhtps:/u4p.123:8443",
+		},
+		{
+			Name:  "X_CSI_K8S_CLUSTER_PREFIX",
+			Value: "TST",
+		},
+		{
+			Name:  "X_CSI_POWERMAX_DEBUG",
+			Value: "false",
+		},
+		{
+			Name:  "X_CSI_POWERMAX_PORTGROUPS",
+			Value: "pg",
+		},
+		{
+			Name:  "X_CSI_TRANSPORT_PROTOCOL",
+			Value: "",
+		},
+		{
+			Name:  "X_CSI_VSPHERE_ENABLED",
+			Value: "false",
+		},
+		{
+			Name:  "X_CSI_VSPHERE_PORTGROUP",
+			Value: "vpg",
+		},
+		{
+			Name:  "X_CSI_VSPHERE_HOSTNAME",
+			Value: "vHN",
+		},
+		{
+			Name:  "X_CSI_VCENTER_HOST",
+			Value: "vH",
+		},
+		{
+			Name:  "X_CSI_VSPHERE_ENABLED",
+			Value: "false",
+		},
+		{
+			Name:  "X_CSI_IG_MODIFY_HOSTNAME",
+			Value: "false",
+		},
+		{
+			Name:  "X_CSI_IG_NODENAME_TEMPLATE",
+			Value: "",
+		},
+	}
+}
+
 func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
