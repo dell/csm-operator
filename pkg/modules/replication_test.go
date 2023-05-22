@@ -52,6 +52,17 @@ func TestReplicationInjectDeployment(t *testing.T) {
 			}
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
+		"success - powermax injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			if err != nil {
+				panic(err)
+			}
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
 		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
