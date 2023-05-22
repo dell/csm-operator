@@ -13,20 +13,6 @@ rules:
 - apiGroups:
   - ""
   resourceNames:
-  - application-mobility-leader-election-role
-  resources:
-  - configmaps
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resourceNames:
   - cert-manager-cainjector-leader-election
   - cert-manager-cainjector-leader-election-core
   - cert-manager-controller
@@ -81,15 +67,6 @@ rules:
   - update
 - apiGroups:
   - ""
-  resourceNames:
-  - application-mobility-leader-election-role
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-- apiGroups:
-  - ""
   resources:
   - namespaces
   verbs:
@@ -130,7 +107,7 @@ rules:
 - apiGroups:
   - ""
   resourceNames:
-  - cert-manager-webhook-ca
+  - webhook-server-cert
   resources:
   - secrets
   verbs:
@@ -403,20 +380,6 @@ rules:
   - sign
 - apiGroups:
   - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - coordination.k8s.io
-  resourceNames:
-  - application-mobility-leader-election-role
   resources:
   - leases
   verbs:

@@ -151,7 +151,7 @@ rules:
 - apiGroups:
   - ""
   resourceNames:
-  - cert-manager-webhook-ca
+  - webhook-server-cert
   resources:
   - secrets
   verbs:
@@ -1185,7 +1185,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: 10.247.98.98:5000/csm-ops:app-mob-48
+        image: 10.247.98.98:5000/csm-ops:app-mob-50
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

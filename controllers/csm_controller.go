@@ -142,7 +142,7 @@ var (
 // +kubebuilder:rbac:groups="cert-manager.io",resources=certificates;certificaterequests;issuers,verbs=create;delete;deletecollection;patch;update
 // +kubebuilder:rbac:groups="cert-manager.io",resources=signers,resourceNames=issuers.cert-manager.io/*;clusterissuers.cert-manager.io/*,verbs=approve
 // +kubebuilder:rbac:groups="cert-manager.io",resources=*/*,verbs=*
-// +kubebuilder:rbac:groups="",resources=secrets,resourceNames=cert-manager-webhook-ca,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups="",resources=secrets,resourceNames=webhook-server-cert,verbs=get;list;watch;update
 // +kubebuilder:rbac:groups="cert-manager.io",resources=configmaps,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=cert-manager-controller,verbs=get;update;patch
 // +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=backups,verbs=create;delete;get;list;patch;update;watch
@@ -860,15 +860,12 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 // reconcileAppMobility - deploy Application Mobility
 func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-<<<<<<< HEAD
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
 		log.Infow("Reconcile Application Mobility Controller Manager")
 		if err := modules.AppMobilityDeployment(ctx, false, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Application Mobility controller Manager: %v", err)
 		}
 	}
-=======
->>>>>>> 7e6e56cb05cd24b9c856f0e98cbabaadaf98f3d1
 	// AppMobility installs cert-manager
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
 		log.Infow("Reconcile application mobility cert-manager")
