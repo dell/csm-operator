@@ -926,9 +926,9 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    name: HelloWorld 
+    name: CustomTest 
     run:
-     - "echo Hello && echo World"
+     - "echo Todo"
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Resiliency"
   paths: 
@@ -949,11 +949,11 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    name: HelloWorld 
+    name: CustomTest 
     run:
-     - "echo Hello && echo World"
+     - "echo Todo"
 
-- scenario: Install PowerFlex Driver(With Resiliency), Disable Resiliency module"
+- scenario: "Install PowerFlex Driver(With Resiliency), Disable Resiliency module"
   paths: 
     - "testfiles/storage_csm_powerflex_resiliency.yaml"
   modules:
@@ -987,9 +987,9 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    name: HelloWorld 
+    name: CustomTest 
     run:
-     - "echo Hello && echo World"
+     - "echo Todo"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Resiliency"
   paths: 
@@ -1010,11 +1010,11 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    name: HelloWorld 
+    name: CustomTest 
     run:
-     - "echo Hello && echo World"
+     - "echo Todo"
 
-- scenario: Install PowerScale Driver(With Resiliency), Disable Resiliency module"
+- scenario: "Install PowerScale Driver(With Resiliency), Disable Resiliency module"
   paths: 
     - "testfiles/storage_csm_powerscale_resiliency.yaml"
   modules:
@@ -1103,9 +1103,9 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    name: HelloWorld 
+    name: CustomTest 
     run:
-     - "echo Hello && echo World"
+     - "echo Todo"
 
 - scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
   paths: 
@@ -1126,11 +1126,11 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    name: HelloWorld 
+    name: CustomTest 
     run:
-     - "echo Hello && echo World"
+     - "echo Todo"
 
-- scenario: Install PowerStore Driver(With Resiliency), Disable Resiliency module"
+- scenario: "Install PowerStore Driver(With Resiliency), Disable Resiliency module"
   paths: 
     - "testfiles/storage_csm_powerstore_resiliency.yaml"
   modules:
