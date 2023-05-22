@@ -28,6 +28,7 @@ var (
 	pScaleCSM            = csmWithPowerScale(csmv1.PowerScale, shared.PScaleConfigVersion)
 	unityCSM             = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, false)
 	unityCSMCertProvided = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, true)
+	pmaxCSM              = csmWithPowermax(csmv1.PowerMax, shared.PmaxConfigVersion)
 
 	fakeDriver csmv1.DriverType = "fakeDriver"
 	badDriver  csmv1.DriverType = "badDriver"
@@ -51,6 +52,7 @@ var (
 		{"unity happy path", unityCSM, csmv1.Unity, "node.yaml", ""},
 		{"unity happy path when secrets with certificates provided", unityCSMCertProvided, csmv1.Unity, "node.yaml", ""},
 		{"file does not exist", csm, fakeDriver, "NonExist.yaml", "no such file or directory"},
+		{"pmax happy path", pmaxCSM, csmv1.PowerMax, "node.yaml", ""},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
 	}
 )

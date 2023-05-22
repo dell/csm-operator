@@ -53,6 +53,10 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		YamlString = ModifyUnityCR(YamlString, cr, "Controller")
 	}
 
+	if cr.Spec.Driver.CSIDriverType == "powermax" {
+		YamlString = ModifyPowermaxCR(YamlString, cr, "Controller")
+	}
+
 	driverYAML, err := utils.GetDriverYaml(YamlString, "Deployment")
 	if err != nil {
 		log.Errorw("GetController get Deployment failed", "Error", err.Error())
@@ -130,6 +134,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			if cr.Spec.Driver.CSIDriverType == "unity" {
 				newV, err = getApplyCertVolumeUnity(cr)
 			}
+			if cr.Spec.Driver.CSIDriverType == "powermax" {
+				newV, err = getApplyCertVolumePowermax(cr)
+			}
 			if err != nil {
 				log.Errorw("GetController spec template volumes", "Error", err.Error())
 				return nil, err
@@ -182,6 +189,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 	if cr.Spec.Driver.CSIDriverType == "unity" {
 		YamlString = ModifyUnityCR(YamlString, cr, "Node")
+	}
+	if cr.Spec.Driver.CSIDriverType == "powermax" {
+		YamlString = ModifyPowermaxCR(YamlString, cr, "Node")
 	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
@@ -271,6 +281,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 			if cr.Spec.Driver.CSIDriverType == "unity" {
 				newV, err = getApplyCertVolumeUnity(cr)
+			}
+			if cr.Spec.Driver.CSIDriverType == "powermax" {
+				newV, err = getApplyCertVolumePowermax(cr)
 			}
 			if err != nil {
 				log.Errorw("GetNode apply cert Volume failed", "Error", err.Error())
@@ -383,6 +396,9 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "CSIDriverSpec")
 	case "isilon":
 		YamlString = ModifyPowerScaleCR(YamlString, cr, "CSIDriverSpec")
+	}
+	if cr.Spec.Driver.CSIDriverType == "powermax" {
+		YamlString = ModifyPowermaxCR(YamlString, cr, "CSIDriverSpec")
 	}
 	err = yaml.Unmarshal([]byte(YamlString), &csidriver)
 	if err != nil {

@@ -59,6 +59,9 @@ const (
 	// ReverseProxy - placeholder for constant csireverseproxy
 	ReverseProxy ModuleType = "csireverseproxy"
 
+	// ReverseProxyServer - placeholder for constant csipowermax-reverseproxy
+	ReverseProxyServer ModuleType = "csipowermax-reverseproxy"
+
 	// Topology - placeholder for constant topology
 	Topology ObservabilityComponentType = "topology"
 
