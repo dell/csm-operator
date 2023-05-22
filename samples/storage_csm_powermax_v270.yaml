@@ -1,0 +1,274 @@
+#
+# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powermax
+  namespace: powermax
+spec:
+  # Add fieds here
+  driver:
+    csiDriverType: "powermax"
+    csiDriverSpec:
+      # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
+      # Allowed values: ReadWriteOnceWithFSType, File , None
+      # Default value: ReadWriteOnceWithFSType
+      fSGroupPolicy: "ReadWriteOnceWithFSType"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: false
+    # Config version for CSI PowerMax v2.7.0 driver
+    configVersion: v2.7.0
+    # replica: Define the number of PowerMax controller nodes
+    # to deploy to the Kubernetes release
+    # Allowed values: n, where n > 0
+    # Default value: None
+    replicas: 2
+    # Default credential secret for Powermax, if not set it to ""
+    authSecret: powermax-creds
+    dnsPolicy: ClusterFirstWithHostNet
+    forceUpdate: false
+    forceRemoveDriver: true
+    common:
+      # Image for CSI PowerMax driver v2.7.0
+      image: dellemc/csi-powermax:v2.7.0
+      # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
+      # Allowed values:
+      #  Always: Always pull the image.
+      #  IfNotPresent: Only pull the image if it does not already exist on the node.
+      #  Never: Never pull the image.
+      # Default value: None
+      imagePullPolicy: IfNotPresent
+      envs:
+        # X_CSI_MANAGED_ARRAYS: Serial ID of the arrays that will be used for provisioning
+        # Default value: None
+        # Examples: "000000000001", "000000000002"
+        - name: X_CSI_MANAGED_ARRAYS
+          value: "000000000000,000000000001"
+        # X_CSI_POWERMAX_ENDPOINT: Address of the Unisphere server that is managing the PowerMax arrays
+        # In case of multi-array, provide an endpoint of locally attached array
+        # Default value: None
+        # Example: https://0.0.0.1:8443
+        - name: X_CSI_POWERMAX_ENDPOINT
+          value: "https://0.0.0.0:8443/"
+        # X_CSI_K8S_CLUSTER_PREFIX: Define a prefix that is appended onto
+        # all resources created in the Array
+        # This should be unique per K8s/CSI deployment
+        # maximum length of this value is 3 characters
+        # Default value: None
+        # Examples: "XYZ", "EMC"
+        - name: X_CSI_K8S_CLUSTER_PREFIX
+          value: "XYZ"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: None
+        - name: KUBELET_CONFIG_DIR
+          value: /var/lib/kubelet
+        # X_CSI_POWERMAX_PORTGROUPS: Define the set of existing port groups that the driver will use.
+        # It is a comma separated list of portgroup names.
+        # Required only in case of iSCSI port groups
+        # Allowed values: iSCSI Port Group names
+        # Default value: None
+        # Examples: "pg1", "pg1, pg2"
+        - name: X_CSI_POWERMAX_PORTGROUPS
+          value: ""
+        # "X_CSI_TRANSPORT_PROTOCOL" can be "FC" or "FIBRE" for fibrechannel,
+        # "ISCSI" for iSCSI, or "" for autoselection.
+        # Allowed values:
+        #   "FC"    - Fiber Channel protocol
+        #   "FIBER" - Fiber Channel protocol
+        #   "ISCSI" - iSCSI protocol
+        #   ""      - Automatic selection of transport protocol
+        # Default value: "" <empty>
+        - name: X_CSI_TRANSPORT_PROTOCOL
+          value: ""
+        # X_CSI_POWERMAX_PROXY_SERVICE_NAME: Refers to the name of the proxy service in kubernetes
+        # Allowed values: "csipowermax-reverseproxy"
+        # default values: "csipowermax-reverseproxy"
+        - name: X_CSI_POWERMAX_PROXY_SERVICE_NAME
+          value: "csipowermax-reverseproxy"
+        # VMware/vSphere virtualization support
+        # set X_CSI_VSPHERE_ENABLED to true, if you to enable VMware virtualized environment support via RDM
+        # Allowed values:
+        #   "true" - vSphere volumes are enabled
+        #   "false" - vSphere volumes are disabled
+        # Default value: "false"
+        - name: "X_CSI_VSPHERE_ENABLED"
+          value: "false"
+        # X_CSI_VSPHERE_PORTGROUP: An existing portGroup that driver will use for vSphere
+        # recommended format: csi-x-VC-PG, x can be anything of user choice
+        # Allowed value: valid existing port group on the array
+        # Default value: "" <empty>
+        - name: "X_CSI_VSPHERE_PORTGROUP"
+          value: ""
+        # X_CSI_VSPHERE_HOSTNAME: An existing host(initiator group)/ host group(cascaded initiator group) that driver will use for vSphere
+        # this host should contain initiators from all the ESXs/ESXi host where the cluster is deployed
+        # recommended format: csi-x-VC-HN, x can be anything of user choice
+        # Allowed value: valid existing host/host group on the array
+        # Default value: "" <empty>
+        - name: "X_CSI_VSPHERE_HOSTNAME"
+          value: ""
+        # X_CSI_VCENTER_HOST: URL/endpoint of the vCenter where all the ESX are present
+        # Allowed value: valid vCenter host endpoint
+        # Default value: "" <empty>
+        - name: "X_CSI_VCENTER_HOST"
+          value: ""
+    controller:
+      envs:
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+    node:
+      envs:
+        # X_CSI_POWERMAX_ISCSI_ENABLE_CHAP: Determine if the driver is going to configure
+        # ISCSI node databases on the nodes with the CHAP credentials
+        # If enabled, the CHAP secret must be provided in the credentials secret
+        # and set to the key "chapsecret"
+        # Allowed values:
+        #   "true"  - CHAP is enabled
+        #   "false" - CHAP is disabled
+        # Default value: "false"
+        - name: X_CSI_POWERMAX_ISCSI_ENABLE_CHAP
+          value: "false"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        # X_CSI_TOPOLOGY_CONTROL_ENABLED provides a way to filter topology keys on a node based on array and transport protocol
+        # if enabled, user can create custom topology keys by editing node-topology-config configmap.
+        # Allowed values:
+        #   true: enable the filtration based on config map
+        #   false: disable the filtration based on config map
+        # Default value: false
+        - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
+          value: "false"
+    sideCars:
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      - name: external-health-monitor
+        enabled: false
+        args: [ "--monitor-interval=60s" ]
+
+  modules:
+    # CSI Powermax Reverseproxy is a mandatory module for Powermax
+    - name: csireverseproxy
+      # enabled: Always set to true
+      enabled: true
+      configVersion: v2.6.0
+      forceRemoveModule: true
+      components:
+      - name: csipowermax-reverseproxy
+      # image: Define the container images used for the reverse proxy
+      # Default value: None
+      # Example: "csipowermax-reverseproxy:v2.6.0"
+        image: dellemc/csipowermax-reverseproxy:v2.6.0
+        envs:
+          # "tlsSecret" defines the TLS secret that is created with certificate
+          # and its associated key
+          # Default value: None
+          # Example: "tls-secret"
+          - name: X_CSI_REVPROXY_TLS_SECRET
+            value: "csirevproxy-tls-secret"
+          - name: X_CSI_REVPROXY_PORT
+            value: "2222"
+          - name: X_CSI_CONFIG_MAP_NAME
+            value: "powermax-reverseproxy-config"
+
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enabled: Enable/Disable csm-authorization
+      enabled: false
+      configVersion: v1.6.0
+      components:
+      - name: karavi-authorization-proxy
+        image: dellemc/csm-authorization-sidecar:v1.6.0
+        envs:
+          # proxyHost: hostname of the csm-authorization server
+          - name: "PROXY_HOST"
+            value: "csm-authorization.com"
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+          - name: "SKIP_CERTIFICATE_VALIDATION"
+            value: "true"
+
+    # Replication: allows configuring replication module
+    # Replication CRDs must be installed before installing driver
+    - name: replication
+      # enabled: Enable/Disable replication feature
+      # Allowed values:
+      #   true: enable replication feature(install dell-csi-replicator sidecar)
+      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.4.0
+      components:
+      - name: dell-csi-replicator
+        # image: Image to use for dell-csi-replicator. This shouldn't be changed
+        # Allowed values: string
+        # Default value: None
+        image: dellemc/dell-csi-replicator:v1.4.0
+        envs:
+          # replicationPrefix: prefix to prepend to storage classes parameters
+          # Allowed values: string
+          # Default value: replication.storage.dell.com
+          - name: "X_CSI_REPLICATION_PREFIX"
+            value: "replication.storage.dell.com"
+          # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+          # Allowed values: string
+          # Default value: powermax
+          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+            value: "powermax"
+
+      - name: dell-replication-controller-manager
+        # image: Defines controller image. This shouldn't be changed
+        # Allowed values: string
+        image: dellemc/dell-replication-controller:v1.4.0
+        envs:
+          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
+          # Set the value to "self" in case of stretched/single cluster configuration
+          # Allowed values: string
+          - name: "TARGET_CLUSTERS_IDS"
+            value: "target-cluster-1"
+          # Replication log level
+          # Allowed values: "error", "warn"/"warning", "info", "debug"
+          # Default value: "debug"
+          - name: "REPLICATION_CTRL_LOG_LEVEL"
+            value: "debug"
+          # replicas: Defines number of controller replicas
+          # Allowed values: int
+          # Default value: 1
+          - name: "REPLICATION_CTRL_REPLICAS"
+            value: "1"
+          # retryIntervalMin: Initial retry interval of failed reconcile request.
+          # It doubles with each failure, upto retry-interval-max
+          # Allowed values: time
+          - name: "RETRY_INTERVAL_MIN"
+            value: "1s"
+          # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
+          # Allowed values: time
+          - name: "RETRY_INTERVAL_MAX"
+            value: "5m"
+
+      - name: dell-replication-controller-init
+        # image: Defines replication init container image. This shouldn't be changed
+        # Allowed values: string
+        image: dellemc/dell-replication-init:v1.0.0

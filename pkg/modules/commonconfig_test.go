@@ -78,6 +78,21 @@ func getSecret(namespace, secretName string) *corev1.Secret {
 	}
 }
 
+func getConfigMap(namespace, configmapName string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configmapName,
+			Namespace: namespace,
+		},
+		Data: map[string]string{
+			"data": configmapName,
+		},
+	}
+}
 func TestCommonCertManager(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
