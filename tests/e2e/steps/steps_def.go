@@ -937,7 +937,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"--user", user,
 		"--password", password,
 		"--array-insecure",
-		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -951,7 +951,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"tenant", "create",
-		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
+		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
@@ -970,7 +970,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"role", "create",
 		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
 			roleName, storageType, sysID, pool, quotaLimit),
-		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
 	)
 
 	fmt.Println("=== Role === \n", cmd.String())
@@ -988,7 +988,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"rolebinding", "create",
 		"--tenant", tenantName,
 		"--role", roleName,
-		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
 	)
 	fmt.Println("=== Binding Role ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -1003,7 +1003,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"--admin-token", "/tmp/adminToken.yaml",
 		"generate", "token",
 		"--tenant", tenantName,
-		"--insecure", "--addr", fmt.Sprintf("csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
 		"--access-token-expiration", fmt.Sprint(10*time.Minute),
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
