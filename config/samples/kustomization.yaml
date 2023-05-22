@@ -4,4 +4,5 @@ resources:
   - storage_v1_csm_powerflex.yaml
   - storage_v1_csm_powerstore.yaml
   - storage_v1_csm_unity.yaml
+  - storage_v1_csm_powermax.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

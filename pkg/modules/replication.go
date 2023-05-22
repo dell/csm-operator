@@ -79,6 +79,10 @@ var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
 	},
+	string(csmv1.PowerMax): {
+		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
+	},
 }
 
 func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) (string, string) {
@@ -156,7 +160,7 @@ func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csm
 }
 
 // CheckApplyContainersReplica --
-func CheckApplyContainersReplica(contaners []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
+func CheckApplyContainersReplica(containers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
 	replicaModule, err := getReplicaModule(cr)
 	if err != nil {
 		return err
@@ -164,7 +168,7 @@ func CheckApplyContainersReplica(contaners []acorev1.ContainerApplyConfiguration
 
 	driverString := "driver"
 	replicationContextPrefix, replicationPrefix := getRepctlPrefices(replicaModule, cr.Spec.Driver.CSIDriverType)
-	for _, cnt := range contaners {
+	for _, cnt := range containers {
 		if *cnt.Name == utils.ReplicationSideCarName {
 			// check volumes
 			volName := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
