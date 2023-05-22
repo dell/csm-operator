@@ -21,7 +21,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerScale driver v2.7.0
-      image: "dellemc/csi-isilon:latest"
+      image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
