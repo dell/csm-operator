@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 #
+
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
@@ -26,25 +27,18 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
-      # Allowed values:
-      #   true: enable storage capacity tracking
-      #   false: disable storage capacity tracking
       storageCapacity: false
     # Config version for CSI PowerStore v2.7.0 driver
     configVersion: v2.7.0
-    # authSecret: This is the secret used to validate the default PowerStore secret used for installation
-    # Allowed values: <metadataName specified in the Manifest>-config
-    # For example: If the metadataName is set to test-powerstore, authSecret value should be set to test-powerstore-config
     authSecret: test-powerstore-config
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
+    forceUpdate: true
     forceRemoveDriver: true
     common:
       # Image for CSI PowerStore driver v2.7.0
-      image: "dellemc/csi-powerstore:v2.7.0"
+      image: "dellemc/csi-powerstore:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -58,6 +52,7 @@ spec:
 
     sideCars:
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -92,7 +87,7 @@ spec:
         # Allowed Values: x.x.x.x/xx or x.x.x.x
         # Default Value: 
         - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
-          value: 
+          value:
 
       # nodeSelector: Define node selection constraints for controller pods.
       # For the pod to be eligible to run on a node, the node must have each
@@ -144,7 +139,7 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-  
+
   modules:
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
@@ -152,21 +147,20 @@ spec:
       #   true: enable Resiliency feature(deploy podmon sidecar)
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
-      enabled: false
+      enabled: true
       configVersion: v1.6.0
       components:
         - name: podmon-controller
           args:
+            - "--csisock=unix:/var/run/csi/csi.sock"
             - "--labelvalue=csi-powerstore"
             - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-powerstore.dellemc.com"
+            - "--mode=controller"
             - "--skipArrayConnectionValidation=false"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
-            # Below 4 args should not be modified.
-            - "--csisock=unix:/var/run/csi/csi.sock"
-            - "--mode=controller"
-            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
-            - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
@@ -175,13 +169,12 @@ spec:
             - name: "X_CSI_PODMON_API_PORT"
               value: "8083"
           args:
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
             - "--labelvalue=csi-powerstore"
             - "--arrayConnectivityPollRate=60"
-            - "--leaderelection=false"
-            - "--driverPodLabelValue=dell-storage"
-            - "--ignoreVolumelessPods=false"
-            # Below 4 args should not be modified.
-            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
-            - "--mode=node"
-            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
+            - "--mode=node"
+            - "--leaderelection=false"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"    
