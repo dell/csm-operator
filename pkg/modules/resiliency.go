@@ -189,13 +189,14 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConf
 
 // ResiliencyInjectDeployment - inject resiliency into deployment
 func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType string) (*applyv1.DeploymentApplyConfiguration, error) {
-	resiliencyModule, containerPtr, err := getResiliencyApplyCR(cr, op, driverType, "controller")
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, "controller")
 	if err != nil {
 		return nil, err
 	}
-	container := *containerPtr
-
-	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
+	podmon := *podmonPtr
+	utils.UpdateSideCarApply(resiliencyModule.Components, &podmon)
+	// prepend podmon container in controller-pod
+	dp.Spec.Template.Spec.Containers = append([]acorev1.ContainerApplyConfiguration{podmon}, dp.Spec.Template.Spec.Containers...)
 
 	if driverType == string(csmv1.PowerScale) {
 		driverType = string(csmv1.PowerScaleName)
@@ -205,7 +206,7 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 		for i, cnt := range dp.Spec.Template.Spec.Containers {
 			if *cnt.Name == "driver" {
 				podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
-				podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
+				podmonArrayConnectivityPollRate := getPollRateFromArgs(podmon.Args)
 				enabled := "true"
 				dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
 					acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonEnabled, Value: &enabled},
@@ -229,20 +230,19 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 
 // ResiliencyInjectDaemonset  - inject resiliency into daemonset
 func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType string) (*applyv1.DaemonSetApplyConfiguration, error) {
-	resiliencyModule, containerPtr, err := getResiliencyApplyCR(cr, op, driverType, "node")
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, "node")
 	if err != nil {
 		return nil, err
 	}
 
-	container := *containerPtr
-	utils.UpdateSideCarApply(resiliencyModule.Components, &container)
-	// Get the controller arguments
-
-	ds.Spec.Template.Spec.Containers = append(ds.Spec.Template.Spec.Containers, container)
+	podmon := *podmonPtr
+	utils.UpdateSideCarApply(resiliencyModule.Components, &podmon)
+	// prepend podmon container in node-pod
+	ds.Spec.Template.Spec.Containers = append([]acorev1.ContainerApplyConfiguration{podmon}, ds.Spec.Template.Spec.Containers...)
 
 	podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
 	enabled := "true"
-	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
+	podmonArrayConnectivityPollRate := getPollRateFromArgs(podmon.Args)
 	for i, cnt := range ds.Spec.Template.Spec.Containers {
 		if *cnt.Name == "driver" {
 			ds.Spec.Template.Spec.Containers[i].Env = append(ds.Spec.Template.Spec.Containers[i].Env,
@@ -255,4 +255,63 @@ func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.
 	}
 
 	return &ds, nil
+}
+
+// CheckApplyContainersResiliency - check container configuration for resiliency
+func CheckApplyContainersResiliency(containers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
+	resiliencyModule, err := getResiliencyModule(cr)
+	if err != nil {
+		return err
+	}
+
+	driverContainerName := "driver"
+
+	// fetch podmonAPIPort
+	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
+
+	// fetch podmonArrayConnectivityPollRate
+	args := getResiliencyArgs(resiliencyModule, "node")
+	podmonArrayConnectivityPollRate := getPollRateFromArgs(args)
+
+	for _, cnt := range containers {
+		if *cnt.Name == utils.ResiliencySideCarName {
+
+			// check argument in resiliency sidecar(podmon)
+			foundPodmonArrayConnectivityPollRate := false
+			for _, arg := range cnt.Args {
+				if fmt.Sprintf("--arrayConnectivityPollRate=%s", podmonArrayConnectivityPollRate) == arg {
+					foundPodmonArrayConnectivityPollRate = true
+				}
+			}
+			if !foundPodmonArrayConnectivityPollRate {
+				return fmt.Errorf("missing the following argument %s", podmonArrayConnectivityPollRate)
+			}
+
+		} else if *cnt.Name == driverContainerName {
+			// check envs in driver sidecar
+			foundPodmonAPIPort := false
+			foundPodmonArrayConnectivityPollRate := false
+			for _, env := range cnt.Env {
+				if *env.Name == XCSIPodmonAPIPort {
+					foundPodmonAPIPort = true
+					if *env.Value != podmonAPIPort {
+						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIPodmonAPIPort, podmonAPIPort, *env.Value)
+					}
+				}
+				if *env.Name == XCSIPodmonArrayConnectivityPollRate {
+					foundPodmonArrayConnectivityPollRate = true
+					if *env.Value != podmonArrayConnectivityPollRate {
+						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIPodmonArrayConnectivityPollRate, podmonArrayConnectivityPollRate, *env.Value)
+					}
+				}
+			}
+			if !foundPodmonAPIPort {
+				return fmt.Errorf("missing the following argument %s", podmonAPIPort)
+			}
+			if !foundPodmonArrayConnectivityPollRate {
+				return fmt.Errorf("missing the following argument %s", podmonArrayConnectivityPollRate)
+			}
+		}
+	}
+	return nil
 }
