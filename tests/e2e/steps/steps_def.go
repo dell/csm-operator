@@ -49,7 +49,7 @@ var (
 	authString             = "karavi-authorization-proxy"
 	operatorNamespace      = "dell-csm-operator"
 	quotaLimit             = "30000000"
-	pflexSecretMap         = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pflexSecretMap         = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL"}
 	pflexAuthSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
@@ -758,10 +758,6 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 
 	// provide few seconds for cluster to settle down
 	time.Sleep(20 * time.Second)
-	if err := configureAuthorizationProxyServer(cr); err != nil {
-		return fmt.Errorf("failed authorization proxy server configuration check: %v", err)
-	}
-
 	return nil
 }
 
@@ -865,7 +861,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
-func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
+func (step *Step) configureAuthorizationProxyServer(res Resource, driver string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	var b []byte
@@ -881,21 +877,40 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		driverNamespace = ""
 	)
 
+	//by default, use set defined in env file 
+	endpointvar := "END_POINT"
+	systemIdvar := "SYSTEM_ID"
+	uservar := "STORAGE_USER"
+	passvar := "STORAGE_PASSWORD"
+	poolvar := "STORAGE_POOL"
+
+	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
+	// this section is for powerflex, other drivers can add their sections as required. 
+	if driver == "powerflex" {
+		endpointvar = "PFLEX_ENDPOINT"
+		systemIdvar = "PFLEX_SYSTEMID"
+		uservar = "PFLEX_USER"
+		passvar = "PFLEX_PASS"
+		poolvar = "PFLEX_POOL"
+		os.Setenv("STORAGE_TYPE", "powerflex")
+		os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
+	}
+
 	// get env variables
-	if os.Getenv("END_POINT") != "" {
-		endpoint = os.Getenv("END_POINT")
+	if os.Getenv(endpointvar) != "" {
+		endpoint = os.Getenv(endpointvar)
 	}
-	if os.Getenv("SYSTEM_ID") != "" {
-		sysID = os.Getenv("SYSTEM_ID")
+	if os.Getenv(systemIdvar) != "" {
+		sysID = os.Getenv(systemIdvar)
 	}
-	if os.Getenv("STORAGE_USER") != "" {
-		user = os.Getenv("STORAGE_USER")
+	if os.Getenv(uservar) != "" {
+		user = os.Getenv(uservar)
 	}
-	if os.Getenv("STORAGE_PASSWORD") != "" {
-		password = os.Getenv("STORAGE_PASSWORD")
+	if os.Getenv(passvar) != "" {
+		password = os.Getenv(passvar)
 	}
-	if os.Getenv("STORAGE_POOL") != "" {
-		pool = os.Getenv("STORAGE_POOL")
+	if os.Getenv(poolvar) != "" {
+		pool = os.Getenv(poolvar)
 	}
 	if os.Getenv("STORAGE_TYPE") != "" {
 		storageType = os.Getenv("STORAGE_TYPE")
@@ -903,6 +918,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	if os.Getenv("DRIVER_NAMESPACE") != "" {
 		driverNamespace = os.Getenv("DRIVER_NAMESPACE")
 	}
+
 	port, err := getPortContainerizedAuth()
 	if err != nil {
 		return err
