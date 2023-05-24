@@ -54,6 +54,7 @@ export PFLEX_SYSTEMID=""
 export PFLEX_ENDPOINT=""
 export PFLEX_MDM=""
 export PFLEX_AUTH_ENDPOINT=""  
+export PFLEX_POOL=""
 
 # The following are for creating PScale secret/storage class
 # do not include "https://" in the endpoint
@@ -63,4 +64,5 @@ export PSCALE_PASS=""
 export PSCALE_ENDPOINT=""
 export PSCALE_AUTH_ENDPOINT=""
 export PSCALE_AUTH_PORT=""
+
 
