@@ -67,6 +67,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
 	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
 
+	runner.addStep(`^Create namespace \[([^"]*)\]$`, step.createNamespace)
+	runner.addStep(`^Delete namespace \[([^"]*)\]$`, step.deleteNamespace)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {

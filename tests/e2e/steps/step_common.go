@@ -356,13 +356,7 @@ func arePodsRunning(pod *corev1.Pod) (string, bool) {
 
 // removeNodelabel clears a node label set by setNodeLabel
 func removeNodeLabel(testName, labelName string) error {
-	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
-	if err != nil {
-		return fmt.Errorf("kube config creation failed with %s", err)
-	}
-
-	// create the clientset
-	clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := getClientset()
 	if err != nil {
 		return fmt.Errorf("Clientset creation failed with %s", err)
 	}
@@ -386,14 +380,7 @@ func removeNodeLabel(testName, labelName string) error {
 
 // setNodeLabel adds a label to all nodes without it and marks them as modified so they can be reset at the end of the test
 func setNodeLabel(testName, labelName, labelValue string) error {
-	// Get K8s config
-	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
-	if err != nil {
-		return fmt.Errorf("kube config creation failed with %s", err)
-	}
-
-	// create the clientset from K8s config
-	clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := getClientset()
 	if err != nil {
 		return fmt.Errorf("Clientset creation failed with %s", err)
 	}
@@ -479,3 +466,20 @@ func getPortContainerizedAuth() (string, error) {
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil
 }
+
+func getClientset() (*kubernetes.Clientset, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
+	if err != nil {
+		return nil, fmt.Errorf("kube config creation failed with %s", err)
+	}
+
+	// create the clientset
+	//clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("Clientset creation failed with %s", err)
+	}
+
+	return clientset, nil
+}
+

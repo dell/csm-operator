@@ -28,6 +28,7 @@ import (
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -523,6 +524,59 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 	}
 
 	return nil
+}
+
+func (step *Step) createNamespace(res Resource, namespace string) error {
+	clientset, err := getClientset()
+        if err != nil {
+                return fmt.Errorf("Clientset creation failed with %s", err)
+        }
+
+	_, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+	if err == nil {
+		fmt.Printf("namespace %s already exists, skipping creation\n", namespace)
+		return nil
+	}
+
+	newNamespace := new(corev1.Namespace)
+	newNamespace.Name = namespace
+
+	_, err = clientset.CoreV1().Namespaces().Create(context.TODO(), newNamespace, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("namespace creation failed with %s", err.Error())
+	}
+
+	return nil
+}
+
+func (step *Step) deleteNamespace(res Resource, namespace string) error {
+	clientset, err := getClientset()
+        if err != nil {
+                return fmt.Errorf("Clientset creation failed with %s", err)
+        }
+
+	_, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+	if err == nil {
+		err := clientset.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to delete namespace: %s", err.Error())
+		}
+
+		sleepTime := 2
+		for err = nil; err == nil; _, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{}) {
+			fmt.Printf("waiting for namespace %s to delete\n", namespace)
+			time.Sleep(time.Duration(sleepTime) * time.Second)
+			sleepTime = sleepTime * 2
+		}
+
+		return nil
+	} else if err.Error() == fmt.Errorf("namespaces \"%s\" not found", namespace).Error() {
+		fmt.Printf("namespace %s does not exist, skipping deletion\n", namespace)
+
+		return nil
+	} else {
+		return fmt.Errorf("Get of namespace \"%s\" failed with error \"%s\"", namespace, err.Error())
+	}
 }
 
 func (step *Step) restoreTemplate(res Resource, templateFile, crType string) error {
