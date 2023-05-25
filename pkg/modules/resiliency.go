@@ -21,6 +21,7 @@ import (
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -129,16 +130,34 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, driverType csmv1.DriverType
 	return ""
 }
 
-func getResiliencyArgs(m csmv1.Module, mode string) []string {
+func applyModuleToSideCar(component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration) {
+	if component.Image != "" {
+		image := string(component.Image)
+		if container.Image != nil {
+			*container.Image = image
+		}
+		container.Image = &image
+	}
+	if component.ImagePullPolicy != "" {
+		if container.ImagePullPolicy != nil {
+			*container.ImagePullPolicy = component.ImagePullPolicy
+		}
+		container.ImagePullPolicy = &component.ImagePullPolicy
+	}
+	emptyEnv := make([]corev1.EnvVar, 0)
+	container.Env = utils.ReplaceAllApplyCustomEnvs(container.Env, emptyEnv, component.Envs)
+	container.Args = utils.ReplaceAllArgs(container.Args, component.Args)
+}
+
+func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration) {
 	for _, component := range m.Components {
 		if component.Name == utils.PodmonControllerComponent && mode == "controller" {
-			return component.Args
+			applyModuleToSideCar(component, container)
 		}
 		if component.Name == utils.PodmonNodeComponent && mode == "node" {
-			return component.Args
+			applyModuleToSideCar(component, container)
 		}
 	}
-	return nil
 }
 
 func getPollRateFromArgs(args []string) string {
@@ -152,6 +171,7 @@ func getPollRateFromArgs(args []string) string {
 	}
 	return ""
 }
+
 func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	resiliencyModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -174,16 +194,13 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConf
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
-	// read args from the respective components
-	args := getResiliencyArgs(resiliencyModule, mode)
-
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
 	if err != nil {
 		return nil, nil, err
 	}
-	// set arguments
-	container.Args = args
+	// read args from the respective components
+	setResiliencyArgs(resiliencyModule, mode, &container)
 	return &resiliencyModule, &container, nil
 }
 
@@ -194,7 +211,6 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 		return nil, err
 	}
 	podmon := *podmonPtr
-	utils.UpdateSideCarApply(resiliencyModule.Components, &podmon)
 	// prepend podmon container in controller-pod
 	dp.Spec.Template.Spec.Containers = append([]acorev1.ContainerApplyConfiguration{podmon}, dp.Spec.Template.Spec.Containers...)
 
@@ -236,7 +252,6 @@ func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.
 	}
 
 	podmon := *podmonPtr
-	utils.UpdateSideCarApply(resiliencyModule.Components, &podmon)
 	// prepend podmon container in node-pod
 	ds.Spec.Template.Spec.Containers = append([]acorev1.ContainerApplyConfiguration{podmon}, ds.Spec.Template.Spec.Containers...)
 
@@ -268,10 +283,10 @@ func CheckApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 
 	// fetch podmonAPIPort
 	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
-
+	var container acorev1.ContainerApplyConfiguration
 	// fetch podmonArrayConnectivityPollRate
-	args := getResiliencyArgs(resiliencyModule, "node")
-	podmonArrayConnectivityPollRate := getPollRateFromArgs(args)
+	setResiliencyArgs(resiliencyModule, "node", &container)
+	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 
 	for _, cnt := range containers {
 		if *cnt.Name == utils.ResiliencySideCarName {

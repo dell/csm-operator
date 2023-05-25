@@ -434,6 +434,8 @@ spec:
       configVersion: v1.6.0
       components:
         - name: podmon-controller
+          image: dellemc/podmon:nightly
+          imagePullPolicy: IfNotPresent
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
             - "--labelvalue=csi-isilon"
@@ -445,6 +447,8 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
+          image: dellemc/podmon:nightly
+          imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
             # Allowed values: Any valid and free port (string)
