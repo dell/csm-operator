@@ -172,7 +172,7 @@ spec:
             - "--default-fstype=ext4"
             - "--extra-create-metadata"
             - "--feature-gates=Topology=true"
-            - "--enable-capacity=false"
+            - "--enable-capacity=true"
             - "--capacity-ownerref-level=2"
             - "--capacity-poll-interval=5m"
           env:

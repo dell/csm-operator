@@ -61,6 +61,13 @@ spec:
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
+
+      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+      # Configure only when the storageCapacity is set as "true"
+      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+      #- name: provisioner
+      #  args: ["--capacity-poll-interval=5m"]
+
     controller:
       envs:
         # X_CSI_NFS_ACLS: enables setting permissions on NFS mount directory
@@ -157,15 +164,16 @@ spec:
       components:
         - name: podmon-controller
           args:
-            - "--csisock=unix:/var/run/csi/csi.sock"
             - "--labelvalue=csi-powerstore"
             - "--arrayConnectivityPollRate=60"
-            - "--driverPath=csi-powerstore.dellemc.com"
-            - "--mode=controller"
             - "--skipArrayConnectionValidation=false"
-            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--mode=controller"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
@@ -174,12 +182,13 @@ spec:
             - name: "X_CSI_PODMON_API_PORT"
               value: "8083"
           args:
-            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
             - "--labelvalue=csi-powerstore"
             - "--arrayConnectivityPollRate=60"
-            - "--driverPath=csi-powerstore.dellemc.com"
-            - "--mode=node"
             - "--leaderelection=false"
-            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
+            - "--mode=node"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powerstore.dellemc.com"

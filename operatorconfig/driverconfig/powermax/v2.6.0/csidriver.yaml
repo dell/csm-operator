@@ -1,5 +1,3 @@
-#
-#
 # Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-#
-this snfoiasga
- is
-
- 843*&(*(% invalid YAml
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+    name: csi-powermax.dellemc.com
+spec:
+    attachRequired: true
+    podInfoOnMount: true
+    fsGroupPolicy: ReadWriteOnceWithFSType
+    storageCapacity: false
+    volumeLifecycleModes:
+        - Persistent

@@ -1,5 +1,3 @@
-#
-#
 # Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-#
-
-apiVersion: storage.k8s.io/v1
-kind: CSIDriver
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: csi-powerstore.dellemc.com
-spec:
-  storageCapacity: false
-  podInfoOnMount: true
-  fsGroupPolicy: ReadWriteOnceWithFSType
-  volumeLifecycleModes:
-    - Persistent
-    - Ephemeral
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: <DriverDefaultReleaseNamespace>
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: "debug"
+    CSI_LOG_FORMAT: "JSON"
