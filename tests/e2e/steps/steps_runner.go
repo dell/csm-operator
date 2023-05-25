@@ -66,6 +66,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
 	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
 	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
+	//Configure authorization-proxy-server for [powerflex]
+	runner.addStep(`^Configure authorization-proxy-server for \[([^"]*)\]$`, step.configureAuthorizationProxyServer)
 
 }
 

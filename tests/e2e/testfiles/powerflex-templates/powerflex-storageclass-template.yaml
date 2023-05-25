@@ -8,7 +8,7 @@ provisioner: csi-vxflexos.dellemc.com
 reclaimPolicy: Delete
 allowVolumeExpansion: true
 parameters:
-  storagepool: pool1
+  storagepool: REPLACE_POOL
   systemID: REPLACE_SYSTEMID 
   csi.storage.k8s.io/fstype: ext4
 volumeBindingMode: WaitForFirstConsumer
