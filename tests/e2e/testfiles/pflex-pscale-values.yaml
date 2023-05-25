@@ -17,7 +17,8 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Uninstall PowerScale Driver"
   paths:
@@ -53,7 +54,8 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Uninstall PowerFlex Driver"
   paths:
