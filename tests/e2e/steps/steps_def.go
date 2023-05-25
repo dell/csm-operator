@@ -877,7 +877,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 		driverNamespace = ""
 	)
 
-	//by default, use set defined in env file 
+	//by default, use set defined in env file
 	endpointvar := "END_POINT"
 	systemIdvar := "SYSTEM_ID"
 	uservar := "STORAGE_USER"
@@ -885,7 +885,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 	poolvar := "STORAGE_POOL"
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
-	// this section is for powerflex, other drivers can add their sections as required. 
+	// this section is for powerflex, other drivers can add their sections as required.
 	if driver == "powerflex" {
 		endpointvar = "PFLEX_ENDPOINT"
 		systemIdvar = "PFLEX_SYSTEMID"
