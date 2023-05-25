@@ -61,7 +61,32 @@ Dell Container Storage Modules Operator has been tested and qualified with
     * OpenShift Clusters 4.11, 4.12 with RHEL 8.x & RHCOS worker nodes
 
 ## Installation
-To install Dell Container Storage Modules Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
+
+## Install Operator (both OLM and Non OLM) in dev mode
+  1. Clone the repo: `git clone https://github.com/dell/csm-operator.git` 
+  2. Navigate one level inside the cloned repo: `cd csm-operator`
+  3. Execute `make install` to install the CRDs
+  4. Execute `make run` to have the operator running.
+  5. Install any of the operands (CSI Driver) using another session 
+
+NOTE: Closing the session where operator is running will stop the operator.
+
+## Install Operator using scripts
+
+### Operator install on a cluster without OLM 
+For Non OLM based install of Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/#operator-installation-on-a-cluster-without-olm/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/#operator-installation-on-a-cluster-without-olm/)
+ 
+To uninstall the Operator, execute `bash scripts/uninstall.sh`
+
+### Operator install on a cluster with OLM 
+  NOTE: Index image or Catalog image should be used for OLM based install of Operator. This mode of install is used only for internal testing purposes as the bundle and index/catalog images are not posted in Dockerhub. 
+  1. Clone the repo: `git clone https://github.com/dell/csm-operator.git` 
+  2. Navigate one level inside the cloned repo: `cd csm-operator`
+  3. Update the image specified in `deploy/olm/operator_community.yaml` to the required image.
+  4. Execute `bash scripts/install_olm.sh` to install the operator.
+ 
+  To uninstall the Operator, execute `bash scripts/uninstall_olm.sh`
+
 
 ## Install CSI Drivers and CSM Modules
 To install CSI drivers and CSM modules using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
