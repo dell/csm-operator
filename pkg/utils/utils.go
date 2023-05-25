@@ -271,7 +271,8 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 				sRef := old.ValueFrom.SecretKeyRef
 				if sRef != nil {
 					secret := &acorev1.SecretKeySelectorApplyConfiguration{
-						Key: sRef.Key,
+						Key:      sRef.Key,
+						Optional: sRef.Optional,
 					}
 					secret.WithName(*sRef.Name)
 					e = acorev1.EnvVarApplyConfiguration{
@@ -868,7 +869,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 			}
 
 			for _, clusterID := range clusterIDs {
-				/*Hack: skip-replication-cluster-check - skips check for for csm_controller unit test
+				/*Hack: skip-replication-cluster-check - skips check for csm_controller unit test
 				self - skips check for stretched cluster*/
 				if clusterID == "skip-replication-cluster-check" || clusterID == "self" {
 					return replicaEnabled, clusterClients, nil

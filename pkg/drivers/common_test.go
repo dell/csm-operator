@@ -191,6 +191,171 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	return res
 }
 
+func csmWithPowermax(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", version)
+
+	// Add FSGroupPolicy
+	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "ReadWriteOnceWithFSType"
+
+	// Add DNS Policy for GetNode test
+	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
+
+	// Add image name
+	res.Spec.Driver.Common.Image = "thisIsAnImage"
+
+	// Add pstore driver version
+	res.Spec.Driver.ConfigVersion = version
+
+	// Add pstore driver type
+	res.Spec.Driver.CSIDriverType = driver
+
+	// Add NodeSelector to node and controller
+	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+
+	// Add common envs
+	commonEnvs := getPmaxCommonEnvs()
+	res.Spec.Driver.Common.Envs = commonEnvs
+
+	// Add node fields specific to powermax
+	enableChap := corev1.EnvVar{Name: "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP", Value: "true"}
+	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
+	nodeTopology := corev1.EnvVar{Name: "X_CSI_TOPOLOGY_CONTROL_ENABLED", Value: "true"}
+	res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, nodeTopology}
+
+	// Add controller fields specific to powermax
+	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
+
+	// Add CSI Driver specific fields
+	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+
+	// Add reverseproxy module
+	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
+	res.Spec.Modules = []csmv1.Module{revproxy}
+	return res
+}
+
+func getPmaxCommonEnvs() []corev1.EnvVar {
+	return []corev1.EnvVar{
+		{
+			Name:  "X_CSI_MANAGED_ARRAYS",
+			Value: "00000000001",
+		},
+		{
+			Name:  "X_CSI_POWERMAX_ENDPOINT",
+			Value: "hhtps:/u4p.123:8443",
+		},
+		{
+			Name:  "X_CSI_K8S_CLUSTER_PREFIX",
+			Value: "TST",
+		},
+		{
+			Name:  "X_CSI_POWERMAX_DEBUG",
+			Value: "false",
+		},
+		{
+			Name:  "X_CSI_POWERMAX_PORTGROUPS",
+			Value: "pg",
+		},
+		{
+			Name:  "X_CSI_TRANSPORT_PROTOCOL",
+			Value: "",
+		},
+		{
+			Name:  "X_CSI_VSPHERE_ENABLED",
+			Value: "false",
+		},
+		{
+			Name:  "X_CSI_VSPHERE_PORTGROUP",
+			Value: "vpg",
+		},
+		{
+			Name:  "X_CSI_VSPHERE_HOSTNAME",
+			Value: "vHN",
+		},
+		{
+			Name:  "X_CSI_VCENTER_HOST",
+			Value: "vH",
+		},
+		{
+			Name:  "X_CSI_VSPHERE_ENABLED",
+			Value: "false",
+		},
+		{
+			Name:  "X_CSI_IG_MODIFY_HOSTNAME",
+			Value: "false",
+		},
+		{
+			Name:  "X_CSI_IG_NODENAME_TEMPLATE",
+			Value: "",
+		},
+	}
+}
+
+func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add FSGroupPolicy
+	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+
+	// Add DNS Policy for GetNode test
+	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
+
+	// Add image name
+	res.Spec.Driver.Common.Image = "thisIsAnImage"
+
+	// Add pscale driver version
+	res.Spec.Driver.ConfigVersion = version
+
+	// Add pscale driver type
+	res.Spec.Driver.CSIDriverType = driver
+
+	// Add NodeSelector to node and controller
+	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+
+	// Add node name prefix to cover some code in GetNode
+	nodeNamePrefix := corev1.EnvVar{Name: "X_CSI_POWERSTORE_NODE_NAME_PREFIX"}
+
+	// Add FC port filter
+	fcFilterPath := corev1.EnvVar{Name: "X_CSI_FC_PORTS_FILTER_FILE_PATH"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{nodeNamePrefix, fcFilterPath}
+
+	// Add environment variable
+	csiLogLevel := corev1.EnvVar{Name: "CSI_LOG_LEVEL", Value: "debug"}
+
+	res.Spec.Driver.Node.Envs = []corev1.EnvVar{csiLogLevel}
+
+	// Add node fields specific to powerstore
+	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
+	res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor}
+
+	// Add controller fields specific
+	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
+
+	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+
+	// Add sidecars to trigger code in controller
+	sideCarObjEnabledNil := csmv1.ContainerTemplate{
+		Name:    "driver",
+		Enabled: nil,
+		Args:    []string{"--v=5"},
+	}
+	sideCarObjEnabledFalse := csmv1.ContainerTemplate{
+		Name:    "resizer",
+		Enabled: &falseBool,
+		Args:    []string{"--v=5"},
+	}
+	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
+		Name:    "provisioner",
+		Enabled: &trueBool,
+		Args:    []string{"--volume-name-prefix=k8s", "--enable-capacity=true", "--capacity-ownerref-level=2"},
+	}
+	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
+	res.Spec.Driver.SideCars = sideCarList
+	return res
+}
+
 func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
@@ -225,9 +390,6 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 		envVar6 = corev1.EnvVar{Name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
 	}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3, envVar4, envVar5, envVar6, envVar7}
-
-	// Add node name prefix to cover some code in GetNode
-	// nodeNamePrefix := corev1.EnvVar{Name: "X_CSI_UNITY_NODENAME_PREFIX"}
 
 	// Add node fields specific to unity
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}

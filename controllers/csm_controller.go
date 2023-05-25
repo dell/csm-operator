@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -357,18 +358,25 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 
 	csm := new(csmv1.ContainerStorageModule)
 	err := r.Client.Get(ctx, namespacedName, csm)
+
 	if err != nil {
 		log.Error("deployment get csm", "error", err.Error())
 	}
 
 	newStatus := csm.GetCSMStatus()
+
+	// Updating controller status manually as controller runtime API is not updating csm object with latest data
+	// TODO: Can remove this once the controller runtime repo has a fix for updating the object passed
+	newStatus.ControllerStatus.Available = strconv.Itoa(int(available))
+	newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
+	newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
+
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
 	if err != nil {
 		log.Debugw("deployment status ", "pods", err.Error())
 	} else {
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
 	}
-
 }
 
 func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, obj interface{}) {
@@ -613,6 +621,15 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
 		}
 		return nil
+	}
+
+	//Create/Update Reverseproxy Server
+	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled {
+		log.Infow("Trying Create/Update reverseproxy...")
+		if err := r.reconcileReverseProxy(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+			return fmt.Errorf("failed to deploy reverseproxy proxy server: %v", err)
+		}
+		log.Infow("Create/Update reverseproxy successful...")
 	}
 
 	// Get Driver resources
@@ -903,6 +920,16 @@ func getDriverConfig(ctx context.Context,
 
 }
 
+// reconcileReverseProxy - deploy reverse proxy server
+func (r *ContainerStorageModuleReconciler) reconcileReverseProxy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+	log.Infow("Reconcile reverseproxy proxy")
+	if err := modules.ReverseProxyServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		return fmt.Errorf("unable to reconcile reverse-proxy proxy server: %v", err)
+	}
+	return nil
+}
+
 func removeDriverReplicaCluster(ctx context.Context, cluster utils.ReplicaCluster, driverConfig *DriverConfig) error {
 	log := logger.GetLogger(ctx)
 	var err error
@@ -1031,6 +1058,14 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 			return err
 		}
 	}
+
+	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled {
+		log.Infow("Deleting ReverseProxy")
+		if err := r.reconcileReverseProxy(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -1055,10 +1090,16 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powerstore validation: %v", err)
 		}
+
 	case csmv1.Unity:
 		err := drivers.PrecheckUnity(ctx, cr, operatorConfig, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed unity validation: %v", err)
+		}
+	case csmv1.PowerMax:
+		err := drivers.PrecheckPowerMax(ctx, cr, operatorConfig, r.GetClient())
+		if err != nil {
+			return fmt.Errorf("failed powermax validation: %v", err)
 		}
 	default:
 		for _, m := range cr.Spec.Modules {
@@ -1125,7 +1166,10 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 				if err := modules.ObservabilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed observability validation: %v", err)
 				}
-
+			case csmv1.ReverseProxy:
+				if err := modules.ReverseProxyPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+					return fmt.Errorf("failed reverseproxy validation: %v", err)
+				}
 			default:
 				return fmt.Errorf("unsupported module type %s", m.Name)
 			}

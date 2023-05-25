@@ -70,6 +70,36 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
 			return false, controllerYAML.Deployment, tmpOperatorConfig, customResource
 		},
+		"success - valid Powerscale driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			if err != nil {
+				panic(err)
+			}
+			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerScale))
+			if err != nil {
+				panic(err)
+			}
+			return true, *newDeployment, operatorConfig, customResource
+		},
+		"success - valid Powerflex driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerFlex)
+			if err != nil {
+				panic(err)
+			}
+			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerFlexName))
+			if err != nil {
+				panic(err)
+			}
+			return true, *newDeployment, operatorConfig, customResource
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -78,6 +108,10 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if success {
 				assert.NoError(t, err)
 				if newDeployment == nil {
+					panic(err)
+				}
+				err = CheckApplyContainersResiliency(dp.Spec.Template.Spec.Containers, cr)
+				if err != nil {
 					panic(err)
 				}
 			} else {

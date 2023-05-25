@@ -92,7 +92,8 @@ metadata:
                 "tolerations": null
               },
               "csiDriverSpec": {
-                "fSGroupPolicy": "ReadWriteOnceWithFSType"
+                "fSGroupPolicy": "ReadWriteOnceWithFSType",
+                "storageCapacity": false
               },
               "csiDriverType": "isilon",
               "dnsPolicy": "ClusterFirstWithHostNet",
@@ -386,18 +387,14 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "test-unity",
-            "namespace": "test-unity"
+            "name": "unity",
+            "namespace": "unity"
           },
           "spec": {
             "driver": {
-              "authSecret": "test-unity-creds",
+              "authSecret": "unity-creds",
               "common": {
                 "envs": [
-                  {
-                    "name": "X_CSI_UNITY_NODENAME_PREFIX",
-                    "value": "csi-node"
-                  },
                   {
                     "name": "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS",
                     "value": "false"
