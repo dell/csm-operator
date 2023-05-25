@@ -73,32 +73,49 @@
 - scenario: "Install PowerFlex Driver (With Authorization)"
   paths:
     - "testfiles/storage_csm_powerflex_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
   modules:
     - "authorization"
+    - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create [authorization-proxy-server] prerequisites from CR [2]"
+    - "Apply custom resource [2]"
+    - "Validate [authorization-proxy-server] module from CR [2] is installed"
+    - "Configure authorization-proxy-server for [powerflex]"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Run custom test"
-    # Last four steps perform Clean Up
+    # Last steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Delete custom resource [2]"
+    - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+    run:
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization"
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
   modules:
     - "authorization"
+    - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create [authorization-proxy-server] prerequisites from CR [2]"
+    - "Apply custom resource [2]"
+    - "Validate [authorization-proxy-server] module from CR [2] is installed"
+    - "Configure authorization-proxy-server for [powerflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
@@ -111,22 +128,32 @@
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [authorization] module from CR [1] is installed"
     - "Run custom test"
-    # Last four steps perform Clean Up
+    # Last  steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Delete custom resource [2]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-
+    run:
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+ 
 - scenario: Install PowerFlex Driver(With Authorization), Disable Authorization module"
   paths:
     - "testfiles/storage_csm_powerflex_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
   modules:
     - "authorization"
+    - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create [authorization-proxy-server] prerequisites from CR [2]"
+    - "Apply custom resource [2]"
+    - "Validate [authorization-proxy-server] module from CR [2] is installed"
+    - "Configure authorization-proxy-server for [powerflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
@@ -140,14 +167,17 @@
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [authorization] module from CR [1] is not installed"
     - "Run custom test"
-    # Last four steps perform Clean Up
+    # Last steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Delete custom resource [2]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
   customTest:
     name: Cert CSI
-    run: ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+    run:
+      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver"
   paths:
