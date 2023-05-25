@@ -201,7 +201,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.4.0"
+			replica.ConfigVersion = "v1.5.0"
 
 			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
 			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
@@ -225,7 +225,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.4.0"
+			replica.ConfigVersion = "v1.5.0"
 
 			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
 			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
@@ -249,7 +249,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.4.0"
+			replica.ConfigVersion = "v1.5.0"
 
 			for i, component := range tmpCR.Spec.Modules[0].Components {
 				if component.Name == utils.ReplicationControllerManager {
@@ -278,7 +278,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.4.0"
+			replica.ConfigVersion = "v1.5.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
