@@ -27,8 +27,6 @@ spec:
     - server auth
     - client auth
   dnsNames:
-  - karavi-auth
-  - karavi-auth.authorization.svc.kubernetes.local
   - csm-authorization.com
   - authorization-ingress-nginx-controller.authorization.svc.cluster.local
   issuerRef:

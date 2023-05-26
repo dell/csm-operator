@@ -62,6 +62,13 @@ spec:
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
+
+      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+      # Configure only when the storageCapacity is set as "true"
+      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+      #- name: provisioner
+      #  args: ["--capacity-poll-interval=5m"]
+
     controller:
       envs:
         # X_CSI_NFS_ACLS: enables setting permissions on NFS mount directory
