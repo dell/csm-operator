@@ -1,43 +1,62 @@
 # List of E2E Tests Scenarios
 - scenario: "Install PowerScale Driver(Standalone)"
-  paths:
-    - "testfiles/storage_csm_powerscale.yaml"
+  CRs:
+    powerscale: "testfiles/storage_csm_powerscale.yaml"
+  configFiles:
+    storageclass: "testfiles/powerscale-templates/powerscale-storageclass-template.yaml"
+    secret: "testfiles/powerscale-templates/powerscale-secret-template.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds] in namespace [test-isilon] for [pscale]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Create namespace [test-isilon]"
+    - "Create storageclass with name [op-e2e-isilon] from template [storageclass] for [pscale]"
+    - "Create secret from template [secret] named [test-isilon-creds] in namespace [test-isilon] for [pscale]"
+    - "Apply custom resource [powerscale]"
+    - "Validate custom resource [powerscale]"
+    - "Validate [powerscale] driver from CR [powerscale] is installed"
     - "Run custom test"
     # Last three steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Enable forceRemoveDriver on CR [powerscale]"
+    - "Delete custom resource [powerscale]"
+    - "Restore template [secret] for [pscale]"
+    - "Restore template [storageclass] for [pscale]"
+    - "Delete namespace [test-isilon]"
   customTest:
     name: Cert CSI
     run: 
       - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver with first alternate sample file"
-  paths: 
-    - "testfiles/storage_csm_powerscale_alt_vals_1.yaml"
+  CRs: 
+    powerscale: "testfiles/storage_csm_powerscale_alt_vals_1.yaml"
+  configFiles:
+    storageclass: "testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml"
+    secret: "testfiles/powerscale-templates/powerscale-secret-template.yaml"
+    cert0: "testfiles/powerscale-cert-secret-0.yaml"
+    cert1: "testfiles/powerscale-cert-secret-1.yaml"
+    cert2: "testfiles/powerscale-cert-secret-2.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [powerscale-altifs] and template [testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Create namespace [dell]"
+    - "Create storageclass with name [powerscale-altifs] from template [storageclass] for [pscale]"
+    - "Create secret from template [secret] named [csm-creds] in namespace [dell] for [pscale]"
+    - "Apply yaml file [cert0]"
+    - "Apply yaml file [cert1]"
+    - "Apply yaml file [cert2]"
+    - "Apply custom resource [powerscale]"
+    - "Validate custom resource [powerscale]"
+    - "Validate [powerscale] driver from CR [powerscale] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml] for [pscale]"
+    - "Enable forceRemoveDriver on CR [powerscale]"
+    - "Delete custom resource [powerscale]"
+    - "Delete yaml file [cert0]"
+    - "Delete yaml file [cert1]"
+    - "Delete yaml file [cert2]"
+    - "Restore template [secret] for [pscale]"
+    - "Restore template [storageclass] for [pscale]"
+    - "Delete namespace [dell]"
   customTest:
     name: Cert CSI and check_parameters.sh
     run: 
@@ -45,22 +64,27 @@
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_1_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with second alternate sample file"
-  paths: 
-    - "testfiles/storage_csm_powerscale_alt_vals_2.yaml"
+  CRs: 
+    powerscale: "testfiles/storage_csm_powerscale_alt_vals_2.yaml"
+  configFiles:
+    storageclass: "testfiles/powerscale-templates/powerscale-storageclass-template.yaml"
+    secret: "testfiles/powerscale-templates/powerscale-secret-template.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Create namespace [dell]"
+    - "Create storageclass with name [op-e2e-isilon] from template [storageclass] for [pscale]"
+    - "Create secret from template [secret] named [csm-creds] in namespace [dell] for [pscale]"
+    - "Apply custom resource [powerscale]"
+    - "Validate custom resource [powerscale]"
+    - "Validate [powerscale] driver from CR [powerscale] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Enable forceRemoveDriver on CR [powerscale]"
+    - "Delete custom resource [powerscale]"
+    - "Restore template [secret] for [pscale]"
+    - "Restore template [storageclass] for [pscale]"
+    - "Delete namespace [dell]"
   customTest:
     name: Cert CSI and check_parameters.sh
     run: 
@@ -68,24 +92,29 @@
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_2_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with third alternate sample file"
-  paths: 
-    - "testfiles/storage_csm_powerscale_alt_vals_3.yaml"
+  CRs: 
+    powerscale: "testfiles/storage_csm_powerscale_alt_vals_3.yaml"
+  configFiles:
+    storageclass: "testfiles/powerscale-templates/powerscale-storageclass-template.yaml"
+    secret: "testfiles/powerscale-templates/powerscale-secret-template.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set [control-plane] node label"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Create namespace [dell]"
+    - "Create storageclass with name [op-e2e-isilon] from template [storageclass] for [pscale]"
+    - "Create secret from template [secret] named [csm-creds] in namespace [dell] for [pscale]"
+    - "Apply custom resource [powerscale]"
+    - "Validate custom resource [powerscale]"
+    - "Validate [powerscale] driver from CR [powerscale] is installed"
     - "Run custom test"
     # Last four steps perform Clean Up. Need to reinstall pscale with forceRemoveDriver to fully clean delete
     - "Remove [control-plane] node label"
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Enable forceRemoveDriver on CR [powerscale]"
+    - "Delete custom resource [powerscale]"
+    - "Restore template [secret] for [pscale]"
+    - "Restore template [storageclass] for [pscale]"
+    - "Delete namespace [dell]"
   customTest:
     name: Cert CSI and check_parameters.sh
     run: 
@@ -93,22 +122,27 @@
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_3_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with health monitor"
-  paths: 
-    - "testfiles/storage_csm_powerscale_health_monitor.yaml"
+  CRs: 
+    powerscale: "testfiles/storage_csm_powerscale_health_monitor.yaml"
+  configFiles:
+    storageclass: "testfiles/powerscale-templates/powerscale-storageclass-template.yaml"
+    secret: "testfiles/powerscale-templates/powerscale-secret-template.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Create namespace [dell]"
+    - "Create storageclass with name [op-e2e-isilon] from template [storageclass] for [pscale]"
+    - "Create secret from template [secret] named [csm-creds] in namespace [dell] for [pscale]"
+    - "Apply custom resource [powerscale]"
+    - "Validate custom resource [powerscale]"
+    - "Validate [powerscale] driver from CR [powerscale] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Enable forceRemoveDriver on CR [powerscale]"
+    - "Delete custom resource [powerscale]"
+    - "Restore template [secret] for [pscale]"
+    - "Restore template [storageclass] for [pscale]"
+    - "Delete namespace [dell]"
   customTest:
     name: Cert CSI and check_parameters.sh
     run: 
@@ -116,32 +150,40 @@
       - /bin/bash check_parameters.sh testfiles/powerscale_health_monitor_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver(With Authorization)"
-  paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
-    - "testfiles/storage_csm_powerscale_auth.yaml"
+  CRs:
+    auth: "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    pscale: "testfiles/storage_csm_powerscale_auth.yaml"
+  configFiles:
+    sc: "testfiles/powerscale-templates/powerscale-storageclass-template.yaml"
+    pscaleAuthSecret: "testfiles/powerscale-templates/powerscale-auth-secret-template.yaml"
+    karaviAuthSecret: "testfiles/powerscale-templates/karavi-authorization-config.json"
+    proxyCert: "testfiles/authorization-templates/rootCertificate.pem"
   modules:
     - "authorizationproxyserver"
     - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [test-isilon-creds-auth] in namespace [test-isilon] for [pscaleAuth]"
-    - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [test-isilon] for [pscaleAuthSidecar]"
-    - "Set up secret with template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
-    - "Apply custom resource [2]"
-    - "Validate custom resource [2]"
-    - "Validate [powerscale] driver from CR [2] is installed"
-    - "Validate [authorization] module from CR [2] is installed"
+    - "Create namespace [test-isilon]"
+    - "Create [authorization-proxy-server] prerequisites from CR [auth]"
+    - "Apply custom resource [auth]"
+    - "Validate [authorization-proxy-server] module from CR [auth] is installed"
+    - "Create storageclass with name [op-e2e-isilon] from template [sc] for [pscale]"
+    - "Create secret from template [pscaleAuthSecret] named [test-isilon-creds-auth] in namespace [test-isilon] for [pscaleAuth]"
+    - "Create secret from template [karaviAuthSecret] named [karavi-authorization-config] in namespace [test-isilon] for [pscaleAuthSidecar]"
+    - "Create secret from template [proxyCert] named [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
+    - "Apply custom resource [pscale]"
+    - "Validate custom resource [pscale]"
+    - "Validate [powerscale] driver from CR [pscale] is installed"
+    - "Validate [authorization] module from CR [pscale] is installed"
     - "Run custom test"
     # Last six steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [2]"
-    - "Delete custom resource [2]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
-    - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
+    - "Enable forceRemoveDriver on CR [pscale]"
+    - "Delete custom resource [pscale]"
+    - "Delete custom resource [auth]"
+    - "Restore template [sc] for [pscale]"
+    - "Restore template [pscaleAuthSecret] for [pscaleAuth]"
+    - "Restore template [karaviAuthSecret] for [pscaleAuthSidecar]"
+    - "Delete namespace [test-isilon]"
   customTest:
     name: Cert CSI
     run: 
@@ -160,15 +202,15 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds] in namespace [test-isilon] for [pscale]"
+    - "Create secret from template [testfiles/powerscale-templates/powerscale-secret-template.yaml] named [test-isilon-creds] in namespace [test-isilon] for [pscale]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is not installed"
     - "Enable [authorization] module from CR [2]"
     - "Set secret for driver from CR [2] to [test-isilon-creds-auth]"
-    - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [test-isilon] for [pscaleAuthSidecar]"
-    - "Set up secret with template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
+    - "Create secret from template [testfiles/powerscale-templates/karavi-authorization-config.json] named [karavi-authorization-config] in namespace [test-isilon] for [pscaleAuthSidecar]"
+    - "Create secret from template [testfiles/authorization-templates/rootCertificate.pem] named [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Run custom test"
@@ -232,7 +274,7 @@
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds] in namespace [test-isilon] for [pscale]"
+    - "Create secret from template [testfiles/powerscale-templates/powerscale-secret-template.yaml] named [test-isilon-creds] in namespace [test-isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -254,9 +296,9 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [test-isilon-creds-auth] in namespace [test-isilon] for [pscaleAuth]"
-    - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [test-isilon] for [pscaleAuthSidecar]"
-    - "Set up secret with template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
+    - "Create secret from template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] named [test-isilon-creds-auth] in namespace [test-isilon] for [pscaleAuth]"
+    - "Create secret from template [testfiles/powerscale-templates/karavi-authorization-config.json] named [karavi-authorization-config] in namespace [test-isilon] for [pscaleAuthSidecar]"
+    - "Create secret from template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
@@ -380,7 +422,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds] in namespace [test-isilon] for [pscale]"
+    - "Create secret from template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds] in namespace [test-isilon] for [pscale]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
@@ -388,8 +430,8 @@
     - "Validate [observability] module from CR [2] is not installed"
     - "Enable [authorization] module from CR [2]"
     - "Set secret for driver from CR [2] to [test-isilon-creds-auth]"
-    - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [test-isilon] for [pscaleAuthSidecar]"
-    - "Set up secret with template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
+    - "Create secret from template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [test-isilon] for [pscaleAuthSidecar]"
+    - "Create secret from template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [test-isilon] for [authSidecarCert]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is not installed"
@@ -463,7 +505,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -485,7 +527,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -508,7 +550,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -532,7 +574,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set [control-plane] node label"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -556,7 +598,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -579,7 +621,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -601,7 +643,7 @@
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -618,7 +660,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -641,13 +683,13 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powersflex] driver from CR [1] is installed"
     - "Validate [authorization] module from CR [1] is not installed"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
     - "Enable [authorization] module from CR [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [authorization] module from CR [1] is installed"
@@ -670,7 +712,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -678,7 +720,7 @@
     - "Validate [authorization] module from CR [1] is installed"
     - "Run custom test"
     - "Disable [authorization] module from CR [1]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [authorization] module from CR [1] is not installed"
     - "Run custom test"
@@ -1039,8 +1081,8 @@
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds] in namespace [test-isilon] for [pscale]"
+    - "Create secret from template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "Create secret from template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds] in namespace [test-isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Apply custom resource [2]"
     - "Validate custom resource [1]"
