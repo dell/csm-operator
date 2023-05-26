@@ -1,5 +1,5 @@
 name: dell-csi-replicator
-image: dellemc/dell-csi-replicator:v1.2.0
+image: dellemc/dell-csi-replicator:v1.5.0
 imagePullPolicy: IfNotPresent
 args:
   - "--csi-address=$(ADDRESS)"
