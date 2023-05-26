@@ -130,7 +130,8 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, driverType csmv1.DriverType
 	return ""
 }
 
-func applyModuleToSideCar(component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration) {
+// Apply resiliency module from the manifest file to the podmon sidecar
+func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration) {
 	if component.Image != "" {
 		image := string(component.Image)
 		if container.Image != nil {
@@ -152,10 +153,10 @@ func applyModuleToSideCar(component csmv1.ContainerTemplate, container *acorev1.
 func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration) {
 	for _, component := range m.Components {
 		if component.Name == utils.PodmonControllerComponent && mode == "controller" {
-			applyModuleToSideCar(component, container)
+			modifyPodmon(component, container)
 		}
 		if component.Name == utils.PodmonNodeComponent && mode == "node" {
-			applyModuleToSideCar(component, container)
+			modifyPodmon(component, container)
 		}
 	}
 }
