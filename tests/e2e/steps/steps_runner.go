@@ -43,32 +43,38 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 		clientSet:  clientSet,
 	}
 	runner.addStep(`^Given an environment with k8s or openshift, and CSM operator installed$`, step.validateTestEnvironment)
-	runner.addStep(`^Apply custom resource \[(\d+)\]$`, step.applyCustomResource)
-	runner.addStep(`^Validate custom resource \[(\d+)\]$`, step.validateCustomResourceStatus)
-	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
-	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is not installed$`, step.validateDriverNotInstalled)
+	runner.addStep(`^Apply custom resource \[([^"]*)\]$`, step.applyCustomResource)
+	runner.addStep(`^Validate custom resource \[([^"]*)\]$`, step.validateCustomResourceStatus)
+	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[([^"]*)\] is installed$`, step.validateDriverInstalled)
+	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[([^"]*)\] is not installed$`, step.validateDriverNotInstalled)
 
 	runner.addStep(`^Run custom test$`, step.runCustomTest)
-	runner.addStep(`^Enable forceRemoveDriver on CR \[(\d+)\]$`, step.enableForceRemoveDriver)
-	runner.addStep(`^Delete custom resource \[(\d+)\]$`, step.deleteCustomResource)
+	runner.addStep(`^Enable forceRemoveDriver on CR \[([^"]*)\]$`, step.enableForceRemoveDriver)
+	runner.addStep(`^Delete custom resource \[([^"]*)\]$`, step.deleteCustomResource)
 
-	runner.addStep(`^Validate \[([^"]*)\] module from CR \[(\d+)\] is installed$`, step.validateModuleInstalled)
-	runner.addStep(`^Validate \[([^"]*)\] module from CR \[(\d+)\] is not installed$`, step.validateModuleNotInstalled)
+	runner.addStep(`^Validate \[([^"]*)\] module from CR \[([^"]*)\] is installed$`, step.validateModuleInstalled)
+	runner.addStep(`^Validate \[([^"]*)\] module from CR \[([^"]*)\] is not installed$`, step.validateModuleNotInstalled)
 
-	runner.addStep(`^Enable \[([^"]*)\] module from CR \[(\d+)\]$`, step.enableModule)
-	runner.addStep(`^Disable \[([^"]*)\] module from CR \[(\d+)\]$`, step.disableModule)
+	runner.addStep(`^Enable \[([^"]*)\] module from CR \[([^"]*)\]$`, step.enableModule)
+	runner.addStep(`^Disable \[([^"]*)\] module from CR \[([^"]*)\]$`, step.disableModule)
 
 	runner.addStep(`^Set \[([^"]*)\] node label$`, step.setNodeLabel)
 	runner.addStep(`^Remove \[([^"]*)\] node label$`, step.removeNodeLabel)
 
-	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
-	runner.addStep(`^Set up secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
-	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
-	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
-	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
+	runner.addStep(`^Set secret for driver from CR \[([^"]*)\] to \[([^"]*)\]$`, step.setDriverSecret)
+	runner.addStep(`^Create secret from template \[([^"]*)\] named \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]$`, step.setUpSecret)
+	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]$`, step.restoreTemplate)
+	runner.addStep(`^Create storageclass with name \[([^"]*)\] from template \[([^"]*)\] for \[([^"]*)\]$`, step.setUpStorageClass)
+	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[([^"]*)\]$`, step.createPrereqs)
+
+	//runner.addStep(`^Create empty cert secret named \[([^"]*)\] in namespace \[([^"]*)\]$`, step.createEmptyCert)
+	//runner.addStep(`^Delete cert secret named \[([^"]*)\] from namespace \[([^"]*)\]$`, step.deleteCert)
 
 	runner.addStep(`^Create namespace \[([^"]*)\]$`, step.createNamespace)
 	runner.addStep(`^Delete namespace \[([^"]*)\]$`, step.deleteNamespace)
+
+	runner.addStep(`^Apply yaml file \[([^"]*)\]$`, step.applyYamlFile)
+	runner.addStep(`^Delete yaml file \[([^"]*)\]$`, step.deleteYamlFile)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {

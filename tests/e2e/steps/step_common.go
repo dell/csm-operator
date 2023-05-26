@@ -46,17 +46,19 @@ type CustomTest struct {
 
 // Scenario -
 type Scenario struct {
-	Scenario   string     `json:"scenario" yaml:"scenario"`
-	Paths      []string   `json:"paths" yaml:"paths"`
-	Modules    []string   `json:"modules" yaml:"modules"`
-	Steps      []string   `json:"steps" yaml:"steps"`
-	CustomTest CustomTest `json:"customTest,omitempty" yaml:"customTest"`
+	Scenario    string            `json:"scenario" yaml:"scenario"`
+	CRs         map[string]string `json:"crs" yaml:"crs"`
+	ConfigFiles map[string]string `json:"configFiles" yaml:"configFiles"`
+	Modules     []string          `json:"modules" yaml:"modules"`
+	Steps       []string          `json:"steps" yaml:"steps"`
+	CustomTest  CustomTest        `json:"customTest,omitempty" yaml:"customTest"`
 }
 
 // Resource -
 type Resource struct {
 	Scenario       Scenario
-	CustomResource []csmv1.ContainerStorageModule
+	CustomResource map[string]csmv1.ContainerStorageModule
+	ConfigFiles    map[string]string
 }
 
 // Step -
