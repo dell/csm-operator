@@ -31,6 +31,7 @@ import (
 
 	t1 "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -293,20 +294,32 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
 	_, merr := calculateState(ctx, instance, r, newStatus)
-	csm := new(csmv1.ContainerStorageModule)
-	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,
-		Namespace: instance.GetNamespace()}, csm)
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		log := logger.GetLogger(ctx)
+
+		csm := new(csmv1.ContainerStorageModule)
+		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,
+			Namespace: instance.GetNamespace()}, csm)
+		if err != nil {
+			return err
+		}
+
+		log.Infow("instance - new controller Status", "desired", instance.Status.ControllerStatus.Desired)
+		log.Infow("instance - new controller Status", "Available", instance.Status.ControllerStatus.Available)
+		log.Infow("instance - new controller Status", "numberUnavailable", instance.Status.ControllerStatus.Failed)
+		log.Infow("instance - new controller Status", "State", instance.Status.State)
+
+		csm.Status = instance.Status
+		err = r.GetClient().Status().Update(ctx, csm)
+		return err
+	})
 	if err != nil {
+		// May be conflict if max retries were hit, or may be something unrelated
+		// like permissions or a network error
+		log.Error(err, " Failed to update CR status")
 		return err
 	}
-
-	log.Infow("instance - new controller Status", "desired", instance.Status.ControllerStatus.Desired)
-	log.Infow("instance - new controller Status", "Available", instance.Status.ControllerStatus.Available)
-	log.Infow("instance - new controller Status", "numberUnavailable", instance.Status.ControllerStatus.Failed)
-	log.Infow("instance - new controller Status", "State", instance.Status.State)
-
-	csm.Status = instance.Status
-	err = r.GetClient().Status().Update(ctx, csm)
 	if err != nil {
 		log.Error(err, " Failed to update CR status")
 		return err
