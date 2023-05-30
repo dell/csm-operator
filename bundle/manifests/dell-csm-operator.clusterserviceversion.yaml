@@ -392,7 +392,6 @@ metadata:
           },
           "spec": {
             "driver": {
-              "authSecret": "unity-creds",
               "common": {
                 "envs": [
                   {
