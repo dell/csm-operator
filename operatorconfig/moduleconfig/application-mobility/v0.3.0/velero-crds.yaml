@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -107,7 +107,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -628,7 +628,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -810,7 +810,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -892,7 +892,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -988,7 +988,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -1196,7 +1196,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -1389,7 +1389,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -1852,7 +1852,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -2345,7 +2345,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -2431,7 +2431,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: velero
+    component: application-mobility-velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null

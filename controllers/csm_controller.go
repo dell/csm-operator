@@ -116,6 +116,7 @@ var (
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles/finalizers,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=subjectaccessreviews,verbs=create
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles,verbs=get;list;watch;update;create;delete;patch
+// +kubebuilder:rbac:groups="*",resources=*,resourceNames=application-mobility-velero-server,verbs=*
 // +kubebuilder:rbac:groups="monitoring.coreos.com",resources=servicemonitors,verbs=get;create
 // +kubebuilder:rbac:groups="",resources=deployments/finalizers,resourceNames=dell-csm-operator-controller-manager,verbs=update
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csidrivers,verbs=get;list;watch;create;update;delete;patch
@@ -862,7 +863,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 	log := logger.GetLogger(ctx)
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
 		log.Infow("Reconcile Application Mobility Controller Manager")
-		if err := modules.AppMobilityDeployment(ctx, false, op, cr, ctrlClient); err != nil {
+		if err := modules.AppMobilityDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Application Mobility controller Manager: %v", err)
 		}
 	}
@@ -877,9 +878,9 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 	// Appmobility installs velero
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobVeleroComponent) {
 		log.Infow("Reconcile application mobility velero")
-		/*if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile velero for Application Mobility: %v", err)
-		}*/
+		}
 	}
 
 	return nil

@@ -29,11 +29,6 @@ spec:
           - name: "APPLICATION_MOBILITY_LICENSE_NAME"
             value: "license"
 
-          # Namespace for Velero installatino
-          # Default value: application-mobility
-          - name: "VELERO_NAMESPACE"
-            value: "application-mobility"
-
           # Storage-service ingress configuration
           # Default value: velero-restic-credentials
           - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
@@ -46,3 +41,49 @@ spec:
       # Default value: false
       - name: cert-manager
         enabled: true
+      # enabled: Enable/Disable Velero and Restic Services
+      # Allowed values:
+      #   true: enable deployment of cert-manager
+      #   false: disable deployment of cert-manager only if it's already deployed
+      # Default value: false
+      - name: velero
+        #existingSecret: existing_secret_name 
+        image: velero/velero:v1.8.1
+        imagePullPolicy: IfNotPresent
+        enabled: true
+        #use-volume-snapshots: false
+        #cleanUpCRDs: false
+        #deployRestic: false
+        #initContainers:
+        #  - name: dell-custom-velero-plugin
+        #    image: dellemc/csm-application-mobility-velero-plugin:v0.1.0
+        #    volumeMounts:
+        #    - mountPath: /target
+         #     name: plugins
+        # - name: velero-plugin-for-aws
+        #   image: velero/velero-plugin-for-aws:v1.5.0
+        #   volumeMounts:
+        #    - mountPath: /target
+        #      name: plugins  
+        envs:
+          # Backup storage location name
+          # Allowed values: string
+          # Default value: default
+          - name: "BACKUPSTORAGELOCATION_NAME"
+            value: "default"
+
+          # Namespace for Velero installation
+          # Default value: application-mobility
+          - name: "VELERO_NAMESPACE"
+            value: "application-mobility"
+
+          # Based on the objectstore being used , the velero plugin and its configuration may need to change!
+          # GCP and Azure plugins configuration are different. See more details at: https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/README.md
+          # Sample value: aws
+          - name: "CONFIG_PROVIDER"
+            value: "aws"
+
+          # name to be used for secret that will be created to hold object store credentials. Used in conjunction with secretContents
+          # Default value: cloud-creds
+          - name: "CREDENTIAL_NAME"
+            value: "cloud-creds"

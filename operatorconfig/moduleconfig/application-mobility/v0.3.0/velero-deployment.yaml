@@ -1,14 +1,94 @@
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: <BACKUPSTORAGELOCATION_NAME>
+  namespace: <VELERO_NAMESPACE>
+  labels:
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+spec:
+  provider: <PROVIDER>
+  #default: 
+  accessMode: ReadWrite
+  objectStorage:
+    bucket: velero-bucket
+    #prefix: <BUCKET_PREFIX>
+
+    #caCert: <CA_CERT>
+  config: {}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: application-mobility-velero-server
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+subjects:
+  - kind: ServiceAccount
+    namespace: <VELERO_NAMESPACE>
+    name: application-mobility-velero-server-service-account
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: application-mobility-velero-server
+  namespace: <VELERO_NAMESPACE>
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+rules:
+- apiGroups:
+    - "*"
+  resources:
+    - "*"
+  verbs:
+    - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: application-mobility-velero-server
+  namespace: <VELERO_NAMESPACE>
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+subjects:
+  - kind: ServiceAccount
+    namespace: <VELERO_NAMESPACE>
+    name: application-mobility-velero-server-service-account
+roleRef:
+  kind: Role
+  name: application-mobility-velero-server
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: application-mobility-velero-server-service-account
+  namespace: <VELERO_NAMESPACE>
+  annotations:
+  labels:
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: velero
-  namespace: <NAMESPACE>
+  name: application-mobility-velero
+  namespace: <VELERO_NAMESPACE>
   annotations:
   labels:
-    app.kubernetes.io/name: velero
+    app.kubernetes.io/name: application-mobility-velero
     app.kubernetes.io/instance: application-mobility
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    component: velero
+    component: application-mobility-velero
 spec:
   replicas: 1
   strategy:
@@ -16,29 +96,28 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/instance: application-mobility
-      app.kubernetes.io/name: velero
+      app.kubernetes.io/name: application-mobility-velero
   template:
     metadata:
       labels:
-        name: velero
-        app.kubernetes.io/name: velero
+        name: application-mobility-velero
+        app.kubernetes.io/name: application-mobility-velero
         app.kubernetes.io/instance: application-mobility
-        app.kubernetes.io/managed-by: {{ .Release.Service }}
       annotations:
-      <POD_ANNOTATIONS>
-      <METRICS_PODANNOTATIONS>
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8085"
+        prometheus.io/path: "/metrics"
     spec:
-      imagePullSecrets: <PULL_SECRET>
-        - name: <PULL_SCRET_NAME>
+      imagePullSecrets: #<PULL_SECRET>
+        - name: #<PULL_SCRET_NAME>
       restartPolicy: Always
-      serviceAccountName: <SERVICE_ACCOUNT_NAME>
-      priorityClassName: <NODEAGENT_PRIORITYCLASSNAME>
-      terminationGracePeriodSeconds: <TERMINATION_GRACE_PERIOD_SECONDS>
+      serviceAccountName: application-mobility-velero-server-service-account
+      priorityClassName: #<NODEAGENT_PRIORITYCLASSNAME>
+      terminationGracePeriodSeconds: #<TERMINATION_GRACE_PERIOD_SECONDS>
       containers:
-        - name: velero
-          image: <IMAGE_REPOSITORY>@<IMAGE_DIGEST>
-          image: <IMAGE_REPOSITORY>:<IMAGE_TAG>
-          imagePullPolicy: <IMAGE_PULLPOLICY>
+        - name: application-mobility-velero
+          image: <VELERO_IMAGE>
+          imagePullPolicy: <VELERO_IMAGE_PULLPOLICY>
           ports:
             - name: http-monitoring
               containerPort: 8085
@@ -46,57 +125,13 @@ spec:
             - /velero
           args:
             - server
-            ### Flags
-          {{- with .Values.configuration }}
-            - --uploader-type={{ default "restic" .uploaderType }}
-            {{- with .backupSyncPeriod }}
-            - --backup-sync-period={{ . }}
-            {{- with .fsBackupTimeout }}
-            - --fs-backup-timeout={{ . }}
-            {{- with .clientBurst }}
-            - --client-burst={{ . }}
-            {{- with .clientPageSize }}
-            - --client-page-size={{ . }}
-            {{- with .clientQPS }}
-            - --client-qps={{ . }}
-            {{- with .defaultBackupStorageLocation }}
-            - --default-backup-storage-location={{ . }}
-            {{- with .defaultBackupTTL }}
-            - --default-backup-ttl={{ . }}
-            {{- with .defaultVolumeSnapshotLocations }}
-            - --default-volume-snapshot-locations={{ . }}
-            {{- if .defaultVolumesToFsBackup }}
-            - --default-volumes-to-fs-backup
-            {{- with .defaultRepoMaintainFrequency }}
-            - --default-repo-maintain-frequency={{ . }}
-            {{- with .disableControllers }}
-            - --disable-controllers={{ . }}
-            {{- with .garbageCollectionFrequency }}
-            - --garbage-collection-frequency={{ . }}
-            {{- with .logFormat }}
-            - --log-format={{ . }}
-            {{- with .logLevel }}
-            - --log-level={{ . }}
-            {{- with .metricsAddress }}
-            - --metrics-address={{ . }}
-            {{- with .pluginDir }}
-            - --plugin-dir={{ . }}
-            {{- with .profilerAddress }}
-            - --profiler-address={{ . }}
-            - --restore-only
-            {{- with .restoreResourcePriorities }}
-            - --restore-resource-priorities={{ . }}
-            {{- with .storeValidationFrequency }}
-            - --store-validation-frequency={{ . }}
-            {{- with .terminatingResourceTimeout }}
-            - --terminating-resource-timeout={{ . }}
-            ### Global Flags
-            {{- with .features }}
-            - --features={{ . }}
-            {{- with .namespace }}
-            - --namespace={{ . }}
-          resources: <RESOURCES>
-          securityContext: <SECURITY_CONTEXT>
+          resources: 
+            requests:
+              cpu: 500m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
           volumeMounts:
             - name: plugins
               mountPath: /plugins
@@ -106,9 +141,6 @@ spec:
               mountPath: /scratch
             - name: tmpdir
               mountPath: /tmp
-          envFrom:
-          - secretRef:
-              name: <CREDENTIAL_EXTRASECRET_REF>
           env:
             - name: VELERO_SCRATCH_DIR
               value: /scratch
@@ -121,31 +153,18 @@ spec:
               value: /plugins
             - name: AWS_SHARED_CREDENTIALS_FILE
               value: /credentials/cloud
-            - name: GOOGLE_APPLICATION_CREDENTIALS
-              value: /credentials/cloud
-            - name: AZURE_CREDENTIALS_FILE
-              value: /credentials/cloud
-            - name: ALIBABA_CLOUD_CREDENTIALS_FILE
-              value: /credentials/cloud
-          {{- with .Values.configuration.extraEnvVars }}
-          {{- range $key, $value := . }}
-            - name: {{ default "none" $key }}
-              value: {{ default "none" $value | quote }}
-          {{- with .Values.credentials.extraEnvVars }}
-          {{- range $key, $value := . }}
-            - name: {{ default "none" $key }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "velero.secretName" $ }}
-                  key: {{ default "none" $key }}
           lifecycle:
-      dnsPolicy: <DNS_POLICY>
-      initContainers: {}
- 
+      dnsPolicy: ClusterFirst
+      initContainers:
+       - name: dell-custom-velero-plugin
+         image: dellemc/csm-application-mobility-velero-plugin:v0.1.0
+         volumeMounts:
+           - mountPath: /target
+             name: plugins
       volumes:
         - name: cloud-credentials
           secret:
-            secretName: {{ include "velero.secretName" . }}
+            secretName: <CREDENTIAL_NAME>
         - name: plugins
           emptyDir: {}
         - name: scratch
@@ -153,8 +172,7 @@ spec:
         - name: tmpdir
           emptyDir: {}
       securityContext:
-      nodeSelector: <NDE_SELECTOR>
-      dnsConfig: <DNS_CONFIG>
-      tolerations: <TOLERATIONS>
-      affinity: <AFFINITY>
-
+      nodeSelector: #<NDE_SELECTOR>
+      dnsConfig: #<DNS_CONFIG>
+      tolerations: #<TOLERATIONS>
+      affinity: #<AFFINITY>
