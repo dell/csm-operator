@@ -301,12 +301,12 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "test-powerstore",
-            "namespace": "test-powerstore"
+            "name": "powerstore",
+            "namespace": "powerstore"
           },
           "spec": {
             "driver": {
-              "authSecret": "test-powerstore-config",
+              "authSecret": "powerstore-config",
               "common": {
                 "envs": [
                   {

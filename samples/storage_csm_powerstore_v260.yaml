@@ -16,8 +16,8 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-powerstore
-  namespace: test-powerstore
+  name: powerstore
+  namespace: powerstore
 spec:
   driver:
     csiDriverType: "powerstore"
@@ -35,8 +35,8 @@ spec:
     configVersion: v2.6.0
     # authSecret: This is the secret used to validate the default PowerStore secret used for installation
     # Allowed values: <metadataName specified in the Manifest>-config
-    # For example: If the metadataName is set to test-powerstore, authSecret value should be set to test-powerstore-config
-    authSecret: test-powerstore-config
+    # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
+    authSecret: powerstore-config
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
