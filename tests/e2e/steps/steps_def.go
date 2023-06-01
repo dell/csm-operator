@@ -128,6 +128,38 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 
 }
 
+func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string) error {
+	if thirdPartyModule == "cert-manager" {
+		cmd := exec.Command("kubectl", "apply", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
+		err := cmd.Run()
+		if err != nil {
+    			return fmt.Errorf("cert-manager install failed: %v", err)
+		}
+	} else if thirdPartyModule == "velero" {
+		fmt.Printf("velero install not supported yet\n")
+	} else {
+		return fmt.Errorf("Installation of third-party module %v not supported", thirdPartyModule)
+	}
+
+	return nil
+}
+
+func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule string) error {
+	if thirdPartyModule == "cert-manager" {
+		cmd := exec.Command("kubectl", "delete", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
+		err := cmd.Run()
+		if err != nil {
+    			return fmt.Errorf("cert-manager uninstall failed: %v", err)
+		}
+	} else if thirdPartyModule == "velero" {
+		fmt.Printf("velero uninstall not supported yet\n")
+	} else {
+		return fmt.Errorf("Uninstallation of third-party module %v not supported", thirdPartyModule)
+	}
+
+	return nil
+}
+
 func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]

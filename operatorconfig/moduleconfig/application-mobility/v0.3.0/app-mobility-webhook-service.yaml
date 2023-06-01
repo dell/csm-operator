@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: <NAMESPACE>-webhook-service
+  namespace: <NAMESPACE>
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 9443
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: <NAMESPACE>/<NAMESPACE>-serving-cert
+  name: <NAMESPACE>-mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: <NAMESPACE>-webhook-service
+      namespace: <NAMESPACE>
+      path: /mutate-mobility-storage-dell-com-v1alpha1-backup
+  failurePolicy: Fail
+  name: mbackup.mobility.storage.dell.com
+  rules:
+  - apiGroups:
+    - mobility.storage.dell.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - backups
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: <NAMESPACE>/<NAMESPACE>-serving-cert
+  name: <NAMESPACE>-validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: <NAMESPACE>-webhook-service
+      namespace: <NAMESPACE>
+      path: /validate-mobility-storage-dell-com-v1alpha1-backup
+  failurePolicy: Fail
+  name: vbackup.mobility.storage.dell.com
+  rules:
+  - apiGroups:
+    - mobility.storage.dell.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - backups
+  sideEffects: None
