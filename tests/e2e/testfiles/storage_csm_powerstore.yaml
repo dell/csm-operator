@@ -17,8 +17,8 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-powerstore
-  namespace: test-powerstore
+  name: powerstore
+  namespace: powerstore
 spec:
   driver:
     csiDriverType: "powerstore"
@@ -28,17 +28,17 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
-    # Config version for CSI PowerStore v2.5.0 driver
-    configVersion: v2.5.0
-    authSecret: test-powerstore-config
+    # Config version for CSI PowerStore v2.7.0 driver
+    configVersion: v2.7.0
+    authSecret: powerstore-config
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: true
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerStore driver v2.5.0
-      image: "dellemc/csi-powerstore:v2.5.0"
+      # Image for CSI PowerStore driver v2.7.0
+      image: "dellemc/csi-powerstore:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -139,4 +139,46 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      
+
+  modules:
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.6.0
+      components:
+        - name: podmon-controller
+          image: dellemc/podmon:nightly
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--labelvalue=csi-powerstore"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-powerstore.dellemc.com"
+            - "--mode=controller"
+            - "--skipArrayConnectionValidation=false"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+        - name: podmon-node
+          image: dellemc/podmon:nightly
+          imagePullPolicy: IfNotPresent
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+          args:
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
+            - "--labelvalue=csi-powerstore"
+            - "--arrayConnectivityPollRate=60"
+            - "--driverPath=csi-powerstore.dellemc.com"
+            - "--mode=node"
+            - "--leaderelection=false"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"   

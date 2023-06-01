@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -41,14 +40,22 @@ import (
 )
 
 const (
-	roleName   = "CSIGold"
-	tenantName = "PancakeGroup"
+	roleName           = "CSIGold"
+	tenantName         = "PancakeGroup"
+	certManagerVersion = "v1.11.0"
 )
 
 var (
-	authString        = "karavi-authorization-proxy"
-	operatorNamespace = "dell-csm-operator"
-	quotaLimit        = "30000000"
+	authString             = "karavi-authorization-proxy"
+	operatorNamespace      = "dell-csm-operator"
+	quotaLimit             = "30000000"
+	pflexSecretMap         = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL"}
+	pflexAuthSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
+	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
+	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
+	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
+	authSidecarRootCertMap = map[string]string{}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -70,7 +77,7 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 
 // GetTestResources -- parse values file
 func GetTestResources(valuesFilePath string) ([]Resource, error) {
-	b, err := ioutil.ReadFile(valuesFilePath)
+	b, err := os.ReadFile(valuesFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read values file: %v", err)
 	}
@@ -85,7 +92,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 	for _, scene := range scenarios {
 		customResources := []csmv1.ContainerStorageModule{}
 		for _, path := range scene.Paths {
-			b, err := ioutil.ReadFile(path)
+			b, err := os.ReadFile(path)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read testdata: %v", err)
 			}
@@ -108,7 +115,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	crBuff, err := ioutil.ReadFile(res.Scenario.Paths[crNum-1])
+	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
 	if err != nil {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
@@ -197,6 +204,26 @@ func (step *Step) validateDriverNotInstalled(res Resource, driverName string, cr
 	return checkNoRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
+func (step *Step) setNodeLabel(res Resource, label string) error {
+	if label == "control-plane" {
+		setNodeLabel(label, "node-role.kubernetes.io/control-plane", "")
+	} else {
+		return fmt.Errorf("Adding node label %s not supported, feel free to add support", label)
+	}
+
+	return nil
+}
+
+func (step *Step) removeNodeLabel(res Resource, label string) error {
+	if label == "control-plane" {
+		removeNodeLabel(label, "node-role.kubernetes.io/control-plane")
+	} else {
+		return fmt.Errorf("Removing node label %s not supported, feel free to add support", label)
+	}
+
+	return nil
+}
+
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
@@ -225,10 +252,16 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 
 			case csmv1.AuthorizationServer:
 				return step.validateAuthorizationProxyServerInstalled(cr)
+
+			case csmv1.Resiliency:
+				return step.validateResiliencyInstalled(cr)
+
+			default:
+				return fmt.Errorf("%s module is not found", module)
 			}
 		}
 	}
-	return fmt.Errorf("%s module is not not found", module)
+	return nil
 }
 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
@@ -259,6 +292,9 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 
 			case csmv1.AuthorizationServer:
 				return step.validateAuthorizationProxyServerNotInstalled(cr)
+
+			case csmv1.Resiliency:
+				return step.validateResiliencyNotInstalled(cr)
 			}
 		}
 	}
@@ -314,7 +350,6 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 }
 
 func (step *Step) validateObservabilityNotInstalled(cr csmv1.ContainerStorageModule) error {
-	/* TODO(Michael): explore better way to handle this instead of using hacks*/
 	// check installation for all replicas
 	fakeReconcile := utils.FakeReconcileCSM{
 		Client:    step.ctrlClient,
@@ -381,7 +416,6 @@ func (step *Step) validateReplicationInstalled(cr csmv1.ContainerStorageModule) 
 }
 
 func (step *Step) validateReplicationNotInstalled(cr csmv1.ContainerStorageModule) error {
-	/* TODO(Michael): explore better way to handle this instead of using hacks*/
 	// check installation for all replicas
 	fakeReconcile := utils.FakeReconcileCSM{
 		Client:    step.ctrlClient,
@@ -458,7 +492,130 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 	return nil
 }
 
-// Uses scenario
+func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
+	// find which map to use for secret values
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command("kubectl", "get", "sc", scName)
+	err = cmd.Run()
+	if err == nil {
+		cmd = exec.Command("kubectl", "delete", "sc", scName)
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+	cmd = exec.Command("kubectl", "create", "-f", templateFile)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
+
+	// find which map to use for secret values
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	//if secret exists- delete it
+	if secretExists(namespace, name) {
+		cmd := exec.Command("kubectl", "delete", "secret", "-n", namespace, name)
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to delete secret: %s", err.Error())
+		}
+	}
+
+	// create new secret
+	fileArg := "--from-file=config=" + templateFile
+	cmd := exec.Command("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create secret with template file: %s:  %s", templateFile, err.Error())
+	}
+
+	return nil
+}
+
+func (step *Step) restoreTemplate(res Resource, templateFile, crType string) error {
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(os.Getenv(mapValues[key]), key, templateFile)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func determineMap(crType string) (map[string]string, error) {
+	mapValues := map[string]string{}
+	if crType == "pflex" {
+		mapValues = pflexSecretMap
+	} else if crType == "pflexAuth" {
+		mapValues = pflexAuthSecretMap
+	} else if crType == "pscale" {
+		mapValues = pscaleSecretMap
+	} else if crType == "pscaleAuth" {
+		mapValues = pscaleAuthSecretMap
+	} else if crType == "pscaleAuthSidecar" {
+		mapValues = pscaleAuthSidecarMap
+	} else if crType == "pflexAuthSidecar" {
+		mapValues = pflexAuthSidecarMap
+	} else if crType == "authSidecarCert" {
+		mapValues = authSidecarRootCertMap
+	} else {
+		return mapValues, fmt.Errorf("type: %s is not supported", crType)
+	}
+
+	return mapValues, nil
+}
+
+func secretExists(namespace, name string) bool {
+	cmd := exec.Command("kubectl", "get", "secret", "-n", namespace, name)
+	err := cmd.Run()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func replaceInFile(old, new, templateFile string) error {
+	cmdString := "s/" + old + "/" + new + "/g"
+	cmd := exec.Command("sed", "-i", cmdString, templateFile)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to substitute %s with %s in file %s: %s", old, new, templateFile, err.Error())
+	}
+	return nil
+
+}
+
 func (step *Step) runCustomTest(res Resource) error {
 	var (
 		stdout string
@@ -466,17 +623,19 @@ func (step *Step) runCustomTest(res Resource) error {
 		err    error
 	)
 
-	args := strings.Split(res.Scenario.CustomTest.Run, " ")
-	if len(args) == 1 {
-		stdout, stderr, err = framework.RunCmd(args[0])
+	for testNum, customTest := range res.Scenario.CustomTest.Run {
+		args := strings.Split(customTest, " ")
+		if len(args) == 1 {
+			stdout, stderr, err = framework.RunCmd(args[0])
+		} else {
+			stdout, stderr, err = framework.RunCmd(args[0], args[1:]...)
+		}
 
-	} else {
-		stdout, stderr, err = framework.RunCmd(args[0], args[1:]...)
+		if err != nil {
+			return fmt.Errorf("error running custom test #%d. Error: %v \n stdout: %s \n stderr: %s", testNum, err, stdout, stderr)
+		}
 	}
 
-	if err != nil {
-		return fmt.Errorf("error running customs test. Error: %v \n stdout: %s \n stderr: %s", err, stdout, stderr)
-	}
 	return nil
 }
 
@@ -590,8 +749,26 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 	return nil
 }
 
-func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerStorageModule) error {
+func (step *Step) createPrereqs(res Resource, module string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1]
 
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.ModuleType(module) {
+			switch m.Name {
+			case csmv1.AuthorizationServer:
+				return step.authProxyServerPrereqs(cr)
+
+			default:
+				return fmt.Errorf("%s module is not found", module)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerStorageModule) error {
 	instance := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -619,15 +796,10 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 
 	// provide few seconds for cluster to settle down
 	time.Sleep(20 * time.Second)
-	if err := configureAuthorizationProxyServer(cr); err != nil {
-		return fmt.Errorf("failed AuthorizationProxyServer configuration check: %v", err)
-	}
-
 	return nil
 }
 
 func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.ContainerStorageModule) error {
-
 	// check installation for all AuthorizationProxyServer
 	fakeReconcile := utils.FakeReconcileCSM{
 		Client:    step.ctrlClient,
@@ -648,7 +820,86 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 	return nil
 }
 
-func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
+func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error {
+	fmt.Println("=== Creating Authorization Proxy Server Prerequisites ===")
+
+	cmd := exec.Command("kubectl", "get", "ns", "authorization")
+	err := cmd.Run()
+	if err == nil {
+		cmd = exec.Command("kubectl", "delete", "ns", "authorization")
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to delete authorization namespace: %v\nErrMessage:\n%s", err, string(b))
+		}
+	}
+
+	cmd = exec.Command("kubectl", "create",
+		"ns", "authorization",
+	)
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create authorization namespace: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	cmd = exec.Command("kubectl", "apply",
+		"--validate=false", "-f",
+		fmt.Sprintf("https://github.com/jetstack/cert-manager/releases/download/%s/cert-manager.crds.yaml",
+			certManagerVersion),
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to apply cert-manager CRDs: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	cmd = exec.Command("kubectl", "create",
+		"secret", "generic",
+		"karavi-config-secret",
+		"-n", "authorization",
+		"--from-file=config.yaml=testfiles/authorization-templates/csm_authorization_config.yaml",
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create config secret for JWT: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	cmd = exec.Command("kubectl", "create",
+		"-f", "testfiles/authorization-templates/csm_authorization_storage_secret.yaml",
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create storage secret: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	cmd = exec.Command("kubectl", "get", "sc", "local-storage")
+	err = cmd.Run()
+	if err == nil {
+		cmd = exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/csm_authorization_local_storage.yaml")
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to delete local storage: %v\nErrMessage:\n%s", err, string(b))
+		}
+	}
+
+	cmd = exec.Command("kubectl", "create",
+		"-f", "testfiles/authorization-templates/csm_authorization_local_storage.yaml",
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create local storage for redis: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	cmd = exec.Command("kubectl", "create",
+		"-f", "testfiles/authorization-templates/csm_authorization_certificate.yaml",
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create self-signed cert: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	return nil
+}
+
+func (step *Step) configureAuthorizationProxyServer(res Resource, driver string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	var b []byte
@@ -661,42 +912,78 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		password        = ""
 		storageType     = ""
 		pool            = ""
-		controlPlaneIP  = ""
 		driverNamespace = ""
 	)
 
+	//by default, use set defined in env file
+	endpointvar := "END_POINT"
+	systemIdvar := "SYSTEM_ID"
+	uservar := "STORAGE_USER"
+	passvar := "STORAGE_PASSWORD"
+	poolvar := "STORAGE_POOL"
+
+	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
+	// this section is for powerflex, other drivers can add their sections as required.
+	if driver == "powerflex" {
+		endpointvar = "PFLEX_ENDPOINT"
+		systemIdvar = "PFLEX_SYSTEMID"
+		uservar = "PFLEX_USER"
+		passvar = "PFLEX_PASS"
+		poolvar = "PFLEX_POOL"
+		os.Setenv("STORAGE_TYPE", "powerflex")
+		os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
+	}
+
 	// get env variables
-	if os.Getenv("END_POINT") != "" {
-		endpoint = os.Getenv("END_POINT")
+	if os.Getenv(endpointvar) != "" {
+		endpoint = os.Getenv(endpointvar)
 	}
-	if os.Getenv("SYSTEM_ID") != "" {
-		sysID = os.Getenv("SYSTEM_ID")
+	if os.Getenv(systemIdvar) != "" {
+		sysID = os.Getenv(systemIdvar)
 	}
-	if os.Getenv("STORAGE_USER") != "" {
-		user = os.Getenv("STORAGE_USER")
+	if os.Getenv(uservar) != "" {
+		user = os.Getenv(uservar)
 	}
-	if os.Getenv("STORAGE_PASSWORD") != "" {
-		password = os.Getenv("STORAGE_PASSWORD")
+	if os.Getenv(passvar) != "" {
+		password = os.Getenv(passvar)
 	}
-	if os.Getenv("STORAGE_POOL") != "" {
-		pool = os.Getenv("STORAGE_POOL")
+	if os.Getenv(poolvar) != "" {
+		pool = os.Getenv(poolvar)
 	}
 	if os.Getenv("STORAGE_TYPE") != "" {
 		storageType = os.Getenv("STORAGE_TYPE")
 	}
-	if os.Getenv("CONTROL_PLANE_IP") != "" {
-		controlPlaneIP = os.Getenv("CONTROL_PLANE_IP")
-	}
 	if os.Getenv("DRIVER_NAMESPACE") != "" {
 		driverNamespace = os.Getenv("DRIVER_NAMESPACE")
 	}
+
 	port, err := getPortContainerizedAuth()
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("=== Creating Storage ===")
+	fmt.Printf("=== Generating Admin Token ===\n")
+	adminTkn := exec.Command("karavictl",
+		"admin", "token",
+		"--name", "Admin",
+		"--jwt-signing-secret", "secret",
+		"--refresh-token-expiration", fmt.Sprint(30*24*time.Hour),
+		"--access-token-expiration", fmt.Sprint(2*time.Hour),
+	)
+	b, err = adminTkn.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	fmt.Println("=== Creating Storage ===\n ")
 	cmd := exec.Command("karavictl",
+		"--admin-token", "/tmp/adminToken.yaml",
 		"storage", "create",
 		"--type", storageType,
 		"--endpoint", fmt.Sprintf("https://%s", endpoint),
@@ -704,9 +991,9 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		"--user", user,
 		"--password", password,
 		"--array-insecure",
-		"--insecure", "--addr", fmt.Sprintf("storage.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
 	)
-	fmt.Println("=== Storage === ", cmd.String())
+	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
 
 	if err != nil {
@@ -714,32 +1001,34 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	}
 
 	// Create Tenant
-	fmt.Println("=== Creating Tenant ===")
+	fmt.Println("=== Creating Tenant ===\n ")
 	cmd = exec.Command("karavictl",
+		"--admin-token", "/tmp/adminToken.yaml",
 		"tenant", "create",
-		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("tenant.csm-authorization.com:%s", port),
+		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
 	)
 	b, err = cmd.CombinedOutput()
-	fmt.Println("=== Tenant === ", cmd.String())
+	fmt.Println("=== Tenant === \n", cmd.String())
 
 	if err != nil && !strings.Contains(string(b), "tenant already exists") {
 		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
 
+	fmt.Println("=== Creating Role ===\n", cmd.String())
 	// Create Role
 	if storageType == "powerscale" {
 		quotaLimit = "0"
 	}
 	cmd = exec.Command("karavictl",
+		"--admin-token", "/tmp/adminToken.yaml",
 		"role", "create",
 		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
 			roleName, storageType, sysID, pool, quotaLimit),
-		"--insecure", "--addr", fmt.Sprintf("role.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
 	)
 
-	fmt.Println("=== Creating Role", cmd.String())
+	fmt.Println("=== Role === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
-
 	if err != nil {
 		return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
 	}
@@ -749,12 +1038,13 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 
 	// Bind role
 	cmd = exec.Command("karavictl",
+		"--admin-token", "/tmp/adminToken.yaml",
 		"rolebinding", "create",
 		"--tenant", tenantName,
 		"--role", roleName,
-		"--insecure", "--addr", fmt.Sprintf("tenant.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
 	)
-	fmt.Println("=== Binding Role", cmd.String())
+	fmt.Println("=== Binding Role ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
 
 	if err != nil {
@@ -762,13 +1052,15 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	}
 
 	// Generate token
-	fmt.Println("=== Generating token ===")
+	fmt.Println("=== Generating token ===\n ")
 	cmd = exec.Command("karavictl",
+		"--admin-token", "/tmp/adminToken.yaml",
 		"generate", "token",
 		"--tenant", tenantName,
-		"--insecure", "--addr", fmt.Sprintf("tenant.csm-authorization.com:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
+		"--access-token-expiration", fmt.Sprint(10*time.Minute),
 	)
-	fmt.Println("=== Token", cmd.String())
+	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
 
 	if err != nil {
@@ -776,7 +1068,7 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 	}
 
 	// Apply token to CSI driver host
-	fmt.Println("=== Applying token ===")
+	fmt.Println("=== Applying token ===\n ")
 	var token struct {
 		Token string `json:"Token"`
 	}
@@ -785,15 +1077,88 @@ func configureAuthorizationProxyServer(cr csmv1.ContainerStorageModule) error {
 		return fmt.Errorf("failed to unmarshal token %s: %v", string(b), err)
 	}
 
-	wrtArgs := []string{fmt.Sprintf(`cat > /tmp/token.yaml << EOF %s`, token.Token+"EOF")}
-	if b, err := execCommand(controlPlaneIP, "dellemc", "dangerous", wrtArgs); err != nil {
-		return fmt.Errorf("failed to copy token to %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
+	err = os.WriteFile("/tmp/token.yaml", []byte(token.Token), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	kApplyArgs := []string{"kubectl", "apply", "-f", "/tmp/token.yaml", "-n", driverNamespace}
-	if b, err := execCommand(controlPlaneIP, "dellemc", "dangerous", kApplyArgs); err != nil {
-		return fmt.Errorf("failed to apply token in %s: %v\nErrMessage:\n%s", controlPlaneIP, err, string(b))
+	cmd = exec.Command("kubectl", "apply",
+		"-f", "/tmp/token.yaml",
+		"-n", driverNamespace,
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to apply token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
+	fmt.Println("=== Token Applied ===\n ")
+	return nil
+}
+
+func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) error {
+	dpApply, dsApply, err := getApplyDeploymentDaemonSet(cr, step.ctrlClient)
+	if err != nil {
+		return err
+	}
+
+	var presentInNode, presentInController bool
+	// check whether podmon container is present in cluster or not: for controller
+	for _, cnt := range dpApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == "podmon" {
+			presentInController = true
+			break
+		}
+	}
+
+	// check whether podmon container is present in cluster or not: for node
+	for _, cnt := range dsApply.Spec.Template.Spec.Containers {
+		if *cnt.Name == "podmon" {
+			presentInNode = true
+			break
+		}
+	}
+
+	if !presentInNode || !presentInController {
+		return fmt.Errorf("podmon container not found either in controller or node pod")
+	}
+
+	// validating args & env presence for powerstore & powerscale
+	driverType := cr.Spec.Driver.CSIDriverType
+
+	if driverType == csmv1.PowerScaleName || driverType == csmv1.PowerStore || driverType == csmv1.PowerScale {
+		if err := modules.CheckApplyContainersResiliency(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
+			return err
+		}
+		if err := modules.CheckApplyContainersResiliency(dsApply.Spec.Template.Spec.Containers, cr); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule) error {
+
+	// check that resiliency sidecar(podmon) is not in cluster: for controller
+	dp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name == utils.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
+		}
+	}
+
+	// check that resiliency sidecar(podmon) is not in cluster: for node
+	ds, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+	for _, cnt := range ds.Spec.Template.Spec.Containers {
+		if cnt.Name == utils.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
+		}
+	}
 	return nil
 }

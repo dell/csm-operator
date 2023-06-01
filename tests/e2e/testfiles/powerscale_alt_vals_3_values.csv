@@ -1,0 +1,4 @@
+parameter name, grep option for paramater value, parameter value,resource to describe
+Force Remove Driver,,true,csm,0
+Node-Selectors,-v,none,node,1
+Tolerations,-v,none,node,1

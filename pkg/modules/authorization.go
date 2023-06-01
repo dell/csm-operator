@@ -26,6 +26,7 @@ import (
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -100,13 +101,10 @@ const (
 )
 
 var (
-	redisStorageClass       string
-	authHostname            string
-	proxyIngressHost        string
-	proxyIngressClassName   string
-	tenantIngressClassName  string
-	roleIngressClassName    string
-	storageIngressClassName string
+	redisStorageClass     string
+	authHostname          string
+	proxyIngressHost      string
+	proxyIngressClassName string
 )
 
 // AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
@@ -127,6 +125,10 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
 	}, // powerscale/isilon & powerflex/vxflexos are valid types
+	"powermax": {
+		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
+	},
 }
 
 func getAuthorizationModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
@@ -146,7 +148,7 @@ func CheckAnnotationAuth(annotation map[string]string) error {
 			return errors.New("com.dell.karavi-authorization-proxy is missing from annotation")
 		}
 		if annotation["com.dell.karavi-authorization-proxy"] != "true" {
-			return fmt.Errorf("extpected notation value to be true but got %s", annotation["com.dell.karavi-authorization-proxy"])
+			return fmt.Errorf("expected notation value to be true but got %s", annotation["com.dell.karavi-authorization-proxy"])
 		}
 		return nil
 	}
@@ -447,7 +449,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 	return nil
 }
 
-// getAuthorizationServerDeployment - updates deployment manifest with authorization CRD values
+// getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
 func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (string, error) {
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
@@ -489,8 +491,8 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	return YamlString, nil
 }
 
-// AuthorizationServer - apply/delete deployment objects
-func AuthorizationServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+// AuthorizationServerDeployment - apply/delete deployment objects
+func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getAuthorizationServerDeployment(op, cr, csmv1.Module{})
 	if err != nil {
 		return err
@@ -515,7 +517,7 @@ func AuthorizationServer(ctx context.Context, isDeleting bool, op utils.Operator
 	return nil
 }
 
-// getAuthorizationIngressRules - update ingress manifest
+// getAuthorizationIngressRules - apply dynamic values to the Ingress manifest before installation
 func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
@@ -533,6 +535,12 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 	YamlString = string(buf)
 	authNamespace := cr.Namespace
 
+	var versionLessThan170 bool
+	if semver.Compare(auth.ConfigVersion, "v1.7.0") == -1 {
+		versionLessThan170 = true
+	}
+
+	var tenantIngressClassName, roleIngressClassName, storageIngressClassName string
 	for _, component := range auth.Components {
 		if component.Name == AuthProxyServerComponent {
 			for _, env := range component.Envs {
@@ -542,12 +550,14 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 					proxyIngressHost = env.Value
 				} else if env.Name == "PROXY_INGRESS_CLASSNAME" {
 					proxyIngressClassName = env.Value
-				} else if env.Name == "TENANT_INGRESS_CLASSNAME" {
-					tenantIngressClassName = env.Value
-				} else if env.Name == "ROLE_INGRESS_CLASSNAME" {
-					roleIngressClassName = env.Value
-				} else if env.Name == "STORAGE_INGRESS_CLASSNAME" {
-					storageIngressClassName = env.Value
+				} else if versionLessThan170 {
+					if env.Name == "TENANT_INGRESS_CLASSNAME" {
+						tenantIngressClassName = env.Value
+					} else if env.Name == "ROLE_INGRESS_CLASSNAME" {
+						roleIngressClassName = env.Value
+					} else if env.Name == "STORAGE_INGRESS_CLASSNAME" {
+						storageIngressClassName = env.Value
+					}
 				}
 			}
 		}
@@ -557,9 +567,12 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, proxyIngressHost)
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressClassName, proxyIngressClassName)
-	YamlString = strings.ReplaceAll(YamlString, AuthTenantIngressClassName, tenantIngressClassName)
-	YamlString = strings.ReplaceAll(YamlString, AuthRoleIngressClassName, roleIngressClassName)
-	YamlString = strings.ReplaceAll(YamlString, AuthStorageIngressClassName, storageIngressClassName)
+
+	if versionLessThan170 {
+		YamlString = strings.ReplaceAll(YamlString, AuthTenantIngressClassName, tenantIngressClassName)
+		YamlString = strings.ReplaceAll(YamlString, AuthRoleIngressClassName, roleIngressClassName)
+		YamlString = strings.ReplaceAll(YamlString, AuthStorageIngressClassName, storageIngressClassName)
+	}
 
 	return YamlString, nil
 }
@@ -597,55 +610,7 @@ func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.Operato
 	return nil
 }
 
-func getCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
-
-	auth, err := getAuthorizationModule(cr)
-	if err != nil {
-		return YamlString, err
-	}
-
-	certManagerPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthCertManagerManifest)
-	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
-	if err != nil {
-		return YamlString, err
-	}
-
-	YamlString = string(buf)
-	authNamespace := cr.Namespace
-	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-
-	return YamlString, nil
-}
-
-// AuthorizationCertManager - apply/delete cert-manager objects
-func AuthorizationCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getCertManager(op, cr)
-	if err != nil {
-		return err
-	}
-
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
-	if err != nil {
-		return err
-	}
-
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// getNginxIngressController - install nginx ingress controller
+// getNginxIngressController - configure nginx ingress controller with the specified namespace before installation
 func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
@@ -694,7 +659,7 @@ func NginxIngressController(ctx context.Context, isDeleting bool, op utils.Opera
 	return nil
 }
 
-// getPolicies -
+// getPolicies - configure policies with the specified namespace before installation
 func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
@@ -716,7 +681,7 @@ func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	return YamlString, nil
 }
 
-// InstallPolicies -
+// InstallPolicies - apply/delete authorization opa policy objects
 func InstallPolicies(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getPolicies(op, cr)
 	if err != nil {

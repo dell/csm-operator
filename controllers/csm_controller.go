@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -109,7 +110,7 @@ var (
 // +kubebuilder:rbac:groups="",resources=pods;services;services/finalizers;endpoints;persistentvolumeclaims;events;configmaps;secrets;serviceaccounts;roles;ingresses,verbs=*
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch;create;patch;update
 // +kubebuilder:rbac:groups="",resources=persistentvolumeclaims/status,verbs=update;patch;get
-// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=create;get;list;watch
 // +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;list;watch;create;delete;patch;update
 // +kubebuilder:rbac:groups="apps",resources=deployments;daemonsets;replicasets;statefulsets,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles;clusterrolebindings;replicasets;rolebindings,verbs=get;list;watch;update;create;delete;patch
@@ -120,14 +121,16 @@ var (
 // +kubebuilder:rbac:groups="",resources=deployments/finalizers,resourceNames=dell-csm-operator-controller-manager,verbs=update
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csidrivers,verbs=get;list;watch;create;update;delete;patch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=storageclasses,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments,verbs=get;list;watch;create;update;patch
+// +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csinodes,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups="csi.storage.k8s.io",resources=csinodeinfos,verbs=get;list;watch
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotclasses;volumesnapshotcontents,verbs=get;list;watch;create;update;delete;patch
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotcontents/status,verbs=get;list;watch;patch;update
-// +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots;volumesnapshots/status,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots/status,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups="volumegroup.storage.dell.com",resources=dellcsivolumegroupsnapshots;dellcsivolumegroupsnapshots/status,verbs=create;list;watch;delete;update
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=*
+// +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions/status,verbs=get;list;patch;watch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments/status,verbs=patch
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="security.openshift.io",resources=securitycontextconstraints,resourceNames=privileged,verbs=use
@@ -355,18 +358,25 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 
 	csm := new(csmv1.ContainerStorageModule)
 	err := r.Client.Get(ctx, namespacedName, csm)
+
 	if err != nil {
 		log.Error("deployment get csm", "error", err.Error())
 	}
 
 	newStatus := csm.GetCSMStatus()
+
+	// Updating controller status manually as controller runtime API is not updating csm object with latest data
+	// TODO: Can remove this once the controller runtime repo has a fix for updating the object passed
+	newStatus.ControllerStatus.Available = strconv.Itoa(int(available))
+	newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
+	newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
+
 	err = utils.UpdateStatus(ctx, csm, r, newStatus)
 	if err != nil {
 		log.Debugw("deployment status ", "pods", err.Error())
 	} else {
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
 	}
-
 }
 
 func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, obj interface{}) {
@@ -613,6 +623,15 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return nil
 	}
 
+	//Create/Update Reverseproxy Server
+	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled {
+		log.Infow("Trying Create/Update reverseproxy...")
+		if err := r.reconcileReverseProxy(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+			return fmt.Errorf("failed to deploy reverseproxy proxy server: %v", err)
+		}
+		log.Infow("Create/Update reverseproxy successful...")
+	}
+
 	// Get Driver resources
 	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig)
 	if err != nil {
@@ -650,6 +669,37 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				node.DaemonSetApplyConfig = *ds
+			case csmv1.Resiliency:
+				log.Info("Injecting CSM Resiliency")
+
+				// for controller-pod
+				driverName := string(cr.Spec.Driver.CSIDriverType)
+				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driverName)
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into deployment: %v", err)
+				}
+				controller.Deployment = *dp
+
+				clusterRole, err := modules.ResiliencyInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig, "controller")
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into controller cluster role: %v", err)
+				}
+
+				controller.Rbac.ClusterRole = *clusterRole
+
+				// for node-pod
+				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into daemonset: %v", err)
+				}
+				node.DaemonSetApplyConfig = *ds
+
+				clusterRoleForNode, err := modules.ResiliencyInjectClusterRole(node.Rbac.ClusterRole, cr, operatorConfig, "node")
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into node cluster role: %v", err)
+				}
+
+				node.Rbac.ClusterRole = *clusterRoleForNode
 			case csmv1.Replication:
 				log.Info("Injecting CSM Replication")
 				dp, err := modules.ReplicationInjectDeployment(controller.Deployment, cr, operatorConfig)
@@ -787,7 +837,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 	log := logger.GetLogger(ctx)
 	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization proxy-server")
-		if err := modules.AuthorizationServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		if err := modules.AuthorizationServerDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization proxy server: %v", err)
 		}
 
@@ -798,7 +848,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 
 	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
 		log.Infow("Reconcile authorization cert-manager")
-		if err := modules.AuthorizationCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
 		}
 	}
@@ -841,7 +891,6 @@ func getDriverConfig(ctx context.Context,
 		// use powerscale instead of isilon as the folder name is powerscale
 		driverType = csmv1.PowerScaleName
 	}
-
 	configMap, err = drivers.GetConfigMap(ctx, cr, operatorConfig, driverType)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s configMap: %v", driverType, err)
@@ -869,6 +918,16 @@ func getDriverConfig(ctx context.Context,
 		Controller: controller,
 	}, nil
 
+}
+
+// reconcileReverseProxy - deploy reverse proxy server
+func (r *ContainerStorageModuleReconciler) reconcileReverseProxy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+	log.Infow("Reconcile reverseproxy proxy")
+	if err := modules.ReverseProxyServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		return fmt.Errorf("unable to reconcile reverse-proxy proxy server: %v", err)
+	}
+	return nil
 }
 
 func removeDriverReplicaCluster(ctx context.Context, cluster utils.ReplicaCluster, driverConfig *DriverConfig) error {
@@ -999,6 +1058,14 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 			return err
 		}
 	}
+
+	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled {
+		log.Infow("Deleting ReverseProxy")
+		if err := r.reconcileReverseProxy(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -1022,6 +1089,17 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		err := drivers.PrecheckPowerStore(ctx, cr, operatorConfig, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed powerstore validation: %v", err)
+		}
+
+	case csmv1.Unity:
+		err := drivers.PrecheckUnity(ctx, cr, operatorConfig, r.GetClient())
+		if err != nil {
+			return fmt.Errorf("failed unity validation: %v", err)
+		}
+	case csmv1.PowerMax:
+		err := drivers.PrecheckPowerMax(ctx, cr, operatorConfig, r.GetClient())
+		if err != nil {
+			return fmt.Errorf("failed powermax validation: %v", err)
 		}
 	default:
 		for _, m := range cr.Spec.Modules {
@@ -1078,12 +1156,20 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 					return fmt.Errorf("failed replication validation: %v", err)
 				}
 
+			case csmv1.Resiliency:
+				if err := modules.ResiliencyPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+					return fmt.Errorf("failed resiliency validation: %v", err)
+				}
+
 			case csmv1.Observability:
 				// observability precheck
 				if err := modules.ObservabilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed observability validation: %v", err)
 				}
-
+			case csmv1.ReverseProxy:
+				if err := modules.ReverseProxyPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+					return fmt.Errorf("failed reverseproxy validation: %v", err)
+				}
 			default:
 				return fmt.Errorf("unsupported module type %s", m.Name)
 			}
@@ -1102,6 +1188,7 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 		// use powerscale instead of isilon as the folder name is powerscale
 		driverType = csmv1.PowerScaleName
 	}
+
 	// If it is an upgrade/downgrade, check to see if we meet the minimum version using GetUpgradeInfo, which returns the minimum version required
 	// for the desired upgrade. If the upgrade path is not valid fail
 	// Existing version

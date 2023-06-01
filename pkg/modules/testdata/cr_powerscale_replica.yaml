@@ -6,11 +6,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.5.0
+    configVersion: v2.6.0
     authSecret: test-isilon-creds 
     replicas: 1
     common:
-      image: "dellemc/csi-isilon:v2.5.0"
+      image: "dellemc/csi-isilon:v2.6.0"
       imagePullPolicy: IfNotPresent
 
   modules:
@@ -18,7 +18,7 @@ spec:
       enabled: true
       components:
       - name: dell-csi-replicator
-        image: dellemc/dell-csi-replicator:v1.3.0
+        image: dellemc/dell-csi-replicator:v1.4.0
         envs:
           - name: "X_CSI_REPLICATION_PREFIX"
             value: "replication.storage.dell.com"
@@ -27,7 +27,7 @@ spec:
       
       
       - name: dell-replication-controller-manager
-        image: dellemc/dell-replication-controller:v1.3.1
+        image: dellemc/dell-replication-controller:v1.4.0
         envs:
           - name: "TARGET_CLUSTERS_IDS"
             value: "test-target-cluster-1,test-target-cluster-2"

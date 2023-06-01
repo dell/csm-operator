@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/tests/shared"
@@ -122,6 +123,7 @@ var (
 	oldConfigVersion         = shared.OldConfigVersion
 	upgradeConfigVersion     = shared.UpgradeConfigVersion
 	jumpUpgradeConfigVersion = shared.JumpUpgradeConfigVersion
+	invalidConfigVersion     = shared.BadConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -175,6 +177,62 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.runFakeAuthCSMManager("timed out waiting for the condition", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true)
+}
+
+func (suite *CSMControllerTestSuite) TestResiliencyReconcile() {
+	suite.makeFakeResiliencyCSM(csmName, suite.namespace, true, append(getResiliencyModule(), getResiliencyModule()...), string(v1.PowerStore))
+	suite.runFakeCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeCSMManager("", true)
+}
+
+func (suite *CSMControllerTestSuite) TestResiliencyReconcileError() {
+
+	suite.makeFakeResiliencyCSM(csmName, suite.namespace, false, append(getResiliencyModule(), getResiliencyModule()...), "unsupported-driver")
+	reconciler := suite.createReconciler()
+	res, err := reconciler.Reconcile(ctx, req)
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+	if err != nil {
+		assert.Error(suite.T(), err)
+	}
+}
+
+func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, append(getReverseProxyModule()), string(v1.PowerMax))
+	suite.runFakeCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeCSMManager("", true)
+}
+
+func (suite *CSMControllerTestSuite) TestReverseProxyPreCheckError() {
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, false, append(getReverseProxyModule()), "badVersion")
+	reconciler := suite.createReconciler()
+	res, err := reconciler.Reconcile(ctx, req)
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+	if err != nil {
+		assert.Error(suite.T(), err)
+	}
+}
+
+func (suite *CSMControllerTestSuite) TestReconcileReverseProxyError() {
+	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
+	csm.Spec.Modules = getReverseProxyModule()
+	reconciler := suite.createReconciler()
+	badOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
+	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestPowermaxReconcileError() {
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, false, append(getReverseProxyModule()), "badDriver")
+	reconciler := suite.createReconciler()
+	res, err := reconciler.Reconcile(ctx, req)
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+	if err != nil {
+		assert.Error(suite.T(), err)
+	}
 }
 
 // test error injection. Client get should fail
@@ -236,6 +294,46 @@ func (suite *CSMControllerTestSuite) TestPowerStoreAnnotation() {
 
 	suite.fakeClient.Create(ctx, &csm)
 	sec := shared.MakeSecret(csmName+"-config", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
+
+}
+
+func (suite *CSMControllerTestSuite) TestUnityAnnotation() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.Unity
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, configVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
+
+}
+
+func (suite *CSMControllerTestSuite) TestPowermaxAnnotation() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, shared.PmaxConfigVersion)
 	suite.fakeClient.Create(ctx, sec)
 
 	reconciler := suite.createReconciler()
@@ -344,7 +442,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
 		annotations = make(map[string]string)
 	}
 	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = jumpUpgradeConfigVersion
+		annotations[configVersionKey] = invalidConfigVersion
 		csm.SetAnnotations(annotations)
 	}
 
@@ -599,6 +697,11 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// error in Resiliency
+	csm.Spec.Modules = getResiliencyModule()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
 	// error in Observability
 	csm.Spec.Modules = getObservabilityModule()
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
@@ -643,6 +746,12 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
+	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Resiliency
+	csm.Spec.Modules = getResiliencyModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
@@ -722,7 +831,7 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, reconcileDelete bool) {
 	reconciler := suite.createReconciler()
 
-	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
+	// invoke controller Reconcile to test. Typically, k8s would call this when resource is changed
 	res, err := reconciler.Reconcile(ctx, req)
 
 	ctrl.Log.Info("reconcile response", "res is: ", res)
@@ -1028,7 +1137,7 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.4.0",
+			ConfigVersion: "v1.5.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ReplicationSideCarName,
@@ -1049,7 +1158,20 @@ func getReplicaModule() []csmv1.Module {
 		},
 	}
 }
-
+func getResiliencyModule() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.Resiliency,
+			Enabled:       true,
+			ConfigVersion: "v1.6.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: utils.ResiliencySideCarName,
+				},
+			},
+		},
+	}
+}
 func getAuthModule() []csmv1.Module {
 	return []csmv1.Module{
 		{
@@ -1076,7 +1198,7 @@ func getAuthProxyServer() []csmv1.Module {
 		{
 			Name:          csmv1.AuthorizationServer,
 			Enabled:       true,
-			ConfigVersion: "v1.5.0",
+			ConfigVersion: "v1.7.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "karavi-authorization-proxy-server",
@@ -1105,6 +1227,37 @@ func getAuthProxyServer() []csmv1.Module {
 					Name:    "ingress-nginx",
 					Enabled: &[]bool{true}[0],
 					Envs:    []corev1.EnvVar{},
+				},
+			},
+			ForceRemoveModule: true,
+		},
+	}
+}
+
+func getReverseProxyModule() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.ReverseProxy,
+			Enabled:       true,
+			ConfigVersion: "v2.6.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:    string(csmv1.ReverseProxyServer),
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "X_CSI_REVPROXY_TLS_SECRET",
+							Value: "csirevproxy-tls-secret",
+						},
+						{
+							Name:  "X_CSI_REVPROXY_PORT",
+							Value: "2222",
+						},
+						{
+							Name:  "X_CSI_CONFIG_MAP_NAME",
+							Value: "powermax-reverseproxy-config",
+						},
+					},
 				},
 			},
 			ForceRemoveModule: true,
@@ -1216,12 +1369,57 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
+	// this secret required by reverseproxy module
+	sec = shared.MakeSecret("csirevproxy-tls-secret", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this configmap is required by reverseproxy module
+	cm := shared.MakeConfigMap("csirevproxy-tls-secret", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, cm)
+	assert.Nil(suite.T(), err)
+
 	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	truebool := true
 	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
 		Name:            "provisioner",
+		Enabled:         &truebool,
+		Image:           "image2",
+		ImagePullPolicy: "IfNotPresent",
+		Args:            []string{"--volume-name-prefix=k8s"},
+	}
+	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledTrue}
+	csm.Spec.Driver.SideCars = sideCarList
+	if withFinalizer {
+		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	}
+	// remove driver when deleting csm
+	csm.Spec.Driver.ForceRemoveDriver = true
+	csm.Annotations[configVersionKey] = configVersion
+
+	csm.Spec.Modules = modules
+	out, _ := json.Marshal(&csm)
+	csm.Annotations[previouslyAppliedCustomResource] = string(out)
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, withFinalizer bool, modules []csmv1.Module, driverType string) {
+
+	sec := shared.MakeSecret(name+"-config", ns, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeCSM(name, ns, configVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = v1.DriverType(driverType)
+
+	truebool := true
+	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
+		Name:            "podmon",
 		Enabled:         &truebool,
 		Image:           "image2",
 		ImagePullPolicy: "IfNotPresent",
@@ -1386,4 +1584,50 @@ func (suite *CSMControllerTestSuite) debugFakeObjects() {
 		unittestLogger.Info("found fake object ", "name", key.Name)
 		unittestLogger.Info("found fake object ", "object", fmt.Sprintf("%#v", o))
 	}
+}
+
+func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) {
+	// Create secrets and config map for Reconcile
+	sec := shared.MakeSecret("csirevproxy-tls-secret", ns, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+	sec = shared.MakeSecret("powermax-creds", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+	cm := shared.MakeConfigMap(driverType+"-reverseproxy-config", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, cm)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeCSM(name, ns, shared.PmaxConfigVersion)
+
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
+	csm.Spec.Driver.AuthSecret = "powermax-creds"
+	if driverType == "badVersion" {
+		modules[0].ConfigVersion = "v2.4.0"
+	}
+	if driverType == "badDriver" {
+		csm.Spec.Driver.ConfigVersion = "v2.4.0"
+	}
+	trueBool := true
+	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
+		Name:            string(csmv1.ReverseProxyServer),
+		Enabled:         &trueBool,
+		Image:           "image2",
+		ImagePullPolicy: "IfNotPresent",
+		Args:            []string{"--volume-name-prefix=k8s"},
+	}
+	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledTrue}
+	csm.Spec.Driver.SideCars = sideCarList
+	if withFinalizer {
+		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	}
+	// remove driver when deleting csm
+	csm.Spec.Driver.ForceRemoveDriver = true
+	csm.Spec.Modules = modules
+	out, _ := json.Marshal(&csm)
+	csm.Annotations[previouslyAppliedCustomResource] = string(out)
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
 }

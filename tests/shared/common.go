@@ -13,7 +13,7 @@
 package shared
 
 import (
-	"io/ioutil"
+	"os"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,13 +27,16 @@ import (
 
 // ConfigVersions used for all unit tests
 const (
-	PFlexConfigVersion       string = "v2.6.0"
-	ConfigVersion            string = "v2.4.0"
-	UpgradeConfigVersion     string = "v2.5.0"
-	JumpUpgradeConfigVersion string = "v2.6.0"
+	PFlexConfigVersion       string = "v2.7.0"
+	ConfigVersion            string = "v2.5.0"
+	UpgradeConfigVersion     string = "v2.6.0"
+	JumpUpgradeConfigVersion string = "v2.7.0"
 	OldConfigVersion         string = "v2.2.0"
 	BadConfigVersion         string = "v0"
-	PStoreConfigVersion      string = "v2.6.0"
+	PStoreConfigVersion      string = "v2.7.0"
+	UnityConfigVersion       string = "v2.6.0"
+	PScaleConfigVersion      string = "v2.7.0"
+	PmaxConfigVersion        string = "v2.7.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
@@ -165,9 +168,26 @@ func MakeSecret(name, ns, configVersion string) *corev1.Secret {
 	return secret
 }
 
+// MakeConfigMap returns a driver pre-req configmap array-config
+func MakeConfigMap(name, ns, configVersion string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+		Data: map[string]string{
+			"data": name,
+		},
+	}
+}
+
 // MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
-	configJSON, _ := ioutil.ReadFile(configFile)
+	configJSON, _ := os.ReadFile(configFile)
 	data := map[string][]byte{
 		"config": configJSON,
 	}
@@ -187,4 +207,35 @@ func MakePod(name, ns string) corev1.Pod {
 	}
 
 	return podObj
+}
+
+// MakeReverseProxyModule returns a csireverseproxy object
+func MakeReverseProxyModule(configVersion string) csmv1.Module {
+	revproxy := csmv1.Module{
+		Name:          csmv1.ReverseProxy,
+		Enabled:       true,
+		ConfigVersion: "v2.6.0",
+		Components: []csmv1.ContainerTemplate{
+			{
+				Name:  string(csmv1.ReverseProxyServer),
+				Image: "dell/proxy:v2.6.0",
+				Envs: []corev1.EnvVar{
+					{
+						Name:  "X_CSI_REVPROXY_TLS_SECRET",
+						Value: "csirevproxy-tls-secret",
+					},
+					{
+						Name:  "X_CSI_REVPROXY_PORT",
+						Value: "2222",
+					},
+					{
+						Name:  "X_CSI_CONFIG_MAP_NAME",
+						Value: "powermax-reverseproxy-config",
+					},
+				},
+			},
+		},
+		ForceRemoveModule: false,
+	}
+	return revproxy
 }

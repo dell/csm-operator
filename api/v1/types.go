@@ -38,6 +38,9 @@ const (
 	// Replication - placeholder for replication constant
 	Replication ModuleType = "replication"
 
+	// Resiliency - placeholder for resiliency constant
+	Resiliency ModuleType = "resiliency"
+
 	// Observability - placeholder for constant observability
 	Observability ModuleType = "observability"
 
@@ -58,6 +61,9 @@ const (
 	
 	// ApplicationMobility - placeholder for constant application-mobility
 	ApplicationMobility ModuleType = "application-mobility-controller-manager"
+
+	// ReverseProxyServer - placeholder for constant csipowermax-reverseproxy
+	ReverseProxyServer ModuleType = "csipowermax-reverseproxy"
 
 	// Topology - placeholder for constant topology
 	Topology ObservabilityComponentType = "topology"

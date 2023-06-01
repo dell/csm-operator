@@ -10,11 +10,13 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	"github.com/dell/csm-operator/tests/shared"
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +25,13 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
-	//csmReconciler "github.com/dell/csm-operator/controllers"
+)
+
+var (
+	// where to find all the yaml files
+	config = utils.OperatorConfig{
+		ConfigDirectory: "../../tests/config",
+	}
 )
 
 func TestReplicationInjectDeployment(t *testing.T) {
@@ -39,6 +47,17 @@ func TestReplicationInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			if err != nil {
+				panic(err)
+			}
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+		"success - powermax injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
 			if err != nil {
 				panic(err)
 			}
@@ -148,6 +167,32 @@ func TestReplicationPreCheck(t *testing.T) {
 			return true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
+		"success - driver type PowerFlex": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_powerflex_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			tmpCR.Spec.Driver.CSIDriverType = "powerflex"
+			replica := tmpCR.Spec.Modules[0]
+
+			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
+			var configJSONFileGood = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerFlex)
+			driverSecret1 := shared.MakeSecretWithJSON(customResource.Name+"-config", customResource.Namespace, configJSONFileGood)
+			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret, driverSecret1, driverSecret2).Build()
+
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret1, driverSecret2).Build()
+				return clusterClient, nil
+			}
+
+			return true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+
 		"success - version provided": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -156,7 +201,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.4.0"
+			replica.ConfigVersion = "v1.5.0"
 
 			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
 			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
@@ -180,7 +225,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.4.0"
+			replica.ConfigVersion = "v1.5.0"
 
 			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
 			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
@@ -204,7 +249,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.4.0"
+			replica.ConfigVersion = "v1.5.0"
 
 			for i, component := range tmpCR.Spec.Modules[0].Components {
 				if component.Name == utils.ReplicationControllerManager {
@@ -233,7 +278,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.4.0"
+			replica.ConfigVersion = "v1.5.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
