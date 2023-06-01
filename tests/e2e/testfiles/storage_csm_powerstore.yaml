@@ -17,8 +17,8 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-powerstore
-  namespace: test-powerstore
+  name: powerstore
+  namespace: powerstore
 spec:
   driver:
     csiDriverType: "powerstore"
@@ -30,7 +30,7 @@ spec:
       storageCapacity: false
     # Config version for CSI PowerStore v2.7.0 driver
     configVersion: v2.7.0
-    authSecret: test-powerstore-config
+    authSecret: powerstore-config
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
