@@ -1,13 +1,13 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-powerstore
-  namespace: test-powerstore
+  name: powerstore
+  namespace: powerstore
 spec:
   driver:
     csiDriverType: "powerstore"
     configVersion: v2.7.0
-    authSecret: test-powerstore-creds 
+    authSecret: powerstore-creds
     replicas: 1
     common:
       image: "dellemc/csi-powerstore:v2.7.0"
