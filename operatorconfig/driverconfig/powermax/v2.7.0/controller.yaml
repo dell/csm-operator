@@ -127,7 +127,7 @@ spec:
 
       containers:
         - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.7.0
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.8.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -141,7 +141,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.2.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -156,7 +156,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: external-health-monitor
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.8.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -173,7 +173,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.4.0
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -193,7 +193,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.2.1
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.2.2
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
