@@ -35,10 +35,10 @@ standAloneConfig:
         - proxy-secret-22
   managementServers:
     - url: https://primary-1.unisphe.re:8443 # primary unisphere endpoint
-      arrayCredentialSecret: primary-1-secret # credential secret
+      arrayCredentialSecret: primary-1-secret # credential secret, e.g., powermax-creds
       skipCertificateValidation: true
-    - url: https://backup-1.unisphe.re:8443
-      arrayCredentialSecret: backup-1-secret # backup unisphere endpoint
+    - url: https://backup-1.unisphe.re:8443 # backup unisphere endpoint
+      arrayCredentialSecret: backup-1-secret # credential secret, e.g., powermax-creds
       skipCertificateValidation: false # value false, to verify unisphere certificate and provide certSecret
       certSecret: primary-certs # unisphere verification certificate
     - url: https://primary-2.unisphe.re:8443

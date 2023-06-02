@@ -8,12 +8,12 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "test-isilon",
-            "namespace": "test-isilon"
+            "name": "isilon",
+            "namespace": "isilon"
           },
           "spec": {
             "driver": {
-              "authSecret": "test-isilon-creds",
+              "authSecret": "isilon-creds",
               "common": {
                 "envs": [
                   {
@@ -301,12 +301,12 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "test-powerstore",
-            "namespace": "test-powerstore"
+            "name": "powerstore",
+            "namespace": "powerstore"
           },
           "spec": {
             "driver": {
-              "authSecret": "test-powerstore-config",
+              "authSecret": "powerstore-config",
               "common": {
                 "envs": [
                   {
