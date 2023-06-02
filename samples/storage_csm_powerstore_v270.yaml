@@ -30,7 +30,7 @@ spec:
       # Allowed values:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
-      storageCapacity: false
+      storageCapacity: true
     # Config version for CSI PowerStore v2.7.0 driver
     configVersion: v2.7.0
     # authSecret: This is the secret used to validate the default PowerStore secret used for installation
