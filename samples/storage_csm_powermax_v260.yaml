@@ -107,25 +107,25 @@ spec:
         #   "true" - vSphere volumes are enabled
         #   "false" - vSphere volumes are disabled
         # Default value: "false"
-        - name: "X_CSI_VSPHERE_ENABLED"
+        - name: X_CSI_VSPHERE_ENABLED
           value: "false"
         # X_CSI_VSPHERE_PORTGROUP: An existing portGroup that driver will use for vSphere
         # recommended format: csi-x-VC-PG, x can be anything of user choice
         # Allowed value: valid existing port group on the array
         # Default value: "" <empty>
-        - name: "X_CSI_VSPHERE_PORTGROUP"
+        - name: X_CSI_VSPHERE_PORTGROUP
           value: ""
         # X_CSI_VSPHERE_HOSTNAME: An existing host(initiator group)/ host group(cascaded initiator group) that driver will use for vSphere
         # this host should contain initiators from all the ESXs/ESXi host where the cluster is deployed
         # recommended format: csi-x-VC-HN, x can be anything of user choice
         # Allowed value: valid existing host/host group on the array
         # Default value: "" <empty>
-        - name: "X_CSI_VSPHERE_HOSTNAME"
+        - name: X_CSI_VSPHERE_HOSTNAME
           value: ""
         # X_CSI_VCENTER_HOST: URL/endpoint of the vCenter where all the ESX are present
         # Allowed value: valid vCenter host endpoint
         # Default value: "" <empty>
-        - name: "X_CSI_VCENTER_HOST"
+        - name: X_CSI_VCENTER_HOST
           value: ""
     controller:
       envs:
@@ -148,7 +148,7 @@ spec:
         # Default value: "false"
         - name: X_CSI_POWERMAX_ISCSI_ENABLE_CHAP
           value: "false"
-        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin-volume usage, volume condition
         # Allowed values:
         #   true: enable checking of health condition of CSI volumes
         #   false: disable checking of health condition of CSI volumes
@@ -174,14 +174,14 @@ spec:
     - name: csireverseproxy
       # enabled: Always set to true
       enabled: true
-      configVersion: v2.6.0
+      configVersion: v2.5.0
       forceRemoveModule: true
       components:
       - name: csipowermax-reverseproxy
       # image: Define the container images used for the reverse proxy
       # Default value: None
-      # Example: "csipowermax-reverseproxy:v2.6.0"
-        image: dellemc/csipowermax-reverseproxy:v2.6.0
+      # Example: "csipowermax-reverseproxy:v2.5.0"
+        image: dellemc/csipowermax-reverseproxy:v2.5.0
         envs:
           # "tlsSecret" defines the TLS secret that is created with certificate
           # and its associated key
