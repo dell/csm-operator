@@ -39,7 +39,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 				panic(err)
 			}
 
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 
 			tmpCR := customResource
 			observability := tmpCR.Spec.Modules[0]
@@ -59,7 +59,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 				panic(err)
 			}
 
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 
 			tmpCR := customResource
 			tmpCR.Spec.Driver.CSIDriverType = "powerscale"
@@ -101,7 +101,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 				panic(err)
 			}
 
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 
 			tmpCR := customResource
 			observability := tmpCR.Spec.Modules[0]
@@ -122,7 +122,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 				panic(err)
 			}
 
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
 
@@ -147,7 +147,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 				panic(err)
 			}
 
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 
 			tmpCR := customResource
 			observability := tmpCR.Spec.Modules[0]
@@ -168,7 +168,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 				panic(err)
 			}
 
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 
 			tmpCR := customResource
 			tmpCR.Spec.Driver.CSIDriverType = "unsupported-driver"
@@ -290,7 +290,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 
 			tmpCR := customResource
 
@@ -313,7 +313,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 				panic(err)
 			}
 
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
 
@@ -339,7 +339,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
 
@@ -363,7 +363,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 
 			tmpCR := customResource
 
@@ -376,7 +376,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
 
@@ -394,7 +394,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 				panic(err)
 			}
 
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
 
@@ -421,10 +421,10 @@ func TestPowerScaleMetrics(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 			isilonKaraviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
 			isilonProxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-			karaviIsilonCreds := getSecret("karavi", "test-isilon-creds")
+			karaviIsilonCreds := getSecret("karavi", "isilon-creds")
 			karaviAuthconfig := getSecret("karavi", "isilon-karavi-authorization-config")
 			proxyAuthzTokens := getSecret("karavi", "isilon-proxy-authz-tokens")
 			tmpCR := customResource
@@ -435,7 +435,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"Fail - no secrets in test-isilon namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"Fail - no secrets in isilon namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -465,7 +465,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 				panic(err)
 			}
 
-			isilonCreds := getSecret(customResource.Namespace, "test-isilon-creds")
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
 

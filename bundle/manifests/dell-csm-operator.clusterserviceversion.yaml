@@ -8,12 +8,12 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "test-isilon",
-            "namespace": "test-isilon"
+            "name": "isilon",
+            "namespace": "isilon"
           },
           "spec": {
             "driver": {
-              "authSecret": "test-isilon-creds",
+              "authSecret": "isilon-creds",
               "common": {
                 "envs": [
                   {
