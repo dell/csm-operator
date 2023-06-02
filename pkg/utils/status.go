@@ -73,7 +73,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		failedCount := 0
 
 		//powerflex and powerscale use different label names for the controller name:
-		//app=test-isilon-controller
+		//app=isilon-controller
 		//name=vxflexos-controller
 		//name=powerstore-controller
 		driver := instance.GetDriverType()
