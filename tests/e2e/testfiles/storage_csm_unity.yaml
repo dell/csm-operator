@@ -13,10 +13,6 @@ spec:
       fSGroupPolicy: "ReadWriteOnceWithFSType"
     # Config version for CSI Unity v2.6.0 driver
     configVersion: v2.6.0
-    # authSecret: This is the secret used to validate the default Unity secret used for installation
-    # Allowed values: <metadataName specified in the Manifest>-config
-    # For example: If the metadataName is set to unity, authSecret value should be set to unity-config
-    authSecret: unity-creds
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet

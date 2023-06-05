@@ -13,10 +13,6 @@ spec:
       fSGroupPolicy: "ReadWriteOnceWithFSType"
     # Config version for CSI Unity v2.5.0 driver
     configVersion: v2.5.0
-    # authSecret: This is the secret used to validate the default Unity secret used for installation
-    # Allowed values: <metadataName specified in the Manifest>-creds
-    # For example: If the metadataName is set to unity, authSecret value should be set to unity-creds
-    authSecret: unity-creds
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
@@ -64,6 +60,7 @@ spec:
           value: ""
         # CERT_SECRET_COUNT: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (unity-cert-0..unity-cert-n)
+        # This field is only verified if X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION is set to false
         # Allowed values: n, where n > 0
         # Default value: None          
         - name: CERT_SECRET_COUNT
