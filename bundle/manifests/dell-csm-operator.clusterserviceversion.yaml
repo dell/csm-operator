@@ -1485,9 +1485,9 @@ spec:
         - urn:alm:descriptor:text
       version: v1
   description: "Dell Container Storage Modules (CSM) Operator is a Kubernetes Operator
-    which can be \nused to install and manage Dell’s CSI drivers and CSM modules for
-    Dell PowerScale.\nBy using Dell CSM Operator, enterprises can quickly and easily
-    deploy the \nAuthorization and Replication CSM modules for PowerScale making it
+    which can be \nused to install and manage Dell’s CSI drivers and CSM modules.
+    \nBy using Dell CSM Operator, enterprises can quickly and easily
+    deploy the \nCSM modules for CSI drivers making it
     easy for DevOps \nteams to build and optimize their Kubernetes workloads using
     enterprise grade storage \nwhile consistently aligning with the desired outcomes
     of the organization.\nThis operator is available as a community operator for both
