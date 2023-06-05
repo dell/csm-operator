@@ -901,7 +901,11 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 		os.Setenv("STORAGE_TYPE", "powerflex")
 		os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
 	}
-
+	
+	if driver == "powerscale" {
+		os.Setenv("STORAGE_TYPE", "powerscale")
+		os.Setenv("DRIVER_NAMESPACE", "isilon")		
+	}
 	// get env variables
 	if os.Getenv(endpointvar) != "" {
 		endpoint = os.Getenv(endpointvar)
