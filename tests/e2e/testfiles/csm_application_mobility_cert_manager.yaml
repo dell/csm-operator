@@ -1,0 +1,48 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: application-mobility
+  namespace: application-mobility
+spec:
+  modules:
+    # Application Mobility: enable csm-application-mobility module
+    - name: application-mobility-controller-manager
+      # enable: Enable/Disable app-mobility controller
+      enabled: true
+      configVersion: v0.3.0
+      forceRemoveModule: true
+      components:
+      - name: application-mobility-controller-manager
+        # enable: Enable/Disable application mobility controller-manager
+        enabled: true
+        image: dellemc/csm-application-mobility-controller:v0.3.0
+        imagePullPolicy: IfNotPresent
+        envs:
+          # Replica count for application mobility
+          # Allowed values: string
+          # Default value: 1
+          - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
+            value: "1"
+
+          # License for application mobility
+          # Default value: license
+          - name: "APPLICATION_MOBILITY_LICENSE_NAME"
+            value: "license"
+
+          # Namespace for Velero installatino
+          # Default value: application-mobility
+          - name: "VELERO_NAMESPACE"
+            value: "application-mobility"
+
+          # Storage-service ingress configuration
+          # Default value: velero-restic-credentials
+          - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
+            value: "velero-restic-credentials" 
+
+      # enabled: Enable/Disable cert-manager
+      # Allowed values:
+      #   true: enable deployment of cert-manager
+      #   false: disable deployment of cert-manager only if it's already deployed
+      # Default value: false
+      - name: cert-manager
+        enabled: true
