@@ -426,8 +426,9 @@ spec:
     deploy the \nCSM modules for CSI drivers making it
     easy for DevOps \nteams to build and optimize their Kubernetes workloads using
     enterprise grade storage \nwhile consistently aligning with the desired outcomes
-    of the organization.\nThis operator is available as a community operator for both
-    upstream Kubernetes and\nOpenshift. Operator can be deployed via OperatorHub.io.
+    of the organization.\nThis operator is available as both community and 
+    certified operator for Openshift \nand as a community operator for 
+    upstream Kubernetes.\nOperator can be deployed via OperatorHub.io.
     using Operator Lifecycle Manager (OLM)\n\n### About Dell CSM\n\nDell CSM brings
     powerful enterprise storage features and functionality to Kubernetes for \neasier
     adoption of cloud native workloads, improved productivity and scalable operations.
