@@ -153,6 +153,8 @@ spec:
               value: "<X_CSI_VSPHERE_PORTGROUP>"
             - name: X_CSI_VCENTER_HOST
               value: "<X_CSI_VCENTER_HOST>"
+            - name: X_CSI_VSPHERE_HOSTNAME
+              value: "<X_CSI_VSPHERE_HOSTNAME>"
             - name: X_CSI_VCENTER_USERNAME
               valueFrom:
                 secretKeyRef:
