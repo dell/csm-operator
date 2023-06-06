@@ -1535,9 +1535,6 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		if method == "Create" && createSAError {
 			fmt.Printf("[ShouldFail] force Create ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(createSAErrorStr)
-		} else if method == "Update" && updateSAError {
-			fmt.Printf("[ShouldFail] force Update ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
-			return errors.New(updateSAErrorStr)
 		} else if method == "Get" && getSAError {
 			fmt.Printf("[ShouldFail] force Get ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(getSAErrorStr)
