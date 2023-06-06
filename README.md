@@ -12,7 +12,7 @@ You may obtain a copy of the License at
 # Dell Technologies Container Storage Modules (CSM) Operator
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](https://github.com/dell/csm/blob/main/docs/CODE_OF_CONDUCT.md)
 [![License](https://img.shields.io/github/license/dell/csm-operator)](LICENSE)
-[![Docker Pulls](https://img.shields.io/docker/pulls/dellemc/csm-operator)](https://hub.docker.com/r/dellemc/csm-operator)
+[![Docker Pulls](https://img.shields.io/docker/pulls/dellemc/dell-csm-operator)](https://hub.docker.com/r/dellemc/dell-csm-operator)
 [![Go version](https://img.shields.io/github/go-mod/go-version/dell/csm-operator)](go.mod)
 [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/dell/csm-operator?include_prereleases&label=latest&style=flat-square)](https://github.com/dell/csm-operator/releases/latest)
 
@@ -74,7 +74,7 @@ NOTE: Closing the session where operator is running will stop the operator.
 ## Install Operator using scripts
 
 ### Operator install on a cluster without OLM 
-For Non OLM based install of Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/#operator-installation-on-a-cluster-without-olm/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/#operator-installation-on-a-cluster-without-olm/)
+For Non OLM based install of Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/#operator-installation-on-a-cluster-without-olm](https://dell.github.io/csm-docs/docs/deployment/csmoperator/#operator-installation-on-a-cluster-without-olm)
  
 To uninstall the Operator, execute `bash scripts/uninstall.sh`
 

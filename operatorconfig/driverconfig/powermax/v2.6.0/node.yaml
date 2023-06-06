@@ -153,6 +153,8 @@ spec:
               value: "<X_CSI_VSPHERE_PORTGROUP>"
             - name: X_CSI_VCENTER_HOST
               value: "<X_CSI_VCENTER_HOST>"
+            - name: X_CSI_VSPHERE_HOSTNAME
+              value: "<X_CSI_VSPHERE_HOSTNAME>"
             - name: X_CSI_VCENTER_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -189,7 +191,7 @@ spec:
             - name: node-topology-config
               mountPath: /node-topology-config
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.3
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
