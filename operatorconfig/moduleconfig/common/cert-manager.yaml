@@ -1,17 +1,3 @@
-# Copyright 2021 The cert-manager Authors.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 ---
 # Source: cert-manager/templates/cainjector-serviceaccount.yaml
 apiVersion: v1
@@ -25,7 +11,7 @@ metadata:
     app.kubernetes.io/name: cainjector
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cainjector"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 ---
 # Source: cert-manager/templates/serviceaccount.yaml
 apiVersion: v1
@@ -39,7 +25,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 ---
 # Source: cert-manager/templates/webhook-serviceaccount.yaml
 apiVersion: v1
@@ -53,7 +39,21 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "webhook"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
+---
+# Source: cert-manager/templates/webhook-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <NAMESPACE>-cert-manager-webhook
+  namespace: "<NAMESPACE>"
+  labels:
+    app: webhook
+    app.kubernetes.io/name: webhook
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/component: "webhook"
+    app.kubernetes.io/version: "v1.11.0"
+data:
 ---
 # Source: cert-manager/templates/cainjector-rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -65,7 +65,7 @@ metadata:
     app.kubernetes.io/name: cainjector
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cainjector"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   - apiGroups: ["cert-manager.io"]
     resources: ["certificates"]
@@ -85,9 +85,6 @@ rules:
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["get", "list", "watch", "update"]
-  - apiGroups: ["auditregistration.k8s.io"]
-    resources: ["auditsinks"]
-    verbs: ["get", "list", "watch", "update"]
 ---
 # Source: cert-manager/templates/rbac.yaml
 # Issuer controller role
@@ -100,7 +97,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   - apiGroups: ["cert-manager.io"]
     resources: ["issuers", "issuers/status"]
@@ -126,7 +123,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   - apiGroups: ["cert-manager.io"]
     resources: ["clusterissuers", "clusterissuers/status"]
@@ -152,7 +149,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   - apiGroups: ["cert-manager.io"]
     resources: ["certificates", "certificates/status", "certificaterequests", "certificaterequests/status"]
@@ -171,7 +168,7 @@ rules:
     verbs: ["create", "delete", "get", "list", "watch"]
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list", "watch", "create", "update", "delete"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]
@@ -184,10 +181,10 @@ metadata:
   name: <NAMESPACE>-cert-manager-controller-orders
   labels:
     app: cert-manager
-    app.kubernetes.io/name: cert-manager
-    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: <NAMESPACE>
+    app.kubernetes.io/instance: cert-manager
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   - apiGroups: ["acme.cert-manager.io"]
     resources: ["orders", "orders/status"]
@@ -225,7 +222,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   # Use to update challenge resource status
   - apiGroups: ["acme.cert-manager.io"]
@@ -285,7 +282,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   - apiGroups: ["cert-manager.io"]
     resources: ["certificates", "certificaterequests"]
@@ -322,7 +319,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
     rbac.authorization.k8s.io/aggregate-to-view: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
@@ -344,13 +341,16 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
 rules:
   - apiGroups: ["cert-manager.io"]
     resources: ["certificates", "certificaterequests", "issuers"]
     verbs: ["create", "delete", "deletecollection", "patch", "update"]
+  - apiGroups: ["cert-manager.io"]
+    resources: ["certificates/status"]
+    verbs: ["update"]
   - apiGroups: ["acme.cert-manager.io"]
     resources: ["challenges", "orders"]
     verbs: ["create", "delete", "deletecollection", "patch", "update"]
@@ -366,7 +366,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cert-manager"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   - apiGroups: ["cert-manager.io"]
     resources: ["signers"]
@@ -386,7 +386,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cert-manager"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   - apiGroups: ["certificates.k8s.io"]
     resources: ["certificatesigningrequests"]
@@ -412,7 +412,7 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "webhook"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
 - apiGroups: ["authorization.k8s.io"]
   resources: ["subjectaccessreviews"]
@@ -428,7 +428,7 @@ metadata:
     app.kubernetes.io/name: cainjector
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cainjector"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -448,7 +448,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -468,7 +468,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -478,7 +478,7 @@ subjects:
     namespace: "<NAMESPACE>"
     kind: ServiceAccount
 ---
-# Source: <NAMESPACE>-cert-manager/templates/rbac.yaml
+# Source: cert-manager/templates/rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -488,7 +488,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -508,7 +508,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -528,7 +528,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -548,7 +548,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -568,13 +568,13 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cert-manager"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: <NAMESPACE>-cert-manager-controller-approve:cert-manager-io
 subjects:
-  - name: <NAMESPACE>-cert-manager
+  - name: cert-manager
     namespace: "<NAMESPACE>"
     kind: ServiceAccount
 ---
@@ -588,7 +588,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cert-manager"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -608,7 +608,7 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "webhook"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -631,21 +631,13 @@ metadata:
     app.kubernetes.io/name: cainjector
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cainjector"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
   # Used for leader election by the controller
   # cert-manager-cainjector-leader-election is used by the CertificateBased injector controller
   #   see cmd/cainjector/start.go#L113
   # cert-manager-cainjector-leader-election-core is used by the SecretBased injector controller
   #   see cmd/cainjector/start.go#L137
-  # See also: https://github.com/kubernetes-sigs/controller-runtime/pull/1144#discussion_r480173688
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    resourceNames: ["cert-manager-cainjector-leader-election", "cert-manager-cainjector-leader-election-core"]
-    verbs: ["get", "update", "patch"]
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["create"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     resourceNames: ["cert-manager-cainjector-leader-election", "cert-manager-cainjector-leader-election-core"]
@@ -665,17 +657,8 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
-  # Used for leader election by the controller
-  # See also: https://github.com/kubernetes-sigs/controller-runtime/pull/1144#discussion_r480173688
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    resourceNames: ["cert-manager-controller"]
-    verbs: ["get", "update", "patch"]
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["create"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     resourceNames: ["cert-manager-controller"]
@@ -695,7 +678,7 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "webhook"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
@@ -719,7 +702,7 @@ metadata:
     app.kubernetes.io/name: cainjector
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cainjector"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -742,7 +725,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -758,13 +741,13 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: <NAMESPACE>-cert-manager-webhook:dynamic-serving
-  namespace: "<NAMESPACE>"
+  namespace: <NAMESPACE>
   labels:
     app: webhook
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "webhook"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -786,14 +769,14 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 spec:
   type: ClusterIP
   ports:
-    - protocol: TCP
-      port: 9402
-      name: tcp-prometheus-servicemonitor
-      targetPort: 9402
+  - protocol: TCP
+    port: 9402
+    name: tcp-prometheus-servicemonitor
+    targetPort: 9402
   selector:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
@@ -810,14 +793,14 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "webhook"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 spec:
   type: ClusterIP
   ports:
   - name: https
     port: 443
     protocol: TCP
-    targetPort: 10250
+    targetPort: "https"
   selector:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
@@ -834,7 +817,7 @@ metadata:
     app.kubernetes.io/name: cainjector
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "cainjector"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 spec:
   replicas: 1
   selector:
@@ -849,14 +832,16 @@ spec:
         app.kubernetes.io/name: cainjector
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/component: "cainjector"
-        app.kubernetes.io/version: "v1.6.1"
+        app.kubernetes.io/version: "v1.11.0"
     spec:
       serviceAccountName: <NAMESPACE>-cert-manager-cainjector
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-        - name: cert-manager
-          image: "quay.io/jetstack/cert-manager-cainjector:v1.6.1"
+        - name: cert-manager-cainjector
+          image: "quay.io/jetstack/cert-manager-cainjector:v1.11.0"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2
@@ -866,8 +851,13 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          resources:
-            {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+      nodeSelector:
+        kubernetes.io/os: linux
 ---
 # Source: cert-manager/templates/deployment.yaml
 apiVersion: apps/v1
@@ -880,7 +870,7 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "controller"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 spec:
   replicas: 1
   selector:
@@ -895,7 +885,7 @@ spec:
         app.kubernetes.io/name: cert-manager
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/component: "controller"
-        app.kubernetes.io/version: "v1.6.1"
+        app.kubernetes.io/version: "v1.11.0"
       annotations:
         prometheus.io/path: "/metrics"
         prometheus.io/scrape: 'true'
@@ -904,24 +894,34 @@ spec:
       serviceAccountName: <NAMESPACE>-cert-manager
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-        - name: cert-manager
-          image: "quay.io/jetstack/cert-manager-controller:v1.6.1"
+        - name: cert-manager-controller
+          image: "quay.io/jetstack/cert-manager-controller:v1.11.0"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2
           - --cluster-resource-namespace=$(POD_NAMESPACE)
           - --leader-election-namespace=kube-system
+          - --acme-http01-solver-image=quay.io/jetstack/cert-manager-acmesolver:v1.11.0
+          - --max-concurrent-challenges=60
           ports:
           - containerPort: 9402
+            name: http-metrics
             protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
           env:
           - name: POD_NAMESPACE
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          resources:
-            {}
+      nodeSelector:
+        kubernetes.io/os: linux
 ---
 # Source: cert-manager/templates/webhook-deployment.yaml
 apiVersion: apps/v1
@@ -934,7 +934,7 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "webhook"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
 spec:
   replicas: 1
   selector:
@@ -949,25 +949,33 @@ spec:
         app.kubernetes.io/name: webhook
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/component: "webhook"
-        app.kubernetes.io/version: "v1.6.1"
+        app.kubernetes.io/version: "v1.11.0"
     spec:
       serviceAccountName: <NAMESPACE>-cert-manager-webhook
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-        - name: cert-manager
-          image: "quay.io/jetstack/cert-manager-webhook:v1.6.1"
+        - name: cert-manager-webhook
+          image: "quay.io/jetstack/cert-manager-webhook:v1.11.0"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2
           - --secure-port=10250
           - --dynamic-serving-ca-secret-namespace=$(POD_NAMESPACE)
           - --dynamic-serving-ca-secret-name=webhook-server-cert
-          - --dynamic-serving-dns-names=<NAMESPACE>-cert-manager-webhook,<NAMESPACE>-cert-manager-webhook.<NAMESPACE>,<NAMESPACE>-cert-manager-webhook.<NAMESPACE>.svc
+          - --dynamic-serving-dns-names=<NAMESPACE>-cert-manager-webhook
+          - --dynamic-serving-dns-names=<NAMESPACE>-cert-manager-webhook.$(POD_NAMESPACE)
+          - --dynamic-serving-dns-names=<NAMESPACE>-cert-manager-webhook.$(POD_NAMESPACE).svc
+          
           ports:
           - name: https
             protocol: TCP
             containerPort: 10250
+          - name: healthcheck
+            protocol: TCP
+            containerPort: 6080
           livenessProbe:
             httpGet:
               path: /livez
@@ -988,13 +996,18 @@ spec:
             timeoutSeconds: 1
             successThreshold: 1
             failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
           env:
           - name: POD_NAMESPACE
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          resources:
-            {}
+      nodeSelector:
+        kubernetes.io/os: linux
 ---
 # Source: cert-manager/templates/webhook-mutating-webhook.yaml
 apiVersion: admissionregistration.k8s.io/v1
@@ -1006,7 +1019,7 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "webhook"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
   annotations:
     cert-manager.io/inject-ca-from-secret: "<NAMESPACE>/webhook-server-cert"
 webhooks:
@@ -1022,15 +1035,7 @@ webhooks:
           - UPDATE
         resources:
           - "*/*"
-    # We don't actually support `v1beta1` but is listed here as it is a
-    # required value for
-    # [Kubernetes v1.16](https://github.com/kubernetes/kubernetes/issues/82025).
-    # The API server reads the supported versions in order, so _should always_
-    # attempt a `v1` request which is understood by the cert-manager webhook.
-    # Any `v1beta1` request will return an error and fail closed for that
-    # resource (the whole object request is rejected). When we no longer
-    # support v1.16 we can remove `v1beta1` from this list.
-    admissionReviewVersions: ["v1", "v1beta1"]
+    admissionReviewVersions: ["v1"]
     # This webhook only accepts v1 cert-manager resources.
     # Equivalent matchPolicy ensures that non-v1 resource requests are sent to
     # this webhook (after the resources have been converted to v1).
@@ -1055,7 +1060,7 @@ metadata:
     app.kubernetes.io/name: webhook
     app.kubernetes.io/instance: <NAMESPACE>
     app.kubernetes.io/component: "webhook"
-    app.kubernetes.io/version: "v1.6.1"
+    app.kubernetes.io/version: "v1.11.0"
   annotations:
     cert-manager.io/inject-ca-from-secret: "<NAMESPACE>/webhook-server-cert"
 webhooks:
@@ -1081,15 +1086,7 @@ webhooks:
           - UPDATE
         resources:
           - "*/*"
-    # We don't actually support `v1beta1` but is listed here as it is a
-    # required value for
-    # [Kubernetes v1.16](https://github.com/kubernetes/kubernetes/issues/82025).
-    # The API server reads the supported versions in order, so _should always_
-    # attempt a `v1` request which is understood by the cert-manager webhook.
-    # Any `v1beta1` request will return an error and fail closed for that
-    # resource (the whole object request is rejected). When we no longer
-    # support v1.16 we can remove `v1beta1` from this list.
-    admissionReviewVersions: ["v1", "v1beta1"]
+    admissionReviewVersions: ["v1"]
     # This webhook only accepts v1 cert-manager resources.
     # Equivalent matchPolicy ensures that non-v1 resource requests are sent to
     # this webhook (after the resources have been converted to v1).

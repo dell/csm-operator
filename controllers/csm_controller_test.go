@@ -762,6 +762,9 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// error in Application-mobility
+	//csm.Spec.Modules =
+
 	// error unsupported module
 	csm.Spec.Modules = []csmv1.Module{
 		{
