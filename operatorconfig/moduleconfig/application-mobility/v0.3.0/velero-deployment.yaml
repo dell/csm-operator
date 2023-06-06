@@ -1,0 +1,178 @@
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: <BACKUPSTORAGELOCATION_NAME>
+  namespace: <VELERO_NAMESPACE>
+  labels:
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+spec:
+  provider: <PROVIDER>
+  #default: 
+  accessMode: ReadWrite
+  objectStorage:
+    bucket: velero-bucket
+    #prefix: <BUCKET_PREFIX>
+
+    #caCert: <CA_CERT>
+  config: {}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: application-mobility-velero-server
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+subjects:
+  - kind: ServiceAccount
+    namespace: <VELERO_NAMESPACE>
+    name: application-mobility-velero-server-service-account
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: application-mobility-velero-server
+  namespace: <VELERO_NAMESPACE>
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+rules:
+- apiGroups:
+    - "*"
+  resources:
+    - "*"
+  verbs:
+    - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: application-mobility-velero-server
+  namespace: <VELERO_NAMESPACE>
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+subjects:
+  - kind: ServiceAccount
+    namespace: <VELERO_NAMESPACE>
+    name: application-mobility-velero-server-service-account
+roleRef:
+  kind: Role
+  name: application-mobility-velero-server
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: application-mobility-velero-server-service-account
+  namespace: <VELERO_NAMESPACE>
+  annotations:
+  labels:
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: application-mobility-velero
+  namespace: <VELERO_NAMESPACE>
+  annotations:
+  labels:
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+    component: application-mobility-velero
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: application-mobility
+      app.kubernetes.io/name: application-mobility-velero
+  template:
+    metadata:
+      labels:
+        name: application-mobility-velero
+        app.kubernetes.io/name: application-mobility-velero
+        app.kubernetes.io/instance: application-mobility
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8085"
+        prometheus.io/path: "/metrics"
+    spec:
+      imagePullSecrets: #<PULL_SECRET>
+        - name: #<PULL_SCRET_NAME>
+      restartPolicy: Always
+      serviceAccountName: application-mobility-velero-server-service-account
+      priorityClassName: #<NODEAGENT_PRIORITYCLASSNAME>
+      terminationGracePeriodSeconds: #<TERMINATION_GRACE_PERIOD_SECONDS>
+      containers:
+        - name: application-mobility-velero
+          image: <VELERO_IMAGE>
+          imagePullPolicy: <VELERO_IMAGE_PULLPOLICY>
+          ports:
+            - name: http-monitoring
+              containerPort: 8085
+          command:
+            - /velero
+          args:
+            - server
+          resources: 
+            requests:
+              cpu: 500m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          volumeMounts:
+            - name: plugins
+              mountPath: /plugins
+            - name: cloud-credentials
+              mountPath: /credentials
+            - name: scratch
+              mountPath: /scratch
+            - name: tmpdir
+              mountPath: /tmp
+          env:
+            - name: VELERO_SCRATCH_DIR
+              value: /scratch
+            - name: VELERO_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: LD_LIBRARY_PATH
+              value: /plugins
+            - name: AWS_SHARED_CREDENTIALS_FILE
+              value: /credentials/cloud
+          lifecycle:
+      dnsPolicy: ClusterFirst
+      initContainers:
+       - name: dell-custom-velero-plugin
+         image: dellemc/csm-application-mobility-velero-plugin:v0.1.0
+         volumeMounts:
+           - mountPath: /target
+             name: plugins
+      volumes:
+        - name: cloud-credentials
+          secret:
+            secretName: <CREDENTIAL_NAME>
+        - name: plugins
+          emptyDir: {}
+        - name: scratch
+          emptyDir: {}
+        - name: tmpdir
+          emptyDir: {}
+      securityContext:
+      nodeSelector: #<NDE_SELECTOR>
+      dnsConfig: #<DNS_CONFIG>
+      tolerations: #<TOLERATIONS>
+      affinity: #<AFFINITY>

@@ -34,12 +34,11 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --app-mobility-namespace=<NAMESPACE>
-        - --velero-namespace=<VELERO-NAMESPACE>
-        - --secret-name=<SECRET-NAME>
-        - --license-name=<LICENSE-NAME>
+        - --secret-name=<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
+        - --license-name=<APPLICATION_MOBILITY_LICENSE_NAME>
         command:
         - /manager
-        image: <CONTROLLER-IMAGE>
+        image: <CONTROLLER_IMAGE>
         livenessProbe:
           httpGet:
             path: /healthz
@@ -266,7 +265,7 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
+- apiGroups: 
   - mobility.storage.dell.com
   resources:
   - clusterconfigs
@@ -449,25 +448,63 @@ rules:
   - update
   - watch
 - apiGroups:
-    - mobility.storage.dell.com
+  - mobility.storage.dell.com
   resources:
-    - schedules
+  - schedules
   verbs:
-    - create
-    - delete
-    - get
-    - list
-    - patch
-    - update
-    - watch
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
-    - mobility.storage.dell.com
+  - mobility.storage.dell.com
   resources:
-    - schedules/status
+  - schedules/status
   verbs:
-    - get
-    - patch
-    - update
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: <NAMESPACE>-leader-election-role
+  namespace: application-mobility
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -555,58 +592,6 @@ subjects:
   name: <NAMESPACE>-controller-manager
   namespace: <NAMESPACE>
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: <NAMESPACE>-leader-election-role
-  namespace: <NAMESPACE>
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: <NAMESPACE>-leader-election-rolebinding
-  namespace: <NAMESPACE>
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: <NAMESPACE>-leader-election-role
-subjects:
-- kind: ServiceAccount
-  name: <NAMESPACE>-controller-manager
-  namespace: <NAMESPACE>
----
 apiVersion: v1
 data:
   controller_manager_config.yaml: "apiVersion: controller-runtime.sigs.k8s.io/v1alpha1\r\nkind: ControllerManagerConfig\r\nhealth:\r\n  healthProbeBindAddress: :8081\r\nmetrics:\r\n  bindAddress: 127.0.0.1:8080\r\nwebhook:\r\n  port: 9443\r\nleaderElection:\r\n  leaderElect: true\r\n  resourceName: 50a66265.storage.dell.com\r\n"
@@ -614,3 +599,18 @@ kind: ConfigMap
 metadata:
   name: <NAMESPACE>-manager-config
   namespace: <NAMESPACE>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: <NAMESPACE>-manager-rolebinding
+  namespace: <NAMESPACE>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: <NAMESPACE>-manager-role
+subjects:
+- kind: ServiceAccount
+  name: <NAMESPACE>-controller-manager
+  namespace: <NAMESPACE>
+ ---

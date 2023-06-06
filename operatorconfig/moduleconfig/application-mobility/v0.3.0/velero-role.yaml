@@ -1,0 +1,53 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: application-mobility-velero-server
+  namespace: <NAMESPACE>
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+rules:
+- apiGroups:
+    - "*"
+  resources:
+    - "*"
+  verbs:
+    - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: velero-server
+  namespace: <NAMESPACE>
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: velero
+    app.kubernetes.io/instance: application-mobility
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+subjects:
+  - kind: ServiceAccount
+    namespace: <NAMESPACE>
+    name: <SERVICE_ACCOUNT_NAME>
+roleRef:
+  kind: Role
+  name: velero-server
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: velero-schedule
+  namespace: <NAMESPACE>
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade,post-rollback
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    app.kubernetes.io/name: velero
+    app.kubernetes.io/instance: application-mobility
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+spec:
+  useOwnerReferencesInBackup: false
+  schedule: <SCHEDULE>
+  template: <SCHEDULE_TEMPLATE>

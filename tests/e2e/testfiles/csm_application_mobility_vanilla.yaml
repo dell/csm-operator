@@ -6,7 +6,7 @@ metadata:
 spec:
   modules:
     # Application Mobility: enable csm-application-mobility module
-    - name: application-mobility-controller-manager
+    - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: true
       configVersion: v0.3.0
@@ -45,4 +45,5 @@ spec:
       #   false: disable deployment of cert-manager only if it's already deployed
       # Default value: false
       - name: cert-manager
-        enabled: false
+        enabled: true
+

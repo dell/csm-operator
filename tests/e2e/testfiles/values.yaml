@@ -9,7 +9,7 @@
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds] in namespace [test-isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [application-mobility] module from CR [1] is installed"
     - "Run custom test"
     # Last three steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
