@@ -61,6 +61,10 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 	// Check for secret only
 	config := cr.Name + "-config"
 
+	if cr.Spec.Driver.AuthSecret != "" {
+		config = cr.Spec.Driver.AuthSecret
+	}
+
 	// Check if driver version is supported by doing a stat on a config file
 	configFilePath := fmt.Sprintf("%s/driverconfig/powerstore/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {

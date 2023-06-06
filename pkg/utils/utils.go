@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ type K8sImagesConfig struct {
 		Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
 		Sdc                   string `json:"sdc" yaml:"sdc"`
 		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
+		Podmon                string `json:"podmon" yaml:"podmon"`
 	} `json:"images" yaml:"images"`
 }
 
@@ -118,6 +119,8 @@ const (
 	ReplicationControllerInit = "dell-replication-controller-init"
 	// ReplicationSideCarName -
 	ReplicationSideCarName = "dell-csi-replicator"
+	// ResiliencySideCarName -
+	ResiliencySideCarName = "podmon"
 	// DefaultSourceClusterID -
 	DefaultSourceClusterID = "default-source-cluster"
 	// ObservabilityNamespace - karavi
@@ -126,6 +129,10 @@ const (
 	AuthorizationNamespace = "authorization"
 	// AuthProxyServerComponent - karavi-authorization-proxy-server component
 	AuthProxyServerComponent = "karavi-authorization-proxy-server"
+	// PodmonControllerComponent - podmon-controller
+	PodmonControllerComponent = "podmon-controller"
+	// PodmonNodeComponent - podmon-node
+	PodmonNodeComponent = "podmon-node"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -189,6 +196,8 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 		*c.Image = img.Images.Sdc
 	case csmv1.Sdcmonitor:
 		*c.Image = img.Images.Sdcmonitor
+	case string(csmv1.Resiliency):
+		*c.Image = img.Images.Podmon
 	}
 	return
 }
@@ -262,7 +271,8 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 				sRef := old.ValueFrom.SecretKeyRef
 				if sRef != nil {
 					secret := &acorev1.SecretKeySelectorApplyConfiguration{
-						Key: sRef.Key,
+						Key:      sRef.Key,
+						Optional: sRef.Optional,
 					}
 					secret.WithName(*sRef.Name)
 					e = acorev1.EnvVarApplyConfiguration{
@@ -511,6 +521,15 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &cm)
+
+		case "Secret":
+
+			var s corev1.Secret
+			if err := yaml.Unmarshal(raw, &s); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &s)
 
 		case "Deployment":
 
@@ -779,7 +798,7 @@ func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Cl
 	if err := ctrlClient.Get(ctx, t1.NamespacedName{Name: clusterID,
 		Namespace: ReplicationControllerNameSpace}, secret); err != nil {
 		if k8serror.IsNotFound(err) {
-			return []byte("error"), fmt.Errorf("failed to find secret %s", clusterID)
+			return []byte("error"), fmt.Errorf("failed to find secret %s in namespace %s", clusterID, ReplicationControllerNameSpace)
 		}
 		log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
 	}
@@ -820,6 +839,16 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 
 }
 
+// IsResiliencyModuleEnabled - check if resiliency module is enabled or not
+func IsResiliencyModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) bool {
+	for _, m := range instance.Spec.Modules {
+		if m.Name == csmv1.Resiliency && m.Enabled {
+			return true
+		}
+	}
+	return false
+}
+
 // GetDefaultClusters -
 func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) (bool, []ReplicaCluster, error) {
 	clusterClients := []ReplicaCluster{
@@ -840,10 +869,12 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 			}
 
 			for _, clusterID := range clusterIDs {
-				/*Hack: skip check for for csm_controller unit test*/
-				if clusterID == "skip-replication-cluster-check" {
+				/*Hack: skip-replication-cluster-check - skips check for csm_controller unit test
+				self - skips check for stretched cluster*/
+				if clusterID == "skip-replication-cluster-check" || clusterID == "self" {
 					return replicaEnabled, clusterClients, nil
 				}
+
 				targetCtrlClient, err := getClusterCtrlClient(ctx, clusterID, r.GetClient())
 				if err != nil {
 					return replicaEnabled, clusterClients, err

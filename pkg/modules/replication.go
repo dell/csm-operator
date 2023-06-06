@@ -61,15 +61,27 @@ var (
 	XCSIReplicaPrefix = "X_CSI_REPLICATION_PREFIX"
 )
 
-// ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CMS Replication. The key is driver name and the value is the driver plugin identifier
+// ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
 var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
-	"powerscale": {
+	string(csmv1.PowerScaleName): {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 	},
-	"isilon": {
+	string(csmv1.PowerScale): {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
+	},
+	string(csmv1.PowerFlex): {
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	},
+	string(csmv1.PowerFlexName): {
+		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	},
+	string(csmv1.PowerMax): {
+		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
 	},
 }
 
@@ -148,7 +160,7 @@ func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csm
 }
 
 // CheckApplyContainersReplica --
-func CheckApplyContainersReplica(contaners []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
+func CheckApplyContainersReplica(containers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
 	replicaModule, err := getReplicaModule(cr)
 	if err != nil {
 		return err
@@ -156,7 +168,7 @@ func CheckApplyContainersReplica(contaners []acorev1.ContainerApplyConfiguration
 
 	driverString := "driver"
 	replicationContextPrefix, replicationPrefix := getRepctlPrefices(replicaModule, cr.Spec.Driver.CSIDriverType)
-	for _, cnt := range contaners {
+	for _, cnt := range containers {
 		if *cnt.Name == utils.ReplicationSideCarName {
 			// check volumes
 			volName := ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
@@ -297,6 +309,13 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 			if err != nil {
 				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClusterID)
 			}
+		case csmv1.PowerFlex:
+			tmpCR := cr
+			log.Infof("\nperforming pre checks for: %s", cluster.ClusterID)
+			err = drivers.PrecheckPowerFlex(ctx, &tmpCR, op, cluster.ClusterCTRLClient)
+			if err != nil {
+				return fmt.Errorf("failed powerflex validation: %v for cluster %s", err, cluster.ClusterID)
+			}
 		}
 	}
 	return nil
@@ -320,8 +339,8 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	replicaCount := "1"
 	retryMin := "1s"
 	retryMax := "5m"
-	replicaImage := "dellemc/dell-replication-controller:v1.4.0"
-	replicaInitImage := "dellemc/dell-replication-init:v1.0.0"
+	replicaImage := "dellemc/dell-replication-controller:v1.5.0"
+	replicaInitImage := "dellemc/dell-replication-init:v1.0.1"
 
 	for _, component := range replica.Components {
 		if component.Name == utils.ReplicationControllerManager {
@@ -372,7 +391,7 @@ func ReplicationManagerController(ctx context.Context, isDeleting bool, op utils
 		return err
 	}
 
-	ctrlObjects, err := utils.GetCTRLObject([]byte(YamlString))
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}

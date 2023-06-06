@@ -1,0 +1,60 @@
+# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: test-powermax
+  namespace: powermax
+spec:
+  driver:
+    csiDriverType: "powermax"
+    configVersion: v2.6.0
+    authSecret: test-powermax-creds
+    replicas: 1
+    common:
+      image: "dellemc/csi-powermax:v2.6.0"
+      imagePullPolicy: IfNotPresent
+
+  modules:
+    - name: replication
+      enabled: true
+      components:
+        - name: dell-csi-replicator
+          image: dellemc/dell-csi-replicator:v1.4.0
+          envs:
+            - name: "X_CSI_REPLICATION_PREFIX"
+              value: "replication.storage.dell.com"
+            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+              value: "powermax"
+
+
+        - name: dell-replication-controller-manager
+          image: dellemc/dell-replication-controller:v1.4.0
+          envs:
+            - name: "TARGET_CLUSTERS_IDS"
+              value: "test-target-cluster-1,test-target-cluster-2"
+
+            - name: "REPLICATION_CTRL_LOG_LEVEL"
+              value: "debug"
+
+            - name: "REPLICATION_CTRL_REPLICAS"
+              value: "1"
+
+            - name: "LEADER_ELECTION"
+              value: "true"
+
+            - name: "RETRY_INTERVAL_MIN"
+              value: "1s"
+
+            - name: "RETRY_INTERVAL_MAX"
+              value: "5m"

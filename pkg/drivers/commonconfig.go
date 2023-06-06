@@ -48,6 +48,14 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if cr.Spec.Driver.CSIDriverType == "powerstore" {
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "Controller")
 	}
+	log.Debugw("DriverSpec ", cr.Spec)
+	if cr.Spec.Driver.CSIDriverType == "unity" {
+		YamlString = ModifyUnityCR(YamlString, cr, "Controller")
+	}
+
+	if cr.Spec.Driver.CSIDriverType == "powermax" {
+		YamlString = ModifyPowermaxCR(YamlString, cr, "Controller")
+	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "Deployment")
 	if err != nil {
@@ -61,12 +69,15 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if len(cr.Spec.Driver.Controller.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Controller.Tolerations {
+			log.Debugw("Adding toleration", "t", t)
 			toleration := acorev1.Toleration()
-			toleration.WithEffect(t.Effect)
 			toleration.WithKey(t.Key)
-			toleration.WithValue(t.Value)
 			toleration.WithOperator(t.Operator)
-			toleration.WithTolerationSeconds(*t.TolerationSeconds)
+			toleration.WithValue(t.Value)
+			toleration.WithEffect(t.Effect)
+			if t.TolerationSeconds != nil {
+				toleration.WithTolerationSeconds(*t.TolerationSeconds)
+			}
 			tols = append(tols, *toleration)
 		}
 
@@ -115,8 +126,17 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	controllerYAML.Deployment.Spec.Template.Spec.Containers = newcontainers
 	// Update volumes
 	for i, v := range controllerYAML.Deployment.Spec.Template.Spec.Volumes {
+		newV := new(acorev1.VolumeApplyConfiguration)
 		if *v.Name == "certs" {
-			newV, err := getApplyCertVolume(cr)
+			if cr.Spec.Driver.CSIDriverType == "isilon" || cr.Spec.Driver.CSIDriverType == "powerflex" {
+				newV, err = getApplyCertVolume(cr)
+			}
+			if cr.Spec.Driver.CSIDriverType == "unity" {
+				newV, err = getApplyCertVolumeUnity(cr)
+			}
+			if cr.Spec.Driver.CSIDriverType == "powermax" {
+				newV, err = getApplyCertVolumePowermax(cr)
+			}
 			if err != nil {
 				log.Errorw("GetController spec template volumes", "Error", err.Error())
 				return nil, err
@@ -167,6 +187,12 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	if cr.Spec.Driver.CSIDriverType == "powerflex" {
 		YamlString = ModifyPowerflexCR(YamlString, cr, "Node")
 	}
+	if cr.Spec.Driver.CSIDriverType == "unity" {
+		YamlString = ModifyUnityCR(YamlString, cr, "Node")
+	}
+	if cr.Spec.Driver.CSIDriverType == "powermax" {
+		YamlString = ModifyPowermaxCR(YamlString, cr, "Node")
+	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
 	if err != nil {
@@ -184,12 +210,15 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	if len(cr.Spec.Driver.Node.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Node.Tolerations {
+			fmt.Printf("[BRUH] toleration t: %+v\n", t)
 			toleration := acorev1.Toleration()
-			toleration.WithEffect(t.Effect)
 			toleration.WithKey(t.Key)
-			toleration.WithValue(t.Value)
 			toleration.WithOperator(t.Operator)
-			toleration.WithTolerationSeconds(*t.TolerationSeconds)
+			toleration.WithValue(t.Value)
+			toleration.WithEffect(t.Effect)
+			if t.TolerationSeconds != nil {
+				toleration.WithTolerationSeconds(*t.TolerationSeconds)
+			}
 			tols = append(tols, *toleration)
 		}
 
@@ -205,6 +234,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	for i, c := range containers {
 		if string(*c.Name) == "driver" {
 			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
+			c.Env = containers[i].Env
 			if string(cr.Spec.Driver.Common.Image) != "" {
 				image := string(cr.Spec.Driver.Common.Image)
 				c.Image = &image
@@ -244,8 +274,17 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	// Update volumes
 	for i, v := range nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes {
+		newV := new(acorev1.VolumeApplyConfiguration)
 		if *v.Name == "certs" {
-			newV, err := getApplyCertVolume(cr)
+			if cr.Spec.Driver.CSIDriverType == "isilon" || cr.Spec.Driver.CSIDriverType == "powerflex" {
+				newV, err = getApplyCertVolume(cr)
+			}
+			if cr.Spec.Driver.CSIDriverType == "unity" {
+				newV, err = getApplyCertVolumeUnity(cr)
+			}
+			if cr.Spec.Driver.CSIDriverType == "powermax" {
+				newV, err = getApplyCertVolumePowermax(cr)
+			}
 			if err != nil {
 				log.Errorw("GetNode apply cert Volume failed", "Error", err.Error())
 				return nil, err
@@ -315,6 +354,9 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 			break
 		}
 	}
+	if cr.Spec.Driver.CSIDriverType == "unity" {
+		configMap.Data = ModifyUnityConfigMap(ctx, cr)
+	}
 	return &configMap, nil
 
 }
@@ -349,8 +391,14 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	}
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
-	if cr.Spec.Driver.CSIDriverType == "powerstore" {
+	switch cr.Spec.Driver.CSIDriverType {
+	case "powerstore":
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "CSIDriverSpec")
+	case "isilon":
+		YamlString = ModifyPowerScaleCR(YamlString, cr, "CSIDriverSpec")
+	}
+	if cr.Spec.Driver.CSIDriverType == "powermax" {
+		YamlString = ModifyPowermaxCR(YamlString, cr, "CSIDriverSpec")
 	}
 	err = yaml.Unmarshal([]byte(YamlString), &csidriver)
 	if err != nil {

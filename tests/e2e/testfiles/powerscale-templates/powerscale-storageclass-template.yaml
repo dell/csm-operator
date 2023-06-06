@@ -1,0 +1,12 @@
+allowVolumeExpansion: true
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: op-e2e-isilon
+parameters:
+  AccessZone: System
+  IsiPath: /ifs/data/csi
+  RootClientEnabled: "false"
+provisioner: csi-isilon.dellemc.com
+reclaimPolicy: Delete
+volumeBindingMode: Immediate

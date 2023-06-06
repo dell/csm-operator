@@ -73,6 +73,7 @@ const (
 	AppMobCertManagerComponent = "cert-manager"
 	// AppMobVeleroComponent - velero component
 	AppMobVeleroComponent = "velero"
+
 )
 
 // getAppMobilityModule - get instance of app mobility module
@@ -87,6 +88,7 @@ func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error)
 
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
 func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+
 	YamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
@@ -94,7 +96,6 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	}
 
 	fmt.Printf("***** INSIDE APPLICATION DEPLOYMENT ******")
-
 	deploymentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobDeploymentManifest)
 	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
 	if err != nil {
@@ -461,3 +462,4 @@ func IsdeployResticEnabled(ctx context.Context, instance csmv1.ContainerStorageM
 	return false
 }
 */
+

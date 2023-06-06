@@ -46,3 +46,4 @@ spec:
       # Default value: false
       - name: cert-manager
         enabled: true
+

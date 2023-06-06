@@ -1,0 +1,22 @@
+parameter name, grep option for paramater value, parameter value,resource to describe
+Name,,powerscale,controller,2
+Namespace,,dell,controller,1
+F S Group Policy,,File,csm,1
+Auth Secret,,csm-creds,csm,1
+Replicas,,3,csm,1
+Dns Policy,,ClusterFirstWithHostNet,csm,1
+Force Remove Driver,,true,csm,1
+Image Pull Policy,,Always,csm,1
+X_CSI_VERBOSE,,1,controller,1
+X_CSI_ISI_PORT,,8080,controller,1
+X_CSI_ISI_PATH,,/ifs/e2etest,controller,1
+X_CSI_ISI_NO_PROBE_ON_START,,true,controller,1
+X_CSI_ISI_AUTOPROBE,,true,controller,1
+X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION,,true,controller,1
+X_CSI_CUSTOM_TOPOLOGY_ENABLED,,false,controller,1
+X_CSI_ISI_QUOTA_ENABLED,,false,controller,1
+X_CSI_ISI_ACCESS_ZONE,,E2eTestZone,controller,1
+X_CSI_ISI_VOLUME_PATH_PERMISSIONS,,777,controller,1
+X_CSI_HEALTH_MONITOR_ENABLED,,false,controller,1
+Tolerations,-v,none,controller,1
+X_CSI_MAX_VOLUMES_PER_NODE,,20,node,1

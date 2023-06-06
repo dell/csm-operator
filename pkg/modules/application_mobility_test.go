@@ -414,7 +414,6 @@ func TestAppMobilityVelero(t *testing.T) {
 			}
 
 			tmpCR := customResource
-
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -464,7 +463,6 @@ func TestAppMobilityVelero(t *testing.T) {
 			err := AppMobilityVelero(ctx, isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}

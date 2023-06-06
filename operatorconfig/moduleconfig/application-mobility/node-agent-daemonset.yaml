@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-agent
+  namespace: <NAMESPACE>
+  {{- with .Values.nodeAgent.annotations }}
+  annotations:
+  labels:
+    app.kubernetes.io/name: {{ include "velero.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "velero.chart" . }}
+    {{- with .Values.nodeAgent.labels }}
+spec:
+  selector:
+    matchLabels:
+      name: node-agent
+  template:
+    metadata:
+      labels:
+        name: node-agent
+        app.kubernetes.io/name: {{ include "velero.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        helm.sh/chart: {{ include "velero.chart" . }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+    spec:
+      imagePullSecrets:
+      {{- range .Values.image.imagePullSecrets }}
+        - name: {{ . }}
+      serviceAccountName: {{ include "velero.serverServiceAccount" . }}
+      {{- with .Values.nodeAgent.podSecurityContext }}
+      securityContext:
+      priorityClassName: {{ include "velero.nodeAgent.priorityClassName" . }}
+      terminationGracePeriodSeconds: <TERMINATION_GRACE_PERIOD_SECONDS>
+      volumes:
+        - name: cloud-credentials
+          secret:
+            secretName: {{ include "velero.secretName" . }}
+        - name: host-pods
+          hostPath:
+            path: <NODEAGENT_PODVOLUMEPATH>
+        - name: scratch
+          emptyDir: {}
+      dnsPolicy: <NODEAGENT_DNSPOLICY>
+      containers:
+        - name: node-agent
+          image: <IMAGE_REPOSITORY>@<IMAGE_DIGEST>
+          image: <IMAGE_REPOSITORY>:<IMAGE_TAG>
+          imagePullPolicy: <IMAGE_PULLPOLICY>
+          command:
+            - /velero
+          args:
+            - node-agent
+            - server
+          {{- with .Values.configuration }}
+            {{- with .features }}
+            - --features={{ . }}
+            {{- with .logLevel }}
+            - --log-level={{ . }}
+            {{- with .logFormat }}
+            - --log-format={{ . }}
+          volumeMounts:
+            - name: cloud-credentials
+              mountPath: /credentials
+            - name: host-pods
+              mountPath: /host_pods
+              mountPropagation: HostToContainer
+            - name: scratch
+              mountPath: /scratch
+          envFrom:
+          - secretRef:
+              name: <CREDENTIAL_EXTRASECRET_REF>
+          env:
+            - name: VELERO_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: VELERO_SCRATCH_DIR
+              value: /scratch
+            - name: AWS_SHARED_CREDENTIALS_FILE
+              value: /credentials/cloud
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /credentials/cloud
+            - name: AZURE_CREDENTIALS_FILE
+              value: /credentials/cloud
+            - name: ALIBABA_CLOUD_CREDENTIALS_FILE
+              value: /credentials/cloud
+            - name: {{ default "none" $key }}
+              value: {{ default "none" $value | quote }}
+            - name: {{ default "none" $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "velero.secretName" $ }}
+                  key: {{ default "none" $key }}
+            - name: {{ default "none" $key }}
+              value: {{ default "none" $value | quote }}
+          lifecycle: 
+          securityContext:
+            privileged: <NODEAGENT_PRIVILEGED>
+            {{- with $containerSecurityContext }}
+          {{- with .Values.nodeAgent.resources }}
+          resources:
+      {{- with .Values.nodeAgent.tolerations }}
+      tolerations:
+      {{- with .Values.nodeAgent.nodeSelector }}
+      nodeSelector:
+      {{- with .Values.nodeAgent.affinity }}
+      affinity:    
+    {{- with .Values.nodeAgent.dnsConfig }}
+    dnsConfig:

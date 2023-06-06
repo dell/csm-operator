@@ -34,7 +34,6 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --app-mobility-namespace=<NAMESPACE>
-        - --velero-namespace=<NAMESPACE>
         - --secret-name=<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
         - --license-name=<APPLICATION_MOBILITY_LICENSE_NAME>
         command:
@@ -162,17 +161,17 @@ rules:
   verbs:
   - get
   - list
-- apiGroups: 
+- apiGroups:
   - mobility.storage.dell.com
-  resources: 
+  resources:
   - backups
-  verbs: 
-  - create 
-  - delete 
+  verbs:
+  - create
+  - delete
   - get
   - list
-  - patch 
-  - update 
+  - patch
+  - update
   - watch
 - apiGroups:
   - mobility.storage.dell.com
@@ -552,7 +551,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: <NAMESPACE>-leader-election-rolebinding
-  namespace: application-mobility
+  namespace: <NAMESPACE>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -560,7 +559,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: <NAMESPACE>-controller-manager
-  namespace: application-mobility
+  namespace: <NAMESPACE>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -601,14 +600,6 @@ metadata:
   name: <NAMESPACE>-manager-config
   namespace: <NAMESPACE>
 ---
-apiVersion: v1
-data:
-  controller_manager_config.yaml: "apiVersion: controller-runtime.sigs.k8s.io/v1alpha1\r\nkind: ControllerManagerConfig\r\nhealth:\r\n  healthProbeBindAddress: :8081\r\nmetrics:\r\n  bindAddress: 127.0.0.1:8080\r\nwebhook:\r\n  port: 9443\r\nleaderElection:\r\n  leaderElect: true\r\n  resourceName: 50a66265.storage.dell.com\r\n"
-kind: ConfigMap
-metadata:
-  name: <NAMESPACE>-manager-config
-  namespace: <NAMESPACE>
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -622,3 +613,4 @@ subjects:
 - kind: ServiceAccount
   name: <NAMESPACE>-controller-manager
   namespace: <NAMESPACE>
+ ---
