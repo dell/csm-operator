@@ -658,6 +658,8 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			return fmt.Errorf("failed to deploy application mobility: %v", err)
 		}
 		return nil
+	}
+
 	//Create/Update Reverseproxy Server
 	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled {
 		log.Infow("Trying Create/Update reverseproxy...")
@@ -819,9 +821,9 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 	}
-
 	return nil
 }
+
 
 // reconcileObservability - Delete/Create/Update observability components
 // isDeleting - true: Delete; false: Create/Update

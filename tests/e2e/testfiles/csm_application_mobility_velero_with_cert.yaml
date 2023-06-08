@@ -50,7 +50,7 @@ spec:
         #existingSecret: existing_secret_name 
         image: velero/velero:v1.8.1
         imagePullPolicy: IfNotPresent
-        enabled: false
+        enabled: true
         #use-volume-snapshots: false
         #cleanUpCRDs: false
         #deployRestic: false

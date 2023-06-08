@@ -9,7 +9,7 @@
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [test-isilon-creds] in namespace [test-isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
-    - "Validate [application-mobility] module from CR [1] is installed"
+    - "Validate [powerscale] driver from CR [1] is installed"
     - "Run custom test"
     # Last three steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
@@ -1226,7 +1226,8 @@
   customTest:
     # name of custom test to run
     name: verify app-mobility
-    run: ./verify-app-mobility.sh
+    run: 
+      - ./verify-app-mobility.sh
 
 - scenario: "Install App Mobility with APPLICATION_MOBILITY_REPLICA_COUNT set to 2"
   paths: 
@@ -1248,7 +1249,8 @@
   customTest:
     # name of custom test to run
     name: verify app-mobility
-    run: ./verify-app-mobility.sh
+    run: 
+      - ./verify-app-mobility.sh
 
 - scenario: "Install App Mobility with APPLICATION_MOBILITY_LICENSE_NAME set to bad license"
   paths: 
@@ -1270,7 +1272,8 @@
   customTest:
     # name of custom test to run
     name: verify app-mobility
-    run: ./verify-app-mobility.sh
+    run: 
+      - ./verify-app-mobility.sh
 
 - scenario: "Install App Mobility with Cert-Manager"
   paths: 
@@ -1292,4 +1295,28 @@
   customTest:
     # name of custom test to run
     name: verify app-mobility
-    run: ./verify-app-mobility.sh
+    run: 
+      - ./verify-app-mobility.sh
+
+- scenario: "Install App Mobility with Cert-Manager and Velero"
+  paths: 
+    - "testfiles/csm_application_mobility_velero_with_cert.yaml"
+  modules: 
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install [cert-manager]"
+    - "Install [velero]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [application-mobility] module from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Uninstall [cert-manager]"
+    - "Uninstall [velero]"
+    - "Enable forceRemoveModule on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    # name of custom test to run
+    name: verify app-mobility
+    run: 
+      - ./verify-app-mobility.sh
