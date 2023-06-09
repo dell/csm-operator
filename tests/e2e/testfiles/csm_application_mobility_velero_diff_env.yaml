@@ -22,7 +22,7 @@ spec:
           # Allowed values: string
           # Default value: 1
           - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
-            value: "2"
+            value: "1"
 
           # License for application mobility
           # Default value: license
@@ -50,7 +50,7 @@ spec:
         #existingSecret: existing_secret_name 
         image: velero/velero:v1.8.1
         imagePullPolicy: IfNotPresent
-        enabled: false
+        enabled: true
         #use-volume-snapshots: false
         #cleanUpCRDs: false
         #deployRestic: false
@@ -70,12 +70,12 @@ spec:
           # Allowed values: string
           # Default value: default
           - name: "BACKUPSTORAGELOCATION_NAME"
-            value: "default"
+            value: "backup-name"
 
           # Namespace for Velero installation
           # Default value: application-mobility
           - name: "VELERO_NAMESPACE"
-            value: "application-mobility"
+            value: "velero"
 
           # Based on the objectstore being used , the velero plugin and its configuration may need to change!
           # GCP and Azure plugins configuration are different. See more details at: https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/README.md
@@ -86,4 +86,4 @@ spec:
           # name to be used for secret that will be created to hold object store credentials. Used in conjunction with secretContents
           # Default value: cloud-creds
           - name: "CREDENTIAL_NAME"
-            value: "cloud-creds"
+            value: "secret"
