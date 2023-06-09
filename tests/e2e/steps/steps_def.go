@@ -137,10 +137,11 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		}
 	} else if thirdPartyModule == "velero" {
 	  cmd := exec.Command("helm", "install", "velero","vmware-tanzu/velero","--namespace velero","--create-namespace","--set configuration.provider=csi","--set configuration.backupStorageLocation.name=default","--set configuration.backupStorageLocation.bucket=bucket","--set initContainers[0].name=velero-plugin-for-csi","--set initContainers[0].image=velero/velero-plugin-for-csi:v0.2.0","--set initContainers[0].volumeMounts[0].mountPath=/target","--set initContainers[0].volumeMounts[0].name=plugins")
-	} else {
-		return fmt.Errorf("Installation of velero %v failed", thirdPartyModule)
+    err := cmd.Run()
+    if err != nil {
+				return fmt.Errorf("Installation of velero %v failed", err)
+		}
 	}
-
 	return nil
 }
 
@@ -152,11 +153,12 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
     			return fmt.Errorf("cert-manager uninstall failed: %v", err)
 		}
 	} else if thirdPartyModule == "velero" {
-		fmt.Printf("helm", "delete", "velero","--namespace velero")
-	} else {
-		return fmt.Errorf("Uninstallation of third-party module %v not supported", thirdPartyModule)
+		cmd := exec.Command("helm", "delete", "velero","--namespace velero")
+    err := cmd.Run()
+    if err != nil {
+		  return fmt.Errorf("Uninstallation of velero %v failed", err)
 	}
-
+  }
 	return nil
 }
 
