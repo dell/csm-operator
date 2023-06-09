@@ -1344,7 +1344,8 @@
     # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
     # Example:
     #   ./hello_world.sh
-    run: ./verify-app-mobility.sh
+    run: 
+      - ./verify-app-mobility.sh
 
 - scenario: "Install App Mobility with powerflex driver"
   paths:
@@ -1374,4 +1375,5 @@
     # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
     # Example:
     #   ./hello_world.sh
-    run: ./verify-app-mobility.sh
+    run: 
+      - ./verify-app-mobility.sh

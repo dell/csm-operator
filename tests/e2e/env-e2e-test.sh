@@ -17,7 +17,7 @@ export GINKGO_OPTS="-v"
 # export KUBECONFIG=""
 
 # Must supply path to values file if different from testfiles/values.yaml
-export VALUES_FILE="testfiles/values.yaml"
+export VALUES_FILE="testfiles/abh-values.yaml"
 
 # USER MODIFICATION REQUIRED: must supply path to your cert-csi binary
 export CERT_CSI="/root/cert-csi"
