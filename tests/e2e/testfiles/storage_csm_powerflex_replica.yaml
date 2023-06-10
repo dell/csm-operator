@@ -11,13 +11,13 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.6.0
+    configVersion: v2.7.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.6.0"
+      image: "dellemc/csi-vxflexos:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -38,7 +38,7 @@ spec:
 
 
     sideCars:
-    # sdc-monitor is disabled by default, due to high CPU usage 
+    # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:3.6.0.6
@@ -81,12 +81,12 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint 
-      # - key: "node-role.kubernetes.io/master"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      # - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
 
@@ -105,7 +105,7 @@ spec:
         #    false: disable SDC approval
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
-          value: "false"  
+          value: "false"
 
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
@@ -139,11 +139,11 @@ spec:
       # Default value: None
       tolerations:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      # - key: "node-role.kubernetes.io/master"   
+      # - key: "node-role.kubernetes.io/master"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      # - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
 
@@ -156,7 +156,7 @@ spec:
             value: "10.x.x.x,10.x.x.x"  #provide MDM value
 
   modules:
-    # replication: allows to configure replication
+    # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
       # enabled: Enable/Disable replication feature
@@ -183,7 +183,7 @@ spec:
           # Default value: powerstore
           - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
             value: "powerflex"
-      
+
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
@@ -193,13 +193,13 @@ spec:
           # Set the value to "self" in case of stretched/single cluster configuration
           # Allowed values: string
           - name: "TARGET_CLUSTERS_IDS"
-            value: "cluster-151"
+            value: "self"
           # Replication log level
           # Allowed values: "error", "warn"/"warning", "info", "debug"
           # Default value: "debug"
           - name: "REPLICATION_CTRL_LOG_LEVEL"
             value: "debug"
-          
+
           # replicas: Defines number of controller replicas
           # Allowed values: int
           # Default value: 1
@@ -214,9 +214,8 @@ spec:
           # Allowed values: time
           - name: "RETRY_INTERVAL_MAX"
             value: "5m"
-      
+
       - name: dell-replication-controller-init
         # image: Defines replication init container image. This shouldn't be changed
         # Allowed values: string
         image: dellemc/dell-replication-init:v1.0.0
-

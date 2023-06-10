@@ -11,18 +11,18 @@
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Run custom test"
-    # Last three steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI
-    run: 
+    run:
       - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver with first alternate sample file"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_alt_vals_1.yaml"
   modules:
   steps:
@@ -33,19 +33,19 @@
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Run custom test"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml] for [pscale]"
   customTest:
     name: Cert CSI and check_parameters.sh
-    run: 
+    run:
       - ./cert-csi test vio --sc powerscale-altifs --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_1_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with second alternate sample file"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_alt_vals_2.yaml"
   modules:
   steps:
@@ -56,19 +56,19 @@
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Run custom test"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI and check_parameters.sh
-    run: 
+    run:
       - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_2_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with third alternate sample file"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_alt_vals_3.yaml"
   modules:
   steps:
@@ -80,7 +80,7 @@
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Run custom test"
-    # Last four steps perform Clean Up. Need to reinstall pscale with forceRemoveDriver to fully clean delete
+    # cleanup
     - "Remove [control-plane] node label"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -88,12 +88,12 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI and check_parameters.sh
-    run: 
+    run:
       - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_3_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver with health monitor"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_health_monitor.yaml"
   modules:
   steps:
@@ -104,14 +104,14 @@
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Run custom test"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI and check_parameters.sh
-    run: 
+    run:
       - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_health_monitor_values.csv dell powerscale
 
@@ -137,7 +137,7 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Run custom test"
-    # Last six steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
@@ -145,7 +145,7 @@
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
   customTest:
     name: Cert CSI
-    run: 
+    run:
       - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization"
@@ -174,7 +174,7 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Run custom test"
-    # Last six steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
@@ -182,7 +182,7 @@
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
   customTest:
     name: Cert CSI
-    run: 
+    run:
       - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(With Replication)"
@@ -197,17 +197,18 @@
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is installed"
     - "Run custom test"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
-    name: HelloWorld 
-    run: 
+    name: HelloWorld
+    run:
       - "echo Hello && echo World"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Replication"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale.yaml"
+    - "testfiles/storage_csm_powerscale_replica.yaml"
   modules:
     - "replication"
   steps:
@@ -216,16 +217,16 @@
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
-    - "Enable [replication] module from CR [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
-    - "Validate [replication] module from CR [1] is installed"
+    - "Enable [replication] module from CR [2]"
+    - "Validate [powerscale] driver from CR [2] is installed"
+    - "Validate [replication] module from CR [2] is installed"
     - "Run custom test"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+    - "Delete custom resource [2]"
   customTest:
-    name: HelloWorld 
-    run: 
+    name: HelloWorld
+    run:
       - "echo Hello && echo World"
 
 - scenario: "Uninstall PowerScale Driver"
@@ -269,7 +270,7 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is not installed"
     - "Run custom test"
-    # Last six steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
@@ -281,10 +282,8 @@
     run:
       - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
-
-
 - scenario: Install PowerScale Driver(With Replication), Disable Replication module"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_replica.yaml"
   modules:
     - "replication"
@@ -297,27 +296,31 @@
     - "Disable [replication] module from CR [1]"
     - "Validate [replication] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
 - scenario: "Install PowerScale Driver(With Observability)"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_observability.yaml"
   modules:
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable/Disable Observability"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale.yaml"
   modules:
     - "observability"
@@ -333,12 +336,12 @@
     - "Disable [observability] module from CR [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
 - scenario: Install PowerScale Driver(With Observability), Disable Observability module"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_observability.yaml"
   modules:
     - "observability"
@@ -351,12 +354,12 @@
     - "Disable [observability] module from CR [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
 - scenario: "Install PowerScale Driver(With Authorization and Observability)"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "observability"
@@ -369,12 +372,12 @@
     - "Validate [authorization] module from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
     - "Run custom test"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
   customTest:
     name: Cert CSI
-    run: 
+    run:
       - ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization, Enable Observability"
@@ -409,7 +412,7 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is installed"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
@@ -417,7 +420,7 @@
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
 
 - scenario: Install PowerScale Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "observability"
@@ -438,12 +441,12 @@
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [authorization] module from CR [1] is not installed"
     - "Validate [observability] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
 - scenario: Install PowerScale Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
-  paths: 
+  paths:
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "observability"
@@ -464,744 +467,744 @@
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [authorization] module from CR [1] is not installed"
     - "Validate [observability] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
+    # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
-- scenario: "Install PowerFlex Driver(Standalone)"
-  paths:
-    - "testfiles/storage_csm_powerflex.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-  customTest:
-    name: Cert CSI
-    run: 
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+# - scenario: "Install PowerFlex Driver(Standalone)"
+#   paths:
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#   customTest:
+#     name: Cert CSI
+#     run:
+#       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerFlex Driver with first set of alternate values"
-  paths:
-    - "testfiles/storage_csm_powerflex_alt_vals_1.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-  customTest:
-    name: Cert CSI and check_parameters.sh
-    run: 
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-      - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_1_values.csv dell powerflex
+# - scenario: "Install PowerFlex Driver with first set of alternate values"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_alt_vals_1.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#   customTest:
+#     name: Cert CSI and check_parameters.sh
+#     run:
+#       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+#       - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_1_values.csv dell powerflex
 
-- scenario: "Install PowerFlex Driver with second set of alternate values"
-  paths:
-    - "testfiles/storage_csm_powerflex_alt_vals_2.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-  customTest:
-    name: Cert CSI and check_parameters.sh
-    run: 
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-      - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_2_values.csv dell powerflex
+# - scenario: "Install PowerFlex Driver with second set of alternate values"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_alt_vals_2.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#   customTest:
+#     name: Cert CSI and check_parameters.sh
+#     run:
+#       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+#       - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_2_values.csv dell powerflex
 
-- scenario: "Install PowerFlex Driver with third set of alternate values"
-  paths:
-    - "testfiles/storage_csm_powerflex_alt_vals_3.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set [control-plane] node label"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Remove [control-plane] node label"
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-  customTest:
-    name: Cert CSI and check_parameters.sh
-    run: 
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-      - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_3_values.csv dell powerflex
+# - scenario: "Install PowerFlex Driver with third set of alternate values"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_alt_vals_3.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Set [control-plane] node label"
+#     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Remove [control-plane] node label"
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#   customTest:
+#     name: Cert CSI and check_parameters.sh
+#     run:
+#       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+#       - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_3_values.csv dell powerflex
 
-- scenario: "Install PowerFlex Driver with fourth set of alternate values"
-  paths:
-    - "testfiles/storage_csm_powerflex_alt_vals_4.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-  customTest:
-    name: Cert CSI and check_parameters.sh
-    run: 
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-      - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_4_values.csv dell powerflex
+# - scenario: "Install PowerFlex Driver with fourth set of alternate values"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_alt_vals_4.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#   customTest:
+#     name: Cert CSI and check_parameters.sh
+#     run:
+#       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+#       - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_4_values.csv dell powerflex
 
-- scenario: "Install PowerFlex Driver with fifth set of alternate values"
-  paths:
-    - "testfiles/storage_csm_powerflex_alt_vals_5.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-  customTest:
-    name: Cert CSI and check_parameters.sh
-    run: 
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-      - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_5_values.csv dell powerflex
+# - scenario: "Install PowerFlex Driver with fifth set of alternate values"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_alt_vals_5.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#   customTest:
+#     name: Cert CSI and check_parameters.sh
+#     run:
+#       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+#       - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_5_values.csv dell powerflex
 
-- scenario: "Uninstall PowerFlex Driver"
-  paths:
-    - "testfiles/storage_csm_powerflex.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Validate [powerflex] driver from CR [1] is not installed"
+# - scenario: "Uninstall PowerFlex Driver"
+#   paths:
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Validate [powerflex] driver from CR [1] is not installed"
 
-- scenario: "Install PowerFlex Driver (With Authorization)"
-  paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
-    - "testfiles/storage_csm_powerflex_auth.yaml"
-  modules:
-    - "authorization"
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerflex]"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
-    - "Apply custom resource [2]"
-    - "Validate custom resource [2]"
-    - "Validate [powerflex] driver from CR [2] is installed"
-    - "Run custom test"
-    # Last steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [2]"
-    - "Delete custom resource [1]"
-    - "Delete custom resource [2]"
-    - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-  customTest:
-    name: Cert CSI
-    run:
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+# - scenario: "Install PowerFlex Driver (With Authorization)"
+#   paths:
+#     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+#     - "testfiles/storage_csm_powerflex_auth.yaml"
+#   modules:
+#     - "authorization"
+#     - "authorizationproxyserver"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create [authorization-proxy-server] prerequisites from CR [1]"
+#     - "Apply custom resource [1]"
+#     - "Validate [authorization-proxy-server] module from CR [1] is installed"
+#     - "Configure authorization-proxy-server for [powerflex]"
+#     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
+#     - "Apply custom resource [2]"
+#     - "Validate custom resource [2]"
+#     - "Validate [powerflex] driver from CR [2] is installed"
+#     - "Run custom test"
+#     # Last steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [2]"
+#     - "Delete custom resource [1]"
+#     - "Delete custom resource [2]"
+#     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#   customTest:
+#     name: Cert CSI
+#     run:
+#       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerFlex Driver(Standalone), Enable Authorization"
-  paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
-    - "testfiles/storage_csm_powerflex.yaml"
-  modules:
-    - "authorizationproxyserver"
-    - "authorization"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Apply custom resource [2]"
-    - "Validate custom resource [2]"
-    - "Validate [powersflex] driver from CR [2] is installed"
-    - "Validate [authorization] module from CR [2] is not installed"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
-    - "Enable [authorization] module from CR [2]"
-    - "Validate [powerflex] driver from CR [2] is installed"
-    - "Validate [authorization] module from CR [2] is installed"
-    - "Run custom test"
-    # Last  steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [2]"
-    - "Delete custom resource [1]"
-    - "Delete custom resource [2]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
-  customTest:
-    name: Cert CSI
-    run:
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+# - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization"
+#   paths:
+#     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   modules:
+#     - "authorizationproxyserver"
+#     - "authorization"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create [authorization-proxy-server] prerequisites from CR [1]"
+#     - "Apply custom resource [1]"
+#     - "Validate [authorization-proxy-server] module from CR [1] is installed"
+#     - "Configure authorization-proxy-server for [powerflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
+#     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Apply custom resource [2]"
+#     - "Validate custom resource [2]"
+#     - "Validate [powersflex] driver from CR [2] is installed"
+#     - "Validate [authorization] module from CR [2] is not installed"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
+#     - "Enable [authorization] module from CR [2]"
+#     - "Validate [powerflex] driver from CR [2] is installed"
+#     - "Validate [authorization] module from CR [2] is installed"
+#     - "Run custom test"
+#     # Last  steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [2]"
+#     - "Delete custom resource [1]"
+#     - "Delete custom resource [2]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
+#   customTest:
+#     name: Cert CSI
+#     run:
+#       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: Install PowerFlex Driver(With Authorization), Disable Authorization module"
-  paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
-    - "testfiles/storage_csm_powerflex_auth.yaml"
-  modules:
-    - "authorization"
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
-    - "Apply custom resource [2]"
-    - "Validate custom resource [2]"
-    - "Validate [powerflex] driver from CR [2] is installed"
-    - "Validate [authorization] module from CR [2] is installed"
-    - "Run custom test"
-    - "Disable [authorization] module from CR [2]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Validate [powerflex] driver from CR [2] is installed"
-    - "Validate [authorization] module from CR [2] is not installed"
-    - "Run custom test"
-    # Last steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [2]"
-    - "Delete custom resource [1]"
-    - "Delete custom resource [2]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
-  customTest:
-    name: Cert CSI
-    run:
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+# - scenario: Install PowerFlex Driver(With Authorization), Disable Authorization module"
+#   paths:
+#     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+#     - "testfiles/storage_csm_powerflex_auth.yaml"
+#   modules:
+#     - "authorization"
+#     - "authorizationproxyserver"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create [authorization-proxy-server] prerequisites from CR [1]"
+#     - "Apply custom resource [1]"
+#     - "Validate [authorization-proxy-server] module from CR [1] is installed"
+#     - "Configure authorization-proxy-server for [powerflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
+#     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
+#     - "Apply custom resource [2]"
+#     - "Validate custom resource [2]"
+#     - "Validate [powerflex] driver from CR [2] is installed"
+#     - "Validate [authorization] module from CR [2] is installed"
+#     - "Run custom test"
+#     - "Disable [authorization] module from CR [2]"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+#     - "Validate [powerflex] driver from CR [2] is installed"
+#     - "Validate [authorization] module from CR [2] is not installed"
+#     - "Run custom test"
+#     # Last steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [2]"
+#     - "Delete custom resource [1]"
+#     - "Delete custom resource [2]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
+#   customTest:
+#     name: Cert CSI
+#     run:
+#       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerFlex Driver(With Observability)"
-  paths: 
-    - "testfiles/storage_csm_powerflex_observability.yaml"
-  modules:
-    - "observability"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: "Install PowerFlex Driver(With Observability)"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_observability.yaml"
+#   modules:
+#     - "observability"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: "Install PowerFlex Driver(Standalone), Enable/Disable Observability"
-  paths: 
-    - "testfiles/storage_csm_powerflex.yaml"
-  modules:
-    - "observability"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is not installed"
-    - "Enable [observability] module from CR [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Disable [observability] module from CR [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: "Install PowerFlex Driver(Standalone), Enable/Disable Observability"
+#   paths:
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   modules:
+#     - "observability"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is not installed"
+#     - "Enable [observability] module from CR [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is installed"
+#     - "Disable [observability] module from CR [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is not installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: Install PowerFlex Driver(With Observability), Disable Observability module"
-  paths: 
-    - "testfiles/storage_csm_powerflex_observability.yaml"
-  modules:
-    - "observability"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Disable [observability] module from CR [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: Install PowerFlex Driver(With Observability), Disable Observability module"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_observability.yaml"
+#   modules:
+#     - "observability"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is installed"
+#     - "Disable [observability] module from CR [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is not installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: "Install Powerflex Driver(With Replication)"
-  paths:
-    - "testfiles/storage_csm_powerflex_replica.yaml"
-  modules:
-    - "replication"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [replication] module from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: HelloWorld 
-    run: 
-      - "echo Hello && echo World"
+# - scenario: "Install Powerflex Driver(With Replication)"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_replica.yaml"
+#   modules:
+#     - "replication"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [replication] module from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: HelloWorld
+#     run:
+#       - "echo Hello && echo World"
 
-- scenario: "Install Powerflex Driver(Standalone), Enable Replication"
-  paths: 
-    - "testfiles/storage_csm_powerflex.yaml"
-  modules:
-    - "replication"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [replication] module from CR [1] is not installed"
-    - "Enable [replication] module from CR [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [replication] module from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: HelloWorld 
-    run: 
-      - "echo Hello && echo World"
+# - scenario: "Install Powerflex Driver(Standalone), Enable Replication"
+#   paths:
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   modules:
+#     - "replication"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [replication] module from CR [1] is not installed"
+#     - "Enable [replication] module from CR [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [replication] module from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: HelloWorld
+#     run:
+#       - "echo Hello && echo World"
 
-- scenario: Install PowerFlex Driver(With Replication), Disable Replication module"
-  paths: 
-    - "testfiles/storage_csm_powerflex_replica.yaml"
-  modules:
-    - "replication"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [replication] module from CR [1] is installed"
-    - "Disable [replication] module from CR [1]"
-    - "Validate [replication] driver from CR [1] is installed"
-    - "Validate [replication] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: Install PowerFlex Driver(With Replication), Disable Replication module"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_replica.yaml"
+#   modules:
+#     - "replication"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [replication] module from CR [1] is installed"
+#     - "Disable [replication] module from CR [1]"
+#     - "Validate [replication] driver from CR [1] is installed"
+#     - "Validate [replication] module from CR [1] is not installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: "Install PowerFlex Driver(With Authorization and Observability)"
-  paths: 
-    - "testfiles/storage_csm_powerflex_observability_auth.yaml"
-  modules:
-    - "observability"
-    - "authorization"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: Cert CSI
-    run: 
-      - ./cert-csi test vio --sc vxflexos --chainNumber 2 --chainLength 2
+# - scenario: "Install PowerFlex Driver(With Authorization and Observability)"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+#   modules:
+#     - "observability"
+#     - "authorization"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: Cert CSI
+#     run:
+#       - ./cert-csi test vio --sc vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerFlex Driver(Standalone), Enable Authorization, Enable Observability"
-  paths: 
-    - "testfiles/storage_csm_powerflex.yaml"
-  modules:
-    - "observability"
-    - "authorization"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is not installed"
-    - "Validate [observability] module from CR [1] is not installed"
-    - "Enable [authorization] module from CR [1]"
-    - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is not installed"
-    - "Enable [observability] module from CR [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization, Enable Observability"
+#   paths:
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   modules:
+#     - "observability"
+#     - "authorization"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is not installed"
+#     - "Validate [observability] module from CR [1] is not installed"
+#     - "Enable [authorization] module from CR [1]"
+#     - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is not installed"
+#     - "Enable [observability] module from CR [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
-  paths: 
-    - "testfiles/storage_csm_powerflex_observability_auth.yaml"
-  modules:
-    - "observability"
-    - "authorization"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Disable [observability] module from CR [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is not installed"
-    - "Disable [authorization] module from CR [1]"
-    - "Set secret for driver from CR [1] to [test-vxflexos-config]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is not installed"
-    - "Validate [observability] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+#   modules:
+#     - "observability"
+#     - "authorization"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is installed"
+#     - "Disable [observability] module from CR [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is not installed"
+#     - "Disable [authorization] module from CR [1]"
+#     - "Set secret for driver from CR [1] to [test-vxflexos-config]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is not installed"
+#     - "Validate [observability] module from CR [1] is not installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
-  paths: 
-    - "testfiles/storage_csm_powerflex_observability_auth.yaml"
-  modules:
-    - "observability"
-    - "authorization"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Disable [authorization] module from CR [1]"
-    - "Set secret for driver from CR [1] to [test-vxflexos-config]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is not installed"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Disable [observability] module from CR [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [authorization] module from CR [1] is not installed"
-    - "Validate [observability] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+#   modules:
+#     - "observability"
+#     - "authorization"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Set secret for driver from CR [1] to [test-vxflexos-config-auth]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is installed"
+#     - "Validate [observability] module from CR [1] is installed"
+#     - "Disable [authorization] module from CR [1]"
+#     - "Set secret for driver from CR [1] to [test-vxflexos-config]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is not installed"
+#     - "Validate [observability] module from CR [1] is installed"
+#     - "Disable [observability] module from CR [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [authorization] module from CR [1] is not installed"
+#     - "Validate [observability] module from CR [1] is not installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: "Install PowerFlex Driver(With Resiliency)"
-  paths:
-    - "testfiles/storage_csm_powerflex_resiliency.yaml"
-  modules:
-    - "resiliency"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: CustomTest 
-    run:
-     - "echo Todo"
+# - scenario: "Install PowerFlex Driver(With Resiliency)"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_resiliency.yaml"
+#   modules:
+#     - "resiliency"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: CustomTest
+#     run:
+#      - "echo Todo"
 
-- scenario: "Install PowerFlex Driver(Standalone), Enable Resiliency"
-  paths: 
-    - "testfiles/storage_csm_powerflex.yaml"
-  modules:
-    - "resiliency"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is not installed"
-    - "Enable [resiliency] module from CR [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: CustomTest 
-    run:
-     - "echo Todo"
+# - scenario: "Install PowerFlex Driver(Standalone), Enable Resiliency"
+#   paths:
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   modules:
+#     - "resiliency"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is not installed"
+#     - "Enable [resiliency] module from CR [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: CustomTest
+#     run:
+#      - "echo Todo"
 
-- scenario: "Install PowerFlex Driver(With Resiliency), Disable Resiliency module"
-  paths: 
-    - "testfiles/storage_csm_powerflex_resiliency.yaml"
-  modules:
-    - "resiliency"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is installed"
-    - "Disable [resiliency] module from CR [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: "Install PowerFlex Driver(With Resiliency), Disable Resiliency module"
+#   paths:
+#     - "testfiles/storage_csm_powerflex_resiliency.yaml"
+#   modules:
+#     - "resiliency"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is installed"
+#     - "Disable [resiliency] module from CR [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is not installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: "Install PowerScale Driver(With Resiliency)"
-  paths:
-    - "testfiles/storage_csm_powerscale_resiliency.yaml"
-  modules:
-    - "resiliency"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: CustomTest 
-    run:
-     - "echo Todo"
+# - scenario: "Install PowerScale Driver(With Resiliency)"
+#   paths:
+#     - "testfiles/storage_csm_powerscale_resiliency.yaml"
+#   modules:
+#     - "resiliency"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerscale] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: CustomTest
+#     run:
+#      - "echo Todo"
 
-- scenario: "Install PowerScale Driver(Standalone), Enable Resiliency"
-  paths: 
-    - "testfiles/storage_csm_powerscale.yaml"
-  modules:
-    - "resiliency"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is not installed"
-    - "Enable [resiliency] module from CR [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: CustomTest 
-    run:
-     - "echo Todo"
+# - scenario: "Install PowerScale Driver(Standalone), Enable Resiliency"
+#   paths:
+#     - "testfiles/storage_csm_powerscale.yaml"
+#   modules:
+#     - "resiliency"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerscale] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is not installed"
+#     - "Enable [resiliency] module from CR [1]"
+#     - "Validate [powerscale] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: CustomTest
+#     run:
+#      - "echo Todo"
 
-- scenario: "Install PowerScale Driver(With Resiliency), Disable Resiliency module"
-  paths: 
-    - "testfiles/storage_csm_powerscale_resiliency.yaml"
-  modules:
-    - "resiliency"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is installed"
-    - "Disable [resiliency] module from CR [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: "Install PowerScale Driver(With Resiliency), Disable Resiliency module"
+#   paths:
+#     - "testfiles/storage_csm_powerscale_resiliency.yaml"
+#   modules:
+#     - "resiliency"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerscale] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is installed"
+#     - "Disable [resiliency] module from CR [1]"
+#     - "Validate [powerscale] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is not installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: "Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver"
-  paths:
-    - "testfiles/storage_csm_powerscale.yaml"
-    - "testfiles/storage_csm_powerflex.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
-    - "Apply custom resource [1]"
-    - "Apply custom resource [2]"
-    - "Validate custom resource [1]"
-    - "Validate custom resource [2]"
-    - "Validate [powerscale] driver from CR [1] is installed"
-    - "Validate [powerflex] driver from CR [2] is installed"
-    - "Enable forceRemoveDriver on CR [2]"
-    - "Delete custom resource [2]"
-    - "Validate [powerscale] driver from CR [1] is installed"
-    - "Validate [powerflex] driver from CR [2] is not installed"
-    # Last four steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
-    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+# - scenario: "Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver"
+#   paths:
+#     - "testfiles/storage_csm_powerscale.yaml"
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+#     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+#     - "Apply custom resource [1]"
+#     - "Apply custom resource [2]"
+#     - "Validate custom resource [1]"
+#     - "Validate custom resource [2]"
+#     - "Validate [powerscale] driver from CR [1] is installed"
+#     - "Validate [powerflex] driver from CR [2] is installed"
+#     - "Enable forceRemoveDriver on CR [2]"
+#     - "Delete custom resource [2]"
+#     - "Validate [powerscale] driver from CR [1] is installed"
+#     - "Validate [powerflex] driver from CR [2] is not installed"
+#     # Last four steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+#     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
 
-- scenario: "Install Authorization Proxy Server"
-  paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
-  modules:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerscale]"
-    - "Delete custom resource [1]"
+# - scenario: "Install Authorization Proxy Server"
+#   paths:
+#     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+#   modules:
+#     - "authorizationproxyserver"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create [authorization-proxy-server] prerequisites from CR [1]"
+#     - "Apply custom resource [1]"
+#     - "Validate [authorization-proxy-server] module from CR [1] is installed"
+#     - "Configure authorization-proxy-server for [powerscale]"
+#     - "Delete custom resource [1]"
 
-- scenario: "Install PowerStore Driver(Standalone)"
-  paths: 
-    - "testfiles/storage_csm_powerstore.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: Cert CSI
-    run: 
-      - ./cert-csi test vio --sc powerstore --chainNumber 2 --chainLength 2
+# - scenario: "Install PowerStore Driver(Standalone)"
+#   paths:
+#     - "testfiles/storage_csm_powerstore.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerstore] driver from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: Cert CSI
+#     run:
+#       - ./cert-csi test vio --sc powerstore --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerStore Driver(With Resiliency)"
-  paths:
-    - "testfiles/storage_csm_powerstore_resiliency.yaml"
-  modules:
-    - "resiliency"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: CustomTest 
-    run:
-     - "echo Todo"
+# - scenario: "Install PowerStore Driver(With Resiliency)"
+#   paths:
+#     - "testfiles/storage_csm_powerstore_resiliency.yaml"
+#   modules:
+#     - "resiliency"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerstore] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: CustomTest
+#     run:
+#      - "echo Todo"
 
-- scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
-  paths: 
-    - "testfiles/storage_csm_powerstore.yaml"
-  modules:
-    - "resiliency"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is not installed"
-    - "Enable [resiliency] module from CR [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: CustomTest 
-    run:
-     - "echo Todo"
+# - scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
+#   paths:
+#     - "testfiles/storage_csm_powerstore.yaml"
+#   modules:
+#     - "resiliency"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerstore] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is not installed"
+#     - "Enable [resiliency] module from CR [1]"
+#     - "Validate [powerstore] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: CustomTest
+#     run:
+#      - "echo Todo"
 
-- scenario: "Install PowerStore Driver(With Resiliency), Disable Resiliency module"
-  paths: 
-    - "testfiles/storage_csm_powerstore_resiliency.yaml"
-  modules:
-    - "resiliency"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is installed"
-    - "Disable [resiliency] module from CR [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
-    - "Validate [resiliency] module from CR [1] is not installed"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+# - scenario: "Install PowerStore Driver(With Resiliency), Disable Resiliency module"
+#   paths:
+#     - "testfiles/storage_csm_powerstore_resiliency.yaml"
+#   modules:
+#     - "resiliency"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerstore] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is installed"
+#     - "Disable [resiliency] module from CR [1]"
+#     - "Validate [powerstore] driver from CR [1] is installed"
+#     - "Validate [resiliency] module from CR [1] is not installed"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
 
-- scenario: "Install Unity Driver(Standalone)"
-  paths: 
-    - "testfiles/storage_csm_unity.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [unity] driver from CR [1] is installed"
-    - "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    name: Cert CSI
-    run: 
-      - ./cert-csi test vio --sc unity --chainNumber 2 --chainLength 2
+# - scenario: "Install Unity Driver(Standalone)"
+#   paths:
+#     - "testfiles/storage_csm_unity.yaml"
+#   modules:
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [unity] driver from CR [1] is installed"
+#     - "Run custom test"
+#     # Last two steps perform Clean Up
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#   customTest:
+#     name: Cert CSI
+#     run:
+#       - ./cert-csi test vio --sc unity --chainNumber 2 --chainLength 2
