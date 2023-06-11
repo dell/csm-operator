@@ -12,7 +12,7 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
     configVersion: v2.7.0
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
