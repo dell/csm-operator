@@ -11,7 +11,6 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    # Config version for CSI PowerScale v2.7.0 driver
     configVersion: v2.7.0
     authSecret: isilon-creds
     replicas: 2
@@ -19,7 +18,6 @@ spec:
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerScale driver v2.7.0
       image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:

@@ -11,16 +11,14 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    # Config version for CSI PowerScale v2.5.0 driver
-    configVersion: v2.5.0
+    configVersion: v2.7.0
     authSecret: csm-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: false
     common:
-      # Image for CSI PowerScale driver v2.5.0
-      image: "dellemc/csi-isilon:v2.5.0"
+      image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
