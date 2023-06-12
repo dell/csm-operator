@@ -223,7 +223,7 @@
     - "Validate [replication] module from CR [2] is installed"
     - "Run custom test"
     # cleanup
-    - "Enable forceRemoveDriver on CR [1]"
+    - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
   customTest:
     name: HelloWorld
