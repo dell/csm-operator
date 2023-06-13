@@ -11,13 +11,13 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.6.0
+    configVersion: v2.7.0
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: true
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.6.0"
+      image: "dellemc/csi-vxflexos:nightly"
       imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -38,7 +38,7 @@ spec:
 
 
     sideCars:
-    # sdc-monitor is disabled by default, due to high CPU usage 
+    # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:3.6.0.6
@@ -81,12 +81,12 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint 
-      # - key: "node-role.kubernetes.io/master"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      - key: "node-role.kubernetes.io/control-plane"
         operator: "Exists"
         effect: "NoSchedule"
 
@@ -105,7 +105,7 @@ spec:
         #    false: disable SDC approval
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
-          value: "true"  
+          value: "true"
 
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
@@ -139,11 +139,11 @@ spec:
       # Default value: None
       tolerations:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      # - key: "node-role.kubernetes.io/master"   
+      # - key: "node-role.kubernetes.io/master"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      - key: "node-role.kubernetes.io/control-plane"
         operator: "Exists"
         effect: "NoSchedule"
 
