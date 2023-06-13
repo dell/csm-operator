@@ -5,22 +5,20 @@ metadata:
   namespace: isilon
 spec:
   driver:
-    csiDriverType: "isilon" 
+    csiDriverType: "isilon"
     csiDriverSpec:
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    # Config version for CSI PowerScale v2.5.0 driver
-    configVersion: v2.5.0
+    configVersion: v2.7.0
     authSecret: isilon-creds-auth
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerScale driver v2.5.0
-      image: "dellemc/csi-isilon:v2.5.0"
+      image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -35,7 +33,7 @@ spec:
         # X_CSI_ISI_PORT: Specify the HTTPs port number of the PowerScale OneFS API server
         # This value acts as a default value for endpointPort, if not specified for a cluster config in secret
         # Allowed value: valid port number
-        # Default value: 8080	
+        # Default value: 8080
         - name: X_CSI_ISI_PORT
           value: "8080"
 
@@ -50,7 +48,7 @@ spec:
 
         # X_CSI_ISI_NO_PROBE_ON_START: Indicates whether the controller/node should probe all the PowerScale clusters during driver initialization
         # Allowed values:
-        #   true : do not probe all PowerScale clusters during driver initialization	
+        #   true : do not probe all PowerScale clusters during driver initialization
         #   false: probe all PowerScale clusters during driver initialization
         # Default value: false
         - name: X_CSI_ISI_NO_PROBE_ON_START
@@ -69,8 +67,8 @@ spec:
         # This value acts as a default value for skipCertificateValidation, if not specified for a cluster config in secret
         # Allowed values:
         #   true: skip OneFS API server's certificate verification
-        #   false: verify OneFS API server's certificates 
-        # Default value: true	
+        #   false: verify OneFS API server's certificates
+        # Default value: true
         - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
           value: "true"
 
@@ -89,7 +87,7 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
-        
+
         # certSecretCount: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (isilon-cert-0..isilon-cert-n)
         # Allowed values: n, where n > 0
@@ -247,8 +245,8 @@ spec:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-        
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
     # observability: allows to configure observability
@@ -256,7 +254,7 @@ spec:
       # enabled: Enable/Disable observability
       enabled: true
       configVersion: v1.4.0
-      components: 
+      components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: true
@@ -268,7 +266,7 @@ spec:
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
-              value: "INFO"           
+              value: "INFO"
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector

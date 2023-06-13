@@ -5,14 +5,13 @@ metadata:
   namespace: dell
 spec:
   driver:
-    csiDriverType: "isilon" 
+    csiDriverType: "isilon"
     csiDriverSpec:
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    # Config version for CSI PowerScale v2.5.0 driver
-    configVersion: v2.5.0
+    configVersion: v2.7.0
     authSecret: csm-creds
     # currently fails with something about nodes taints etc
     replicas: 3
@@ -20,8 +19,7 @@ spec:
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerScale driver v2.5.0
-      image: "dellemc/csi-isilon:v2.5.0"
+      image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: Always
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -36,7 +34,7 @@ spec:
         # X_CSI_ISI_PORT: Specify the HTTPs port number of the PowerScale OneFS API server
         # This value acts as a default value for endpointPort, if not specified for a cluster config in secret
         # Allowed value: valid port number
-        # Default value: 8080	
+        # Default value: 8080
         - name: X_CSI_ISI_PORT
           value: "8080"
 
@@ -53,7 +51,7 @@ spec:
 
         # X_CSI_ISI_NO_PROBE_ON_START: Indicates whether the controller/node should probe all the PowerScale clusters during driver initialization
         # Allowed values:
-        #   true : do not probe all PowerScale clusters during driver initialization	
+        #   true : do not probe all PowerScale clusters during driver initialization
         #   false: probe all PowerScale clusters during driver initialization
         # Default value: false
         - name: X_CSI_ISI_NO_PROBE_ON_START
@@ -72,8 +70,8 @@ spec:
         # This value acts as a default value for skipCertificateValidation, if not specified for a cluster config in secret
         # Allowed values:
         #   true: skip OneFS API server's certificate verification
-        #   false: verify OneFS API server's certificates 
-        # Default value: true	
+        #   false: verify OneFS API server's certificates
+        # Default value: true
         - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
           #value: "false"
           value: "true"
@@ -94,7 +92,7 @@ spec:
         - name: KUBELET_CONFIG_DIR
           #value: "/root/alt-kubelet/kubelet"
           value: "/var/lib/kubelet"
-        
+
         # certSecretCount: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (isilon-cert-0..isilon-cert-n)
         # Allowed values: n, where n > 0
@@ -263,8 +261,8 @@ spec:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
             value: "csm-authorization.com"
-        
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
 
@@ -295,7 +293,7 @@ spec:
           # Default value: powerstore
           - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
             value: "powerscale"
-      
+
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
@@ -305,13 +303,13 @@ spec:
           # Set the value to "self" in case of stretched/single cluster configuration
           # Allowed values: string
           - name: "TARGET_CLUSTERS_IDS"
-            value: "target-cluster-1"
+            value: "self"
           # Replication log level
           # Allowed values: "error", "warn"/"warning", "info", "debug"
           # Default value: "debug"
           - name: "REPLICATION_CTRL_LOG_LEVEL"
             value: "debug"
-          
+
           # replicas: Defines number of controller replicas
           # Allowed values: int
           # Default value: 1
@@ -326,7 +324,7 @@ spec:
           # Allowed values: time
           - name: "RETRY_INTERVAL_MAX"
             value: "5m"
-      
+
       - name: dell-replication-controller-init
         # image: Defines replication init container image. This shouldn't be changed
         # Allowed values: string
@@ -337,7 +335,7 @@ spec:
       # enabled: Enable/Disable observability
       enabled: false
       configVersion: v1.4.0
-      components: 
+      components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: false
@@ -349,7 +347,7 @@ spec:
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
-              value: "INFO"           
+              value: "INFO"
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
