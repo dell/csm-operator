@@ -11,14 +11,12 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    # Config version for CSI PowerScale v2.7.0 driver
     configVersion: v2.7.0
     authSecret: isilon-creds-auth
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: true
     common:
-      # Image for CSI PowerScale driver v2.6.0
       image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
@@ -68,7 +66,7 @@ spec:
         # This value acts as a default value for skipCertificateValidation, if not specified for a cluster config in secret
         # Allowed values:
         #   true: skip OneFS API server's certificate verification
-        #   false: verify OneFS API server's certificates 
+        #   false: verify OneFS API server's certificates
         # Default value: true
         - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
           value: "true"
@@ -88,7 +86,7 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
-        
+
         # certSecretCount: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (isilon-cert-0..isilon-cert-n)
         # Allowed values: n, where n > 0
@@ -232,7 +230,7 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      
+
     sideCars:
       - name: provisioner
         args: ["--volume-name-prefix=csipscale"]
@@ -254,7 +252,7 @@ spec:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-        
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
