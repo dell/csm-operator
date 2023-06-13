@@ -11,13 +11,13 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.5.0
+    configVersion: v2.7.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.5.0"
+      image: "dellemc/csi-vxflexos:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -144,8 +144,8 @@ spec:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-        
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
     # observability: allows to configure observability
@@ -236,4 +236,3 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
-

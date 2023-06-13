@@ -54,7 +54,7 @@ spec:
 
 
     sideCars:
-    # sdc-monitor is disabled by default, due to high CPU usage 
+    # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:3.6.0.6
@@ -95,8 +95,8 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      # - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
 
@@ -115,7 +115,7 @@ spec:
         #    false: disable SDC approval
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
-          value: "false"  
+          value: "false"
 
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
@@ -146,8 +146,8 @@ spec:
       # Leave as blank to install node driver only on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      # - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
 
