@@ -163,7 +163,6 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 }
 
 func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
-	time.Sleep(60 * time.Second)
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
