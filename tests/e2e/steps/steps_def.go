@@ -130,15 +130,15 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 
 func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string) error {
 	if thirdPartyModule == "cert-manager" {
-		cmd := exec.Command("kubectl", "apply", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
+		cmd := exec.Command("kubectl", "create", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
 		err := cmd.Run()
 		if err != nil {
     			return fmt.Errorf("cert-manager install failed: %v", err)
 		}
 	} else if thirdPartyModule == "velero" {
 	  cmd := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "--set", "configuration.provider=csi", "--set", "configuration.backupStorageLocation.name=default", "--set", "configuration.backupStorageLocation.bucket=bucket", "--set", "initContainers[0].name=velero-plugin-for-csi", "--set", "initContainers[0].image=velero/velero-plugin-for-csi:v0.2.0", "--set", "initContainers[0].volumeMounts[0].mountPath=/target", "--set", "initContainers[0].volumeMounts[0].name=plugins", "--version=2.29.8")
-    err := cmd.Run()
-    if err != nil {
+      err := cmd.Run()
+      if err != nil {
 				return fmt.Errorf("Installation of velero %v failed", err)
 		}
 	}
@@ -153,16 +153,17 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
     			return fmt.Errorf("cert-manager uninstall failed: %v", err)
 		}
 	} else if thirdPartyModule == "velero" {
-		cmd := exec.Command("helm", "delete", "velero","--namespace velero")
-    err := cmd.Run()
-    if err != nil {
+		cmd := exec.Command("helm", "delete", "velero","--namespace=velero")
+    	err := cmd.Run()
+    	if err != nil {
 		  return fmt.Errorf("Uninstallation of velero %v failed", err)
-	}
-  }
+		}
+  	}
 	return nil
 }
 
 func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
+	time.Sleep(60 * time.Second)
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
 	found := new(csmv1.ContainerStorageModule)
@@ -258,6 +259,9 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 			case csmv1.Resiliency:
 				return step.validateResiliencyInstalled(cr)
 
+			case csmv1.ApplicationMobility:
+				return step.validateAppMobInstalled(cr)
+
 			default:
 				return fmt.Errorf("%s module is not found", module)
 			}
@@ -297,6 +301,9 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 
 			case csmv1.Resiliency:
 				return step.validateResiliencyNotInstalled(cr)
+
+			//case csmv1.ApplicationMobility:
+			//  return step.validateAppMobNotInstalled(cr)
 			}
 		}
 	}
@@ -722,6 +729,22 @@ func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
 	return step.ctrlClient.Update(context.TODO(), found)
 }
 
+func (step *Step) enableForceRemoveModule(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1]
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name}, found,
+	); err != nil {
+		return err
+	}
+	for _, module := range found.Spec.Modules {
+		module.ForceRemoveModule = true
+	}
+	return step.ctrlClient.Update(context.TODO(), found)
+}
+
 func (step *Step) validateTestEnvironment(_ Resource) error {
 	if os.Getenv("OPERATOR_NAMESPACE") != "" {
 		operatorNamespace = os.Getenv("OPERATOR_NAMESPACE")
@@ -819,6 +842,38 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 		}
 	}
 
+	return nil
+}
+
+func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error {
+	time.Sleep(5 * time.Second)
+	instance := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name}, instance,
+	); err != nil {
+		return err
+	}
+
+	// check installation for all AuthorizationProxyServer
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		// check AuthorizationProxyServer in all clusters
+		if err := checkApplicationMobilityPods(utils.ApplicationMobilityNamespace, cluster.ClusterK8sClient); err != nil {
+			return fmt.Errorf("failed to check for App-mob installation in %s: %v", cluster.ClusterID, err)
+		}
+	}
+
+	// provide few seconds for cluster to settle down
+	time.Sleep(20 * time.Second)
 	return nil
 }
 

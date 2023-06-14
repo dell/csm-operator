@@ -9,7 +9,7 @@ RES_NS=res-vxflexos
 
 
 # attempt backup, check if successful
-dellctl backup create $BACKUP_NAME --include-namespaces $VOL_NS
+./dellctl backup create $BACKUP_NAME --include-namespaces $VOL_NS
 
 
 # check return code from backup command
@@ -24,7 +24,7 @@ fi
 BACKUP_WAIT_TIME=$((SECONDS+30))
 sleep 5
 while [ $SECONDS -lt $BACKUP_WAIT_TIME ]; do
-  NUM_GOOD_BACKUPS=$(dellctl backup get $BACKUP_NAME | grep "Completed" | wc -l)
+  NUM_GOOD_BACKUPS=$(./dellctl backup get $BACKUP_NAME | grep "Completed" | wc -l)
   if [ "${NUM_GOOD_BACKUPS}" == "1" ]; then
     echo "backup successful"
     break
@@ -36,13 +36,13 @@ done
 
 if [ "${NUM_GOOD_BACKUPS}" != "1" ]; then
   echo -e "backup not completed -- backup current status:"
-  dellctl backup get $BACKUP_NAME
+  ./dellctl backup get $BACKUP_NAME
   exit 1
 fi
 
 
 # attempt restore, check if successful
-dellctl restore create $RESTORE_NAME --from-backup $BACKUP_NAME --namespace-mappings $VOL_NS:$RES_NS
+./dellctl restore create $RESTORE_NAME --from-backup $BACKUP_NAME --namespace-mappings $VOL_NS:$RES_NS
 RET=$?
 if [ "${RET}" != "0" ]; then
   echo "restore failed with return code $RET"
@@ -54,7 +54,7 @@ fi
 RESTORE_WAIT_TIME=$((SECONDS+30))
 sleep 5
 while [ $SECONDS -lt $RESTORE_WAIT_TIME ]; do
-  NUM_GOOD_RESTORE=$(dellctl restore get $RESTORE_NAME | grep "Completed" | wc -l)
+  NUM_GOOD_RESTORE=$(./dellctl restore get $RESTORE_NAME | grep "Completed" | wc -l)
   if [ "${NUM_GOOD_RESTORE}" == "1" ]; then
     echo "restore successful"
     break
@@ -66,7 +66,7 @@ done
 
 if [ "${NUM_GOOD_RESTORE}" != "1" ]; then
   echo -e "backup not completed -- backup current status:"
-  dellctl backup get $RESTORE_NAME
+  ./dellctl backup get $RESTORE_NAME
   exit 1
 fi
 

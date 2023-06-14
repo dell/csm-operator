@@ -1215,7 +1215,6 @@
     - "Install [velero]"
     - "Install [cert-manager]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
@@ -1227,7 +1226,7 @@
     # name of custom test to run
     name: verify app-mobility
     run: 
-      - ./verify-app-mobility.sh
+      - sh verify-app-mobility.sh
 
 - scenario: "Install App Mobility Controller with different env variables than default"
   paths: 
@@ -1238,7 +1237,6 @@
     - "Install [velero]"
     - "Install [cert-manager]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
@@ -1250,7 +1248,7 @@
     # name of custom test to run
     name: verify app-mobility
     run: 
-      - ./verify-app-mobility.sh
+      - sh verify-app-mobility.sh
       
 - scenario: "Install App Mobility Velero with different env variables than default"
   paths: 
@@ -1260,7 +1258,6 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install [cert-manager]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
@@ -1271,7 +1268,7 @@
     # name of custom test to run
     name: verify app-mobility
     run: 
-      - ./verify-app-mobility.sh
+      - sh verify-app-mobility.sh
 
 - scenario: "Install App Mobility with Cert-Manager"
   paths: 
@@ -1281,7 +1278,6 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install [velero]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
@@ -1292,7 +1288,7 @@
     # name of custom test to run
     name: verify app-mobility
     run: 
-      - ./verify-app-mobility.sh
+      - sh verify-app-mobility.sh
 
 - scenario: "Install App Mobility with Cert-Manager and Velero"
   paths: 
@@ -1301,7 +1297,6 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
     - "Run custom test"
     # Last two steps perform Clean Up
@@ -1311,7 +1306,7 @@
     # name of custom test to run
     name: verify app-mobility
     run: 
-      - ./verify-app-mobility.sh
+      - sh verify-app-mobility.sh
 
 - scenario: "Install App Mobility with velero not installed and cert-manager already installed on machine"
   paths:
@@ -1321,7 +1316,6 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install [cert-manager]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
     - "validate [application-mobility] module from CR[1] is installed"
     - "Run custom test"
     # Last two steps perform Clean UP
@@ -1337,7 +1331,7 @@
     # Example:
     #   ./hello_world.sh
     run: 
-      - ./verify-app-mobility.sh
+      - sh verify-app-mobility.sh
 
 - scenario: "Install App Mobility with powerflex driver"
   paths:
@@ -1347,7 +1341,6 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
     - "Validate [application-mobility] module from CR[1] is installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
@@ -1360,6 +1353,7 @@
     - "Uninstall [velero]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
+    - "Delete custom resource [2]"
   customTest:
     # name of the custom test to run
     name: verify app-mobility
@@ -1368,7 +1362,7 @@
     # Example:
     #   ./hello_world.sh
     run: 
-      - ./verify-app-mobility.sh
+      - sh verify-app-mobility.sh
 
 - scenario: "Install App Mobility with velero not installed and cert-manager already installed on machine"
   paths:
@@ -1378,7 +1372,6 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install [cert-manager]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
     - "validate [application-mobility] module from CR[1] is installed"
     - "Run custom test"
     # Last two steps perform Clean UP
@@ -1394,7 +1387,7 @@
     # Example:
     #   ./hello_world.sh
     run: 
-      - ./verify-app-mobility.sh
+      - sh verify-app-mobility.sh
 
 - scenario: "Install App Mobility with powerflex driver"
   paths:
@@ -1404,7 +1397,6 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
     - "Validate [application-mobility] module from CR[1] is installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
@@ -1417,6 +1409,7 @@
     - "Uninstall [velero]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
+    - "Delete custom resource [2]"
   customTest:
     # name of the custom test to run
     name: verify app-mobility
@@ -1425,4 +1418,4 @@
     # Example:
     #   ./hello_world.sh
     run: 
-      - ./verify-app-mobility.sh
+      - sh verify-app-mobility.sh

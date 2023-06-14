@@ -17,10 +17,10 @@ export GINKGO_OPTS="-v"
 # export KUBECONFIG=""
 
 # Must supply path to values file if different from testfiles/values.yaml
-export VALUES_FILE="testfiles/values.yaml"
+export VALUES_FILE="testfiles/appmob-values.yaml"
 
 # USER MODIFICATION REQUIRED: must supply path to your cert-csi binary
-export CERT_CSI="/root/cert-csi"
+export CERT_CSI="/root/cert-csi/cert-csi"
 
 # [Optional] uncomment any modules you want to test
 # export AUTHORIZATION=true

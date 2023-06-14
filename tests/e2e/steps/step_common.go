@@ -335,6 +335,31 @@ func checkAuthorizationProxyServerPods(namespace string, k8sClient kubernetes.In
 	return nil
 }
 
+func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interface) error {
+	notReadyMessage := ""
+	allReady := true
+
+	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+	if err != nil {
+		return err
+	}
+	if len(pods) == 0 {
+		return fmt.Errorf("no pod was found in %s", namespace)
+	}
+	for _, pod := range pods {
+		errMsg := ""
+		if strings.Contains(pod.Name, "application-mobility-controller-manager") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		}
+	}
+
+	if !allReady {
+		return fmt.Errorf(notReadyMessage)
+	}
+	return nil
+}
+
 func arePodsRunning(pod *corev1.Pod) (string, bool) {
 	notReadyMsg := ""
 	allReady := true

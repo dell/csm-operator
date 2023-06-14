@@ -52,6 +52,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 
 	runner.addStep(`^Run custom test$`, step.runCustomTest)
 	runner.addStep(`^Enable forceRemoveDriver on CR \[(\d+)\]$`, step.enableForceRemoveDriver)
+	runner.addStep(`^Enable forceRemoveModule on CR \[(\d+)\]$`, step.enableForceRemoveModule)
 	runner.addStep(`^Delete custom resource \[(\d+)\]$`, step.deleteCustomResource)
 
 	runner.addStep(`^Validate \[([^"]*)\] module from CR \[(\d+)\] is installed$`, step.validateModuleInstalled)

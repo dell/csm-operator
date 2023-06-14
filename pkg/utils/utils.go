@@ -133,6 +133,8 @@ const (
 	PodmonControllerComponent = "podmon-controller"
 	// PodmonNodeComponent - podmon-node
 	PodmonNodeComponent = "podmon-node"
+	// ApplicationMobilityNamespace - application-mobility
+	ApplicationMobilityNamespace = "application-mobility"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
