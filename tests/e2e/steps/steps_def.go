@@ -14,7 +14,6 @@ package steps
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -1041,15 +1040,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
-	var token struct {
-		Token string `json:"Token"`
-	}
-	err = json.Unmarshal(b, &token)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal token %s: %v", string(b), err)
-	}
 
-	err = os.WriteFile("/tmp/token.yaml", []byte(token.Token), 0644)
+	err = os.WriteFile("/tmp/token.yaml", b, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
