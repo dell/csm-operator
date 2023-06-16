@@ -100,7 +100,7 @@
     run: 
       - sh verify-app-mobility.sh
 
-- scenario: "Install App Mobility with velero not installed and cert-manager already installed on machine"
+- scenario: "Install App Mobility with velero when cert-manager is already installed"
   paths:
     - "testfiles/csm_application_mobility_test_velero.yaml"
   modules:
@@ -112,7 +112,6 @@
     #- "Run custom test"
     # Last two steps perform Clean UP
     - "Uninstall [cert-manager]"
-    - "Uninstall [velero]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
   customTest:
@@ -141,8 +140,6 @@
     - "Validate [powerflex] driver from CR [2] is installed"
     #- "Run custom test"
     # Last two steps perform Clean UP
-    - "Uninstall [cert-manager]"
-    - "Uninstall [velero]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
     - "Delete custom resource [2]"
@@ -197,8 +194,6 @@
     - "Validate [powerflex] driver from CR [2] is installed"
     #- "Run custom test"
     # Last two steps perform Clean UP
-    - "Uninstall [cert-manager]"
-    - "Uninstall [velero]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
     - "Delete custom resource [2]"
