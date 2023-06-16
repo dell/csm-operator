@@ -348,10 +348,6 @@ func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interfa
 		allPods = append(allPods, somePods[:]...)
 	}
 
-	for _, pod := range allPods {
-		fmt.Printf("[checkApplicationMobilityPods] podName: %s\n", pod.Name)
-	}
-
 	// update this if we expect more pods eg restic
 	if len(allPods) != 5 {
 		return fmt.Errorf("expected %d pods in namespaces %+v but got %d pods", 5, nsToCheck, len(allPods))
