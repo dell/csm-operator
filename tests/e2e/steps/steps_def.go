@@ -136,16 +136,16 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			return fmt.Errorf("cert-manager install failed: %v", err)
 		}
 	} else if thirdPartyModule == "velero" {
-		/*cmd := exec.Command("helm", "repo", "add", "vmware-tanzu/velero", "https://vmware-tanzu.github.io/helm-charts")
-		err := cmd.Run()
-		if err != nil {
-			return fmt.Errorf("Installation of velero %v failed", err)
-		}*/
+		cmd1 := exec.Command("helm", "repo", "add", "vmware-tanzu", "https://vmware-tanzu.github.io/helm-charts")
+		err1 := cmd1.Run()
+		if err1 != nil {
+			return fmt.Errorf("Installation of velero %v failed", err1)
+		}
 
-		cmd := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "--set", "configuration.provider=csi", "--set", "configuration.backupStorageLocation.name=default", "--set", "configuration.backupStorageLocation.bucket=bucket", "--set", "initContainers[0].name=velero-plugin-for-csi", "--set", "initContainers[0].image=velero/velero-plugin-for-csi:v0.2.0", "--set", "initContainers[0].volumeMounts[0].mountPath=/target", "--set", "initContainers[0].volumeMounts[0].name=plugins", "--version=2.29.8")
-		err := cmd.Run()
-		if err != nil {
-			return fmt.Errorf("Installation of velero %v failed", err)
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "--set", "configuration.provider=csi", "--set", "configuration.backupStorageLocation.name=default", "--set", "configuration.backupStorageLocation.bucket=bucket", "--set", "initContainers[0].name=velero-plugin-for-csi", "--set", "initContainers[0].image=velero/velero-plugin-for-csi:v0.2.0", "--set", "initContainers[0].volumeMounts[0].mountPath=/target", "--set", "initContainers[0].volumeMounts[0].name=plugins", "--version=2.29.8")
+		err2 := cmd2.Run()
+		if err2 != nil {
+			return fmt.Errorf("Installation of velero %v failed", err2)
 		}
 	}
 	return nil
