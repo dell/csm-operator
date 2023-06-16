@@ -27,7 +27,7 @@ spec:
           # License for application mobility
           # Default value: license
           - name: "APPLICATION_MOBILITY_LICENSE_NAME"
-            value: "bad_license"
+            value: "alt-license"
 
           # Storage-service ingress configuration
           # Default value: velero-restic-credentials

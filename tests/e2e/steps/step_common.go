@@ -336,27 +336,34 @@ func checkAuthorizationProxyServerPods(namespace string, k8sClient kubernetes.In
 }
 
 func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interface) error {
-	notReadyMessage := ""
-	allReady := true
+	// list all namespaces that we expect to find app-mobility pods in
+	nsToCheck := []string{namespace, "velero", "cert-manager"}
+	var allPods []*corev1.Pod
 
-	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
-	if err != nil {
-		return err
+	for _, ns := range nsToCheck {
+		somePods, err := fpod.GetPodsInNamespace(k8sClient, ns, map[string]string{})
+		if err != nil {
+			return err
+		}
+		allPods = append(allPods, somePods[:]...)
 	}
-	if len(pods) == 0 {
-		return fmt.Errorf("no pod was found in %s", namespace)
+
+	for _, pod := range allPods {
+		fmt.Printf("[checkApplicationMobilityPods] podName: %s\n", pod.Name)
 	}
-	for _, pod := range pods {
-		errMsg := ""
-		if strings.Contains(pod.Name, "application-mobility-controller-manager") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
+
+	// update this if we expect more pods eg restic
+	if len(allPods) != 5 {
+		return fmt.Errorf("expected %d pods in namespaces %+v but got %d pods", 5, nsToCheck, len(allPods))
+	}
+
+	for _, pod := range allPods {
+		podMsg, podRunning := arePodsRunning(pod)
+		if podRunning == false {
+			return fmt.Errorf("pod %s not running: %+v\n", pod.Name, podMsg)
 		}
 	}
 
-	if !allReady {
-		return fmt.Errorf(notReadyMessage)
-	}
 	return nil
 }
 
