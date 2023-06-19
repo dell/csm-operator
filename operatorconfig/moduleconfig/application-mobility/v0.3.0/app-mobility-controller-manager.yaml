@@ -613,4 +613,3 @@ subjects:
 - kind: ServiceAccount
   name: <NAMESPACE>-controller-manager
   namespace: <NAMESPACE>
- ---
