@@ -490,6 +490,19 @@ func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType s
 	return nil
 }
 
+func (step *Step) setupSecretFromFile(res Resource, file, namespace string) error {
+	crBuff, err := os.ReadFile(file)
+	if err != nil {
+		return fmt.Errorf("failed to read secret data: %v", err)
+	}
+
+	if _, err := framework.RunKubectlInput(namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to apply secret from file %s in namespace %s: %v", file, namespace, err)
+	}
+
+	return nil
+}
+
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
 
 	// find which map to use for secret values
