@@ -198,7 +198,7 @@ spec:
     - name: authorization
       # enabled: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.6.0
+      configVersion: v1.7.0
       components:
       - name: karavi-authorization-proxy
         image: dellemc/csm-authorization-sidecar:v1.7.0
