@@ -479,7 +479,7 @@ spec:
   - name: Documentation
     url: https://dell.github.io/csm-docs/docs/deployment/csmoperator/
   maintainers:
-  - email: dell.csm.operator@dell.com
+  - email: container.storage.modules@dell.com
     name: Dell Container Storage Modules
   maturity: stable
   minKubeVersion: 1.21.0
