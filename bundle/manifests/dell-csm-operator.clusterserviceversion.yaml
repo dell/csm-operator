@@ -151,11 +151,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -482,11 +482,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -889,11 +889,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -2329,7 +2329,7 @@ spec:
   - name: Documentation
     url: https://dell.github.io/csm-docs/docs/deployment/csmoperator/
   maintainers:
-  - email: dell.csm.operator@dell.com
+  - email: container.storage.modules@dell.com
     name: Dell Container Storage Modules
   maturity: stable
   minKubeVersion: 1.21.0
