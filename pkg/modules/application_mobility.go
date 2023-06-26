@@ -64,7 +64,7 @@ const (
 	// VeleroImgPullPolicy - image pull policy for velero
 	VeleroImgPullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
 	// CredentialName  -  Secret name for velero
-	CredentialName = "<CREDENTIAL_NAME>" 
+	CredentialName = "<CREDENTIAL_NAME>"
 	//VeleroInitContainers = "<INIT_CONTAINERS>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
@@ -73,7 +73,6 @@ const (
 	AppMobCertManagerComponent = "cert-manager"
 	// AppMobVeleroComponent - velero component
 	AppMobVeleroComponent = "velero"
-
 )
 
 // getAppMobilityModule - get instance of app mobility module
@@ -327,7 +326,7 @@ func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 
 // AppMobilityVelero - Install/Delete velero
 func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	
+
 	YamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
@@ -396,7 +395,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				if strings.Contains(ConfigProvider, env.Name) {
 					Provider = env.Value
 				}
-				if strings.Contains(CredentialName,env.Name) {
+				if strings.Contains(CredentialName, env.Name) {
 					credName = env.Value
 				}
 			}
@@ -462,4 +461,3 @@ func IsdeployResticEnabled(ctx context.Context, instance csmv1.ContainerStorageM
 	return false
 }
 */
-

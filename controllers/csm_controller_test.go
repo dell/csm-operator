@@ -756,11 +756,11 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
-        // error in App Mobility
-        csm.Spec.Modules = getAppMob()
-        csm.Spec.Modules[0].ConfigVersion = "8.0.0"
-        err = reconciler.PreChecks(ctx, &csm, operatorConfig)
-        assert.NotNil(suite.T(), err)
+	// error in App Mobility
+	csm.Spec.Modules = getAppMob()
+	csm.Spec.Modules[0].ConfigVersion = "8.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
 
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
@@ -1285,7 +1285,7 @@ func getAppMob() []csmv1.Module {
 				{
 					Name:    "velero",
 					Enabled: &[]bool{true}[0],
-					Envs:    []corev1.EnvVar{
+					Envs: []corev1.EnvVar{
 						{
 							Name:  "BACKUPSTORAGELOCATION_NAME",
 							Value: "default",
