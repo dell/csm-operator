@@ -1,9 +1,9 @@
 name: Workflow
 on:
   push:
-    branches: [ application-mobility ]
+    branches: [ controller-unit-test ]
   pull_request:
-    branches: [ application-mobility ]
+    branches: [ controller-unit-test ]
 jobs:
   code-check:
     name: Check Go formatting, linting, vetting
