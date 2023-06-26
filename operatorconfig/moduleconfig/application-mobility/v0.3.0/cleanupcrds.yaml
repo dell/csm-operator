@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: velero-cleanup-crds
+  namespace: <VELERO_NAMESPACE>
+  labels:
+    app.kubernetes.io/name: velero
+    app.kubernetes.io/instance: application-mobility
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      name: velero-cleanup-crds
+      labels:
+      annotations:
+    spec:
+      imagePullSecrets:
+        - name: 
+      serviceAccountName: application-mobility-velero-server-service-account
+      containers:
+        - name: kubectl
+          image: docker.io/bitnami/kubectl:latest
+          imagePullPolicy: <VELERO_IMAGE_PULLPOLICY>
+          command:
+            - /bin/sh
+            - -c
+            - >
+              kubectl delete restore --all;
+              kubectl delete backup --all;
+              kubectl delete backupstoragelocation --all;
+              kubectl delete volumesnapshotlocation --all;
+              kubectl delete podvolumerestore --all;
+              kubectl delete crd -l component=velero;
+          securityContext: 
+          resources:
+      restartPolicy: OnFailure
+      securityContext: 
+      nodeSelector:
+      tolerations:
+      affinity:

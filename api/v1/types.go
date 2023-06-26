@@ -305,6 +305,9 @@ type ContainerTemplate struct {
 	// ObjectStoreSecretName is the name of the secret for the object store for app-mobility
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Object Store Secret"
 	ObjectStoreSecretName string `json:"objectStoreSecretName,omitempty" yaml:"objectStoreSecretName,omitempty"`
+
+	///////////
+	Features FeatureType `json:"features" yaml:"features"`
 }
 
 // SnapshotClass struct
@@ -322,4 +325,16 @@ type SnapshotClass struct {
 type CSIDriverSpec struct {
 	FSGroupPolicy   string `json:"fSGroupPolicy,omitempty" yaml:"fSGroupPolicy,omitempty"`
 	StorageCapacity bool   `json:"storageCapacity,omitempty" yaml:"storageCapacity"`
+}
+
+// Module defines the desired state of a ContainerStorageModule///////////////
+type FeatureType struct {
+
+	// Name is name of ContainerStorageModule modules////////
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"/////
+	UseSnapshot bool `json:"use-volume-snapshots,omitempty" yaml:"use-volume-snapshots,omitempty"`
+
+	// Enabled is used to indicate whether or not to deploy a module///////
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enabled"////
+	CleanUpCRDs bool `json:"cleanUpCRDs,omitempty" yaml:"cleanUpCRDs,omitempty"`
 }

@@ -41,7 +41,6 @@ spec:
       # Default value: false
       - name: cert-manager
         enabled: true
-      # enabled: Enable/Disable Velero and Restic Services
       # Allowed values:
       #   true: enable deployment of cert-manager
       #   false: disable deployment of cert-manager only if it's already deployed
@@ -51,8 +50,10 @@ spec:
         image: velero/velero:v1.8.1
         imagePullPolicy: IfNotPresent
         enabled: true
-        #use-volume-snapshots: false
-        #cleanUpCRDs: false
+        features:
+        - use-volume-snapshots: false
+          cleanUpCRDs: false
+        # enabled: Enable/Disable Velero and Restic Services
         #deployRestic: false
         #initContainers:
         #  - name: dell-custom-velero-plugin
@@ -87,3 +88,9 @@ spec:
           # Default value: cloud-creds
           - name: "CREDENTIAL_NAME"
             value: "cloud-creds"
+
+          # name is the name of the volume snapshot location where snapshots are being taken. Required.
+          # Volume-snapshot-Location Provider will be CONFIG_PROVIDER
+          # Default value : default
+          - name: "<VOL_SNAPSHOT_LOCATION_NAME>"
+            value: "default"

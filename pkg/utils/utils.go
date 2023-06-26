@@ -27,6 +27,7 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	goYAML "github.com/go-yaml/yaml"
 
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -135,6 +136,8 @@ const (
 	PodmonNodeComponent = "podmon-node"
 	// ApplicationMobilityNamespace - application-mobility
 	ApplicationMobilityNamespace = "application-mobility"
+	UseVolSnapshot               = "use-volume-snapshots"
+	CleanupCrd                   = "cleanUPCRDs"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -542,6 +545,24 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 			ctrlObjects = append(ctrlObjects, &dp)
 
+		case "BackupStorageLocation":
+
+			var bsl velerov1.BackupStorageLocation
+			if err := yaml.Unmarshal(raw, &bsl); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &bsl)
+
+		case "VolumeSnapshotLocation":
+
+			var vs velerov1.VolumeSnapshotLocation
+			if err := yaml.Unmarshal(raw, &vs); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &vs)
+
 		}
 	}
 
@@ -917,6 +938,27 @@ func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule,
 
 	return false, csmv1.Module{}
 }
+
+// IsFeatureEnabled - check if the feature is enabled
+/*
+func IsFeatureEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string, ftype bool) bool {
+	ModEnabled, HereModule := IsModuleEnabled(ctx, instance, mod)
+	if !ModEnabled {
+		return false
+	}
+	Componentenabled := IsComponentEnabled(ctx, instance, mod, componentType)
+	if !Componentenabled {
+		return false
+	}
+
+	for _, f := range HereModule.Components[0].Features {
+		if f.ftype == true {
+			return true
+		}
+	}
+
+	return false
+}*/
 
 // IsComponentEnabled - check if the component is enabled
 func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
