@@ -64,7 +64,7 @@ const (
 	// VeleroImgPullPolicy - image pull policy for velero
 	VeleroImgPullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
 	// VeleroSecretName  -  Secret name for velero
-	VeleroSecretName = "<VELERO_SECRET>"
+	VeleroSecretName = "<VELERO_SECRET>" // #nosec G101
 	//VeleroInitContainers = "<INIT_CONTAINERS>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
