@@ -333,7 +333,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	if err != nil {
 		return err
 	}
-	if cr.Spec.Modules[0].Components[3].Features.UseSnapshot {
+	if cr.Spec.Modules[0].Components[0].Features.UseSnapshot {
 		YamlString2, err := getUseVolumeSnapshot(op, cr)
 		if err != nil {
 			return err
@@ -356,7 +356,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		return nil
 	}
 
-	if cr.Spec.Modules[0].Components[3].Features.CleanUpCRDs {
+	if cr.Spec.Modules[0].Components[0].Features.CleanUpCRDs {
 		YamlString3, err := getCleanupcrds(op, cr)
 		if err != nil {
 			return err
