@@ -63,8 +63,8 @@ const (
 	VeleroImg = "<VELERO_IMAGE>"
 	// VeleroImgPullPolicy - image pull policy for velero
 	VeleroImgPullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
-	// CredentialName  -  Secret name for velero
-	CredentialName = "<VELERO_SECRET>"
+	// VeleroSecretName  -  Secret name for velero
+	VeleroSecretName = "<VELERO_SECRET>"
 	//VeleroInitContainers = "<INIT_CONTAINERS>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
@@ -395,7 +395,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				if strings.Contains(ConfigProvider, env.Name) {
 					Provider = env.Value
 				}
-				if strings.Contains(CredentialName, env.Name) {
+				if strings.Contains(VeleroSecretName, env.Name) {
 					credName = env.Value
 				}
 			}
@@ -408,7 +408,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	//YamlString = strings.ReplaceAll(YamlString, VeleroInitContainers, Velero_init_container)
 	YamlString = strings.ReplaceAll(YamlString, BackupStorageLocation, Backupstoragelocation_name)
 	YamlString = strings.ReplaceAll(YamlString, ConfigProvider, Provider)
-	YamlString = strings.ReplaceAll(YamlString, CredentialName, credName)
+	YamlString = strings.ReplaceAll(YamlString, VeleroSecretName, credName)
 	return YamlString, nil
 }
 
