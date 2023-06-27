@@ -1299,7 +1299,7 @@ func getAppMob() []csmv1.Module {
 							Value: "aws",
 						},
 						{
-							Name:  "CREDENTIAL_NAME",
+							Name:  "VELERO_SECRET",
 							Value: "cloud-creds",
 						},
 					},
