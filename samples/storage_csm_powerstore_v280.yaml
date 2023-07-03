@@ -31,8 +31,8 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI PowerStore v2.7.0 driver
-    configVersion: v2.7.0
+    # Config version for CSI PowerStore v2.8.0 driver
+    configVersion: v2.8.0
     # authSecret: This is the secret used to validate the default PowerStore secret used for installation
     # Allowed values: <metadataName specified in the Manifest>-config
     # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
@@ -43,8 +43,8 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerStore driver v2.7.0
-      image: "dellemc/csi-powerstore:v2.7.0"
+      # Image for CSI PowerStore driver v2.8.0
+      image: "dellemc/csi-powerstore:v2.8.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -165,7 +165,7 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.6.0
+      configVersion: v1.7.0
       components:
         - name: podmon-controller
           args:
