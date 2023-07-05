@@ -416,6 +416,7 @@ func TestAppMobilityVelero(t *testing.T) {
 			}
 
 			tmpCR := customResource
+      velerov1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig

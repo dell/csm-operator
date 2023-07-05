@@ -66,12 +66,12 @@ const (
 	VeleroNamespace = "<VELERO_NAMESPACE>"
 	// ConfigProvider - configurations provider (csi/aws)
 	ConfigProvider = "<CONFIG_PROVIDER>"
-	// VeleroImg - Image for velero
+	// VeleroImage - Image for velero
 	VeleroImage = "<VELERO_IMAGE>"
-	// VeleroImgPullPolicy - image pull policy for velero
+	// VeleroImagePullPolicy - image pull policy for velero
 	VeleroImagePullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
-	// VeleroSecretName  -  Secret name for velero
-	VeleroSecretName = "<CREDENTIAL_NAME>"
+	// VeleroAccess  -  Secret name for velero
+	VeleroAccess = "<VELERO_ACCESS>"
 	//VeleroInitContainers = "<INIT_CONTAINERS>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
@@ -444,7 +444,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
 				}
-				if strings.Contains(VeleroSecretName, env.Name) {
+				if strings.Contains(VeleroAccess, env.Name) {
 					credName = env.Value
 				}
 			}
@@ -457,7 +457,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	//YamlString = strings.ReplaceAll(YamlString, VeleroInitContainers, Velero_init_container)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageLocation, backupStorageLocationName)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
-	yamlString = strings.ReplaceAll(yamlString, VeleroSecretName, credName)
+	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
 	return yamlString, nil
 }
 

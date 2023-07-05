@@ -50,7 +50,7 @@ spec:
         image: velero/velero:v1.8.1
         imagePullPolicy: IfNotPresent
         enabled: true
-        useVolumeSnapshot: true
+        useVolumeSnapshot: false
         cleanUpCRDs: false
         # enabled: Enable/Disable Velero and Restic Services
         #deployRestic: false
@@ -85,7 +85,7 @@ spec:
 
           # name to be used for secret that will be created to hold object store credentials. Used in conjunction with secretContents
           # Default value: cloud-creds
-          - name: "CREDENTIAL_NAME"
+          - name: "VELERO_ACCESS"
             value: "cloud-creds"
 
           # name is the name of the volume snapshot location where snapshots are being taken. Required.

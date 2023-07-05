@@ -22,6 +22,7 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -35,6 +36,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -156,6 +158,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	unittestLogger.Info("Init unit test...")
 
 	csmv1.AddToScheme(scheme.Scheme)
+	velerov1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)
@@ -1299,7 +1302,7 @@ func getAppMob() []csmv1.Module {
 							Value: "aws",
 						},
 						{
-							Name:  "VELERO_SECRET",
+							Name:  "VELERO_ACCESS",
 							Value: "cloud-creds",
 						},
 					},
