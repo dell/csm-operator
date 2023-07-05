@@ -50,9 +50,8 @@ spec:
         image: velero/velero:v1.8.1
         imagePullPolicy: IfNotPresent
         enabled: true
-        features:
-        - use-volume-snapshots: false
-          cleanUpCRDs: false
+        use-volume-snapshots: true
+        cleanUpCRDs: false
         # enabled: Enable/Disable Velero and Restic Services
         #deployRestic: false
         #initContainers:
@@ -92,5 +91,5 @@ spec:
           # name is the name of the volume snapshot location where snapshots are being taken. Required.
           # Volume-snapshot-Location Provider will be CONFIG_PROVIDER
           # Default value : default
-          - name: "<VOL_SNAPSHOT_LOCATION_NAME>"
+          - name: "VOL_SNAPSHOT_LOCATION_NAME"
             value: "default"

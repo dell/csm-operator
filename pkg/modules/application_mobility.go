@@ -55,8 +55,11 @@ const (
 	AppMobLicenseName = "<APPLICATION_MOBILITY_LICENSE_NAME>"
 	// AppMobObjStoreSecretName - Secret name for object store
 	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
-	//BackupStorageLocation - name for BackupStorageLocation
+	//BackupStorageLocation - name for Backup Storage Location
 	BackupStorageLocation = "<BACKUPSTORAGELOCATION_NAME>"
+	//VolSnapshotlocation - name for Volume Snapshot location
+	VolSnapshotlocation = "<VOL_SNAPSHOT_LOCATION_NAME>"
+
 	// VeleroNamespace - namespace Velero is installed in
 	VeleroNamespace = "<VELERO_NAMESPACE>"
 	// configProvider - configurations provider (csi/aws)
@@ -333,53 +336,53 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	if err != nil {
 		return err
 	}
-	if cr.Spec.Modules[0].Components[0].Features.UseSnapshot {
-		YamlString2, err := getUseVolumeSnapshot(op, cr)
-		if err != nil {
-			return err
-		}
-		ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString2))
-		if err != nil {
-			return err
-		}
-		for _, ctrlObj := range ctrlObjects {
-			if isDeleting {
-				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			} else {
-				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
+	for _, c := range cr.Spec.Modules[0].Components {
+		if c.UseSnapshot {
+			YamlString2, err := getUseVolumeSnapshot(op, cr)
+			if err != nil {
+				return err
+			}
+			ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString2))
+			if err != nil {
+				return err
+			}
+			for _, ctrlObj := range ctrlObjects {
+				if isDeleting {
+					if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+						return err
+					}
+				} else {
+					if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+						return err
+					}
 				}
 			}
 		}
-		return nil
 	}
+	for _, c := range cr.Spec.Modules[0].Components {
+		if c.CleanUpCRDs {
+			YamlString3, err := getCleanupcrds(op, cr)
+			if err != nil {
+				return err
+			}
+			ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString3))
+			if err != nil {
+				return err
+			}
 
-	if cr.Spec.Modules[0].Components[0].Features.CleanUpCRDs {
-		YamlString3, err := getCleanupcrds(op, cr)
-		if err != nil {
-			return err
-		}
-		ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString3))
-		if err != nil {
-			return err
-		}
-
-		for _, ctrlObj := range ctrlObjects {
-			if isDeleting {
-				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			} else {
-				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
+			for _, ctrlObj := range ctrlObjects {
+				if isDeleting {
+					if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+						return err
+					}
+				} else {
+					if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+						return err
+					}
 				}
 			}
 		}
-		return nil
 	}
-
 	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
@@ -477,14 +480,14 @@ func getUseVolumeSnapshot(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	}
 
 	YamlString = string(buf)
-	Backupstoragelocation_name := ""
+	VolSnapshotlocation_name := ""
 	Velero_NS := ""
 	Provider := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
-				if strings.Contains(BackupStorageLocation, env.Name) {
-					Backupstoragelocation_name = env.Value
+				if strings.Contains(VolSnapshotlocation, env.Name) {
+					VolSnapshotlocation_name = env.Value
 				}
 				if strings.Contains(VeleroNamespace, env.Name) {
 					Velero_NS = env.Value
@@ -497,7 +500,7 @@ func getUseVolumeSnapshot(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, VeleroNamespace, Velero_NS)
-	YamlString = strings.ReplaceAll(YamlString, BackupStorageLocation, Backupstoragelocation_name)
+	YamlString = strings.ReplaceAll(YamlString, VolSnapshotlocation, VolSnapshotlocation_name)
 	YamlString = strings.ReplaceAll(YamlString, ConfigProvider, Provider)
 
 	return YamlString, nil
@@ -536,58 +539,4 @@ func getCleanupcrds(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	YamlString = strings.ReplaceAll(YamlString, VeleroNamespace, Velero_NS)
 	YamlString = strings.ReplaceAll(YamlString, VeleroImgPullPolicy, Velero_img_pullpolicy)
 	return YamlString, nil
-}
-
-// AppMobilityCertManager - Install/Delete cert-manager
-func UseVolumeSnapshot(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
-	YamlString, err := getUseVolumeSnapshot(op, cr)
-	if err != nil {
-		return err
-	}
-
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
-	if err != nil {
-		return err
-	}
-
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// AppMobilityCertManager - Install/Delete cert-manager
-func Cleanupcrds(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
-	YamlString, err := getCleanupcrds(op, cr)
-	if err != nil {
-		return err
-	}
-
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
-	if err != nil {
-		return err
-	}
-
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }

@@ -42,6 +42,7 @@ import (
 	k8sClient "github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -70,6 +71,8 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(csmv1.AddToScheme(scheme))
+
+	utilruntime.Must(velerov1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
 

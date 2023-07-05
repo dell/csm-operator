@@ -39,6 +39,8 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
@@ -136,8 +138,6 @@ const (
 	PodmonNodeComponent = "podmon-node"
 	// ApplicationMobilityNamespace - application-mobility
 	ApplicationMobilityNamespace = "application-mobility"
-	UseVolSnapshot               = "use-volume-snapshots"
-	CleanupCrd                   = "cleanUPCRDs"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -644,6 +644,10 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
+	scheme := runtime.NewScheme()
+	velerov1.AddToScheme(scheme)
+	utilruntime.Must(velerov1.AddToScheme(scheme))
+
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
 	if err != nil && k8serror.IsNotFound(err) {
@@ -668,6 +672,10 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
+
+	scheme := runtime.NewScheme()
+	velerov1.AddToScheme(scheme)
+	utilruntime.Must(velerov1.AddToScheme(scheme))
 
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
@@ -938,27 +946,6 @@ func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule,
 
 	return false, csmv1.Module{}
 }
-
-// IsFeatureEnabled - check if the feature is enabled
-/*
-func IsFeatureEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string, ftype bool) bool {
-	ModEnabled, HereModule := IsModuleEnabled(ctx, instance, mod)
-	if !ModEnabled {
-		return false
-	}
-	Componentenabled := IsComponentEnabled(ctx, instance, mod, componentType)
-	if !Componentenabled {
-		return false
-	}
-
-	for _, f := range HereModule.Components[0].Features {
-		if f.ftype == true {
-			return true
-		}
-	}
-
-	return false
-}*/
 
 // IsComponentEnabled - check if the component is enabled
 func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {

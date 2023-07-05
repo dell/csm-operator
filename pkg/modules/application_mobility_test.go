@@ -15,10 +15,12 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/kubernetes/scheme"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -401,7 +403,7 @@ func TestAppMobilityVelero(t *testing.T) {
 					Name: "application-mobility-velero",
 				},
 			}
-
+			velerov1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
@@ -457,7 +459,12 @@ func TestAppMobilityVelero(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
+			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			defer func() {
+				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+			}()
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := AppMobilityVelero(ctx, isDeleting, op, cr, sourceClient)
