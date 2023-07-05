@@ -22,7 +22,6 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -157,7 +156,6 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	unittestLogger.Info("Init unit test...")
 
 	csmv1.AddToScheme(scheme.Scheme)
-	velerov1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)

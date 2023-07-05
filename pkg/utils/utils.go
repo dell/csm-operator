@@ -39,8 +39,6 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
@@ -644,10 +642,6 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	scheme := runtime.NewScheme()
-	velerov1.AddToScheme(scheme)
-	utilruntime.Must(velerov1.AddToScheme(scheme))
-
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
 	if err != nil && k8serror.IsNotFound(err) {
@@ -672,10 +666,6 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
-
-	scheme := runtime.NewScheme()
-	velerov1.AddToScheme(scheme)
-	utilruntime.Must(velerov1.AddToScheme(scheme))
 
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 

@@ -50,8 +50,8 @@ spec:
         image: velero/velero:v1.8.1
         imagePullPolicy: IfNotPresent
         enabled: true
-        use-volume-snapshots: false
-        cleanUpCRDs: false
+        use-volume-snapshots: true
+        cleanUpCRDs: true
         #deployRestic: false
         #initContainers:
         #  - name: dell-custom-velero-plugin
