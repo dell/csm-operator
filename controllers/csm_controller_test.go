@@ -179,6 +179,13 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.runFakeAuthCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestAppMobReconcile() {
+	suite.makeFakeAppMobCSM(csmName, suite.namespace, getAppMob())
+	suite.runFakeAuthCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeAuthCSMManager("", true)
+}
+
 func (suite *CSMControllerTestSuite) TestResiliencyReconcile() {
 	suite.makeFakeResiliencyCSM(csmName, suite.namespace, true, append(getResiliencyModule(), getResiliencyModule()...), string(v1.PowerStore))
 	suite.runFakeCSMManager("", false)
@@ -692,6 +699,11 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// error in App-Mobility
+	csm.Spec.Modules = getAppMob()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
@@ -744,6 +756,12 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// error in App Mobility
+	csm.Spec.Modules = getAppMob()
+	csm.Spec.Modules[0].ConfigVersion = "8.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
+
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
@@ -761,9 +779,6 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
-
-	// error in Application-mobility
-	//csm.Spec.Modules =
 
 	// error unsupported module
 	csm.Spec.Modules = []csmv1.Module{
@@ -1237,6 +1252,64 @@ func getAuthProxyServer() []csmv1.Module {
 	}
 }
 
+func getAppMob() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.ApplicationMobility,
+			Enabled:       true,
+			ConfigVersion: "v0.3.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:    "application-mobility-controller-manager",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "APPLICATION_MOBILITY_REPLICA_COUNT",
+							Value: "csm-auth.com",
+						},
+						{
+							Name:  "APPLICATION_MOBILITY_LICENSE_NAME",
+							Value: "license",
+						},
+						{
+							Name:  "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME",
+							Value: "velero-restic-credentials",
+						},
+					},
+				},
+				{
+					Name:    "cert-manager",
+					Enabled: &[]bool{true}[0],
+					Envs:    []corev1.EnvVar{},
+				},
+				{
+					Name:    "velero",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "BACKUPSTORAGELOCATION_NAME",
+							Value: "default",
+						},
+						{
+							Name:  "VELERO_NAMESPACE",
+							Value: "application-mobility",
+						},
+						{
+							Name:  "CONFIG_PROVIDER",
+							Value: "aws",
+						},
+						{
+							Name:  "VELERO_SECRET",
+							Value: "cloud-creds",
+						},
+					},
+				},
+			},
+			ForceRemoveModule: true,
+		},
+	}
+}
+
 func getReverseProxyModule() []csmv1.Module {
 	return []csmv1.Module{
 		{
@@ -1326,6 +1399,34 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 
 	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
 	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.Nil(suite.T(), err)
+
+	// Restore the status
+	for _, c := range csm.Spec.Modules[0].Components {
+		c.Enabled = &[]bool{false}[0]
+	}
+}
+
+func (suite *CSMControllerTestSuite) TestReconcileAppMob() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getAppMob()
+	reconciler := suite.createReconciler()
+	badOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
+	err := reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.Error(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.Nil(suite.T(), err)
 
 	// Restore the status
@@ -1446,6 +1547,37 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 }
 
 // helper method to create k8s objects
+func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, modules []csmv1.Module) {
+
+	// this secret required by authorization module
+	sec := shared.MakeSecret("cloud-creds", ns, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("license", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("velero-restic-credentials", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by authorization module
+	sec = shared.MakeSecret("webhook-server-cert", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeModuleCSM(name, ns, configVersion)
+
+	csm.Spec.Modules = getAppMob()
+	csm.Spec.Modules[0].ForceRemoveModule = true
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
 func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, modules []csmv1.Module) {
 
 	// this secret required by authorization module

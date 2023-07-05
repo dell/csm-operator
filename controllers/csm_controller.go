@@ -824,7 +824,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	return nil
 }
 
-
 // reconcileObservability - Delete/Create/Update observability components
 // isDeleting - true: Delete; false: Create/Update
 func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
@@ -1175,11 +1174,6 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	default:
 		for _, m := range cr.Spec.Modules {
 			if m.Name == csmv1.AuthorizationServer || m.Name == csmv1.ApplicationMobility {
-				return nil
-			} else if m.Name == csmv1.ApplicationMobility {
-				if err := modules.ApplicationMobilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
-					return fmt.Errorf("failed Appmobility validation: %v", err)
-				}
 				return nil
 			}
 		}

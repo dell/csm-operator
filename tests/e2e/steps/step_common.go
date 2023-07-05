@@ -356,7 +356,7 @@ func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interfa
 	for _, pod := range allPods {
 		podMsg, podRunning := arePodsRunning(pod)
 		if podRunning == false {
-			return fmt.Errorf("pod %s not running: %+v\n", pod.Name, podMsg)
+			return fmt.Errorf("pod %s not running: %+v", pod.Name, podMsg)
 		}
 	}
 
