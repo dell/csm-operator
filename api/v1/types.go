@@ -308,7 +308,7 @@ type ContainerTemplate struct {
 
 	//UseSnapshot is to check whether volume snapshot is enabled under velero component
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="use-volume-snapshots for Application Mobilit- Velero"
-	UseSnapshot bool `json:"use-volume-snapshots,omitempty" yaml:"use-volume-snapshots,omitempty"`
+	UseSnapshot bool `json:"useVolumeSnapshot,omitempty" yaml:"useVolumeSnapshot,omitempty"`
 
 	//CleanUpCRDs is to check whether customer wants to clean up velero crds
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="cleanUpCRDs for Application Mobility - Velero"
