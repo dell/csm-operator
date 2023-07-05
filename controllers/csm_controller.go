@@ -1175,11 +1175,6 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		for _, m := range cr.Spec.Modules {
 			if m.Name == csmv1.AuthorizationServer || m.Name == csmv1.ApplicationMobility {
 				return nil
-			} else if m.Name == csmv1.ApplicationMobility {
-				if err := modules.ApplicationMobilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
-					return fmt.Errorf("failed Appmobility validation: %v", err)
-				}
-				return nil
 			}
 		}
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
