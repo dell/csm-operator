@@ -67,11 +67,11 @@ const (
 	// ConfigProvider - configurations provider (csi/aws)
 	ConfigProvider = "<CONFIG_PROVIDER>"
 	// VeleroImg - Image for velero
-	VeleroImg = "<VELERO_IMAGE>"
+	VeleroImage = "<VELERO_IMAGE>"
 	// VeleroImgPullPolicy - image pull policy for velero
-	VeleroImgPullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
+	VeleroImagePullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
 	// VeleroSecretName  -  Secret name for velero
-	VeleroSecretName = "<VELERO_SECRET>"
+	VeleroSecretName = "<CREDENTIAL_NAME>"
 	//VeleroInitContainers = "<INIT_CONTAINERS>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
@@ -421,25 +421,25 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 
 	yamlString = string(buf)
 	backupStorageLocationName := ""
-	velero_NS := ""
+	veleroNS := ""
 	provider := ""
-	velero_Img := ""
-	velero_ImgPullPolicy := ""
+	veleroImg := ""
+	veleroImgPullPolicy := ""
 	credName := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			if component.Image != "" {
-				velero_Img = string(component.Image)
+				veleroImg = string(component.Image)
 			}
 			if component.ImagePullPolicy != "" {
-				velero_ImgPullPolicy = string(component.ImagePullPolicy)
+				veleroImgPullPolicy = string(component.ImagePullPolicy)
 			}
 			for _, env := range component.Envs {
 				if strings.Contains(BackupStorageLocation, env.Name) {
 					backupStorageLocationName = env.Value
 				}
 				if strings.Contains(VeleroNamespace, env.Name) {
-					velero_NS = env.Value
+					veleroNS = env.Value
 				}
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
@@ -451,9 +451,9 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 		}
 	}
 
-	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, velero_NS)
-	yamlString = strings.ReplaceAll(yamlString, VeleroImg, velero_Img)
-	yamlString = strings.ReplaceAll(yamlString, VeleroImgPullPolicy, velero_ImgPullPolicy)
+	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroImage, veleroImg)
+	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
 	//YamlString = strings.ReplaceAll(YamlString, VeleroInitContainers, Velero_init_container)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageLocation, backupStorageLocationName)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
@@ -478,7 +478,7 @@ func getUseVolumeSnapshot(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 
 	yamlString = string(buf)
 	volSnapshotLocationName := ""
-	velero_NS := ""
+	veleroNS := ""
 	provider := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
@@ -487,7 +487,7 @@ func getUseVolumeSnapshot(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 					volSnapshotLocationName = env.Value
 				}
 				if strings.Contains(VeleroNamespace, env.Name) {
-					velero_NS = env.Value
+					veleroNS = env.Value
 				}
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
@@ -496,7 +496,7 @@ func getUseVolumeSnapshot(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 		}
 	}
 
-	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, velero_NS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
 	yamlString = strings.ReplaceAll(yamlString, VolSnapshotlocation, volSnapshotLocationName)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
 
@@ -518,8 +518,8 @@ func getCleanupcrds(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	}
 
 	yamlString = string(buf)
-	velero_NS := ""
-	velero_ImgPullPolicy := ""
+	veleroNS := ""
+	veleroImgPullPolicy := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			if component.ImagePullPolicy != "" {
@@ -527,13 +527,13 @@ func getCleanupcrds(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 			}
 			for _, env := range component.Envs {
 				if strings.Contains(VeleroNamespace, env.Name) {
-					velero_NS = env.Value
+					veleroNS = env.Value
 				}
 			}
 		}
 	}
 
-	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, velero_NS)
-	yamlString = strings.ReplaceAll(yamlString, VeleroImgPullPolicy, veleroImgPullPolicy)
+	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
 	return yamlString, nil
 }
