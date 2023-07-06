@@ -309,7 +309,7 @@ func (c *K8sClient) Discovery() discovery.DiscoveryInterface {
 	panic("implement me")
 }
 
-// NetworkingV1alpha1() retrieves the NetworkingV1alpha1Client
+// NetworkingV1alpha1 retrieves the NetworkingV1alpha1Client
 func (c *K8sClient) NetworkingV1alpha1() networkalphav1.NetworkingV1alpha1Interface {
 	panic("implement me")
 }
