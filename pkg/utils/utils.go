@@ -27,6 +27,7 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	goYAML "github.com/go-yaml/yaml"
 
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -541,6 +542,24 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &dp)
+
+		case "BackupStorageLocation":
+
+			var bsl velerov1.BackupStorageLocation
+			if err := yaml.Unmarshal(raw, &bsl); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &bsl)
+
+		case "VolumeSnapshotLocation":
+
+			var vs velerov1.VolumeSnapshotLocation
+			if err := yaml.Unmarshal(raw, &vs); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &vs)
 
 		}
 	}

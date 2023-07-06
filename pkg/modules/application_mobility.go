@@ -38,10 +38,14 @@ const (
 	AppMobMetricService = "app-mobility-controller-manager-metrics-service.yaml"
 	// AppMobWebhookService - filename of Webhook manifest for app-mobility
 	AppMobWebhookService = "app-mobility-webhook-service.yaml"
-	// VeleroManifest -
+	// VeleroManifest - filename of Velero manifest for app-mobility
 	VeleroManifest = "velero-deployment.yaml"
-	// AppMobCertManagerManifest -
+	// AppMobCertManagerManifest - filename of Cert-manager manifest for app-mobility
 	AppMobCertManagerManifest = "cert-manager.yaml"
+	//UseVolSnapshotManifest - filename of use volume snapshot manifest for app-mobility
+	UseVolSnapshotManifest = "velero-volumesnapshotlocation.yaml"
+	//CleanupCrdManifest - filename of Cleanup Crds manifest for app-mobility
+	CleanupCrdManifest = "cleanupcrds.yaml"
 
 	//ControllerImg - image for app-mobility-controller
 	ControllerImg = "<CONTROLLER_IMAGE>"
@@ -53,18 +57,21 @@ const (
 	AppMobLicenseName = "<APPLICATION_MOBILITY_LICENSE_NAME>"
 	// AppMobObjStoreSecretName - Secret name for object store
 	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
-	//BackupStorageLocation - name for BackupStorageLocation
+	//BackupStorageLocation - name for Backup Storage Location
 	BackupStorageLocation = "<BACKUPSTORAGELOCATION_NAME>"
+	//VolSnapshotlocation - name for Volume Snapshot location
+	VolSnapshotlocation = "<VOL_SNAPSHOT_LOCATION_NAME>"
+
 	// VeleroNamespace - namespace Velero is installed in
 	VeleroNamespace = "<VELERO_NAMESPACE>"
 	// ConfigProvider - configurations provider (csi/aws)
 	ConfigProvider = "<CONFIG_PROVIDER>"
-	// VeleroImg - Image for velero
-	VeleroImg = "<VELERO_IMAGE>"
-	// VeleroImgPullPolicy - image pull policy for velero
-	VeleroImgPullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
-	// VeleroSecretName  -  Secret name for velero
-	VeleroSecretName = "<VELERO_SECRET>" // #nosec G101
+	// VeleroImage - Image for velero
+	VeleroImage = "<VELERO_IMAGE>"
+	// VeleroImagePullPolicy - image pull policy for velero
+	VeleroImagePullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
+	// VeleroAccess  -  Secret name for velero
+	VeleroAccess = "<VELERO_ACCESS>"
 	//VeleroInitContainers = "<INIT_CONTAINERS>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
@@ -88,20 +95,20 @@ func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error)
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
 func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 
-	YamlString := ""
+	yamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
-		return YamlString, err
+		return yamlString, err
 	}
 
 	fmt.Printf("***** INSIDE APPLICATION DEPLOYMENT ******")
 	deploymentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobDeploymentManifest)
 	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
 	if err != nil {
-		return YamlString, err
+		return yamlString, err
 	}
 
-	YamlString = string(buf)
+	yamlString = string(buf)
 	controllerImage := ""
 	licenseName := ""
 	objectSecretName := ""
@@ -122,22 +129,22 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 		}
 	}
 
-	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, cr.Namespace)
-	YamlString = strings.ReplaceAll(YamlString, ControllerImg, controllerImage)
-	YamlString = strings.ReplaceAll(YamlString, AppMobLicenseName, licenseName)
-	YamlString = strings.ReplaceAll(YamlString, AppMobObjStoreSecretName, objectSecretName)
+	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
+	yamlString = strings.ReplaceAll(yamlString, ControllerImg, controllerImage)
+	yamlString = strings.ReplaceAll(yamlString, AppMobLicenseName, licenseName)
+	yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
 
-	return YamlString, nil
+	return yamlString, nil
 }
 
 // AppMobilityDeployment - apply and delete controller manager deployment
 func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getAppMobilityModuleDeployment(op, cr)
+	yamlString, err := getAppMobilityModuleDeployment(op, cr)
 	if err != nil {
 		return err
 	}
 	fmt.Printf("**** NEED TO RUN DEPLOYMENT****")
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
 	}
@@ -160,32 +167,32 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 
 // getControllerManagerMetricService - updates metric manifest with app mobility CRD values
 func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
+	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
-		return YamlString, err
+		return yamlString, err
 	}
 
 	metricServicePath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobMetricService)
 	buf, err := os.ReadFile(filepath.Clean(metricServicePath))
 	if err != nil {
-		return YamlString, err
+		return yamlString, err
 	}
 
-	YamlString = string(buf)
-	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, cr.Namespace)
+	yamlString = string(buf)
+	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 
-	return YamlString, nil
+	return yamlString, nil
 }
 
 // AppMobilityDeployment - apply and delete Controller manager metric service deployment
 func controllerManagerMetricService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getControllerManagerMetricService(op, cr)
+	yamlString, err := getControllerManagerMetricService(op, cr)
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
 	}
@@ -206,31 +213,31 @@ func controllerManagerMetricService(ctx context.Context, isDeleting bool, op uti
 
 // getAppMobilityWebhookService - gets the app mobility webhook service manifest
 func getAppMobilityWebhookService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
+	yamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
-		return YamlString, err
+		return yamlString, err
 	}
 
 	webhookServicePath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobWebhookService)
 	buf, err := os.ReadFile(filepath.Clean(webhookServicePath))
 	if err != nil {
-		return YamlString, err
+		return yamlString, err
 	}
 
-	YamlString = string(buf)
-	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, cr.Namespace)
+	yamlString = string(buf)
+	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 
-	return YamlString, nil
+	return yamlString, nil
 }
 
 // AppMobilityWebhookService - apply/delete app mobility's webhook service
 func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getAppMobilityWebhookService(op, cr)
+	yamlString, err := getAppMobilityWebhookService(op, cr)
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
 	}
@@ -282,12 +289,12 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 // AppMobilityCertManager - Install/Delete cert-manager
 func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
-	YamlString, err := getAppMobCertManager(op, cr)
+	yamlString, err := getAppMobCertManager(op, cr)
 	if err != nil {
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
 	}
@@ -308,30 +315,76 @@ func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.Opera
 
 // getAppMobilityCertManager - gets the cert-manager manifest from common
 func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
+	yamlString := ""
 
 	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/%s", op.ConfigDirectory, AppMobCertManagerManifest)
 	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
 	if err != nil {
-		return YamlString, err
+		return yamlString, err
 	}
 
-	YamlString = string(buf)
+	yamlString = string(buf)
 	appMobNamespace := cr.Namespace
-	YamlString = strings.ReplaceAll(YamlString, AppMobNamespace, appMobNamespace)
+	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, appMobNamespace)
 
-	return YamlString, nil
+	return yamlString, nil
 }
 
 // AppMobilityVelero - Install/Delete velero
 func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
-	YamlString, err := getVelero(op, cr)
+	yamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
 	}
+	for _, c := range cr.Spec.Modules[0].Components {
+		if c.UseSnapshot {
+			yamlString2, err := getUseVolumeSnapshot(op, cr)
+			if err != nil {
+				return err
+			}
+			ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString2))
+			if err != nil {
+				return err
+			}
+			for _, ctrlObj := range ctrlObjects {
+				if isDeleting {
+					if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+						return err
+					}
+				} else {
+					if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+	for _, c := range cr.Spec.Modules[0].Components {
+		if c.CleanUpCRDs {
+			yamlString3, err := getCleanupcrds(op, cr)
+			if err != nil {
+				return err
+			}
+			ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString3))
+			if err != nil {
+				return err
+			}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+			for _, ctrlObj := range ctrlObjects {
+				if isDeleting {
+					if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+						return err
+					}
+				} else {
+					if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
 	}
@@ -352,20 +405,20 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 
 // getVelero - gets the velero-deployment manifest
 func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
+	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
-		return YamlString, err
+		return yamlString, err
 	}
 
-	VeleroPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, VeleroManifest)
-	buf, err := os.ReadFile(filepath.Clean(VeleroPath))
+	veleroPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, VeleroManifest)
+	buf, err := os.ReadFile(filepath.Clean(veleroPath))
 	if err != nil {
-		return YamlString, err
+		return yamlString, err
 	}
 
-	YamlString = string(buf)
+	yamlString = string(buf)
 	backupStorageLocationName := ""
 	veleroNS := ""
 	provider := ""
@@ -390,68 +443,96 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
 				}
-				if strings.Contains(VeleroSecretName, env.Name) {
+				if strings.Contains(VeleroAccess, env.Name) {
 					credName = env.Value
 				}
 			}
 		}
 	}
 
-	YamlString = strings.ReplaceAll(YamlString, VeleroNamespace, veleroNS)
-	YamlString = strings.ReplaceAll(YamlString, VeleroImg, veleroImg)
-	YamlString = strings.ReplaceAll(YamlString, VeleroImgPullPolicy, veleroImgPullPolicy)
-	YamlString = strings.ReplaceAll(YamlString, BackupStorageLocation, backupStorageLocationName)
-	YamlString = strings.ReplaceAll(YamlString, ConfigProvider, provider)
-	YamlString = strings.ReplaceAll(YamlString, VeleroSecretName, credName)
-	return YamlString, nil
+	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroImage, veleroImg)
+	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
+	//YamlString = strings.ReplaceAll(YamlString, VeleroInitContainers, Velero_init_container)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageLocation, backupStorageLocationName)
+	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
+	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
+	return yamlString, nil
 }
 
-// IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
-/*
-func IsVolumaeSnapshotEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
-	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)
-	if !appMobilityEnabled {
-		return false
+// getVelero - gets the velero-deployment manifest
+func getUseVolumeSnapshot(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
 	}
 
-	for _, c := range appmobility.Components {
-		if c.Name == componentType && *c.Enabled {
-			return true
+	volSnapshotPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, UseVolSnapshotManifest)
+	buf, err := os.ReadFile(filepath.Clean(volSnapshotPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+	volSnapshotLocationName := ""
+	veleroNS := ""
+	provider := ""
+	for _, component := range appMob.Components {
+		if component.Name == AppMobVeleroComponent {
+			for _, env := range component.Envs {
+				if strings.Contains(VolSnapshotlocation, env.Name) {
+					volSnapshotLocationName = env.Value
+				}
+				if strings.Contains(VeleroNamespace, env.Name) {
+					veleroNS = env.Value
+				}
+				if strings.Contains(ConfigProvider, env.Name) {
+					provider = env.Value
+				}
+			}
 		}
 	}
 
-	return false
+	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VolSnapshotlocation, volSnapshotLocationName)
+	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
+
+	return yamlString, nil
 }
 
-// IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
-func IsCleanupCRDEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
-	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)
-	if !appMobilityEnabled {
-		return false
+func getCleanupcrds(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
 	}
 
-	for _, c := range appmobility.Components {
-		if c.Name == componentType && *c.Enabled {
-			return true
+	cleanupCrdsPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, CleanupCrdManifest)
+	buf, err := os.ReadFile(filepath.Clean(cleanupCrdsPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+	veleroNS := ""
+	veleroImgPullPolicy := ""
+	for _, component := range appMob.Components {
+		if component.Name == AppMobVeleroComponent {
+			if component.ImagePullPolicy != "" {
+				veleroImgPullPolicy = string(component.ImagePullPolicy)
+			}
+			for _, env := range component.Envs {
+				if strings.Contains(VeleroNamespace, env.Name) {
+					veleroNS = env.Value
+				}
+			}
 		}
 	}
 
-	return false
+	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
+	return yamlString, nil
 }
-
-// IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
-func IsdeployResticEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
-	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)
-	if !appMobilityEnabled {
-		return false
-	}
-
-	for _, c := range appmobility.Components {
-		if c.Name == componentType && *c.Enabled {
-			return true
-		}
-	}
-
-	return false
-}
-*/
