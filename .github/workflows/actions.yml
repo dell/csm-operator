@@ -40,7 +40,7 @@ jobs:
       - name: Run unit tests and check package coverage
         uses: dell/common-github-actions/go-code-tester@csm-operator-controllers
         with:
-          threshold: 87
+          threshold: 90
   test_driver:
     name: Run Go unit tests on driver and check package coverage
     runs-on: ubuntu-latest
