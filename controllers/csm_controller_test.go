@@ -22,7 +22,6 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -31,6 +30,7 @@ import (
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
