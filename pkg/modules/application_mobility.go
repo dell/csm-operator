@@ -333,12 +333,12 @@ func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 // AppMobilityVelero - Install/Delete velero
 func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
-	yamlString, err := getVelero(op, cr)
+	var useSnap bool
+	var cleanUp bool
+  yamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
 	}
-	var useSnap bool
-	var cleanUp bool
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
 			for _, c := range m.Components {
