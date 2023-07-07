@@ -343,10 +343,10 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		if m.Name == csmv1.ApplicationMobility {
 			for _, c := range m.Components {
 				if c.UseSnapshot {
-					useSnap = true	
+					useSnap = true
 				}
 			}
-		}		
+		}
 	}
 	if useSnap {
 		yamlString2, err := getUseVolumeSnapshot(op, cr)
@@ -373,10 +373,10 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		if m.Name == csmv1.ApplicationMobility {
 			for _, c := range m.Components {
 				if c.CleanUpCRDs {
-					cleanUp = true	
+					cleanUp = true
 				}
 			}
-		}		
+		}
 	}
 	if cleanUp {
 		yamlString3, err := getCleanupcrds(op, cr)
