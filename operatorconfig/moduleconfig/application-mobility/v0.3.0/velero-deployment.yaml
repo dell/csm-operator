@@ -108,8 +108,8 @@ spec:
         prometheus.io/port: "8085"
         prometheus.io/path: "/metrics"
     spec:
-      imagePullSecrets: #<PULL_SECRET>
-        - name: #<PULL_SCRET_NAME>
+      #imagePullSecrets: #<PULL_SECRET>
+       # - name: #<PULL_SCRET_NAME>
       restartPolicy: Always
       serviceAccountName: application-mobility-velero-server-service-account
       priorityClassName: #<NODEAGENT_PRIORITYCLASSNAME>
@@ -164,7 +164,7 @@ spec:
       volumes:
         - name: cloud-credentials
           secret:
-            secretName: <VELERO_SECRET>
+            secretName: <VELERO_ACCESS>
         - name: plugins
           emptyDir: {}
         - name: scratch

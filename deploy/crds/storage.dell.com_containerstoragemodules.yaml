@@ -62,6 +62,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      cleanUpCRDs:
+                        description: CleanUpCRDs is to check whether customer wants to clean up velero crds
+                        type: boolean
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -215,6 +218,9 @@ spec:
                               type: string
                           type: object
                         type: array
+                      useVolumeSnapshot:
+                        description: UseSnapshot is to check whether volume snapshot is enabled under velero component
+                        type: boolean
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
                         type: string
@@ -230,6 +236,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      cleanUpCRDs:
+                        description: CleanUpCRDs is to check whether customer wants to clean up velero crds
+                        type: boolean
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -383,6 +392,9 @@ spec:
                               type: string
                           type: object
                         type: array
+                      useVolumeSnapshot:
+                        description: UseSnapshot is to check whether volume snapshot is enabled under velero component
+                        type: boolean
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
                         type: string
@@ -417,6 +429,9 @@ spec:
                           items:
                             type: string
                           type: array
+                        cleanUpCRDs:
+                          description: CleanUpCRDs is to check whether customer wants to clean up velero crds
+                          type: boolean
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -570,6 +585,9 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        useVolumeSnapshot:
+                          description: UseSnapshot is to check whether volume snapshot is enabled under velero component
+                          type: boolean
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
                           type: string
@@ -583,6 +601,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      cleanUpCRDs:
+                        description: CleanUpCRDs is to check whether customer wants to clean up velero crds
+                        type: boolean
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -736,6 +757,9 @@ spec:
                               type: string
                           type: object
                         type: array
+                      useVolumeSnapshot:
+                        description: UseSnapshot is to check whether volume snapshot is enabled under velero component
+                        type: boolean
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
                         type: string
@@ -754,6 +778,9 @@ spec:
                           items:
                             type: string
                           type: array
+                        cleanUpCRDs:
+                          description: CleanUpCRDs is to check whether customer wants to clean up velero crds
+                          type: boolean
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -907,6 +934,9 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        useVolumeSnapshot:
+                          description: UseSnapshot is to check whether volume snapshot is enabled under velero component
+                          type: boolean
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
                           type: string
@@ -946,6 +976,9 @@ spec:
                             items:
                               type: string
                             type: array
+                          cleanUpCRDs:
+                            description: CleanUpCRDs is to check whether customer wants to clean up velero crds
+                            type: boolean
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
@@ -1099,6 +1132,9 @@ spec:
                                   type: string
                               type: object
                             type: array
+                          useVolumeSnapshot:
+                            description: UseSnapshot is to check whether volume snapshot is enabled under velero component
+                            type: boolean
                           veleroNamespace:
                             description: VeleroNamespace is the namespace that Velero is installed in
                             type: string

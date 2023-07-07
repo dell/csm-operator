@@ -785,8 +785,6 @@ rules:
   resources:
   - volumesnapshots/status
   verbs:
-  - create
-  - delete
   - get
   - list
   - patch
@@ -1000,8 +998,6 @@ rules:
   verbs:
   - create
   - delete
-  - get
   - list
-  - patch
   - update
   - watch

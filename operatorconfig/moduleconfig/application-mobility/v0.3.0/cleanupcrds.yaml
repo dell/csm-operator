@@ -14,8 +14,8 @@ spec:
       labels:
       annotations:
     spec:
-      imagePullSecrets:
-        - name: 
+      #imagePullSecrets:
+        #- name: 
       serviceAccountName: application-mobility-velero-server-service-account
       containers:
         - name: kubectl
