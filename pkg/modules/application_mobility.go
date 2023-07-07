@@ -333,53 +333,69 @@ func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 // AppMobilityVelero - Install/Delete velero
 func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
+	var useSnap bool
+	var cleanUp bool
 	yamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
 	}
-	for _, c := range cr.Spec.Modules[0].Components {
-		if c.UseSnapshot {
-			yamlString2, err := getUseVolumeSnapshot(op, cr)
-			if err != nil {
-				return err
-			}
-			ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString2))
-			if err != nil {
-				return err
-			}
-			for _, ctrlObj := range ctrlObjects {
-				if isDeleting {
-					if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-						return err
-					}
-				} else {
-					if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-						return err
-					}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.ApplicationMobility {
+			for _, c := range m.Components {
+				if c.UseSnapshot {
+					useSnap = true
 				}
 			}
 		}
 	}
-	for _, c := range cr.Spec.Modules[0].Components {
-		if c.CleanUpCRDs {
-			yamlString3, err := getCleanupcrds(op, cr)
-			if err != nil {
-				return err
+	if useSnap {
+		yamlString2, err := getUseVolumeSnapshot(op, cr)
+		if err != nil {
+			return err
+		}
+		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString2))
+		if err != nil {
+			return err
+		}
+		for _, ctrlObj := range ctrlObjects {
+			if isDeleting {
+				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
 			}
-			ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString3))
-			if err != nil {
-				return err
+		}
+	}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.ApplicationMobility {
+			for _, c := range m.Components {
+				if c.CleanUpCRDs {
+					cleanUp = true
+				}
 			}
+		}
+	}
+	if cleanUp {
+		yamlString3, err := getCleanupcrds(op, cr)
+		if err != nil {
+			return err
+		}
+		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString3))
+		if err != nil {
+			return err
+		}
 
-			for _, ctrlObj := range ctrlObjects {
-				if isDeleting {
-					if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-						return err
-					}
-				} else {
-					if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-						return err
-					}
+		for _, ctrlObj := range ctrlObjects {
+			if isDeleting {
+				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
 				}
 			}
 		}
