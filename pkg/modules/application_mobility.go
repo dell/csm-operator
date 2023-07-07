@@ -337,49 +337,65 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	if err != nil {
 		return err
 	}
-	for _, c := range cr.Spec.Modules[0].Components {
-		if c.UseSnapshot {
-			yamlString2, err := getUseVolumeSnapshot(op, cr)
-			if err != nil {
-				return err
+	var useSnap bool
+	var cleanUp bool
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.ApplicationMobility {
+			for _, c := range m.Components {
+				if c.UseSnapshot {
+					useSnap = true	
+				}
 			}
-			ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString2))
-			if err != nil {
-				return err
-			}
-			for _, ctrlObj := range ctrlObjects {
-				if isDeleting {
-					if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-						return err
-					}
-				} else {
-					if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-						return err
-					}
+		}		
+	}
+	if useSnap {
+		yamlString2, err := getUseVolumeSnapshot(op, cr)
+		if err != nil {
+			return err
+		}
+		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString2))
+		if err != nil {
+			return err
+		}
+		for _, ctrlObj := range ctrlObjects {
+			if isDeleting {
+				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
 				}
 			}
 		}
 	}
-	for _, c := range cr.Spec.Modules[0].Components {
-		if c.CleanUpCRDs {
-			yamlString3, err := getCleanupcrds(op, cr)
-			if err != nil {
-				return err
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.ApplicationMobility {
+			for _, c := range m.Components {
+				if c.CleanUpCRDs {
+					cleanUp = true	
+				}
 			}
-			ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString3))
-			if err != nil {
-				return err
-			}
+		}		
+	}
+	if cleanUp {
+		yamlString3, err := getCleanupcrds(op, cr)
+		if err != nil {
+			return err
+		}
+		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString3))
+		if err != nil {
+			return err
+		}
 
-			for _, ctrlObj := range ctrlObjects {
-				if isDeleting {
-					if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-						return err
-					}
-				} else {
-					if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-						return err
-					}
+		for _, ctrlObj := range ctrlObjects {
+			if isDeleting {
+				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
 				}
 			}
 		}
