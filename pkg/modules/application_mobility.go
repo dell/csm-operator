@@ -335,7 +335,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 
 	var useSnap bool
 	var cleanUp bool
-  yamlString, err := getVelero(op, cr)
+	yamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
 	}
