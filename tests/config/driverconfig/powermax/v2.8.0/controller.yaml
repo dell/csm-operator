@@ -80,6 +80,16 @@ rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
+ # Permissions for CSIStorageCapacity
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csistoragecapacities"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get"] 
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -186,9 +196,20 @@ spec:
             - "--leader-election"
             - "--extra-create-metadata"
             - "--default-fstype=ext4"
+            - "--enable-capacity=true"
+            - "--capacity-ownerref-level=2"
+            - "--capacity-poll-interval=5m"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
@@ -209,7 +230,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-powermax:v2.7.0
+          image: dellemc/csi-powermax:v2.8.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-powermax.sh" ]
           args:

@@ -395,10 +395,10 @@ metadata:
                     "value": ""
                   }
                 ],
-                "image": "dellemc/csi-powermax:v2.7.0",
+                "image": "dellemc/csi-powermax:v2.8.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.7.0",
+              "configVersion": "v2.8.0",
               "controller": {
                 "envs": [
                   {
@@ -409,7 +409,7 @@ metadata:
               },
               "csiDriverSpec": {
                 "fSGroupPolicy": "ReadWriteOnceWithFSType",
-                "storageCapacity": false
+                "storageCapacity": true
               },
               "csiDriverType": "powermax",
               "dnsPolicy": "ClusterFirstWithHostNet",
