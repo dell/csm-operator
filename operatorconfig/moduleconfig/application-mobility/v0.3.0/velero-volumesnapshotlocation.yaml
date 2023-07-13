@@ -11,6 +11,3 @@ metadata:
 spec:
   provider: <VOL_SNAPSHOTLOCATION_PROVIDER>
   config: 
-
-
-

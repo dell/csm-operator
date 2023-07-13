@@ -8,13 +8,9 @@ metadata:
     app.kubernetes.io/instance: application-mobility
 spec:
   provider: <PROVIDER>
-  #default: 
   accessMode: ReadWrite
   objectStorage:
-    bucket: velero-bucket
-    #prefix: <BUCKET_PREFIX>
-
-    #caCert: <CA_CERT>
+    bucket: <BUCKET_NAME>
   config: {}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -108,12 +104,8 @@ spec:
         prometheus.io/port: "8085"
         prometheus.io/path: "/metrics"
     spec:
-      #imagePullSecrets: #<PULL_SECRET>
-       # - name: #<PULL_SCRET_NAME>
       restartPolicy: Always
       serviceAccountName: application-mobility-velero-server-service-account
-      priorityClassName: #<NODEAGENT_PRIORITYCLASSNAME>
-      terminationGracePeriodSeconds: #<TERMINATION_GRACE_PERIOD_SECONDS>
       containers:
         - name: application-mobility-velero
           image: <VELERO_IMAGE>
@@ -156,9 +148,9 @@ spec:
           lifecycle:
       dnsPolicy: ClusterFirst
       initContainers:
-       - name: dell-custom-velero-plugin
-         image: dellemc/csm-application-mobility-velero-plugin:v0.1.0
-         volumeMounts:
+        - name: <INIT_CONTAINER_NAME>
+          image: <INIT_CONTAINER_IMAGE>
+          volumeMounts:
            - mountPath: /target
              name: plugins
       volumes:
@@ -172,7 +164,3 @@ spec:
         - name: tmpdir
           emptyDir: {}
       securityContext:
-      nodeSelector: #<NDE_SELECTOR>
-      dnsConfig: #<DNS_CONFIG>
-      tolerations: #<TOLERATIONS>
-      affinity: #<AFFINITY>
