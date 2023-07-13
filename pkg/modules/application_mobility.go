@@ -74,9 +74,9 @@ const (
 	VeleroImagePullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
 	// VeleroAccess  -  Secret name for velero
 	VeleroAccess = "<VELERO_ACCESS>"
-	//InitContainernName - Name of init container for velero (ex: aws/csi)
+	//InitContainerName - Name of init container for velero (ex: aws/csi)
 	InitContainerName = "<INIT_CONTAINER_NAME>"
-	//InitContainernImage - Image of init container for velero (ex: aws/csi)
+	//InitContainerImage - Image of init container for velero (ex: aws/csi)
 	InitContainerImage = "<INIT_CONTAINER_IMAGE>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
