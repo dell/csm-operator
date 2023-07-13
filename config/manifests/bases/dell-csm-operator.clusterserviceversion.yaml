@@ -5,12 +5,12 @@ metadata:
     alm-examples: '[]'
     capabilities: Basic Install
     categories: Storage
-    containerImage: docker.io/dellemc/dell-csm-operator:v1.2.0
+    containerImage: docker.io/dellemc/dell-csm-operator:v1.3.0
     createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.2.0
+  name: dell-csm-operator.v1.3.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -486,5 +486,5 @@ spec:
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
-  replaces: dell-csm-operator.v1.1.0
-  version: 1.2.0
+  replaces: dell-csm-operator.v1.2.0
+  version: 1.3.0
