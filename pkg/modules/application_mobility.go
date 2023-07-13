@@ -338,6 +338,8 @@ func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 // AppMobilityVelero - Install/Delete velero along with its features - use volume snapshot location and cleanup crds
 func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
+	var useSnap bool
+	var cleanUp bool
 	yamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
