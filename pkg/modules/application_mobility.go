@@ -344,8 +344,6 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	if err != nil {
 		return err
 	}
-	var useSnap bool
-	var cleanUp bool
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
 			for _, c := range m.Components {
