@@ -433,7 +433,7 @@ func TestAppMobilityVelero(t *testing.T) {
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
 		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			customResource, err := getCustomResource("./testdata/cr_application_mobility_aws.yaml")
 			if err != nil {
 				panic(err)
 			}

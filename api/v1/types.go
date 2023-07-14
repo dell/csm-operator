@@ -148,6 +148,11 @@ type Module struct {
 	// ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Module"
 	ForceRemoveModule bool `json:"forceRemoveModule,omitempty" yaml:"forceRemoveModule"`
+
+	// InitContainer is the specification for Module InitContainer
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="InitContainer"
+	InitContainer []ContainerTemplate `json:"initContainer,omitempty" yaml:"initContainer"`
 }
 
 // PodStatus - Represents PodStatus in a daemonset or deployment
