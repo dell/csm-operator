@@ -36,7 +36,7 @@ const (
 	PStoreConfigVersion      string = "v2.8.0"
 	UnityConfigVersion       string = "v2.6.0"
 	PScaleConfigVersion      string = "v2.7.0"
-	PmaxConfigVersion        string = "v2.7.0"
+	PmaxConfigVersion        string = "v2.8.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
