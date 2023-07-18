@@ -223,7 +223,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-powerstore:v2.6.0
+          image: dellemc/csi-powerstore:v2.8.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-powerstore" ]
           args:
