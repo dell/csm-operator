@@ -31,8 +31,8 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI PowerStore v2.7.0 driver
-    configVersion: v2.7.0
+    # Config version for CSI PowerStore v2.8.0 driver
+    configVersion: v2.8.0
     # authSecret: This is the secret used to validate the default PowerStore secret used for installation
     # Allowed values: <metadataName specified in the Manifest>-config
     # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
@@ -43,8 +43,8 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerStore driver v2.7.0
-      image: "dellemc/csi-powerstore:v2.7.0"
+      # Image for CSI PowerStore driver v2.8.0
+      image: "dellemc/csi-powerstore:v2.8.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -132,6 +132,11 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
+        # X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE: Defines the maximum PowerStore volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE
+          value: "0"
 
       # nodeSelector: Define node selection constraints for node pods.
       # For the pod to be eligible to run on a node, the node must have each
