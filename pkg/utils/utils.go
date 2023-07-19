@@ -916,31 +916,14 @@ func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule,
 	return false, csmv1.Module{}
 }
 
-// IsComponentEnabled - check if the component is enabled
-func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
-	observabilityEnabled, obs := IsModuleEnabled(ctx, instance, mod)
-
-	if !observabilityEnabled {
+// IsModuleComponentEnabled - check if module components are enabled
+func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+	moduleEnabled, module := IsModuleEnabled(ctx, instance, mod)
+	if !moduleEnabled {
 		return false
 	}
 
-	for _, c := range obs.Components {
-		if c.Name == componentType && *c.Enabled {
-			return true
-		}
-	}
-
-	return false
-}
-
-// IsAuthorizationComponentEnabled - check if authorization proxy server components are enabled
-func IsAuthorizationComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
-	authorizationEnabled, auth := IsModuleEnabled(ctx, instance, mod)
-	if !authorizationEnabled {
-		return false
-	}
-
-	for _, c := range auth.Components {
+	for _, c := range module.Components {
 		if c.Name == componentType && *c.Enabled {
 			return true
 		}
