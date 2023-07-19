@@ -574,8 +574,8 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 		components := []string{}
 		if oldObservabilityEnabled && newObservabilityEnabled {
 			for _, comp := range oldObs.Components {
-				oldCompEnabled := utils.IsComponentEnabled(ctx, *oldCR, csmv1.Observability, comp.Name)
-				newCompEnabled := utils.IsComponentEnabled(ctx, *newCR, csmv1.Observability, comp.Name)
+				oldCompEnabled := utils.IsModuleComponentEnabled(ctx, *oldCR, csmv1.Observability, comp.Name)
+				newCompEnabled := utils.IsModuleComponentEnabled(ctx, *newCR, csmv1.Observability, comp.Name)
 				if oldCompEnabled && !newCompEnabled {
 					components = append(components, comp.Name)
 				}
@@ -797,7 +797,7 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 	if len(components) == 0 {
 		if enabled, obs := utils.IsModuleEnabled(ctx, cr, csmv1.Observability); enabled {
 			for _, comp := range obs.Components {
-				if utils.IsComponentEnabled(ctx, cr, csmv1.Observability, comp.Name) {
+				if utils.IsModuleComponentEnabled(ctx, cr, csmv1.Observability, comp.Name) {
 					components = append(components, comp.Name)
 				}
 			}
@@ -817,9 +817,14 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		var err error
 		switch comp {
 		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName:
+			log.Infow("Reconcile observability TODO JJL")
 			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
 		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName:
+			log.Infow("Reconcile observability TODO JJL")
 			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
+		case modules.ObservabilityCertManagerComponent:
+			log.Infow("Reconcile observability cert-manager")
+			err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient)
 		default:
 			err = fmt.Errorf("unsupported component type: %v", comp)
 		}
@@ -835,7 +840,7 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 // reconcileAuthorization - deploy authorization proxy server
 func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization proxy-server")
 		if err := modules.AuthorizationServerDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization proxy server: %v", err)
@@ -846,14 +851,14 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		}
 	}
 
-	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
 		log.Infow("Reconcile authorization cert-manager")
 		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
 		}
 	}
 
-	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
 		log.Infow("Reconcile authorization nginx ingress controller")
 		if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
@@ -861,7 +866,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 	}
 
 	// Authorization Ingress rules are applied after NGINX ingress controller is installed
-	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization Ingresses")
 		if err := modules.AuthorizationIngress(ctx, isDeleting, op, cr, r, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
