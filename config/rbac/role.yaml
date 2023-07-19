@@ -108,7 +108,7 @@ rules:
 - apiGroups:
   - ""
   resourceNames:
-  - webhook-server-cert
+  - cert-manager-webhook-ca
   resources:
   - secrets
   verbs:

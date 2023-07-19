@@ -1568,7 +1568,7 @@ func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, modules 
 	assert.Nil(suite.T(), err)
 
 	// this secret required by authorization module
-	sec = shared.MakeSecret("webhook-server-cert", ns, configVersion)
+	sec = shared.MakeSecret("cert-manager-webhook-ca", ns, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
