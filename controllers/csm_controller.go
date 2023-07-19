@@ -817,7 +817,7 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		log.Infow(fmt.Sprintf("reconcile %s", comp))
 		var err error
 		switch comp {
-		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName:
+		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName, modules.ObservabilityCertManagerComponent:
 			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
 		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName:
 			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
