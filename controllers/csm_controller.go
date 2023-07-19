@@ -804,8 +804,9 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		}
 	}
 	comp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
-		modules.ObservabilityTopologyName:      modules.ObservabilityTopology,
-		modules.ObservabilityOtelCollectorName: modules.OtelCollector,
+		modules.ObservabilityTopologyName:         modules.ObservabilityTopology,
+		modules.ObservabilityOtelCollectorName:    modules.OtelCollector,
+		modules.ObservabilityCertManagerComponent: modules.CommonCertManager,
 	}
 	metricsComp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface) error{
 		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
@@ -817,14 +818,9 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		var err error
 		switch comp {
 		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName:
-			log.Infow("Reconcile observability TODO JJL")
 			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
 		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName:
-			log.Infow("Reconcile observability TODO JJL")
 			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
-		case modules.ObservabilityCertManagerComponent:
-			log.Infow("Reconcile observability cert-manager")
-			err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient)
 		default:
 			err = fmt.Errorf("unsupported component type: %v", comp)
 		}

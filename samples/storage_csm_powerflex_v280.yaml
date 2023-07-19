@@ -200,12 +200,12 @@ spec:
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
 
-	# enabled: Enable/Disable cert-manager
-	# Allowed values:
-	#   true: enable deployment of cert-manager
-	#   false: disable deployment of cert-manager only if it's already deployed
-	# Default value: true
-	- name: cert-manager
+        # enabled: Enable/Disable cert-manager
+        # Allowed values:
+        #   true: enable deployment of cert-manager
+        #   false: disable deployment of cert-manager only if it's already deployed
+        # Default value: true
+        - name: cert-manager
           enabled: true
 
         - name: metrics-powerflex
