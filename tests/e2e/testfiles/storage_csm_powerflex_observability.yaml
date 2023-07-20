@@ -136,6 +136,7 @@ spec:
   modules:
     # observability: allows to configure observability
     - name: observability
+    - namespace: test-vxflexos
       # enabled: Enable/Disable observability
       enabled: true
       configVersion: v1.4.0

@@ -46,6 +46,9 @@ const (
 	// ObservabilityMetricsPowerFlexName - component metrics-powerflex
 	ObservabilityMetricsPowerFlexName string = "metrics-powerflex"
 
+	// ObservabilityNameSpace - placeholder for observability namespace
+	ObservabilityNameSpace string = "<OBSERVABILITY_NAMESPACE>"
+
 	// TopologyLogLevel -
 	TopologyLogLevel string = "<TOPOLOGY_LOG_LEVEL>"
 
@@ -259,6 +262,7 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 
 	YamlString = strings.ReplaceAll(YamlString, TopologyLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, TopologyImage, topologyImage)
+	YamlString = strings.ReplaceAll(YamlString, ObservabilityNameSpace, cr.Namespace)
 	return YamlString, nil
 }
 
@@ -322,6 +326,7 @@ func getOtelCollector(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorImage, otelCollectorImage)
 	YamlString = strings.ReplaceAll(YamlString, NginxProxyImage, nginxProxyImage)
+	YamlString = strings.ReplaceAll(YamlString, ObservabilityNameSpace, cr.Namespace)
 	return YamlString, nil
 }
 
@@ -479,6 +484,7 @@ func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStor
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, ObservabilityNameSpace, cr.Namespace)
 
 	return YamlString, nil
 }
@@ -677,6 +683,7 @@ func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, PowerflexLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, ObservabilityNameSpace, cr.Namespace)
 	return YamlString, nil
 }
 

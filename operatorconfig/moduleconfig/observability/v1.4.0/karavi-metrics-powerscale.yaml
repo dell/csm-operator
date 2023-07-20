@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: karavi-metrics-powerscale-controller
-  namespace: karavi
+  namespace: <OBSERVABILITY_NAMESPACE>
 
 ---
 
@@ -30,7 +30,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: karavi-metrics-powerscale-controller
-    namespace: karavi
+    namespace: <OBSERVABILITY_NAMESPACE>
 roleRef:
   kind: ClusterRole
   name: karavi-metrics-powerscale-controller
@@ -45,7 +45,7 @@ metadata:
     app.kubernetes.io/name: karavi-metrics-powerscale
     app.kubernetes.io/instance: karavi
   name: karavi-metrics-powerscale
-  namespace: karavi
+  namespace: <OBSERVABILITY_NAMESPACE>
 spec:
   type: ClusterIP
   ports:
@@ -62,7 +62,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: karavi-metrics-powerscale-configmap
-  namespace: karavi
+  namespace: <OBSERVABILITY_NAMESPACE>
 data:
   karavi-metrics-powerscale.yaml : |
     COLLECTOR_ADDR: <COLLECTOR_ADDRESS>
@@ -85,7 +85,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: <DriverDefaultReleaseName>-config-params
-  namespace: karavi
+  namespace: <OBSERVABILITY_NAMESPACE>
 data:
   driver-config-params.yaml: |
     CSI_LOG_LEVEL: debug
@@ -96,7 +96,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: karavi-metrics-powerscale
-  namespace: karavi
+  namespace: <OBSERVABILITY_NAMESPACE>
   labels:
     app.kubernetes.io/name: karavi-metrics-powerscale
     app.kubernetes.io/instance: karavi
