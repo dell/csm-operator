@@ -443,18 +443,24 @@ spec:
       configVersion: v1.6.0
       components:
         - name: podmon-controller
+          image: dellemc/podmon:v1.6.0
+          imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-isilon"
             - "--arrayConnectivityPollRate=60"
             - "--skipArrayConnectionValidation=false"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityPollRate=5"
+            - "--arrayConnectivityConnectionLossThreshold=3"
             # Below 4 args should not be modified.
             - "--csisock=unix:/var/run/csi/csi.sock"
             - "--mode=controller"
             - "--driverPath=csi-isilon.dellemc.com"
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
         - name: podmon-node
+          image: dellemc/podmon:v1.6.0
+          imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
             # Allowed values: Any valid and free port (string)
@@ -467,6 +473,8 @@ spec:
             - "--leaderelection=false"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityPollRate=5"
+            - "--arrayConnectivityConnectionLossThreshold=3"
             # Below 4 args should not be modified.
             - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
             - "--mode=node"
