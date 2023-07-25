@@ -146,7 +146,7 @@ var (
 // +kubebuilder:rbac:groups="cert-manager.io",resources=certificates;certificaterequests;issuers,verbs=create;delete;deletecollection;patch;update
 // +kubebuilder:rbac:groups="cert-manager.io",resources=signers,resourceNames=issuers.cert-manager.io/*;clusterissuers.cert-manager.io/*,verbs=approve
 // +kubebuilder:rbac:groups="cert-manager.io",resources=*/*,verbs=*
-// +kubebuilder:rbac:groups="",resources=secrets,resourceNames=webhook-server-cert,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups="",resources=secrets,resourceNames=cert-manager-webhook-ca,verbs=get;list;watch;update
 // +kubebuilder:rbac:groups="cert-manager.io",resources=configmaps,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=cert-manager-controller,verbs=get;update;patch
 // +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=backups,verbs=create;delete;get;list;patch;update;watch
