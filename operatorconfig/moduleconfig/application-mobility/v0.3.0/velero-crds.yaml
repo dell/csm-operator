@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -107,7 +107,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -159,6 +159,24 @@ spec:
                   Use DefaultVolumesToFsBackup instead."
                 nullable: true
                 type: boolean
+              excludedClusterScopedResources:
+                description: ExcludedClusterScopedResources is a slice of cluster-scoped
+                  resource type names to exclude from the backup. If set to "*", all
+                  cluster-scoped resource types are excluded. The default value is
+                  empty.
+                items:
+                  type: string
+                nullable: true
+                type: array
+              excludedNamespaceScopedResources:
+                description: ExcludedNamespaceScopedResources is a slice of namespace-scoped
+                  resource type names to exclude from the backup. If set to "*", all
+                  namespace-scoped resource types are excluded. The default value
+                  is empty.
+                items:
+                  type: string
+                nullable: true
+                type: array
               excludedNamespaces:
                 description: ExcludedNamespaces contains a list of namespaces that
                   are not included in the backup.
@@ -364,6 +382,23 @@ spec:
                   resources should be included for consideration in the backup.
                 nullable: true
                 type: boolean
+              includedClusterScopedResources:
+                description: IncludedClusterScopedResources is a slice of cluster-scoped
+                  resource type names to include in the backup. If set to "*", all
+                  cluster-scoped resource types are included. The default value is
+                  empty, which means only related cluster-scoped resources are included.
+                items:
+                  type: string
+                nullable: true
+                type: array
+              includedNamespaceScopedResources:
+                description: IncludedNamespaceScopedResources is a slice of namespace-scoped
+                  resource type names to include in the backup. The default value
+                  is "*".
+                items:
+                  type: string
+                nullable: true
+                type: array
               includedNamespaces:
                 description: IncludedNamespaces is a slice of namespace names to include
                   objects from. If empty, all namespaces are included.
@@ -378,6 +413,11 @@ spec:
                   type: string
                 nullable: true
                 type: array
+              itemOperationTimeout:
+                description: ItemOperationTimeout specifies the time used to wait
+                  for asynchronous BackupItemAction operations The default value is
+                  1 hour.
+                type: string
               labelSelector:
                 description: LabelSelector is a metav1.LabelSelector to filter with
                   when adding individual objects to the backup. If empty or nil, all
@@ -491,14 +531,35 @@ spec:
                 additionalProperties:
                   type: string
                 description: OrderedResources specifies the backup order of resources
-                  of specific Kind. The map key is the Kind name and value is a list
-                  of resource names separated by commas. Each resource name has format
-                  "namespace/resourcename".  For cluster resources, simply use "resourcename".
+                  of specific Kind. The map key is the resource name and value is
+                  a list of object names separated by commas. Each resource name has
+                  format "namespace/objectname".  For cluster resources, simply use
+                  "objectname".
                 nullable: true
                 type: object
+              resourcePolicy:
+                description: ResourcePolicy specifies the referenced resource policies
+                  that backup should follow
+                properties:
+                  apiGroup:
+                    description: APIGroup is the group for the resource being referenced.
+                      If APIGroup is not specified, the specified Kind must be in
+                      the core API group. For any other third-party types, APIGroup
+                      is required.
+                    type: string
+                  kind:
+                    description: Kind is the type of resource being referenced
+                    type: string
+                  name:
+                    description: Name is the name of resource being referenced
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
               snapshotVolumes:
-                description: SnapshotVolumes specifies whether to take cloud snapshots
-                  of any PV's referenced in the set of objects included in the Backup.
+                description: SnapshotVolumes specifies whether to take snapshots of
+                  any PV's referenced in the set of objects included in the Backup.
                 nullable: true
                 type: boolean
               storageLocation:
@@ -519,6 +580,20 @@ spec:
           status:
             description: BackupStatus captures the current status of a Velero backup.
             properties:
+              backupItemOperationsAttempted:
+                description: BackupItemOperationsAttempted is the total number of
+                  attempted async BackupItemAction operations for this backup.
+                type: integer
+              backupItemOperationsCompleted:
+                description: BackupItemOperationsCompleted is the total number of
+                  successfully completed async BackupItemAction operations for this
+                  backup.
+                type: integer
+              backupItemOperationsFailed:
+                description: BackupItemOperationsFailed is the total number of async
+                  BackupItemAction operations for this backup which ended with an
+                  error.
+                type: integer
               completionTimestamp:
                 description: CompletionTimestamp records the time a backup was completed.
                   Completion time is recorded even on failed backups. Completion time
@@ -559,6 +634,10 @@ spec:
                 - New
                 - FailedValidation
                 - InProgress
+                - WaitingForPluginOperations
+                - WaitingForPluginOperationsPartiallyFailed
+                - Finalizing
+                - FinalizingPartiallyFailed
                 - Completed
                 - PartiallyFailed
                 - Failed
@@ -628,7 +707,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -810,7 +889,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -892,7 +971,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -936,10 +1015,13 @@ spec:
                     - BackupLog
                     - BackupContents
                     - BackupVolumeSnapshots
-                    - BackupItemSnapshots
+                    - BackupItemOperations
                     - BackupResourceList
+                    - BackupResults
                     - RestoreLog
                     - RestoreResults
+                    - RestoreResourceList
+                    - RestoreItemOperations
                     - CSIBackupVolumeSnapshots
                     - CSIBackupVolumeSnapshotContents
                     type: string
@@ -988,7 +1070,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -1196,7 +1278,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -1389,7 +1471,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -1443,7 +1525,7 @@ spec:
                 nullable: true
                 type: array
               existingResourcePolicy:
-                description: ExistingResourcePolicy specifies the restore behaviour
+                description: ExistingResourcePolicy specifies the restore behavior
                   for the kubernetes resource to be restored
                 nullable: true
                 type: string
@@ -1625,6 +1707,10 @@ spec:
                   type: string
                 nullable: true
                 type: array
+              itemOperationTimeout:
+                description: ItemOperationTimeout specifies the time used to wait
+                  for RestoreItemAction operations The default value is 1 hour.
+                type: string
               labelSelector:
                 description: LabelSelector is a metav1.LabelSelector to filter with
                   when restoring individual objects from the backup. If empty or nil,
@@ -1742,7 +1828,7 @@ spec:
                 type: boolean
               restorePVs:
                 description: RestorePVs specifies whether to restore all included
-                  PVs from snapshot (via the cloudprovider).
+                  PVs from snapshot
                 nullable: true
                 type: boolean
               restoreStatus:
@@ -1799,6 +1885,8 @@ spec:
                 - New
                 - FailedValidation
                 - InProgress
+                - WaitingForPluginOperations
+                - WaitingForPluginOperationsPartiallyFailed
                 - Completed
                 - PartiallyFailed
                 - Failed
@@ -1819,6 +1907,20 @@ spec:
                       due to plugins that return additional related items to restore
                     type: integer
                 type: object
+              restoreItemOperationsAttempted:
+                description: RestoreItemOperationsAttempted is the total number of
+                  attempted async RestoreItemAction operations for this restore.
+                type: integer
+              restoreItemOperationsCompleted:
+                description: RestoreItemOperationsCompleted is the total number of
+                  successfully completed async RestoreItemAction operations for this
+                  restore.
+                type: integer
+              restoreItemOperationsFailed:
+                description: RestoreItemOperationsFailed is the total number of async
+                  RestoreItemAction operations for this restore which ended with an
+                  error.
+                type: integer
               startTimestamp:
                 description: StartTimestamp records the time the restore operation
                   was started. The server's time is used for StartTimestamps
@@ -1852,7 +1954,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -1934,6 +2036,24 @@ spec:
                       entirely in future. Use DefaultVolumesToFsBackup instead."
                     nullable: true
                     type: boolean
+                  excludedClusterScopedResources:
+                    description: ExcludedClusterScopedResources is a slice of cluster-scoped
+                      resource type names to exclude from the backup. If set to "*",
+                      all cluster-scoped resource types are excluded. The default
+                      value is empty.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  excludedNamespaceScopedResources:
+                    description: ExcludedNamespaceScopedResources is a slice of namespace-scoped
+                      resource type names to exclude from the backup. If set to "*",
+                      all namespace-scoped resource types are excluded. The default
+                      value is empty.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
                   excludedNamespaces:
                     description: ExcludedNamespaces contains a list of namespaces
                       that are not included in the backup.
@@ -2144,6 +2264,24 @@ spec:
                       resources should be included for consideration in the backup.
                     nullable: true
                     type: boolean
+                  includedClusterScopedResources:
+                    description: IncludedClusterScopedResources is a slice of cluster-scoped
+                      resource type names to include in the backup. If set to "*",
+                      all cluster-scoped resource types are included. The default
+                      value is empty, which means only related cluster-scoped resources
+                      are included.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  includedNamespaceScopedResources:
+                    description: IncludedNamespaceScopedResources is a slice of namespace-scoped
+                      resource type names to include in the backup. The default value
+                      is "*".
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
                   includedNamespaces:
                     description: IncludedNamespaces is a slice of namespace names
                       to include objects from. If empty, all namespaces are included.
@@ -2158,6 +2296,11 @@ spec:
                       type: string
                     nullable: true
                     type: array
+                  itemOperationTimeout:
+                    description: ItemOperationTimeout specifies the time used to wait
+                      for asynchronous BackupItemAction operations The default value
+                      is 1 hour.
+                    type: string
                   labelSelector:
                     description: LabelSelector is a metav1.LabelSelector to filter
                       with when adding individual objects to the backup. If empty
@@ -2271,14 +2414,34 @@ spec:
                     additionalProperties:
                       type: string
                     description: OrderedResources specifies the backup order of resources
-                      of specific Kind. The map key is the Kind name and value is
-                      a list of resource names separated by commas. Each resource
-                      name has format "namespace/resourcename".  For cluster resources,
-                      simply use "resourcename".
+                      of specific Kind. The map key is the resource name and value
+                      is a list of object names separated by commas. Each resource
+                      name has format "namespace/objectname".  For cluster resources,
+                      simply use "objectname".
                     nullable: true
                     type: object
+                  resourcePolicy:
+                    description: ResourcePolicy specifies the referenced resource
+                      policies that backup should follow
+                    properties:
+                      apiGroup:
+                        description: APIGroup is the group for the resource being
+                          referenced. If APIGroup is not specified, the specified
+                          Kind must be in the core API group. For any other third-party
+                          types, APIGroup is required.
+                        type: string
+                      kind:
+                        description: Kind is the type of resource being referenced
+                        type: string
+                      name:
+                        description: Name is the name of resource being referenced
+                        type: string
+                    required:
+                    - kind
+                    - name
+                    type: object
                   snapshotVolumes:
-                    description: SnapshotVolumes specifies whether to take cloud snapshots
+                    description: SnapshotVolumes specifies whether to take snapshots
                       of any PV's referenced in the set of objects included in the
                       Backup.
                     nullable: true
@@ -2345,7 +2508,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
@@ -2431,7 +2594,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    component: application-mobility-velero
+    component: velero
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
