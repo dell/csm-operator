@@ -71,6 +71,16 @@ rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
+  # Permissions for CSIStorageCapacity
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csistoragecapacities"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -118,7 +128,7 @@ spec:
 
       containers:
         - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.6.0
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.8.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -135,7 +145,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.0.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -152,7 +162,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: external-health-monitor
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.7.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -172,7 +182,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.3.0
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -187,14 +197,25 @@ spec:
             - "--leader-election-renew-deadline=10s"
             - "--leader-election-lease-duration=15s"
             - "--leader-election-retry-period=5s"
+            - "--enable-capacity=true"
+            - "--capacity-ownerref-level=2"
+            - "--capacity-poll-interval=5m"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.1.0
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.2.2
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -211,8 +232,28 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
+        - name: csi-metadata-retriever
+          image: dellemc/csi-metadata-retriever:v1.4.0
+          imagePullPolicy: Always
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=120s"
+            - "--v=5"
+            - "--leader-election"
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+          command: [ "/csi-metadata-retriever" ]
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+            - name: CSI_RETRIEVER_ENDPOINT
+              value: /var/run/csi/csi_retriever.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-isilon:v2.5.0
+          image: dellemc/csi-isilon:v2.8.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-isilon" ]
           args:
@@ -224,6 +265,8 @@ spec:
           env:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
+            - name: CSI_RETRIEVER_ENDPOINT
+              value: /var/run/csi/csi_retriever.sock
             - name: X_CSI_MODE
               value: controller
             - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
@@ -246,6 +289,8 @@ spec:
               value: "/ifs/data/csi"
             - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
               value: "0777"
+            - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
+              value: "false"
             - name: X_CSI_ISI_NO_PROBE_ON_START
               value: "false"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
@@ -258,6 +303,8 @@ spec:
               value: /certs
             - name: X_CSI_ISI_CONFIG_PATH
               value: /isilon-configs/config
+            - name: X_CSI_MAX_PATH_LIMIT
+              value: "false"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
