@@ -5,22 +5,27 @@ metadata:
   namespace: isilon
 spec:
   driver:
-    csiDriverType: "isilon" 
+    csiDriverType: "isilon"
     csiDriverSpec:
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    # Config version for CSI PowerScale v2.5.0 driver
-    configVersion: v2.5.0
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: true
+    # Config version for CSI PowerScale v2.8.0 driver
+    configVersion: v2.8.0
     authSecret: isilon-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerScale driver v2.5.0
-      image: "dellemc/csi-isilon:v2.5.0"
+      # Image for CSI PowerScale driver v2.8.0
+      image: "dellemc/csi-isilon:v2.8.0"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -89,7 +94,7 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
-        
+
         # certSecretCount: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (isilon-cert-0..isilon-cert-n)
         # Allowed values: n, where n > 0
@@ -138,6 +143,22 @@ spec:
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
 
+      # X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS: Ignore unresolvable hosts on the OneFS.
+      # When set to true, OneFS allows new host to add to existing export list though any of the existing hosts from the
+      # same exports are unresolvable/doesn't exist anymore.
+      # Allowed values:
+      #   true: ignore existing unresolvable hosts and append new host to the existing export
+      #   false: exhibits OneFS default behavior i.e. if any of existing hosts are unresolvable while adding new one it fails
+      # Default value: false
+      - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
+        value: "false"
+
+      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+      # Default value: 192
+      # Examples: 192, 256
+      - name: X_CSI_MAX_PATH_LIMIT
+        value: "192"
+
       # nodeSelector: Define node selection constraints for pods of controller deployment.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -185,6 +206,12 @@ spec:
       - name: X_CSI_HEALTH_MONITOR_ENABLED
         value: "false"
 
+      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+      # Default value: 192
+      # Examples: 192, 256
+      - name: X_CSI_MAX_PATH_LIMIT
+        value: "192"
+
       # nodeSelector: Define node selection constraints for pods of node daemonset
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -219,24 +246,30 @@ spec:
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
+      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+      # Configure when the storageCapacity is set as "true"
+      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+      #- name: provisioner
+      #  args: ["--capacity-poll-interval=5m"]
 
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.5.0
+      configVersion: v1.7.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.5.0
+        image: dellemc/csm-authorization-sidecar:v1.7.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
             value: "csm-authorization.com"
-        
+
           # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
+
     # replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
@@ -246,13 +279,13 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.3.0
+      configVersion: v1.5.0
       components:
       - name: dell-csi-replicator
         # image: Image to use for dell-csi-replicator. This shouldn't be changed
         # Allowed values: string
         # Default value: None
-        image: dellemc/dell-csi-replicator:v1.3.0
+        image: dellemc/dell-csi-replicator:v1.5.0
         envs:
           # replicationPrefix: prefix to prepend to storage classes parameters
           # Allowed values: string
@@ -264,11 +297,11 @@ spec:
           # Default value: powerstore
           - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
             value: "powerscale"
-      
+
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.3.1
+        image: dellemc/dell-replication-controller:v1.5.0
         envs:
           # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
           # Set the value to "self" in case of stretched/single cluster configuration
@@ -280,7 +313,7 @@ spec:
           # Default value: "debug"
           - name: "REPLICATION_CTRL_LOG_LEVEL"
             value: "debug"
-          
+
           # replicas: Defines number of controller replicas
           # Allowed values: int
           # Default value: 1
@@ -296,24 +329,29 @@ spec:
           - name: "RETRY_INTERVAL_MAX"
             value: "5m"
 
+      - name: dell-replication-controller-init
+        # image: Defines replication init container image. This shouldn't be changed
+        # Allowed values: string
+        image: dellemc/dell-replication-init:v1.0.1
+
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.4.0
-      components: 
+      configVersion: v1.5.0
+      components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.4.0
+          image: dellemc/csm-topology:v1.5.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
-              value: "INFO"           
+              value: "INFO"
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
@@ -333,7 +371,7 @@ spec:
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-metrics-powerscale:v1.1.0
+          image: dellemc/csm-metrics-powerscale:v1.2.0
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int
@@ -395,3 +433,50 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.7.0
+      components:
+        - name: podmon-controller
+          image: dellemc/podmon:v1.6.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--labelvalue=csi-isilon"
+            - "--arrayConnectivityPollRate=60"
+            - "--skipArrayConnectionValidation=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityPollRate=5"
+            - "--arrayConnectivityConnectionLossThreshold=3"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--mode=controller"
+            - "--driverPath=csi-isilon.dellemc.com"
+            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+        - name: podmon-node
+          image: dellemc/podmon:v1.6.0
+          imagePullPolicy: IfNotPresent
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+          args:
+            - "--labelvalue=csi-isilon"
+            - "--arrayConnectivityPollRate=60"
+            - "--leaderelection=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityPollRate=5"
+            - "--arrayConnectivityConnectionLossThreshold=3"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
+            - "--mode=node"
+            - "--driverPath=csi-isilon.dellemc.com"
+            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
