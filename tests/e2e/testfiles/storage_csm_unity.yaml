@@ -11,16 +11,16 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    # Config version for CSI Unity v2.6.0 driver
-    configVersion: v2.6.0
+    # Config version for CSI Unity v2.8.0 driver
+    configVersion: v2.8.0
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Image for CSI Unity driver v2.6.0
-      image: "dellemc/csi-unity:v2.6.0"
+      # Nightly Image for CSI Unity driver v2.8.0
+      image: "dellemc/csi-unity:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
