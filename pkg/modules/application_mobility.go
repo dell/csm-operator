@@ -46,6 +46,8 @@ const (
 	UseVolSnapshotManifest = "velero-volumesnapshotlocation.yaml"
 	//CleanupCrdManifest - filename of Cleanup Crds manifest for app-mobility
 	CleanupCrdManifest = "cleanupcrds.yaml"
+	//ResticCrdManifest - filename of restic manifest for app-mobility
+	ResticCrdManifest = "restic.yaml"
 
 	//ControllerImg - image for app-mobility-controller
 	ControllerImg = "<CONTROLLER_IMAGE>"
@@ -106,7 +108,6 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 		return yamlString, err
 	}
 
-	fmt.Printf("***** INSIDE APPLICATION DEPLOYMENT ******")
 	deploymentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobDeploymentManifest)
 	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
 	if err != nil {
@@ -148,7 +149,6 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 	if err != nil {
 		return err
 	}
-	fmt.Printf("**** NEED TO RUN DEPLOYMENT****")
 	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
@@ -160,7 +160,6 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 				return err
 			}
 		} else {
-			fmt.Printf("**** INSIDE APPLY OBJECT *****")
 			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
@@ -266,7 +265,6 @@ func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.Op
 func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
-	fmt.Printf("**** GETTING INSIDE PRECHECK*****")
 	// check if provided version is supported
 	if appMob.ConfigVersion != "" {
 		err := checkVersion(string(csmv1.ApplicationMobility), appMob.ConfigVersion, op.ConfigDirectory)
@@ -340,9 +338,28 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 
 	var useSnap bool
 	var cleanUp bool
+	var restic bool
+
 	yamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
+	}
+
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range ctrlObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
 	}
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
@@ -352,6 +369,9 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 				}
 				if c.CleanUpCRDs {
 					cleanUp = true
+				}
+				if c.DeployRestic {
+					restic = true
 				}
 			}
 		}
@@ -399,19 +419,24 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 			}
 		}
 	}
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
-
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
+	if restic {
+		yamlString4, err := getRestic(op, cr)
+		if err != nil {
+			return err
+		}
+		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString4))
+		if err != nil {
+			return err
+		}
+		for _, ctrlObj := range ctrlObjects {
+			if isDeleting {
+				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -580,6 +605,51 @@ func getCleanupcrds(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
+	return yamlString, nil
+}
+
+func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+	cleanupCrdsPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, ResticCrdManifest)
+	buf, err := os.ReadFile(filepath.Clean(cleanupCrdsPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+	veleroNS := ""
+	veleroImgPullPolicy := ""
+	veleroImg := ""
+	credName := ""
+	for _, component := range appMob.Components {
+		if component.Name == AppMobVeleroComponent {
+			if component.Image != "" {
+				veleroImg = string(component.Image)
+			}
+			if component.ImagePullPolicy != "" {
+				veleroImgPullPolicy = string(component.ImagePullPolicy)
+			}
+			for _, env := range component.Envs {
+				if strings.Contains(VeleroNamespace, env.Name) {
+					veleroNS = env.Value
+				}
+				if strings.Contains(VeleroAccess, env.Name) {
+					credName = env.Value
+				}
+
+			}
+		}
+	}
+
+	yamlString = strings.ReplaceAll(yamlString, VeleroImage, veleroImg)
+	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
 	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
 	return yamlString, nil
 }

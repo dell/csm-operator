@@ -318,6 +318,10 @@ type ContainerTemplate struct {
 	//CleanUpCRDs is to check whether customer wants to clean up velero crds
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="cleanUpCRDs for Application Mobility - Velero"
 	CleanUpCRDs bool `json:"cleanUpCRDs,omitempty" yaml:"cleanUpCRDs,omitempty"`
+
+	//DeployRestic is to enable/disable restic services
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Deploy Restic for Application Mobility"
+	DeployRestic bool `json:"deployRestic,omitempty" yaml:"deployRestic,omitempty"`
 }
 
 // SnapshotClass struct

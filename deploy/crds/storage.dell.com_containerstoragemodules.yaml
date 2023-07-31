@@ -68,6 +68,9 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      deployRestic:
+                        description: DeployRestic is to enable/disable restic services
+                        type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
                         type: boolean
@@ -242,6 +245,9 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      deployRestic:
+                        description: DeployRestic is to enable/disable restic services
+                        type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
                         type: boolean
@@ -435,6 +441,9 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        deployRestic:
+                          description: DeployRestic is to enable/disable restic services
+                          type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to deploy a module
                           type: boolean
@@ -607,6 +616,9 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      deployRestic:
+                        description: DeployRestic is to enable/disable restic services
+                        type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
                         type: boolean
@@ -784,6 +796,9 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        deployRestic:
+                          description: DeployRestic is to enable/disable restic services
+                          type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to deploy a module
                           type: boolean
@@ -982,6 +997,9 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          deployRestic:
+                            description: DeployRestic is to enable/disable restic services
+                            type: boolean
                           enabled:
                             description: Enabled is used to indicate wether or not to deploy a module
                             type: boolean
@@ -1165,6 +1183,9 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          deployRestic:
+                            description: DeployRestic is to enable/disable restic services
+                            type: boolean
                           enabled:
                             description: Enabled is used to indicate wether or not to deploy a module
                             type: boolean
