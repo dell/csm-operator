@@ -113,7 +113,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.0.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -126,7 +126,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.3.0
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -147,7 +147,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.1.0
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.2.2
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -163,7 +163,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.6.0
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.8.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -176,7 +176,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: external-health-monitor
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.7.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -193,7 +193,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-unity:v2.6.0
+          image: dellemc/csi-unity:v2.8.0
           args:
             - "--driver-name=csi-unity.dellemc.com"
             - "--driver-config=/unity-config/driver-config-params.yaml"
