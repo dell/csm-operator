@@ -451,7 +451,6 @@ spec:
             - "--skipArrayConnectionValidation=false"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
-            - "--arrayConnectivityPollRate=5"
             - "--arrayConnectivityConnectionLossThreshold=3"
             # Below 4 args should not be modified.
             - "--csisock=unix:/var/run/csi/csi.sock"
@@ -473,7 +472,6 @@ spec:
             - "--leaderelection=false"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
-            - "--arrayConnectivityPollRate=5"
             - "--arrayConnectivityConnectionLossThreshold=3"
             # Below 4 args should not be modified.
             - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
