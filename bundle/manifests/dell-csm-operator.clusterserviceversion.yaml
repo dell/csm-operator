@@ -797,10 +797,10 @@ metadata:
                     "value": "0"
                   }
                 ],
-                "image": "dellemc/csi-vxflexos:v2.7.0",
+                "image": "dellemc/csi-vxflexos:v2.8.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.7.0",
+              "configVersion": "v2.8.0",
               "controller": {
                 "envs": [
                   {
@@ -2349,7 +2349,7 @@ spec:
     name: csi-powerstore
   - image: docker.io/dellemc/csi-unity:v2.7.0
     name: csi-unity
-  - image: docker.io/dellemc/csi-vxflexos:v2.7.0
+  - image: docker.io/dellemc/csi-vxflexos:v2.8.0
     name: csi-vxflexos
   - image: docker.io/dellemc/sdc:3.6.0.6
     name: sdc
