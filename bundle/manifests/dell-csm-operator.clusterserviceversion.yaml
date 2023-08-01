@@ -736,7 +736,8 @@ metadata:
                 "tolerations": null
               },
               "csiDriverSpec": {
-                "fSGroupPolicy": "ReadWriteOnceWithFSType"
+                "fSGroupPolicy": "ReadWriteOnceWithFSType",
+                "storageCapacity": true
               },
               "csiDriverType": "unity",
               "dnsPolicy": "ClusterFirstWithHostNet",
