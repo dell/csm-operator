@@ -192,7 +192,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-vxflexos:v2.7.0
+          image: dellemc/csi-vxflexos:v2.8.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:
