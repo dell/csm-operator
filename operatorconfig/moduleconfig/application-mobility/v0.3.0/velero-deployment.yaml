@@ -95,30 +95,6 @@ spec:
     app.kubernetes.io/name: application-mobility-velero
     app.kubernetes.io/instance: application-mobility
 ---
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: application-mobility-velero-server
-  namespace: <VELERO_NAMESPACE>
-  annotations:
-  labels:
-    app.kubernetes.io/name: application-mobility-velero
-    app.kubernetes.io/instance: application-mobility
-spec:
-  namespaceSelector:
-    matchNames:
-      - <VELERO_NAMESPACE>
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: application-mobility-velero
-      app.kubernetes.io/instance: application-mobility
-  endpoints:
-  - port: http-monitoring
-    interval: 30
-    scrapeTimeout: 10
-    scheme: HTTP
-    tlsConfig:
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:

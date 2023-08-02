@@ -32,7 +32,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	coreosv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	networking "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
@@ -430,14 +429,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 				return ctrlObjects, err
 			}
 			ctrlObjects = append(ctrlObjects, &sa)
-
-		case "ServiceMonitor":
-			var sm coreosv1.ServiceMonitor
-			err := yaml.Unmarshal(raw, &sm)
-			if err != nil {
-				return ctrlObjects, err
-			}
-			ctrlObjects = append(ctrlObjects, &sm)
 
 		case "ClusterRole":
 			var cr rbacv1.ClusterRole
