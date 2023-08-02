@@ -42,6 +42,9 @@ const (
 
 	// CsiPrefixRenameSdc - String to rename SDC
 	CsiPrefixRenameSdc = "<X_CSI_RENAME_SDC_PREFIX>"
+
+	// CsiVxflexosMaxVolumesPerNode - Max volumes that the controller could schedule on a node
+	CsiVxflexosMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -219,6 +222,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	approveSdcEnabled := ""
 	renameSdcEnabled := ""
 	renameSdcPrefix := ""
+	maxVolumesPerNode := ""
 
 	switch fileType {
 	case "Node":
@@ -232,10 +236,15 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_RENAME_SDC_PREFIX" {
 				renameSdcPrefix = env.Value
 			}
+			if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
+				maxVolumesPerNode = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
+		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
+
 	}
 	return yamlString
 }
