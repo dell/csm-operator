@@ -398,7 +398,7 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 
 	// Add controller fields specific
 	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
-	// res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
 
 	return res
 }
