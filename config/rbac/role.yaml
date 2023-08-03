@@ -323,6 +323,7 @@ rules:
   - certificaterequests/status
   - certificates/status
   verbs:
+  - patch
   - update
 - apiGroups:
   - cert-manager.io
