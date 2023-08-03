@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "None"
-    configVersion: v2.7.0
+    configVersion: v2.8.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -121,6 +121,12 @@ spec:
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
+
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "1"
 
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
