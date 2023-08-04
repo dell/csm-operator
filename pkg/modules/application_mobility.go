@@ -48,8 +48,10 @@ const (
 	CleanupCrdManifest = "cleanupcrds.yaml"
 	//VeleroCrdManifest - filename of Velero crds manisfest for Velero feature
 	VeleroCrdManifest = "velero-crds.yaml"
-	//
+	//VeleroAccessManifest - filename where velero access with its contents
 	VeleroAccessManifest = "velero-secret.yaml"
+	//ResticCrdManifest - filename of restic manifest for app-mobility
+	ResticCrdManifest = "restic.yaml"
 
 	//ControllerImg - image for app-mobility-controller
 	ControllerImg = "<CONTROLLER_IMAGE>"
@@ -207,7 +209,8 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 // AppMobilityDeployment - apply and delete controller manager deployment
 func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	yamlString, err := getAppMobilityModuleDeployment(op, cr)
+	
+  yamlString, err := getAppMobilityModuleDeployment(op, cr)
 	if err != nil {
 		return err
 	}
@@ -223,7 +226,6 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 				return err
 			}
 		} else {
-
 			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
@@ -475,10 +477,29 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	var useSnap bool
 	var cleanUp bool
 	credName := ""
+	var restic bool
+
 
 	yamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
+	}
+
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range ctrlObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
 	}
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
@@ -489,6 +510,9 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 				if c.CleanUpCRDs {
 					cleanUp = true
 				}
+        if c.DeployRestic {
+					restic = true
+				}
 				for _, env := range c.Envs {
 					if strings.Contains(AppMobObjStoreSecretName, env.Name) {
 						credName = env.Value
@@ -498,8 +522,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 					if cred.Enabled {
 						credName = string(cred.Name)
 					}
-				}
-
+				}			
 			}
 		}
 	}
@@ -555,19 +578,24 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 			}
 		}
 	}
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
-
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
+	if restic {
+		yamlString4, err := getRestic(op, cr)
+		if err != nil {
+			return err
+		}
+		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString4))
+		if err != nil {
+			return err
+		}
+		for _, ctrlObj := range ctrlObjects {
+			if isDeleting {
+				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -754,6 +782,51 @@ func getCleanupcrds(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
+	return yamlString, nil
+}
+
+func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+	cleanupCrdsPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, ResticCrdManifest)
+	buf, err := os.ReadFile(filepath.Clean(cleanupCrdsPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+	veleroNS := ""
+	veleroImgPullPolicy := ""
+	veleroImg := ""
+	credName := ""
+	for _, component := range appMob.Components {
+		if component.Name == AppMobVeleroComponent {
+			if component.Image != "" {
+				veleroImg = string(component.Image)
+			}
+			if component.ImagePullPolicy != "" {
+				veleroImgPullPolicy = string(component.ImagePullPolicy)
+			}
+			for _, env := range component.Envs {
+				if strings.Contains(VeleroNamespace, env.Name) {
+					veleroNS = env.Value
+				}
+				if strings.Contains(VeleroAccess, env.Name) {
+					credName = env.Value
+				}
+
+			}
+		}
+	}
+
+	yamlString = strings.ReplaceAll(yamlString, VeleroImage, veleroImg)
+	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
 	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
 	return yamlString, nil
 }

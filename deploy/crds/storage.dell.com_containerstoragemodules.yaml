@@ -80,6 +80,9 @@ spec:
                               type: string
                           type: object
                         type: array
+                      deployRestic:
+                        description: DeployRestic is to enable/disable restic services
+                        type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
                         type: boolean
@@ -266,7 +269,10 @@ spec:
                               type: string
                           type: object
                         type: array
-                      enabled:
+                      deployRestic:
+                        description: DeployRestic is to enable/disable restic services
+                        type: boolean
+                        enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
                         type: boolean
                       envs:
@@ -471,6 +477,9 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        deployRestic:
+                          description: DeployRestic is to enable/disable restic services
+                          type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to deploy a module
                           type: boolean
@@ -655,6 +664,9 @@ spec:
                               type: string
                           type: object
                         type: array
+                      deployRestic:
+                        description: DeployRestic is to enable/disable restic services
+                        type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
                         type: boolean
@@ -832,7 +844,7 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
-                        credentials:
+                          credentials:
                           items:
                             description: Credential struct
                             properties:
@@ -844,6 +856,9 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        deployRestic:
+                          description: DeployRestic is to enable/disable restic services
+                          type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to deploy a module
                           type: boolean
@@ -1054,6 +1069,9 @@ spec:
                                   type: string
                               type: object
                             type: array
+                          deployRestic:
+                            description: DeployRestic is to enable/disable restic services
+                            type: boolean
                           enabled:
                             description: Enabled is used to indicate wether or not to deploy a module
                             type: boolean
@@ -1249,6 +1267,9 @@ spec:
                                   type: string
                               type: object
                             type: array
+                          deployRestic:
+                            description: DeployRestic is to enable/disable restic services
+                            type: boolean
                           enabled:
                             description: Enabled is used to indicate wether or not to deploy a module
                             type: boolean
