@@ -327,8 +327,8 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
-    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Apply custom resource [1]"
+    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
@@ -379,7 +379,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization and Observability)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -395,8 +395,8 @@
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds-auth] in namespace [isilon] for [pscaleAuth]"
     - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
     - "Set up secret with template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [isilon] for [authSidecarCert]"
-    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Apply custom resource [2]"
+    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
@@ -417,7 +417,7 @@
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization, Enable Observability"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
   modules:
     - "authorizationproxyserver"
@@ -443,8 +443,8 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is not installed"
-    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Enable [observability] module from CR [2]"
+    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is installed"
@@ -457,7 +457,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -473,8 +473,8 @@
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds-auth] in namespace [isilon] for [pscaleAuth]"
     - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
     - "Set up secret with template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [isilon] for [authSidecarCert]"
-    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Apply custom resource [2]"
+    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
@@ -504,7 +504,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -520,8 +520,8 @@
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds-auth] in namespace [isilon] for [pscaleAuth]"
     - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
     - "Set up secret with template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [isilon] for [authSidecarCert]"
-    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Apply custom resource [2]"
+    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
@@ -988,7 +988,7 @@
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization, Enable Observability"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
   modules:
     - "authorizationproxyserver"
@@ -1029,7 +1029,7 @@
 
 - scenario: "Install PowerFlex Driver(With Authorization and Observability)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -1045,8 +1045,8 @@
     - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
-    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Apply custom resource [2]"
+    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
@@ -1066,7 +1066,7 @@
 
 - scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -1082,8 +1082,8 @@
     - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
-    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Apply custom resource [2]"
+    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
@@ -1112,7 +1112,7 @@
 
 - scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -1128,8 +1128,8 @@
     - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
-    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Apply custom resource [2]"
+    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
