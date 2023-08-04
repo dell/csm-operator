@@ -123,7 +123,7 @@ func getVeleroCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule
 	return yamlString, nil
 }
 
-// veleroCrdDeploy - apply and delete Velero crds deployment
+// VeleroCrdDeploy - apply and delete Velero crds deployment
 func VeleroCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
 	yamlString, err := getVeleroCrdDeploy(op, cr)
@@ -254,7 +254,7 @@ func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.Contain
 	return yamlString, nil
 }
 
-// AppMobilityDeployment - apply and delete Controller manager metric service deployment
+// ControllerManagerMetricService - apply and delete Controller manager metric service deployment
 func ControllerManagerMetricService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getControllerManagerMetricService(op, cr)
 	if err != nil {
@@ -398,7 +398,7 @@ func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	return yamlString, nil
 }
 
-// AppMobilityCertManager - Install/Delete cert-manager
+// CreateVeleroAccess - Install/Delete velero-secret yaml from operator config
 func CreateVeleroAccess(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
 	yamlString, err := getCreateVeleroAccess(op, cr)
@@ -425,7 +425,7 @@ func CreateVeleroAccess(ctx context.Context, isDeleting bool, op utils.OperatorC
 	return nil
 }
 
-// getAppMobilityCertManager - gets the cert-manager manifest from common
+// getCreateVeleroAccess - gets the velero-secret manifest from operatorconfig
 func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 
 	yamlString := ""
