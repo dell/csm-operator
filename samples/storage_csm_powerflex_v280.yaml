@@ -204,9 +204,9 @@ spec:
         # Allowed values:
         #   true: enable deployment of cert-manager
         #   false: disable deployment of cert-manager only if it's already deployed
-        # Default value: true
+        # Default value: false
         - name: cert-manager
-          enabled: true
+          enabled: false
 
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
