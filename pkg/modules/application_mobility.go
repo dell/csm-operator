@@ -209,8 +209,8 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 // AppMobilityDeployment - apply and delete controller manager deployment
 func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	
-  yamlString, err := getAppMobilityModuleDeployment(op, cr)
+
+	yamlString, err := getAppMobilityModuleDeployment(op, cr)
 	if err != nil {
 		return err
 	}
@@ -479,7 +479,6 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	credName := ""
 	var restic bool
 
-
 	yamlString, err := getVelero(op, cr)
 	if err != nil {
 		return err
@@ -510,7 +509,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 				if c.CleanUpCRDs {
 					cleanUp = true
 				}
-        if c.DeployRestic {
+				if c.DeployRestic {
 					restic = true
 				}
 				for _, env := range c.Envs {
@@ -522,7 +521,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 					if cred.Enabled {
 						credName = string(cred.Name)
 					}
-				}			
+				}
 			}
 		}
 	}
