@@ -318,6 +318,8 @@ type ContainerTemplate struct {
 	//CleanUpCRDs is to check whether customer wants to clean up velero crds
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="cleanUpCRDs for Application Mobility - Velero"
 	CleanUpCRDs bool `json:"cleanUpCRDs,omitempty" yaml:"cleanUpCRDs,omitempty"`
+
+	ComponentCred []Credential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
 }
 
 // SnapshotClass struct
@@ -335,4 +337,11 @@ type SnapshotClass struct {
 type CSIDriverSpec struct {
 	FSGroupPolicy   string `json:"fSGroupPolicy,omitempty" yaml:"fSGroupPolicy,omitempty"`
 	StorageCapacity bool   `json:"storageCapacity,omitempty" yaml:"storageCapacity"`
+}
+
+// Credential struct
+type Credential struct {
+	Enabled        bool   `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Name           string `json:"name,omitempty" yaml:"name,omitempty"`
+	SecretContents string `json:"secretContents,omitempty" yaml:"secretContents"`
 }

@@ -127,7 +127,7 @@ spec:
           volumeMounts:
             - name: plugins
               mountPath: /plugins
-            - name: cloud-credentials
+            - name: <APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
               mountPath: /credentials
             - name: scratch
               mountPath: /scratch
@@ -154,9 +154,9 @@ spec:
            - mountPath: /target
              name: plugins
       volumes:
-        - name: cloud-credentials
+        - name: <APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
           secret:
-            secretName: <VELERO_ACCESS>
+            secretName: <APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
         - name: plugins
           emptyDir: {}
         - name: scratch

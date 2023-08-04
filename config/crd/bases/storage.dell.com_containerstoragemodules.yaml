@@ -78,6 +78,18 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      credentials:
+                        items:
+                          description: Credential struct
+                          properties:
+                            enabled:
+                              type: boolean
+                            name:
+                              type: string
+                            secretContents:
+                              type: string
+                          type: object
+                        type: array
                       enabled:
                         description: Enabled is used to indicate wether or not to
                           deploy a module
@@ -317,6 +329,18 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      credentials:
+                        items:
+                          description: Credential struct
+                          properties:
+                            enabled:
+                              type: boolean
+                            name:
+                              type: string
+                            secretContents:
+                              type: string
+                          type: object
+                        type: array
                       enabled:
                         description: Enabled is used to indicate wether or not to
                           deploy a module
@@ -577,6 +601,18 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        credentials:
+                          items:
+                            description: Credential struct
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              secretContents:
+                                type: string
+                            type: object
+                          type: array
                         enabled:
                           description: Enabled is used to indicate wether or not to
                             deploy a module
@@ -815,6 +851,18 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      credentials:
+                        items:
+                          description: Credential struct
+                          properties:
+                            enabled:
+                              type: boolean
+                            name:
+                              type: string
+                            secretContents:
+                              type: string
+                          type: object
+                        type: array
                       enabled:
                         description: Enabled is used to indicate wether or not to
                           deploy a module
@@ -1056,6 +1104,18 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        credentials:
+                          items:
+                            description: Credential struct
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              secretContents:
+                                type: string
+                            type: object
+                          type: array
                         enabled:
                           description: Enabled is used to indicate wether or not to
                             deploy a module
@@ -1323,6 +1383,18 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          credentials:
+                            items:
+                              description: Credential struct
+                              properties:
+                                enabled:
+                                  type: boolean
+                                name:
+                                  type: string
+                                secretContents:
+                                  type: string
+                              type: object
+                            type: array
                           enabled:
                             description: Enabled is used to indicate wether or not
                               to deploy a module
@@ -1579,6 +1651,18 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          credentials:
+                            items:
+                              description: Credential struct
+                              properties:
+                                enabled:
+                                  type: boolean
+                                name:
+                                  type: string
+                                secretContents:
+                                  type: string
+                              type: object
+                            type: array
                           enabled:
                             description: Enabled is used to indicate wether or not
                               to deploy a module
