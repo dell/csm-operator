@@ -28,8 +28,8 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
-    # Config version for CSI PowerStore v2.7.0 driver
-    configVersion: v2.7.0
+    # Config version for CSI PowerStore v2.8.0 driver
+    configVersion: v2.8.0
     authSecret: powerstore-config
     # Controller count
     replicas: 2
@@ -37,7 +37,7 @@ spec:
     forceUpdate: true
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerStore driver v2.7.0
+      # Image for CSI PowerStore driver
       image: "dellemc/csi-powerstore:nightly"
       imagePullPolicy: IfNotPresent
       envs:
@@ -120,6 +120,11 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
+        # X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE: Defines the maximum PowerStore volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE
+          value: "0"
 
       # nodeSelector: Define node selection constraints for node pods.
       # For the pod to be eligible to run on a node, the node must have each
@@ -148,7 +153,7 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: true
-      configVersion: v1.6.0
+      configVersion: v1.7.0
       components:
         - name: podmon-controller
           image: dellemc/podmon:nightly
