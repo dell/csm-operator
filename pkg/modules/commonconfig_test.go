@@ -21,7 +21,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/yaml"
@@ -37,6 +39,8 @@ func TestMain(m *testing.M) {
 
 	operatorConfig = utils.OperatorConfig{}
 	operatorConfig.ConfigDirectory = "../../operatorconfig"
+
+	apiextv1.AddToScheme(scheme.Scheme)
 
 	if st := m.Run(); st > status {
 		status = st
