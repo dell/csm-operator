@@ -75,6 +75,26 @@ metadata:
     app.kubernetes.io/name: application-mobility-velero
     app.kubernetes.io/instance: application-mobility
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: application-mobility-velero-server
+  namespace: <VELERO_NAMESPACE>
+  annotations:
+  labels:
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-monitoring
+      port: 8085
+      targetPort: http-monitoring
+  selector:
+    name: velero
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:

@@ -48,8 +48,8 @@ spec:
         enabled: true
         useVolumeSnapshot: false
         cleanUpCRDs: false
-        # enabled: Enable/Disable Restic Service
-        #deployRestic: false  
+        # enabled: Enable/Disable Velero and Restic Services
+        deployRestic: false
         envs:
           # Backup storage location name
           # Allowed values: string

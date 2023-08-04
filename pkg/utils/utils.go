@@ -552,6 +552,15 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 			ctrlObjects = append(ctrlObjects, &dp)
 
+		case "DaemonSet":
+
+			var ds appsv1.DaemonSet
+			if err := yaml.Unmarshal(raw, &ds); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ds)
+
 		case "BackupStorageLocation":
 
 			var bsl velerov1.BackupStorageLocation
