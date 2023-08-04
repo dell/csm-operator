@@ -37,6 +37,9 @@ const (
 	// ObservabilityTopologyName - component topology
 	ObservabilityTopologyName string = "topology"
 
+	// ObservabilityCertManagerComponent cert-manager component name
+	ObservabilityCertManagerComponent string = "cert-manager"
+
 	// ObservabilityMetricsPowerScaleName - component metrics-powerscale
 	ObservabilityMetricsPowerScaleName string = "metrics-powerscale"
 
