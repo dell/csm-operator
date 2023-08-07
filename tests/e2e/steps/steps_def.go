@@ -14,7 +14,6 @@ package steps
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -537,6 +536,19 @@ func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType s
 	return nil
 }
 
+func (step *Step) setupSecretFromFile(res Resource, file, namespace string) error {
+	crBuff, err := os.ReadFile(file)
+	if err != nil {
+		return fmt.Errorf("failed to read secret data: %v", err)
+	}
+
+	if _, err := framework.RunKubectlInput(namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to apply secret from file %s in namespace %s: %v", file, namespace, err)
+	}
+
+	return nil
+}
+
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
 
 	// find which map to use for secret values
@@ -996,6 +1008,10 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 		os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
 	}
 
+	if driver == "powerscale" {
+		os.Setenv("STORAGE_TYPE", "powerscale")
+		os.Setenv("DRIVER_NAMESPACE", "isilon")
+	}
 	// get env variables
 	if os.Getenv(endpointvar) != "" {
 		endpoint = os.Getenv(endpointvar)
@@ -1131,15 +1147,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
-	var token struct {
-		Token string `json:"Token"`
-	}
-	err = json.Unmarshal(b, &token)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal token %s: %v", string(b), err)
-	}
 
-	err = os.WriteFile("/tmp/token.yaml", []byte(token.Token), 0644)
+	err = os.WriteFile("/tmp/token.yaml", b, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}

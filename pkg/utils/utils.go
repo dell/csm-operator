@@ -34,6 +34,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	t1 "k8s.io/apimachinery/pkg/types"
@@ -421,6 +422,14 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			return ctrlObjects, err
 		}
 		switch meta.Kind {
+
+		case "CustomResourceDefinition":
+			var crd apiextv1.CustomResourceDefinition
+			err := yaml.Unmarshal(raw, &crd)
+			if err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &crd)
 
 		case "ServiceAccount":
 			var sa corev1.ServiceAccount
@@ -946,31 +955,14 @@ func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule,
 	return false, csmv1.Module{}
 }
 
-// IsComponentEnabled - check if the component is enabled
-func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
-	observabilityEnabled, obs := IsModuleEnabled(ctx, instance, mod)
-
-	if !observabilityEnabled {
+// IsModuleComponentEnabled - check if module components are enabled
+func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+	moduleEnabled, module := IsModuleEnabled(ctx, instance, mod)
+	if !moduleEnabled {
 		return false
 	}
 
-	for _, c := range obs.Components {
-		if c.Name == componentType && *c.Enabled {
-			return true
-		}
-	}
-
-	return false
-}
-
-// IsAuthorizationComponentEnabled - check if authorization proxy server components are enabled
-func IsAuthorizationComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
-	authorizationEnabled, auth := IsModuleEnabled(ctx, instance, mod)
-	if !authorizationEnabled {
-		return false
-	}
-
-	for _, c := range auth.Components {
+	for _, c := range module.Components {
 		if c.Name == componentType && *c.Enabled {
 			return true
 		}

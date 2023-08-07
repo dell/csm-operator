@@ -1,8 +1,8 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-isilon
-  namespace: test-isilon
+  name: isilon
+  namespace: isilon
 spec:
   driver:
     csiDriverType: "isilon" 
@@ -13,7 +13,7 @@ spec:
       fSGroupPolicy: "ReadWriteOnceWithFSType"
     # Config version for CSI PowerScale v2.6.0 driver
     configVersion: v2.6.0
-    authSecret: test-isilon-creds
+    authSecret: isilon-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
@@ -355,6 +355,14 @@ spec:
             # Default value: "nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
+
+        - name: cert-manager
+        # enabled: Enable/Disable cert-manager
+        # Allowed values:
+        #   true: enable deployment of cert-manager
+        #   false: disable deployment of cert-manager only if it's already deployed
+        # Default value: false
+          enabled: false
 
         - name: metrics-powerscale
           # enabled: Enable/Disable PowerScale metrics

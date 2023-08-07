@@ -35,6 +35,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -104,9 +105,6 @@ var (
 	getSAError    bool
 	getSAErrorStr = "unable to get ServiceAccount"
 
-	updateSAError    bool
-	updateSAErrorStr = "unable to update ServiceAccount"
-
 	updateDSError    bool
 	updateDSErrorStr = "unable to update Daemonset"
 
@@ -159,6 +157,8 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 	csmv1.AddToScheme(scheme.Scheme)
 	velerov1.AddToScheme(scheme.Scheme)
+
+	apiextv1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)
@@ -1002,12 +1002,6 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expect
 	assert.Containsf(suite.T(), err.Error(), getSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	getSAError = false
 
-	updateSAError = true
-	_, err = reconciler.Reconcile(ctx, req)
-	assert.Error(suite.T(), err)
-	assert.Containsf(suite.T(), err.Error(), updateSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
-	updateSAError = false
-
 	updateDSError = true
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
@@ -1682,9 +1676,6 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		if method == "Create" && createSAError {
 			fmt.Printf("[ShouldFail] force Create ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(createSAErrorStr)
-		} else if method == "Update" && updateSAError {
-			fmt.Printf("[ShouldFail] force Update ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
-			return errors.New(updateSAErrorStr)
 		} else if method == "Get" && getSAError {
 			fmt.Printf("[ShouldFail] force Get ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(getSAErrorStr)
