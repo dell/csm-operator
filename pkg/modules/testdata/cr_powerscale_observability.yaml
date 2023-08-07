@@ -1,16 +1,16 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-isilon
-  namespace: test-isilon
+  name: isilon
+  namespace: isilon
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.5.0
-    authSecret: test-isilon-creds 
+    configVersion: v2.8.0
+    authSecret: isilon-creds 
     replicas: 1
     common:
-      image: "dellemc/csi-isilon:v2.5.0"
+      image: "dellemc/csi-isilon:v2.8.0"
       imagePullPolicy: IfNotPresent
 
   modules:

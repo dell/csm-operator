@@ -179,7 +179,8 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	// Add node fields specific to powerstore
 	enableChap := corev1.EnvVar{Name: "X_CSI_POWERSTORE_ENABLE_CHAP", Value: "true"}
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
-	res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor}
+	maxVolumesPerNode := corev1.EnvVar{Name: "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE", Value: "0"}
+	res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, maxVolumesPerNode}
 
 	// Add controller fields specific
 	nfsAclsParam := corev1.EnvVar{Name: "X_CSI_NFS_ACLS"}
@@ -397,7 +398,7 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 
 	// Add controller fields specific
 	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
-	// res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
 
 	return res
 }

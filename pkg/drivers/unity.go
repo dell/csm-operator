@@ -111,6 +111,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 	// Parameters to initialise CR values
 	healthMonitorNode := ""
 	healthMonitorController := ""
+	storageCapacity := "false"
 
 	switch fileType {
 	case "Node":
@@ -129,6 +130,11 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+	case "CSIDriverSpec":
+		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+			storageCapacity = "true"
+		}
+		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
 
 	}
 	return yamlString

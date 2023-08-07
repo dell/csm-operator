@@ -114,7 +114,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	nodeChap := "false"
 	ctrlHealthMonitor := "false"
 	nodeHealthMonitor := "false"
-	storageCapacity := "false"
+	storageCapacity := "true"
 
 	switch fileType {
 	case "Node":

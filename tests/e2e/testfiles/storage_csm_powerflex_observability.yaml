@@ -11,13 +11,13 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.5.0
+    configVersion: v2.7.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.5.0"
+      image: "dellemc/csi-vxflexos:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -166,6 +166,14 @@ spec:
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
 
+        - name: cert-manager
+          # enabled: Enable/Disable cert-manager
+          # Allowed values:
+          #   true: enable deployment of cert-manager
+          #   false: disable deployment of cert-manager only if it's already deployed
+          # Default value: true
+          enabled: true
+
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
@@ -222,4 +230,3 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
-

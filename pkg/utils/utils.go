@@ -423,6 +423,14 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 		}
 		switch meta.Kind {
 
+		case "CustomResourceDefinition":
+			var crd apiextv1.CustomResourceDefinition
+			err := yaml.Unmarshal(raw, &crd)
+			if err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &crd)
+
 		case "ServiceAccount":
 			var sa corev1.ServiceAccount
 			err := yaml.Unmarshal(raw, &sa)
@@ -955,31 +963,14 @@ func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule,
 	return false, csmv1.Module{}
 }
 
-// IsComponentEnabled - check if the component is enabled
-func IsComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
-	observabilityEnabled, obs := IsModuleEnabled(ctx, instance, mod)
-
-	if !observabilityEnabled {
+// IsModuleComponentEnabled - check if module components are enabled
+func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+	moduleEnabled, module := IsModuleEnabled(ctx, instance, mod)
+	if !moduleEnabled {
 		return false
 	}
 
-	for _, c := range obs.Components {
-		if c.Name == componentType && *c.Enabled {
-			return true
-		}
-	}
-
-	return false
-}
-
-// IsAuthorizationComponentEnabled - check if authorization proxy server components are enabled
-func IsAuthorizationComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
-	authorizationEnabled, auth := IsModuleEnabled(ctx, instance, mod)
-	if !authorizationEnabled {
-		return false
-	}
-
-	for _, c := range auth.Components {
+	for _, c := range module.Components {
 		if c.Name == componentType && *c.Enabled {
 			return true
 		}

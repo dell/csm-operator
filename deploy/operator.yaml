@@ -181,6 +181,7 @@ rules:
   verbs:
   - get
   - list
+  - patch
   - update
   - watch
 - apiGroups:
@@ -228,6 +229,7 @@ rules:
   - orders
   - orders/status
   verbs:
+  - patch
   - update
 - apiGroups:
   - acme.cert-manager.io
@@ -368,6 +370,7 @@ rules:
   - certificates/status
   verbs:
   - update
+  - patch
 - apiGroups:
   - cert-manager.io
   resources:
@@ -376,6 +379,7 @@ rules:
   verbs:
   - get
   - list
+  - patch
   - update
   - watch
 - apiGroups:
@@ -397,6 +401,7 @@ rules:
   verbs:
   - get
   - list
+  - patch
   - update
   - watch
 - apiGroups:
@@ -422,6 +427,7 @@ rules:
   resources:
   - certificatesigningrequests/status
   verbs:
+  - patch
   - update
 - apiGroups:
   - certificates.k8s.io
@@ -530,7 +536,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - networking.x-k8s.io
+  - gateway.networking.k8s.io
   resources:
   - gateways
   - httproutes
@@ -539,18 +545,23 @@ rules:
   - list
   - watch
 - apiGroups:
-  - networking.x-k8s.io
+  - gateway.networking.k8s.io
   resources:
   - gateways/finalizers
   - httproutes/finalizers
   verbs:
   - update
 - apiGroups:
-  - networking.x-k8s.io
+  - gateway.networking.k8s.io
   resources:
   - httproutes
   verbs:
-  - '*'
+  - get
+  - list
+  - watch
+  - create
+  - delete
+  - update
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
@@ -1240,7 +1251,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: docker.io/dellemc/dell-csm-operator:v1.2.0
+        image: docker.io/dellemc/dell-csm-operator:v1.3.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

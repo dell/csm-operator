@@ -16,25 +16,23 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-isilon
-  namespace: test-isilon
+  name: isilon
+  namespace: isilon
 spec:
   driver:
-    csiDriverType: "isilon" 
+    csiDriverType: "isilon"
     csiDriverSpec:
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    # Config version for CSI PowerScale v2.7.0 driver
     configVersion: v2.7.0
-    authSecret: test-isilon-creds
+    authSecret: isilon-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerScale driver v2.7.0
       image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
@@ -50,7 +48,7 @@ spec:
         # X_CSI_ISI_PORT: Specify the HTTPs port number of the PowerScale OneFS API server
         # This value acts as a default value for endpointPort, if not specified for a cluster config in secret
         # Allowed value: valid port number
-        # Default value: 8080	
+        # Default value: 8080
         - name: X_CSI_ISI_PORT
           value: "8080"
 
@@ -65,7 +63,7 @@ spec:
 
         # X_CSI_ISI_NO_PROBE_ON_START: Indicates whether the controller/node should probe all the PowerScale clusters during driver initialization
         # Allowed values:
-        #   true : do not probe all PowerScale clusters during driver initialization	
+        #   true : do not probe all PowerScale clusters during driver initialization
         #   false: probe all PowerScale clusters during driver initialization
         # Default value: false
         - name: X_CSI_ISI_NO_PROBE_ON_START
@@ -84,8 +82,8 @@ spec:
         # This value acts as a default value for skipCertificateValidation, if not specified for a cluster config in secret
         # Allowed values:
         #   true: skip OneFS API server's certificate verification
-        #   false: verify OneFS API server's certificates 
-        # Default value: true	
+        #   false: verify OneFS API server's certificates
+        # Default value: true
         - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
           value: "true"
 
@@ -104,7 +102,7 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
-        
+
         # certSecretCount: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (isilon-cert-0..isilon-cert-n)
         # Allowed values: n, where n > 0
@@ -298,4 +296,4 @@ spec:
             - "--leaderelection=false"
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
             - "--driverPodLabelValue=dell-storage"
-            - "--ignoreVolumelessPods=false"       
+            - "--ignoreVolumelessPods=false"

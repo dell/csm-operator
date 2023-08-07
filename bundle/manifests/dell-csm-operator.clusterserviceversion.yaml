@@ -8,12 +8,12 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "test-isilon",
-            "namespace": "test-isilon"
+            "name": "isilon",
+            "namespace": "isilon"
           },
           "spec": {
             "driver": {
-              "authSecret": "test-isilon-creds",
+              "authSecret": "isilon-creds",
               "common": {
                 "envs": [
                   {
@@ -57,10 +57,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.6.0",
+                "image": "dellemc/csi-isilon:v2.8.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.6.0",
+              "configVersion": "v2.8.0",
               "controller": {
                 "envs": [
                   {
@@ -93,7 +93,7 @@ metadata:
               },
               "csiDriverSpec": {
                 "fSGroupPolicy": "ReadWriteOnceWithFSType",
-                "storageCapacity": false
+                "storageCapacity": true
               },
               "csiDriverType": "isilon",
               "dnsPolicy": "ClusterFirstWithHostNet",
@@ -151,11 +151,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -293,6 +293,253 @@ metadata:
                 "configVersion": "v1.5.0",
                 "enabled": false,
                 "name": "observability"
+              },
+              {
+                "components": [
+                  {
+                    "args": [
+                      "--labelvalue=csi-isilon",
+                      "--arrayConnectivityPollRate=60",
+                      "--skipArrayConnectionValidation=false",
+                      "--driverPodLabelValue=dell-storage",
+                      "--ignoreVolumelessPods=false",
+                      "--csisock=unix:/var/run/csi/csi.sock",
+                      "--mode=controller",
+                      "--driverPath=csi-isilon.dellemc.com",
+                      "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+                    ],
+                    "name": "podmon-controller"
+                  },
+                  {
+                    "args": [
+                      "--labelvalue=csi-isilon",
+                      "--arrayConnectivityPollRate=60",
+                      "--leaderelection=false",
+                      "--driverPodLabelValue=dell-storage",
+                      "--ignoreVolumelessPods=false",
+                      "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock",
+                      "--mode=node",
+                      "--driverPath=csi-isilon.dellemc.com",
+                      "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+                    ],
+                    "envs": [
+                      {
+                        "name": "X_CSI_PODMON_API_PORT",
+                        "value": "8083"
+                      }
+                    ],
+                    "name": "podmon-node"
+                  }
+                ],
+                "configVersion": "v1.6.0",
+                "enabled": false,
+                "name": "resiliency"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "storage.dell.com/v1",
+          "kind": "ContainerStorageModule",
+          "metadata": {
+            "name": "powermax",
+            "namespace": "powermax"
+          },
+          "spec": {
+            "driver": {
+              "authSecret": "powermax-creds",
+              "common": {
+                "envs": [
+                  {
+                    "name": "X_CSI_MANAGED_ARRAYS",
+                    "value": "000000000000,000000000001"
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_ENDPOINT",
+                    "value": "https://0.0.0.0:8443/"
+                  },
+                  {
+                    "name": "X_CSI_K8S_CLUSTER_PREFIX",
+                    "value": "XYZ"
+                  },
+                  {
+                    "name": "KUBELET_CONFIG_DIR",
+                    "value": "/var/lib/kubelet"
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_PORTGROUPS",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_TRANSPORT_PROTOCOL",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_PROXY_SERVICE_NAME",
+                    "value": "csipowermax-reverseproxy"
+                  },
+                  {
+                    "name": "X_CSI_VSPHERE_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_VSPHERE_PORTGROUP",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_VSPHERE_HOSTNAME",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_VCENTER_HOST",
+                    "value": ""
+                  }
+                ],
+                "image": "dellemc/csi-powermax:v2.8.0",
+                "imagePullPolicy": "IfNotPresent"
+              },
+              "configVersion": "v2.8.0",
+              "controller": {
+                "envs": [
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  }
+                ]
+              },
+              "csiDriverSpec": {
+                "fSGroupPolicy": "ReadWriteOnceWithFSType",
+                "storageCapacity": true
+              },
+              "csiDriverType": "powermax",
+              "dnsPolicy": "ClusterFirstWithHostNet",
+              "forceRemoveDriver": true,
+              "forceUpdate": false,
+              "node": {
+                "envs": [
+                  {
+                    "name": "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_TOPOLOGY_CONTROL_ENABLED",
+                    "value": "false"
+                  }
+                ]
+              },
+              "replicas": 2,
+              "sideCars": [
+                {
+                  "args": [
+                    "--monitor-interval=60s"
+                  ],
+                  "enabled": false,
+                  "name": "external-health-monitor"
+                }
+              ]
+            },
+            "modules": [
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "X_CSI_REVPROXY_TLS_SECRET",
+                        "value": "csirevproxy-tls-secret"
+                      },
+                      {
+                        "name": "X_CSI_REVPROXY_PORT",
+                        "value": "2222"
+                      },
+                      {
+                        "name": "X_CSI_CONFIG_MAP_NAME",
+                        "value": "powermax-reverseproxy-config"
+                      }
+                    ],
+                    "image": "dellemc/csipowermax-reverseproxy:v2.6.0",
+                    "name": "csipowermax-reverseproxy"
+                  }
+                ],
+                "configVersion": "v2.6.0",
+                "enabled": true,
+                "forceRemoveModule": true,
+                "name": "csireverseproxy"
+              },
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "PROXY_HOST",
+                        "value": "csm-authorization.com"
+                      },
+                      {
+                        "name": "SKIP_CERTIFICATE_VALIDATION",
+                        "value": "true"
+                      }
+                    ],
+                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
+                    "name": "karavi-authorization-proxy"
+                  }
+                ],
+                "configVersion": "v1.7.0",
+                "enabled": false,
+                "name": "authorization"
+              },
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "X_CSI_REPLICATION_PREFIX",
+                        "value": "replication.storage.dell.com"
+                      },
+                      {
+                        "name": "X_CSI_REPLICATION_CONTEXT_PREFIX",
+                        "value": "powermax"
+                      }
+                    ],
+                    "image": "dellemc/dell-csi-replicator:v1.5.0",
+                    "name": "dell-csi-replicator"
+                  },
+                  {
+                    "envs": [
+                      {
+                        "name": "TARGET_CLUSTERS_IDS",
+                        "value": "target-cluster-1"
+                      },
+                      {
+                        "name": "REPLICATION_CTRL_LOG_LEVEL",
+                        "value": "debug"
+                      },
+                      {
+                        "name": "REPLICATION_CTRL_REPLICAS",
+                        "value": "1"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MIN",
+                        "value": "1s"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MAX",
+                        "value": "5m"
+                      }
+                    ],
+                    "image": "dellemc/dell-replication-controller:v1.5.0",
+                    "name": "dell-replication-controller-manager"
+                  },
+                  {
+                    "image": "dellemc/dell-replication-init:v1.0.1",
+                    "name": "dell-replication-controller-init"
+                  }
+                ],
+                "configVersion": "v1.5.0",
+                "enabled": false,
+                "name": "replication"
               }
             ]
           }
@@ -326,10 +573,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-powerstore:v2.6.0",
+                "image": "dellemc/csi-powerstore:v2.8.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.6.0",
+              "configVersion": "v2.8.0",
               "controller": {
                 "envs": [
                   {
@@ -350,7 +597,7 @@ metadata:
               },
               "csiDriverSpec": {
                 "fSGroupPolicy": "ReadWriteOnceWithFSType",
-                "storageCapacity": false
+                "storageCapacity": true
               },
               "csiDriverType": "powerstore",
               "dnsPolicy": "ClusterFirstWithHostNet",
@@ -380,7 +627,50 @@ metadata:
                   "name": "external-health-monitor"
                 }
               ]
-            }
+            },
+            "modules": [
+              {
+                "components": [
+                  {
+                    "args": [
+                      "--labelvalue=csi-powerstore",
+                      "--arrayConnectivityPollRate=60",
+                      "--skipArrayConnectionValidation=false",
+                      "--driverPodLabelValue=dell-storage",
+                      "--ignoreVolumelessPods=false",
+                      "--csisock=unix:/var/run/csi/csi.sock",
+                      "--mode=controller",
+                      "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
+                      "--driverPath=csi-powerstore.dellemc.com"
+                    ],
+                    "name": "podmon-controller"
+                  },
+                  {
+                    "args": [
+                      "--labelvalue=csi-powerstore",
+                      "--arrayConnectivityPollRate=60",
+                      "--leaderelection=false",
+                      "--driverPodLabelValue=dell-storage",
+                      "--ignoreVolumelessPods=false",
+                      "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock",
+                      "--mode=node",
+                      "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
+                      "--driverPath=csi-powerstore.dellemc.com"
+                    ],
+                    "envs": [
+                      {
+                        "name": "X_CSI_PODMON_API_PORT",
+                        "value": "8083"
+                      }
+                    ],
+                    "name": "podmon-node"
+                  }
+                ],
+                "configVersion": "v1.6.0",
+                "enabled": false,
+                "name": "resiliency"
+              }
+            ]
           }
         },
         {
@@ -427,14 +717,14 @@ metadata:
                     "value": "1"
                   },
                   {
-                    "name": "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"
+                    "name": "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION",
                     "value": "true"
                   }
                 ],
-                "image": "dellemc/csi-unity:v2.6.0",
+                "image": "dellemc/csi-unity:v2.7.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.6.0",
+              "configVersion": "v2.7.0",
               "controller": {
                 "envs": [
                   {
@@ -446,7 +736,8 @@ metadata:
                 "tolerations": null
               },
               "csiDriverSpec": {
-                "fSGroupPolicy": "ReadWriteOnceWithFSType"
+                "fSGroupPolicy": "ReadWriteOnceWithFSType",
+                "storageCapacity": true
               },
               "csiDriverType": "unity",
               "dnsPolicy": "ClusterFirstWithHostNet",
@@ -507,10 +798,10 @@ metadata:
                     "value": "0"
                   }
                 ],
-                "image": "dellemc/csi-vxflexos:v2.6.0",
+                "image": "dellemc/csi-vxflexos:v2.7.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.6.0",
+              "configVersion": "v2.7.0",
               "controller": {
                 "envs": [
                   {
@@ -599,11 +890,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -682,6 +973,94 @@ metadata:
                 "configVersion": "v1.5.0",
                 "enabled": false,
                 "name": "observability"
+              },
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "X_CSI_REPLICATION_PREFIX",
+                        "value": "replication.storage.dell.com"
+                      },
+                      {
+                        "name": "X_CSI_REPLICATION_CONTEXT_PREFIX",
+                        "value": "powerflex"
+                      }
+                    ],
+                    "image": "dellemc/dell-csi-replicator:v1.5.0",
+                    "name": "dell-csi-replicator"
+                  },
+                  {
+                    "envs": [
+                      {
+                        "name": "TARGET_CLUSTERS_IDS",
+                        "value": "target-cluster-1"
+                      },
+                      {
+                        "name": "REPLICATION_CTRL_LOG_LEVEL",
+                        "value": "debug"
+                      },
+                      {
+                        "name": "REPLICATION_CTRL_REPLICAS",
+                        "value": "1"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MIN",
+                        "value": "1s"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MAX",
+                        "value": "5m"
+                      }
+                    ],
+                    "image": "dellemc/dell-replication-controller:v1.5.0",
+                    "name": "dell-replication-controller-manager"
+                  },
+                  {
+                    "image": "dellemc/dell-replication-init:v1.0.1",
+                    "name": "dell-replication-controller-init"
+                  }
+                ],
+                "configVersion": "v1.5.0",
+                "enabled": false,
+                "name": "replication"
+              },
+              {
+                "components": [
+                  {
+                    "args": [
+                      "--labelvalue=csi-vxflexos",
+                      "--skipArrayConnectionValidation=false",
+                      "--driverPodLabelValue=dell-storage",
+                      "--ignoreVolumelessPods=false",
+                      "--csisock=unix:/var/run/csi/csi.sock",
+                      "--mode=controller",
+                      "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+                    ],
+                    "name": "podmon-controller"
+                  },
+                  {
+                    "args": [
+                      "--labelvalue=csi-vxflexos",
+                      "--leaderelection=false",
+                      "--driverPodLabelValue=dell-storage",
+                      "--ignoreVolumelessPods=false",
+                      "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock",
+                      "--mode=node",
+                      "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+                    ],
+                    "envs": [
+                      {
+                        "name": "X_CSI_PODMON_API_PORT",
+                        "value": "8083"
+                      }
+                    ],
+                    "name": "podmon-node"
+                  }
+                ],
+                "configVersion": "v1.6.0",
+                "enabled": false,
+                "name": "resiliency"
               }
             ]
           }
@@ -689,15 +1068,14 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Storage
-    containerImage: docker.io/dellemc/dell-csm-operator:v1.2.0
+    containerImage: docker.io/dellemc/dell-csm-operator:v1.3.0
     createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
-    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.11"}]'
     operators.operatorframework.io/builder: operator-sdk-v1.14.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.2.0
+  name: dell-csm-operator.v1.3.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -1108,31 +1486,28 @@ spec:
         - urn:alm:descriptor:text
       version: v1
   description: "Dell Container Storage Modules (CSM) Operator is a Kubernetes Operator
-    which can be \nused to install and manage Dell’s CSI drivers and CSM modules for
-    Dell PowerScale.\nBy using Dell CSM Operator, enterprises can quickly and easily
-    deploy the \nAuthorization and Replication CSM modules for PowerScale making it
-    easy for DevOps \nteams to build and optimize their Kubernetes workloads using
-    enterprise grade storage \nwhile consistently aligning with the desired outcomes
-    of the organization.\nThis operator is available as a community operator for both
-    upstream Kubernetes and\nOpenshift. Operator can be deployed via OperatorHub.io.
-    using Operator Lifecycle Manager (OLM)\n\n### About Dell CSM\n\nDell CSM brings
-    powerful enterprise storage features and functionality to Kubernetes for \neasier
-    adoption of cloud native workloads, improved productivity and scalable operations.
-    \n\nCSM delivers software modules for storage management that provide developers
-    access to \nbuild automation for enhanced IT needs and other critical enterprise
-    storage features. \n\nAs of August 18th, 2022,  there are six modules available
-    as part of Dell CSM.\n*\tObservability - Delivers a high-level view of the storage
-    capacity \n  and performance usage via Grafana dashboards to the Kubernetes users\n*\tReplication
-    - Enables array replication capabilities for Kubernetes users\n*\tAuthorization
-    - Provides both storage and Kubernetes administrators the ability \n  to apply
-    RBAC for Dell EMC CSI Drivers\n*\tResiliency - Designed to make Kubernetes applications
-    more resilient to \n  node failures\n*\tVolume Placement - Analyzes capacity and
-    automates volume placement for \n  Kubernetes workloads\n*\tSnapshots - Delivers
-    additional snapshot capabilities such as group/crash \n  consistent snapshots
-    with referential integrity\n\nThese modules are available for various storage
-    platforms in the Dell portfolio, \nsuch as Dell PowerStore, Dell PowerMax, Dell
-    PowerFlex, Dell PowerScale, and Unity XT.\n\nFor more information, visit [Dell’s
-    Container Storage Module web page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kubernetes-storage.htm)\n\nAdditional
+    which can be \nused to install and manage Dell’s CSI drivers and CSM modules.
+    \nBy using Dell CSM Operator, enterprises can quickly and easily deploy the \nCSM
+    modules for CSI drivers making it easy for DevOps \nteams to build and optimize
+    their Kubernetes workloads using enterprise grade storage \nwhile consistently
+    aligning with the desired outcomes of the organization.\nThis operator is available
+    as both community and certified operator for Openshift \nand as a community operator
+    for upstream Kubernetes.\nOperator can be deployed via OperatorHub.io. using Operator
+    Lifecycle Manager (OLM)\n\n### About Dell CSM\n\nDell CSM brings powerful enterprise
+    storage features and functionality to Kubernetes for \neasier adoption of cloud
+    native workloads, improved productivity and scalable operations. \n\nCSM delivers
+    software modules for storage management that provide developers access to \nbuild
+    automation for enhanced IT needs and other critical enterprise storage features.
+    \n\nCurrently, the following modules are available as part of Dell CSM. \n*\tObservability
+    - Delivers a high-level view of the storage capacity \n  and performance usage
+    via Grafana dashboards to the Kubernetes users\n*\tReplication - Enables array
+    replication capabilities for Kubernetes users\n*\tAuthorization - Provides both
+    storage and Kubernetes administrators the ability \n  to apply RBAC for Dell CSI
+    Drivers\n*\tResiliency - Designed to make Kubernetes applications more resilient
+    to \n  node failures\n\nThese modules are available for various storage platforms
+    in the Dell portfolio, \nsuch as Dell PowerStore, Dell PowerMax, Dell PowerFlex,
+    Dell PowerScale, and Dell Unity XT.\n\nFor more information, visit [Dell’s Container
+    Storage Module web page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kubernetes-storage.htm)\n\nAdditional
     Materials\n*\t[CSM Operator GitHub Page](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)\n*\t[CSM
     Introduction Video](https://www.youtube.com/watch?v=NtNSKdF9Iyo)\n*\t[CSM Solution
     Brief](https://www.delltechnologies.com/asset/en-us/products/storage/briefs-summaries/csm-solution-brief.pdf)\n*\t[CSI
@@ -1846,6 +2221,7 @@ spec:
           - volumeattachments
           verbs:
           - create
+          - delete
           - get
           - list
           - patch
@@ -1901,7 +2277,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: docker.io/dellemc/dell-csm-operator:v1.2.0
+                image: docker.io/dellemc/dell-csm-operator:v1.3.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -1954,12 +2330,47 @@ spec:
   - name: Documentation
     url: https://dell.github.io/csm-docs/docs/deployment/csmoperator/
   maintainers:
-  - email: dell.csm.operator@dell.com
+  - email: container.storage.modules@dell.com
     name: Dell Container Storage Modules
   maturity: stable
   minKubeVersion: 1.21.0
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
-  replaces: dell-csm-operator.v1.1.0
-  version: 1.2.0
+  relatedImages:
+  - image: docker.io/dellemc/dell-csm-operator:v1.3.0
+    name: dell-csm-operator
+  - image: docker.io/dellemc/csi-isilon:v2.8.0
+    name: csi-isilon
+  - image: docker.io/dellemc/csi-powermax:v2.8.0
+    name: csi-powermax
+  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.6.0
+    name: csipowermax-reverseproxy
+  - image: docker.io/dellemc/csi-powerstore:v2.8.0
+    name: csi-powerstore
+  - image: docker.io/dellemc/csi-unity:v2.7.0
+    name: csi-unity
+  - image: docker.io/dellemc/csi-vxflexos:v2.7.0
+    name: csi-vxflexos
+  - image: docker.io/dellemc/sdc:3.6.0.6
+    name: sdc
+  - image: docker.io/dellemc/csm-authorization-sidecar:v1.7.0
+    name: karavi-authorization-proxy
+  - image: docker.io/dellemc/dell-csi-replicator:v1.5.0
+    name: dell-csi-replicator
+  - image: docker.io/dellemc/dell-replication-controller:v1.5.0
+    name: dell-replication-controller-manager
+  - image: docker.io/dellemc/dell-replication-init:v1.0.1
+    name: dell-replication-controller-init
+  - image: docker.io/dellemc/csm-topology:v1.5.0
+    name: topology
+  - image: docker.io/otel/opentelemetry-collector:0.42.0
+    name: otel-collector
+  - image: docker.io/dellemc/csm-metrics-powerscale:v1.2.0
+    name: metrics-powerscale
+  - image: docker.io/dellemc/csm-metrics-powerflex:v1.5.0
+    name: metrics-powerflex
+  - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+    name: kube-rbac-proxy
+  replaces: dell-csm-operator.v1.2.0
+  version: 1.3.0

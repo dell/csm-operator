@@ -95,7 +95,7 @@ const (
 
 var (
 	dMutex                          sync.RWMutex
-	configVersionKey                = fmt.Sprintf("%s/%s", MetadataPrefix, "CSIoperatorConfigVersion")
+	configVersionKey                = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMOperatorConfigVersion")
 	previouslyAppliedCustomResource = fmt.Sprintf("%s/%s", MetadataPrefix, "previously-applied-configuration")
 
 	// StopWatch - watcher stop handle
@@ -138,11 +138,11 @@ var (
 // +kubebuilder:rbac:urls="/metrics",verbs=get
 // +kubebuilder:rbac:groups="authentication.k8s.io",resources=tokenreviews,verbs=create
 // +kubebuilder:rbac:groups="authorization.k8s.io",resources=subjectaccessreviews,verbs=create
-// +kubebuilder:rbac:groups="cert-manager.io",resources=issuers;issuers/status,verbs=update;get;list;watch
-// +kubebuilder:rbac:groups="cert-manager.io",resources=clusterissuers;clusterissuers/status,verbs=update;get;list;watch
+// +kubebuilder:rbac:groups="cert-manager.io",resources=issuers;issuers/status,verbs=update;get;list;watch;patch
+// +kubebuilder:rbac:groups="cert-manager.io",resources=clusterissuers;clusterissuers/status,verbs=update;get;list;watch;patch
 // +kubebuilder:rbac:groups="cert-manager.io",resources=certificates;certificaterequests;clusterissuers;issuers,verbs=*
 // +kubebuilder:rbac:groups="cert-manager.io",resources=certificates/finalizers;certificaterequests/finalizers,verbs=update
-// +kubebuilder:rbac:groups="cert-manager.io",resources=certificates/status;certificaterequests/status,verbs=update
+// +kubebuilder:rbac:groups="cert-manager.io",resources=certificates/status;certificaterequests/status,verbs=update;patch
 // +kubebuilder:rbac:groups="cert-manager.io",resources=certificates;certificaterequests;issuers,verbs=create;delete;deletecollection;patch;update
 // +kubebuilder:rbac:groups="cert-manager.io",resources=signers,resourceNames=issuers.cert-manager.io/*;clusterissuers.cert-manager.io/*,verbs=approve
 // +kubebuilder:rbac:groups="cert-manager.io",resources=*/*,verbs=*
@@ -181,21 +181,21 @@ var (
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-controller,verbs=get;update;patch
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=create;patch
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders,verbs=create;delete;get;list;watch
-// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders;orders/status,verbs=update
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders;orders/status,verbs=update;patch
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders;challenges,verbs=get;list;watch;create;delete;deletecollection;patch;update
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=clusterissuers;issuers,verbs=get;list;watch
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=challenges,verbs=create;delete
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders/finalizers,verbs=update
-// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=challenges;challenges/status,verbs=update;get;list;watch
+// +kubebuilder:rbac:groups="acme.cert-manager.io",resources=challenges;challenges/status,verbs=update;get;list;watch;patch
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=challenges/finalizers,verbs=update
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=*/*,verbs=*
 // +kubebuilder:rbac:groups="networking.k8s.io",resources=ingresses,verbs=*
 // +kubebuilder:rbac:groups="networking.k8s.io",resources=ingresses/finalizers,verbs=update
 // +kubebuilder:rbac:groups="networking.k8s.io",resources=ingressclasses,verbs=create;get;list;watch;update;delete
 // +kubebuilder:rbac:groups="networking.k8s.io",resources=ingresses/status,verbs=update;get;list;watch
-// +kubebuilder:rbac:groups="networking.x-k8s.io",resources=httproutes,verbs=*
-// +kubebuilder:rbac:groups="networking.x-k8s.io",resources=httproutes;gateways,verbs=get;list;watch
-// +kubebuilder:rbac:groups="networking.x-k8s.io",resources=gateways/finalizers;httproutes/finalizers,verbs=update
+// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=httproutes,verbs=get;list;watch;create;delete;update
+// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=httproutes;gateways,verbs=get;list;watch
+// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=gateways/finalizers;httproutes/finalizers,verbs=update
 // +kubebuilder:rbac:groups="route.openshift.io",resources=routes/custom-host,verbs=create
 // +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources=validatingwebhookconfigurations;mutatingwebhookconfigurations,verbs=create;get;list;watch;update;delete;patch
 // +kubebuilder:rbac:groups="apiregistration.k8s.io",resources=apiservices,verbs=get;list;watch;update
@@ -207,7 +207,7 @@ var (
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
 // +kubebuilder:rbac:groups="discovery.k8s.io",resources=endpointslices,verbs=list;watch;get
 // +kubebuilder:rbac:groups="certificates.k8s.io",resources=certificatesigningrequests,verbs=get;list;watch;update
-// +kubebuilder:rbac:groups="certificates.k8s.io",resources=certificatesigningrequests/status,verbs=update
+// +kubebuilder:rbac:groups="certificates.k8s.io",resources=certificatesigningrequests/status,verbs=update;patch
 // +kubebuilder:rbac:groups="certificates.k8s.io",resources=signers,resourceNames=issuers.cert-manager.io/*;clusterissuers.cert-manager.io/*,verbs=sign
 // +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core;cert-manager-controller,verbs=get;update;patch
 // +kubebuilder:rbac:groups="batch",resources=jobs,verbs=list;watch;create;update;delete
@@ -603,8 +603,8 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 		components := []string{}
 		if oldObservabilityEnabled && newObservabilityEnabled {
 			for _, comp := range oldObs.Components {
-				oldCompEnabled := utils.IsComponentEnabled(ctx, *oldCR, csmv1.Observability, comp.Name)
-				newCompEnabled := utils.IsComponentEnabled(ctx, *newCR, csmv1.Observability, comp.Name)
+				oldCompEnabled := utils.IsModuleComponentEnabled(ctx, *oldCR, csmv1.Observability, comp.Name)
+				newCompEnabled := utils.IsModuleComponentEnabled(ctx, *newCR, csmv1.Observability, comp.Name)
 				if oldCompEnabled && !newCompEnabled {
 					components = append(components, comp.Name)
 				}
@@ -833,15 +833,16 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 	if len(components) == 0 {
 		if enabled, obs := utils.IsModuleEnabled(ctx, cr, csmv1.Observability); enabled {
 			for _, comp := range obs.Components {
-				if utils.IsComponentEnabled(ctx, cr, csmv1.Observability, comp.Name) {
+				if utils.IsModuleComponentEnabled(ctx, cr, csmv1.Observability, comp.Name) {
 					components = append(components, comp.Name)
 				}
 			}
 		}
 	}
 	comp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
-		modules.ObservabilityTopologyName:      modules.ObservabilityTopology,
-		modules.ObservabilityOtelCollectorName: modules.OtelCollector,
+		modules.ObservabilityTopologyName:         modules.ObservabilityTopology,
+		modules.ObservabilityOtelCollectorName:    modules.OtelCollector,
+		modules.ObservabilityCertManagerComponent: modules.CommonCertManager,
 	}
 	metricsComp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface) error{
 		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
@@ -852,7 +853,7 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		log.Infow(fmt.Sprintf("reconcile %s", comp))
 		var err error
 		switch comp {
-		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName:
+		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName, modules.ObservabilityCertManagerComponent:
 			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
 		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName:
 			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
@@ -871,7 +872,7 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 // reconcileAuthorization - deploy authorization proxy server
 func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization proxy-server")
 		if err := modules.AuthorizationServerDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization proxy server: %v", err)
@@ -882,14 +883,14 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		}
 	}
 
-	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
 		log.Infow("Reconcile authorization cert-manager")
 		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
 		}
 	}
 
-	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
 		log.Infow("Reconcile authorization nginx ingress controller")
 		if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
@@ -897,7 +898,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 	}
 
 	// Authorization Ingress rules are applied after NGINX ingress controller is installed
-	if utils.IsAuthorizationComponentEnabled(ctx, cr, r, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization Ingresses")
 		if err := modules.AuthorizationIngress(ctx, isDeleting, op, cr, r, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
