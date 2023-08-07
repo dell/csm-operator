@@ -509,14 +509,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 			ctrlObjects = append(ctrlObjects, &i)
 
-		case "CustomResourceDefinition":
-			var crd apiextv1.CustomResourceDefinition
-			err := yaml.Unmarshal(raw, &crd)
-			if err != nil {
-				return ctrlObjects, err
-			}
-			ctrlObjects = append(ctrlObjects, &crd)
-
 		case "ValidatingWebhookConfiguration":
 			var vwc admissionregistration.ValidatingWebhookConfiguration
 			err := yaml.Unmarshal(raw, &vwc)
