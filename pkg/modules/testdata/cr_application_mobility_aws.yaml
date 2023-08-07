@@ -30,9 +30,9 @@ spec:
             value: "license"
 
           # Storage-service ingress configuration
-          # Default value: velero-restic-credentials
+          # Default value: EMPTY
           - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
-            value: "velero-restic-credentials" 
+            value: "cloud-credentials" 
 
       # enabled: Enable/Disable cert-manager
       # Allowed values:
@@ -41,17 +41,14 @@ spec:
       # Default value: false
       - name: cert-manager
         enabled: true
-      # Allowed values:
-      #   true: enable deployment of cert-manager
-      #   false: disable deployment of cert-manager only if it's already deployed
-      # Default value: false
+      # enabled: Enable/Disable Velero
       - name: velero
         image: velero/velero:v1.10.0
         imagePullPolicy: IfNotPresent
         enabled: true
-        useVolumeSnapshot: true
-        cleanUpCRDs: true
-        # enabled: Enable/Disable Velero and Restic Services
+        useVolumeSnapshot: false
+        cleanUpCRDs: false
+        # enabled: Enable/Disable Restic Service
         #deployRestic: false  
         envs:
           # Backup storage location name
@@ -76,16 +73,22 @@ spec:
           - name: "PROVIDER"
             value: "aws"
 
-          # name to be used for secret that will be created to hold object store credentials. Used in conjunction with secretContents
-          # Default value: cloud-creds
-          - name: "VELERO_ACCESS"
-            value: "cloud-creds"
-
           # name is the name of the volume snapshot location where snapshots are being taken. Required.
           # Volume-snapshot-Location Provider will be CONFIG_PROVIDER
           # Default value : default
           - name: "VOL_SNAPSHOT_LOCATION_NAME"
             value: "default"
+            
+        credentials:
+          - enabled: false  
+            #Optionally, specify the name to be used for secret that will be created to hold object store credentials. Used in conjunction with secretContents.
+            name: cloud-creds
+            #Optionally, specify the object store access credentials to be stored in a secret with key "cloud". Either this or existingSecret should be provided.
+            secretContents: 
+              #cloud: |
+              #  [default]
+              #  aws_access_key_id=access_key
+              #  aws_secret_access_key=secret_access_key
 
     # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
     # If the value is a string then it is evaluated as a template.

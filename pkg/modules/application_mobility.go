@@ -46,6 +46,10 @@ const (
 	UseVolSnapshotManifest = "velero-volumesnapshotlocation.yaml"
 	//CleanupCrdManifest - filename of Cleanup Crds manifest for app-mobility
 	CleanupCrdManifest = "cleanupcrds.yaml"
+	//VeleroCrdManifest - filename of Velero crds manisfest for Velero feature
+	VeleroCrdManifest = "velero-crds.yaml"
+	//VeleroAccessManifest - filename where velero access with its contents
+	VeleroAccessManifest = "velero-secret.yaml"
 	//ResticCrdManifest - filename of restic manifest for app-mobility
 	ResticCrdManifest = "restic.yaml"
 
@@ -80,6 +84,8 @@ const (
 	InitContainerName = "<INIT_CONTAINER_NAME>"
 	//InitContainerImage - Image of init container for velero (ex: aws/csi)
 	InitContainerImage = "<INIT_CONTAINER_IMAGE>"
+	//AccessContents - contents of the object store secret
+	AccessContents = "<CRED_CONTENTS>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
@@ -97,6 +103,53 @@ func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error)
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("Application Mobility module not found")
+}
+
+// getVeleroCrdDeploy - applies and deploy VeleroCrd manifest
+func getVeleroCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	veleroCrdPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, VeleroCrdManifest)
+	buf, err := os.ReadFile(filepath.Clean(veleroCrdPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+
+	return yamlString, nil
+}
+
+// VeleroCrdDeploy - apply and delete Velero crds deployment
+func VeleroCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+
+	yamlString, err := getVeleroCrdDeploy(op, cr)
+	if err != nil {
+		return err
+	}
+	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range deployObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
@@ -117,6 +170,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	yamlString = string(buf)
 	controllerImage := ""
 	licenseName := ""
+	replicaCount := ""
 	objectSecretName := ""
 
 	for _, component := range appMob.Components {
@@ -128,9 +182,19 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 				if strings.Contains(AppMobLicenseName, env.Name) {
 					licenseName = env.Value
 				}
+				if strings.Contains(AppMobReplicaCount, env.Name) {
+					replicaCount = env.Value
+				}
 				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
 					objectSecretName = env.Value
 				}
+			}
+		}
+		for _, cred := range component.ComponentCred {
+			if cred.Enabled {
+				yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, cred.Name)
+			} else {
+				yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
 			}
 		}
 	}
@@ -138,17 +202,19 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, ControllerImg, controllerImage)
 	yamlString = strings.ReplaceAll(yamlString, AppMobLicenseName, licenseName)
-	yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
+	yamlString = strings.ReplaceAll(yamlString, AppMobReplicaCount, replicaCount)
 
 	return yamlString, nil
 }
 
 // AppMobilityDeployment - apply and delete controller manager deployment
 func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+
 	yamlString, err := getAppMobilityModuleDeployment(op, cr)
 	if err != nil {
 		return err
 	}
+
 	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
@@ -190,8 +256,8 @@ func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.Contain
 	return yamlString, nil
 }
 
-// AppMobilityDeployment - apply and delete Controller manager metric service deployment
-func controllerManagerMetricService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+// ControllerManagerMetricService - apply and delete Controller manager metric service deployment
+func ControllerManagerMetricService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getControllerManagerMetricService(op, cr)
 	if err != nil {
 		return err
@@ -206,6 +272,7 @@ func controllerManagerMetricService(ctx context.Context, isDeleting bool, op uti
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
+		} else {
 			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
@@ -333,11 +400,83 @@ func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	return yamlString, nil
 }
 
+// CreateVeleroAccess - Install/Delete velero-secret yaml from operator config
+func CreateVeleroAccess(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+
+	yamlString, err := getCreateVeleroAccess(op, cr)
+	if err != nil {
+		return err
+	}
+
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range ctrlObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// getCreateVeleroAccess - gets the velero-secret manifest from operatorconfig
+func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+
+	yamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	veleroAccessPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, VeleroAccessManifest)
+	buf, err := os.ReadFile(filepath.Clean(veleroAccessPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+	veleroNS := ""
+	credName := ""
+	credContent := ""
+
+	for _, component := range appMob.Components {
+		if component.Name == AppMobVeleroComponent {
+			for _, env := range component.Envs {
+				if strings.Contains(VeleroNamespace, env.Name) {
+					veleroNS = env.Value
+				}
+			}
+			for _, cred := range component.ComponentCred {
+				if cred.Enabled {
+					credName = string(cred.Name)
+					credContent = string(cred.SecretContents)
+				}
+			}
+		}
+	}
+
+	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
+	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
+	yamlString = strings.ReplaceAll(yamlString, AccessContents, credContent)
+
+	return yamlString, nil
+}
+
 // AppMobilityVelero - Install/Delete velero along with its features - use volume snapshot location and cleanup crds
 func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
 	var useSnap bool
 	var cleanUp bool
+	credName := ""
 	var restic bool
 
 	yamlString, err := getVelero(op, cr)
@@ -373,9 +512,28 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 				if c.DeployRestic {
 					restic = true
 				}
+				for _, env := range c.Envs {
+					if strings.Contains(AppMobObjStoreSecretName, env.Name) {
+						credName = env.Value
+					}
+				}
+				for _, cred := range c.ComponentCred {
+					if cred.Enabled {
+						credName = string(cred.Name)
+					}
+				}
 			}
 		}
 	}
+
+	foundCred, err := utils.GetSecret(ctx, credName, cr.Namespace, ctrlClient)
+	if foundCred == nil {
+		err := CreateVeleroAccess(ctx, isDeleting, op, cr, ctrlClient)
+		if err != nil {
+			return fmt.Errorf("unable to deploy velero-secret for Application Mobility: %v", err)
+		}
+	}
+
 	if useSnap {
 		yamlString2, err := getUseVolumeSnapshot(op, cr)
 		if err != nil {
@@ -468,6 +626,18 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	veleroInitContainerName := ""
 	veleroInitContainerImage := ""
 	credName := ""
+	objectSecretName := ""
+
+	for _, component := range appMob.Components {
+		if component.Name == AppMobCtrlMgrComponent {
+			for _, env := range component.Envs {
+				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
+					objectSecretName = env.Value
+				}
+			}
+		}
+	}
+
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			if component.Image != "" {
@@ -489,8 +659,12 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
 				}
-				if strings.Contains(VeleroAccess, env.Name) {
-					credName = env.Value
+			}
+			for _, cred := range component.ComponentCred {
+				if cred.Enabled {
+					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, cred.Name)
+				} else {
+					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
 				}
 			}
 		}
@@ -528,6 +702,8 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	yamlString = strings.ReplaceAll(yamlString, VeleroBucketName, bucketName)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
 	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
+	yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
+
 	return yamlString, nil
 }
 

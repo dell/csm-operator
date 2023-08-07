@@ -319,6 +319,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="cleanUpCRDs for Application Mobility - Velero"
 	CleanUpCRDs bool `json:"cleanUpCRDs,omitempty" yaml:"cleanUpCRDs,omitempty"`
 
+	//ComponentCred is to store the velero credential contents
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ComponentCred for velero component"
+	ComponentCred []Credential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+
 	//DeployRestic is to enable/disable restic services
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Deploy Restic for Application Mobility"
 	DeployRestic bool `json:"deployRestic,omitempty" yaml:"deployRestic,omitempty"`
@@ -339,4 +343,11 @@ type SnapshotClass struct {
 type CSIDriverSpec struct {
 	FSGroupPolicy   string `json:"fSGroupPolicy,omitempty" yaml:"fSGroupPolicy,omitempty"`
 	StorageCapacity bool   `json:"storageCapacity,omitempty" yaml:"storageCapacity"`
+}
+
+// Credential struct
+type Credential struct {
+	Enabled        bool   `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Name           string `json:"name,omitempty" yaml:"name,omitempty"`
+	SecretContents string `json:"secretContents,omitempty" yaml:"secretContents"`
 }

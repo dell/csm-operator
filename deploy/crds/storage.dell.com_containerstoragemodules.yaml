@@ -68,6 +68,18 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      credentials:
+                        items:
+                          description: Credential struct
+                          properties:
+                            enabled:
+                              type: boolean
+                            name:
+                              type: string
+                            secretContents:
+                              type: string
+                          type: object
+                        type: array
                       deployRestic:
                         description: DeployRestic is to enable/disable restic services
                         type: boolean
@@ -245,10 +257,22 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      credentials:
+                        items:
+                          description: Credential struct
+                          properties:
+                            enabled:
+                              type: boolean
+                            name:
+                              type: string
+                            secretContents:
+                              type: string
+                          type: object
+                        type: array
                       deployRestic:
                         description: DeployRestic is to enable/disable restic services
                         type: boolean
-                      enabled:
+                        enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
                         type: boolean
                       envs:
@@ -441,6 +465,18 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        credentials:
+                          items:
+                            description: Credential struct
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              secretContents:
+                                type: string
+                            type: object
+                          type: array
                         deployRestic:
                           description: DeployRestic is to enable/disable restic services
                           type: boolean
@@ -616,6 +652,18 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      credentials:
+                        items:
+                          description: Credential struct
+                          properties:
+                            enabled:
+                              type: boolean
+                            name:
+                              type: string
+                            secretContents:
+                              type: string
+                          type: object
+                        type: array
                       deployRestic:
                         description: DeployRestic is to enable/disable restic services
                         type: boolean
@@ -796,6 +844,18 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                          credentials:
+                          items:
+                            description: Credential struct
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              secretContents:
+                                type: string
+                            type: object
+                          type: array
                         deployRestic:
                           description: DeployRestic is to enable/disable restic services
                           type: boolean
@@ -997,6 +1057,18 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          credentials:
+                            items:
+                              description: Credential struct
+                              properties:
+                                enabled:
+                                  type: boolean
+                                name:
+                                  type: string
+                                secretContents:
+                                  type: string
+                              type: object
+                            type: array
                           deployRestic:
                             description: DeployRestic is to enable/disable restic services
                             type: boolean
@@ -1183,6 +1255,18 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          credentials:
+                            items:
+                              description: Credential struct
+                              properties:
+                                enabled:
+                                  type: boolean
+                                name:
+                                  type: string
+                                secretContents:
+                                  type: string
+                              type: object
+                            type: array
                           deployRestic:
                             description: DeployRestic is to enable/disable restic services
                             type: boolean

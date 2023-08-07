@@ -913,6 +913,12 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 	log := logger.GetLogger(ctx)
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
 		log.Infow("Reconcile Application Mobility Controller Manager")
+		if err := modules.AppMobilityWebhookService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to deploy WebhookService for Application Mobility: %v", err)
+		}
+		if err := modules.ControllerManagerMetricService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to deploy MetricService for Application Mobility: %v", err)
+		}
 		if err := modules.AppMobilityDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Application Mobility controller Manager: %v", err)
 		}
@@ -928,6 +934,9 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 	// Appmobility installs velero
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobVeleroComponent) {
 		log.Infow("Reconcile application mobility velero")
+		if err := modules.VeleroCrdDeploy(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to deploy velero-crds for Application Mobility: %v", err)
+		}
 		if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile velero for Application Mobility: %v", err)
 		}

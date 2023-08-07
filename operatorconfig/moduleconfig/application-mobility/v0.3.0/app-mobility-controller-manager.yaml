@@ -6,7 +6,7 @@ metadata:
   name: <NAMESPACE>-controller-manager
   namespace: <NAMESPACE>
 spec:
-  replicas: 1
+  replicas: <APPLICATION_MOBILITY_REPLICA_COUNT>
   selector:
     matchLabels:
       control-plane: controller-manager

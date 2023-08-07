@@ -75,7 +75,7 @@ func init() {
 
 	utilruntime.Must(velerov1.AddToScheme(scheme))
 
-  utilruntime.Must(apiextv1.AddToScheme(scheme))
+	utilruntime.Must(apiextv1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
 

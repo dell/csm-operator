@@ -157,6 +157,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 	csmv1.AddToScheme(scheme.Scheme)
 	velerov1.AddToScheme(scheme.Scheme)
+	apiextv1.AddToScheme(scheme.Scheme)
 
 	apiextv1.AddToScheme(scheme.Scheme)
 
@@ -1262,7 +1263,7 @@ func getAppMob() []csmv1.Module {
 					Envs: []corev1.EnvVar{
 						{
 							Name:  "APPLICATION_MOBILITY_REPLICA_COUNT",
-							Value: "csm-auth.com",
+							Value: "1",
 						},
 						{
 							Name:  "APPLICATION_MOBILITY_LICENSE_NAME",
@@ -1270,14 +1271,13 @@ func getAppMob() []csmv1.Module {
 						},
 						{
 							Name:  "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME",
-							Value: "velero-restic-credentials",
+							Value: "cloud-credentials",
 						},
 					},
 				},
 				{
 					Name:    "cert-manager",
 					Enabled: &[]bool{true}[0],
-					Envs:    []corev1.EnvVar{},
 				},
 				{
 					Name:    "velero",
@@ -1296,8 +1296,12 @@ func getAppMob() []csmv1.Module {
 							Value: "aws",
 						},
 						{
-							Name:  "VELERO_ACCESS",
-							Value: "cloud-creds",
+							Name:  "BUCKET_NAME",
+							Value: "velero-bucket",
+						},
+						{
+							Name:  "VOL_SNAPSHOT_LOCATION_NAME",
+							Value: "default",
 						},
 					},
 				},
@@ -1546,22 +1550,22 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, modules []csmv1.Module) {
 
-	// this secret required by authorization module
+	// this secret required by application-mobility module
 	sec := shared.MakeSecret("cloud-creds", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	// this secret required by authorization module
+	// this secret required by application-mobility module
 	sec = shared.MakeSecret("license", ns, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	// this secret required by authorization module
+	// this secret required by application-mobility module
 	sec = shared.MakeSecret("velero-restic-credentials", ns, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	// this secret required by authorization module
+	// this secret required by application-mobility module
 	sec = shared.MakeSecret("cert-manager-webhook-ca", ns, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
