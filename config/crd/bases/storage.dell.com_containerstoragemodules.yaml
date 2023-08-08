@@ -79,6 +79,8 @@ spec:
                         description: Commander is the image tag for the Container
                         type: string
                       credentials:
+                        description: ComponentCred is to store the velero credential
+                          contents
                         items:
                           description: Credential struct
                           properties:
@@ -333,6 +335,8 @@ spec:
                         description: Commander is the image tag for the Container
                         type: string
                       credentials:
+                        description: ComponentCred is to store the velero credential
+                          contents
                         items:
                           description: Credential struct
                           properties:
@@ -608,6 +612,8 @@ spec:
                           description: Commander is the image tag for the Container
                           type: string
                         credentials:
+                          description: ComponentCred is to store the velero credential
+                            contents
                           items:
                             description: Credential struct
                             properties:
@@ -622,7 +628,6 @@ spec:
                         deployRestic:
                           description: DeployRestic is to enable/disable restic services
                           type: boolean
-
                         enabled:
                           description: Enabled is used to indicate wether or not to
                             deploy a module
@@ -862,6 +867,8 @@ spec:
                         description: Commander is the image tag for the Container
                         type: string
                       credentials:
+                        description: ComponentCred is to store the velero credential
+                          contents
                         items:
                           description: Credential struct
                           properties:
@@ -1118,6 +1125,8 @@ spec:
                           description: Commander is the image tag for the Container
                           type: string
                         credentials:
+                          description: ComponentCred is to store the velero credential
+                            contents
                           items:
                             description: Credential struct
                             properties:
@@ -1400,6 +1409,8 @@ spec:
                             description: Commander is the image tag for the Container
                             type: string
                           credentials:
+                            description: ComponentCred is to store the velero credential
+                              contents
                             items:
                               description: Credential struct
                               properties:
@@ -1672,6 +1683,8 @@ spec:
                             description: Commander is the image tag for the Container
                             type: string
                           credentials:
+                            description: ComponentCred is to store the velero credential
+                              contents
                             items:
                               description: Credential struct
                               properties:
