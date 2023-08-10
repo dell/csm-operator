@@ -69,6 +69,8 @@ const (
 	VeleroBucketName = "<BUCKET_NAME>"
 	//VolSnapshotlocation - name for Volume Snapshot location
 	VolSnapshotlocation = "<VOL_SNAPSHOT_LOCATION_NAME>"
+	//BackupStorageURL - cloud url for backup storage location 
+	BackupStorageURL = "<BACKUP_STORAGE_URL>"
 
 	// VeleroNamespace - namespace Velero is installed in
 	VeleroNamespace = "<VELERO_NAMESPACE>"
@@ -80,12 +82,16 @@ const (
 	VeleroImagePullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
 	// VeleroAccess  -  Secret name for velero
 	VeleroAccess = "<VELERO_ACCESS>"
-	//InitContainerName - Name of init container for velero (ex: aws/csi)
+	//InitContainerName - Name of init container for velero
 	InitContainerName = "<INIT_CONTAINER_NAME>"
-	//InitContainerImage - Image of init container for velero (ex: aws/csi)
+	//InitContainerImage - Image of init container for velero
 	InitContainerImage = "<INIT_CONTAINER_IMAGE>"
 	//AccessContents - contents of the object store secret
 	AccessContents = "<CRED_CONTENTS>"
+	//AccessKeyId - contains the aws access key id
+	AccessKeyId = "<KEY_ID>"
+	//AccessKey - contains the aws access key
+	AccessKey = "<KEY>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
@@ -185,6 +191,10 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 				if strings.Contains(AppMobReplicaCount, env.Name) {
 					replicaCount = env.Value
 				}
+			}
+		}
+		if component.Name == AppMobVeleroComponent {
+			for _, env := range component.Envs {
 				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
 					objectSecretName = env.Value
 				}
@@ -446,7 +456,8 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	yamlString = string(buf)
 	veleroNS := ""
 	credName := ""
-	credContent := ""
+	accessId := ""
+	access := ""
 
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
@@ -458,7 +469,8 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 			for _, cred := range component.ComponentCred {
 				if cred.Enabled {
 					credName = string(cred.Name)
-					credContent = string(cred.SecretContents)
+					accessId = string(cred.SecretContents.AccessKeyId)
+					access = string(cred.SecretContents.AccessKey)
 				}
 			}
 		}
@@ -466,7 +478,8 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
 	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
-	yamlString = strings.ReplaceAll(yamlString, AccessContents, credContent)
+	yamlString = strings.ReplaceAll(yamlString, AccessKeyId, accessId)
+	yamlString = strings.ReplaceAll(yamlString, AccessKey, access)
 
 	return yamlString, nil
 }
@@ -476,8 +489,9 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 
 	var useSnap bool
 	var cleanUp bool
-	credName := ""
 	var restic bool
+	credName := ""
+	veleroNS := ""
 
 	yamlString, err := getVelero(op, cr)
 	if err != nil {
@@ -503,30 +517,35 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
 			for _, c := range m.Components {
-				if c.UseSnapshot {
-					useSnap = true
-				}
-				if c.CleanUpCRDs {
-					cleanUp = true
-				}
-				if c.DeployRestic {
-					restic = true
-				}
-				for _, env := range c.Envs {
-					if strings.Contains(AppMobObjStoreSecretName, env.Name) {
-						credName = env.Value
+				if c.Name == AppMobVeleroComponent {
+					if c.UseSnapshot {
+						useSnap = true
 					}
-				}
-				for _, cred := range c.ComponentCred {
-					if cred.Enabled {
-						credName = string(cred.Name)
+					if c.CleanUpCRDs {
+						cleanUp = true
+					}
+					if c.DeployRestic {
+						restic = true
+					}
+					for _, env := range c.Envs {
+						if strings.Contains(AppMobObjStoreSecretName, env.Name) {
+							credName = env.Value
+						}
+						if strings.Contains(VeleroNamespace, env.Name) {
+							veleroNS = env.Value
+						}
+					}
+					for _, cred := range c.ComponentCred {
+						if cred.Enabled {
+							credName = string(cred.Name)
+						}
 					}
 				}
 			}
 		}
 	}
 
-	foundCred, err := utils.GetSecret(ctx, credName, cr.Namespace, ctrlClient)
+	foundCred, err := utils.GetSecret(ctx, credName, veleroNS, ctrlClient)
 	if foundCred == nil {
 		err := CreateVeleroAccess(ctx, isDeleting, op, cr, ctrlClient)
 		if err != nil {
@@ -625,18 +644,8 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	veleroImgPullPolicy := ""
 	veleroInitContainerName := ""
 	veleroInitContainerImage := ""
-	credName := ""
+	backupUrl := ""
 	objectSecretName := ""
-
-	for _, component := range appMob.Components {
-		if component.Name == AppMobCtrlMgrComponent {
-			for _, env := range component.Envs {
-				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
-					objectSecretName = env.Value
-				}
-			}
-		}
-	}
 
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
@@ -658,6 +667,12 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				}
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
+				}
+				if strings.Contains(BackupStorageURL, env.Name) {
+					backupUrl = env.Value
+				}
+				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
+					objectSecretName = env.Value
 				}
 			}
 			for _, cred := range component.ComponentCred {
@@ -690,7 +705,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 			}
 		}
 	default:
-		fmt.Printf("Invalid entry for config provider")
+		fmt.Errorf("Invalid entry for config provider")
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
@@ -700,9 +715,8 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	yamlString = strings.ReplaceAll(yamlString, InitContainerImage, veleroInitContainerImage)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageLocation, backupStorageLocationName)
 	yamlString = strings.ReplaceAll(yamlString, VeleroBucketName, bucketName)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupUrl)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
-	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
-	yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
 
 	return yamlString, nil
 }

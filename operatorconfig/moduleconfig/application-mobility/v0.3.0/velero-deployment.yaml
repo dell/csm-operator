@@ -11,7 +11,11 @@ spec:
   accessMode: ReadWrite
   objectStorage:
     bucket: <BUCKET_NAME>
-  config: {}
+  default: true
+  config: 
+      region: minio
+      s3ForcePathStyle: true
+      s3Url: <BACKUP_STORAGE_URL>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -147,7 +151,7 @@ spec:
           volumeMounts:
             - name: plugins
               mountPath: /plugins
-            - name: <APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
+            - name: cloud-credentials
               mountPath: /credentials
             - name: scratch
               mountPath: /scratch
@@ -174,7 +178,7 @@ spec:
            - mountPath: /target
              name: plugins
       volumes:
-        - name: <APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
+        - name: cloud-credentials
           secret:
             secretName: <APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
         - name: plugins

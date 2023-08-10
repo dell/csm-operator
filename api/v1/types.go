@@ -347,7 +347,25 @@ type CSIDriverSpec struct {
 
 // Credential struct
 type Credential struct {
-	Enabled        bool   `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Name           string `json:"name,omitempty" yaml:"name,omitempty"`
-	SecretContents string `json:"secretContents,omitempty" yaml:"secretContents"`
+	// Enabled is used to indicate wether or not to create a secret for objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enabled"
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+
+	// Name is the name of secret which contains credentials to access objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+
+	// SecretContents contains credentials to access objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="secretContents"
+	SecretContents Credkey `json:"secretContents,omitempty" yaml:"secretContents"`
+}
+
+// Credkey struct
+type Credkey struct {
+	// AccessKeyId is a name of key ID to access objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKeyId"
+	AccessKeyId string `json:"aws_access_key_id,omitempty" yaml:"aws_access_key_id,omitempty"`
+	// AccessKey contains the key to access objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKey"
+	AccessKey string `json:"aws_secret_access_key,omitempty" yaml:"aws_secret_access_key,omitempty"`
 }
