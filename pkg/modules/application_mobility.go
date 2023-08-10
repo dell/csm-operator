@@ -93,6 +93,7 @@ const (
 	//AccessKey - contains the aws access key
 	AccessKey = "<KEY>"
 
+
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
 	// AppMobCertManagerComponent - cert-manager component
@@ -138,21 +139,9 @@ func VeleroCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
-
-	for _, ctrlObj := range deployObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
 	}
 
 	return nil
@@ -225,21 +214,9 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 		return err
 	}
 
-	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
-
-	for _, ctrlObj := range deployObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
 	}
 
 	return nil
@@ -272,21 +249,10 @@ func ControllerManagerMetricService(ctx context.Context, isDeleting bool, op uti
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
 
-	for _, ctrlObj := range deployObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
 	}
 
 	return nil
@@ -318,21 +284,10 @@ func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.Op
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
 
-	for _, ctrlObj := range deployObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
 	}
 
 	return nil
@@ -374,22 +329,11 @@ func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.Opera
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
 	}
 
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
 
@@ -418,22 +362,11 @@ func CreateVeleroAccess(ctx context.Context, isDeleting bool, op utils.OperatorC
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
 	}
 
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
 
@@ -459,6 +392,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	accessId := ""
 	access := ""
 
+
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
@@ -471,6 +405,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 					credName = string(cred.Name)
 					accessId = string(cred.SecretContents.AccessKeyId)
 					access = string(cred.SecretContents.AccessKey)
+
 				}
 			}
 		}
@@ -481,6 +416,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	yamlString = strings.ReplaceAll(yamlString, AccessKeyId, accessId)
 	yamlString = strings.ReplaceAll(yamlString, AccessKey, access)
 
+
 	return yamlString, nil
 }
 
@@ -489,6 +425,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 
 	var useSnap bool
 	var cleanUp bool
+	credName := ""
 	var restic bool
 	credName := ""
 	veleroNS := ""
@@ -498,22 +435,11 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
 	}
 
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
-	}
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
 			for _, c := range m.Components {
@@ -541,6 +467,16 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 						}
 					}
 				}
+				for _, env := range c.Envs {
+					if strings.Contains(AppMobObjStoreSecretName, env.Name) {
+						credName = env.Value
+					}
+				}
+				for _, cred := range c.ComponentCred {
+					if cred.Enabled {
+						credName = string(cred.Name)
+					}
+				}
 			}
 		}
 	}
@@ -555,23 +491,21 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 
 	if useSnap {
 		yamlString2, err := getUseVolumeSnapshot(op, cr)
+
+		if err != nil {
+			return fmt.Errorf("unable to deploy velero-secret for Application Mobility: %v", err)
+		}
+	}
+
+	if useSnap {
+		yamlString2, err := getUseVolumeSnapshot(op, cr)
 		if err != nil {
 			return err
 		}
-		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString2))
-		if err != nil {
-			return err
-		}
-		for _, ctrlObj := range ctrlObjects {
-			if isDeleting {
-				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			} else {
-				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			}
+
+		er := applyDeleteObjects(ctx, ctrlClient, yamlString2, isDeleting)
+		if er != nil {
+			return er
 		}
 	}
 	if cleanUp {
@@ -579,42 +513,22 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		if err != nil {
 			return err
 		}
-		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString3))
-		if err != nil {
-			return err
+
+		er := applyDeleteObjects(ctx, ctrlClient, yamlString3, isDeleting)
+		if er != nil {
+			return er
 		}
 
-		for _, ctrlObj := range ctrlObjects {
-			if isDeleting {
-				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			} else {
-				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			}
-		}
 	}
 	if restic {
 		yamlString4, err := getRestic(op, cr)
 		if err != nil {
 			return err
 		}
-		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString4))
-		if err != nil {
-			return err
-		}
-		for _, ctrlObj := range ctrlObjects {
-			if isDeleting {
-				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			} else {
-				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			}
+
+		er := applyDeleteObjects(ctx, ctrlClient, yamlString4, isDeleting)
+		if er != nil {
+			return er
 		}
 	}
 	return nil
@@ -674,6 +588,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
 					objectSecretName = env.Value
 				}
+
 			}
 			for _, cred := range component.ComponentCred {
 				if cred.Enabled {
@@ -799,6 +714,7 @@ func getCleanupcrds(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	return yamlString, nil
 }
 
+// getRestic - gets restic services manifests
 func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
@@ -817,6 +733,18 @@ func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	veleroImgPullPolicy := ""
 	veleroImg := ""
 	credName := ""
+	objectSecretName := ""
+
+	for _, component := range appMob.Components {
+		if component.Name == AppMobCtrlMgrComponent {
+			for _, env := range component.Envs {
+				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
+					objectSecretName = env.Value
+				}
+			}
+		}
+	}
+
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			if component.Image != "" {
@@ -834,6 +762,13 @@ func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				}
 
 			}
+			for _, cred := range component.ComponentCred {
+				if cred.Enabled {
+					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, cred.Name)
+				} else {
+					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
+				}
+			}
 		}
 	}
 
@@ -841,5 +776,30 @@ func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
 	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
 	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
+	yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
 	return yamlString, nil
+}
+
+// applyDeleteObjects - Applies/Deletes the object based on boolean value
+func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlString string, isDeleting bool) error {
+
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range ctrlObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+
 }

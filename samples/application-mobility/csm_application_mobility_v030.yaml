@@ -76,7 +76,7 @@ spec:
           
           # Name of the backup storage url
           # This field has to be changed to a functional backup storage url 
-          # Default value: existing-cred
+          # Default value: localhost:8000
           - name: "BACKUP_STORAGE_URL"
             value: "localhost:8000"
 
