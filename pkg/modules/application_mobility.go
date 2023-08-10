@@ -132,13 +132,9 @@ func VeleroCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
 
-	er := applyDeleteObjects(ctx, ctrlClient, deployObjects, isDeleting)
-	if err != nil {
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
 		return er
 	}
 
@@ -208,13 +204,8 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 		return err
 	}
 
-	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
-
-	er := applyDeleteObjects(ctx, ctrlClient, deployObjects, isDeleting)
-	if err != nil {
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
 		return er
 	}
 
@@ -248,13 +239,9 @@ func ControllerManagerMetricService(ctx context.Context, isDeleting bool, op uti
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
 
-	er := applyDeleteObjects(ctx, ctrlClient, deployObjects, isDeleting)
-	if err != nil {
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
 		return er
 	}
 
@@ -287,13 +274,9 @@ func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.Op
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
 
-	er := applyDeleteObjects(ctx, ctrlClient, deployObjects, isDeleting)
-	if err != nil {
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
 		return er
 	}
 
@@ -336,13 +319,8 @@ func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.Opera
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
-
-	er := applyDeleteObjects(ctx, ctrlClient, ctrlObjects, isDeleting)
-	if err != nil {
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
 		return er
 	}
 
@@ -374,13 +352,8 @@ func CreateVeleroAccess(ctx context.Context, isDeleting bool, op utils.OperatorC
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
-
-	er := applyDeleteObjects(ctx, ctrlClient, ctrlObjects, isDeleting)
-	if err != nil {
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
 		return er
 	}
 
@@ -444,13 +417,8 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
-	if err != nil {
-		return err
-	}
-
-	er := applyDeleteObjects(ctx, ctrlClient, ctrlObjects, isDeleting)
-	if err != nil {
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
 		return er
 	}
 
@@ -493,13 +461,9 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		if err != nil {
 			return err
 		}
-		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString2))
-		if err != nil {
-			return err
-		}
 
-		er := applyDeleteObjects(ctx, ctrlClient, ctrlObjects, isDeleting)
-		if err != nil {
+		er := applyDeleteObjects(ctx, ctrlClient, yamlString2, isDeleting)
+		if er != nil {
 			return er
 		}
 	}
@@ -508,13 +472,9 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		if err != nil {
 			return err
 		}
-		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString3))
-		if err != nil {
-			return err
-		}
 
-		er := applyDeleteObjects(ctx, ctrlClient, ctrlObjects, isDeleting)
-		if err != nil {
+		er := applyDeleteObjects(ctx, ctrlClient, yamlString3, isDeleting)
+		if er != nil {
 			return er
 		}
 
@@ -524,13 +484,9 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		if err != nil {
 			return err
 		}
-		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString4))
-		if err != nil {
-			return err
-		}
 
-		er := applyDeleteObjects(ctx, ctrlClient, ctrlObjects, isDeleting)
-		if err != nil {
+		er := applyDeleteObjects(ctx, ctrlClient, yamlString4, isDeleting)
+		if er != nil {
 			return er
 		}
 	}
@@ -788,7 +744,12 @@ func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 }
 
 // applyDeleteObjects - Applies/Deletes the object based on boolean value
-func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, ctrlObjects []crclient.Object, isDeleting bool) error {
+func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlString string, isDeleting bool) error {
+
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	if err != nil {
+		return err
+	}
 
 	for _, ctrlObj := range ctrlObjects {
 		if isDeleting {
