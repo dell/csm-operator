@@ -425,7 +425,6 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 
 	var useSnap bool
 	var cleanUp bool
-	credName := ""
 	var restic bool
 	credName := ""
 	veleroNS := ""
@@ -484,14 +483,6 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	foundCred, err := utils.GetSecret(ctx, credName, veleroNS, ctrlClient)
 	if foundCred == nil {
 		err := CreateVeleroAccess(ctx, isDeleting, op, cr, ctrlClient)
-		if err != nil {
-			return fmt.Errorf("unable to deploy velero-secret for Application Mobility: %v", err)
-		}
-	}
-
-	if useSnap {
-		yamlString2, err := getUseVolumeSnapshot(op, cr)
-
 		if err != nil {
 			return fmt.Errorf("unable to deploy velero-secret for Application Mobility: %v", err)
 		}
