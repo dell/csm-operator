@@ -611,7 +611,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 			}
 		}
 	default:
-		log.Errorw("Invalid entry for config provider")
+		fmt.Println("Invalid entry for config provider")
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
