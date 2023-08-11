@@ -163,6 +163,11 @@ spec:
         # Default value: false
         - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
           value: "false"
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum Powermax volumes that the controller can publish to the node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
     sideCars:
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor

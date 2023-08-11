@@ -182,6 +182,11 @@ spec:
         # Default value: false
         - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
           value: "false"
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerMax volumes that the controller can schedule on the node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
       # nodeSelector: Define node selection constraints for node pods.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
