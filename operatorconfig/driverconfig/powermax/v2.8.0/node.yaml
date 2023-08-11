@@ -145,6 +145,8 @@ spec:
               value: "<X_CSI_POWERMAX_PORTGROUPS>"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_MAX_VOLUMES_PER_NODE
+              value: "<X_CSI_MAX_VOLUMES_PER_NODE>"
             - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
               value: "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
             - name: X_CSI_VSPHERE_ENABLED
