@@ -11,7 +11,11 @@ spec:
   accessMode: ReadWrite
   objectStorage:
     bucket: <BUCKET_NAME>
-  config: {}
+  default: true
+  config: 
+      region: minio
+      s3ForcePathStyle: true
+      s3Url: <BACKUP_STORAGE_URL>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

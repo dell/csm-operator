@@ -85,11 +85,26 @@ spec:
                           description: Credential struct
                           properties:
                             enabled:
+                              description: Enabled is used to indicate wether or not
+                                to create a secret for objectstore
                               type: boolean
                             name:
+                              description: Name is the name of secret which contains
+                                credentials to access objectstore
                               type: string
                             secretContents:
-                              type: string
+                              description: SecretContents contains credentials to
+                                access objectstore
+                              properties:
+                                aws_access_key_id:
+                                  description: AccessKeyId is a name of key ID to
+                                    access objectstore
+                                  type: string
+                                aws_secret_access_key:
+                                  description: AccessKey contains the key to access
+                                    objectstore
+                                  type: string
+                              type: object
                           type: object
                         type: array
                       deployRestic:
@@ -341,11 +356,26 @@ spec:
                           description: Credential struct
                           properties:
                             enabled:
+                              description: Enabled is used to indicate wether or not
+                                to create a secret for objectstore
                               type: boolean
                             name:
+                              description: Name is the name of secret which contains
+                                credentials to access objectstore
                               type: string
                             secretContents:
-                              type: string
+                              description: SecretContents contains credentials to
+                                access objectstore
+                              properties:
+                                aws_access_key_id:
+                                  description: AccessKeyId is a name of key ID to
+                                    access objectstore
+                                  type: string
+                                aws_secret_access_key:
+                                  description: AccessKey contains the key to access
+                                    objectstore
+                                  type: string
+                              type: object
                           type: object
                         type: array
                       deployRestic:
@@ -618,11 +648,26 @@ spec:
                             description: Credential struct
                             properties:
                               enabled:
+                                description: Enabled is used to indicate wether or
+                                  not to create a secret for objectstore
                                 type: boolean
                               name:
+                                description: Name is the name of secret which contains
+                                  credentials to access objectstore
                                 type: string
                               secretContents:
-                                type: string
+                                description: SecretContents contains credentials to
+                                  access objectstore
+                                properties:
+                                  aws_access_key_id:
+                                    description: AccessKeyId is a name of key ID to
+                                      access objectstore
+                                    type: string
+                                  aws_secret_access_key:
+                                    description: AccessKey contains the key to access
+                                      objectstore
+                                    type: string
+                                type: object
                             type: object
                           type: array
                         deployRestic:
@@ -873,11 +918,26 @@ spec:
                           description: Credential struct
                           properties:
                             enabled:
+                              description: Enabled is used to indicate wether or not
+                                to create a secret for objectstore
                               type: boolean
                             name:
+                              description: Name is the name of secret which contains
+                                credentials to access objectstore
                               type: string
                             secretContents:
-                              type: string
+                              description: SecretContents contains credentials to
+                                access objectstore
+                              properties:
+                                aws_access_key_id:
+                                  description: AccessKeyId is a name of key ID to
+                                    access objectstore
+                                  type: string
+                                aws_secret_access_key:
+                                  description: AccessKey contains the key to access
+                                    objectstore
+                                  type: string
+                              type: object
                           type: object
                         type: array
                       deployRestic:
@@ -1131,11 +1191,26 @@ spec:
                             description: Credential struct
                             properties:
                               enabled:
+                                description: Enabled is used to indicate wether or
+                                  not to create a secret for objectstore
                                 type: boolean
                               name:
+                                description: Name is the name of secret which contains
+                                  credentials to access objectstore
                                 type: string
                               secretContents:
-                                type: string
+                                description: SecretContents contains credentials to
+                                  access objectstore
+                                properties:
+                                  aws_access_key_id:
+                                    description: AccessKeyId is a name of key ID to
+                                      access objectstore
+                                    type: string
+                                  aws_secret_access_key:
+                                    description: AccessKey contains the key to access
+                                      objectstore
+                                    type: string
+                                type: object
                             type: object
                           type: array
                         deployRestic:
@@ -1415,11 +1490,26 @@ spec:
                               description: Credential struct
                               properties:
                                 enabled:
+                                  description: Enabled is used to indicate wether
+                                    or not to create a secret for objectstore
                                   type: boolean
                                 name:
+                                  description: Name is the name of secret which contains
+                                    credentials to access objectstore
                                   type: string
                                 secretContents:
-                                  type: string
+                                  description: SecretContents contains credentials
+                                    to access objectstore
+                                  properties:
+                                    aws_access_key_id:
+                                      description: AccessKeyId is a name of key ID
+                                        to access objectstore
+                                      type: string
+                                    aws_secret_access_key:
+                                      description: AccessKey contains the key to access
+                                        objectstore
+                                      type: string
+                                  type: object
                               type: object
                             type: array
                           deployRestic:
@@ -1689,11 +1779,26 @@ spec:
                               description: Credential struct
                               properties:
                                 enabled:
+                                  description: Enabled is used to indicate wether
+                                    or not to create a secret for objectstore
                                   type: boolean
                                 name:
+                                  description: Name is the name of secret which contains
+                                    credentials to access objectstore
                                   type: string
                                 secretContents:
-                                  type: string
+                                  description: SecretContents contains credentials
+                                    to access objectstore
+                                  properties:
+                                    aws_access_key_id:
+                                      description: AccessKeyId is a name of key ID
+                                        to access objectstore
+                                      type: string
+                                    aws_secret_access_key:
+                                      description: AccessKey contains the key to access
+                                        objectstore
+                                      type: string
+                                  type: object
                               type: object
                             type: array
                           deployRestic:
