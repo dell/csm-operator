@@ -69,7 +69,7 @@ const (
 	VeleroBucketName = "<BUCKET_NAME>"
 	//VolSnapshotlocation - name for Volume Snapshot location
 	VolSnapshotlocation = "<VOL_SNAPSHOT_LOCATION_NAME>"
-	//BackupStorageURL - cloud url for backup storage location 
+	//BackupStorageURL - cloud url for backup storage location
 	BackupStorageURL = "<BACKUP_STORAGE_URL>"
 
 	// VeleroNamespace - namespace Velero is installed in
@@ -92,7 +92,6 @@ const (
 	AccessKeyId = "<KEY_ID>"
 	//AccessKey - contains the aws access key
 	AccessKey = "<KEY>"
-
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
@@ -375,7 +374,6 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	accessId := ""
 	access := ""
 
-
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
@@ -398,7 +396,6 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
 	yamlString = strings.ReplaceAll(yamlString, AccessKeyId, accessId)
 	yamlString = strings.ReplaceAll(yamlString, AccessKey, access)
-
 
 	return yamlString, nil
 }
