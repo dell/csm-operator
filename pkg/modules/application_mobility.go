@@ -314,7 +314,7 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 // AppMobilityCertManager - Install/Delete cert-manager
 func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
-	yamlString, err := getAppMobCertManager(op, cr)
+	yamlString, err := getCertManager(op, cr)
 	if err != nil {
 		return err
 	}
@@ -325,23 +325,6 @@ func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.Opera
 	}
 
 	return nil
-}
-
-// getAppMobilityCertManager - gets the cert-manager manifest from common
-func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	yamlString := ""
-
-	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/%s", op.ConfigDirectory, AppMobCertManagerManifest)
-	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
-	if err != nil {
-		return yamlString, err
-	}
-
-	yamlString = string(buf)
-	appMobNamespace := cr.Namespace
-	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, appMobNamespace)
-
-	return yamlString, nil
 }
 
 // CreateVeleroAccess - Install/Delete velero-secret yaml from operator config
