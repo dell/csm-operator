@@ -38,6 +38,8 @@ const (
 	AppMobMetricService = "app-mobility-controller-manager-metrics-service.yaml"
 	// AppMobWebhookService - filename of Webhook manifest for app-mobility
 	AppMobWebhookService = "app-mobility-webhook-service.yaml"
+	// AppMobCrds - name of app-mobility crd manifest yaml
+	AppMobCrds = "app-mobility-crds.yaml"
 	// VeleroManifest - filename of Velero manifest for app-mobility
 	VeleroManifest = "velero-deployment.yaml"
 	// AppMobCertManagerManifest - filename of Cert-manager manifest for app-mobility
@@ -138,9 +140,47 @@ func VeleroCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	if err != nil {
 		return err
 	}
-	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
-	if er != nil {
-		return er
+	err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// getAppMobCrdDeploy - apply and deploy app mobility crd manifest
+func getAppMobCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	appMobCrdPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobCrds)
+	buf, err := os.ReadFile(filepath.Clean(appMobCrdPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+
+	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
+
+	return yamlString, nil
+}
+
+// AppMobCrdDeploy - apply and delete Velero crds deployment
+func AppMobCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+
+	yamlString, err := getAppMobCrdDeploy(op, cr)
+	if err != nil {
+		return err
+	}
+
+	err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if err != nil {
+		return err
 	}
 
 	return nil

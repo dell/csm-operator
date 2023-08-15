@@ -639,3 +639,89 @@ func TestVeleroCrdDeploy(t *testing.T) {
 		})
 	}
 }
+func TestAppMobCrdDeploy(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "CustomResourceDefinition",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "clusterconfigs.mobility.storage.dell.com",
+				},
+			}
+			apiextv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			apiextv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "./testdata/badYaml"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
+		},
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
+		},
+		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			tmpCR := customResource
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := AppMobCrdDeploy(ctx, isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
