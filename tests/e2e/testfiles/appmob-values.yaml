@@ -115,7 +115,6 @@
     #- "Run custom test"
     # Last two steps perform Clean UP
     - "Uninstall [cert-manager]"
-    - "Uninstall [velero]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
   customTest:
