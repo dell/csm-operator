@@ -294,8 +294,8 @@ func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.Op
 	return nil
 }
 
-// getCertManagerIssuerCertService - gets the app mobility cert manager's issuer and certificate manifest
-func getCertManagerIssuerCertService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+// getIssuerCertService - gets the app mobility cert manager's issuer and certificate manifest
+func getIssuerCertService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
@@ -314,8 +314,8 @@ func getCertManagerIssuerCertService(op utils.OperatorConfig, cr csmv1.Container
 	return yamlString, nil
 }
 
-// CertManagerIssuerCertService() - apply and delete the app mobility cert manager's issuer and certificate service
-func CertManagerIssuerCertService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+// IssuerCertService() - apply and delete the app mobility issuer and certificate service
+func IssuerCertService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getCertManagerIssuerCertService(op, cr)
 	if err != nil {
 		return err
