@@ -88,10 +88,10 @@ const (
 	InitContainerImage = "<INIT_CONTAINER_IMAGE>"
 	//AccessContents - contents of the object store secret
 	AccessContents = "<CRED_CONTENTS>"
-	//AccessKeyId - contains the aws access key id
-	AccessKeyId = "<KEY_ID>"
-	//AccessKey - contains the aws access key
-	AccessKey = "<KEY>"
+	//AKeyID - contains the aws access key id
+	AKeyID = "<KEY_ID>"
+	//AKey - contains the aws access key
+	AKey = "<KEY>"
 
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
@@ -389,7 +389,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	yamlString = string(buf)
 	veleroNS := ""
 	credName := ""
-	accessId := ""
+	accessID := ""
 	access := ""
 
 
@@ -403,7 +403,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 			for _, cred := range component.ComponentCred {
 				if cred.Enabled {
 					credName = string(cred.Name)
-					accessId = string(cred.SecretContents.AccessKeyId)
+					accessID = string(cred.SecretContents.AccessKeyID)
 					access = string(cred.SecretContents.AccessKey)
 
 				}
@@ -413,8 +413,8 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
 	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
-	yamlString = strings.ReplaceAll(yamlString, AccessKeyId, accessId)
-	yamlString = strings.ReplaceAll(yamlString, AccessKey, access)
+	yamlString = strings.ReplaceAll(yamlString, AKeyID, accessID)
+	yamlString = strings.ReplaceAll(yamlString, AKey, access)
 
 
 	return yamlString, nil
@@ -549,7 +549,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	veleroImgPullPolicy := ""
 	veleroInitContainerName := ""
 	veleroInitContainerImage := ""
-	backupUrl := ""
+	backupURL := ""
 	objectSecretName := ""
 
 	for _, component := range appMob.Components {
@@ -574,7 +574,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 					provider = env.Value
 				}
 				if strings.Contains(BackupStorageURL, env.Name) {
-					backupUrl = env.Value
+					backupURL = env.Value
 				}
 				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
 					objectSecretName = env.Value
@@ -621,7 +621,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	yamlString = strings.ReplaceAll(yamlString, InitContainerImage, veleroInitContainerImage)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageLocation, backupStorageLocationName)
 	yamlString = strings.ReplaceAll(yamlString, VeleroBucketName, bucketName)
-	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupUrl)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupURL)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
 
 	return yamlString, nil
@@ -727,16 +727,6 @@ func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	objectSecretName := ""
 
 	for _, component := range appMob.Components {
-		if component.Name == AppMobCtrlMgrComponent {
-			for _, env := range component.Envs {
-				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
-					objectSecretName = env.Value
-				}
-			}
-		}
-	}
-
-	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			if component.Image != "" {
 				veleroImg = string(component.Image)
@@ -750,6 +740,9 @@ func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				}
 				if strings.Contains(VeleroAccess, env.Name) {
 					credName = env.Value
+				}
+				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
+					objectSecretName = env.Value
 				}
 
 			}
@@ -765,9 +758,7 @@ func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 
 	yamlString = strings.ReplaceAll(yamlString, VeleroImage, veleroImg)
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
-	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
 	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
-	yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
 	return yamlString, nil
 }
 
