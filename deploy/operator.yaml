@@ -1039,7 +1039,7 @@ rules:
 - apiGroups:
   - velero.io
   resources:
-  - resticrepositories
+  - backuprepositories
   verbs:
   - create
   - delete

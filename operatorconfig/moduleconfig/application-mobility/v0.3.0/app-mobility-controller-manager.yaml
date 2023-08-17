@@ -36,6 +36,7 @@ spec:
         - --app-mobility-namespace=<NAMESPACE>
         - --secret-name=<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
         - --license-name=<APPLICATION_MOBILITY_LICENSE_NAME>
+        - --velero-namespace=<NAMESPACE>
         command:
         - /manager
         image: <CONTROLLER_IMAGE>
@@ -77,7 +78,7 @@ spec:
       - name: cert
         secret:
           defaultMode: 420
-          secretName: cert-manager-webhook-ca
+          secretName: webhook-server-cert
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -414,7 +415,7 @@ rules:
 - apiGroups:
   - velero.io
   resources:
-  - resticrepositories
+  - backuprepositories
   verbs:
   - create
   - delete

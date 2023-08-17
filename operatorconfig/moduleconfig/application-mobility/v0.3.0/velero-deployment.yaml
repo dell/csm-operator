@@ -141,6 +141,7 @@ spec:
             - /velero
           args:
             - server
+            - --uploader-type=restic
           resources: 
             requests:
               cpu: 500m
@@ -174,6 +175,11 @@ spec:
       initContainers:
         - name: <INIT_CONTAINER_NAME>
           image: <INIT_CONTAINER_IMAGE>
+          volumeMounts:
+           - mountPath: /target
+             name: plugins
+        - name: dell-custom-velero-plugin
+          image: dellemc/csm-application-mobility-velero-plugin:latest
           volumeMounts:
            - mountPath: /target
              name: plugins
