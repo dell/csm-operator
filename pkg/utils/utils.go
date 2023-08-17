@@ -40,6 +40,7 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	certmanagerv1 "github.com/cert-manager/pkg/apis/certmanager/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
@@ -578,6 +579,27 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &vs)
+
+		}
+
+		case "Issuer":
+
+			var is certmanagerv1.IssuerKind
+			if err := yaml.Unmarshal(raw, &is); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &is)
+
+		}
+		case "Certificate":
+
+			var ct certmanagerv1.CertificateKind
+			if err := yaml.Unmarshal(raw, &ct); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ct)
 
 		}
 	}
