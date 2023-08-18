@@ -24,4 +24,4 @@ images:
   externalhealthmonitorcontroller: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.8.0
 
   # "images.sdcmonitor" defines the container images used to monitor sdc container
-  sdcmonitor: dellemc/sdc:3.6.0.6
+  sdcmonitor: dellemc/sdc:3.6.1
