@@ -47,6 +47,7 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	//+kubebuilder:scaffold:imports
@@ -76,6 +77,8 @@ func init() {
 	utilruntime.Must(velerov1.AddToScheme(scheme))
 
 	utilruntime.Must(apiextv1.AddToScheme(scheme))
+
+	utilruntime.Must(certmanagerv1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
 
