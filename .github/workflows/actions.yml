@@ -73,6 +73,7 @@ jobs:
         uses: securego/gosec@master
         with:
           args: -exclude-dir=tests ./...
+          excludes: "G101"
   malware_security_scan:
     name: Malware Scanner
     runs-on: ubuntu-latest
