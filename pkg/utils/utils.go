@@ -575,7 +575,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &vs)
 
 		case "Issuer":
-			var is certmanagerv1.IssuerKind
+			var is certmanagerv1.Issuer
 			if err := yaml.Unmarshal(raw, &is); err != nil {
 				return ctrlObjects, err
 			}
@@ -583,7 +583,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &is)
 
 		case "Certificate":
-			var ct certmanagerv1.CertificateKind
+			var ct certmanagerv1.Certificate
 			if err := yaml.Unmarshal(raw, &ct); err != nil {
 				return ctrlObjects, err
 			}
