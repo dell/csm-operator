@@ -919,6 +919,9 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 		if err := modules.ControllerManagerMetricService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to deploy MetricService for Application Mobility: %v", err)
 		}
+		if err := modules.CertManagerCrdDeploy(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to deploy Cert Manager CRDs for Application Mobility: %v", err)
+		}
 		if err := modules.IssuerCertService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to deploy Certificate & Issuer for Application Mobility: %v", err)
 		}

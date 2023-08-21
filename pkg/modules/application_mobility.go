@@ -52,6 +52,8 @@ const (
 	VeleroAccessManifest = "velero-secret.yaml"
 	// ResticCrdManifest - filename of restic manifest for app-mobility
 	ResticCrdManifest = "restic.yaml"
+	// CertManagerCrdManifest - filename of Cert Manager crds manisfest for Cert Manager feature
+	CertManagerCrdManifest = "cert-crds.yaml"
 	// CertManagerIssuerCertManifest - filename of the issuer and cert for app-mobility
 	CertManagerIssuerCertManifest = "certificate.yaml"
 
@@ -286,6 +288,41 @@ func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.Op
 		return err
 	}
 
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
+	}
+
+	return nil
+}
+
+// getCertManagerCrdDeploy - applies and deploy Cert Manager CRD manifest
+func getCertManagerCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	certManagerCrdPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, CertManagerCrdManifest)
+	buf, err := os.ReadFile(filepath.Clean(certManagerCrdPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+
+	return yamlString, nil
+}
+
+// CertManagerCrdDeploy - apply and delete Velero crds deployment
+func CertManagerCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+
+	yamlString, err := getCertManagerCrdDeploy(op, cr)
+	if err != nil {
+		return err
+	}
 	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
 	if er != nil {
 		return er
