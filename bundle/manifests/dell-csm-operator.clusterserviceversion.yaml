@@ -798,10 +798,10 @@ metadata:
                     "value": "0"
                   }
                 ],
-                "image": "dellemc/csi-vxflexos:v2.7.0",
+                "image": "dellemc/csi-vxflexos:v2.8.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.7.0",
+              "configVersion": "v2.8.0",
               "controller": {
                 "envs": [
                   {
@@ -813,7 +813,8 @@ metadata:
                 "tolerations": null
               },
               "csiDriverSpec": {
-                "fSGroupPolicy": "File"
+                "fSGroupPolicy": "File",
+                "storageCapacity": true
               },
               "csiDriverType": "powerflex",
               "dnsPolicy": "ClusterFirstWithHostNet",
@@ -827,7 +828,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:3.6.0.6",
+                  "image": "dellemc/sdc:3.6.1",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "sdc"
                 }
@@ -864,7 +865,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:3.6.0.6",
+                  "image": "dellemc/sdc:3.6.1",
                   "name": "sdc-monitor"
                 },
                 {
@@ -2352,7 +2353,7 @@ spec:
     name: csi-unity
   - image: docker.io/dellemc/csi-vxflexos:v2.7.0
     name: csi-vxflexos
-  - image: docker.io/dellemc/sdc:3.6.0.6
+  - image: docker.io/dellemc/sdc:3.6.1
     name: sdc
   - image: docker.io/dellemc/csm-authorization-sidecar:v1.7.0
     name: karavi-authorization-proxy
