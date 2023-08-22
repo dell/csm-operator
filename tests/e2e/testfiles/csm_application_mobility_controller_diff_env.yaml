@@ -29,11 +29,6 @@ spec:
           - name: "APPLICATION_MOBILITY_LICENSE_NAME"
             value: "alt-license"
 
-          # Storage-service ingress configuration
-          # Default value: velero-restic-credentials
-          - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
-            value: "random-credentials" 
-
       # enabled: Enable/Disable cert-manager
       # Allowed values:
       #   true: enable deployment of cert-manager
