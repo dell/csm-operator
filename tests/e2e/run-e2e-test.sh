@@ -25,10 +25,10 @@ fi
 export E2E_VALUES_FILE=$VALUES_FILE
 
 export GO111MODULE=on
-export ACK_GINKGO_DEPRECATIONS=1.16.4
-export ACK_GINKGO_RC=true
+#export ACK_GINKGO_DEPRECATIONS=1.16.4
+#export ACK_GINKGO_RC=true
 
-if ! (go mod vendor && go get -u github.com/onsi/ginkgo/ginkgo); then
+if ! (go mod vendor && go get github.com/onsi/ginkgo/v2); then
     echo "go mod vendor or go get ginkgo error"
     exit 1
 fi

@@ -44,7 +44,7 @@ import (
 	flowcontrolv1beta1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1"
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
 	networkingv1 "k8s.io/client-go/kubernetes/typed/networking/v1"
-	//networkalphav1 "k8s.io/client-go/kubernetes/typed/networking/v1alpha1"
+	networkalphav1 "k8s.io/client-go/kubernetes/typed/networking/v1alpha1"
 	networkingv1beta1 "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
 	nodev1 "k8s.io/client-go/kubernetes/typed/node/v1"
 	nodev1alpha1 "k8s.io/client-go/kubernetes/typed/node/v1alpha1"
@@ -310,6 +310,6 @@ func (c *K8sClient) Discovery() discovery.DiscoveryInterface {
 }
 
 // NetworkingV1alpha1 retrieves the NetworkingV1alpha1Client
-//func (c *K8sClient) NetworkingV1alpha1() networkalphav1.NetworkingV1alpha1Interface {
-	//panic("implement me")
-//}
+func (c *K8sClient) NetworkingV1alpha1() networkalphav1.NetworkingV1alpha1Interface {
+	panic("implement me")
+}
