@@ -6,6 +6,7 @@ spec:
     fsGroupPolicy: ReadWriteOnceWithFSType
     attachRequired: true
     podInfoOnMount: true
+    storageCapacity: true
     volumeLifecycleModes: 
     - Persistent
     - Ephemeral

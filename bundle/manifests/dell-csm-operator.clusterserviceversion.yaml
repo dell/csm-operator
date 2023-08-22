@@ -798,10 +798,10 @@ metadata:
                     "value": "0"
                   }
                 ],
-                "image": "dellemc/csi-vxflexos:v2.7.0",
+                "image": "dellemc/csi-vxflexos:v2.8.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.7.0",
+              "configVersion": "v2.8.0",
               "controller": {
                 "envs": [
                   {
@@ -813,7 +813,8 @@ metadata:
                 "tolerations": null
               },
               "csiDriverSpec": {
-                "fSGroupPolicy": "File"
+                "fSGroupPolicy": "File",
+                "storageCapacity": true
               },
               "csiDriverType": "powerflex",
               "dnsPolicy": "ClusterFirstWithHostNet",

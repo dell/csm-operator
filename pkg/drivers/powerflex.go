@@ -232,6 +232,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	renameSdcEnabled := ""
 	renameSdcPrefix := ""
 	maxVolumesPerNode := ""
+	storageCapacity := "false"
 	nfsAcls := ""
 	externalAscess := ""
 	enableQuota := ""
@@ -265,10 +266,14 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
+	case "CSIDriverSpec":
+		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+			storageCapacity = "true"
+		}
+		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosExternaAccess, externalAscess)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosQuotaEnabled, enableQuota)
-
 	}
 	return yamlString
 }
