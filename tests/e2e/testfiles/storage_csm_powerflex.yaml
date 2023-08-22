@@ -11,6 +11,11 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: true
     configVersion: v2.8.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
@@ -59,6 +64,11 @@ spec:
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
+      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+      # Configure when the storageCapacity is set as "true"
+      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+      #- name: provisioner
+      #  args: ["--capacity-poll-interval=5m"]
 
     controller:
       envs:
