@@ -83,7 +83,7 @@ spec:
                               description: SecretContents contains credentials to access objectstore
                               properties:
                                 aws_access_key_id:
-                                  description: AccessKeyId is a name of key ID to access objectstore
+                                  description: AccessKeyID is a name of key ID to access objectstore
                                   type: string
                                 aws_secret_access_key:
                                   description: AccessKey contains the key to access objectstore
@@ -283,7 +283,7 @@ spec:
                               description: SecretContents contains credentials to access objectstore
                               properties:
                                 aws_access_key_id:
-                                  description: AccessKeyId is a name of key ID to access objectstore
+                                  description: AccessKeyID is a name of key ID to access objectstore
                                   type: string
                                 aws_secret_access_key:
                                   description: AccessKey contains the key to access objectstore
@@ -502,7 +502,7 @@ spec:
                                 description: SecretContents contains credentials to access objectstore
                                 properties:
                                   aws_access_key_id:
-                                    description: AccessKeyId is a name of key ID to access objectstore
+                                    description: AccessKeyID is a name of key ID to access objectstore
                                     type: string
                                   aws_secret_access_key:
                                     description: AccessKey contains the key to access objectstore
@@ -700,7 +700,7 @@ spec:
                               description: SecretContents contains credentials to access objectstore
                               properties:
                                 aws_access_key_id:
-                                  description: AccessKeyId is a name of key ID to access objectstore
+                                  description: AccessKeyID is a name of key ID to access objectstore
                                   type: string
                                 aws_secret_access_key:
                                   description: AccessKey contains the key to access objectstore
@@ -903,7 +903,7 @@ spec:
                                 description: SecretContents contains credentials to access objectstore
                                 properties:
                                   aws_access_key_id:
-                                    description: AccessKeyId is a name of key ID to access objectstore
+                                    description: AccessKeyID is a name of key ID to access objectstore
                                     type: string
                                   aws_secret_access_key:
                                     description: AccessKey contains the key to access objectstore
@@ -1127,7 +1127,7 @@ spec:
                                   description: SecretContents contains credentials to access objectstore
                                   properties:
                                     aws_access_key_id:
-                                      description: AccessKeyId is a name of key ID to access objectstore
+                                      description: AccessKeyID is a name of key ID to access objectstore
                                       type: string
                                     aws_secret_access_key:
                                       description: AccessKey contains the key to access objectstore
@@ -1336,7 +1336,7 @@ spec:
                                   description: SecretContents contains credentials to access objectstore
                                   properties:
                                     aws_access_key_id:
-                                      description: AccessKeyId is a name of key ID to access objectstore
+                                      description: AccessKeyID is a name of key ID to access objectstore
                                       type: string
                                     aws_secret_access_key:
                                       description: AccessKey contains the key to access objectstore
