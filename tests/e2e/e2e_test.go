@@ -80,7 +80,6 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	fmt.Printf("In BeforeSuite\n")
 	moduleEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
@@ -121,7 +120,6 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = Describe("[run-e2e-test] E2E Testing", func() {
-	fmt.Printf("In Describe\n")
 	It("Running all test Given Test Scenarios", func() {
 		for _, test := range testResources {
 			By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
