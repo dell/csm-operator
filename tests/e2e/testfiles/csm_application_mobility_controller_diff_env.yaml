@@ -27,7 +27,7 @@ spec:
           # License for application mobility
           # Default value: license
           - name: "APPLICATION_MOBILITY_LICENSE_NAME"
-            value: "alt-license" 
+            value: "license" 
 
       # enabled: Enable/Disable cert-manager
       # Allowed values:

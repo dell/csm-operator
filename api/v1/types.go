@@ -369,4 +369,3 @@ type Credkey struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKey"
 	AccessKey string `json:"aws_secret_access_key,omitempty" yaml:"aws_secret_access_key,omitempty"`
 }
-

@@ -69,7 +69,7 @@ const (
 	VeleroBucketName = "<BUCKET_NAME>"
 	//VolSnapshotlocation - name for Volume Snapshot location
 	VolSnapshotlocation = "<VOL_SNAPSHOT_LOCATION_NAME>"
-	//BackupStorageURL - cloud url for backup storage location 
+	//BackupStorageURL - cloud url for backup storage location
 	BackupStorageURL = "<BACKUP_STORAGE_URL>"
 
 	// VeleroNamespace - namespace Velero is installed in
@@ -92,7 +92,6 @@ const (
 	AKeyID = "<KEY_ID>"
 	//AKey - contains the aws access key
 	AKey = "<KEY>"
-
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
 	AppMobCtrlMgrComponent = "application-mobility-controller-manager"
@@ -392,7 +391,6 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	accessID := ""
 	access := ""
 
-
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
@@ -415,7 +413,6 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
 	yamlString = strings.ReplaceAll(yamlString, AKeyID, accessID)
 	yamlString = strings.ReplaceAll(yamlString, AKey, access)
-
 
 	return yamlString, nil
 }
@@ -723,7 +720,6 @@ func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	veleroNS := ""
 	veleroImgPullPolicy := ""
 	veleroImg := ""
-	credName := ""
 	objectSecretName := ""
 
 	for _, component := range appMob.Components {
@@ -737,9 +733,6 @@ func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 			for _, env := range component.Envs {
 				if strings.Contains(VeleroNamespace, env.Name) {
 					veleroNS = env.Value
-				}
-				if strings.Contains(VeleroAccess, env.Name) {
-					credName = env.Value
 				}
 				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
 					objectSecretName = env.Value
