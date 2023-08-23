@@ -42,6 +42,18 @@ const (
 
 	// CsiPrefixRenameSdc - String to rename SDC
 	CsiPrefixRenameSdc = "<X_CSI_RENAME_SDC_PREFIX>"
+
+	// CsiVxflexosMaxVolumesPerNode - Max volumes that the controller could schedule on a node
+	CsiVxflexosMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
+
+	// CsiVxflexosNfsAcls - Enables setting permissions on NFS mount directory
+	CsiVxflexosNfsAcls = "<X_CSI_NFS_ACLS>"
+
+	// CsiVxflexosExternaAccess - Specify additional entries for host to access NFS volumes
+	CsiVxflexosExternaAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
+
+	// CsiVxflexosQuotaEnabled - Flag to enable/disable setting of quota for NFS volumes
+	CsiVxflexosQuotaEnabled = "<X_CSI_QUOTA_ENABLED>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -219,6 +231,11 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	approveSdcEnabled := ""
 	renameSdcEnabled := ""
 	renameSdcPrefix := ""
+	maxVolumesPerNode := ""
+	storageCapacity := "false"
+	nfsAcls := ""
+	externalAscess := ""
+	enableQuota := ""
 
 	switch fileType {
 	case "Node":
@@ -232,10 +249,31 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_RENAME_SDC_PREFIX" {
 				renameSdcPrefix = env.Value
 			}
+			if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
+				maxVolumesPerNode = env.Value
+			}
+			if env.Name == "X_CSI_NFS_ACLS" {
+				nfsAcls = env.Value
+			}
+			if env.Name == "X_CSI_POWERFLEX_EXTERNAL_ACCESS" {
+				externalAscess = env.Value
+			}
+			if env.Name == "X_CSI_QUOTA_ENABLED" {
+				enableQuota = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
+		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
+	case "CSIDriverSpec":
+		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+			storageCapacity = "true"
+		}
+		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
+		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosNfsAcls, nfsAcls)
+		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosExternaAccess, externalAscess)
+		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosQuotaEnabled, enableQuota)
 	}
 	return yamlString
 }

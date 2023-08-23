@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "None"
-    configVersion: v2.7.0
+    configVersion: v2.8.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -35,13 +35,19 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
+        - name: X_CSI_NFS_ACLS
+          value: "0777"
+        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+          value: ""
+        - name: X_CSI_QUOTA_ENABLED
+          value: "false"
 
 
     sideCars:
     # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:3.6.0.6
+        image: dellemc/sdc:3.6.1
         envs:
         - name: HOST_PID
           value: "1"
@@ -122,6 +128,12 @@ spec:
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
 
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "1"
+
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -148,7 +160,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:3.6.0.6
+      - image: dellemc/sdc:3.6.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:

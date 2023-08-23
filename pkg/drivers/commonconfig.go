@@ -396,9 +396,12 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "CSIDriverSpec")
 	case "isilon":
 		YamlString = ModifyPowerScaleCR(YamlString, cr, "CSIDriverSpec")
-	}
-	if cr.Spec.Driver.CSIDriverType == "powermax" {
+	case "powermax":
 		YamlString = ModifyPowermaxCR(YamlString, cr, "CSIDriverSpec")
+	case "powerflex":
+		YamlString = ModifyPowerflexCR(YamlString, cr, "CSIDriverSpec")
+	case "unity":
+		YamlString = ModifyUnityCR(YamlString, cr, "CSIDriverSpec")
 	}
 	err = yaml.Unmarshal([]byte(YamlString), &csidriver)
 	if err != nil {

@@ -53,6 +53,9 @@ const (
 	CSIPmaxVsphereHostname = "<X_CSI_VSPHERE_HOSTNAME>"
 	CSIPmaxVsphereHost     = "<X_CSI_VCENTER_HOST>"
 	CSIPmaxChap            = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
+
+	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
+	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
 )
 
 // PrecheckPowerMax do input validation
@@ -114,7 +117,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	nodeChap := "false"
 	ctrlHealthMonitor := "false"
 	nodeHealthMonitor := "false"
-	storageCapacity := "false"
+	storageCapacity := "true"
+	maxVolumesPerNode := ""
 
 	switch fileType {
 	case "Node":
@@ -169,6 +173,9 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 			if env.Name == "X_CSI_TOPOLOGY_CONTROL_ENABLED" {
 				nodeTopology = env.Value
 			}
+			if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
+				maxVolumesPerNode = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxManagedArray, managedArray)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxEndpoint, endpoint)
@@ -185,6 +192,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHostname, vsphereHostname)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHost, vsphereHost)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
+		yamlString = strings.ReplaceAll(yamlString, CsiPmaxMaxVolumesPerNode, maxVolumesPerNode)
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "X_CSI_MANAGED_ARRAYS" {

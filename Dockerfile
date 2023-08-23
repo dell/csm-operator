@@ -35,14 +35,8 @@ COPY tests/ tests/
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
-# Tag corresponding to digest sha256:82d08fba0a8322ff0c39934efe6972ccbf152dfb4639fb7a5765192f674e3eaa is 8.8-860
-FROM registry.access.redhat.com/ubi8/ubi-minimal@sha256:82d08fba0a8322ff0c39934efe6972ccbf152dfb4639fb7a5765192f674e3eaa
-
-RUN microdnf install yum \
-    && yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical \
-    && yum clean all \
-    && rpm -e yum \
-    && microdnf clean all
+# Tag corresponding to digest sha256:18a01cb5c53560ca2295e8a218454fe33b330ad6fac0d0ea43a513cd93787b7f for ubi9 micro is 9.2-9
+FROM registry.access.redhat.com/ubi9/ubi-micro@sha256:18a01cb5c53560ca2295e8a218454fe33b330ad6fac0d0ea43a513cd93787b7f
 
 ENV USER_UID=1001 \
     USER_NAME=dell-csm-operator
@@ -53,7 +47,7 @@ LABEL vendor="Dell Inc." \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
     description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
-    version="1.2.0" \
+    version="1.3.0" \
     license="Dell CSM Operator Apache License"
 
 # copy the licenses folder
