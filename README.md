@@ -87,6 +87,9 @@ To uninstall the Operator, execute `bash scripts/uninstall.sh`
  
   To uninstall the Operator, execute `bash scripts/uninstall_olm.sh`
 
+### Operator install using offline bundle on a cluster without OLM
+For Non OLM based install of Operator using offline bundle please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/#offline-bundle-installation-on-a-cluster-without-olm](https://dell.github.io/csm-docs/docs/deployment/csmoperator/#offline-bundle-installation-on-a-cluster-without-olm)
+
 
 ## Install CSI Drivers and CSM Modules
 To install CSI drivers and CSM modules using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/)
