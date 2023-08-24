@@ -1,4 +1,4 @@
-- scenario: "Install App Mobility with Velero and Cert-Manager already installed"
+- scenario: "Install App Mobility with all features enabled while Velero and Cert-Manager already installed"
   paths: 
     - "testfiles/csm_application_mobility_vanilla.yaml"
   modules:
@@ -20,19 +20,17 @@
     run: 
       - sh verify-app-mobility.sh
 
-- scenario: "Install App Mobility Controller with different env variables than default"
+- scenario: "Install App Mobility Controller manager with different env variables along with velero"
   paths: 
     - "testfiles/csm_application_mobility_controller_diff_env.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install [velero]"
     - "Install [cert-manager]"
     - "Apply custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
     #- "Run custom test"
     # Last two steps perform Clean Up
-    - "Uninstall [velero]"
     - "Uninstall [cert-manager]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
@@ -44,63 +42,29 @@
       
 - scenario: "Install App Mobility Velero with different env variables than default"
   paths: 
+    - "testfiles/application-mobility-templates/alt-velero-secret.yaml"
     - "testfiles/csm_application_mobility_velero_diff_env.yaml"
   modules:
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    
     - "Install [cert-manager]"
     - "Apply custom resource [1]"
-    - "Validate [application-mobility] module from CR [1] is installed"
+    - "Apply custom resource [2]"
+    - "Validate [application-mobility] module from CR [2] is installed"
     #- "Run custom test"
     # Last two steps perform Clean Up
     - "Uninstall [cert-manager]"
-    - "Enable forceRemoveModule on CR [1]"
+    - "Enable forceRemoveModule on CR [2]"
     - "Delete custom resource [1]"
+    - "Delete custom resource [2]"
   customTest:
     # name of custom test to run
     name: verify app-mobility
     run: 
       - sh verify-app-mobility.sh
 
-- scenario: "Install App Mobility with Cert-Manager"
-  paths: 
-    - "testfiles/csm_application_mobility_cert_manager.yaml"
-  modules:
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install [velero]"
-    - "Apply custom resource [1]"
-    - "Validate [application-mobility] module from CR [1] is installed"
-    #- "Run custom test"
-    # Last two steps perform Clean Up
-    - "Uninstall [velero]"
-    - "Enable forceRemoveModule on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    # name of custom test to run
-    name: verify app-mobility
-    run: 
-      - sh verify-app-mobility.sh
-
-- scenario: "Install App Mobility with Cert-Manager and Velero"
-  paths: 
-    - "testfiles/csm_application_mobility_velero_with_cert.yaml"
-  modules: 
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate [application-mobility] module from CR [1] is installed"
-    #- "Run custom test"
-    # Last two steps perform Clean Up
-    - "Enable forceRemoveModule on CR [1]"
-    - "Delete custom resource [1]"
-  customTest:
-    # name of custom test to run
-    name: verify app-mobility
-    run: 
-      - sh verify-app-mobility.sh
-
-- scenario: "Install App Mobility with velero when cert-manager is already installed"
+- scenario: "Install App Mobility with velero not installed and cert-manager already installed on machine"
   paths:
     - "testfiles/csm_application_mobility_test_velero.yaml"
   modules:
@@ -117,16 +81,13 @@
   customTest:
     # name of custom test to run
     name: verify app-mobility
-    # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
-    # Example:
     #   ./hello_world.sh
     run: 
       - sh verify-app-mobility.sh
 
 - scenario: "Install App Mobility with powerflex driver"
   paths:
-    - "testfiles/csm_application_mobility_velero_with_cert.yaml"
+    - "testfiles/csm_application_mobility_vanilla.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
   modules:
   steps:
@@ -146,10 +107,6 @@
   customTest:
     # name of the custom test to run
     name: verify app-mobility
-    # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
-    # Example:
     #   ./hello_world.sh
     run: 
       - sh verify-app-mobility.sh
-
