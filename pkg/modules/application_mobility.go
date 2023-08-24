@@ -135,11 +135,16 @@ func getVeleroCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule
 
 // VeleroCrdDeploy - apply and delete Velero crds deployment
 func VeleroCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	yamlString, err := getVeleroCrdDeploy(op, cr)
 	if err != nil {
 		return err
 	}
+
+	appMob, err := getAppMobilityModule(cr)
+	if appMob.ForceRemoveCRDs == false && isDeleting == true {
+		return nil
+	}
+
 	err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
 	if err != nil {
 		return err
@@ -172,10 +177,16 @@ func getAppMobCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule
 
 // AppMobCrdDeploy - apply and delete Velero crds deployment
 func AppMobCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	yamlString, err := getAppMobCrdDeploy(op, cr)
 	if err != nil {
 		return err
+	}
+
+	fmt.Printf("[AppMobCrdDeploy] cr: %+v\n", cr)
+
+	appMob, err := getAppMobilityModule(cr)
+	if appMob.ForceRemoveCRDs == false && isDeleting == true {
+		return nil
 	}
 
 	err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)

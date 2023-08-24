@@ -1751,6 +1751,10 @@ spec:
                       description: Enabled is used to indicate whether or not to deploy
                         a module
                       type: boolean
+                    forceRemoveCRDs:
+                      description: ForceRemoveModule is the boolean flag used to remove
+                        authorization proxy server deployment when CR is deleted
+                      type: boolean
                     forceRemoveModule:
                       description: ForceRemoveModule is the boolean flag used to remove
                         authorization proxy server deployment when CR is deleted

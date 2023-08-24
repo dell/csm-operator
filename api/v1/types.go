@@ -149,6 +149,10 @@ type Module struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Module"
 	ForceRemoveModule bool `json:"forceRemoveModule,omitempty" yaml:"forceRemoveModule"`
 
+	// ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Module"
+	ForceRemoveCRDs bool `json:"forceRemoveCRDs,omitempty" yaml:"forceRemoveCRDs"`
+
 	// InitContainer is the specification for Module InitContainer
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="InitContainer"
