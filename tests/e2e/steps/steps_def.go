@@ -305,9 +305,6 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 
 			case csmv1.Resiliency:
 				return step.validateResiliencyNotInstalled(cr)
-
-				//case csmv1.ApplicationMobility:
-				//  return step.validateAppMobNotInstalled(cr)
 			}
 		}
 	}
@@ -863,7 +860,8 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 }
 
 func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error {
-	time.Sleep(5 * time.Second)
+	//providing additional time to get appmob pods up to running
+	time.Sleep(10 * time.Second)
 	instance := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -890,7 +888,7 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 	}
 
 	// provide few seconds for cluster to settle down
-	time.Sleep(20 * time.Second)
+	time.Sleep(10 * time.Second)
 	return nil
 }
 
