@@ -76,11 +76,7 @@ spec:
           
           # Name of the backup storage url
           # This field has to be changed to a functional backup storage url 
-<<<<<<< HEAD
-          # Default value: existing-cred
-=======
           # Default value: localhost:8000
->>>>>>> application-mobility
           - name: "BACKUP_STORAGE_URL"
             value: "localhost:8000"
 
@@ -98,13 +94,8 @@ spec:
             name: cloud-creds
             #Specify the object store access credentials to be stored in a secret with key "cloud".
             secretContents: 
-<<<<<<< HEAD
               aws_access_key_id: keyid
               aws_secret_access_key: key123 
-=======
-              aws_access_key_id: #Provide the access key id here
-              aws_secret_access_key: #provide the access key here 
->>>>>>> application-mobility
               
 
     # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
@@ -116,10 +107,4 @@ spec:
 
         #initContainer image for the configuration-provider - aws 
       - name: velero-plugin-for-aws
-<<<<<<< HEAD
         image: velero/velero-plugin-for-aws:v1.5.0
-=======
-        image: velero/velero-plugin-for-aws:v1.5.0
-
-        
->>>>>>> application-mobility
