@@ -1,6 +1,6 @@
 module github.com/dell/csm-operator
 
-go 1.20
+go 1.21
 
 require (
 	github.com/go-yaml/yaml v2.1.0+incompatible
@@ -8,6 +8,7 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/mod v0.8.0
 	k8s.io/api v0.23.4
+	k8s.io/apiextensions-apiserver v0.23.4
 	k8s.io/apimachinery v0.23.4
 	k8s.io/client-go v0.23.4
 	sigs.k8s.io/controller-runtime v0.11.1
@@ -64,7 +65,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.23.4 // indirect
 	k8s.io/component-base v0.23.4 // indirect
 	k8s.io/klog/v2 v2.40.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
