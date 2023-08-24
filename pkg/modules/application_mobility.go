@@ -44,6 +44,8 @@ const (
 	VeleroManifest = "velero-deployment.yaml"
 	// AppMobCertManagerManifest - filename of Cert-manager manifest for app-mobility
 	AppMobCertManagerManifest = "cert-manager.yaml"
+	// DefaultImagePullPolicy - default image pull policy in yamls
+	ControllerImagePullPolicy = "<CONTROLLER_IMAGE_PULLPOLICY>"
 	//UseVolSnapshotManifest - filename of use volume snapshot manifest for app-mobility
 	UseVolSnapshotManifest = "velero-volumesnapshotlocation.yaml"
 	//CleanupCrdManifest - filename of Cleanup Crds manifest for app-mobility
@@ -203,6 +205,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 	yamlString = string(buf)
 	controllerImage := ""
+	controllerImagePullPolicy := ""
 	licenseName := ""
 	replicaCount := ""
 	objectSecretName := ""
@@ -212,6 +215,9 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 			if component.Image != "" {
 				controllerImage = string(component.Image)
 			}
+        		if string(component.ImagePullPolicy) != "" {
+				controllerImagePullPolicy = string(component.ImagePullPolicy)
+        		}
 			for _, env := range component.Envs {
 				if strings.Contains(AppMobLicenseName, env.Name) {
 					licenseName = env.Value
@@ -239,6 +245,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, ControllerImg, controllerImage)
+	yamlString = strings.ReplaceAll(yamlString, ControllerImagePullPolicy, controllerImagePullPolicy)
 	yamlString = strings.ReplaceAll(yamlString, AppMobLicenseName, licenseName)
 	yamlString = strings.ReplaceAll(yamlString, AppMobReplicaCount, replicaCount)
 
