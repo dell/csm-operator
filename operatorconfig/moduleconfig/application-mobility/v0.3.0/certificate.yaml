@@ -12,7 +12,7 @@ metadata:
   annotations:
   generation: 1
   labels:
-  name: appmob-serving-cert
+  name: <NAMESPACE>-serving-cert
   namespace: <NAMESPACE>
 spec:
   dnsNames:
