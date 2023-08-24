@@ -35,13 +35,19 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
+        - name: X_CSI_NFS_ACLS
+          value: "0777"
+        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+          value: ""
+        - name: X_CSI_QUOTA_ENABLED
+          value: "false"
 
 
     sideCars:
     # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:3.6.0.6
+        image: dellemc/sdc:3.6.1
         envs:
         - name: HOST_PID
           value: "1"
@@ -154,7 +160,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:3.6.0.6
+      - image: dellemc/sdc:3.6.1
         imagePullPolicy: Never
         name: sdc
         envs:

@@ -363,7 +363,7 @@ type Credential struct {
 // Credkey struct
 type Credkey struct {
 	// AccessKeyID is a name of key ID to access objectstore
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKeyId"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKeyID"
 	AccessKeyID string `json:"aws_access_key_id,omitempty" yaml:"aws_access_key_id,omitempty"`
 	// AccessKey contains the key to access objectstore
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKey"

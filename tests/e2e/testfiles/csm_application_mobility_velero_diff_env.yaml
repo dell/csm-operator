@@ -61,7 +61,7 @@ spec:
           # Namespace for Velero installation
           # Default value: application-mobility
           - name: "VELERO_NAMESPACE"
-            value: "velero"
+            value: "application-mobility"
 
           # Based on the objectstore being used, the velero plugin and its configuration may need to change!
           # default value: aws

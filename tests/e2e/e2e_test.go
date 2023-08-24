@@ -83,7 +83,7 @@ var _ = BeforeSuite(func() {
 	moduleEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
-	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must both be set.")
+	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must be set.")
 
 	for _, moduleEnvVar := range moduleEnvVars {
 		enabled := os.Getenv(moduleEnvVar)
@@ -103,13 +103,13 @@ var _ = BeforeSuite(func() {
 	By("Getting a k8s client")
 	ctrlClient, err := client.New(config.GetConfigOrDie(), client.Options{})
 	if err != nil {
-		framework.Failf("Failed to create controll runtime client: %v", err)
+		framework.Failf("Failed to create control runtime client: %v", err)
 	}
 	csmv1.AddToScheme(ctrlClient.Scheme())
 
 	clientSet, err := kubernetes.NewForConfig(config.GetConfigOrDie())
 	if err != nil {
-		framework.Failf("Failed to create kubernetes  clientset : %v", err)
+		framework.Failf("Failed to create kubernetes clientset : %v", err)
 	}
 
 	stepRunner = &step.Runner{}
@@ -119,7 +119,7 @@ var _ = BeforeSuite(func() {
 
 })
 
-var _ = Describe("[run-e2e-test]E2E Testing", func() {
+var _ = Describe("[run-e2e-test] E2E Testing", func() {
 	It("Running all test Given Test Scenarios", func() {
 		for _, test := range testResources {
 			By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))

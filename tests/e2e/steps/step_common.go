@@ -349,7 +349,7 @@ func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interfa
 		allPods = append(allPods, somePods[:]...)
 	}
 
-	// update this if we expect more pods eg restic
+	// once we have status in csm module objects, update this code
 	if len(allPods) < minNumPods {
 		return fmt.Errorf("expected at least %d pods in namespaces %+v but got %d pods", minNumPods, nsToCheck, len(allPods))
 	}

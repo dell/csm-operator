@@ -38,10 +38,14 @@ const (
 	AppMobMetricService = "app-mobility-controller-manager-metrics-service.yaml"
 	// AppMobWebhookService - filename of Webhook manifest for app-mobility
 	AppMobWebhookService = "app-mobility-webhook-service.yaml"
+	// AppMobCrds - name of app-mobility crd manifest yaml
+	AppMobCrds = "app-mobility-crds.yaml"
 	// VeleroManifest - filename of Velero manifest for app-mobility
 	VeleroManifest = "velero-deployment.yaml"
 	// AppMobCertManagerManifest - filename of Cert-manager manifest for app-mobility
 	AppMobCertManagerManifest = "cert-manager.yaml"
+	// ControllerImagePullPolicy - default image pull policy in yamls
+	ControllerImagePullPolicy = "<CONTROLLER_IMAGE_PULLPOLICY>"
 	//UseVolSnapshotManifest - filename of use volume snapshot manifest for app-mobility
 	UseVolSnapshotManifest = "velero-volumesnapshotlocation.yaml"
 	//CleanupCrdManifest - filename of Cleanup Crds manifest for app-mobility
@@ -141,6 +145,43 @@ func VeleroCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
 	if er != nil {
 		return er
+
+	return nil
+}
+
+// getAppMobCrdDeploy - apply and deploy app mobility crd manifest
+func getAppMobCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	appMobCrdPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, AppMobCrds)
+	buf, err := os.ReadFile(filepath.Clean(appMobCrdPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+
+	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
+
+	return yamlString, nil
+}
+
+// AppMobCrdDeploy - apply and delete Velero crds deployment
+func AppMobCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+
+	yamlString, err := getAppMobCrdDeploy(op, cr)
+	if err != nil {
+		return err
+	}
+
+	err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -163,15 +204,15 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 	yamlString = string(buf)
 	controllerImage := ""
+	controllerImagePullPolicy := ""
 	licenseName := ""
 	replicaCount := ""
 	objectSecretName := ""
 
 	for _, component := range appMob.Components {
 		if component.Name == AppMobCtrlMgrComponent {
-			if component.Image != "" {
-				controllerImage = string(component.Image)
-			}
+			controllerImage = string(component.Image)
+			controllerImagePullPolicy = string(component.ImagePullPolicy)
 			for _, env := range component.Envs {
 				if strings.Contains(AppMobLicenseName, env.Name) {
 					licenseName = env.Value
@@ -199,6 +240,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, ControllerImg, controllerImage)
+	yamlString = strings.ReplaceAll(yamlString, ControllerImagePullPolicy, controllerImagePullPolicy)
 	yamlString = strings.ReplaceAll(yamlString, AppMobLicenseName, licenseName)
 	yamlString = strings.ReplaceAll(yamlString, AppMobReplicaCount, replicaCount)
 
@@ -323,7 +365,7 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 // AppMobilityCertManager - Install/Delete cert-manager
 func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 
-	yamlString, err := getAppMobCertManager(op, cr)
+	yamlString, err := getCertManager(op, cr)
 	if err != nil {
 		return err
 	}
@@ -334,23 +376,6 @@ func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.Opera
 	}
 
 	return nil
-}
-
-// getAppMobilityCertManager - gets the cert-manager manifest from common
-func getAppMobCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	yamlString := ""
-
-	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/%s", op.ConfigDirectory, AppMobCertManagerManifest)
-	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
-	if err != nil {
-		return yamlString, err
-	}
-
-	yamlString = string(buf)
-	appMobNamespace := cr.Namespace
-	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, appMobNamespace)
-
-	return yamlString, nil
 }
 
 // CreateVeleroAccess - Install/Delete velero-secret yaml from operator config
