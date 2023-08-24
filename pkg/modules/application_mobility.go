@@ -145,7 +145,7 @@ func VeleroCrdDeploy(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
 	if er != nil {
 		return er
-
+	}
 	return nil
 }
 
