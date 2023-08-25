@@ -68,6 +68,13 @@ rules:
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["create", "list", "watch", "delete", "update"]
+  # Permissions for CSIStorageCapacity
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csistoragecapacities"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -141,9 +148,20 @@ spec:
             - "--v=5"
             - "--default-fstype=ext4"
             - "--extra-create-metadata"
+            - "--enable-capacity=true"
+            - "--capacity-ownerref-level=2"
+            - "--capacity-poll-interval=5m"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
@@ -211,6 +229,12 @@ spec:
             - name: SSL_CERT_DIR
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
+              value: false
+            - name: X_CSI_NFS_ACLS
+              value: "0777"
+            - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+              value: ""
+            - name: X_CSI_QUOTA_ENABLED
               value: false
           volumeMounts:
             - name: socket-dir
