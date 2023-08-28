@@ -37,6 +37,7 @@ import (
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/controllers"
 	"github.com/dell/csm-operator/core"
@@ -47,7 +48,6 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	//+kubebuilder:scaffold:imports
@@ -61,7 +61,7 @@ const (
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
 	K8sMinimumSupportedVersion = "1.21"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.27"
+	K8sMaximumSupportedVersion = "1.28"
 )
 
 var (
