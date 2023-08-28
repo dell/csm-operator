@@ -281,6 +281,111 @@ func TestControllerManagerMetricService(t *testing.T) {
 		})
 	}
 }
+func TestApplicationMobilityIssuerCertService(t *testing.T) {
+	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
+		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			licenceCred := getSecret(customResource.Namespace, "license")
+
+			tmpCR := customResource
+			appMobility := tmpCR.Spec.Modules[0]
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+				return clusterClient, nil
+			}
+
+			return true, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"Fail - unsupported app-mobility version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			appMobility := tmpCR.Spec.Modules[0]
+			appMobility.ConfigVersion = "v10.10.10"
+			licenceCred := getSecret(customResource.Namespace, "license")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
+			}
+
+			return false, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"Success - working app-mobility version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			appMobility := tmpCR.Spec.Modules[0]
+			appMobility.ConfigVersion = "v0.3.0"
+			licenceCred := getSecret(customResource.Namespace, "license")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
+			}
+
+			return true, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"failed to find secret": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			appMobility := tmpCR.Spec.Modules[0]
+			licenceCred := getSecret(customResource.Namespace, "licenses")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
+			}
+
+			return false, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			defer func() {
+				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+			}()
+			success, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
+			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			utils.NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
+				return nil, nil
+			}
+			fakeReconcile := utils.FakeReconcileCSM{
+				Client:    sourceClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+			err := IssuerCertService(context.TODO(), operatorConfig, appMobility, tmpCR, &fakeReconcile)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
 func TestApplicationMobilityPrecheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
