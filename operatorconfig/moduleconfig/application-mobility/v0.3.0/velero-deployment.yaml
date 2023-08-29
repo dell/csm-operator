@@ -121,8 +121,10 @@ spec:
     metadata:
       labels:
         name: application-mobility-velero
+        csm: application-mobility
         app.kubernetes.io/name: application-mobility-velero
         app.kubernetes.io/instance: application-mobility
+
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8085"
