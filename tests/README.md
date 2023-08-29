@@ -32,7 +32,7 @@ go get github.com/onsi/gomega/...
 
 To run e2e test, go through the following steps:
 
-- Ensure you meet all [prerequisites](#prerequisite).
+- Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
 - Set your environment variables in the file `env-e2e-test.sh`. You MUST set `CERT-CSI` to point to a cert-csi executable.
 - If you want to test any modules, uncomment their environment variables in `env-e2e-test.sh`.
