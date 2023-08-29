@@ -86,13 +86,13 @@ const (
 	VeleroImagePullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
 	// VeleroAccess  -  Secret name for velero
 	VeleroAccess = "<VELERO_ACCESS>"
-	//InitContainerName - Name of init container for velero - aws
+	//AWSInitContainerName - Name of init container for velero - aws
 	AWSInitContainerName = "<AWS_INIT_CONTAINER_NAME>"
-	//InitContainerImage - Image of init container for velero -aws
+	//AWSInitContainerImage - Image of init container for velero -aws
 	AWSInitContainerImage = "<AWS_INIT_CONTAINER_IMAGE>"
-	//InitContainerName - Name of init container for velero - dell
+	//DELLInitContainerName - Name of init container for velero - dell
 	DELLInitContainerName = "<DELL_INIT_CONTAINER_NAME>"
-	//InitContainerImage - Image of init container for velero - dell
+	//DELLInitContainerImage - Image of init container for velero - dell
 	DELLInitContainerImage = "<DELL_INIT_CONTAINER_IMAGE>"
 	//AccessContents - contents of the object store secret
 	AccessContents = "<CRED_CONTENTS>"

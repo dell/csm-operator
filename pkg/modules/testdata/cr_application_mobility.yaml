@@ -27,12 +27,7 @@ spec:
           # License for application mobility
           # Default value: license
           - name: "APPLICATION_MOBILITY_LICENSE_NAME"
-            value: "license"
-
-          # Storage-service ingress configuration
-          # Default value: EMPTY
-          - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
-            value: "cloud-credentials" 
+            value: "license" 
 
       # enabled: Enable/Disable cert-manager
       # Allowed values:
@@ -48,8 +43,8 @@ spec:
         enabled: true
         useVolumeSnapshot: true
         cleanUpCRDs: true
-        # enabled: Enable/Disable Velero and Restic Services
-        deployRestic: true  
+        # enabled: Enable/Disable node-agent service
+        deployNodeAgent: true
         envs:
           # Backup storage location name
           # Allowed values: string
@@ -59,9 +54,9 @@ spec:
           
           # Velero bucket name
           # Allowed values: string
-          # Default value: default
+          # Default value: my-bucket
           - name: "BUCKET_NAME"
-            value: "velero-bucket"
+            value: "my-bucket"
 
           # Namespace for Velero installation
           # Default value: application-mobility
@@ -69,34 +64,49 @@ spec:
             value: "application-mobility"
 
           # Based on the objectstore being used, the velero plugin and its configuration may need to change!
-          # default value: csi. Accepted values are csi, aws
-          - name: "PROVIDER"
-            value: "csi"
+          # default value: aws
+          - name: "CONFIGURATION_PROVIDER"
+            value: "aws"
 
-          # name is the name of the volume snapshot location where snapshots are being taken. Required.
-          # Volume-snapshot-Location Provider will be CONFIG_PROVIDER
+          # Name of the volume snapshot location where snapshots are being taken. Required.
+          # Volume-snapshot-Location Provider will be same as CONFIG_PROVIDER
           # Default value : default
           - name: "VOL_SNAPSHOT_LOCATION_NAME"
             value: "default"
-            
+          
+          # Name of the backup storage url
+          # This field has to be changed to a functional backup storage url 
+          # Default value: localhost:8000
+          - name: "BACKUP_STORAGE_URL"
+            value: "localhost:8000"
+
+          # Name of the secret in velero namespace that has credentials to access object store
+          # We can leave the field empty if there no existing secret in velero installed namespace 
+          # Default value: existing-cred
+          - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
+            value: "existing-cred"
+
+        #If velero is not already present in cluster, set enabled to true to create a secret. 
+        #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.   
         credentials:
           - enabled: true  
-            #Optionally, specify the name to be used for secret that will be created to hold object store credentials. Used in conjunction with secretContents.
+            #Specify the name to be used for secret that will be created to hold object store credentials.
             name: cloud-creds
-            #Optionally, specify the object store access credentials to be stored in a secret with key "cloud". Either this or existingSecret should be provided.
+            #Specify the object store access credentials to be stored in a secret with key "cloud".
             secretContents: 
-              #cloud: |
-              #  [default]
-              #  aws_access_key_id=access_key
-              #  aws_secret_access_key=secret_access_key
+              aws_access_key_id: #Provide the access key id here
+              aws_secret_access_key: #provide the access key here 
+              
 
-    # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
+    # Init containers to be added to the Velero deployment's pod spec.
     # If the value is a string then it is evaluated as a template.
     - initContainer:
-        #initContainer image for the configuration-provider - csi 
+        #initContainer image for the dell velero plugin
       - name: dell-custom-velero-plugin
-        image: dellemc/csm-application-mobility-velero-plugin:v0.1.0
+        image: dellemc/csm-application-mobility-velero-plugin:latest
 
-        #initContainer image for the configuration-provider - aws 
+        #initContainer image for the configuration provider aws
       - name: velero-plugin-for-aws
         image: velero/velero-plugin-for-aws:v1.5.0
+
+        
