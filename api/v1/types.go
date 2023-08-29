@@ -323,9 +323,9 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ComponentCred for velero component"
 	ComponentCred []Credential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
 
-	//DeployRestic is to enable/disable restic services
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Deploy Restic for Application Mobility"
-	DeployRestic bool `json:"deployRestic,omitempty" yaml:"deployRestic,omitempty"`
+	//DeployNodeAgent is to enable/disable node-agent services
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Deploy node-agent for Application Mobility"
+	DeployNodeAgent bool `json:"deployNodeAgent,omitempty" yaml:"deployNodeAgent,omitempty"`
 }
 
 // SnapshotClass struct
