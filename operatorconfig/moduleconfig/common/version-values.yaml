@@ -17,6 +17,9 @@ powerscale:
       resiliency: "v1.7.0"
 powerflex:
   # List of Driver versions and modules that supports the version
+  v2.5.0:
+      authorization: "v1.5.0"
+      observability: "v1.4.0"
   v2.6.0:
       authorization: "v1.6.0"
       observability: "v1.5.0"
