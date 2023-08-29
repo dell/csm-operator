@@ -15,6 +15,7 @@ package clientgoclient
 import (
 	"k8s.io/client-go/discovery"
 	admissionregistrationv1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1"
+	admissionregistrationv1alpha1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1alpha1"
 	admissionregistrationv1beta1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
 	internalv1alpha1 "k8s.io/client-go/kubernetes/typed/apiserverinternal/v1alpha1"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
@@ -22,6 +23,7 @@ import (
 	appsv1beta2 "k8s.io/client-go/kubernetes/typed/apps/v1beta2"
 	authenticationv1 "k8s.io/client-go/kubernetes/typed/authentication/v1"
 	authenticationv1beta1 "k8s.io/client-go/kubernetes/typed/authentication/v1beta1"
+	authenticationv1alpha1 "k8s.io/client-go/kubernetes/typed/authentication/v1alpha1"
 	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	authorizationv1beta1 "k8s.io/client-go/kubernetes/typed/authorization/v1beta1"
 	autoscalingv1 "k8s.io/client-go/kubernetes/typed/autoscaling/v1"
@@ -32,6 +34,7 @@ import (
 	batchv1beta1 "k8s.io/client-go/kubernetes/typed/batch/v1beta1"
 	certificatesv1 "k8s.io/client-go/kubernetes/typed/certificates/v1"
 	certificatesv1beta1 "k8s.io/client-go/kubernetes/typed/certificates/v1beta1"
+	certificatesv1alpha1 "k8s.io/client-go/kubernetes/typed/certificates/v1alpha1"
 	coordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	coordinationv1beta1 "k8s.io/client-go/kubernetes/typed/coordination/v1beta1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -43,8 +46,10 @@ import (
 	flowcontrolv1alpha1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1alpha1"
 	flowcontrolv1beta1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1"
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
+	flowcontrolv1beta3 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3"
 	networkingv1 "k8s.io/client-go/kubernetes/typed/networking/v1"
 	networkingv1beta1 "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
+	networkingv1alpha1 "k8s.io/client-go/kubernetes/typed/networking/v1alpha1"
 	nodev1 "k8s.io/client-go/kubernetes/typed/node/v1"
 	nodev1alpha1 "k8s.io/client-go/kubernetes/typed/node/v1alpha1"
 	nodev1beta1 "k8s.io/client-go/kubernetes/typed/node/v1beta1"
@@ -53,6 +58,7 @@ import (
 	rbacv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	rbacv1alpha1 "k8s.io/client-go/kubernetes/typed/rbac/v1alpha1"
 	rbacv1beta1 "k8s.io/client-go/kubernetes/typed/rbac/v1beta1"
+	resourceV1alpha2 "k8s.io/client-go/kubernetes/typed/resource/v1alpha2"
 	schedulingv1 "k8s.io/client-go/kubernetes/typed/scheduling/v1"
 	schedulingv1alpha1 "k8s.io/client-go/kubernetes/typed/scheduling/v1alpha1"
 	schedulingv1beta1 "k8s.io/client-go/kubernetes/typed/scheduling/v1beta1"
@@ -81,6 +87,11 @@ func (c *K8sClient) AppsV1() appsv1.AppsV1Interface {
 	return &FakeAppsV1{
 		FakeClient: c.FakeClient,
 	}
+}
+
+// AdmissionregistrationV1alpha1 retrieves the AdmissionregistrationV1alpha1Client
+func (c *K8sClient) AdmissionregistrationV1alpha1() admissionregistrationv1alpha1.AdmissionregistrationV1alpha1Interface {
+	panic("implement me")
 }
 
 // AdmissionregistrationV1 retrieves the AdmissionregistrationV1Client
@@ -113,6 +124,11 @@ func (c *K8sClient) AuthenticationV1() authenticationv1.AuthenticationV1Interfac
 	panic("implement me")
 }
 
+// AuthenticationV1alpha1 retrieves the AuthenticationV1alpha1Client
+func (c *K8sClient) AuthenticationV1alpha1() authenticationv1alpha1.AuthenticationV1alpha1Interface {
+	panic("implement me")
+}
+
 // AuthenticationV1beta1 retrieves the AuthenticationV1beta1Client
 func (c *K8sClient) AuthenticationV1beta1() authenticationv1beta1.AuthenticationV1beta1Interface {
 	panic("implement me")
@@ -135,6 +151,11 @@ func (c *K8sClient) AutoscalingV1() autoscalingv1.AutoscalingV1Interface {
 
 // AutoscalingV2 retrieves the AutoscalingV2Client
 func (c *K8sClient) AutoscalingV2() autoscalingv2.AutoscalingV2Interface {
+	panic("implement me")
+}
+
+// FlowcontrolV1beta3 retrieves the FlowcontrolV1beta3Client
+func (c *K8sClient) FlowcontrolV1beta3() flowcontrolv1beta3.FlowcontrolV1beta3Interface {
 	panic("implement me")
 }
 
@@ -165,6 +186,11 @@ func (c *K8sClient) BatchV1beta1() batchv1beta1.BatchV1beta1Interface {
 
 // CertificatesV1 retrieves the CertificatesV1Client
 func (c *K8sClient) CertificatesV1() certificatesv1.CertificatesV1Interface {
+	panic("implement me")
+}
+
+// CertificatesV1alpha1 retrieves the CertificatesV1alpha1Client
+func (c *K8sClient) CertificatesV1alpha1() certificatesv1alpha1.CertificatesV1alpha1Interface {
 	panic("implement me")
 }
 
@@ -228,6 +254,11 @@ func (c *K8sClient) NetworkingV1() networkingv1.NetworkingV1Interface {
 	panic("implement me")
 }
 
+// NetworkingV1alpha1 retrieves the NetworkingV1alpha1Client
+func (c *K8sClient) NetworkingV1alpha1() networkingv1alpha1.NetworkingV1alpha1Interface {
+	panic("implement me")
+}
+
 // NetworkingV1beta1 retrieves the NetworkingV1beta1Client
 func (c *K8sClient) NetworkingV1beta1() networkingv1beta1.NetworkingV1beta1Interface {
 	panic("implement me")
@@ -285,6 +316,11 @@ func (c *K8sClient) SchedulingV1beta1() schedulingv1beta1.SchedulingV1beta1Inter
 
 // SchedulingV1 retrieves the SchedulingV1Client
 func (c *K8sClient) SchedulingV1() schedulingv1.SchedulingV1Interface {
+	panic("implement me")
+}
+
+// ResourceV1alpha2 retrieves the ResourceV1alpha2Client 
+func (c *K8sClient) ResourceV1alpha2() resourceV1alpha2.ResourceV1alpha2Interface {
 	panic("implement me")
 }
 
