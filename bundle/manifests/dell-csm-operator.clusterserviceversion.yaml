@@ -909,7 +909,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.5.0",
+                    "image": "dellemc/csm-topology:v1.6.0",
                     "name": "topology"
                   },
                   {
