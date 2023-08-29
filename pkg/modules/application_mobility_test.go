@@ -281,83 +281,79 @@ func TestControllerManagerMetricService(t *testing.T) {
 		})
 	}
 }
-func TestApplicationMobilityIssuerCertService(t *testing.T) {
-	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
-
-	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
-		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+func TestApplicationMobilityCertManagerCrdDeployment(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
 			}
 
-			licenceCred := getSecret(customResource.Namespace, "license")
-
 			tmpCR := customResource
-			appMobility := tmpCR.Spec.Modules[0]
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
-				return clusterClient, nil
+			cr := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "application-mobility-certificate",
+				},
 			}
+			velerov1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 
-			return true, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"Fail - unsupported app-mobility version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
 			}
 
 			tmpCR := customResource
-			appMobility := tmpCR.Spec.Modules[0]
-			appMobility.ConfigVersion = "v10.10.10"
-			licenceCred := getSecret(customResource.Namespace, "license")
+			velerov1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
-			}
-
-			return false, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"Success - working app-mobility version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
 			}
 
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			tmpCR := customResource
-			appMobility := tmpCR.Spec.Modules[0]
-			appMobility.ConfigVersion = "v0.3.0"
-			licenceCred := getSecret(customResource.Namespace, "license")
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
-			}
-
-			return true, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"failed to find secret": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility_aws.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "./testdata/badYaml"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
+		},
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
 			}
 
 			tmpCR := customResource
-			appMobility := tmpCR.Spec.Modules[0]
-			licenceCred := getSecret(customResource.Namespace, "licenses")
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
-			}
-
-			return false, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
 	}
+
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
@@ -366,19 +362,104 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
 				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
-			success, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
-			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			utils.NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
-				return nil, nil
-			}
-			fakeReconcile := utils.FakeReconcileCSM{
-				Client:    sourceClient,
-				K8sClient: fake.NewSimpleClientset(),
-			}
-			err := IssuerCertService(context.TODO(), operatorConfig, appMobility, tmpCR, &fakeReconcile)
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := CertManagerCrdDeploy(ctx, isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
 
+		})
+	}
+}
+func TestApplicationMobilityIssuerCertService(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "application-mobility-certificate",
+				},
+			}
+			velerov1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			velerov1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			tmpCR := customResource
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility_aws.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "./testdata/badYaml"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
+		},
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, badOperatorConfig
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			defer func() {
+				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+			}()
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := IssuerCertService(ctx, isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
 			}
