@@ -338,6 +338,7 @@ func checkAuthorizationProxyServerPods(namespace string, k8sClient kubernetes.In
 func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interface) error {
 	// list all namespaces that we expect to find app-mobility pods in
 	nsToCheck := []string{namespace, "velero", "cert-manager"}
+	minNumPods := 5
 	var allPods []*corev1.Pod
 
 	for _, ns := range nsToCheck {
@@ -348,14 +349,14 @@ func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interfa
 		allPods = append(allPods, somePods[:]...)
 	}
 
-	// update this if we expect more pods eg restic
-	if len(allPods) != 5 {
-		return fmt.Errorf("expected %d pods in namespaces %+v but got %d pods", 5, nsToCheck, len(allPods))
+	// once we have status in csm module objects, update this code
+	if len(allPods) < minNumPods {
+		return fmt.Errorf("expected at least %d pods in namespaces %+v but got %d pods", minNumPods, nsToCheck, len(allPods))
 	}
 
 	for _, pod := range allPods {
 		podMsg, podRunning := arePodsRunning(pod)
-		if podRunning == false {
+		if podRunning == false && pod.Status.Phase != "Succeeded" {
 			return fmt.Errorf("pod %s not running: %+v", pod.Name, podMsg)
 		}
 	}

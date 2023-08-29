@@ -27,12 +27,7 @@ spec:
           # License for application mobility
           # Default value: license
           - name: "APPLICATION_MOBILITY_LICENSE_NAME"
-            value: "alt-license"
-
-          # Storage-service ingress configuration
-          # Default value: velero-restic-credentials
-          - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
-            value: "random-credentials" 
+            value: "license" 
 
       # enabled: Enable/Disable cert-manager
       # Allowed values:
@@ -41,49 +36,75 @@ spec:
       # Default value: false
       - name: cert-manager
         enabled: false
-      # enabled: Enable/Disable Velero and Restic Services
-      # Allowed values:
-      #   true: enable deployment of cert-manager
-      #   false: disable deployment of cert-manager only if it's already deployed
-      # Default value: false
+      # enabled: Enable/Disable Velero
       - name: velero
-        #existingSecret: existing_secret_name 
-        image: velero/velero:v1.8.1
+        image: velero/velero:v1.10.0
         imagePullPolicy: IfNotPresent
-        enabled: false
-        #use-volume-snapshots: false
-        #cleanUpCRDs: false
-        #deployRestic: false
-        #initContainers:
-        #  - name: dell-custom-velero-plugin
-        #    image: dellemc/csm-application-mobility-velero-plugin:v0.1.0
-        #    volumeMounts:
-        #    - mountPath: /target
-         #     name: plugins
-        # - name: velero-plugin-for-aws
-        #   image: velero/velero-plugin-for-aws:v1.5.0
-        #   volumeMounts:
-        #    - mountPath: /target
-        #      name: plugins  
+        enabled: true
+        useVolumeSnapshot: false
+        cleanUpCRDs: false
+        # enabled: Enable/Disable Restic Services
+        deployRestic: true
         envs:
           # Backup storage location name
           # Allowed values: string
           # Default value: default
           - name: "BACKUPSTORAGELOCATION_NAME"
             value: "default"
+          
+          # Velero bucket name
+          # Allowed values: string
+          # Default value: my-bucket
+          - name: "BUCKET_NAME"
+            value: "my-bucket"
 
           # Namespace for Velero installation
           # Default value: application-mobility
           - name: "VELERO_NAMESPACE"
             value: "application-mobility"
 
-          # Based on the objectstore being used , the velero plugin and its configuration may need to change!
-          # GCP and Azure plugins configuration are different. See more details at: https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/README.md
-          # Sample value: aws
-          - name: "CONFIG_PROVIDER"
+          # Based on the objectstore being used, the velero plugin and its configuration may need to change!
+          # default value: aws
+          - name: "PROVIDER"
             value: "aws"
 
-          # name to be used for secret that will be created to hold object store credentials. Used in conjunction with secretContents
-          # Default value: cloud-creds
-          - name: "VELERO_SECRET"
-            value: "cloud-creds"
+          # Name of the volume snapshot location where snapshots are being taken. Required.
+          # Volume-snapshot-Location Provider will be same as CONFIG_PROVIDER
+          # Default value : default
+          - name: "VOL_SNAPSHOT_LOCATION_NAME"
+            value: "default"
+          
+          # Name of the backup storage url
+          # This field has to be changed to a functional backup storage url 
+          # Default value: existing-cred
+          - name: "BACKUP_STORAGE_URL"
+            value: "localhost:8000"
+
+          # Name of the secret in velero namespace that has credentials to access object store
+          # We can leave the field empty if there no existing secret in velero installed namespace 
+          # Default value: existing-cred
+          - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
+            value: "existing-cred"
+
+        #If velero is not already present in cluster, set enabled to true to create a secret. 
+        #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.   
+        credentials:
+          - enabled: false  
+            #Specify the name to be used for secret that will be created to hold object store credentials.
+            name: cloud-creds
+            #Specify the object store access credentials to be stored in a secret with key "cloud".
+            secretContents: 
+              aws_access_key_id: #Provide the access key id here
+              aws_secret_access_key: #provide the access key here 
+              
+
+    # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
+    # If the value is a string then it is evaluated as a template.
+    - initContainer:
+        #initContainer image for the configuration-provider - csi 
+      - name: dell-custom-velero-plugin
+        image: dellemc/csm-application-mobility-velero-plugin:v0.1.0
+
+        #initContainer image for the configuration-provider - aws 
+      - name: velero-plugin-for-aws
+        image: velero/velero-plugin-for-aws:v1.5.0
