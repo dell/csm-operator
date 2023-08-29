@@ -50,8 +50,6 @@ const (
 	DefaultRetryMax = "<RETRY_INTERVAL_MAX>"
 	// DefaultReplicaImage -
 	DefaultReplicaImage = "<REPLICATION_CONTROLLER_IMAGE>"
-	// DefaultReplicaInitImage -
-	DefaultReplicaInitImage = "<REPLICATION_INIT_IMAGE>"
 )
 
 var (
@@ -339,8 +337,7 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	replicaCount := "1"
 	retryMin := "1s"
 	retryMax := "5m"
-	replicaImage := "dellemc/dell-replication-controller:v1.5.0"
-	replicaInitImage := "dellemc/dell-replication-init:v1.0.1"
+	replicaImage := "dellemc/dell-replication-controller:v1.6.0"
 
 	for _, component := range replica.Components {
 		if component.Name == utils.ReplicationControllerManager {
@@ -358,17 +355,12 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 					retryMax = env.Value
 				}
 			}
-		} else if component.Name == utils.ReplicationControllerInit {
-			if component.Image != "" {
-				replicaInitImage = string(component.Image)
-			}
 		}
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, DefaultLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, DefautlReplicaCount, replicaCount)
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicaImage, replicaImage)
-	YamlString = strings.ReplaceAll(YamlString, DefaultReplicaInitImage, replicaInitImage)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMax, retryMax)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
 	return YamlString, nil

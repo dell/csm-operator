@@ -116,8 +116,6 @@ const (
 	ReplicationControllerNameSpace = "dell-replication-controller"
 	// ReplicationControllerManager -
 	ReplicationControllerManager = "dell-replication-controller-manager"
-	// ReplicationControllerInit -
-	ReplicationControllerInit = "dell-replication-controller-init"
 	// ReplicationSideCarName -
 	ReplicationSideCarName = "dell-csi-replicator"
 	// ResiliencySideCarName -
