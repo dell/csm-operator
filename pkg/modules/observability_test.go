@@ -105,7 +105,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 
 			tmpCR := customResource
 			observability := tmpCR.Spec.Modules[0]
-			observability.ConfigVersion = "v1.6.0"
+			observability.ConfigVersion = "v1.5.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
