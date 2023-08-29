@@ -129,9 +129,11 @@ spec:
 
         # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
         # Allowed values: Any value greater than or equal to 0
+        # If value is zero Container Orchestrator shall decide how many volumes of this type can be published by the controller to the node.
+        # This limit is applicable to all the nodes in the cluster for which node label 'maxVxflexosVolumesPerNode' is not set.
         # Default value: "0"
         - name: X_CSI_MAX_VOLUMES_PER_NODE
-          value: "1"
+          value: "0"
           
           
 
