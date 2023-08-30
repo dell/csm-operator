@@ -62,16 +62,6 @@ func NewFakeClientNoInjector(objectMap map[shared.StorageKey]runtime.Object) *Cl
 	return &Client{Objects: objectMap}
 }
 
-// GroupVersionKindFor returns the GroupVersionKind for the given object.
-func (f Client) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
-	panic("implement me")
-}
-
-// IsObjectNamespaced returns true if the GroupVersionKind of the object is namespaced.
-func (f Client) IsObjectNamespaced(obj runtime.Object) (bool, error) {
-	panic("implement me")
-}
-
 // Get implements client.Client.
 func (f Client) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	if f.ErrorInjector != nil {
@@ -268,6 +258,16 @@ func (f Client) Patch(ctx context.Context, obj client.Object, patch client.Patch
 
 // DeleteAllOf implements client.Client.
 func (f Client) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
+	panic("implement me")
+}
+
+// GroupVersionKindFor returns the GroupVersionKind for the given object.
+func (f Client) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	panic("implement me")
+}
+
+// IsObjectNamespaced returns true if the GroupVersionKind of the object is namespaced.
+func (f Client) IsObjectNamespaced(obj runtime.Object) (bool, error) {
 	panic("implement me")
 }
 
