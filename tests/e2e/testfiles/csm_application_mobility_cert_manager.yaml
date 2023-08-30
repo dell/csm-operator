@@ -43,8 +43,8 @@ spec:
         enabled: true
         useVolumeSnapshot: false
         cleanUpCRDs: false
-        # enabled: Enable/Disable Restic Services
-        deployRestic: true
+        # enabled: Enable/Disable node-agent service
+        deployNodeAgent: true
         envs:
           # Backup storage location name
           # Allowed values: string
@@ -65,18 +65,18 @@ spec:
 
           # Based on the objectstore being used, the velero plugin and its configuration may need to change!
           # default value: aws
-          - name: "PROVIDER"
+          - name: "CONFIGURATION_PROVIDER"
             value: "aws"
 
           # Name of the volume snapshot location where snapshots are being taken. Required.
-          # Volume-snapshot-Location Provider will be same as CONFIG_PROVIDER
+          # Volume-snapshot-Location Provider will be same as CONFIGURATION_PROVIDER
           # Default value : default
           - name: "VOL_SNAPSHOT_LOCATION_NAME"
             value: "default"
           
           # Name of the backup storage url
           # This field has to be changed to a functional backup storage url 
-          # Default value: existing-cred
+          # Default value: localhost:8000
           - name: "BACKUP_STORAGE_URL"
             value: "localhost:8000"
 
@@ -98,13 +98,13 @@ spec:
               aws_secret_access_key: #provide the access key here 
               
 
-    # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
+    # Init containers to be added to the Velero deployment's pod spec.
     # If the value is a string then it is evaluated as a template.
     - initContainer:
-        #initContainer image for the configuration-provider - csi 
+        #initContainer image for the dell velero plugin
       - name: dell-custom-velero-plugin
-        image: dellemc/csm-application-mobility-velero-plugin:v0.1.0
+        image: dellemc/csm-application-mobility-velero-plugin:latest
 
-        #initContainer image for the configuration-provider - aws 
+        #initContainer image for the configuration provider aws
       - name: velero-plugin-for-aws
         image: velero/velero-plugin-for-aws:v1.5.0

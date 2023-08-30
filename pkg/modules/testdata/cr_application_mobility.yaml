@@ -69,7 +69,7 @@ spec:
             value: "aws"
 
           # Name of the volume snapshot location where snapshots are being taken. Required.
-          # Volume-snapshot-Location Provider will be same as CONFIG_PROVIDER
+          # Volume-snapshot-Location Provider will be same as CONFIGURATION_PROVIDER
           # Default value : default
           - name: "VOL_SNAPSHOT_LOCATION_NAME"
             value: "default"
@@ -108,5 +108,3 @@ spec:
         #initContainer image for the configuration provider aws
       - name: velero-plugin-for-aws
         image: velero/velero-plugin-for-aws:v1.5.0
-
-        
