@@ -50,13 +50,13 @@ spec:
           # Allowed values: string
           # Default value: default
           - name: "BACKUPSTORAGELOCATION_NAME"
-            value: "alt-backup-storage"
-          
+            value: "alt-backupname"
+            
           # Velero bucket name
           # Allowed values: string
           # Default value: my-bucket
           - name: "BUCKET_NAME"
-            value: "alt-bucket"
+            value: "my-alt-bucket"
 
           # Namespace for Velero installation
           # Default value: application-mobility
@@ -72,11 +72,11 @@ spec:
           # Volume-snapshot-Location Provider will be same as CONFIGURATION_PROVIDER
           # Default value : default
           - name: "VOL_SNAPSHOT_LOCATION_NAME"
-            value: "alt_snapshot"
+            value: "alt-vol-snapshot"
           
           # Name of the backup storage url
           # This field has to be changed to a functional backup storage url 
-          # Default value: localhost:8000
+          # Default value: existing-cred
           - name: "BACKUP_STORAGE_URL"
             value: "localhost:3000"
 

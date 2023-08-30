@@ -66,4 +66,9 @@ export PSCALE_ENDPOINT=""
 export PSCALE_AUTH_ENDPOINT=""
 export PSCALE_AUTH_PORT=""
 
+# The following are for testing AM
+export VOL_NS=wordpress
+export RES_NS=res-wordpress
+export AM_NS=app-mobility
+
 
