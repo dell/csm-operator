@@ -46,7 +46,7 @@ spec:
           value: "false"
 
     sideCars:
-    # sdc-monitor is disabled by default, due to high CPU usage 
+    # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:3.6.1
@@ -92,12 +92,12 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint 
-      # - key: "node-role.kubernetes.io/master"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      # - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
 
@@ -110,7 +110,7 @@ spec:
         #    false: disable SDC approval
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
-          value: "false"  
+          value: "false"
 
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
@@ -134,7 +134,7 @@ spec:
         # Default value: "0"
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "0"
-          
+
 
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
@@ -151,11 +151,11 @@ spec:
       # Default value: None
       tolerations:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      # - key: "node-role.kubernetes.io/master"   
+      # - key: "node-role.kubernetes.io/master"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint 
-      # - key: "node-role.kubernetes.io/control-plane"   
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
 
@@ -180,8 +180,8 @@ spec:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
             value: "csm-authorization.com"
-        
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"
 
@@ -189,14 +189,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.5.0
+      configVersion: v1.6.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.5.0
+          image: dellemc/csm-topology:v1.6.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -221,7 +221,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:v1.5.0
+          image: dellemc/csm-metrics-powerflex:v1.6.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -300,7 +300,7 @@ spec:
           # Allowed values: string
           - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
             value: "powerflex"
-      
+
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
@@ -316,7 +316,7 @@ spec:
           # Default value: "debug"
           - name: "REPLICATION_CTRL_LOG_LEVEL"
             value: "debug"
-          
+
           # replicas: Defines number of controller replicas
           # Allowed values: int
           # Default value: 1
