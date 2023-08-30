@@ -242,7 +242,7 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	YamlString = string(buf)
 
 	logLevel := "INFO"
-	topologyImage := "dellemc/csm-topology:v1.4.0"
+	topologyImage := ""
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityTopologyName {
@@ -418,7 +418,7 @@ func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStor
 
 	logLevel := "INFO"
 	otelCollectorAddress := "otel-collector:55680"
-	pscaleImage := "dellemc/dellemc/csm-metrics-powerscale:v1.0.0"
+	pscaleImage := ""
 	maxConcurrentQueries := "10"
 	capacityEnabled := "true"
 	performanceEnabled := "true"
@@ -623,7 +623,7 @@ func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = string(buf)
 
 	otelCollectorAddress := "otel-collector:55680"
-	pflexImage := "dellemc/dellemc/csm-metrics-powerflex:v1.3.0"
+	pflexImage := ""
 	maxConcurrentQueries := "10"
 	sdcEnabled := "true"
 	volumeEnabled := "true"
