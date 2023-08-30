@@ -41,17 +41,17 @@ spec:
         image: velero/velero:v1.10.0
         imagePullPolicy: IfNotPresent
         enabled: true
-        useVolumeSnapshot: false
-        cleanUpCRDs: false
-        # enabled: Enable/Disable Restic Services
-        deployRestic: true
+        useVolumeSnapshot: true
+        cleanUpCRDs: true
+        # enabled: Enable/Disable node-agent service
+        deployNodeAgent: true
         envs:
           # Backup storage location name
           # Allowed values: string
           # Default value: default
           - name: "BACKUPSTORAGELOCATION_NAME"
             value: "alt-backupname"
-          
+            
           # Velero bucket name
           # Allowed values: string
           # Default value: my-bucket
@@ -61,15 +61,15 @@ spec:
           # Namespace for Velero installation
           # Default value: application-mobility
           - name: "VELERO_NAMESPACE"
-            value: "application-mobility"
+            value: "velero"
 
           # Based on the objectstore being used, the velero plugin and its configuration may need to change!
           # default value: aws
-          - name: "PROVIDER"
-            value: "csi"
+          - name: "CONFIGURATION_PROVIDER"
+            value: "aws"
 
           # Name of the volume snapshot location where snapshots are being taken. Required.
-          # Volume-snapshot-Location Provider will be same as CONFIG_PROVIDER
+          # Volume-snapshot-Location Provider will be same as CONFIGURATION_PROVIDER
           # Default value : default
           - name: "VOL_SNAPSHOT_LOCATION_NAME"
             value: "alt-vol-snapshot"
@@ -78,13 +78,13 @@ spec:
           # This field has to be changed to a functional backup storage url 
           # Default value: existing-cred
           - name: "BACKUP_STORAGE_URL"
-            value: "localhost:1000"
+            value: "localhost:3000"
 
           # Name of the secret in velero namespace that has credentials to access object store
           # We can leave the field empty if there no existing secret in velero installed namespace 
           # Default value: existing-cred
           - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
-            value: "alt-cloud-cred"
+            value: "alt-cloud-creds"
 
         #If velero is not already present in cluster, set enabled to true to create a secret. 
         #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.   
@@ -98,13 +98,13 @@ spec:
               aws_secret_access_key: #provide the access key here 
               
 
-    # Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.
+    # Init containers to be added to the Velero deployment's pod spec.
     # If the value is a string then it is evaluated as a template.
     - initContainer:
-        #initContainer image for the configuration-provider - csi 
+        #initContainer image for the dell velero plugin
       - name: dell-custom-velero-plugin
-        image: dellemc/csm-application-mobility-velero-plugin:v0.1.0
+        image: dellemc/csm-application-mobility-velero-plugin:latest
 
-        #initContainer image for the configuration-provider - aws 
+        #initContainer image for the configuration provider aws
       - name: velero-plugin-for-aws
         image: velero/velero-plugin-for-aws:v1.5.0
