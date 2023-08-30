@@ -150,7 +150,7 @@ spec:
             name: karavi-metrics-powerscale-configmap
         - name: csi-isilon-config-params
           configMap:
-             name: <DriverDefaultReleaseName>-config-params
+            name: <DriverDefaultReleaseName>-config-params
       restartPolicy: Always
 status: {}
 

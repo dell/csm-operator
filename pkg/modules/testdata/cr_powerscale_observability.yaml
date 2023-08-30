@@ -7,7 +7,7 @@ spec:
   driver:
     csiDriverType: "isilon"
     configVersion: v2.8.0
-    authSecret: isilon-creds 
+    authSecret: isilon-creds
     replicas: 1
     common:
       image: "dellemc/csi-isilon:v2.8.0"
@@ -18,14 +18,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.4.0
-      components: 
+      configVersion: v1.6.0
+      components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.4.0
+          image: dellemc/csm-topology:v1.6.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -51,7 +51,7 @@ spec:
           enabled: true
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-metrics-powerscale:v1.0.0
+          image: dellemc/csm-metrics-powerscale:v1.3.0
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int
@@ -123,7 +123,7 @@ spec:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
             value: "testing-proxy-host"
-        
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
           - name: "SKIP_CERTIFICATE_VALIDATION"
             value: "true"

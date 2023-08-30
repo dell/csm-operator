@@ -220,7 +220,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.5.0",
+                    "image": "dellemc/csm-topology:v1.6.0",
                     "name": "topology"
                   },
                   {
@@ -286,7 +286,7 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "dellemc/csm-metrics-powerscale:v1.2.0",
+                    "image": "dellemc/csm-metrics-powerscale:v1.3.0",
                     "name": "metrics-powerscale"
                   }
                 ],
@@ -909,7 +909,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.5.0",
+                    "image": "dellemc/csm-topology:v1.6.0",
                     "name": "topology"
                   },
                   {
@@ -967,7 +967,7 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "dellemc/csm-metrics-powerflex:v1.5.0",
+                    "image": "dellemc/csm-metrics-powerflex:v1.6.0",
                     "name": "metrics-powerflex"
                   }
                 ],
@@ -2363,13 +2363,13 @@ spec:
     name: dell-replication-controller-manager
   - image: docker.io/dellemc/dell-replication-init:v1.0.1
     name: dell-replication-controller-init
-  - image: docker.io/dellemc/csm-topology:v1.5.0
+  - image: docker.io/dellemc/csm-topology:v1.6.0
     name: topology
   - image: docker.io/otel/opentelemetry-collector:0.42.0
     name: otel-collector
-  - image: docker.io/dellemc/csm-metrics-powerscale:v1.2.0
+  - image: docker.io/dellemc/csm-metrics-powerscale:v1.3.0
     name: metrics-powerscale
-  - image: docker.io/dellemc/csm-metrics-powerflex:v1.5.0
+  - image: docker.io/dellemc/csm-metrics-powerflex:v1.6.0
     name: metrics-powerflex
   - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
     name: kube-rbac-proxy
