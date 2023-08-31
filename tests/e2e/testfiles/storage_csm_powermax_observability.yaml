@@ -136,25 +136,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-      # nodeSelector: Define node selection constraints for controller pods.
-      # For the pod to be eligible to run on a node, the node must have each
-      # of the indicated key-value pairs as labels.
-      # Leave as blank to consider all nodes
-      # Allowed values: map of key-value pairs
-      # Default value: None
-      nodeSelector:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      #  node-role.kubernetes.io/control-plane: ""
-
-      # tolerations: Define tolerations that would be applied to controller deployment
-      # Leave as blank to install controller on worker nodes
-      # Allowed values: map of key-value pairs
-      # Default value: None
-      tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      #  - key: "node-role.kubernetes.io/control-plane"
-      #    operator: "Exists"
-      #    effect: "NoSchedule"
     node:
       envs:
         # X_CSI_POWERMAX_ISCSI_ENABLE_CHAP: Determine if the driver is going to configure
@@ -182,156 +163,50 @@ spec:
         # Default value: false
         - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
           value: "false"
-        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerMax volumes that the controller can schedule on the node
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum Powermax volumes that the controller can publish to the node
         # Allowed values: Any value greater than or equal to 0
         # Default value: "0"
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "0"
-      # nodeSelector: Define node selection constraints for node pods.
-      # For the pod to be eligible to run on a node, the node must have each
-      # of the indicated key-value pairs as labels.
-      # Leave as blank to consider all nodes
-      # Allowed values: map of key-value pairs
-      # Default value: None
-      nodeSelector:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      #  node-role.kubernetes.io/control-plane: ""
-
-      # tolerations: Define tolerations that would be applied to node daemonset
-      # Add/Remove tolerations as per requirement
-      # Leave as blank if you wish to not apply any tolerations
-      # Allowed values: map of key-value pairs
-      # Default value: None
-      tolerations:
-        - key: "node.kubernetes.io/memory-pressure"
-          operator: "Exists"
-          effect: "NoExecute"
-        - key: "node.kubernetes.io/disk-pressure"
-          operator: "Exists"
-          effect: "NoExecute"
-        - key: "node.kubernetes.io/network-unavailable"
-          operator: "Exists"
-          effect: "NoExecute"
     sideCars:
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: [ "--monitor-interval=60s" ]
-      
-      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
-      # Configure only when the storageCapacity is set as "true"
-      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-      #- name: provisioner
-      #  args: ["--capacity-poll-interval=5m"]
 
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
       # enabled: Always set to true
       enabled: true
+      configVersion: v2.6.0
       forceRemoveModule: true
-      configVersion: v2.7.0
       components:
-      - name: csipowermax-reverseproxy
-      # image: Define the container images used for the reverse proxy
-      # Default value: None
-      # Example: "csipowermax-reverseproxy:v2.7.0"
-        image: dellemc/csipowermax-reverseproxy:v2.7.0
-        envs:
-          # "tlsSecret" defines the TLS secret that is created with certificate
-          # and its associated key
+        - name: csipowermax-reverseproxy
+          # image: Define the container images used for the reverse proxy
           # Default value: None
-          # Example: "tls-secret"
-          - name: X_CSI_REVPROXY_TLS_SECRET
-            value: "csirevproxy-tls-secret"
-          - name: X_CSI_REVPROXY_PORT
-            value: "2222"
-          - name: X_CSI_CONFIG_MAP_NAME
-            value: "powermax-reverseproxy-config"
-
-    # Authorization: enable csm-authorization for RBAC
-    - name: authorization
-      # enabled: Enable/Disable csm-authorization
-      enabled: false
-      configVersion: v1.7.0
-      components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.7.0
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "csm-authorization.com"
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
-
-    # Replication: allows configuring replication module
-    # Replication CRDs must be installed before installing driver
-    - name: replication
-      # enabled: Enable/Disable replication feature
-      # Allowed values:
-      #   true: enable replication feature(install dell-csi-replicator sidecar)
-      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
-      # Default value: false
-      enabled: false
-      configVersion: v1.6.0
-      components:
-      - name: dell-csi-replicator
-        # image: Image to use for dell-csi-replicator. This shouldn't be changed
-        # Allowed values: string
-        # Default value: None
-        image: dellemc/dell-csi-replicator:v1.6.0
-        envs:
-          # replicationPrefix: prefix to prepend to storage classes parameters
-          # Allowed values: string
-          # Default value: replication.storage.dell.com
-          - name: "X_CSI_REPLICATION_PREFIX"
-            value: "replication.storage.dell.com"
-          # replicationContextPrefix: prefix to use for naming of resources created by replication feature
-          # Allowed values: string
-          # Default value: powermax
-          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-            value: "powermax"
-
-      - name: dell-replication-controller-manager
-        # image: Defines controller image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.6.0
-        envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
-          # Set the value to "self" in case of stretched/single cluster configuration
-          # Allowed values: string
-          - name: "TARGET_CLUSTERS_IDS"
-            value: "target-cluster-1"
-          # Replication log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "REPLICATION_CTRL_LOG_LEVEL"
-            value: "debug"
-          # replicas: Defines number of controller replicas
-          # Allowed values: int
-          # Default value: 1
-          - name: "REPLICATION_CTRL_REPLICAS"
-            value: "1"
-          # retryIntervalMin: Initial retry interval of failed reconcile request.
-          # It doubles with each failure, upto retry-interval-max
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MIN"
-            value: "1s"
-          # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MAX"
-            value: "5m"
-
+          # Example: "csipowermax-reverseproxy:v2.6.0"
+          image: dellemc/csipowermax-reverseproxy:v2.6.0
+          envs:
+            # "tlsSecret" defines the TLS secret that is created with certificate
+            # and its associated key
+            # Default value: None
+            # Example: "tls-secret"
+            - name: X_CSI_REVPROXY_TLS_SECRET
+              value: "csirevproxy-tls-secret"
+            - name: X_CSI_REVPROXY_PORT
+              value: "2222"
+            - name: X_CSI_CONFIG_MAP_NAME
+              value: "powermax-reverseproxy-config"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
-      enabled: false
+      enabled: true
       configVersion: v1.5.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
-          enabled: false
+          enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/csm-topology:v1.5.0
@@ -344,7 +219,7 @@ spec:
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: false
+          enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
           image: otel/opentelemetry-collector:0.42.0
@@ -361,11 +236,11 @@ spec:
           #   true: enable deployment of cert-manager
           #   false: disable deployment of cert-manager only if it's already deployed
           # Default value: false
-          enabled: false
+          enabled: true
 
         - name: metrics-powermax
           # enabled: Enable/Disable PowerMax metrics
-          enabled: false
+          enabled: true
           # image: Defines PowerMax metrics image. This shouldn't be changed
           image: dellemc/csm-metrics-powermax:v1.1.0
           envs:

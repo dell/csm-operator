@@ -5,7 +5,7 @@ metadata:
   namespace: karavi
 data:
   karavi-topology.yaml: |
-    PROVISIONER_NAMES: csi-isilon.dellemc.com,csi-vxflexos.dellemc.com
+    PROVISIONER_NAMES: csi-isilon.dellemc.com,csi-vxflexos.dellemc.com, csi-powermax.dellemc.com
     LOG_LEVEL: <TOPOLOGY_LOG_LEVEL>
     LOG_FORMAT: text
     ZIPKIN_URI: ""
