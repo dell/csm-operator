@@ -183,11 +183,6 @@ spec:
           volumeMounts:
            - mountPath: /target
              name: plugins
-        - name: dell-custom-velero-plugin
-          image: dellemc/csm-application-mobility-velero-plugin:latest
-          volumeMounts:
-           - mountPath: /target
-             name: plugins
       volumes:
         - name: cloud-credentials
           secret:
