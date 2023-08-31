@@ -23,6 +23,8 @@ spec:
         args:
           - "--redis-host=redis.<NAMESPACE>.svc.cluster.local:6379"
           - "--tenant-service=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
+          - "--role-service=role-service.<NAMESPACE>.svc.cluster.local:50051"
+          - "--storage-service=storage-service.<NAMESPACE>.svc.cluster.local:50051"
         ports:
         - containerPort: 8080
         volumeMounts:
@@ -186,7 +188,7 @@ spec:
           name: grpc
         env:
           - name: NAMESPACE
-            value: authorization
+            value: <NAMESPACE>
         volumeMounts:
         - name: csm-config-params
           mountPath: /etc/karavi-authorization/csm-config-params
@@ -222,7 +224,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "patch"]
+    verbs: ["get", "patch","post"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -268,12 +270,17 @@ spec:
         volumeMounts:
         - name: storage-volume
           mountPath: /etc/karavi-authorization/storage
+        - name: config-volume
+          mountPath: /etc/karavi-authorization/config
         - name: csm-config-params
           mountPath: /etc/karavi-authorization/csm-config-params
       volumes:
       - name: storage-volume
         secret:
           secretName: karavi-storage-secret
+      - name: config-volume
+        secret:
+          secretName: karavi-config-secret
       - name: csm-config-params
         configMap:
           name: csm-config-params

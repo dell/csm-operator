@@ -28,9 +28,6 @@ spec:
     - client auth
   dnsNames:
   - csm-authorization.com
-  - tenant.csm-authorization.com
-  - role.csm-authorization.com
-  - storage.csm-authorization.com
   - authorization-ingress-nginx-controller.authorization.svc.cluster.local
   issuerRef:
     name: selfsigned
