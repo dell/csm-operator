@@ -271,6 +271,7 @@ func (f Client) IsObjectNamespaced(obj runtime.Object) (bool, error) {
 	panic("implement me")
 }
 
+// SubResource returns a subresource with the name specified in subResource
 func (f Client) SubResource(subResource string) client.SubResourceClient {
 	return &subResourceClient{client: &f, subResource: subResource}
 }
