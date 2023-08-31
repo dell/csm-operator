@@ -829,6 +829,7 @@ spec:
     metadata:
       labels:
         app: cainjector
+        csm: cert-manager
         app.kubernetes.io/name: cainjector
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/component: "cainjector"
@@ -882,6 +883,7 @@ spec:
     metadata:
       labels:
         app: cert-manager
+        csm: cert-manager
         app.kubernetes.io/name: cert-manager
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/component: "controller"
@@ -946,6 +948,7 @@ spec:
     metadata:
       labels:
         app: webhook
+        csm: cert-manager
         app.kubernetes.io/name: webhook
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/component: "webhook"
