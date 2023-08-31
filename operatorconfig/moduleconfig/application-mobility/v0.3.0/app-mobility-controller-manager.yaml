@@ -40,6 +40,7 @@ spec:
         command:
         - /manager
         image: <CONTROLLER_IMAGE>
+        imagePullPolicy: <CONTROLLER_IMAGE_PULLPOLICY>
         livenessProbe:
           httpGet:
             path: /healthz

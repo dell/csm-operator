@@ -501,7 +501,7 @@ spec:
     name: csi-unity
   - image: docker.io/dellemc/csi-vxflexos:v2.7.0
     name: csi-vxflexos
-  - image: docker.io/dellemc/sdc:3.6.0.6
+  - image: docker.io/dellemc/sdc:3.6.1
     name: sdc
   - image: docker.io/dellemc/csm-authorization-sidecar:v1.7.0
     name: karavi-authorization-proxy

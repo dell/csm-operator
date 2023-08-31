@@ -323,9 +323,9 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ComponentCred for velero component"
 	ComponentCred []Credential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
 
-	//DeployRestic is to enable/disable restic services
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Deploy Restic for Application Mobility"
-	DeployRestic bool `json:"deployRestic,omitempty" yaml:"deployRestic,omitempty"`
+	//DeployNodeAgent is to enable/disable node-agent services
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Deploy node-agent for Application Mobility"
+	DeployNodeAgent bool `json:"deployNodeAgent,omitempty" yaml:"deployNodeAgent,omitempty"`
 }
 
 // SnapshotClass struct
@@ -362,9 +362,9 @@ type Credential struct {
 
 // Credkey struct
 type Credkey struct {
-	// AccessKeyId is a name of key ID to access objectstore
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKeyId"
-	AccessKeyId string `json:"aws_access_key_id,omitempty" yaml:"aws_access_key_id,omitempty"`
+	// AccessKeyID is a name of key ID to access objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKeyID"
+	AccessKeyID string `json:"aws_access_key_id,omitempty" yaml:"aws_access_key_id,omitempty"`
 	// AccessKey contains the key to access objectstore
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKey"
 	AccessKey string `json:"aws_secret_access_key,omitempty" yaml:"aws_secret_access_key,omitempty"`

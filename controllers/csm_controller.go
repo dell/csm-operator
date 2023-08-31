@@ -922,6 +922,9 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 		if err := modules.AppMobilityDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Application Mobility controller Manager: %v", err)
 		}
+		if err := modules.AppMobCrdDeploy(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile Application Mobility CRDs: %v", err)
+		}
 	}
 	// AppMobility installs cert-manager
 	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {

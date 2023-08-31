@@ -83,7 +83,7 @@ spec:
                               description: SecretContents contains credentials to access objectstore
                               properties:
                                 aws_access_key_id:
-                                  description: AccessKeyId is a name of key ID to access objectstore
+                                  description: AccessKeyID is a name of key ID to access objectstore
                                   type: string
                                 aws_secret_access_key:
                                   description: AccessKey contains the key to access objectstore
@@ -91,8 +91,8 @@ spec:
                               type: object
                           type: object
                         type: array
-                      deployRestic:
-                        description: DeployRestic is to enable/disable restic services
+                      deployNodeAgent:
+                        description: DeployNodeAgent is to enable/disable node-agent services
                         type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
@@ -283,7 +283,7 @@ spec:
                               description: SecretContents contains credentials to access objectstore
                               properties:
                                 aws_access_key_id:
-                                  description: AccessKeyId is a name of key ID to access objectstore
+                                  description: AccessKeyID is a name of key ID to access objectstore
                                   type: string
                                 aws_secret_access_key:
                                   description: AccessKey contains the key to access objectstore
@@ -291,8 +291,8 @@ spec:
                               type: object
                           type: object
                         type: array
-                      deployRestic:
-                        description: DeployRestic is to enable/disable restic services
+                      deployNodeAgent:
+                        description: DeployNodeAgent is to enable/disable node-agent services
                         type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
@@ -502,7 +502,7 @@ spec:
                                 description: SecretContents contains credentials to access objectstore
                                 properties:
                                   aws_access_key_id:
-                                    description: AccessKeyId is a name of key ID to access objectstore
+                                    description: AccessKeyID is a name of key ID to access objectstore
                                     type: string
                                   aws_secret_access_key:
                                     description: AccessKey contains the key to access objectstore
@@ -510,8 +510,8 @@ spec:
                                 type: object
                             type: object
                           type: array
-                        deployRestic:
-                          description: DeployRestic is to enable/disable restic services
+                        deployNodeAgent:
+                          description: DeployNodeAgent is to enable/disable node-agent services
                           type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to deploy a module
@@ -700,7 +700,7 @@ spec:
                               description: SecretContents contains credentials to access objectstore
                               properties:
                                 aws_access_key_id:
-                                  description: AccessKeyId is a name of key ID to access objectstore
+                                  description: AccessKeyID is a name of key ID to access objectstore
                                   type: string
                                 aws_secret_access_key:
                                   description: AccessKey contains the key to access objectstore
@@ -708,8 +708,8 @@ spec:
                               type: object
                           type: object
                         type: array
-                      deployRestic:
-                        description: DeployRestic is to enable/disable restic services
+                      deployNodeAgent:
+                        description: DeployNodeAgent is to enable/disable node-agent services
                         type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to deploy a module
@@ -903,7 +903,7 @@ spec:
                                 description: SecretContents contains credentials to access objectstore
                                 properties:
                                   aws_access_key_id:
-                                    description: AccessKeyId is a name of key ID to access objectstore
+                                    description: AccessKeyID is a name of key ID to access objectstore
                                     type: string
                                   aws_secret_access_key:
                                     description: AccessKey contains the key to access objectstore
@@ -911,8 +911,8 @@ spec:
                                 type: object
                             type: object
                           type: array
-                        deployRestic:
-                          description: DeployRestic is to enable/disable restic services
+                        deployNodeAgent:
+                          description: DeployNodeAgent is to enable/disable node-agent services
                           type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to deploy a module
@@ -1127,7 +1127,7 @@ spec:
                                   description: SecretContents contains credentials to access objectstore
                                   properties:
                                     aws_access_key_id:
-                                      description: AccessKeyId is a name of key ID to access objectstore
+                                      description: AccessKeyID is a name of key ID to access objectstore
                                       type: string
                                     aws_secret_access_key:
                                       description: AccessKey contains the key to access objectstore
@@ -1135,8 +1135,8 @@ spec:
                                   type: object
                               type: object
                             type: array
-                          deployRestic:
-                            description: DeployRestic is to enable/disable restic services
+                          deployNodeAgent:
+                            description: DeployNodeAgent is to enable/disable node-agent services
                             type: boolean
                           enabled:
                             description: Enabled is used to indicate wether or not to deploy a module
@@ -1336,7 +1336,7 @@ spec:
                                   description: SecretContents contains credentials to access objectstore
                                   properties:
                                     aws_access_key_id:
-                                      description: AccessKeyId is a name of key ID to access objectstore
+                                      description: AccessKeyID is a name of key ID to access objectstore
                                       type: string
                                     aws_secret_access_key:
                                       description: AccessKey contains the key to access objectstore
@@ -1344,8 +1344,8 @@ spec:
                                   type: object
                               type: object
                             type: array
-                          deployRestic:
-                            description: DeployRestic is to enable/disable restic services
+                          deployNodeAgent:
+                            description: DeployNodeAgent is to enable/disable node-agent services
                             type: boolean
                           enabled:
                             description: Enabled is used to indicate wether or not to deploy a module

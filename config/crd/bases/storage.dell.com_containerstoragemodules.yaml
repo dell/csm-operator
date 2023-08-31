@@ -97,7 +97,7 @@ spec:
                                 access objectstore
                               properties:
                                 aws_access_key_id:
-                                  description: AccessKeyId is a name of key ID to
+                                  description: AccessKeyID is a name of key ID to
                                     access objectstore
                                   type: string
                                 aws_secret_access_key:
@@ -107,8 +107,9 @@ spec:
                               type: object
                           type: object
                         type: array
-                      deployRestic:
-                        description: DeployRestic is to enable/disable restic services
+                      deployNodeAgent:
+                        description: DeployNodeAgent is to enable/disable node-agent
+                          services
                         type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to
@@ -368,7 +369,7 @@ spec:
                                 access objectstore
                               properties:
                                 aws_access_key_id:
-                                  description: AccessKeyId is a name of key ID to
+                                  description: AccessKeyID is a name of key ID to
                                     access objectstore
                                   type: string
                                 aws_secret_access_key:
@@ -378,8 +379,9 @@ spec:
                               type: object
                           type: object
                         type: array
-                      deployRestic:
-                        description: DeployRestic is to enable/disable restic services
+                      deployNodeAgent:
+                        description: DeployNodeAgent is to enable/disable node-agent
+                          services
                         type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to
@@ -660,7 +662,7 @@ spec:
                                   access objectstore
                                 properties:
                                   aws_access_key_id:
-                                    description: AccessKeyId is a name of key ID to
+                                    description: AccessKeyID is a name of key ID to
                                       access objectstore
                                     type: string
                                   aws_secret_access_key:
@@ -670,8 +672,9 @@ spec:
                                 type: object
                             type: object
                           type: array
-                        deployRestic:
-                          description: DeployRestic is to enable/disable restic services
+                        deployNodeAgent:
+                          description: DeployNodeAgent is to enable/disable node-agent
+                            services
                           type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to
@@ -930,7 +933,7 @@ spec:
                                 access objectstore
                               properties:
                                 aws_access_key_id:
-                                  description: AccessKeyId is a name of key ID to
+                                  description: AccessKeyID is a name of key ID to
                                     access objectstore
                                   type: string
                                 aws_secret_access_key:
@@ -940,8 +943,9 @@ spec:
                               type: object
                           type: object
                         type: array
-                      deployRestic:
-                        description: DeployRestic is to enable/disable restic services
+                      deployNodeAgent:
+                        description: DeployNodeAgent is to enable/disable node-agent
+                          services
                         type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to
@@ -1203,7 +1207,7 @@ spec:
                                   access objectstore
                                 properties:
                                   aws_access_key_id:
-                                    description: AccessKeyId is a name of key ID to
+                                    description: AccessKeyID is a name of key ID to
                                       access objectstore
                                     type: string
                                   aws_secret_access_key:
@@ -1213,8 +1217,9 @@ spec:
                                 type: object
                             type: object
                           type: array
-                        deployRestic:
-                          description: DeployRestic is to enable/disable restic services
+                        deployNodeAgent:
+                          description: DeployNodeAgent is to enable/disable node-agent
+                            services
                           type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to
@@ -1502,7 +1507,7 @@ spec:
                                     to access objectstore
                                   properties:
                                     aws_access_key_id:
-                                      description: AccessKeyId is a name of key ID
+                                      description: AccessKeyID is a name of key ID
                                         to access objectstore
                                       type: string
                                     aws_secret_access_key:
@@ -1512,8 +1517,8 @@ spec:
                                   type: object
                               type: object
                             type: array
-                          deployRestic:
-                            description: DeployRestic is to enable/disable restic
+                          deployNodeAgent:
+                            description: DeployNodeAgent is to enable/disable node-agent
                               services
                             type: boolean
                           enabled:
@@ -1791,7 +1796,7 @@ spec:
                                     to access objectstore
                                   properties:
                                     aws_access_key_id:
-                                      description: AccessKeyId is a name of key ID
+                                      description: AccessKeyID is a name of key ID
                                         to access objectstore
                                       type: string
                                     aws_secret_access_key:
@@ -1801,8 +1806,8 @@ spec:
                                   type: object
                               type: object
                             type: array
-                          deployRestic:
-                            description: DeployRestic is to enable/disable restic
+                          deployNodeAgent:
+                            description: DeployNodeAgent is to enable/disable node-agent
                               services
                             type: boolean
                           enabled:
