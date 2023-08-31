@@ -22,8 +22,8 @@ import (
 	appsv1beta1 "k8s.io/client-go/kubernetes/typed/apps/v1beta1"
 	appsv1beta2 "k8s.io/client-go/kubernetes/typed/apps/v1beta2"
 	authenticationv1 "k8s.io/client-go/kubernetes/typed/authentication/v1"
-	authenticationv1beta1 "k8s.io/client-go/kubernetes/typed/authentication/v1beta1"
 	authenticationv1alpha1 "k8s.io/client-go/kubernetes/typed/authentication/v1alpha1"
+	authenticationv1beta1 "k8s.io/client-go/kubernetes/typed/authentication/v1beta1"
 	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	authorizationv1beta1 "k8s.io/client-go/kubernetes/typed/authorization/v1beta1"
 	autoscalingv1 "k8s.io/client-go/kubernetes/typed/autoscaling/v1"
@@ -33,8 +33,8 @@ import (
 	batchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	batchv1beta1 "k8s.io/client-go/kubernetes/typed/batch/v1beta1"
 	certificatesv1 "k8s.io/client-go/kubernetes/typed/certificates/v1"
-	certificatesv1beta1 "k8s.io/client-go/kubernetes/typed/certificates/v1beta1"
 	certificatesv1alpha1 "k8s.io/client-go/kubernetes/typed/certificates/v1alpha1"
+	certificatesv1beta1 "k8s.io/client-go/kubernetes/typed/certificates/v1beta1"
 	coordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	coordinationv1beta1 "k8s.io/client-go/kubernetes/typed/coordination/v1beta1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -48,8 +48,8 @@ import (
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
 	flowcontrolv1beta3 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3"
 	networkingv1 "k8s.io/client-go/kubernetes/typed/networking/v1"
-	networkingv1beta1 "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
 	networkingv1alpha1 "k8s.io/client-go/kubernetes/typed/networking/v1alpha1"
+	networkingv1beta1 "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
 	nodev1 "k8s.io/client-go/kubernetes/typed/node/v1"
 	nodev1alpha1 "k8s.io/client-go/kubernetes/typed/node/v1alpha1"
 	nodev1beta1 "k8s.io/client-go/kubernetes/typed/node/v1beta1"
@@ -319,7 +319,7 @@ func (c *K8sClient) SchedulingV1() schedulingv1.SchedulingV1Interface {
 	panic("implement me")
 }
 
-// ResourceV1alpha2 retrieves the ResourceV1alpha2Client 
+// ResourceV1alpha2 retrieves the ResourceV1alpha2Client
 func (c *K8sClient) ResourceV1alpha2() resourceV1alpha2.ResourceV1alpha2Interface {
 	panic("implement me")
 }
