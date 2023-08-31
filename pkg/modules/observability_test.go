@@ -95,6 +95,27 @@ func TestObservabilityPrecheck(t *testing.T) {
 			return true, observability, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
+		"success - driver type Powermax": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+
+			tmpCR := customResource
+			tmpCR.Spec.Driver.CSIDriverType = "powermax"
+			observability := tmpCR.Spec.Modules[0]
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+				return clusterClient, nil
+			}
+
+			return true, observability, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+
 		"success - version provided": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
@@ -752,6 +773,205 @@ func TestPowerFlexMetrics(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 			err := PowerFlexMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
+			if success {
+				assert.NoError(t, err)
+
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
+}
+
+func TestPowerMaxMetrics(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+
+			tmpCR := customResource
+
+			cr := &rbacv1.ClusterRole{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "karavi-metrics-powermax-controller",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr, pmaxCreds).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - deleting with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
+			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
+
+			tmpCR := customResource
+			auth := &tmpCR.Spec.Modules[1]
+			auth.Enabled = true
+
+			cr := &rbacv1.ClusterRole{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "karavi-metrics-powermax-controller",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr, pmaxCreds, karaviAuthconfig, proxyAuthzTokens).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - deleting with auth after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
+			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
+
+			tmpCR := customResource
+			auth := &tmpCR.Spec.Modules[1]
+			auth.Enabled = true
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds, karaviAuthconfig, proxyAuthzTokens).Build()
+			k8sClient := clientgoclient.NewFakeClient(sourceClient)
+
+			//pre-run to generate objects
+			err = PowerMaxMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
+			if err != nil {
+				panic(err)
+			}
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
+			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
+
+			tmpCR := customResource
+			auth := &tmpCR.Spec.Modules[1]
+			auth.Enabled = true
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds, karaviAuthconfig, proxyAuthzTokens).Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - update objects": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
+			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
+
+			objects := map[shared.StorageKey]runtime.Object{}
+			fakeClient := crclient.NewFakeClientNoInjector(objects)
+			fakeClient.Create(ctx, pmaxCreds)
+			fakeClient.Create(ctx, karaviAuthconfig)
+			fakeClient.Create(ctx, proxyAuthzTokens)
+			k8sClient := clientgoclient.NewFakeClient(fakeClient)
+			//pre-run to generate objects
+			err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := &tmpCR.Spec.Modules[1]
+			auth.Enabled = true
+
+			return true, false, tmpCR, fakeClient, operatorConfig
+		},
+		"Fail - no secrets in test-powermax namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+		"Fail - skipCertificateValidation is false but no cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
+			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
+
+			tmpCR := customResource
+			auth := &tmpCR.Spec.Modules[1]
+			auth.Enabled = true
+			// set skipCertificateValidation to false
+			for i, env := range auth.Components[0].Envs {
+				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
+					auth.Components[0].Envs[i].Value = "false"
+				}
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds, karaviAuthconfig, proxyAuthzTokens).Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			success, isDeleting, cr, sourceClient, op := tc(t)
+			k8sClient := clientgoclient.NewFakeClient(sourceClient)
+			err := PowerMaxMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
 			if success {
 				assert.NoError(t, err)
 
