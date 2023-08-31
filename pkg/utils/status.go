@@ -475,25 +475,25 @@ func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule
 
 	//log := logger.GetLogger(ctx)
 	running := false
-	var apprunning bool
-	var velrunning bool
-	var certrunning bool
-	var restrunning bool
+	var AppRunning bool
+	var VelRunning bool
+	var CertRunning bool
+	var RestRunning bool
 	var err error = nil
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
-			apprunning, err = checkForServices(ctx, instance, r, newStatus, false)
+			AppRunning, err = checkForServices(ctx, instance, r, newStatus, false)
 			for _, c := range m.Components {
 				if c.Name == "velero" {
 					if *c.Enabled == true {
-						velrunning, err = checkForServices(ctx, instance, r, newStatus, false)
+						VelRunning, err = checkForServices(ctx, instance, r, newStatus, false)
 					}
 				} else if c.Name == "cert-manager" {
 					if *c.Enabled == true {
-						certrunning, err = checkForServices(ctx, instance, r, newStatus, false)
+						CertRunning, err = checkForServices(ctx, instance, r, newStatus, false)
 					}
 				} else if c.DeployNodeAgent {
-					restrunning, err = checkForServices(ctx, instance, r, newStatus, true)
+					RestRunning, err = checkForServices(ctx, instance, r, newStatus, true)
 				}
 
 			}
@@ -501,7 +501,7 @@ func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule
 		}
 	}
 
-	running = apprunning && velrunning && certrunning && restrunning
+	running = AppRunning && VelRunning && CertRunning && RestRunning
 
 	return running, err
 
