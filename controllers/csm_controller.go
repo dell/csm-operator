@@ -820,6 +820,7 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 	metricsComp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface) error{
 		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
 		modules.ObservabilityMetricsPowerFlexName:  modules.PowerFlexMetrics,
+		modules.ObservabilityMetricsPowerMaxName:   modules.PowerMaxMetrics,
 	}
 
 	for _, comp := range components {
@@ -828,7 +829,7 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		switch comp {
 		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName, modules.ObservabilityCertManagerComponent:
 			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
-		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName:
+		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName, modules.ObservabilityMetricsPowerMaxName:
 			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
 		default:
 			err = fmt.Errorf("unsupported component type: %v", comp)
@@ -1207,7 +1208,7 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 
 	// If annotation exists, we are doing an upgrade or modify
 	if configVersionExists {
-		// if versions are equal, it is a modify
+		// if versions are equal, it is a modification
 		if oldVersion == cr.Spec.Driver.ConfigVersion {
 			log.Infow("proceeding with modification of driver install")
 			return true, nil
