@@ -46,6 +46,9 @@ const (
 	// ObservabilityMetricsPowerFlexName - component metrics-powerflex
 	ObservabilityMetricsPowerFlexName string = "metrics-powerflex"
 
+	// ObservabilityMetricsPowerMaxName - component metrics-powermax
+	ObservabilityMetricsPowerMaxName string = "metrics-powermax"
+
 	// TopologyLogLevel -
 	TopologyLogLevel string = "<TOPOLOGY_LOG_LEVEL>"
 
@@ -139,8 +142,35 @@ const (
 	// DriverDefaultReleaseName constant
 	DriverDefaultReleaseName string = "<DriverDefaultReleaseName>"
 
-	// PflexObsYamlFile - Otel Collector yaml file
+	// PflexObsYamlFile - powerflex metrics yaml file
 	PflexObsYamlFile string = "karavi-metrics-powerflex.yaml"
+
+	// PmaxCapacityMetricsEnabled - enable/disable capacity metrics
+	PmaxCapacityMetricsEnabled string = "<POWERMAX_CAPACITY_METRICS_ENABLED>"
+
+	// PmaxCapacityPollFreq - polling frequency to get capacity metrics
+	PmaxCapacityPollFreq string = "<POWERMAX_CAPACITY_POLL_FREQUENCY>"
+
+	// PmaxPerformanceMetricsEnabled - enable/disable performance metrics
+	PmaxPerformanceMetricsEnabled string = "<POWERMAX_PERFORMANCE_METRICS_ENABLED>"
+
+	// PmaxPerformancePollFreq - polling frequency to get capacity metrics
+	PmaxPerformancePollFreq string = "<POWERMAX_PERFORMANCE_POLL_FREQUENCY>"
+
+	// PmaxConcurrentQueries - number of concurrent queries
+	PmaxConcurrentQueries string = "<POWERMAX_MAX_CONCURRENT_QUERIES>"
+
+	// PmaxLogLevel - the level for the Powermax metrics
+	PmaxLogLevel string = "<POWERMAX_LOG_LEVEL>"
+
+	// PmaxLogFormat - log format for Powermax metrics
+	PmaxLogFormat string = "<POWERMAX_LOG_FORMAT>"
+
+	// PmaxObsImage - Observability image for Powermax
+	PmaxObsImage string = "<POWERMAX_OBS_IMAGE>"
+
+	// PMaxObsYamlFile - powermax metrics yaml file
+	PMaxObsYamlFile string = "karavi-metrics-powermax.yaml"
 )
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
@@ -160,6 +190,10 @@ var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
 	"vxflexos": {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+	},
+	string(csmv1.PowerMax): {
+		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
 	},
 }
 
@@ -753,4 +787,148 @@ func createObsSecretObj(driverSecret corev1.Secret, newNameSpace, newSecretName 
 // getNewAuthSecretName - add prefix to secretName
 func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string {
 	return fmt.Sprintf("%s-%s", driverType, secretName)
+}
+
+// PowerMaxMetrics - delete or update powermax metrics objects
+func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+	log := logger.GetLogger(ctx)
+
+	YamlString, err := getPowerMaxMetricsObject(op, cr)
+	if err != nil {
+		return err
+	}
+
+	powerMaxMetricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	// update secret volume and inject authorization to deployment
+	var dpApply *confv1.DeploymentApplyConfiguration
+	foundDp := false
+	for i, obj := range powerMaxMetricsObjects {
+		if deployment, ok := obj.(*appsv1.Deployment); ok {
+			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr)
+			if err != nil {
+				return err
+			}
+			foundDp = true
+			powerMaxMetricsObjects[i] = powerMaxMetricsObjects[len(powerMaxMetricsObjects)-1]
+			powerMaxMetricsObjects = powerMaxMetricsObjects[:len(powerMaxMetricsObjects)-1]
+			break
+		}
+	}
+	if !foundDp {
+		return fmt.Errorf("could not find deployment obj")
+	}
+
+	powerMaxMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerMaxMetricsObjects, ctrlClient, k8sClient)
+	if err != nil {
+		return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
+	}
+
+	for _, ctrlObj := range powerMaxMetricsObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	// update Deployment
+	if isDeleting {
+		// Delete Deployment
+		deploymentKey := client.ObjectKey{
+			Namespace: *dpApply.Namespace,
+			Name:      *dpApply.Name,
+		}
+		deploymentObj := &appsv1.Deployment{}
+		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
+			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
+				return fmt.Errorf("error delete deployment: %v", err)
+			}
+		} else {
+			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
+		}
+	} else {
+		// Create/Update Deployment
+		if err = deployment.SyncDeployment(ctx, *dpApply, k8sClient, cr.Name); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// getPowerMaxMetricsObject - get powermax metrics yaml string
+func getPowerMaxMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+
+	obs, err := getObservabilityModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	buf, err := readConfigFile(obs, cr, op, PMaxObsYamlFile)
+	if err != nil {
+		return YamlString, err
+	}
+	YamlString = string(buf)
+
+	otelCollectorAddress := "otel-collector:55680"
+	pmaxImage := ""
+	maxConcurrentQueries := "10"
+	capacityEnabled := "true"
+	perfEnabled := "true"
+	capacityPollFrequency := "10"
+	perfPollFrequency := "10"
+	logFormat := "TEXT"
+	logLevel := "INFO"
+	revproxyConfigMap := "powermax-reverseproxy-config"
+
+	for _, component := range obs.Components {
+		if component.Name == ObservabilityMetricsPowerMaxName {
+			if component.Image != "" {
+				pmaxImage = string(component.Image)
+			}
+			for _, env := range component.Envs {
+				if strings.Contains(PmaxLogLevel, env.Name) {
+					logLevel = env.Value
+				} else if strings.Contains(PmaxConcurrentQueries, env.Name) {
+					maxConcurrentQueries = env.Value
+				} else if strings.Contains(PmaxCapacityMetricsEnabled, env.Name) {
+					capacityEnabled = env.Value
+				} else if strings.Contains(PmaxCapacityPollFreq, env.Name) {
+					capacityPollFrequency = env.Value
+				} else if strings.Contains(PmaxPerformanceMetricsEnabled, env.Name) {
+					perfEnabled = env.Value
+				} else if strings.Contains(PmaxPerformancePollFreq, env.Name) {
+					perfPollFrequency = env.Value
+				} else if strings.Contains(ReverseProxyConfigMap, env.Name) {
+					revproxyConfigMap = env.Value
+				} else if strings.Contains(PmaxLogFormat, env.Name) {
+					logFormat = env.Value
+				} else if strings.Contains(OtelCollectorAddress, env.Name) {
+					otelCollectorAddress = env.Value
+				}
+			}
+		}
+	}
+
+	YamlString = strings.ReplaceAll(YamlString, PmaxObsImage, pmaxImage)
+	YamlString = strings.ReplaceAll(YamlString, PmaxLogLevel, logLevel)
+	YamlString = strings.ReplaceAll(YamlString, PmaxLogFormat, logFormat)
+	YamlString = strings.ReplaceAll(YamlString, PmaxConcurrentQueries, maxConcurrentQueries)
+	YamlString = strings.ReplaceAll(YamlString, PmaxCapacityMetricsEnabled, capacityEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PmaxCapacityPollFreq, capacityPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PmaxPerformanceMetricsEnabled, perfEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PmaxPerformancePollFreq, perfPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
+	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, revproxyConfigMap)
+	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
+	return YamlString, nil
 }
