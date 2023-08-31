@@ -78,7 +78,7 @@ spec:
       - name: cert
         secret:
           defaultMode: 420
-          secretName: cert-manager-webhook-ca 
+          secretName: webhook-server-cert 
 ---
 apiVersion: v1
 kind: ServiceAccount
