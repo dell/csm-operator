@@ -525,27 +525,44 @@ func (suite *CSMControllerTestSuite) TestRemoveModule() {
 	r := suite.createReconciler()
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Modules = getAuthProxyServer()
+	csmBadVersionAuthProxy := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csmBadVersionAuthProxy.Spec.Modules = getAuthProxyServer()
+	csmBadVersionAuthProxy.Spec.Modules[0].ConfigVersion = shared.BadConfigVersion
+	csmBadVersionRevProxy := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csmBadVersionRevProxy.Spec.Modules = getReverseProxyModule()
+	csmBadVersionRevProxy.Spec.Modules[0].ConfigVersion = shared.BadConfigVersion
 
-	var expectedErr string
-	var errorInjector *bool
-	suite.T().Run(csmName, func(t *testing.T) {
-		if errorInjector != nil {
-			suite.makeFakeCSM(csmName, suite.namespace, false, getAuthProxyServer())
-			r.Reconcile(ctx, req)
-			*errorInjector = true
-		}
-		err := r.removeModule(ctx, csm, operatorConfig, r.Client)
-		if expectedErr == "" {
-			assert.Nil(t, err)
-		} else {
-			assert.Error(t, err)
-			assert.Containsf(t, err.Error(), expectedErr, "expected error containing %q, got %s", expectedErr, err)
-		}
-		if errorInjector != nil {
-			*errorInjector = false
-			r.Client.(*crclient.Client).Clear()
-		}
-	})
+	removeModuleTests := []struct {
+		name          string
+		csm           csmv1.ContainerStorageModule
+		errorInjector *bool
+		expectedErr   string
+	}{
+		{"remove module - success", csm, nil, ""},
+		{"remove module bad version error", csmBadVersionAuthProxy, nil, "unable to reconcile"},
+		{"remove module bad version error", csmBadVersionRevProxy, nil, "unable to reconcile"},
+	}
+
+	for _, tt := range removeModuleTests {
+		suite.T().Run(csmName, func(t *testing.T) {
+			if tt.errorInjector != nil {
+				suite.makeFakeCSM(csmName, suite.namespace, false, getAuthProxyServer())
+				r.Reconcile(ctx, req)
+				*tt.errorInjector = true
+			}
+			err := r.removeModule(ctx, tt.csm, operatorConfig, r.Client)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+			if tt.errorInjector != nil {
+				*tt.errorInjector = false
+				r.Client.(*crclient.Client).Clear()
+			}
+		})
+	}
 }
 
 func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
@@ -1295,6 +1312,33 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	for i := range csm.Spec.Modules[0].Components {
 		csm.Spec.Modules[0].Components[i].Enabled = &[]bool{true}[0]
 	}
+}
+
+func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadComponent() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getObservabilityModule()
+	reconciler := suite.createReconciler()
+
+	badComponent := []csmv1.ContainerTemplate{
+		{
+			Name:    "fake-news",
+			Enabled: &[]bool{true}[0],
+			Envs: []corev1.EnvVar{
+				{
+					Name:  "TOPOLOGY_LOG_LEVEL",
+					Value: "INFO",
+				},
+			},
+		},
+	}
+
+	goodModules := csm.Spec.Modules[0].Components
+	csm.Spec.Modules[0].Components = append(badComponent, csm.Spec.Modules[0].Components...)
+
+	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components = goodModules
 }
 
 func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
