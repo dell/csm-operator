@@ -141,6 +141,7 @@ spec:
             - /velero
           args:
             - server
+            - --uploader-type=restic
           resources: 
             requests:
               cpu: 500m
