@@ -60,6 +60,8 @@ const (
 	CertManagerCrdManifest = "cert-crds.yaml"
 	// CertManagerIssuerCertManifest - filename of the issuer and cert for app-mobility
 	CertManagerIssuerCertManifest = "certificate.yaml"
+	//NodeAgentCrdManifest - filename of node-agent manifest for app-mobility
+	NodeAgentCrdManifest = "node-agent.yaml"
 
 	//ControllerImg - image for app-mobility-controller
 	ControllerImg = "<CONTROLLER_IMAGE>"
@@ -83,17 +85,21 @@ const (
 	// VeleroNamespace - namespace Velero is installed in
 	VeleroNamespace = "<VELERO_NAMESPACE>"
 	// ConfigProvider - configurations provider (csi/aws)
-	ConfigProvider = "<PROVIDER>"
+	ConfigProvider = "<CONFIGURATION_PROVIDER>"
 	// VeleroImage - Image for velero
 	VeleroImage = "<VELERO_IMAGE>"
 	// VeleroImagePullPolicy - image pull policy for velero
 	VeleroImagePullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
 	// VeleroAccess  -  Secret name for velero
 	VeleroAccess = "<VELERO_ACCESS>"
-	//InitContainerName - Name of init container for velero
-	InitContainerName = "<INIT_CONTAINER_NAME>"
-	//InitContainerImage - Image of init container for velero
-	InitContainerImage = "<INIT_CONTAINER_IMAGE>"
+	//AWSInitContainerName - Name of init container for velero - aws
+	AWSInitContainerName = "<AWS_INIT_CONTAINER_NAME>"
+	//AWSInitContainerImage - Image of init container for velero -aws
+	AWSInitContainerImage = "<AWS_INIT_CONTAINER_IMAGE>"
+	//DELLInitContainerName - Name of init container for velero - dell
+	DELLInitContainerName = "<DELL_INIT_CONTAINER_NAME>"
+	//DELLInitContainerImage - Image of init container for velero - dell
+	DELLInitContainerImage = "<DELL_INIT_CONTAINER_IMAGE>"
 	//AccessContents - contents of the object store secret
 	AccessContents = "<CRED_CONTENTS>"
 	//AKeyID - contains the aws access key id
@@ -521,7 +527,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 
 	var useSnap bool
 	var cleanUp bool
-	var restic bool
+	var nodeAgent bool
 	credName := ""
 	veleroNS := ""
 
@@ -545,8 +551,8 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 					if c.CleanUpCRDs {
 						cleanUp = true
 					}
-					if c.DeployRestic {
-						restic = true
+					if c.DeployNodeAgent {
+						nodeAgent = true
 					}
 					for _, env := range c.Envs {
 						if strings.Contains(AppMobObjStoreSecretName, env.Name) {
@@ -607,8 +613,8 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		}
 
 	}
-	if restic {
-		yamlString4, err := getRestic(op, cr)
+	if nodeAgent {
+		yamlString4, err := getNodeAgent(op, cr)
 		if err != nil {
 			return err
 		}
@@ -643,8 +649,10 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	provider := ""
 	veleroImg := ""
 	veleroImgPullPolicy := ""
-	veleroInitContainerName := ""
-	veleroInitContainerImage := ""
+	veleroAWSInitContainerName := ""
+	veleroAWSInitContainerImage := ""
+	veleroDELLInitContainerName := ""
+	veleroDELLInitContainerImage := ""
 	backupURL := ""
 	objectSecretName := ""
 
@@ -686,35 +694,26 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 			}
 		}
 	}
-	switch provider {
-	case "aws":
-		for _, m := range cr.Spec.Modules {
-			for _, icontainer := range m.InitContainer {
-				if icontainer.Name == "velero-plugin-for-aws" {
-					veleroInitContainerName = icontainer.Name
-					veleroInitContainerImage = string(icontainer.Image)
-				}
+	for _, m := range cr.Spec.Modules {
+		for _, icontainer := range m.InitContainer {
+			if icontainer.Name == "velero-plugin-for-aws" {
+				veleroAWSInitContainerName = icontainer.Name
+				veleroAWSInitContainerImage = string(icontainer.Image)
+			}
+			if icontainer.Name == "dell-custom-velero-plugin" {
+				veleroDELLInitContainerName = icontainer.Name
+				veleroDELLInitContainerImage = string(icontainer.Image)
 			}
 		}
-	case "csi":
-		for _, m := range cr.Spec.Modules {
-			for _, icontainer := range m.InitContainer {
-				if icontainer.Name == "dell-custom-velero-plugin" {
-					veleroInitContainerName = icontainer.Name
-					veleroInitContainerImage = string(icontainer.Image)
-
-				}
-			}
-		}
-	default:
-		fmt.Println("Invalid entry for config provider")
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
 	yamlString = strings.ReplaceAll(yamlString, VeleroImage, veleroImg)
 	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
-	yamlString = strings.ReplaceAll(yamlString, InitContainerName, veleroInitContainerName)
-	yamlString = strings.ReplaceAll(yamlString, InitContainerImage, veleroInitContainerImage)
+	yamlString = strings.ReplaceAll(yamlString, AWSInitContainerName, veleroAWSInitContainerName)
+	yamlString = strings.ReplaceAll(yamlString, AWSInitContainerImage, veleroAWSInitContainerImage)
+	yamlString = strings.ReplaceAll(yamlString, DELLInitContainerName, veleroDELLInitContainerName)
+	yamlString = strings.ReplaceAll(yamlString, DELLInitContainerImage, veleroDELLInitContainerImage)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageLocation, backupStorageLocationName)
 	yamlString = strings.ReplaceAll(yamlString, VeleroBucketName, bucketName)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupURL)
@@ -801,15 +800,15 @@ func getCleanupcrds(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	return yamlString, nil
 }
 
-// getRestic - gets restic services manifests
-func getRestic(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+// getNodeAgent - gets ndoe-agent services manifests
+func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
 		return yamlString, err
 	}
-	cleanupCrdsPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, ResticCrdManifest)
+	cleanupCrdsPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, NodeAgentCrdManifest)
 	buf, err := os.ReadFile(filepath.Clean(cleanupCrdsPath))
 	if err != nil {
 		return yamlString, err

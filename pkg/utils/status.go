@@ -224,12 +224,14 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := false
+	var err error = nil
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 	// TODO: Can be uncommented once this issues gets sorted out
 	/* controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
 	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 	newStatus.ControllerStatus = controllerStatus
 	newStatus.NodeStatus = nodeStatus */
+
 	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 	newStatus.NodeStatus = nodeStatus
 	controllerReplicas := newStatus.ControllerStatus.Desired
@@ -242,12 +244,25 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("daemonset expected [%d]", expected)
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
-	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
-		running = true
-		newStatus.State = constants.Succeeded
+	if instance.GetName() == "application-mobility" {
+		modrunning, err := statusForAppMob(ctx, instance, r, newStatus)
+		if err != nil {
+			log.Infof("statusForAppMob err msg [%s]", err.Error())
+		}
+		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && modrunning {
+			running = true
+			newStatus.State = constants.Succeeded
+		}
+		log.Infof("calculate overall state [%s]", newStatus.State)
+	} else {
+		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
+			running = true
+			newStatus.State = constants.Succeeded
+		}
+		log.Infof("calculate overall state [%s]", newStatus.State)
+
 	}
-	log.Infof("calculate overall state [%s]", newStatus.State)
-	var err error = nil
+	//var err error = nil
 	// TODO: Uncomment this when the controller runtime API gets fixed
 	/*
 		if controllerErr != nil {
@@ -265,6 +280,8 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		err = daemonSetErr
 		log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
 	}
+
+	//}
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err
 }
@@ -273,11 +290,17 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
 
 	log := logger.GetLogger(ctx)
-	instance.GetCSMStatus().State = newStatus.State
-	log.Infow("Driver State", "Controller",
-		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
-	instance.GetCSMStatus().ControllerStatus = newStatus.ControllerStatus
-	instance.GetCSMStatus().NodeStatus = newStatus.NodeStatus
+	if instance.GetName() == "application-mobility" {
+		instance.GetCSMStatus().State = newStatus.State
+		log.Infow("Module State", "Controller", newStatus.ControllerStatus)
+		instance.GetCSMStatus().ControllerStatus = newStatus.ControllerStatus
+	} else {
+		instance.GetCSMStatus().State = newStatus.State
+		log.Infow("Driver State", "Controller",
+			newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
+		instance.GetCSMStatus().ControllerStatus = newStatus.ControllerStatus
+		instance.GetCSMStatus().NodeStatus = newStatus.NodeStatus
+	}
 }
 
 // UpdateStatus of csm
@@ -418,4 +441,79 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 	log.Infow("Polling status of NGINX ingress controller")
 
 	return wait.PollImmediate(time.Second, timeout, GetNginxControllerStatus(ctx, instance, r))
+}
+
+// checkForServices - Calculate success state for services deployed with app-mob
+func checkForServices(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, isDaemonset bool) (bool, error) {
+
+	log := logger.GetLogger(ctx)
+	running := false
+	var err error = nil
+	if isDaemonset {
+		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
+		newStatus.NodeStatus = nodeStatus
+		newStatus.State = constants.Failed
+		log.Infof("daemonset expected [%d]", expected)
+		log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
+		if fmt.Sprintf("%d", expected) == nodeStatus.Available {
+			running = true
+			newStatus.State = constants.Succeeded
+		}
+		if daemonSetErr != nil {
+			err = daemonSetErr
+			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
+		}
+
+	} else {
+		controllerReplicas := newStatus.ControllerStatus.Desired
+		controllerStatus := newStatus.ControllerStatus
+		newStatus.State = constants.Failed
+		log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
+		log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
+		if controllerReplicas == controllerStatus.Available {
+			running = true
+			newStatus.State = constants.Succeeded
+		}
+	}
+	log.Infof("calculate overall state [%s] of module", newStatus.State)
+
+	return running, err
+
+}
+
+// statusForAppMob - calculate success state for application-mobility module
+func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+
+	//log := logger.GetLogger(ctx)
+	running := false
+	var appRunning bool
+	var velRunning bool
+	var certRunning bool
+	var restRunning bool
+	var err error = nil
+	for _, m := range instance.Spec.Modules {
+		if m.Name == csmv1.ApplicationMobility {
+			appRunning, err = checkForServices(ctx, instance, r, newStatus, false)
+			for _, c := range m.Components {
+				if c.Name == "velero" {
+					if *c.Enabled {
+						velRunning, err = checkForServices(ctx, instance, r, newStatus, false)
+					}
+				} else if c.Name == "cert-manager" {
+					if *c.Enabled {
+						certRunning, err = checkForServices(ctx, instance, r, newStatus, false)
+					}
+				} else if c.DeployNodeAgent {
+					restRunning, err = checkForServices(ctx, instance, r, newStatus, true)
+				}
+
+			}
+
+		}
+	}
+
+	running = appRunning && velRunning && certRunning && restRunning
+
+	return running, err
+
 }

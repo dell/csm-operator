@@ -121,8 +121,10 @@ spec:
     metadata:
       labels:
         name: application-mobility-velero
+        csm: application-mobility
         app.kubernetes.io/name: application-mobility-velero
         app.kubernetes.io/instance: application-mobility
+
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8085"
@@ -141,6 +143,7 @@ spec:
             - /velero
           args:
             - server
+            - --uploader-type=restic
           resources: 
             requests:
               cpu: 500m
@@ -151,7 +154,7 @@ spec:
           volumeMounts:
             - name: plugins
               mountPath: /plugins
-            - name: <APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
+            - name: cloud-credentials
               mountPath: /credentials
             - name: scratch
               mountPath: /scratch
@@ -172,13 +175,18 @@ spec:
           lifecycle:
       dnsPolicy: ClusterFirst
       initContainers:
-        - name: <INIT_CONTAINER_NAME>
-          image: <INIT_CONTAINER_IMAGE>
+        - name: <AWS_INIT_CONTAINER_NAME>
+          image: <AWS_INIT_CONTAINER_IMAGE>
+          volumeMounts:
+           - mountPath: /target
+             name: plugins
+        - name: <DELL_INIT_CONTAINER_NAME>
+          image: <DELL_INIT_CONTAINER_IMAGE>
           volumeMounts:
            - mountPath: /target
              name: plugins
       volumes:
-        - name: <APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
+        - name: cloud-credentials
           secret:
             secretName: <APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>
         - name: plugins

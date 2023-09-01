@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: node-agent
+  name: application-mobility-node-agent
   namespace: <VELERO_NAMESPACE>
   labels:
     app.kubernetes.io/name: application-mobility-velero
@@ -9,16 +9,17 @@ metadata:
 spec:
   selector:
     matchLabels:
-      name: node-agent
+      name: application-mobility-node-agent
   template:
     metadata:
       labels:
-        name: node-agent
+        name: application-mobility-node-agent
+        csm: application-mobility
         app.kubernetes.io/name: application-mobility-velero
         app.kubernetes.io/instance: application-mobility
     spec:
       serviceAccountName: application-mobility-velero-server-service-account
-      #terminationGracePeriodSeconds: 3600
+      terminationGracePeriodSeconds: 3600
       volumes:
         - name: cloud-credentials
           secret:
@@ -28,7 +29,7 @@ spec:
             path: /var/lib/kubelet/pods
         - name: scratch
           emptyDir: {}
-     #dnsPolicy: ClusterFirst
+      dnsPolicy: ClusterFirst
       securityContext:
         runAsUser: 0
       containers:
@@ -49,7 +50,7 @@ spec:
             - name: scratch
               mountPath: /scratch
           env:
-            - name: <VELERO_NAMESPACE>
+            - name: VELERO_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
@@ -70,4 +71,3 @@ spec:
             limits:
               cpu: 2000m
               memory: 2024Mi
----
