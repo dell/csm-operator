@@ -1,6 +1,6 @@
 name: karavi-authorization-proxy
 imagePullPolicy: IfNotPresent
-image: dellemc/csm-authorization-sidecar:v1.5.0
+image: dellemc/csm-authorization-sidecar:v1.8.0
 env:
   - name: PROXY_HOST
     value: ""
