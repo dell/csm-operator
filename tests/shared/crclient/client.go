@@ -41,6 +41,14 @@ type Client struct {
 	ErrorInjector shared.ErrorInjector
 }
 
+type subResourceClient struct {
+	client      *Client
+	subResource string
+}
+
+// ensure subResourceClient implements client.SubResourceClient.
+//var _ client.SubResourceClient = &subResourceClient{}
+
 // NewFakeClient creates a new client
 func NewFakeClient(objectMap map[shared.StorageKey]runtime.Object, errorInjector shared.ErrorInjector) *Client {
 	return &Client{
@@ -55,7 +63,7 @@ func NewFakeClientNoInjector(objectMap map[shared.StorageKey]runtime.Object) *Cl
 }
 
 // Get implements client.Client.
-func (f Client) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (f Client) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("Get", obj); err != nil {
 			return err
@@ -253,9 +261,24 @@ func (f Client) DeleteAllOf(ctx context.Context, obj client.Object, opts ...clie
 	panic("implement me")
 }
 
+// GroupVersionKindFor returns the GroupVersionKind for the given object.
+func (f Client) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	panic("implement me")
+}
+
+// IsObjectNamespaced returns true if the GroupVersionKind of the object is namespaced.
+func (f Client) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	panic("implement me")
+}
+
+// SubResource returns a subresource with the name specified in subResource
+func (f Client) SubResource(subResource string) client.SubResourceClient {
+	return &subResourceClient{client: &f, subResource: subResource}
+}
+
 // Status implements client.StatusClient.
-func (f Client) Status() client.StatusWriter {
-	return f
+func (f Client) Status() client.SubResourceWriter {
+	return f.SubResource("not-implemented")
 }
 
 // Scheme returns the scheme this client is using.
@@ -266,4 +289,25 @@ func (f Client) Scheme() *runtime.Scheme {
 // RESTMapper returns the scheme this client is using.
 func (f Client) RESTMapper() meta.RESTMapper {
 	panic("implement me")
+}
+
+// Create implements client.SubResourceClient
+func (sc *subResourceClient) Create(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceCreateOption) error {
+	panic("implement me")
+}
+
+// Update implements client.SubResourceClient
+func (sc *subResourceClient) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+	// We are currently not using options in update so they don't need to be passed
+	return sc.client.Update(ctx, obj)
+}
+
+// Patch implements client.SubResourceWriter
+func (sc *subResourceClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
+	panic("implement me")
+}
+
+// Get out of here
+func (sc *subResourceClient) Get(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceGetOption) error {
+	panic("not implemented")
 }

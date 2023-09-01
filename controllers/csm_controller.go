@@ -479,19 +479,28 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
 
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
-	daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleDaemonsetUpdate,
 	})
+	if err != nil {
+		return fmt.Errorf("ContentWatch failed adding event handler to daemonsetInformer: %v", err)
+	}
 
 	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
-	deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleDeploymentUpdate,
 	})
+	if err != nil {
+		return fmt.Errorf("ContentWatch failed adding event handler to deploymentInformer: %v", err)
+	}
 
 	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
-	podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handlePodsUpdate,
 	})
+	if err != nil {
+		return fmt.Errorf("ContentWatch failed adding event handler to podsInformer: %v", err)
+	}
 
 	sharedInformerFactory.Start(StopWatch)
 	return nil
