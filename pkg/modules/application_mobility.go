@@ -157,7 +157,7 @@ func VeleroCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.Cont
 			return err
 		}
 	}
-		
+
 	return nil
 }
 

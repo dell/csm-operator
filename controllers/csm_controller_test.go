@@ -1428,7 +1428,6 @@ func (suite *CSMControllerTestSuite) TestReconcileAppMob() {
 	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 
-
 	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
 	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.Error(suite.T(), err)
