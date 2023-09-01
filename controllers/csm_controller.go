@@ -175,7 +175,7 @@ var (
 // +kubebuilder:rbac:groups="velero.io",resources=podvolumebackups/finalizers,verbs=update
 // +kubebuilder:rbac:groups="velero.io",resources=podvolumebackups/status,verbs=create;get;list;patch;update
 // +kubebuilder:rbac:groups="velero.io",resources=podvolumerestores,verbs=create;delete;get;list;patch;update;watch
-// +kubebuilder:rbac:groups="velero.io",resources=resticrepositories,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="velero.io",resources=backuprepositories,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups="velero.io",resources=restores,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-controller,verbs=get;update;patch
