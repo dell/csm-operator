@@ -232,8 +232,6 @@ spec:
               value: false
             - name: X_CSI_NFS_ACLS
               value: <X_CSI_NFS_ACLS>
-            - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
-              value: <X_CSI_POWERFLEX_EXTERNAL_ACCESS>
             - name: X_CSI_QUOTA_ENABLED
               value: <X_CSI_QUOTA_ENABLED>
           volumeMounts:
