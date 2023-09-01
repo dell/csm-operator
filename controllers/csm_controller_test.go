@@ -1269,10 +1269,6 @@ func getAppMob() []csmv1.Module {
 							Name:  "APPLICATION_MOBILITY_LICENSE_NAME",
 							Value: "license",
 						},
-						{
-							Name:  "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME",
-							Value: "cloud-credentials",
-						},
 					},
 				},
 				{
@@ -1302,6 +1298,10 @@ func getAppMob() []csmv1.Module {
 						{
 							Name:  "VOL_SNAPSHOT_LOCATION_NAME",
 							Value: "default",
+						},
+						{
+							Name:  "BACKUP_STORAGE_URL",
+							Value: "localhost:8000",
 						},
 					},
 				},
@@ -1415,19 +1415,26 @@ func (suite *CSMControllerTestSuite) TestReconcileAppMob() {
 	badOperatorConfig := utils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
+	goodOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../operatorconfig",
+	}
 	err := reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
+
+	er := reconciler.reconcileAppMobilityCRDS(ctx, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), er)
 
 	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
 	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
+
 
 	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
 	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.Error(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAppMobility(ctx, false, goodOperatorConfig, csm, suite.fakeClient)
 	assert.Nil(suite.T(), err)
 
 	// Restore the status
