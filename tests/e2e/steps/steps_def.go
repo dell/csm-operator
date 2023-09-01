@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/kubernetes/test/e2e/framework"
+	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -119,7 +120,7 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
 
-	if _, err := framework.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
 	}
 
@@ -163,12 +164,12 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	return checkAllRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
+	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	return checkNoRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
+	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) setNodeLabel(res Resource, label string) error {
@@ -290,7 +291,7 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 	}
 	for _, cluster := range clusterClients {
 		// check observability in all clusters
-		if err := checkObservabilityRunningPods(utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkObservabilityRunningPods(context.TODO(), utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for observability installation in %s: %v", cluster.ClusterID, err)
 		}
 
@@ -329,7 +330,7 @@ func (step *Step) validateObservabilityNotInstalled(cr csmv1.ContainerStorageMod
 	}
 	for _, cluster := range clusterClients {
 		// check observability is not installed
-		if err := checkObservabilityNoRunningPods(utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkObservabilityNoRunningPods(context.TODO(), utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed observability installation check %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -369,12 +370,12 @@ func (step *Step) validateReplicationInstalled(cr csmv1.ContainerStorageModule) 
 	}
 	for _, cluster := range clusterClients {
 		// check replication controllers in all clusters
-		if err := checkAllRunningPods(utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAllRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for  replication controllers installation in %s: %v", cluster.ClusterID, err)
 		}
 
 		// check driver deployment in all clusters
-		if err := checkAllRunningPods(cr.Namespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAllRunningPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed while check for driver installation in %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -395,14 +396,14 @@ func (step *Step) validateReplicationNotInstalled(cr csmv1.ContainerStorageModul
 	}
 	for _, cluster := range clusterClients {
 		// check replication  controller is not installed
-		if err := checkNoRunningPods(utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
+		if err := checkNoRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
 		}
 
 		// check no driver is not installed in target clusters
 		if cluster.ClusterID != utils.DefaultSourceClusterID {
 
-			if err := checkNoRunningPods(cr.Namespace, cluster.ClusterK8sClient); err != nil {
+			if err := checkNoRunningPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
 				return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
 			}
 		}
@@ -496,7 +497,7 @@ func (step *Step) setupSecretFromFile(res Resource, file, namespace string) erro
 		return fmt.Errorf("failed to read secret data: %v", err)
 	}
 
-	if _, err := framework.RunKubectlInput(namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+	if _, err := kubectl.RunKubectlInput(namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply secret from file %s in namespace %s: %v", file, namespace, err)
 	}
 
@@ -705,7 +706,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 		operatorNamespace = os.Getenv("OPERATOR_NAMESPACE")
 	}
 
-	pods, err := fpod.GetPodsInNamespace(step.clientSet, operatorNamespace, map[string]string{})
+	pods, err := fpod.GetPodsInNamespace(context.TODO(), step.clientSet, operatorNamespace, map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -769,7 +770,7 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 	}
 	for _, cluster := range clusterClients {
 		// check AuthorizationProxyServer in all clusters
-		if err := checkAuthorizationProxyServerPods(utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAuthorizationProxyServerPods(context.TODO(), utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for AuthorizationProxyServer installation in %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -792,7 +793,7 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 	}
 	for _, cluster := range clusterClients {
 		// check AuthorizationProxyServer is not installed
-		if err := checkAuthorizationProxyServerNoRunningPods(utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAuthorizationProxyServerNoRunningPods(context.TODO(), utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed AuthorizationProxyServer installation check %s: %v", cluster.ClusterID, err)
 		}
 	}
