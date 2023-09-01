@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ func CheckApplyContainersReplica(containers []acorev1.ContainerApplyConfiguratio
 				return fmt.Errorf("missing the following volume mount %s", volName)
 			}
 
-			//check arguments
+			// check arguments
 			foundReplicationPrefix := false
 			foundReplicationContextPrefix := false
 			for _, arg := range cnt.Args {
@@ -252,7 +252,6 @@ func CheckClusterRoleReplica(rules []rbacv1.PolicyRule) error {
 		return fmt.Errorf("missing the resources for %s", "dellcsireplicationgroups/status")
 	}
 	return nil
-
 }
 
 // ReplicationInjectClusterRole - inject replication into clusterrole
@@ -339,8 +338,8 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	replicaCount := "1"
 	retryMin := "1s"
 	retryMax := "5m"
-	replicaImage := "dellemc/dell-replication-controller:v1.5.0"
-	replicaInitImage := "dellemc/dell-replication-init:v1.0.1"
+	replicaImage := ""
+	replicaInitImage := ""
 
 	for _, component := range replica.Components {
 		if component.Name == utils.ReplicationControllerManager {
@@ -378,7 +377,6 @@ func getReplicaModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.Replication {
 			return m, nil
-
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("could not find replica module")
