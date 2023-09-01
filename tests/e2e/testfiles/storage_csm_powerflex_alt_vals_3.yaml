@@ -37,8 +37,6 @@ spec:
           value: "0"
         - name: X_CSI_NFS_ACLS
           value: "0777"
-        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
-          value: ""
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
 
