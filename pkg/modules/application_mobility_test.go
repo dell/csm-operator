@@ -19,6 +19,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -392,7 +393,7 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 					Name: "application-mobility-certificate",
 				},
 			}
-			velerov1.AddToScheme(scheme.Scheme)
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig

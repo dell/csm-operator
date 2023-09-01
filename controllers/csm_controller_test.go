@@ -37,6 +37,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -160,6 +161,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	apiextv1.AddToScheme(scheme.Scheme)
 
 	apiextv1.AddToScheme(scheme.Scheme)
+	certmanagerv1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)
