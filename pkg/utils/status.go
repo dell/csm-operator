@@ -247,7 +247,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	if instance.GetName() == "application-mobility" {
 		modrunning, err := statusForAppMob(ctx, instance, r, newStatus)
 		if err != nil {
-			log.Infof("calculate Daemonseterror msg [%s]", err.Error())
+			log.Infof("statusForAppMob err msg [%s]", err.Error())
 		}
 		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && modrunning {
 			running = true
