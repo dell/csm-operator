@@ -172,7 +172,7 @@ metadata:
                         "value": "powerscale"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.5.0",
+                    "image": "dellemc/dell-csi-replicator:v1.6.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -198,15 +198,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.5.0",
+                    "image": "dellemc/dell-replication-controller:v1.6.0",
                     "name": "dell-replication-controller-manager"
-                  },
-                  {
-                    "image": "dellemc/dell-replication-init:v1.0.1",
-                    "name": "dell-replication-controller-init"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -503,7 +499,7 @@ metadata:
                         "value": "powermax"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.5.0",
+                    "image": "dellemc/dell-csi-replicator:v1.6.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -529,15 +525,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.5.0",
+                    "image": "dellemc/dell-replication-controller:v1.6.0",
                     "name": "dell-replication-controller-manager"
-                  },
-                  {
-                    "image": "dellemc/dell-replication-init:v1.0.1",
-                    "name": "dell-replication-controller-init"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "replication"
               }
@@ -988,7 +980,7 @@ metadata:
                         "value": "powerflex"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.5.0",
+                    "image": "dellemc/dell-csi-replicator:v1.6.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -1014,15 +1006,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.5.0",
+                    "image": "dellemc/dell-replication-controller:v1.6.0",
                     "name": "dell-replication-controller-manager"
-                  },
-                  {
-                    "image": "dellemc/dell-replication-init:v1.0.1",
-                    "name": "dell-replication-controller-init"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -2357,12 +2345,10 @@ spec:
     name: sdc
   - image: docker.io/dellemc/csm-authorization-sidecar:v1.7.0
     name: karavi-authorization-proxy
-  - image: docker.io/dellemc/dell-csi-replicator:v1.5.0
+  - image: docker.io/dellemc/dell-csi-replicator:v1.6.0
     name: dell-csi-replicator
-  - image: docker.io/dellemc/dell-replication-controller:v1.5.0
+  - image: docker.io/dellemc/dell-replication-controller:v1.6.0
     name: dell-replication-controller-manager
-  - image: docker.io/dellemc/dell-replication-init:v1.0.1
-    name: dell-replication-controller-init
   - image: docker.io/dellemc/csm-topology:v1.6.0
     name: topology
   - image: docker.io/otel/opentelemetry-collector:0.42.0

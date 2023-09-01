@@ -1131,7 +1131,7 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.5.0",
+			ConfigVersion: "v1.6.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ReplicationSideCarName,
@@ -1144,9 +1144,6 @@ func getReplicaModule() []csmv1.Module {
 							Value: "skip-replication-cluster-check",
 						},
 					},
-				},
-				{
-					Name: utils.ReplicationControllerInit,
 				},
 			},
 		},
