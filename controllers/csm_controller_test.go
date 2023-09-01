@@ -1185,7 +1185,7 @@ func getAuthModule() []csmv1.Module {
 		{
 			Name:          csmv1.Authorization,
 			Enabled:       true,
-			ConfigVersion: "v1.5.0",
+			ConfigVersion: "v1.8.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: "karavi-authorization-proxy",
