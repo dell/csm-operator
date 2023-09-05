@@ -38,8 +38,6 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
-        - name: X_CSI_NFS_ACLS
-          value: "0777"
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
 
