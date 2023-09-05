@@ -136,6 +136,10 @@ var (
 	operatorConfig = utils.OperatorConfig{
 		ConfigDirectory: "../operatorconfig",
 	}
+
+	badOperatorConfig = utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
 )
 
 // CSMContrllerTestSuite implements testify suite
@@ -231,9 +235,6 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyError() {
 	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
 	csm.Spec.Modules = getReverseProxyModule()
 	reconciler := suite.createReconciler()
-	badOperatorConfig := utils.OperatorConfig{
-		ConfigDirectory: "../in-valid-path",
-	}
 	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 }
@@ -528,6 +529,44 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 			if tt.errorInjector != nil {
 				*tt.errorInjector = false
 				r.Client.(*crclient.Client).Clear()
+			}
+		})
+	}
+
+}
+
+// Test all edge cases in SyncCSM
+func (suite *CSMControllerTestSuite) TestSyncCSM() {
+	r := suite.createReconciler()
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	authProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	authProxyServerCSM.Spec.Modules = getAuthProxyServer()
+	appMobCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	appMobCSM.Spec.Modules = getAppMob()
+	reverseProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
+
+	syncCSMTests := []struct {
+		name        string
+		csm         csmv1.ContainerStorageModule
+		op          utils.OperatorConfig
+		expectedErr string
+	}{
+		{"auth proxy server bad op conf", authProxyServerCSM, badOperatorConfig, "failed to deploy authorization proxy server"},
+		{"app mobility happy path", appMobCSM, operatorConfig, ""},
+		{"app mobility bad op conf", appMobCSM, badOperatorConfig, "failed to deploy application mobility"},
+		{"reverse proxy server bad op conf", reverseProxyServerCSM, badOperatorConfig, "failed to deploy reverseproxy proxy server"},
+		{"getDriverConfig bad op config", csm, badOperatorConfig, "no such file or directory"},
+	}
+
+	for _, tt := range syncCSMTests {
+		suite.T().Run(tt.name, func(t *testing.T) {
+			err := r.SyncCSM(ctx, tt.csm, tt.op, r.Client)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
 	}
