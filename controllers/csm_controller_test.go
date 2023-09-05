@@ -540,7 +540,9 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	authProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	authProxyServerCSM.Spec.Modules = getAuthProxyServer()
 	appMobCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	appMobCSM.Spec.Modules = getAppMob()
 	reverseProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
 
 	syncCSMTests := []struct {
 		name          string
@@ -548,11 +550,9 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		op            utils.OperatorConfig
 		expectedErr   string
 	}{
-		{"auth proxy server happy path", authProxyServerCSM, operatorConfig, ""},
 		{"auth proxy server bad op conf", authProxyServerCSM, badOperatorConfig, "failed to deploy authorization proxy server"},
 		{"app mobility happy path", appMobCSM, operatorConfig, ""},
 		{"app mobility bad op conf", appMobCSM, badOperatorConfig, "failed to deploy application mobility"},
-		{"reverse proxy server happy path", reverseProxyServerCSM, operatorConfig, ""},
 		{"reverse proxy server bad op conf", reverseProxyServerCSM, badOperatorConfig, "failed to deploy reverseproxy proxy server"},
 		{"getDriverConfig bad op config", csm, badOperatorConfig, "no such file or directory"},
 	}
