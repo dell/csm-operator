@@ -278,10 +278,6 @@ spec:
               value: "<X_CSI_IG_MODIFY_HOSTNAME>"
             - name: X_CSI_POWERMAX_PROXY_SERVICE_NAME
               value: "csipowermax-reverseproxy"
-            - name: X_CSI_REPLICATION_CONTEXT_PREFIX
-              value: powermax/
-            - name: X_CSI_REPLICATION_PREFIX
-              value: replication.storage.dell.com/
             - name: X_CSI_UNISPHERE_TIMEOUT
               value: 5m
             - name: X_CSI_POWERMAX_CONFIG_PATH
