@@ -538,6 +538,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	r := suite.createReconciler()
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	authProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	authProxyServerCSM.Spec.Modules = getAuthProxyServer()
 	appMobCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	reverseProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 
