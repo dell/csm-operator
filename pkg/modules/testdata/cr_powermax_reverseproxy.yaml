@@ -18,11 +18,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.6.0
+    configVersion: v2.7.0
     authSecret: powermax-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powermax:v2.6.0"
+      image: "dellemc/csi-powermax:v2.7.0"
       imagePullPolicy: IfNotPresent
 
   modules:
@@ -30,13 +30,13 @@ spec:
     - name: "csireverseproxy"
       # enabled: Always set to true
       enabled: true
-      configVersion: v2.6.0
+      configVersion: v2.7.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          # Example: "csipowermax-reverseproxy:v2.6.0"
-          image: dellemc/csipowermax-reverseproxy:v2.6.0
+          # Example: "csipowermax-reverseproxy:v2.7.0"
+          image: dellemc/csipowermax-reverseproxy:v2.7.0
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
