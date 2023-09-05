@@ -46,9 +46,6 @@ const (
 	// CsiVxflexosMaxVolumesPerNode - Max volumes that the controller could schedule on a node
 	CsiVxflexosMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
 
-	// CsiVxflexosNfsAcls - Enables setting permissions on NFS mount directory
-	CsiVxflexosNfsAcls = "<X_CSI_NFS_ACLS>"
-
 	// CsiVxflexosQuotaEnabled - Flag to enable/disable setting of quota for NFS volumes
 	CsiVxflexosQuotaEnabled = "<X_CSI_QUOTA_ENABLED>"
 )
@@ -230,7 +227,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	renameSdcPrefix := ""
 	maxVolumesPerNode := ""
 	storageCapacity := "false"
-	nfsAcls := ""
 	enableQuota := ""
 
 	switch fileType {
@@ -248,9 +244,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
 				maxVolumesPerNode = env.Value
 			}
-			if env.Name == "X_CSI_NFS_ACLS" {
-				nfsAcls = env.Value
-			}
 			if env.Name == "X_CSI_QUOTA_ENABLED" {
 				enableQuota = env.Value
 			}
@@ -264,7 +257,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			storageCapacity = "true"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
-		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosQuotaEnabled, enableQuota)
 	}
 	return yamlString
