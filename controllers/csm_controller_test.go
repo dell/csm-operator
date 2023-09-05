@@ -545,10 +545,10 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
 
 	syncCSMTests := []struct {
-		name          string
-		csm           csmv1.ContainerStorageModule
-		op            utils.OperatorConfig
-		expectedErr   string
+		name        string
+		csm         csmv1.ContainerStorageModule
+		op          utils.OperatorConfig
+		expectedErr string
 	}{
 		{"auth proxy server bad op conf", authProxyServerCSM, badOperatorConfig, "failed to deploy authorization proxy server"},
 		{"app mobility happy path", appMobCSM, operatorConfig, ""},
