@@ -230,8 +230,6 @@ spec:
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: false
-            - name: X_CSI_NFS_ACLS
-              value: <X_CSI_NFS_ACLS>
             - name: X_CSI_QUOTA_ENABLED
               value: <X_CSI_QUOTA_ENABLED>
           volumeMounts:
