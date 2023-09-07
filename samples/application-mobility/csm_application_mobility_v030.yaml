@@ -75,7 +75,7 @@ spec:
             value: "default"
           
           # Name of the backup storage url
-          # This field has to be changed to a functional backup storage url 
+          # This field HAS to be changed to a functional backup storage url 
           # Default value: localhost:8000
           - name: "BACKUP_STORAGE_URL"
             value: "localhost:8000"
@@ -98,8 +98,7 @@ spec:
               aws_secret_access_key: #provide the access key here 
               
 
-    # Init containers to be added to the Velero deployment's pod spec.
-    # If the value is a string then it is evaluated as a template.
+    # Init containers to be added to the Velero and Node-agent deployment's spec.
     - initContainer:
         #initContainer image for the dell velero plugin
       - name: dell-custom-velero-plugin
