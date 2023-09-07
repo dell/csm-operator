@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: application-mobility-velero
     app.kubernetes.io/instance: application-mobility
 spec:
-  provider: <PROVIDER>
+  provider: <CONFIGURATION_PROVIDER>
   accessMode: ReadWrite
   objectStorage:
     bucket: <BUCKET_NAME>

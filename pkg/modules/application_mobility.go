@@ -691,6 +691,9 @@ func getUseVolumeSnapshot(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
 				}
+				if strings.Contains(BackupStorageURL, env.Name) {
+					backupURL = env.Value
+				}
 			}
 		}
 	}
@@ -698,6 +701,7 @@ func getUseVolumeSnapshot(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	yamlString = strings.ReplaceAll(yamlString, VeleroNamespace, veleroNS)
 	yamlString = strings.ReplaceAll(yamlString, VolSnapshotlocation, volSnapshotLocationName)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupURL)
 
 	return yamlString, nil
 }
