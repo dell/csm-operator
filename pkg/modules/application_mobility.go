@@ -679,6 +679,7 @@ func getUseVolumeSnapshot(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	volSnapshotLocationName := ""
 	veleroNS := ""
 	provider := ""
+	backupURL := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
