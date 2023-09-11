@@ -54,8 +54,6 @@ const (
 	VeleroCrdManifest = "velero-crds.yaml"
 	// VeleroAccessManifest - filename where velero access with its contents
 	VeleroAccessManifest = "velero-secret.yaml"
-	// ResticCrdManifest - filename of restic manifest for app-mobility
-	ResticCrdManifest = "restic.yaml"
 	// CertManagerIssuerCertManifest - filename of the issuer and cert for app-mobility
 	CertManagerIssuerCertManifest = "certificate.yaml"
 	//NodeAgentCrdManifest - filename of node-agent manifest for app-mobility
