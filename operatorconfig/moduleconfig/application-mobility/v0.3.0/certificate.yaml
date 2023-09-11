@@ -9,9 +9,6 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  annotations:
-  generation: 1
-  labels:
   name: <NAMESPACE>-serving-cert
   namespace: <NAMESPACE>
 spec:
