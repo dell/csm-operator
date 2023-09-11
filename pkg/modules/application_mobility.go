@@ -376,7 +376,7 @@ func getIssuerCertService(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	return yamlString, nil
 }
 
-// IssuerCertService() - apply and delete the app mobility issuer and certificate service
+// IssuerCertService - apply and delete the app mobility issuer and certificate service
 func IssuerCertService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getIssuerCertService(op, cr)
 	if err != nil {
