@@ -48,12 +48,14 @@ const (
 	ControllerImagePullPolicy = "<CONTROLLER_IMAGE_PULLPOLICY>"
 	//UseVolSnapshotManifest - filename of use volume snapshot manifest for app-mobility
 	UseVolSnapshotManifest = "velero-volumesnapshotlocation.yaml"
-	//CleanupCrdManifest - filename of Cleanup Crds manifest for app-mobility
+	// CleanupCrdManifest - filename of Cleanup Crds manifest for app-mobility
 	CleanupCrdManifest = "cleanupcrds.yaml"
-	//VeleroCrdManifest - filename of Velero crds manisfest for Velero feature
+	// VeleroCrdManifest - filename of Velero crds manisfest for Velero feature
 	VeleroCrdManifest = "velero-crds.yaml"
-	//VeleroAccessManifest - filename where velero access with its contents
+	// VeleroAccessManifest - filename where velero access with its contents
 	VeleroAccessManifest = "velero-secret.yaml"
+	// CertManagerIssuerCertManifest - filename of the issuer and cert for app-mobility
+	CertManagerIssuerCertManifest = "certificate.yaml"
 	//NodeAgentCrdManifest - filename of node-agent manifest for app-mobility
 	NodeAgentCrdManifest = "node-agent.yaml"
 
@@ -340,6 +342,41 @@ func getAppMobilityWebhookService(op utils.OperatorConfig, cr csmv1.ContainerSto
 // AppMobilityWebhookService - apply/delete app mobility's webhook service
 func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getAppMobilityWebhookService(op, cr)
+	if err != nil {
+		return err
+	}
+
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
+	}
+
+	return nil
+}
+
+// getIssuerCertService - gets the app mobility cert manager's issuer and certificate manifest
+func getIssuerCertService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+	appMob, err := getAppMobilityModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	issuerCertServicePath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, CertManagerIssuerCertManifest)
+	buf, err := os.ReadFile(filepath.Clean(issuerCertServicePath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
+
+	return yamlString, nil
+}
+
+// IssuerCertService - apply and delete the app mobility issuer and certificate service
+func IssuerCertService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	yamlString, err := getIssuerCertService(op, cr)
 	if err != nil {
 		return err
 	}

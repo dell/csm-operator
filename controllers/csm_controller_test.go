@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -164,6 +165,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	apiextv1.AddToScheme(scheme.Scheme)
 
 	apiextv1.AddToScheme(scheme.Scheme)
+	certmanagerv1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)
