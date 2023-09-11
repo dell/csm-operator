@@ -22,13 +22,3 @@ spec:
     kind: Issuer
     name: <NAMESPACE>-selfsigned-issuer
   secretName: webhook-server-cert
-conditions:
-- lastTransitionTime: "2023-08-14T21:38:17Z"
-  message: Certificate is up to date and has not expired
-  observedGeneration: 1
-  reason: Ready
-  status: "True"
-  type: Ready
-notAfter: "2023-10-04T15:57:27Z"
-notBefore: "2023-07-06T15:57:27Z"
-renewalTime: "2023-09-04T15:57:27Z"
