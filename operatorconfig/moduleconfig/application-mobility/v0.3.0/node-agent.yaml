@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: application-mobility-node-agent
-  namespace: <VELERO_NAMESPACE>
+  namespace: <NAMESPACE>
   labels:
     app.kubernetes.io/name: application-mobility-velero
     app.kubernetes.io/instance: application-mobility

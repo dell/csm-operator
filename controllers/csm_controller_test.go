@@ -1325,10 +1325,6 @@ func getAppMob() []csmv1.Module {
 							Value: "default",
 						},
 						{
-							Name:  "VELERO_NAMESPACE",
-							Value: "application-mobility",
-						},
-						{
 							Name:  "CONFIG_PROVIDER",
 							Value: "aws",
 						},

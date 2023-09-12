@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     control-plane: controller-manager
-  name: <NAMESPACE>-controller-manager
+  name: application-mobility-controller-manager
   namespace: <NAMESPACE>
 spec:
   replicas: <APPLICATION_MOBILITY_REPLICA_COUNT>

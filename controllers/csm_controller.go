@@ -660,7 +660,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		if err := r.reconcileAppMobility(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy application mobility: %v", err)
 		}
-		return nil
 	}
 
 	//Create/Update Reverseproxy Server
