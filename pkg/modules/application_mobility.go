@@ -57,7 +57,7 @@ const (
 	// CertManagerIssuerCertManifest - filename of the issuer and cert for app-mobility
 	CertManagerIssuerCertManifest = "certificate.yaml"
 	//NodeAgentCrdManifest - filename of node-agent manifest for app-mobility
-	NodeAgentCrdManifest = "node-agent.yaml" 
+	NodeAgentCrdManifest = "node-agent.yaml"
 	//ControllerImg - image for app-mobility-controller
 	ControllerImg = "<CONTROLLER_IMAGE>"
 	// AppMobNamespace - namespace Application Mobility is installed in
@@ -468,15 +468,15 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	access := ""
 
 	for _, component := range appMob.Components {
-			for _, cred := range component.ComponentCred {
-				if cred.Enabled {
-					credName = string(cred.Name)
-					accessID = string(cred.SecretContents.AccessKeyID)
-					access = string(cred.SecretContents.AccessKey)
+		for _, cred := range component.ComponentCred {
+			if cred.Enabled {
+				credName = string(cred.Name)
+				accessID = string(cred.SecretContents.AccessKeyID)
+				access = string(cred.SecretContents.AccessKey)
 
-				}
 			}
-		
+		}
+
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
