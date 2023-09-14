@@ -76,6 +76,7 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+        driver.dellemc.com: dell-storage
     spec:
       #nodeSelector:
       #tolerations:
@@ -90,7 +91,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-powerstore:v2.6.0
+          image: dellemc/csi-powerstore:v2.9.0
           imagePullPolicy:  IfNotPresent
           command: [ "/csi-powerstore" ]
           args:
@@ -100,7 +101,7 @@ spec:
             - name: ENABLE_TRACING
               value:
             - name: CSI_ENDPOINT
-              value: unix:///var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock
+              value: unix://<KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com/csi_sock
             - name: X_CSI_MODE
               value: node
             - name: X_CSI_POWERSTORE_KUBE_NODE_NAME
@@ -112,10 +113,12 @@ spec:
               value: <X_CSI_POWERSTORE_NODE_NAME_PREFIX>
             - name: X_CSI_POWERSTORE_NODE_ID_PATH
               value: /node-id
+            - name: X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE
+              value: <X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE>
             - name: X_CSI_POWERSTORE_NODE_CHROOT_PATH
               value: /noderoot
             - name: X_CSI_POWERSTORE_TMP_DIR
-              value: /var/lib/kubelet/plugins/csi-powerstore.dellemc.com/tmp
+              value: <KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com/tmp
             - name: X_CSI_DRIVER_NAME
               value: "csi-powerstore.dellemc.com"
             - name: X_CSI_FC_PORTS_FILTER_FILE_PATH
@@ -132,12 +135,12 @@ spec:
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
           volumeMounts:
             - name: driver-path
-              mountPath: /var/lib/kubelet/plugins/csi-powerstore.dellemc.com
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com
             - name: csi-path
-              mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
               mountPropagation: "Bidirectional"
             - name: pods-path
-              mountPath: /var/lib/kubelet/pods
+              mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
             - name: dev
               mountPath: /dev
@@ -158,12 +161,12 @@ spec:
             - name: powerstore-config-params
               mountPath: /powerstore-config-params
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock
+            - --kubelet-registration-path=<KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com/csi_sock
           env:
             - name: ADDRESS
               value: /csi/csi_sock
@@ -180,18 +183,18 @@ spec:
       volumes:
         - name: registration-dir
           hostPath:
-            path: /var/lib/kubelet/plugins_registry/
+            path: <KUBELET_CONFIG_DIR>/plugins_registry/
             type: DirectoryOrCreate
         - name: driver-path
           hostPath:
-            path: /var/lib/kubelet/plugins/csi-powerstore.dellemc.com
+            path: <KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com
             type: DirectoryOrCreate
         - name: csi-path
           hostPath:
-            path: /var/lib/kubelet/plugins/kubernetes.io/csi
+            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
         - name: pods-path
           hostPath:
-            path: /var/lib/kubelet/pods
+            path: <KUBELET_CONFIG_DIR>/pods
             type: Directory
         - name: dev
           hostPath:
@@ -227,3 +230,15 @@ spec:
         - name: powerstore-config
           secret:
             secretName: <DriverDefaultReleaseName>-config
+        - name: usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+        - name: kubelet-pods
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: var-run
+          hostPath:
+            path: /var/run
+            type: Directory
