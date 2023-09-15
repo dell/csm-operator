@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     control-plane: controller-manager
-  name: <NAMESPACE>-controller-manager-metrics-service
+  name: application-mobility-controller-manager-metrics-service
   namespace: <NAMESPACE>
 spec:
   ports:

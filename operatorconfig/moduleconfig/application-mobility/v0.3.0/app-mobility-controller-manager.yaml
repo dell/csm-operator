@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     control-plane: controller-manager
-  name: <NAMESPACE>-controller-manager
+  name: application-mobility-controller-manager
   namespace: <NAMESPACE>
 spec:
   replicas: <APPLICATION_MOBILITY_REPLICA_COUNT>
@@ -475,7 +475,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: <NAMESPACE>-leader-election-role
-  namespace: application-mobility
+  namespace: <NAMESPACE>
 rules:
 - apiGroups:
   - ""

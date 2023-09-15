@@ -2,7 +2,7 @@ apiVersion: velero.io/v1
 kind: VolumeSnapshotLocation
 metadata:
   name: <VOL_SNAPSHOT_LOCATION_NAME>
-  namespace: <VELERO_NAMESPACE>
+  namespace: <NAMESPACE>
   annotations:
   labels:
     app.kubernetes.io/name: velero

@@ -893,6 +893,18 @@ rules:
 - apiGroups:
   - velero.io
   resources:
+  - backuprepositories
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
   - backups
   verbs:
   - create
@@ -969,18 +981,6 @@ rules:
   - velero.io
   resources:
   - podvolumerestores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - velero.io
-  resources:
-  - backuprepositories
   verbs:
   - create
   - delete
