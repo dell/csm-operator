@@ -15,7 +15,7 @@ spec:
       - name: application-mobility-controller-manager
         # enable: Enable/Disable application mobility controller-manager
         enabled: true
-        image: dellemc/csm-application-mobility-controller:v0.3.0
+        image: amaas-eos-mw1.cec.lab.emc.com:5098/csm-application-mobility:latest
         imagePullPolicy: IfNotPresent
         envs:
           # Replica count for application mobility
@@ -26,8 +26,8 @@ spec:
 
           # License for application mobility
           # Default value: license
-          - name: "APPLICATION_MOBILITY_LICENSE_NAME"
-            value: "license" 
+          #- name: "APPLICATION_MOBILITY_LICENSE_NAME"
+          #  value: "license" 
 
       # enabled: Enable/Disable cert-manager
       # Allowed values:

@@ -64,7 +64,7 @@ const (
 	// AppMobReplicaCount - Number of replicas
 	AppMobReplicaCount = "<APPLICATION_MOBILITY_REPLICA_COUNT>"
 	// AppMobLicenseName - Name of license for app-mobility
-	AppMobLicenseName = "<APPLICATION_MOBILITY_LICENSE_NAME>"
+	//AppMobLicenseName = "<APPLICATION_MOBILITY_LICENSE_NAME>"
 	// AppMobObjStoreSecretName - Secret name for object store
 	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
 	//BackupStorageLocation - name for Backup Storage Location
@@ -223,7 +223,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	yamlString = string(buf)
 	controllerImage := ""
 	controllerImagePullPolicy := ""
-	licenseName := ""
+	//licenseName := ""
 	replicaCount := ""
 	objectSecretName := ""
 
@@ -232,9 +232,9 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 			controllerImage = string(component.Image)
 			controllerImagePullPolicy = string(component.ImagePullPolicy)
 			for _, env := range component.Envs {
-				if strings.Contains(AppMobLicenseName, env.Name) {
+				/*if strings.Contains(AppMobLicenseName, env.Name) {
 					licenseName = env.Value
-				}
+				}*/
 				if strings.Contains(AppMobReplicaCount, env.Name) {
 					replicaCount = env.Value
 				}
@@ -259,7 +259,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, ControllerImg, controllerImage)
 	yamlString = strings.ReplaceAll(yamlString, ControllerImagePullPolicy, controllerImagePullPolicy)
-	yamlString = strings.ReplaceAll(yamlString, AppMobLicenseName, licenseName)
+	//yamlString = strings.ReplaceAll(yamlString, AppMobLicenseName, licenseName)
 	yamlString = strings.ReplaceAll(yamlString, AppMobReplicaCount, replicaCount)
 
 	return yamlString, nil
