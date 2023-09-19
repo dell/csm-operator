@@ -24,11 +24,6 @@ spec:
           - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
             value: "1"
 
-          # License for application mobility
-          # Default value: license
-          #- name: "APPLICATION_MOBILITY_LICENSE_NAME"
-          #  value: "license" 
-
       # enabled: Enable/Disable cert-manager
       # Allowed values:
       #   true: enable deployment of cert-manager
