@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -164,6 +165,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	apiextv1.AddToScheme(scheme.Scheme)
 
 	apiextv1.AddToScheme(scheme.Scheme)
+	certmanagerv1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)
@@ -483,6 +485,8 @@ func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
 // Test all edge cases in RemoveDriver
 func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	r := suite.createReconciler()
+	csmBadType := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = "powerscale"
@@ -493,7 +497,9 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 		errorInjector *bool
 		expectedErr   string
 	}{
-		{"getDriverConfig error", csmWoType, nil, "no such file or directory"},
+		{"getDriverConfig error", csmBadType, nil, "no such file or directory"},
+		// don't return error if there's no driver- could be a valid case like Auth server or App Mobility
+		{"getDriverConfig no driver", csmWoType, nil, ""},
 		// can't find objects since they are not created. In this case error is nil
 		{"delete obj not found", csm, nil, ""},
 		{"get SA error", csm, &getSAError, getSAErrorStr},
@@ -537,6 +543,8 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	r := suite.createReconciler()
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csmBadType := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	authProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	authProxyServerCSM.Spec.Modules = getAuthProxyServer()
 	appMobCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -554,7 +562,8 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"app mobility happy path", appMobCSM, operatorConfig, ""},
 		{"app mobility bad op conf", appMobCSM, badOperatorConfig, "failed to deploy application mobility"},
 		{"reverse proxy server bad op conf", reverseProxyServerCSM, badOperatorConfig, "failed to deploy reverseproxy proxy server"},
-		{"getDriverConfig bad op config", csm, badOperatorConfig, "no such file or directory"},
+		{"getDriverConfig bad op config", csm, badOperatorConfig, ""},
+		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},
 	}
 
 	for _, tt := range syncCSMTests {
@@ -1321,10 +1330,6 @@ func getAppMob() []csmv1.Module {
 						{
 							Name:  "BACKUPSTORAGELOCATION_NAME",
 							Value: "default",
-						},
-						{
-							Name:  "VELERO_NAMESPACE",
-							Value: "application-mobility",
 						},
 						{
 							Name:  "CONFIG_PROVIDER",

@@ -37,6 +37,7 @@ import (
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/controllers"
 	"github.com/dell/csm-operator/core"
@@ -76,6 +77,8 @@ func init() {
 	utilruntime.Must(velerov1.AddToScheme(scheme))
 
 	utilruntime.Must(apiextv1.AddToScheme(scheme))
+
+	utilruntime.Must(certmanagerv1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
 

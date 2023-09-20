@@ -53,11 +53,6 @@ spec:
           - name: "BUCKET_NAME"
             value: "my-alt-bucket"
 
-          # Namespace for Velero installation
-          # Default value: application-mobility
-          - name: "VELERO_NAMESPACE"
-            value: "velero"
-
           # Based on the objectstore being used, the velero plugin and its configuration may need to change!
           # default value: aws
           - name: "CONFIGURATION_PROVIDER"

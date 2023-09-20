@@ -27,6 +27,7 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	goYAML "github.com/go-yaml/yaml"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -526,7 +527,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &mwc)
 
 		case "ConfigMap":
-
 			var cm corev1.ConfigMap
 			if err := yaml.Unmarshal(raw, &cm); err != nil {
 				return ctrlObjects, err
@@ -535,7 +535,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &cm)
 
 		case "Secret":
-
 			var s corev1.Secret
 			if err := yaml.Unmarshal(raw, &s); err != nil {
 				return ctrlObjects, err
@@ -544,7 +543,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &s)
 
 		case "Deployment":
-
 			var dp appsv1.Deployment
 			if err := yaml.Unmarshal(raw, &dp); err != nil {
 				return ctrlObjects, err
@@ -553,7 +551,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &dp)
 
 		case "DaemonSet":
-
 			var ds appsv1.DaemonSet
 			if err := yaml.Unmarshal(raw, &ds); err != nil {
 				return ctrlObjects, err
@@ -562,7 +559,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &ds)
 
 		case "BackupStorageLocation":
-
 			var bsl velerov1.BackupStorageLocation
 			if err := yaml.Unmarshal(raw, &bsl); err != nil {
 				return ctrlObjects, err
@@ -571,13 +567,28 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &bsl)
 
 		case "VolumeSnapshotLocation":
-
 			var vs velerov1.VolumeSnapshotLocation
 			if err := yaml.Unmarshal(raw, &vs); err != nil {
 				return ctrlObjects, err
 			}
 
 			ctrlObjects = append(ctrlObjects, &vs)
+
+		case "Issuer":
+			var is certmanagerv1.Issuer
+			if err := yaml.Unmarshal(raw, &is); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &is)
+
+		case "Certificate":
+			var ct certmanagerv1.Certificate
+			if err := yaml.Unmarshal(raw, &ct); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ct)
 
 		}
 	}
