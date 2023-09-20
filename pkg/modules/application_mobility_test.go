@@ -291,14 +291,15 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 				panic(err)
 			}
 
-			licenceCred := getSecret(customResource.Namespace, "license")
-
+			ns := "default"
+			licenceCred := getSecret(ns, "dls-license")
+			ivLicense := getSecret(ns, "iv")
 			tmpCR := customResource
 			appMobility := tmpCR.Spec.Modules[0]
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).WithObjects(ivLicense).Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).WithObjects(ivLicense).Build()
 				return clusterClient, nil
 			}
 
@@ -313,11 +314,13 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 			tmpCR := customResource
 			appMobility := tmpCR.Spec.Modules[0]
 			appMobility.ConfigVersion = "v10.10.10"
-			licenceCred := getSecret(customResource.Namespace, "license")
+			ns := "default"
+			licenceCred := getSecret(ns, "dls-license")
+			ivLicense := getSecret(ns, "iv")
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).WithObjects(ivLicense).Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
+				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).WithObjects(ivLicense).Build(), nil
 			}
 
 			return false, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
@@ -331,11 +334,13 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 			tmpCR := customResource
 			appMobility := tmpCR.Spec.Modules[0]
 			appMobility.ConfigVersion = "v0.3.0"
-			licenceCred := getSecret(customResource.Namespace, "license")
+			ns := "default"
+			licenceCred := getSecret(ns, "dls-license")
+			ivLicense := getSecret(ns, "iv")
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).WithObjects(ivLicense).Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
-				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build(), nil
+				return ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).WithObjects(ivLicense).Build(), nil
 			}
 
 			return true, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient
@@ -348,7 +353,8 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 
 			tmpCR := customResource
 			appMobility := tmpCR.Spec.Modules[0]
-			licenceCred := getSecret(customResource.Namespace, "licenses")
+			ns := "default"
+			licenceCred := getSecret(ns, "dls-licenses")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).Build()
 			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
