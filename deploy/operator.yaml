@@ -369,8 +369,8 @@ rules:
   - certificaterequests/status
   - certificates/status
   verbs:
-  - update
   - patch
+  - update
 - apiGroups:
   - cert-manager.io
   resources:
@@ -496,6 +496,33 @@ rules:
   - list
   - watch
 - apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gateways
+  - httproutes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gateways/finalizers
+  - httproutes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - httproutes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
   - monitoring.coreos.com
   resources:
   - servicemonitors
@@ -534,33 +561,6 @@ rules:
   - list
   - update
   - watch
-- apiGroups:
-  - gateway.networking.k8s.io
-  resources:
-  - gateways
-  - httproutes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - gateway.networking.k8s.io
-  resources:
-  - gateways/finalizers
-  - httproutes/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - gateway.networking.k8s.io
-  resources:
-  - httproutes
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - delete
-  - update
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
