@@ -151,11 +151,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.8.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.7.0",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -232,6 +232,10 @@ metadata:
                   },
                   {
                     "enabled": false,
+                    "name": "cert-manager"
+                  },
+                  {
+                    "enabled": false,
                     "envs": [
                       {
                         "name": "POWERSCALE_MAX_CONCURRENT_QUERIES",
@@ -286,7 +290,7 @@ metadata:
                     "name": "metrics-powerscale"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -299,11 +303,14 @@ metadata:
                       "--skipArrayConnectionValidation=false",
                       "--driverPodLabelValue=dell-storage",
                       "--ignoreVolumelessPods=false",
+                      "--arrayConnectivityConnectionLossThreshold=3",
                       "--csisock=unix:/var/run/csi/csi.sock",
                       "--mode=controller",
                       "--driverPath=csi-isilon.dellemc.com",
                       "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
                     ],
+                    "image": "dellemc/podmon:v1.6.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
                   {
@@ -324,10 +331,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "dellemc/podmon:v1.6.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -401,7 +410,9 @@ metadata:
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
                   }
-                ]
+                ],
+                "nodeSelector": null,
+                "tolerations": null
               },
               "csiDriverSpec": {
                 "fSGroupPolicy": "ReadWriteOnceWithFSType",
@@ -424,6 +435,28 @@ metadata:
                   {
                     "name": "X_CSI_TOPOLOGY_CONTROL_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_MAX_VOLUMES_PER_NODE",
+                    "value": "0"
+                  }
+                ],
+                "nodeSelector": null,
+                "tolerations": [
+                  {
+                    "effect": "NoExecute",
+                    "key": "node.kubernetes.io/memory-pressure",
+                    "operator": "Exists"
+                  },
+                  {
+                    "effect": "NoExecute",
+                    "key": "node.kubernetes.io/disk-pressure",
+                    "operator": "Exists"
+                  },
+                  {
+                    "effect": "NoExecute",
+                    "key": "node.kubernetes.io/network-unavailable",
+                    "operator": "Exists"
                   }
                 ]
               },
@@ -456,11 +489,11 @@ metadata:
                         "value": "powermax-reverseproxy-config"
                       }
                     ],
-                    "image": "dellemc/csipowermax-reverseproxy:v2.6.0",
+                    "image": "dellemc/csipowermax-reverseproxy:v2.7.0",
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
-                "configVersion": "v2.6.0",
+                "configVersion": "v2.7.0",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "csireverseproxy"
@@ -478,11 +511,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.8.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.7.0",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -532,6 +565,82 @@ metadata:
                 "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "replication"
+              },
+              {
+                "components": [
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "TOPOLOGY_LOG_LEVEL",
+                        "value": "INFO"
+                      }
+                    ],
+                    "image": "dellemc/csm-topology:v1.6.0",
+                    "name": "topology"
+                  },
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "NGINX_PROXY_IMAGE",
+                        "value": "nginxinc/nginx-unprivileged:1.20"
+                      }
+                    ],
+                    "image": "otel/opentelemetry-collector:0.42.0",
+                    "name": "otel-collector"
+                  },
+                  {
+                    "enabled": false,
+                    "name": "cert-manager"
+                  },
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "POWERMAX_MAX_CONCURRENT_QUERIES",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERMAX_CAPACITY_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERMAX_PERFORMANCE_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERMAX_CAPACITY_POLL_FREQUENCY",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERMAX_PERFORMANCE_POLL_FREQUENCY",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERMAX_LOG_LEVEL",
+                        "value": "INFO"
+                      },
+                      {
+                        "name": "POWERMAX_LOG_FORMAT",
+                        "value": "TEXT"
+                      },
+                      {
+                        "name": "COLLECTOR_ADDRESS",
+                        "value": "otel-collector:55680"
+                      },
+                      {
+                        "name": "X_CSI_CONFIG_MAP_NAME",
+                        "value": "powermax-reverseproxy-config"
+                      }
+                    ],
+                    "image": "dellemc/csm-metrics-powermax:v1.1.0",
+                    "name": "metrics-powermax"
+                  }
+                ],
+                "configVersion": "v1.6.0",
+                "enabled": false,
+                "name": "observability"
               }
             ]
           }
@@ -604,6 +713,10 @@ metadata:
                   {
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE",
+                    "value": "0"
                   }
                 ],
                 "nodeSelector": null,
@@ -630,11 +743,14 @@ metadata:
                       "--skipArrayConnectionValidation=false",
                       "--driverPodLabelValue=dell-storage",
                       "--ignoreVolumelessPods=false",
+                      "--arrayConnectivityConnectionLossThreshold=3",
                       "--csisock=unix:/var/run/csi/csi.sock",
                       "--mode=controller",
                       "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powerstore.dellemc.com"
                     ],
+                    "image": "dellemc/podmon:v1.7.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
                   {
@@ -655,10 +771,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "dellemc/podmon:v1.7.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -713,10 +831,10 @@ metadata:
                     "value": "true"
                   }
                 ],
-                "image": "dellemc/csi-unity:v2.7.0",
+                "image": "dellemc/csi-unity:v2.8.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.7.0",
+              "configVersion": "v2.8.0",
               "controller": {
                 "envs": [
                   {
@@ -788,6 +906,10 @@ metadata:
                   {
                     "name": "CERT_SECRET_COUNT",
                     "value": "0"
+                  },
+                  {
+                    "name": "X_CSI_QUOTA_ENABLED",
+                    "value": "false"
                   }
                 ],
                 "image": "dellemc/csi-vxflexos:v2.8.0",
@@ -838,6 +960,10 @@ metadata:
                   {
                     "name": "X_CSI_RENAME_SDC_PREFIX",
                     "value": ""
+                  },
+                  {
+                    "name": "X_CSI_MAX_VOLUMES_PER_NODE",
+                    "value": "0"
                   }
                 ],
                 "nodeSelector": null,
@@ -883,11 +1009,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.8.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.7.0",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -914,6 +1040,10 @@ metadata:
                     ],
                     "image": "otel/opentelemetry-collector:0.42.0",
                     "name": "otel-collector"
+                  },
+                  {
+                    "enabled": false,
+                    "name": "cert-manager"
                   },
                   {
                     "enabled": false,
@@ -963,7 +1093,7 @@ metadata:
                     "name": "metrics-powerflex"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -1022,10 +1152,14 @@ metadata:
                       "--skipArrayConnectionValidation=false",
                       "--driverPodLabelValue=dell-storage",
                       "--ignoreVolumelessPods=false",
+                      "--arrayConnectivityPollRate=5",
+                      "--arrayConnectivityConnectionLossThreshold=3",
                       "--csisock=unix:/var/run/csi/csi.sock",
                       "--mode=controller",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
                     ],
+                    "image": "dellemc/podmon:v1.7.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
                   {
@@ -1034,6 +1168,7 @@ metadata:
                       "--leaderelection=false",
                       "--driverPodLabelValue=dell-storage",
                       "--ignoreVolumelessPods=false",
+                      "--arrayConnectivityPollRate=5",
                       "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock",
                       "--mode=node",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
@@ -1044,10 +1179,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "dellemc/podmon:v1.7.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -1640,6 +1777,7 @@ spec:
           verbs:
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
@@ -1687,6 +1825,7 @@ spec:
           - orders
           - orders/status
           verbs:
+          - patch
           - update
         - apiGroups:
           - acme.cert-manager.io
@@ -1826,6 +1965,7 @@ spec:
           - certificaterequests/status
           - certificates/status
           verbs:
+          - patch
           - update
         - apiGroups:
           - cert-manager.io
@@ -1835,6 +1975,7 @@ spec:
           verbs:
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
@@ -1856,6 +1997,7 @@ spec:
           verbs:
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
@@ -1881,6 +2023,7 @@ spec:
           resources:
           - certificatesigningrequests/status
           verbs:
+          - patch
           - update
         - apiGroups:
           - certificates.k8s.io
@@ -1949,6 +2092,33 @@ spec:
           - list
           - watch
         - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - gateways
+          - httproutes
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - gateways/finalizers
+          - httproutes/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - httproutes
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
           - monitoring.coreos.com
           resources:
           - servicemonitors
@@ -1987,28 +2157,6 @@ spec:
           - list
           - update
           - watch
-        - apiGroups:
-          - networking.x-k8s.io
-          resources:
-          - gateways
-          - httproutes
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - networking.x-k8s.io
-          resources:
-          - gateways/finalizers
-          - httproutes/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - networking.x-k8s.io
-          resources:
-          - httproutes
-          verbs:
-          - '*'
         - apiGroups:
           - rbac.authorization.k8s.io
           resources:
@@ -2333,17 +2481,17 @@ spec:
     name: csi-isilon
   - image: docker.io/dellemc/csi-powermax:v2.8.0
     name: csi-powermax
-  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.6.0
+  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.7.0
     name: csipowermax-reverseproxy
   - image: docker.io/dellemc/csi-powerstore:v2.8.0
     name: csi-powerstore
-  - image: docker.io/dellemc/csi-unity:v2.7.0
+  - image: docker.io/dellemc/csi-unity:v2.8.0
     name: csi-unity
-  - image: docker.io/dellemc/csi-vxflexos:v2.7.0
+  - image: docker.io/dellemc/csi-vxflexos:v2.8.0
     name: csi-vxflexos
   - image: docker.io/dellemc/sdc:3.6.1
     name: sdc
-  - image: docker.io/dellemc/csm-authorization-sidecar:v1.7.0
+  - image: docker.io/dellemc/csm-authorization-sidecar:v1.8.0
     name: karavi-authorization-proxy
   - image: docker.io/dellemc/dell-csi-replicator:v1.6.0
     name: dell-csi-replicator
@@ -2355,8 +2503,12 @@ spec:
     name: otel-collector
   - image: docker.io/dellemc/csm-metrics-powerscale:v1.3.0
     name: metrics-powerscale
+  - image: docker.io/dellemc/csm-metrics-powermax:v1.1.0
+    name: metrics-powermax
   - image: docker.io/dellemc/csm-metrics-powerflex:v1.6.0
     name: metrics-powerflex
+  - image: docker.io/dellemc/podmon:v1.6.0
+    name: podmon-node
   - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
     name: kube-rbac-proxy
   replaces: dell-csm-operator.v1.2.0
