@@ -157,12 +157,20 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
 		ds := &appsv1.DaemonSet{}
-		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetNodeName(),
+
+		nodeName := instance.GetNodeName()
+
+		// Application-mobility has a different node name than the drivers
+		if instance.GetName() == "application-mobility" {
+			log.Infof("Changing nodeName for application-mobility")
+			nodeName = "application-mobility-node-agent"
+		}
+		log.Infof("nodeName is %s", nodeName)
+		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: nodeName,
 			Namespace: instance.GetNamespace()}, ds)
 		if err != nil {
 			return 0, csmv1.PodStatus{}, err
 		}
-
 		failedCount := 0
 		podList := &corev1.PodList{}
 		label := instance.GetName() + "-node"
@@ -171,6 +179,18 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 			client.MatchingLabels{"app": label},
 		}
 
+		//if instance is AM, need to search for different named daemonset
+		if instance.GetName() == "application-mobility" {
+			log.Infof("Changing labels for application-mobility")
+			label = "application-mobility-node-agent"
+			opts = []client.ListOption{
+				client.InNamespace(instance.GetNamespace()),
+				client.MatchingLabels{"name": label},
+			}
+
+		}
+
+		log.Infof("Label is %s", label)
 		err = cluster.ClusterCTRLClient.List(ctx, podList, opts...)
 		if err != nil {
 			return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{}, err
@@ -468,8 +488,8 @@ func checkForServices(ctx context.Context, instance *csmv1.ContainerStorageModul
 		controllerReplicas := newStatus.ControllerStatus.Desired
 		controllerStatus := newStatus.ControllerStatus
 		newStatus.State = constants.Failed
-		log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
-		log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
+		log.Infof("AM deployment controllerReplicas [%s]", controllerReplicas)
+		log.Infof("AM deployment controllerStatus.Available [%s]", controllerStatus.Available)
 		if controllerReplicas == controllerStatus.Available {
 			running = true
 			newStatus.State = constants.Succeeded
@@ -484,7 +504,6 @@ func checkForServices(ctx context.Context, instance *csmv1.ContainerStorageModul
 // statusForAppMob - calculate success state for application-mobility module
 func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 
-	//log := logger.GetLogger(ctx)
 	running := false
 	var appRunning bool
 	var velRunning bool
@@ -498,18 +517,19 @@ func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule
 				if c.Name == "velero" {
 					if *c.Enabled {
 						velRunning, err = checkForServices(ctx, instance, r, newStatus, false)
+						if c.DeployNodeAgent {
+							restRunning, err = checkForServices(ctx, instance, r, newStatus, true)
+						}
 					}
 				} else if c.Name == "cert-manager" {
 					if *c.Enabled {
 						certRunning, err = checkForServices(ctx, instance, r, newStatus, false)
 					}
-				} else if c.DeployNodeAgent {
-					restRunning, err = checkForServices(ctx, instance, r, newStatus, true)
+
 				}
-
 			}
-
 		}
+
 	}
 
 	running = appRunning && velRunning && certRunning && restRunning

@@ -660,7 +660,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		if err := r.reconcileAppMobility(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy application mobility: %v", err)
 		}
-		return nil
 	}
 
 	//Create/Update Reverseproxy Server
@@ -677,6 +676,12 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	if err != nil {
 		return err
 	}
+
+	// driverConfig = nil means no driver specified in manifest
+	if driverConfig == nil {
+		return nil
+	}
+
 	err = r.oldStandAloneModuleCleanup(ctx, &cr, operatorConfig, driverConfig)
 	if err != nil {
 		return err
@@ -941,6 +946,12 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 		if err := modules.ControllerManagerMetricService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to deploy MetricService for Application Mobility: %v", err)
 		}
+		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile cert-manager for Application Mobility: %v", err)
+		}
+		if err := modules.IssuerCertService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to deploy Certificate & Issuer for Application Mobility: %v", err)
+		}
 		if err := modules.AppMobilityDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Application Mobility controller Manager: %v", err)
 		}
@@ -976,6 +987,12 @@ func getDriverConfig(ctx context.Context,
 		controller *utils.ControllerYAML
 		log        = logger.GetLogger(ctx)
 	)
+
+	//if no driver is specified, return nil
+	if cr.Spec.Driver.CSIDriverType == "" {
+		log.Infof("No driver specified in manifest")
+		return nil, nil
+	}
 
 	// Get Driver resources
 	log.Infof("Getting %s CSI Driver for Dell Technologies", cr.Spec.Driver.CSIDriverType)
@@ -1112,6 +1129,10 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	if err != nil {
 		log.Error("error in getDriverConfig")
 		return err
+	}
+	// driverConfig = nil means no driver specified in manifest
+	if driverConfig == nil {
+		return nil
 	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, instance, r)
