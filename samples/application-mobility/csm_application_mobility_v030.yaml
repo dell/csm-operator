@@ -15,7 +15,7 @@ spec:
       - name: application-mobility-controller-manager
         # enable: Enable/Disable application mobility controller-manager
         enabled: true
-        image: amaas-eos-mw1.cec.lab.emc.com:5098/csm-application-mobility:latest
+        image: dellemc/csm-application-mobility-controller:v0.3.0
         imagePullPolicy: IfNotPresent
         envs:
           # Replica count for application mobility
