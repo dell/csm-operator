@@ -386,7 +386,7 @@ spec:
             - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
             - "--mode=node"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
-  modules:
+            
     # Application Mobility: enable csm-application-mobility module
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
