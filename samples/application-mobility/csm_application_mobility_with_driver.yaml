@@ -386,7 +386,7 @@ spec:
             - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
             - "--mode=node"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
-  modules:
+            
     # Application Mobility: enable csm-application-mobility module
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
@@ -405,11 +405,6 @@ spec:
           # Default value: 1
           - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
             value: "1"
-
-          # License for application mobility
-          # Default value: license
-          - name: "APPLICATION_MOBILITY_LICENSE_NAME"
-            value: "license" 
 
       # enabled: Enable/Disable cert-manager
       # Allowed values:
@@ -471,16 +466,16 @@ spec:
             name: cloud-creds
             #Specify the object store access credentials to be stored in a secret with key "cloud".
             secretContents: 
-              aws_access_key_id:   #Provide the access key id here
-              aws_secret_access_key: #provide the access key here 
+              aws_access_key_id:  #Provide the access key id here
+              aws_secret_access_key:  #provide the access key here 
               
 
     # Init containers to be added to the Velero and Node-agent deployment's spec.
     - initContainer:
         #initContainer image for the dell velero plugin
       - name: dell-custom-velero-plugin
-        image:
+        image: 
 
         #initContainer image for the configuration provider aws
       - name: velero-plugin-for-aws
-        image:
+        image: 
