@@ -315,10 +315,6 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="use-volume-snapshots for Application Mobilit- Velero"
 	UseSnapshot bool `json:"useVolumeSnapshot,omitempty" yaml:"useVolumeSnapshot,omitempty"`
 
-	//CleanUpCRDs is to check whether customer wants to clean up velero crds
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="cleanUpCRDs for Application Mobility - Velero"
-	CleanUpCRDs bool `json:"cleanUpCRDs,omitempty" yaml:"cleanUpCRDs,omitempty"`
-
 	//ComponentCred is to store the velero credential contents
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ComponentCred for velero component"
 	ComponentCred []Credential `json:"credentials,omitempty" yaml:"credentials,omitempty"`

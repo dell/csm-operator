@@ -971,6 +971,9 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 		if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile velero for Application Mobility: %v", err)
 		}
+		if err := modules.UseBackupStorageLoc(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to apply backupstorage location for Application Mobility: %v", err)
+		}
 	}
 
 	return nil

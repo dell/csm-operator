@@ -42,7 +42,6 @@ spec:
         imagePullPolicy: IfNotPresent
         enabled: true
         useVolumeSnapshot: true
-        cleanUpCRDs: true
         # enabled: Enable/Disable node-agent service
         deployNodeAgent: true
         envs:

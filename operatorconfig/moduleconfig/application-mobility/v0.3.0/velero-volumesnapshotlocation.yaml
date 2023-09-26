@@ -12,5 +12,3 @@ spec:
   provider: <CONFIGURATION_PROVIDER>
   config: 
       region: minio
-      s3ForcePathStyle: true
-      s3Url: <BACKUP_STORAGE_URL> 
