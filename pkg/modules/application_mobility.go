@@ -248,7 +248,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 			}
 		}
 		for _, cred := range component.ComponentCred {
-			if cred.createWithInstall {
+			if cred.CreateWithInstall {
 				yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, cred.Name)
 			} else {
 				yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
@@ -470,7 +470,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 
 	for _, component := range appMob.Components {
 		for _, cred := range component.ComponentCred {
-			if cred.createWithInstall {
+			if cred.CreateWithInstall {
 				credName = string(cred.Name)
 				accessID = string(cred.SecretContents.AccessKeyID)
 				access = string(cred.SecretContents.AccessKey)
@@ -523,7 +523,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 						}
 					}
 					for _, cred := range c.ComponentCred {
-						if cred.createWithInstall {
+						if cred.CreateWithInstall {
 							compCredName = string(cred.Name)
 							foundCred, er := utils.GetSecret(ctx, compCredName, cr.Namespace, ctrlClient)
 							if foundCred == nil {
@@ -533,7 +533,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 								}
 							} else if foundCred != nil {
 								log.Errorw("\n The secret : ", foundCred.Name, " already exists in the provided namespace")
-								log.Errorw("\n Rename the Secret : ", foundCred.Name, " or if you want to re-use it, disable Credentials: createWithInstall and plug the secret name in existing-cred argument in samples file \n")
+								log.Errorw("\n Rename the Secret : ", foundCred.Name, " or if you want to re-use it, disable Credentials: CreateWithInstall and plug the secret name in existing-cred argument in samples file \n")
 								return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", er)
 							}
 						} else {
@@ -628,7 +628,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 
 			}
 			for _, cred := range component.ComponentCred {
-				if cred.createWithInstall {
+				if cred.CreateWithInstall {
 					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, cred.Name)
 				} else {
 					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
@@ -811,7 +811,7 @@ func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (str
 
 			}
 			for _, cred := range component.ComponentCred {
-				if cred.createWithInstall {
+				if cred.CreateWithInstall {
 					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, cred.Name)
 				} else {
 					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)

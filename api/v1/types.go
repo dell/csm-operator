@@ -343,9 +343,9 @@ type CSIDriverSpec struct {
 
 // Credential struct
 type Credential struct {
-	// createWithInstall is used to indicate wether or not to create a secret for objectstore
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="createWithInstall"
-	createWithInstall bool `json:"createWithInstall,omitempty" yaml:"createWithInstall,omitempty"`
+	// CreateWithInstall is used to indicate wether or not to create a secret for objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CreateWithInstall"
+	CreateWithInstall bool `json:"createWithInstall,omitempty" yaml:"createWithInstall,omitempty"`
 
 	// Name is the name of secret which contains credentials to access objectstore
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
