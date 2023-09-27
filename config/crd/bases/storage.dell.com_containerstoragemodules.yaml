@@ -81,7 +81,7 @@ spec:
                           description: Credential struct
                           properties:
                             createWithInstall:
-                              description: createWithInstall is used to indicate wether
+                              description: CreateWithInstall is used to indicate wether
                                 or not to create a secret for objectstore
                               type: boolean
                             name:
@@ -349,7 +349,7 @@ spec:
                           description: Credential struct
                           properties:
                             createWithInstall:
-                              description: createWithInstall is used to indicate wether
+                              description: CreateWithInstall is used to indicate wether
                                 or not to create a secret for objectstore
                               type: boolean
                             name:
@@ -638,7 +638,7 @@ spec:
                             description: Credential struct
                             properties:
                               createWithInstall:
-                                description: createWithInstall is used to indicate
+                                description: CreateWithInstall is used to indicate
                                   wether or not to create a secret for objectstore
                                 type: boolean
                               name:
@@ -905,7 +905,7 @@ spec:
                           description: Credential struct
                           properties:
                             createWithInstall:
-                              description: createWithInstall is used to indicate wether
+                              description: CreateWithInstall is used to indicate wether
                                 or not to create a secret for objectstore
                               type: boolean
                             name:
@@ -1175,7 +1175,7 @@ spec:
                             description: Credential struct
                             properties:
                               createWithInstall:
-                                description: createWithInstall is used to indicate
+                                description: CreateWithInstall is used to indicate
                                   wether or not to create a secret for objectstore
                                 type: boolean
                               name:
@@ -1471,7 +1471,7 @@ spec:
                               description: Credential struct
                               properties:
                                 createWithInstall:
-                                  description: createWithInstall is used to indicate
+                                  description: CreateWithInstall is used to indicate
                                     wether or not to create a secret for objectstore
                                   type: boolean
                                 name:
@@ -1756,7 +1756,7 @@ spec:
                               description: Credential struct
                               properties:
                                 createWithInstall:
-                                  description: createWithInstall is used to indicate
+                                  description: CreateWithInstall is used to indicate
                                     wether or not to create a secret for objectstore
                                   type: boolean
                                 name:
