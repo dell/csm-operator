@@ -248,7 +248,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 			}
 		}
 		for _, cred := range component.ComponentCred {
-			if cred.Enabled {
+			if cred.createWithInstall {
 				yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, cred.Name)
 			} else {
 				yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
@@ -470,7 +470,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 
 	for _, component := range appMob.Components {
 		for _, cred := range component.ComponentCred {
-			if cred.Enabled {
+			if cred.createWithInstall {
 				credName = string(cred.Name)
 				accessID = string(cred.SecretContents.AccessKeyID)
 				access = string(cred.SecretContents.AccessKey)
@@ -523,25 +523,25 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 						}
 					}
 					for _, cred := range c.ComponentCred {
-						if cred.Enabled {
+						if cred.createWithInstall {
 							compCredName = string(cred.Name)
 							foundCred, er := utils.GetSecret(ctx, compCredName, cr.Namespace, ctrlClient)
 							if foundCred == nil {
 								err := CreateVeleroAccess(ctx, isDeleting, op, cr, ctrlClient)
 								if err != nil {
-									return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v\n", err)
+									return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", err)
 								}
 							} else if foundCred != nil {
-									log.Errorw("\n The secret : ", foundCred.Name, " already exists in the provided namespace")
-									log.Errorw("\n Rename the Secret : ", foundCred.Name, " or if you want to re-use it, plug the secret name in existing-cred argument in samples file")
-									return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v\n", er)
+								log.Errorw("\n The secret : ", foundCred.Name, " already exists in the provided namespace")
+								log.Errorw("\n Rename the Secret : ", foundCred.Name, " or if you want to re-use it, disable Credentials: createWithInstall and plug the secret name in existing-cred argument in samples file \n")
+								return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", er)
 							}
 						} else {
-								foundCred, err := utils.GetSecret(ctx, envCredName, cr.Namespace, ctrlClient)
-								if foundCred == nil {
-									log.Errorw("\n The secret : %s ",envCredName, " cannot be found in the provided namespace \n")
-									return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v \n", err)
-								}
+							foundCred, err := utils.GetSecret(ctx, envCredName, cr.Namespace, ctrlClient)
+							if foundCred == nil {
+								log.Errorw("\n The secret : %s ", envCredName, " cannot be found in the provided namespace \n")
+								return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", err)
+							}
 						}
 					}
 				}
@@ -558,7 +558,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 
 		volumeSnapshotLoc, err := utils.GetVolumeSnapshotLocation(ctx, vsName, cr.Namespace, ctrlClient)
 		if volumeSnapshotLoc != nil {
-			log.Infow("\n Volume Snapshot location Name : ",volumeSnapshotLoc.Name, " already exists and being re-used")
+			log.Infow("\n Volume Snapshot location Name : ", volumeSnapshotLoc.Name, " already exists and being re-used")
 		}
 
 		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString2))
@@ -628,7 +628,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 
 			}
 			for _, cred := range component.ComponentCred {
-				if cred.Enabled {
+				if cred.createWithInstall {
 					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, cred.Name)
 				} else {
 					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)
@@ -662,18 +662,18 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 
 // getUseVolumeSnapshot - gets the velero - volume snapshot location manifest
 func getUseVolumeSnapshot(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) (string, string, error) {
-	
+
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
-		return "Error: ",yamlString, err
+		return "Error: ", yamlString, err
 	}
 
 	volSnapshotPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, UseVolSnapshotManifest)
 	buf, err := os.ReadFile(filepath.Clean(volSnapshotPath))
 	if err != nil {
-		return "Error: ",yamlString, err
+		return "Error: ", yamlString, err
 	}
 
 	yamlString = string(buf)
@@ -705,13 +705,13 @@ func getBackupStorageLoc(ctx context.Context, op utils.OperatorConfig, cr csmv1.
 
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
-		return "Error: ",yamlString, err
+		return "Error: ", yamlString, err
 	}
 
 	BackupStorageLocPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, BackupStorageLoc)
 	buf, err := os.ReadFile(filepath.Clean(BackupStorageLocPath))
 	if err != nil {
-		return "Error: ",yamlString, err
+		return "Error: ", yamlString, err
 	}
 
 	yamlString = string(buf)
@@ -758,7 +758,7 @@ func UseBackupStorageLoc(ctx context.Context, isDeleting bool, op utils.Operator
 
 	backupStorageLoc, err := utils.GetBackupStorageLocation(ctx, bslName, cr.Namespace, ctrlClient)
 	if backupStorageLoc != nil {
-		log.Infow("\n Backup Storage Name : ",backupStorageLoc.Name, "already exists and being re-used")
+		log.Infow("\n Backup Storage Name : ", backupStorageLoc.Name, "already exists and being re-used")
 	}
 
 	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
@@ -811,7 +811,7 @@ func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (str
 
 			}
 			for _, cred := range component.ComponentCred {
-				if cred.Enabled {
+				if cred.createWithInstall {
 					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, cred.Name)
 				} else {
 					yamlString = strings.ReplaceAll(yamlString, AppMobObjStoreSecretName, objectSecretName)

@@ -80,9 +80,9 @@ spec:
                         items:
                           description: Credential struct
                           properties:
-                            enabled:
-                              description: Enabled is used to indicate wether or not
-                                to create a secret for objectstore
+                            createWithInstall:
+                              description: createWithInstall is used to indicate wether
+                                or not to create a secret for objectstore
                               type: boolean
                             name:
                               description: Name is the name of secret which contains
@@ -348,9 +348,9 @@ spec:
                         items:
                           description: Credential struct
                           properties:
-                            enabled:
-                              description: Enabled is used to indicate wether or not
-                                to create a secret for objectstore
+                            createWithInstall:
+                              description: createWithInstall is used to indicate wether
+                                or not to create a secret for objectstore
                               type: boolean
                             name:
                               description: Name is the name of secret which contains
@@ -637,9 +637,9 @@ spec:
                           items:
                             description: Credential struct
                             properties:
-                              enabled:
-                                description: Enabled is used to indicate wether or
-                                  not to create a secret for objectstore
+                              createWithInstall:
+                                description: createWithInstall is used to indicate
+                                  wether or not to create a secret for objectstore
                                 type: boolean
                               name:
                                 description: Name is the name of secret which contains
@@ -904,9 +904,9 @@ spec:
                         items:
                           description: Credential struct
                           properties:
-                            enabled:
-                              description: Enabled is used to indicate wether or not
-                                to create a secret for objectstore
+                            createWithInstall:
+                              description: createWithInstall is used to indicate wether
+                                or not to create a secret for objectstore
                               type: boolean
                             name:
                               description: Name is the name of secret which contains
@@ -1174,9 +1174,9 @@ spec:
                           items:
                             description: Credential struct
                             properties:
-                              enabled:
-                                description: Enabled is used to indicate wether or
-                                  not to create a secret for objectstore
+                              createWithInstall:
+                                description: createWithInstall is used to indicate
+                                  wether or not to create a secret for objectstore
                                 type: boolean
                               name:
                                 description: Name is the name of secret which contains
@@ -1470,9 +1470,9 @@ spec:
                             items:
                               description: Credential struct
                               properties:
-                                enabled:
-                                  description: Enabled is used to indicate wether
-                                    or not to create a secret for objectstore
+                                createWithInstall:
+                                  description: createWithInstall is used to indicate
+                                    wether or not to create a secret for objectstore
                                   type: boolean
                                 name:
                                   description: Name is the name of secret which contains
@@ -1755,9 +1755,9 @@ spec:
                             items:
                               description: Credential struct
                               properties:
-                                enabled:
-                                  description: Enabled is used to indicate wether
-                                    or not to create a secret for objectstore
+                                createWithInstall:
+                                  description: createWithInstall is used to indicate
+                                    wether or not to create a secret for objectstore
                                   type: boolean
                                 name:
                                   description: Name is the name of secret which contains

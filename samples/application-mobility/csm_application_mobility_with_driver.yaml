@@ -462,10 +462,10 @@ spec:
           - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
             value: "existing-cred"
 
-        #If velero is not already present in cluster, set enabled to true to create a secret. 
+        #If velero is not already present in cluster, set createWithInstall to true to create a secret. 
         #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.   
         credentials:
-          - enabled: true  
+          - createWithInstall: true  
             #Specify the name to be used for secret that will be created to hold object store credentials.
             name: cloud-creds
             #Specify the object store access credentials to be stored in a secret with key "cloud".
