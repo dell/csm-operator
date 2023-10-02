@@ -400,10 +400,11 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 	}
 
 	// Check for secrets
-	appMobilitySecrets := []string{"license"}
+	ns := "default"
+	appMobilitySecrets := []string{"dls-license", "iv"}
 	for _, name := range appMobilitySecrets {
 		found := &corev1.Secret{}
-		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
+		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: ns}, found)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s", name)
@@ -527,7 +528,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 						if cred.CreateWithInstall {
 							compCredName = string(cred.Name)
 							foundCred, er := utils.GetSecret(ctx, compCredName, cr.Namespace, ctrlClient)
-							if foundCred.Name == "" {
+							if foundCred == nil {
 								//creation of a secret
 								err := CreateVeleroAccess(ctx, isDeleting, op, cr, ctrlClient)
 								if err != nil {
