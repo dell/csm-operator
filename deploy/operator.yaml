@@ -935,6 +935,10 @@ spec:
             memory: 192Mi
         securityContext:
           allowPrivilegeEscalation: false
+      hostAliases:
+      - ip: "0.0.0.0"
+        hostnames:
+        - "dummy.local"
       securityContext:
         runAsNonRoot: true
       serviceAccountName: dell-csm-operator-manager-service-account
