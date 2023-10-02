@@ -523,23 +523,25 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 						}
 					}
 					for _, cred := range c.ComponentCred {
+						//if createWithInstall is enabled then create a secret
 						if cred.CreateWithInstall {
 							compCredName = string(cred.Name)
 							foundCred, er := utils.GetSecret(ctx, compCredName, cr.Namespace, ctrlClient)
-							if foundCred == nil {
+							if foundCred.Name == "" {
+								//creation of a secret
 								err := CreateVeleroAccess(ctx, isDeleting, op, cr, ctrlClient)
 								if err != nil {
 									return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", err)
 								}
-							} else if foundCred != nil {
+							} else if foundCred.Name != "" {
 								log.Errorw("\n The secret : ", foundCred.Name, " already exists in the provided namespace")
-								log.Errorw("\n Rename the Secret : ", foundCred.Name, " or if you want to re-use it, disable Credentials: CreateWithInstall and plug the secret name in existing-cred argument in samples file \n")
+								log.Errorw("\n Rename the Secret : ", foundCred.Name, " or if you want to re-use it, disable Credentials: CreateWithInstall and plug the secret name in existing-cred argument in samples file")
 								return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", er)
 							}
 						} else {
 							foundCred, err := utils.GetSecret(ctx, envCredName, cr.Namespace, ctrlClient)
 							if foundCred == nil {
-								log.Errorw("\n The secret : %s ", envCredName, " cannot be found in the provided namespace \n")
+								log.Errorw("\n The secret : %s ", envCredName, " cannot be found in the provided namespace")
 								return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", err)
 							}
 						}
@@ -549,6 +551,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		}
 	}
 
+	//create volume snapshot location
 	if useSnap {
 
 		vsName, yamlString2, err := getUseVolumeSnapshot(ctx, op, cr, ctrlClient)
@@ -575,6 +578,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		}
 	}
 
+	//enable node agent
 	if nodeAgent {
 		yamlString4, err := getNodeAgent(op, cr)
 		if err != nil {
