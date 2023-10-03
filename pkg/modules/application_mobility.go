@@ -534,10 +534,6 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 								if err != nil {
 									return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", err)
 								}
-							} else if foundCred.Name != "" {
-								log.Errorw("\n The secret : ", foundCred.Name, " already exists in the provided namespace")
-								log.Errorw("\n Rename the Secret : ", foundCred.Name, " or if you want to re-use it, disable Credentials: CreateWithInstall and plug the secret name in existing-cred argument in samples file")
-								return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", er)
 							}
 						} else {
 							foundCred, err := utils.GetSecret(ctx, envCredName, cr.Namespace, ctrlClient)
