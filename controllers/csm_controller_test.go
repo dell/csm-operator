@@ -1313,10 +1313,6 @@ func getAppMob() []csmv1.Module {
 							Name:  "APPLICATION_MOBILITY_REPLICA_COUNT",
 							Value: "1",
 						},
-						{
-							Name:  "APPLICATION_MOBILITY_LICENSE_NAME",
-							Value: "license",
-						},
 					},
 				},
 				{
@@ -1606,7 +1602,12 @@ func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, modules 
 	assert.Nil(suite.T(), err)
 
 	// this secret required by application-mobility module
-	sec = shared.MakeSecret("license", ns, configVersion)
+	sec = shared.MakeSecret("dls-license", "default", configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by application-mobility module
+	sec = shared.MakeSecret("iv", "default", configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 

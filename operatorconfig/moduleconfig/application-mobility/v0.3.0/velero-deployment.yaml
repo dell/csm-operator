@@ -1,22 +1,3 @@
-apiVersion: velero.io/v1
-kind: BackupStorageLocation
-metadata:
-  name: <BACKUPSTORAGELOCATION_NAME>
-  namespace: <NAMESPACE>
-  labels:
-    app.kubernetes.io/name: application-mobility-velero
-    app.kubernetes.io/instance: application-mobility
-spec:
-  provider: <CONFIGURATION_PROVIDER>
-  accessMode: ReadWrite
-  objectStorage:
-    bucket: <BUCKET_NAME>
-  default: true
-  config: 
-      region: minio
-      s3ForcePathStyle: true
-      s3Url: <BACKUP_STORAGE_URL>
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:

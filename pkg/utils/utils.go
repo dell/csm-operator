@@ -945,7 +945,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	return replicaEnabled, clusterClients, nil
 }
 
-// GetSecret -
+// GetSecret - check if the secret is present
 func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*corev1.Secret, error) {
 	found := &corev1.Secret{}
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: namespace}, found)
@@ -953,6 +953,30 @@ func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.
 		return nil, fmt.Errorf("no secrets found or error: %v", err)
 	}
 	return found, nil
+}
+
+// GetVolumeSnapshotLocation - check if the Volume Snapshot Location is present
+func GetVolumeSnapshotLocation(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*velerov1.VolumeSnapshotLocation, error) {
+	snapshotLocation := &velerov1.VolumeSnapshotLocation{}
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Namespace: namespace, Name: name},
+		snapshotLocation,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return snapshotLocation, nil
+}
+
+// GetBackupStorageLocation - check if the Backup Storage Location is present
+func GetBackupStorageLocation(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*velerov1.BackupStorageLocation, error) {
+	backupStorage := &velerov1.BackupStorageLocation{}
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Namespace: namespace, Name: name},
+		backupStorage,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return backupStorage, nil
 }
 
 // IsModuleEnabled - check if the module is enabled

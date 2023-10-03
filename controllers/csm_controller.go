@@ -971,6 +971,9 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 		if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile velero for Application Mobility: %v", err)
 		}
+		if err := modules.UseBackupStorageLoc(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to apply backupstorage location for Application Mobility: %v", err)
+		}
 	}
 
 	return nil
@@ -1194,6 +1197,7 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 
 	log := logger.GetLogger(ctx)
+	var am bool
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
@@ -1224,9 +1228,15 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		}
 	default:
 		for _, m := range cr.Spec.Modules {
-			if m.Name == csmv1.AuthorizationServer || m.Name == csmv1.ApplicationMobility {
+			if m.Name == csmv1.AuthorizationServer {
 				return nil
 			}
+			if m.Name == csmv1.ApplicationMobility {
+				am = true
+			}
+		}
+		if am {
+			break
 		}
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
@@ -1259,6 +1269,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	}
 
 	// check modules
+	log.Infow("Starting prechecks for modules")
 	for _, m := range cr.Spec.Modules {
 		if m.Enabled {
 			switch m.Name {

@@ -62,9 +62,6 @@ spec:
                         items:
                           type: string
                         type: array
-                      cleanUpCRDs:
-                        description: CleanUpCRDs is to check whether customer wants to clean up velero crds
-                        type: boolean
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -73,8 +70,8 @@ spec:
                         items:
                           description: Credential struct
                           properties:
-                            enabled:
-                              description: Enabled is used to indicate wether or not to create a secret for objectstore
+                            createWithInstall:
+                              description: CreateWithInstall is used to indicate wether or not to create a secret for objectstore
                               type: boolean
                             name:
                               description: Name is the name of secret which contains credentials to access objectstore
@@ -262,9 +259,6 @@ spec:
                         items:
                           type: string
                         type: array
-                      cleanUpCRDs:
-                        description: CleanUpCRDs is to check whether customer wants to clean up velero crds
-                        type: boolean
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -273,8 +267,8 @@ spec:
                         items:
                           description: Credential struct
                           properties:
-                            enabled:
-                              description: Enabled is used to indicate wether or not to create a secret for objectstore
+                            createWithInstall:
+                              description: CreateWithInstall is used to indicate wether or not to create a secret for objectstore
                               type: boolean
                             name:
                               description: Name is the name of secret which contains credentials to access objectstore
@@ -481,9 +475,6 @@ spec:
                           items:
                             type: string
                           type: array
-                        cleanUpCRDs:
-                          description: CleanUpCRDs is to check whether customer wants to clean up velero crds
-                          type: boolean
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -492,8 +483,8 @@ spec:
                           items:
                             description: Credential struct
                             properties:
-                              enabled:
-                                description: Enabled is used to indicate wether or not to create a secret for objectstore
+                              createWithInstall:
+                                description: CreateWithInstall is used to indicate wether or not to create a secret for objectstore
                                 type: boolean
                               name:
                                 description: Name is the name of secret which contains credentials to access objectstore
@@ -679,9 +670,6 @@ spec:
                         items:
                           type: string
                         type: array
-                      cleanUpCRDs:
-                        description: CleanUpCRDs is to check whether customer wants to clean up velero crds
-                        type: boolean
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -690,8 +678,8 @@ spec:
                         items:
                           description: Credential struct
                           properties:
-                            enabled:
-                              description: Enabled is used to indicate wether or not to create a secret for objectstore
+                            createWithInstall:
+                              description: CreateWithInstall is used to indicate wether or not to create a secret for objectstore
                               type: boolean
                             name:
                               description: Name is the name of secret which contains credentials to access objectstore
@@ -882,9 +870,6 @@ spec:
                           items:
                             type: string
                           type: array
-                        cleanUpCRDs:
-                          description: CleanUpCRDs is to check whether customer wants to clean up velero crds
-                          type: boolean
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -893,8 +878,8 @@ spec:
                           items:
                             description: Credential struct
                             properties:
-                              enabled:
-                                description: Enabled is used to indicate wether or not to create a secret for objectstore
+                              createWithInstall:
+                                description: CreateWithInstall is used to indicate wether or not to create a secret for objectstore
                                 type: boolean
                               name:
                                 description: Name is the name of secret which contains credentials to access objectstore
@@ -1106,9 +1091,6 @@ spec:
                             items:
                               type: string
                             type: array
-                          cleanUpCRDs:
-                            description: CleanUpCRDs is to check whether customer wants to clean up velero crds
-                            type: boolean
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
@@ -1117,8 +1099,8 @@ spec:
                             items:
                               description: Credential struct
                               properties:
-                                enabled:
-                                  description: Enabled is used to indicate wether or not to create a secret for objectstore
+                                createWithInstall:
+                                  description: CreateWithInstall is used to indicate wether or not to create a secret for objectstore
                                   type: boolean
                                 name:
                                   description: Name is the name of secret which contains credentials to access objectstore
@@ -1315,9 +1297,6 @@ spec:
                             items:
                               type: string
                             type: array
-                          cleanUpCRDs:
-                            description: CleanUpCRDs is to check whether customer wants to clean up velero crds
-                            type: boolean
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
@@ -1326,8 +1305,8 @@ spec:
                             items:
                               description: Credential struct
                               properties:
-                                enabled:
-                                  description: Enabled is used to indicate wether or not to create a secret for objectstore
+                                createWithInstall:
+                                  description: CreateWithInstall is used to indicate wether or not to create a secret for objectstore
                                   type: boolean
                                 name:
                                   description: Name is the name of secret which contains credentials to access objectstore

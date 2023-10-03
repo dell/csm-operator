@@ -315,10 +315,6 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="use-volume-snapshots for Application Mobilit- Velero"
 	UseSnapshot bool `json:"useVolumeSnapshot,omitempty" yaml:"useVolumeSnapshot,omitempty"`
 
-	//CleanUpCRDs is to check whether customer wants to clean up velero crds
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="cleanUpCRDs for Application Mobility - Velero"
-	CleanUpCRDs bool `json:"cleanUpCRDs,omitempty" yaml:"cleanUpCRDs,omitempty"`
-
 	//ComponentCred is to store the velero credential contents
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ComponentCred for velero component"
 	ComponentCred []Credential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
@@ -347,9 +343,9 @@ type CSIDriverSpec struct {
 
 // Credential struct
 type Credential struct {
-	// Enabled is used to indicate wether or not to create a secret for objectstore
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enabled"
-	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	// CreateWithInstall is used to indicate wether or not to create a secret for objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CreateWithInstall"
+	CreateWithInstall bool `json:"createWithInstall,omitempty" yaml:"createWithInstall,omitempty"`
 
 	// Name is the name of secret which contains credentials to access objectstore
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
