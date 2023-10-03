@@ -466,10 +466,18 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 
 	yamlString = string(buf)
 	credName := ""
+	backupStorageLocationName := ""
 	accessID := ""
 	access := ""
 
 	for _, component := range appMob.Components {
+		if component.Name == AppMobVeleroComponent {
+			for _, env := range component.Envs {
+				if strings.Contains(BackupStorageLocation, env.Name) {
+					backupStorageLocationName = env.Value
+				}
+			}
+		}
 		for _, cred := range component.ComponentCred {
 			if cred.CreateWithInstall {
 				credName = string(cred.Name)
@@ -483,6 +491,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, VeleroAccess, credName)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageLocation, backupStorageLocationName)
 	yamlString = strings.ReplaceAll(yamlString, AKeyID, accessID)
 	yamlString = strings.ReplaceAll(yamlString, AKey, access)
 
