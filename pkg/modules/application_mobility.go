@@ -527,7 +527,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 						//if createWithInstall is enabled then create a secret
 						if cred.CreateWithInstall {
 							compCredName = string(cred.Name)
-							foundCred, er := utils.GetSecret(ctx, compCredName, cr.Namespace, ctrlClient)
+							foundCred, _ := utils.GetSecret(ctx, compCredName, cr.Namespace, ctrlClient)
 							if foundCred == nil {
 								//creation of a secret
 								err := CreateVeleroAccess(ctx, isDeleting, op, cr, ctrlClient)
