@@ -1,5 +1,6 @@
 # Test for CSM Operator
-This is the test directory for CSM operator. 
+
+This is the test directory for CSM operator.
 
 `config` directory includes yaml files consumed by test cases. For example `driverconfig/powerscale/v2.x.y/node.yaml` is consumed by `pkg/drivers/commonconfig_test.go`.
 
@@ -8,6 +9,7 @@ This is the test directory for CSM operator.
 `shared/crclient` implements kubernetes client from controller runtime. It has very similar functionalities as the one above except that it can't do apply. These two clients share the same memory to store runtime objects.
 
 ## Unit Test
+
 To run unit test, go to the root directory of this project and run `make unit-test`. It will output a report of tests being run.
 
 ## E2E Test
@@ -19,14 +21,15 @@ The E2E tests test the installation of Dell CSM Drivers and Modules.
 - A supported environment where the Dell Container Storage Modules Operator is running and a storageclass is installed.
 - All prerequisites for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
 - For tests that configure secret/storageclasses; The following namespaces need to be created beforehand:
-   - isilon
-   - dell
-   - test-vxflexos 
+  - isilon
+  - dell
+  - test-vxflexos
 - Ginkgo v1.16.5 is installed. To install, go to `tests/e2e` and run the following commands:
-```bash
-go install github.com/onsi/ginkgo/ginkgo
-go get github.com/onsi/gomega/...
-```
+
+  ```bash
+  go install github.com/onsi/ginkgo/ginkgo
+  go get github.com/onsi/gomega/...
+  ```
 
 ### Run
 
@@ -76,9 +79,8 @@ Each test has:
 - `path`: The path to the custom resources yaml file that has the specific configuration you want to test.
 - `steps`: Steps to take for the specific scenearios. Please note that all steps above and the ones in this sample file `tests/e2e/testfiles/values.yaml` already have a backend implementation. If you desire to use a different step, see [Develop](#develop) for how to add new E2E Test
 - `customTest`: An entrypoint for users to run custom test against their environment. You must have `"Run custom test"` as part of your `steps` above for this custom test to run. This object has the following parameter.
-   - `name`: Name of your custom test
-    - `run`: A command line argument that will be run by the e2e test. To ensure the command is accessible from e2e test repo, use absolute paths if you are running a script. 
-
+  - `name`: Name of your custom test
+  - `run`: A command line argument that will be run by the e2e test. To ensure the command is accessible from e2e test repo, use absolute paths if you are running a script.
 
 ### Develop
 
@@ -135,7 +137,7 @@ Most steps to cover common use cases already have their respective backend imple
         1. Implement steps in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go). Define a function to implement your step. Note that the steps are stateless! If you want to define a function to test a happy path, your function should return nil if no error occurs and error otherwise. However, if you want to test an error path, your function should return nil if you get error and error otherwise. The constraints of all functions in step_def.go is as follows:
              - must return `error` or `nil`
              - must take at least one argument. The first one MUST be type `Resource`(even though it may not be used). If your step has any group(a groups is anything in your step enclosed by `[]`), the remaining arguments should be the groups in the order they appear on the steps(from left to right). For example, the two new functions above will can be implemented as shown below:
-             
+
                ```go
                 // take one argument, res, and return error
                 func (step *Step) isTodayTuesday(res Resource) error {
@@ -167,7 +169,7 @@ Most steps to cover common use cases already have their respective backend imple
                ```
 
         2. Register your new steps in `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go). Please pay special attention to the regex and ensure they actually match your new steps. For instance, the new steps we implemented above can be mapped to their steps in the valus file as follows:
-           
+
             ```go
             func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kubernetes.Clientset) {
                 step := Step{

@@ -15,7 +15,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	osruntime "runtime"
@@ -35,6 +34,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/yaml"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -135,7 +136,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 		log.Infof("Current kubernetes version is %s which is a supported version ", kubeVersion)
 	}
 
-	_, err = ioutil.ReadDir(filepath.Clean(ConfigDir))
+	_, err = os.ReadDir(filepath.Clean(ConfigDir))
 	if err != nil {
 		log.Errorw(err.Error(), "cannot find driver config path", ConfigDir)
 		cfg.ConfigDirectory = Operatorconfig
@@ -147,7 +148,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 		k8sPath = fmt.Sprintf("%s%s", ConfigDir, k8sPath)
 	}
 
-	buf, err := ioutil.ReadFile(filepath.Clean(k8sPath))
+	buf, err := os.ReadFile(filepath.Clean(k8sPath))
 	if err != nil {
 		log.Info(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
 	}
@@ -190,13 +191,17 @@ func main() {
 	operatorConfig := getOperatorConfig(log)
 	restConfig := ctrl.GetConfigOrDie()
 
+	hookServer := webhook.NewServer(webhook.Options{
+		Port: 9443,
+	})
+
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		Metrics:                server.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "090cae6a.dell.com",
+		WebhookServer:          hookServer,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

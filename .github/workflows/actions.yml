@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run the formatter, linter, and vetter
         uses: dell/common-github-actions/go-code-formatter-linter-vetter@main
         with:
@@ -21,7 +21,7 @@ jobs:
   #  runs-on: ubuntu-latest
   #  steps:
   #    - name: Checkout the code
-  #      uses: actions/checkout@v3
+  #      uses: actions/checkout@v4
   #    - name: Run the forbidden words scan
   #      uses: dell/common-github-actions/code-sanitizer@main
   #      with:
@@ -31,9 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Checkout csm-operator
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'dell/csm-operator'
           path: 'csm-operator'
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run unit tests and check package coverage
         uses: dell/common-github-actions/go-code-tester@main
         with:
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run unit tests and check package coverage
         uses: dell/common-github-actions/go-code-tester@main
         with:
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run Go Security
         uses: securego/gosec@master
         with:
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run malware scan
         uses: dell/common-github-actions/malware-scanner@main
         with:
@@ -96,7 +96,7 @@ jobs:
           go-version: ^1.21
         id: go
       - name: Checkout the code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build Docker Images
         run: docker build . -t csm-operator:latest
       - name: Scan controller Image

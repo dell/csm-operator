@@ -25,7 +25,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
-	goYAML "github.com/go-yaml/yaml"
+	goYAML "gopkg.in/yaml.v3"
 
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -200,7 +200,6 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case string(csmv1.Resiliency):
 		*c.Image = img.Images.Podmon
 	}
-	return
 }
 
 // UpdateinitContainerApply -
