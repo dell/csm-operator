@@ -37,7 +37,7 @@ spec:
     sideCars:
     # 'k8s' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        args: ["--volume-name-prefix=csivol"]
+        args: ["--volume-name-prefix=k8s"]
 
     # sdc-monitor is disabled by default, due to high CPU usage 
       - name: sdc-monitor
