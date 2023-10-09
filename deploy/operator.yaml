@@ -911,7 +911,8 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: docker.io/dellemc/dell-csm-operator:v1.3.0
+        image: 10.247.98.98:5000/joosabean/dell-csm-operator:vAuth1
+        #image: docker.io/dellemc/dell-csm-operator:v1.3.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
