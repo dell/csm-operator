@@ -18,7 +18,7 @@ spec:
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: false
     common:
-      image: "dellemc/csi-isilon:nightly"
+      image: "dellemc/csi-isilon:latest"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
