@@ -15,10 +15,6 @@ if [ "${RET}" == "127" ]; then
 fi
 
 # make sure env variables are present
-#export VOL_NS=wordpress
-#export RES_NS=res-wordpress
-#export AM_NS=app-mobility
-
 ExitCode=0
 if [ "${VOL_NS}" == "" ]; then
    echo "env variable VOL_NS is not set"

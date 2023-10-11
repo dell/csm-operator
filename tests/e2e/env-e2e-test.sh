@@ -20,7 +20,7 @@ export GINKGO_OPTS="-v"
 export VALUES_FILE="testfiles/appmob-values.yaml"
 
 # USER MODIFICATION REQUIRED: must supply path to your cert-csi binary
-export CERT_CSI="/root/cert-csi/cert-csi"
+export CERT_CSI="/root/cert-csi"
 
 # [Optional] uncomment any modules you want to test
 # export AUTHORIZATION=true
@@ -55,7 +55,7 @@ export PFLEX_SYSTEMID=""
 export PFLEX_ENDPOINT=""
 export PFLEX_MDM=""
 export PFLEX_AUTH_ENDPOINT=""  
-export PFLEX_POOL=""
+export PFLEX_POOL="pool1"
 
 # The following are for creating PScale secret/storage class
 # do not include "https://" in the endpoint
@@ -71,5 +71,7 @@ export VOL_NS=wordpress
 export RES_NS=res-wordpress
 export AM_NS=test-vxflexos
 export BACKEND_STORAGE_URL=""
+export ACCESS_KEY_ID=""
+export ACCESS_KEY=""
 export AM_CONTROLLER_IMAGE=""
-export AM_PLUGIN_IMAGE=""  
+export AM_PLUGIN_IMAGE=""

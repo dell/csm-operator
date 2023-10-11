@@ -56,7 +56,7 @@ var (
 	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
-	amConfigMap            = map[string]string{"REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
+	amConfigMap            = map[string]string{"REPLACE_S3URL": "BACKEND_STORAGE_URL", " REPLACE_KEY_ID": "ACCESS_KEY_ID", "REPLACE_KEY": "ACCESS_KEY", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -189,6 +189,13 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 		if err != nil {
 			return fmt.Errorf("Uninstallation of velero %v failed", err)
 		}
+	} else if thirdPartyModule == "wordpress" {
+		cmd := exec.Command("kubectl", "delete", "-n", "wordpress", "-k", "testfiles/sample-application")
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("Uninstallation of velero %v failed", err)
+		}
+
 	}
 	return nil
 }
@@ -898,7 +905,6 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 		return err
 	}
 
-	// check installation for all AuthorizationProxyServer
 	fakeReconcile := utils.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
@@ -909,8 +915,7 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 		return err
 	}
 	for _, cluster := range clusterClients {
-		// check AuthorizationProxyServer in all clusters
-		if err := checkApplicationMobilityPods(context.TODO(), utils.ApplicationMobilityNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for App-mob installation in %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -1261,8 +1266,7 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 }
 
 // set up AM CR
-func (step *Step) configureAMInstall(templateFile string) error {
-
+func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 	mapValues, err := determineMap("application-mobility")
 	if err != nil {
 		return err

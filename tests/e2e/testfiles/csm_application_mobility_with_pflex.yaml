@@ -243,8 +243,8 @@ spec:
             name: cloud-creds
             #Specify the object store access credentials to be stored in a secret with key "cloud".
             secretContents:
-              aws_access_key_id: access_key  #Provide the access key id here
-              aws_secret_access_key: secret_access_key #provide the access key here
+              aws_access_key_id:  REPLACE_KEY_ID  #Provide the access key id here
+              aws_secret_access_key:  REPLACE_KEY_ID123 #provide the access key here
 
 
     # Init containers to be added to the Velero and Node-agent deployment's spec.

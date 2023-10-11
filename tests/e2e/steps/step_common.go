@@ -337,7 +337,7 @@ func checkAuthorizationProxyServerPods(ctx context.Context, namespace string, k8
 
 func checkApplicationMobilityPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
 	// list all namespaces that we expect to find app-mobility pods in
-	nsToCheck := []string{namespace, "velero", "cert-manager"}
+	nsToCheck := []string{namespace}
 	minNumPods := 5
 	var allPods []*corev1.Pod
 
