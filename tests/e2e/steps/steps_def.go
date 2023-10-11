@@ -56,6 +56,7 @@ var (
 	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
+	amConfigMap            = map[string]string{"REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -147,7 +148,31 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		if err2 != nil {
 			return fmt.Errorf("Installation of velero %v failed", err2)
 		}
+	} else if thirdPartyModule == "wordpress" {
+
+		cmd := exec.Command("kubectl", "get", "ns", "wordpress")
+		err := cmd.Run()
+		if err != nil {
+			cmd = exec.Command("kubectl", "create", "ns", "wordpress")
+			err = cmd.Run()
+			if err != nil {
+				return err
+			}
+		}
+
+		// create wordpress APP for AM testing, requires pflex driver installed and op-e2e-vxflexos SC created
+		cmd2 := exec.Command("kubectl", "apply", "-n", "wordpress", "-k", "testfiles/sample-application")
+		err = cmd2.Run()
+		if err != nil {
+			return err
+		}
+
+		//give wp time to setup before we create backup/restores
+		fmt.Println("Sleeping 60 seconds to allow WP time to create")
+		time.Sleep(60 * time.Second)
+
 	}
+
 	return nil
 }
 
@@ -613,6 +638,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pflexAuthSidecarMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
+	} else if crType == "application-mobility" {
+		mapValues = amConfigMap
 	} else {
 		return mapValues, fmt.Errorf("type: %s is not supported", crType)
 	}
@@ -883,7 +910,7 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 	}
 	for _, cluster := range clusterClients {
 		// check AuthorizationProxyServer in all clusters
-		if err := checkApplicationMobilityPods(utils.ApplicationMobilityNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkApplicationMobilityPods(context.TODO(), utils.ApplicationMobilityNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for App-mob installation in %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -1230,5 +1257,26 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
 		}
 	}
+	return nil
+}
+
+// set up AM CR
+func (step *Step) configureAMInstall(templateFile string) error {
+
+	mapValues, err := determineMap("application-mobility")
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		if os.Getenv(mapValues[key]) == "" {
+			return fmt.Errorf("env variable %s not set, set in env-e2e-test.sh before continuing", key)
+		}
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

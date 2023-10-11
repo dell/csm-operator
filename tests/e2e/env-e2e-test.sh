@@ -69,6 +69,7 @@ export PSCALE_AUTH_PORT=""
 # The following are for testing AM
 export VOL_NS=wordpress
 export RES_NS=res-wordpress
-export AM_NS=app-mobility
-
-
+export AM_NS=test-vxflexos
+export BACKEND_STORAGE_URL=""
+export AM_CONTROLLER_IMAGE=""
+export AM_PLUGIN_IMAGE=""  

@@ -335,14 +335,14 @@ func checkAuthorizationProxyServerPods(ctx context.Context, namespace string, k8
 	return nil
 }
 
-func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interface) error {
+func checkApplicationMobilityPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
 	// list all namespaces that we expect to find app-mobility pods in
 	nsToCheck := []string{namespace, "velero", "cert-manager"}
 	minNumPods := 5
 	var allPods []*corev1.Pod
 
 	for _, ns := range nsToCheck {
-		somePods, err := fpod.GetPodsInNamespace(k8sClient, ns, map[string]string{})
+		somePods, err := fpod.GetPodsInNamespace(ctx, k8sClient, ns, map[string]string{})
 		if err != nil {
 			return err
 		}
