@@ -928,8 +928,8 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 200m
-            memory: 256Mi
+            cpu: 400m
+            memory: 512Mi
           requests:
             cpu: 100m
             memory: 192Mi
