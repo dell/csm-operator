@@ -253,7 +253,7 @@ spec:
       - name: dell-custom-velero-plugin
         image: REPLACE_PLUGIN_IMAGE
         #initContainer image for the configuration provider aws
-	#digest for velero/velero-plugin-for-aws:v1.6.2
+        #digest for velero/velero-plugin-for-aws:v1.6.2
       - name: velero-plugin-for-aws
         image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e
 
