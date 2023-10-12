@@ -91,12 +91,16 @@ const (
 
 	// CSMFinalizerName -
 	CSMFinalizerName = "finalizer.dell.emc.com"
+
+	//CSMVersion -
+	CSMVersion = "v1.8.0"
 )
 
 var (
 	dMutex                          sync.RWMutex
 	configVersionKey                = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMOperatorConfigVersion")
 	previouslyAppliedCustomResource = fmt.Sprintf("%s/%s", MetadataPrefix, "previously-applied-configuration")
+	CSMVersionKey                   = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMVersion")
 
 	// StopWatch - watcher stop handle
 	StopWatch = make(chan struct{})
@@ -1245,6 +1249,9 @@ func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.Containe
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
+	annotations[CSMVersionKey] = CSMVersion
+	instance.SetAnnotations(annotations)
+
 	if _, ok := annotations[configVersionKey]; !ok {
 		annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
 		isUpdated = true
