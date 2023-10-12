@@ -100,13 +100,45 @@ if [ "${NUM_GOOD_RESTORE}" != "1" ]; then
   exit 1
 fi
 
-
-
 # success -- delete test restore and backup
 
-./dellctl restore delete $RESTORE_NAME -n $AM_NS --confirm 
-
 ./dellctl backup delete $BACKUP_NAME -n $AM_NS --confirm
+
+./dellctl restore delete $RESTORE_NAME -n $AM_NS --confirm
+
+# wait for resources to delete- needed because we will delete the AM deployment after
+
+RESTORE_WAIT_TIME=$((SECONDS+300))
+while [ $SECONDS -lt $RESTORE_WAIT_TIME ]; do
+  NUM_RESTORE=$(./dellctl restore get $RESTORE_NAME -n $AM_NS | grep "Completed" | wc -l)
+  if [ "${NUM_RESTORE}" == "0" ]; then
+    echo "restore $RESTORE_NAME deleted"
+    break
+  fi
+  echo "waiting for restore $RESTORE_NAME to delete"
+  sleep 10
+done
+
+BACKUP_WAIT_TIME=$((SECONDS+300))
+while [ $SECONDS -lt $BACKUP_WAIT_TIME ]; do
+  NUM_BACKUP=$(./dellctl backup get $BACKUP_NAME -n $AM_NS | grep "Completed" | wc -l)
+  if [ "${NUM_BACKUP}" == "0" ]; then
+    echo "backup $BACKUP_NAME deleted"
+    break
+  fi
+  echo "waiting for backup $BACKUP_NAME to delete"
+  sleep 10
+done
+
+if [ "${NUM_RESTORE}" != "0" ]; then
+  echo -e "restore $RESTORE_NAME failed to delete in time"
+  exit 1
+fi
+
+if [ "${NUM_BACKUP}" != "0" ]; then
+  echo -e "backup $BACKUP_NAME failed to delete in time"
+  exit 1
+fi
 
 
 exit 0

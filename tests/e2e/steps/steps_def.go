@@ -193,7 +193,7 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 		cmd := exec.Command("kubectl", "delete", "-n", "wordpress", "-k", "testfiles/sample-application")
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("Uninstallation of velero %v failed", err)
+			return fmt.Errorf("Uninstallation of wordpress %v failed", err)
 		}
 
 	}
