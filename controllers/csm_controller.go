@@ -92,7 +92,7 @@ const (
 	// CSMFinalizerName -
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
-	//CSMVersion -
+	// CSMVersion -
 	CSMVersion = "v1.8.0"
 )
 
@@ -100,6 +100,7 @@ var (
 	dMutex                          sync.RWMutex
 	configVersionKey                = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMOperatorConfigVersion")
 	previouslyAppliedCustomResource = fmt.Sprintf("%s/%s", MetadataPrefix, "previously-applied-configuration")
+        // CSMVersionKey - CSM Module version
 	CSMVersionKey                   = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMVersion")
 
 	// StopWatch - watcher stop handle
