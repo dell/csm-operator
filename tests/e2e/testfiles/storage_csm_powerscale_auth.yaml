@@ -17,7 +17,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: true
     common:
-      image: "dellemc/csi-isilon:latest"
+      image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
