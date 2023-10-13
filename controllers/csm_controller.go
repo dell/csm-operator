@@ -100,7 +100,8 @@ var (
 	dMutex                          sync.RWMutex
 	configVersionKey                = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMOperatorConfigVersion")
 	previouslyAppliedCustomResource = fmt.Sprintf("%s/%s", MetadataPrefix, "previously-applied-configuration")
-        // CSMVersionKey - CSM Module version
+
+        // CSMVersionKey - 
 	CSMVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMVersion")
 
 	// StopWatch - watcher stop handle
