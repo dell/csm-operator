@@ -101,7 +101,7 @@ var (
 	configVersionKey                = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMOperatorConfigVersion")
 	previouslyAppliedCustomResource = fmt.Sprintf("%s/%s", MetadataPrefix, "previously-applied-configuration")
         // CSMVersionKey - CSM Module version
-	CSMVersionKey                   = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMVersion")
+	CSMVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMVersion")
 
 	// StopWatch - watcher stop handle
 	StopWatch = make(chan struct{})
