@@ -74,6 +74,6 @@ export AM_NS=test-vxflexos
 export BACKEND_STORAGE_URL=""
 export ACCESS_KEY_ID=""
 export ACCESS_KEY=""
-# Be sure to escape and / with \
+# Be sure to escape / with \
 export AM_CONTROLLER_IMAGE=""
 export AM_PLUGIN_IMAGE=""
