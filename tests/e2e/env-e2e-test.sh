@@ -17,7 +17,7 @@ export GINKGO_OPTS="-v"
 # export KUBECONFIG=""
 
 # Must supply path to values file if different from testfiles/values.yaml
-export VALUES_FILE="testfiles/appmob-values.yaml"
+export VALUES_FILE="testfiles/test-AM.yaml"
 
 # USER MODIFICATION REQUIRED: must supply path to your cert-csi binary
 export CERT_CSI="/root/cert-csi"
@@ -28,6 +28,7 @@ export CERT_CSI="/root/cert-csi"
 # export OBSERVABILITY=true
 # export AUTHORIZATIONPROXYSERVER=true
 # export RESILIENCY=true
+# export APPMOBILITY=true
 
 # [Optional] namespace of operator if you deployed it to a namespace diffrent form the one below.
 # export OPERATOR_NAMESPACE="dell-csm-operator"
@@ -55,7 +56,7 @@ export PFLEX_SYSTEMID=""
 export PFLEX_ENDPOINT=""
 export PFLEX_MDM=""
 export PFLEX_AUTH_ENDPOINT=""  
-export PFLEX_POOL="pool1"
+export PFLEX_POOL=""
 
 # The following are for creating PScale secret/storage class
 # do not include "https://" in the endpoint
@@ -73,5 +74,6 @@ export AM_NS=test-vxflexos
 export BACKEND_STORAGE_URL=""
 export ACCESS_KEY_ID=""
 export ACCESS_KEY=""
+# Be sure to escape and / with \
 export AM_CONTROLLER_IMAGE=""
 export AM_PLUGIN_IMAGE=""
