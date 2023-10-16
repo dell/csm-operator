@@ -8,6 +8,7 @@ Dns Policy,,ClusterFirstWithHostNet,csm,1
 Force Remove Driver,,true,csm,1
 Image Pull Policy,,Always,csm,1
 X_CSI_VERBOSE,,1,controller,1
+X_CSI_ISI_AUTH,,1,controller,1
 X_CSI_ISI_PORT,,8080,controller,1
 X_CSI_ISI_PATH,,/ifs/e2etest,controller,1
 X_CSI_ISI_NO_PROBE_ON_START,,true,controller,1

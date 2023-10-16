@@ -1420,7 +1420,9 @@
     # Example:
     #   ./hello_world.sh
     #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: ./cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
+
 - scenario: "Install PowerMax Driver(With Observability)"
   paths:
     - "testfiles/storage_csm_powermax_observability.yaml"
