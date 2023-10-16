@@ -946,22 +946,16 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 		if err := modules.ControllerManagerMetricService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to deploy MetricService for Application Mobility: %v", err)
 		}
-		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-			return fmt.Errorf("unable to reconcile cert-manager for Application Mobility: %v", err)
+		if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
+			if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile cert-manager for Application Mobility: %v", err)
+			}
 		}
 		if err := modules.IssuerCertService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to deploy Certificate & Issuer for Application Mobility: %v", err)
 		}
 		if err := modules.AppMobilityDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Application Mobility controller Manager: %v", err)
-		}
-	}
-
-	// AppMobility installs cert-manager
-	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
-		log.Infow("Reconcile application mobility cert-manager")
-		if err := modules.AppMobilityCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-			return fmt.Errorf("unable to reconcile cert-manager for Application Mobility: %v", err)
 		}
 	}
 
