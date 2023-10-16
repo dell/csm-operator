@@ -304,7 +304,7 @@ spec:
             - name: X_CSI_ISI_CONFIG_PATH
               value: /isilon-configs/config
             - name: X_CSI_MAX_PATH_LIMIT
-              value: "false"
+              value: "192"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
