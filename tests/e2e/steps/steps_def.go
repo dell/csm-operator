@@ -131,7 +131,7 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 
 func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string) error {
 	if thirdPartyModule == "cert-manager" {
-		cmd := exec.Command("kubectl", "create", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
+		cmd := exec.Command("kubectl", "apply", "-f", "testfiles/cert-manager-crds.yaml")
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("cert-manager install failed: %v", err)
@@ -178,7 +178,7 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 
 func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule string) error {
 	if thirdPartyModule == "cert-manager" {
-		cmd := exec.Command("kubectl", "delete", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
+		cmd := exec.Command("kubectl", "delete", "-f", "testfiles/cert-manager-crds.yaml")
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("cert-manager uninstall failed: %v", err)
