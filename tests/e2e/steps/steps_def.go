@@ -56,7 +56,7 @@ var (
 	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
-	amConfigMap            = map[string]string{"REPLACE_S3URL": "BACKEND_STORAGE_URL", " REPLACE_KEY_ID": "ACCESS_KEY_ID", "REPLACE_KEY": "ACCESS_KEY", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
+	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME":"ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME":"BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -1274,7 +1274,7 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 
 	for key := range mapValues {
 		if os.Getenv(mapValues[key]) == "" {
-			return fmt.Errorf("env variable %s not set, set in env-e2e-test.sh before continuing", key)
+			return fmt.Errorf("env variable %s not set, set in env-e2e-test.sh before continuing", mapValues[key])
 		}
 		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
 		if err != nil {

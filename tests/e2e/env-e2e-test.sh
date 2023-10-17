@@ -17,7 +17,7 @@ export GINKGO_OPTS="-v"
 # export KUBECONFIG=""
 
 # Must supply path to values file if different from testfiles/values.yaml
-export VALUES_FILE="testfiles/test-AM.yaml"
+export VALUES_FILE="testfiles/test-AM-one.yaml"
 
 # USER MODIFICATION REQUIRED: must supply path to your cert-csi binary
 export CERT_CSI="/root/cert-csi"
@@ -72,8 +72,8 @@ export VOL_NS=wordpress
 export RES_NS=res-wordpress
 export AM_NS=test-vxflexos
 export BACKEND_STORAGE_URL=""
-export ACCESS_KEY_ID=""
-export ACCESS_KEY=""
+export BUCKET_NAME=""
+export ALT_BUCKET_NAME="" 
 # Be sure to escape / with \
 export AM_CONTROLLER_IMAGE=""
 export AM_PLUGIN_IMAGE=""

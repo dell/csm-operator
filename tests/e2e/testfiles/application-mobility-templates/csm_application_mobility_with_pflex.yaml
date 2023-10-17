@@ -210,7 +210,7 @@ spec:
           # Allowed values: string
           # Default value: my-bucket
           - name: "BUCKET_NAME"
-            value: "my-bucket"
+            value: "REPLACE_BUCKET_NAME"
 
           # Based on the objectstore being used, the velero plugin and its configuration may need to change!
           # default value: aws
@@ -243,8 +243,8 @@ spec:
             name: cloud-creds
             #Specify the object store access credentials to be stored in a secret with key "cloud".
             secretContents:
-              aws_access_key_id:  REPLACE_KEY_ID  #Provide the access key id here
-              aws_secret_access_key:  REPLACE_KEY_ID123 #provide the access key here
+              aws_access_key_id: console  #Provide the access key id here
+              aws_secret_access_key: console123  #provide the access key here
 
 
     # Init containers to be added to the Velero and Node-agent deployment's spec.
