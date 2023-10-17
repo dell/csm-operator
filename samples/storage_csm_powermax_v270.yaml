@@ -208,6 +208,9 @@ spec:
           operator: "Exists"
           effect: "NoExecute"
     sideCars:
+      # 'pmax' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        args: ["--volume-name-prefix=pmax"]
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
