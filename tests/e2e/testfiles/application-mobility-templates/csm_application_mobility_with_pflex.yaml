@@ -208,7 +208,7 @@ spec:
 
           # Velero bucket name
           # Allowed values: string
-          # Default value: my-bucket
+          # Default value: REPLACE_BUCKET_NAME
           - name: "BUCKET_NAME"
             value: "REPLACE_BUCKET_NAME"
 

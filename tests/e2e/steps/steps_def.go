@@ -143,7 +143,7 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			return fmt.Errorf("Installation of velero %v failed", err1)
 		}
 
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "--set", "configuration.provider=csi", "--set", "configuration.backupStorageLocation.name=default", "--set", "configuration.backupStorageLocation.bucket=bucket", "--set", "initContainers[0].name=velero-plugin-for-csi", "--set", "initContainers[0].image=velero/velero-plugin-for-csi:v0.2.0", "--set", "initContainers[0].volumeMounts[0].mountPath=/target", "--set", "initContainers[0].volumeMounts[0].name=plugins", "--version=2.29.8")
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml", "--version=3.0.0")
 		err2 := cmd2.Run()
 		if err2 != nil {
 			return fmt.Errorf("Installation of velero %v failed", err2)
