@@ -5,12 +5,12 @@ metadata:
     alm-examples: '[]'
     capabilities: Basic Install
     categories: Storage
-    containerImage: docker.io/dellemc/dell-csm-operator:v1.3.0
+    containerImage: docker.io/dellemc/dell-csm-operator:v1.4.0
     createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.3.0
+  name: dell-csm-operator.v1.4.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -487,7 +487,7 @@ spec:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
   relatedImages:
-  - image: docker.io/dellemc/dell-csm-operator:v1.3.0
+  - image: docker.io/dellemc/dell-csm-operator:v1.4.0
     name: dell-csm-operator
   - image: docker.io/dellemc/csi-isilon:v2.8.0
     name: csi-isilon
@@ -523,5 +523,5 @@ spec:
     name: podmon-node
   - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
     name: kube-rbac-proxy
-  replaces: dell-csm-operator.v1.2.0
-  version: 1.3.0
+  replaces: dell-csm-operator.v1.3.0
+  version: 1.4.0
