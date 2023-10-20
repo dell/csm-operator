@@ -625,7 +625,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 		}
 
 		//check if application mobility needs to be uninstalled
-		oldApplicationmobilityEnabled, oldObs := utils.IsModuleEnabled(ctx, *oldCR, csmv1.ApplicationMobility)
+		oldApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *oldCR, csmv1.ApplicationMobility)
 		newApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, csmv1.ApplicationMobility)
 
 		if oldApplicationmobilityEnabled && !newApplicationmobilityEnabled {
