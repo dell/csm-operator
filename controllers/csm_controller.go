@@ -623,6 +623,24 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 				}
 			}
 		}
+
+		//check if application mobility needs to be uninstalled
+		oldApplicationmobilityEnabled, oldObs := utils.IsModuleEnabled(ctx, *oldCR, csmv1.ApplicationMobility)
+		newApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, csmv1.ApplicationMobility)
+
+		if oldApplicationmobilityEnabled && !newApplicationmobilityEnabled {
+			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
+			if err != nil {
+				return err
+			}
+
+			for _, cluster := range clusterClients {
+				log.Infow("Deleting application mobility")
+				if err := r.reconcileAppMobility(ctx, true, operatorConfig, *oldCR, cluster.ClusterCTRLClient); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	copyCR := newCR.DeepCopy()
