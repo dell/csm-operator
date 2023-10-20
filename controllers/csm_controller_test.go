@@ -610,17 +610,16 @@ func (suite *CSMControllerTestSuite) TestRemoveModule() {
 func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 	tests := map[string]func(t *testing.T) (csm *csmv1.ContainerStorageModule, errorInjector *bool, expectedErr string){
 		"Success - Enable all modules": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
-			suite.makeFakeCSM(csmName, suite.namespace, false, append(getReplicaModule(), getObservabilityModule()...))
-
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...))
 			csm := &csmv1.ContainerStorageModule{}
 			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
 			err := suite.fakeClient.Get(ctx, key, csm)
 			assert.Nil(suite.T(), err)
-			csm.Spec.Modules = append(getReplicaModule(), getObservabilityModule()...)
+			csm.Spec.Modules = append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...)
 			return csm, &[]bool{false}[0], ""
 		},
 		"Success - Disable all modules": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
-			suite.makeFakeCSM(csmName, suite.namespace, false, append(getReplicaModule(), getObservabilityModule()...))
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...))
 
 			csm := &csmv1.ContainerStorageModule{}
 			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
@@ -628,13 +627,15 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			assert.Nil(suite.T(), err)
 			replica := getReplicaModule()
 			replica[0].Enabled = false
+			appMob := getAppMob()
+			appMob[0].Enabled = false
 			obs := getObservabilityModule()
 			obs[0].Enabled = false
-			csm.Spec.Modules = append(replica, obs...)
+			csm.Spec.Modules = append(append(replica, obs...), appMob...)
 			return csm, &[]bool{false}[0], ""
 		},
 		"Success - Disable Components": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
-			suite.makeFakeCSM(csmName, suite.namespace, false, append(getReplicaModule(), getObservabilityModule()...))
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...))
 
 			csm := &csmv1.ContainerStorageModule{}
 			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
@@ -642,7 +643,9 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			assert.Nil(suite.T(), err)
 			obs := getObservabilityModule()
 			obs[0].Components[0].Enabled = &[]bool{false}[0]
-			csm.Spec.Modules = append(getReplicaModule(), obs...)
+			appMob := getAppMob()
+			appMob[0].Components[0].Enabled = &[]bool{false}[0]
+			csm.Spec.Modules = append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...)
 			return csm, &[]bool{false}[0], ""
 		},
 	}
