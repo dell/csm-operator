@@ -36,11 +36,11 @@ configuration:
   backupStorageLocation:
     name: default
     provider: aws
-    bucket: my-bucket
+    bucket: REPLACE_BUCKET_NAME
     config: {
       region: minio,
       s3ForcePathStyle: true,
-      s3Url: http://10.247.101.192:3200
+      s3Url: http://REPLACE_S3URL
     }
 
     volumeSnapshotLocation:
@@ -49,7 +49,7 @@ configuration:
 
 initContainers:
 - name: dell-custom-velero-plugin
-  image: amaas-eos-mw1.cec.lab.emc.com:5036/csm-application-mobility-velero-plugin:latest
+  image: REPLACE_PLUGIN_IMAGE
   volumeMounts:
   - mountPath: /target
     name: plugins
