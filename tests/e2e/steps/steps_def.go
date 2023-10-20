@@ -56,7 +56,7 @@ var (
 	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
-	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME":"ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME":"BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
+	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -338,6 +338,8 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 
 			case csmv1.Resiliency:
 				return step.validateResiliencyNotInstalled(cr)
+			case csmv1.ApplicationMobility:
+				return step.validateApplicationMobilityNotInstalled(cr)
 			}
 		}
 	}
@@ -1282,5 +1284,27 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 		}
 	}
 
+	return nil
+}
+
+func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStorageModule) error {
+
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient)
+		if err == nil {
+			return fmt.Errorf("AM pods found in namespace: %s", cr.Namespace)
+		}
+
+	}
+	fmt.Println("All AM pods removed ")
 	return nil
 }
