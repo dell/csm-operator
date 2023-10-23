@@ -343,4 +343,3 @@ func (c *K8sClient) StorageV1alpha1() storagev1alpha1.StorageV1alpha1Interface {
 func (c *K8sClient) Discovery() discovery.DiscoveryInterface {
 	panic("implement me")
 }
-
