@@ -82,7 +82,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: dellemc/csi-vxflexos:v2.6.0
+          image: dellemc/csi-vxflexos:v2.9.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:
@@ -107,6 +107,8 @@ spec:
               value: <X_CSI_RENAME_SDC_ENABLED>
             - name: X_CSI_RENAME_SDC_PREFIX
               value: <X_CSI_RENAME_SDC_PREFIX>
+            - name: X_CSI_MAX_VOLUMES_PER_NODE
+              value: <X_CSI_MAX_VOLUMES_PER_NODE>
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
@@ -126,7 +128,7 @@ spec:
               mountPath: /certs
               readOnly: true
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -148,7 +150,7 @@ spec:
         - name: sdc-monitor
           securityContext:
             privileged: true
-          image: dellemc/sdc:3.6.0.6
+          image: dellemc/sdc:3.6.1
           imagePullPolicy: IfNotPresent
           env:
             - name: HOST_PID
@@ -174,7 +176,7 @@ spec:
         - name: sdc
           securityContext:
             privileged: true
-          image: dellemc/sdc:3.6.0.6
+          image: dellemc/sdc:3.6.1
           imagePullPolicy: IfNotPresent
           env:
             - name: NODENAME

@@ -68,6 +68,13 @@ rules:
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["create", "list", "watch", "delete", "update"]
+  # Permissions for CSIStorageCapacity
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csistoragecapacities"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -116,7 +123,7 @@ spec:
       serviceAccountName: <DriverDefaultReleaseName>-controller
       containers:
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.0.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.4.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -129,7 +136,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.3.0
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -141,14 +148,25 @@ spec:
             - "--v=5"
             - "--default-fstype=ext4"
             - "--extra-create-metadata"
+            - "--enable-capacity=true"
+            - "--capacity-ownerref-level=2"
+            - "--capacity-poll-interval=5m"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: csi-external-health-monitor-controller
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.7.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.10.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -165,7 +183,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.1.0
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -179,7 +197,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.6.0
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -192,7 +210,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-vxflexos:v2.6.0
+          image: dellemc/csi-vxflexos:v2.9.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:
@@ -212,6 +230,8 @@ spec:
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: false
+            - name: X_CSI_QUOTA_ENABLED
+              value: <X_CSI_QUOTA_ENABLED>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
