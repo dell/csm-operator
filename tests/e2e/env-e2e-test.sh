@@ -17,7 +17,7 @@ export GINKGO_OPTS="-v"
 # export KUBECONFIG=""
 
 # Must supply path to values file if different from testfiles/values.yaml
-export VALUES_FILE="testfiles/test-AM-one.yaml"
+export VALUES_FILE="testfiles/appmob-values.yaml"
 
 # USER MODIFICATION REQUIRED: must supply path to your cert-csi binary
 export CERT_CSI="/root/cert-csi"
@@ -28,7 +28,7 @@ export CERT_CSI="/root/cert-csi"
 # export OBSERVABILITY=true
 # export AUTHORIZATIONPROXYSERVER=true
 # export RESILIENCY=true
-# export APPMOBILITY=true
+# export APPLICATIONMOBILITY=true
 
 # [Optional] namespace of operator if you deployed it to a namespace diffrent form the one below.
 # export OPERATOR_NAMESPACE="dell-csm-operator"
