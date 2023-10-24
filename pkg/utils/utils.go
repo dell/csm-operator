@@ -340,6 +340,29 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	return YamlString
 }
 
+// ModifyCommonCR -
+func ModifyCommonCRs(YamlString string, cr csmv1.ApexConnectivityClient) string {
+	if cr.Name != "" {
+		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseName, cr.Name)
+	}
+	if cr.Namespace != "" {
+		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseNamespace, cr.Namespace)
+	}
+	if string(cr.Spec.Client.Common.ImagePullPolicy) != "" {
+		YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Client.Common.ImagePullPolicy))
+	}
+	path := ""
+	for _, env := range cr.Spec.Client.Common.Envs {
+		if env.Name == "KUBELET_CONFIG_DIR" {
+			path = env.Value
+			break
+		}
+	}
+	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
+
+	return YamlString
+}
+
 // GetCTRLObject -
 func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 	ctrlObjects := []crclient.Object{}
@@ -548,6 +571,15 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &dp)
+
+		case "StatefulSet":
+
+			var ss appsv1.StatefulSet
+			if err := yaml.Unmarshal(raw, &ss); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ss)
 
 		}
 	}
@@ -901,6 +933,19 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 			}
 		}
 	}
+	return replicaEnabled, clusterClients, nil
+}
+
+func GetAccDefaultClusters(ctx context.Context, instance csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster, error) {
+	clusterClients := []ReplicaCluster{
+		{
+			ClusterCTRLClient: r.GetClient(),
+			ClusterK8sClient:  r.GetK8sClient(),
+			ClusterID:         DefaultSourceClusterID,
+		},
+	}
+
+	replicaEnabled := false
 	return replicaEnabled, clusterClients, nil
 }
 

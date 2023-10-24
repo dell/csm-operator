@@ -16,4 +16,13 @@ resources:
   kind: ContainerStorageModule
   path: github.com/dell/csm-operator/api/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: dell.com
+  group: storage
+  kind: ApexConnectivityClient
+  path: github.com/dell/csm-operator/api/v1
+  version: v1
 version: "3"

@@ -111,7 +111,7 @@ docker-push: docker-build ## Builds, tags and pushes docker image with the manag
 ##@ Deployment
 
 static-crd: manifests kustomize ## Copies CRDs to deploy folder.
-	$(KUSTOMIZE) build config/crd > deploy/crds/storage.dell.com_containerstoragemodules.yaml
+	$(KUSTOMIZE) build config/crd > deploy/crds/storage.dell.com.crds.all.yaml
 
 static-manager: manifests kustomize ## Creates the operator manifests in deploy folder.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}

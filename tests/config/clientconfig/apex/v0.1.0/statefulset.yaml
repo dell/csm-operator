@@ -1,0 +1,263 @@
+# Source: apex-client-k8s/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: <NAMESPACE>
+  labels:
+    helm.sh/chart: apex-client-k8s-0.2.0
+    app.kubernetes.io/name: connectivity-client-docker-k8s
+    app.kubernetes.io/instance: ApexConnectivityClienttivityClient
+    app.kubernetes.io/version: "0.2.0"
+    app.kubernetes.io/managed-by: CSMOperator
+---
+# Source: apex-client-k8s/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: connectivity-client-docker-k8s-configmap
+  namespace: <NAMESPACE>
+data:
+  AGGREGATOR_URL: csm-dcm-dev.apex-dp3.us.dell.com
+  ANNOUNCE_INTERVAL: "5m"
+  MIN_BACKOFF: "5s"
+  MAX_BACKOFF: "1m"
+  DCM_CLIENT_SERVER_PORT: "9000"
+  DCM_IDENTITY_LOCATION: "/home/connectivity-client/.certs"
+---
+# Source: apex-client-k8s/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: <NAMESPACE>
+rules:
+  - apiGroups: ["*"]
+    resources: ["pods"]
+    verbs: ["list", "watch"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["daemonsets"]
+    verbs: ["list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csidrivers"]
+    verbs: ["list", "watch"] 
+---
+# Source: apex-client-k8s/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: <NAMESPACE>
+subjects:
+  - kind: ServiceAccount
+    name: connectivity-client-docker-k8s
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: connectivity-client-docker-k8s
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: apex-client-k8s/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: apex-connectivity-client
+  namespace: <NAMESPACE>
+  labels:
+    helm.sh/chart: apex-client-k8s-0.2.0
+    app.kubernetes.io/name: connectivity-client-docker-k8s
+    app.kubernetes.io/instance: ApexConnectivityClienttivityClient
+    app.kubernetes.io/version: "0.2.0"
+    app.kubernetes.io/managed-by: CSMOperator
+spec:
+  serviceName: connectivity-client-docker-k8s-headless-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: connectivity-client-docker-k8s
+      app.kubernetes.io/instance: ApexConnectivityClient
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: connectivity-client-docker-k8s
+        app.kubernetes.io/instance: ApexConnectivityClient
+    spec:
+      serviceAccountName: connectivity-client-docker-k8s
+      terminationGracePeriodSeconds: 15
+      securityContext:
+        fsGroup: 1001
+        runAsGroup: 1001
+        runAsUser: 1001
+      hostAliases:
+        - ip: 10.155.25.134
+          hostnames:
+            - csm-dcm-dev.apex-dp3.us.dell.com
+      containers:
+        - name: connectivity-client-docker-k8s
+          securityContext:
+            {}
+          image: "<CONNECTIVITY_CLIENT_IMAGE>"
+          imagePullPolicy: Always
+          args:
+            - "--aggregator"
+            - csm-dcm-dev.apex-dp3.us.dell.com
+            - "--announce.interval"
+            - 5m
+            - "--cacert"
+            - /opt/dellemc/certs/loadbalancer_root_ca_cert.crt,/opt/dellemc/certs/aggregator_internal_root_ca_cert.crt
+          env:
+            - name: LOG_LEVEL
+              value: Info
+            - name: AGGREGATOR_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: connectivity-client-docker-k8s-configmap
+                  key: AGGREGATOR_URL
+            - name: ANNOUNCE_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: connectivity-client-docker-k8s-configmap
+                  key: ANNOUNCE_INTERVAL
+            - name: MIN_BACKOFF
+              valueFrom:
+                configMapKeyRef:
+                  name: connectivity-client-docker-k8s-configmap
+                  key: MIN_BACKOFF
+            - name: MAX_BACKOFF
+              valueFrom:
+                configMapKeyRef:
+                  name: connectivity-client-docker-k8s-configmap
+                  key: MAX_BACKOFF
+            - name: DCM_CLIENT_SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: connectivity-client-docker-k8s-configmap
+                  key: DCM_CLIENT_SERVER_PORT
+            - name: DCM_IDENTITY_LOCATION
+              valueFrom:
+                configMapKeyRef:
+                  name: connectivity-client-docker-k8s-configmap
+                  key: DCM_IDENTITY_LOCATION
+          volumeMounts:
+            - name: ca-certs
+              mountPath: "/opt/dellemc/certs"
+              readOnly: true
+            - name: certs-store-tmpdir
+              mountPath: "/home/connectivity-client/.certs"
+          resources:
+            limits:
+              memory: 75M
+            requests:
+              memory: 25M
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: 9000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: 9000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+        - name: kubernetes-proxy
+          image: "<KUBERNETES_PROXY_IMAGE>"
+          imagePullPolicy: Always
+          command: [ "kubectl" ]
+          args:
+            - "proxy"
+            - "--port=8001"
+            - "--address=0.0.0.0"
+            - "--accept-hosts=^.*$"
+            - "--v=5"
+          ports:
+            - containerPort: 8001
+          livenessProbe:
+            httpGet:
+              path: /api/v1
+              port: 8001
+              scheme: HTTP
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+        - name: cert-persister
+          image: "<CERT_PERSISTER_IMAGE>"
+          imagePullPolicy: Always
+          env:
+            - name: DCM_IDENTITY_LOCATION
+              valueFrom:
+                configMapKeyRef:
+                  name: connectivity-client-docker-k8s-configmap
+                  key: DCM_IDENTITY_LOCATION
+          volumeMounts:
+            - name: certs-store-tmpdir
+              mountPath: "/home/connectivity-client/.certs"
+      initContainers:
+        - name: apex-connectivity-client-init
+          image: "<APEX_CLIENT_INIT_CONTAINER_IMAGE>"
+          imagePullPolicy: Always
+          env:
+            - name: DCM_IDENTITY_LOCATION
+              valueFrom:
+                configMapKeyRef:
+                  name: connectivity-client-docker-k8s-configmap
+                  key: DCM_IDENTITY_LOCATION
+          command: ['sh', '-c', "if [ -s /dcm-client-secret-data/cert.pem ]; then cp -v /dcm-client-secret-data/cert.pem $DCM_IDENTITY_LOCATION/cert.pem; fi"]
+          volumeMounts:
+            - name: certs-store-tmpdir
+              mountPath: "/home/connectivity-client/.certs"
+            - name: connectivity-client-docker-k8s-cert
+              mountPath: /dcm-client-secret-data
+      volumes:
+        - name: ca-certs
+          projected:
+            sources:
+              - secret:
+                  name: connectivity-client-docker-k8s-loadbalancer-ca-cert
+                  items:
+                    - key: loadbalancer_root_ca_cert.crt
+                      path: loadbalancer_root_ca_cert.crt
+              - secret:
+                  name: connectivity-client-docker-k8s-aggregator-internal-ca-cert
+                  items:
+                    - key: aggregator_internal_root_ca_cert.crt
+                      path: aggregator_internal_root_ca_cert.crt
+        - name: certs-store-tmpdir
+          emptyDir:
+            sizeLimit: 10Mi
+        - name: connectivity-client-docker-k8s-cert
+          secret:
+            secretName: connectivity-client-docker-k8s-cert
+            optional: true

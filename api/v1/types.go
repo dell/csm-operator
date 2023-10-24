@@ -34,6 +34,8 @@ type ModuleType string
 // ObservabilityComponentType - type representing the type of components inside observability module. e.g. - topology
 type ObservabilityComponentType string
 
+type ClientType string
+
 const (
 	// Replication - placeholder for replication constant
 	Replication ModuleType = "replication"
@@ -85,6 +87,8 @@ const (
 
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
+
+	DreadnoughtClient ClientType = "apexconnectivityclient"
 
 	// Provisioner - placeholder for constant
 	Provisioner = "provisioner"
@@ -217,6 +221,35 @@ type Driver struct {
 	// ForceRemoveDriver is the boolean flag used to remove driver deployment when CR is deleted
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Driver"
 	ForceRemoveDriver bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
+}
+
+// +k8s:openapi-gen=true
+type Client struct {
+
+	// ClientType is the Client type for Dell Technologies - e.g, ApexConnectivityClient
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Client Type"
+	CSMClientType ClientType `json:"csmClientType" yaml:"csmClientType"`
+
+	// ConfigVersion is the configuration version of the driver
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
+	ConfigVersion string `json:"configVersion" yaml:"configVersion"`
+
+	// Common is the common specification for both controller and node plugins
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Common specification"
+	Common ContainerTemplate `json:"common" yaml:"common"`
+
+	// SideCars is the specification for CSI sidecar containers
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI SideCars specification"
+	SideCars []ContainerTemplate `json:"sideCars,omitempty" yaml:"sideCars"`
+
+	// InitContainers is the specification for Driver InitContainers
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="InitContainers"
+	InitContainers []ContainerTemplate `json:"initContainers,omitempty" yaml:"initContainers"`
+
+	// ForceRemoveClient is the boolean flag used to remove client deployment when CR is deleted
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Client"
+	ForceRemoveClient bool `json:"forceRemoveClient,omitempty" yaml:"forceRemoveClient"`
 }
 
 // ContainerTemplate template
