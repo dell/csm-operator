@@ -8,8 +8,214 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "isilon",
-            "namespace": "isilon"
+            "name": "powermax",
+            "namespace": "powermax"
+          },
+          "spec": {
+            "driver": {
+              "authSecret": "powermax-creds",
+              "common": {
+                "envs": [
+                  {
+                    "name": "X_CSI_MANAGED_ARRAYS",
+                    "value": "000000000000,000000000001"
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_ENDPOINT",
+                    "value": "https://0.0.0.0:8443/"
+                  },
+                  {
+                    "name": "X_CSI_K8S_CLUSTER_PREFIX",
+                    "value": "XYZ"
+                  },
+                  {
+                    "name": "KUBELET_CONFIG_DIR",
+                    "value": "/var/lib/kubelet"
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_PORTGROUPS",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_TRANSPORT_PROTOCOL",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_PROXY_SERVICE_NAME",
+                    "value": "csipowermax-reverseproxy"
+                  },
+                  {
+                    "name": "X_CSI_VSPHERE_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_VSPHERE_PORTGROUP",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_VSPHERE_HOSTNAME",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_VCENTER_HOST",
+                    "value": ""
+                  }
+                ],
+                "image": "dellemc/csi-powermax:v2.7.0",
+                "imagePullPolicy": "IfNotPresent"
+              },
+              "configVersion": "v2.7.0",
+              "controller": {
+                "envs": [
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  }
+                ]
+              },
+              "csiDriverSpec": {
+                "fSGroupPolicy": "ReadWriteOnceWithFSType",
+                "storageCapacity": false
+              },
+              "csiDriverType": "powermax",
+              "dnsPolicy": "ClusterFirstWithHostNet",
+              "forceRemoveDriver": true,
+              "forceUpdate": false,
+              "node": {
+                "envs": [
+                  {
+                    "name": "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_TOPOLOGY_CONTROL_ENABLED",
+                    "value": "false"
+                  }
+                ]
+              },
+              "replicas": 2,
+              "sideCars": [
+                {
+                  "args": [
+                    "--monitor-interval=60s"
+                  ],
+                  "enabled": false,
+                  "name": "external-health-monitor"
+                }
+              ]
+            },
+            "modules": [
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "X_CSI_REVPROXY_TLS_SECRET",
+                        "value": "csirevproxy-tls-secret"
+                      },
+                      {
+                        "name": "X_CSI_REVPROXY_PORT",
+                        "value": "2222"
+                      },
+                      {
+                        "name": "X_CSI_CONFIG_MAP_NAME",
+                        "value": "powermax-reverseproxy-config"
+                      }
+                    ],
+                    "image": "dellemc/csipowermax-reverseproxy:v2.6.0",
+                    "name": "csipowermax-reverseproxy"
+                  }
+                ],
+                "configVersion": "v2.6.0",
+                "enabled": true,
+                "forceRemoveModule": true,
+                "name": "csireverseproxy"
+              },
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "PROXY_HOST",
+                        "value": "csm-authorization.com"
+                      },
+                      {
+                        "name": "SKIP_CERTIFICATE_VALIDATION",
+                        "value": "true"
+                      }
+                    ],
+                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
+                    "name": "karavi-authorization-proxy"
+                  }
+                ],
+                "configVersion": "v1.6.0",
+                "enabled": false,
+                "name": "authorization"
+              },
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "X_CSI_REPLICATION_PREFIX",
+                        "value": "replication.storage.dell.com"
+                      },
+                      {
+                        "name": "X_CSI_REPLICATION_CONTEXT_PREFIX",
+                        "value": "powermax"
+                      }
+                    ],
+                    "image": "dellemc/dell-csi-replicator:v1.4.0",
+                    "name": "dell-csi-replicator"
+                  },
+                  {
+                    "envs": [
+                      {
+                        "name": "TARGET_CLUSTERS_IDS",
+                        "value": "target-cluster-1"
+                      },
+                      {
+                        "name": "REPLICATION_CTRL_LOG_LEVEL",
+                        "value": "debug"
+                      },
+                      {
+                        "name": "REPLICATION_CTRL_REPLICAS",
+                        "value": "1"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MIN",
+                        "value": "1s"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MAX",
+                        "value": "5m"
+                      }
+                    ],
+                    "image": "dellemc/dell-replication-controller:v1.4.0",
+                    "name": "dell-replication-controller-manager"
+                  },
+                  {
+                    "image": "dellemc/dell-replication-init:v1.0.0",
+                    "name": "dell-replication-controller-init"
+                  }
+                ],
+                "configVersion": "v1.4.0",
+                "enabled": false,
+                "name": "replication"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "storage.dell.com/v1",
+          "kind": "ContainerStorageModule",
+          "metadata": {
+            "name": "test-isilon",
+            "namespace": "test-isilon"
           },
           "spec": {
             "driver": {
@@ -1207,6 +1413,197 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - description: ApexConnectivityClient is the Schema for the ApexConnectivityClient
+        API
+      displayName: Apex Connectivity Client
+      kind: ApexConnectivityClient
+      name: apexconnectivityclients.storage.dell.com
+      specDescriptors:
+      - description: Common is the common specification for both controller and node
+          plugins
+        displayName: Common specification
+        path: client.common
+      - description: Args is the set of arguments for the container
+        displayName: Container Arguments
+        path: client.common.args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: client.common.commander
+      - description: Enabled is used to indicate wether or not to deploy a module
+        displayName: Enabled
+        path: client.common.enabled
+      - description: Envs is the set of environment variables for the container
+        displayName: Container Environment vars
+        path: client.common.envs
+      - description: Image is the image tag for the Container
+        displayName: Container Image
+        path: client.common.image
+      - description: ImagePullPolicy is the image pull policy for the image
+        displayName: Container Image Pull Policy
+        path: client.common.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: Name is the name of Container
+        displayName: Container Name
+        path: client.common.name
+      - description: NodeSelector is a selector which must be true for the pod to
+          fit on a node. Selector which must match a node's labels for the pod to
+          be scheduled on that node.
+        displayName: NodeSelector
+        path: client.common.nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: client.common.opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: client.common.opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: client.common.proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: client.common.redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: client.common.roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: client.common.storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: client.common.tenantService
+      - description: Tolerations is the list of tolerations for the driver pods
+        displayName: Tolerations
+        path: client.common.tolerations
+      - description: ConfigVersion is the configuration version of the driver
+        displayName: Config Version
+        path: client.configVersion
+      - description: ClientType is the Client type for Dell Technologies - e.g, ApexConnectivityClient
+        displayName: Client Type
+        path: client.csmClientType
+      - description: ForceRemoveClient is the boolean flag used to remove client deployment
+          when CR is deleted
+        displayName: Force Remove Client
+        path: client.forceRemoveClient
+      - description: Args is the set of arguments for the container
+        displayName: Container Arguments
+        path: client.initContainers[0].args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: client.initContainers[0].commander
+      - description: Enabled is used to indicate wether or not to deploy a module
+        displayName: Enabled
+        path: client.initContainers[0].enabled
+      - description: Envs is the set of environment variables for the container
+        displayName: Container Environment vars
+        path: client.initContainers[0].envs
+      - description: Image is the image tag for the Container
+        displayName: Container Image
+        path: client.initContainers[0].image
+      - description: ImagePullPolicy is the image pull policy for the image
+        displayName: Container Image Pull Policy
+        path: client.initContainers[0].imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: Name is the name of Container
+        displayName: Container Name
+        path: client.initContainers[0].name
+      - description: NodeSelector is a selector which must be true for the pod to
+          fit on a node. Selector which must match a node's labels for the pod to
+          be scheduled on that node.
+        displayName: NodeSelector
+        path: client.initContainers[0].nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: client.initContainers[0].opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: client.initContainers[0].opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: client.initContainers[0].proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: client.initContainers[0].redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: client.initContainers[0].roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: client.initContainers[0].storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: client.initContainers[0].tenantService
+      - description: Tolerations is the list of tolerations for the driver pods
+        displayName: Tolerations
+        path: client.initContainers[0].tolerations
+      - description: SideCars is the specification for CSI sidecar containers
+        displayName: CSI SideCars specification
+        path: client.sideCars
+      - description: Args is the set of arguments for the container
+        displayName: Container Arguments
+        path: client.sideCars[0].args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: client.sideCars[0].commander
+      - description: Enabled is used to indicate wether or not to deploy a module
+        displayName: Enabled
+        path: client.sideCars[0].enabled
+      - description: Envs is the set of environment variables for the container
+        displayName: Container Environment vars
+        path: client.sideCars[0].envs
+      - description: Image is the image tag for the Container
+        displayName: Container Image
+        path: client.sideCars[0].image
+      - description: ImagePullPolicy is the image pull policy for the image
+        displayName: Container Image Pull Policy
+        path: client.sideCars[0].imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: Name is the name of Container
+        displayName: Container Name
+        path: client.sideCars[0].name
+      - description: NodeSelector is a selector which must be true for the pod to
+          fit on a node. Selector which must match a node's labels for the pod to
+          be scheduled on that node.
+        displayName: NodeSelector
+        path: client.sideCars[0].nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: client.sideCars[0].opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: client.sideCars[0].opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: client.sideCars[0].proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: client.sideCars[0].redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: client.sideCars[0].roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: client.sideCars[0].storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: client.sideCars[0].tenantService
+      - description: Tolerations is the list of tolerations for the driver pods
+        displayName: Tolerations
+        path: client.sideCars[0].tolerations
+      statusDescriptors:
+      - description: ClientStatus is the status of Client pods
+        displayName: ClientStatus
+        path: clientStatus
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podStatuses
+      - description: State is the state of the client installation
+        displayName: State
+        path: state
+        x-descriptors:
+        - urn:alm:descriptor:text
+      version: v1
     - description: ContainerStorageModule is the Schema for the containerstoragemodules
         API
       displayName: Container Storage Module
@@ -1895,6 +2292,18 @@ spec:
           - update
           - watch
         - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
           - auditregistration.k8s.io
           resources:
           - auditsinks
@@ -1925,6 +2334,32 @@ spec:
           - list
           - update
           - watch
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - ApexConnectivityClient
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - ApexConnectivityClient/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - ApexConnectivityClient/status
+          verbs:
+          - get
+          - patch
+          - update
         - apiGroups:
           - cert-manager.io
           resources:
@@ -2075,6 +2510,14 @@ spec:
           verbs:
           - get
           - update
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - get
+          - list
+          - watch
         - apiGroups:
           - csi.storage.k8s.io
           resources:
