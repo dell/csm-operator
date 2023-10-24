@@ -99,7 +99,7 @@ const (
 var (
 	dMutex                          sync.RWMutex
 	configVersionKey                = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMOperatorConfigVersion")
-	previouslyAppliedCustomResource = fmt.Sprintf("%s/%s", MetadataPrefix, "previously-applied-configuration")
+	previouslyAppliedCustomResource = fmt.Sprintf("%s/%s", MetadataPrefix, "PreviouslyAppliedConfiguration")
 
 	// CSMVersionKey -
 	CSMVersionKey = fmt.Sprintf("%s/%s", MetadataPrefix, "CSMVersion")
