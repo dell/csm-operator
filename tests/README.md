@@ -26,7 +26,13 @@ The E2E tests test the installation of Dell CSM Drivers and Modules.
 ```bash
 go install github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega/...
-```
+```    
+#### Application Mobility Prerequisites
+If running the Application Mobility e2e tests, further setup must be done, you must:
+- have a MinIO object storage setup, with default credentials 
+   - At least 2 buckets setup, if instance only has one bucket, set ALT_BUCKET_NAME = BUCKET_NAME
+- have all required licenses installed in your testing environment
+- have the latest Application Mobility controller and plugin images 
 
 ### Run
 

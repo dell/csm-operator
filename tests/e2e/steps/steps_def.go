@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/kubernetes/test/e2e/framework"
+	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -55,6 +56,7 @@ var (
 	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
+	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -119,7 +121,7 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
 
-	if _, err := framework.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
 	}
 
@@ -129,7 +131,7 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 
 func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string) error {
 	if thirdPartyModule == "cert-manager" {
-		cmd := exec.Command("kubectl", "create", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
+		cmd := exec.Command("kubectl", "apply", "-f", "testfiles/cert-manager-crds.yaml")
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("cert-manager install failed: %v", err)
@@ -141,18 +143,42 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			return fmt.Errorf("Installation of velero %v failed", err1)
 		}
 
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "--set", "configuration.provider=csi", "--set", "configuration.backupStorageLocation.name=default", "--set", "configuration.backupStorageLocation.bucket=bucket", "--set", "initContainers[0].name=velero-plugin-for-csi", "--set", "initContainers[0].image=velero/velero-plugin-for-csi:v0.2.0", "--set", "initContainers[0].volumeMounts[0].mountPath=/target", "--set", "initContainers[0].volumeMounts[0].name=plugins", "--version=2.29.8")
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml", "--version=3.0.0")
 		err2 := cmd2.Run()
 		if err2 != nil {
 			return fmt.Errorf("Installation of velero %v failed", err2)
 		}
+	} else if thirdPartyModule == "wordpress" {
+
+		cmd := exec.Command("kubectl", "get", "ns", "wordpress")
+		err := cmd.Run()
+		if err != nil {
+			cmd = exec.Command("kubectl", "create", "ns", "wordpress")
+			err = cmd.Run()
+			if err != nil {
+				return err
+			}
+		}
+
+		// create wordpress APP for AM testing, requires pflex driver installed and op-e2e-vxflexos SC created
+		cmd2 := exec.Command("kubectl", "apply", "-n", "wordpress", "-k", "testfiles/sample-application")
+		err = cmd2.Run()
+		if err != nil {
+			return err
+		}
+
+		//give wp time to setup before we create backup/restores
+		fmt.Println("Sleeping 60 seconds to allow WP time to create")
+		time.Sleep(60 * time.Second)
+
 	}
+
 	return nil
 }
 
 func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule string) error {
 	if thirdPartyModule == "cert-manager" {
-		cmd := exec.Command("kubectl", "delete", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
+		cmd := exec.Command("kubectl", "delete", "-f", "testfiles/cert-manager-crds.yaml")
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("cert-manager uninstall failed: %v", err)
@@ -163,6 +189,13 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 		if err != nil {
 			return fmt.Errorf("Uninstallation of velero %v failed", err)
 		}
+	} else if thirdPartyModule == "wordpress" {
+		cmd := exec.Command("kubectl", "delete", "-n", "wordpress", "-k", "testfiles/sample-application")
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("Uninstallation of wordpress %v failed", err)
+		}
+
 	}
 	return nil
 }
@@ -203,12 +236,12 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	return checkAllRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
+	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	return checkNoRunningPods(res.CustomResource[crNum-1].Namespace, step.clientSet)
+	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) setNodeLabel(res Resource, label string) error {
@@ -305,6 +338,8 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 
 			case csmv1.Resiliency:
 				return step.validateResiliencyNotInstalled(cr)
+			case csmv1.ApplicationMobility:
+				return step.validateApplicationMobilityNotInstalled(cr)
 			}
 		}
 	}
@@ -333,7 +368,7 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 	}
 	for _, cluster := range clusterClients {
 		// check observability in all clusters
-		if err := checkObservabilityRunningPods(utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkObservabilityRunningPods(context.TODO(), utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for observability installation in %s: %v", cluster.ClusterID, err)
 		}
 
@@ -372,7 +407,7 @@ func (step *Step) validateObservabilityNotInstalled(cr csmv1.ContainerStorageMod
 	}
 	for _, cluster := range clusterClients {
 		// check observability is not installed
-		if err := checkObservabilityNoRunningPods(utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkObservabilityNoRunningPods(context.TODO(), utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed observability installation check %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -412,12 +447,12 @@ func (step *Step) validateReplicationInstalled(cr csmv1.ContainerStorageModule) 
 	}
 	for _, cluster := range clusterClients {
 		// check replication controllers in all clusters
-		if err := checkAllRunningPods(utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAllRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for  replication controllers installation in %s: %v", cluster.ClusterID, err)
 		}
 
 		// check driver deployment in all clusters
-		if err := checkAllRunningPods(cr.Namespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAllRunningPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed while check for driver installation in %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -438,14 +473,14 @@ func (step *Step) validateReplicationNotInstalled(cr csmv1.ContainerStorageModul
 	}
 	for _, cluster := range clusterClients {
 		// check replication  controller is not installed
-		if err := checkNoRunningPods(utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
+		if err := checkNoRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
 		}
 
 		// check no driver is not installed in target clusters
 		if cluster.ClusterID != utils.DefaultSourceClusterID {
 
-			if err := checkNoRunningPods(cr.Namespace, cluster.ClusterK8sClient); err != nil {
+			if err := checkNoRunningPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
 				return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
 			}
 		}
@@ -539,7 +574,7 @@ func (step *Step) setupSecretFromFile(res Resource, file, namespace string) erro
 		return fmt.Errorf("failed to read secret data: %v", err)
 	}
 
-	if _, err := framework.RunKubectlInput(namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+	if _, err := kubectl.RunKubectlInput(namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply secret from file %s in namespace %s: %v", file, namespace, err)
 	}
 
@@ -612,6 +647,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pflexAuthSidecarMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
+	} else if crType == "application-mobility" {
+		mapValues = amConfigMap
 	} else {
 		return mapValues, fmt.Errorf("type: %s is not supported", crType)
 	}
@@ -764,7 +801,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 		operatorNamespace = os.Getenv("OPERATOR_NAMESPACE")
 	}
 
-	pods, err := fpod.GetPodsInNamespace(step.clientSet, operatorNamespace, map[string]string{})
+	pods, err := fpod.GetPodsInNamespace(context.TODO(), step.clientSet, operatorNamespace, map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -828,7 +865,7 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 	}
 	for _, cluster := range clusterClients {
 		// check AuthorizationProxyServer in all clusters
-		if err := checkAuthorizationProxyServerPods(utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAuthorizationProxyServerPods(context.TODO(), utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for AuthorizationProxyServer installation in %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -851,7 +888,7 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 	}
 	for _, cluster := range clusterClients {
 		// check AuthorizationProxyServer is not installed
-		if err := checkAuthorizationProxyServerNoRunningPods(utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAuthorizationProxyServerNoRunningPods(context.TODO(), utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed AuthorizationProxyServer installation check %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -870,7 +907,6 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 		return err
 	}
 
-	// check installation for all AuthorizationProxyServer
 	fakeReconcile := utils.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
@@ -881,8 +917,7 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 		return err
 	}
 	for _, cluster := range clusterClients {
-		// check AuthorizationProxyServer in all clusters
-		if err := checkApplicationMobilityPods(utils.ApplicationMobilityNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for App-mob installation in %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -1229,5 +1264,47 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
 		}
 	}
+	return nil
+}
+
+// set up AM CR
+func (step *Step) configureAMInstall(res Resource, templateFile string) error {
+	mapValues, err := determineMap("application-mobility")
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		if os.Getenv(mapValues[key]) == "" {
+			return fmt.Errorf("env variable %s not set, set in env-e2e-test.sh before continuing", mapValues[key])
+		}
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStorageModule) error {
+
+	fakeReconcile := utils.FakeReconcileCSM{
+		Client:    step.ctrlClient,
+		K8sClient: step.clientSet,
+	}
+
+	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	if err != nil {
+		return err
+	}
+	for _, cluster := range clusterClients {
+		err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient)
+		if err == nil {
+			return fmt.Errorf("AM pods found in namespace: %s", cr.Namespace)
+		}
+
+	}
+	fmt.Println("All AM pods removed ")
 	return nil
 }

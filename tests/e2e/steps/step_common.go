@@ -65,11 +65,11 @@ type Step struct {
 	clientSet  *kubernetes.Clientset
 }
 
-func checkAllRunningPods(namespace string, k8sClient kubernetes.Interface) error {
+func checkAllRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
 	notReadyMessage := ""
 	allReady := true
 
-	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+	pods, err := fpod.GetPodsInNamespace(ctx, k8sClient, namespace, map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -97,11 +97,11 @@ func checkAllRunningPods(namespace string, k8sClient kubernetes.Interface) error
 	return nil
 }
 
-func checkObservabilityRunningPods(namespace string, k8sClient kubernetes.Interface) error {
+func checkObservabilityRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
 	notReadyMessage := ""
 	allReady := true
 
-	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+	pods, err := fpod.GetPodsInNamespace(ctx, k8sClient, namespace, map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -157,8 +157,8 @@ func checkObservabilityRunningPods(namespace string, k8sClient kubernetes.Interf
 	return nil
 }
 
-func checkObservabilityNoRunningPods(namespace string, k8sClient kubernetes.Interface) error {
-	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+func checkObservabilityNoRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
+	pods, err := fpod.GetPodsInNamespace(ctx, k8sClient, namespace, map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -178,8 +178,8 @@ func checkObservabilityNoRunningPods(namespace string, k8sClient kubernetes.Inte
 	return nil
 }
 
-func checkNoRunningPods(namespace string, k8sClient kubernetes.Interface) error {
-	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+func checkNoRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
+	pods, err := fpod.GetPodsInNamespace(ctx, k8sClient, namespace, map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -283,11 +283,11 @@ func getApplyObservabilityDeployment(namespace string, driverType csmv1.DriverTy
 	return dpApply, nil
 }
 
-func checkAuthorizationProxyServerPods(namespace string, k8sClient kubernetes.Interface) error {
+func checkAuthorizationProxyServerPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
 	notReadyMessage := ""
 	allReady := true
 
-	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+	pods, err := fpod.GetPodsInNamespace(ctx, k8sClient, namespace, map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -335,23 +335,28 @@ func checkAuthorizationProxyServerPods(namespace string, k8sClient kubernetes.In
 	return nil
 }
 
-func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interface) error {
+func checkApplicationMobilityPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
 	// list all namespaces that we expect to find app-mobility pods in
-	nsToCheck := []string{namespace, "velero", "cert-manager"}
-	minNumPods := 5
+	nsToCheck := []string{namespace}
+	// 3 AM pods are needed at least: controller, velero, node-agent
+	minNumPods := 3
 	var allPods []*corev1.Pod
 
 	for _, ns := range nsToCheck {
-		somePods, err := fpod.GetPodsInNamespace(k8sClient, ns, map[string]string{})
+		somePods, err := fpod.GetPodsInNamespace(ctx, k8sClient, ns, map[string]string{})
 		if err != nil {
 			return err
 		}
-		allPods = append(allPods, somePods[:]...)
+		for _, pod := range somePods {
+			if strings.Contains(pod.Name, "application-mobility") {
+				allPods = append(allPods, pod)
+			}
+		}
 	}
 
 	// once we have status in csm module objects, update this code
 	if len(allPods) < minNumPods {
-		return fmt.Errorf("expected at least %d pods in namespaces %+v but got %d pods", minNumPods, nsToCheck, len(allPods))
+		return fmt.Errorf("expected at least %d application-mobility pods in namespaces %+v but got %d pods", minNumPods, nsToCheck, len(allPods))
 	}
 
 	for _, pod := range allPods {
@@ -359,6 +364,7 @@ func checkApplicationMobilityPods(namespace string, k8sClient kubernetes.Interfa
 		if podRunning == false && pod.Status.Phase != "Succeeded" {
 			return fmt.Errorf("pod %s not running: %+v", pod.Name, podMsg)
 		}
+
 	}
 
 	return nil
@@ -446,8 +452,8 @@ func setNodeLabel(testName, labelName, labelValue string) error {
 	return nil
 }
 
-func checkAuthorizationProxyServerNoRunningPods(namespace string, k8sClient kubernetes.Interface) error {
-	pods, err := fpod.GetPodsInNamespace(k8sClient, namespace, map[string]string{})
+func checkAuthorizationProxyServerNoRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
+	pods, err := fpod.GetPodsInNamespace(ctx, k8sClient, namespace, map[string]string{})
 	if err != nil {
 		return err
 	}

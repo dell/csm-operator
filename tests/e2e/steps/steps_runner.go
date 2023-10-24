@@ -72,6 +72,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
 	//Configure authorization-proxy-server for [powerflex]
 	runner.addStep(`^Configure authorization-proxy-server for \[([^"]*)\]$`, step.configureAuthorizationProxyServer)
+	runner.addStep(`^Set up application mobility CR \[([^"]*)\]$`, step.configureAMInstall)
 
 }
 
