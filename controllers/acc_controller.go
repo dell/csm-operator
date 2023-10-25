@@ -98,9 +98,9 @@ var (
 	AccStopWatch = make(chan struct{})
 )
 
-//+kubebuilder:rbac:groups=cache.example.com,resources=ApexConnectivityClient,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cache.example.com,resources=ApexConnectivityClient/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cache.example.com,resources=ApexConnectivityClient/finalizers,verbs=update
+//+kubebuilder:rbac:groups=storage.dell.com,resources=apexconnectivityclients,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=storage.dell.com,resources=apexconnectivityclients/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=storage.dell.com,resources=apexconnectivityclients/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 

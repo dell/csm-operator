@@ -342,9 +342,9 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.example.com
+  - storage.dell.com
   resources:
-  - ApexConnectivityClient
+  - apexconnectivityclients
   verbs:
   - create
   - delete
@@ -354,15 +354,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.example.com
+  - storage.dell.com
   resources:
-  - ApexConnectivityClient/finalizers
+  - apexconnectivityclients/finalizers
   verbs:
   - update
 - apiGroups:
-  - cache.example.com
+  - storage.dell.com
   resources:
-  - ApexConnectivityClient/status
+  - apexconnectivityclients/status
   verbs:
   - get
   - patch
