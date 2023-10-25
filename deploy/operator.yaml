@@ -342,7 +342,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.example.com
+  - storage.dell.com
   resources:
   - apexconnectivityclients
   verbs:
@@ -354,13 +354,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.example.com
+  - storage.dell.com
   resources:
   - apexconnectivityclients/finalizers
   verbs:
   - update
 - apiGroups:
-  - cache.example.com
+  - storage.dell.com
   resources:
   - apexconnectivityclients/status
   verbs:
