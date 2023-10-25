@@ -82,7 +82,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: dellemc/csi-vxflexos:v2.8.0
+          image: dellemc/csi-vxflexos:v2.9.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:
@@ -102,13 +102,13 @@ spec:
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: false
             - name: X_CSI_APPROVE_SDC_ENABLED
-              value: true
+              value: <X_CSI_APPROVE_SDC_ENABLED>
             - name: X_CSI_RENAME_SDC_ENABLED
-              value: true
+              value: <X_CSI_RENAME_SDC_ENABLED>
             - name: X_CSI_RENAME_SDC_PREFIX
-              value: "test"
+              value: <X_CSI_RENAME_SDC_PREFIX>
             - name: X_CSI_MAX_VOLUMES_PER_NODE
-              value: "0"
+              value: <X_CSI_MAX_VOLUMES_PER_NODE>
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
@@ -128,7 +128,7 @@ spec:
               mountPath: /certs
               readOnly: true
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
