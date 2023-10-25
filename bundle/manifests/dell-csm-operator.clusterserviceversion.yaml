@@ -2335,7 +2335,7 @@ spec:
           - update
           - watch
         - apiGroups:
-          - cache.example.com
+          - storage.dell.com
           resources:
           - apexconnectivityclients
           verbs:
@@ -2347,13 +2347,13 @@ spec:
           - update
           - watch
         - apiGroups:
-          - cache.example.com
+          - storage.dell.com
           resources:
           - apexconnectivityclients/finalizers
           verbs:
           - update
         - apiGroups:
-          - cache.example.com
+          - storage.dell.com
           resources:
           - apexconnectivityclients/status
           verbs:
