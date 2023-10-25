@@ -344,7 +344,7 @@ rules:
 - apiGroups:
   - cache.example.com
   resources:
-  - ApexConnectivityClient
+  - apexconnectivityclients
   verbs:
   - create
   - delete
@@ -356,13 +356,13 @@ rules:
 - apiGroups:
   - cache.example.com
   resources:
-  - ApexConnectivityClient/finalizers
+  - apexconnectivityclients/finalizers
   verbs:
   - update
 - apiGroups:
   - cache.example.com
   resources:
-  - ApexConnectivityClient/status
+  - apexconnectivityclients/status
   verbs:
   - get
   - patch
