@@ -674,10 +674,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-powerstore:v2.8.0",
+                "image": "dellemc/csi-powerstore:v2.9.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.8.0",
+              "configVersion": "v2.9.0",
               "controller": {
                 "envs": [
                   {
@@ -2483,7 +2483,7 @@ spec:
     name: csi-powermax
   - image: docker.io/dellemc/csipowermax-reverseproxy:v2.7.0
     name: csipowermax-reverseproxy
-  - image: docker.io/dellemc/csi-powerstore:v2.8.0
+  - image: docker.io/dellemc/csi-powerstore:v2.9.0
     name: csi-powerstore
   - image: docker.io/dellemc/csi-unity:v2.8.0
     name: csi-unity
