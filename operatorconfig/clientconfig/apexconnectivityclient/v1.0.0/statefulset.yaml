@@ -91,10 +91,9 @@ metadata:
   name: apex-connectivity-client
   namespace: <NAMESPACE>
   labels:
-    helm.sh/chart: apex-client-k8s-0.2.0
     app.kubernetes.io/name: connectivity-client-docker-k8s
     app.kubernetes.io/instance: ApexConnectivityClient
-    app.kubernetes.io/version: "0.2.0"
+    app.kubernetes.io/version: "1.0.0"
     app.kubernetes.io/managed-by: CSMOperator
 spec:
   serviceName: connectivity-client-docker-k8s-headless-service
