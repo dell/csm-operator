@@ -35,7 +35,7 @@ Dell Technologies Container Storage Modules (CSM) Operator is an open-source Kub
   * [Uninstall CSI Drivers and CSM Modules](#uninstall-csi-drivers-and-csm-modules)
 
 # Dell Container Storage Modules Operator
-Dell Container Storage Modules Operator is a Kubernetes native application which helps in installing and managing CSI Drivers and CSM Modules provided by Dell Technologies for its various storage platforms. 
+Dell Container Storage Modules Operator is a Kubernetes native application which helps in installing and managing CSI Drivers and CSM Modules provided by Dell Technologies for its various storage platforms.
 Dell Container Storage Modules Operator uses Kubernetes CRDs (Custom Resource Definitions) to define a manifest that describes the deployment specifications for each driver to be deployed.
 
 Dell Container Storage Modules Operator is built using the [operator framework](https://github.com/operator-framework) and runs custom Kubernetes controllers to manage the driver installations. These controllers listen for any create/update/delete request for the respective CRDs and try to reconcile the request.
@@ -55,7 +55,7 @@ The Dell Container Storage Modules Operator image is available on Dockerhub and 
 For any CSM Operator and driver issues, questions or feedback, join the [Dell Technologies Container community](https://www.dell.com/community/Containers/bd-p/Containers) or the [Slack channel for Dell Container Storage Modules](https://dellemccsm.slack.com/).
 
 ## Supported Platforms
-Dell Container Storage Modules Operator has been tested and qualified with 
+Dell Container Storage Modules Operator has been tested and qualified with
 
     * Upstream Kubernetes cluster v1.25, v1.26, v1.27
     * OpenShift Clusters 4.12, 4.13 with RHEL 8.x & RHCOS worker nodes
@@ -63,28 +63,28 @@ Dell Container Storage Modules Operator has been tested and qualified with
 ## Installation
 
 ## Install Operator (both OLM and Non OLM) in dev mode
-  1. Clone the repo: `git clone https://github.com/dell/csm-operator.git` 
+  1. Clone the repo: `git clone https://github.com/dell/csm-operator.git`
   2. Navigate one level inside the cloned repo: `cd csm-operator`
   3. Execute `make install` to install the CRDs
   4. Execute `make run` to have the operator running.
-  5. Install any of the operands (CSI Driver) using another session 
+  5. Install any of the operands (CSI Driver) using another session
 
 NOTE: Closing the session where operator is running will stop the operator.
 
 ## Install Operator using scripts
 
-### Operator install on a cluster without OLM 
+### Operator install on a cluster without OLM
 For Non OLM based install of Operator please refer the steps given here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/#operator-installation-on-a-cluster-without-olm](https://dell.github.io/csm-docs/docs/deployment/csmoperator/#operator-installation-on-a-cluster-without-olm)
- 
+
 To uninstall the Operator, execute `bash scripts/uninstall.sh`
 
-### Operator install on a cluster with OLM 
-  NOTE: Index image or Catalog image should be used for OLM based install of Operator. This mode of install is used only for internal testing purposes as the bundle and index/catalog images are not posted in Dockerhub. 
-  1. Clone the repo: `git clone https://github.com/dell/csm-operator.git` 
+### Operator install on a cluster with OLM
+  NOTE: Index image or Catalog image should be used for OLM based install of Operator. This mode of install is used only for internal testing purposes as the bundle and index/catalog images are not posted in Dockerhub.
+  1. Clone the repo: `git clone https://github.com/dell/csm-operator.git`
   2. Navigate one level inside the cloned repo: `cd csm-operator`
   3. Update the image specified in `deploy/olm/operator_community.yaml` to the required image.
   4. Execute `bash scripts/install_olm.sh` to install the operator.
- 
+
   To uninstall the Operator, execute `bash scripts/uninstall_olm.sh`
 
 ### Operator install using offline bundle on a cluster without OLM
@@ -99,20 +99,20 @@ To uninstall CSI drivers and CSM modules installed using the operator please ref
 
 ## Install Apex Connectivity Client
   1. Ensure that CSM Operator is installed and the operator pods are up and running.
-  2. Edit the images to point to the correct location in `storage_apexconnectivityclient_v010.yaml` sample file located at `csm-operator\samples` folder.
-  3. To deploy Apex Connectivity Client, execute `kubectl create -f samples\storage_apexconnectivityclient_v010.yaml`.
+  2. Edit the images to point to the correct location in `storage_apexconnectivityclient_v100.yaml` sample file located at `csm-operator\samples` folder.
+  3. To deploy Apex Connectivity Client, execute `kubectl create -f samples\storage_apexconnectivityclient_v100.yaml`.
   4. Ensure that the Apex Connectivity Client pods are up and running.
 
 ## Update Apex Connectivity Client
   1. Ensure that CSM Operator is installed and the operator pods are up and running.
-  2. Edit the required images to point to the correct location in `storage_apexconnectivityclient_v010.yaml` sample file located at `csm-operator\samples` folder.
-  3. To update Apex Connectivity Client, execute `kubectl apply -f samples\storage_apexconnectivityclient_v010.yaml`.
+  2. Edit the required images to point to the correct location in `storage_apexconnectivityclient_v100.yaml` sample file located at `csm-operator\samples` folder.
+  3. To update Apex Connectivity Client, execute `kubectl apply -f samples\storage_apexconnectivityclient_v100.yaml`.
   4. Ensure that the Apex Connectivity Client pods are up and running.
 
 ## Uninstall Apex Connectivity Client
   1. Ensure that CSM Operator is installed and the operator pods are up and running.
-  3. To uninstall Apex Connectivity Client, execute `kubectl delete -f samples\storage_apexconnectivityclient_v010.yaml`
-  4. Ensure that the Apex Connectivity Client pods are deleted. 
+  3. To uninstall Apex Connectivity Client, execute `kubectl delete -f samples\storage_apexconnectivityclient_v100.yaml`
+  4. Ensure that the Apex Connectivity Client pods are deleted.
 
 ## Versioning
 
