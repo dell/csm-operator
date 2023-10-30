@@ -123,7 +123,7 @@ spec:
       serviceAccountName: <DriverDefaultReleaseName>-controller
       containers:
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.3.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.4.1
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -136,7 +136,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -166,7 +166,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: csi-external-health-monitor-controller
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.9.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.10.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -183,7 +183,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.2.2
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -197,7 +197,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.8.0
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -210,7 +210,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-vxflexos:v2.8.0
+          image: dellemc/csi-vxflexos:v2.9.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:
@@ -231,7 +231,7 @@ spec:
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: false
             - name: X_CSI_QUOTA_ENABLED
-              value: false
+              value: <X_CSI_QUOTA_ENABLED>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
