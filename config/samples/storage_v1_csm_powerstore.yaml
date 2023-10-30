@@ -31,8 +31,8 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI PowerStore v2.8.0 driver
-    configVersion: v2.8.0
+    # Config version for CSI PowerStore v2.9.0 driver
+    configVersion: v2.9.0
     # authSecret: This is the secret used to validate the default PowerStore secret used for installation
     # Allowed values: <metadataName specified in the Manifest>-config
     # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
@@ -43,8 +43,8 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerStore driver v2.8.0
-      image: "dellemc/csi-powerstore:v2.8.0"
+      # Image for CSI PowerStore driver v2.9.0
+      image: "dellemc/csi-powerstore:v2.9.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -57,6 +57,10 @@ spec:
           value: debug
 
     sideCars:
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        args: ["--volume-name-prefix=csivol"]
+
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
