@@ -16,12 +16,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/client-go/util/workqueue"
 	"strings"
 	"testing"
 	"time"
 
-	//"time"
+	"k8s.io/client-go/util/workqueue"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -41,7 +40,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 
-	//"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -114,7 +112,7 @@ var (
 
 	accName = "acc"
 
-	accConfigVersion = "v0.1.0"
+	accConfigVersion = "v1.0.0"
 
 	accReq = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -611,7 +609,7 @@ func (suite *AccControllerTestSuite) makeFakeAcc(name, ns string, withFinalizer 
 	csm.Spec.Client.SideCars = sideCarList
 
 	initContainerObj := csmv1.ContainerTemplate{
-		Name:            "apex-connectivity-client-init",
+		Name:            "connectivity-client-init",
 		Image:           "image4",
 		ImagePullPolicy: "IfNotPresent",
 	}

@@ -230,7 +230,7 @@ type Client struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Client Type"
 	CSMClientType ClientType `json:"csmClientType" yaml:"csmClientType"`
 
-	// ConfigVersion is the configuration version of the driver
+	// ConfigVersion is the configuration version of the client
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
 	ConfigVersion string `json:"configVersion" yaml:"configVersion"`
 

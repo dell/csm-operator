@@ -342,32 +342,6 @@ rules:
   - update
   - watch
 - apiGroups:
-  - storage.dell.com
-  resources:
-  - apexconnectivityclients
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - apexconnectivityclients/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - apexconnectivityclients/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - cert-manager.io
   resources:
   - '*/*'
@@ -731,6 +705,32 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - storage.dell.com
   resources:
