@@ -546,7 +546,7 @@ func HandleAccSuccess(ctx context.Context, instance *csmv1.ApexConnectivityClien
 
 	running, err := calculateAccState(ctx, instance, r, newStatus)
 	if err != nil {
-		log.Error("HandleSuccess ApexConnectivityClient status ", "error", err.Error())
+		log.Error("HandleSuccess ApexConnectivityClient status ", "error: ", err.Error())
 		newStatus.State = constants.Failed
 	}
 	if running {

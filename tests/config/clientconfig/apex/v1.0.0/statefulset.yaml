@@ -223,8 +223,8 @@ spec:
             - name: certs-store-tmpdir
               mountPath: "/home/connectivity-client/.certs"
       initContainers:
-        - name: apex-connectivity-client-init
-          image: "<APEX_CLIENT_INIT_CONTAINER_IMAGE>"
+        - name: connectivity-client-init
+          image: "<ACC_INIT_CONTAINER_IMAGE>"
           imagePullPolicy: Always
           env:
             - name: DCM_IDENTITY_LOCATION

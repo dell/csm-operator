@@ -1,8 +1,19 @@
+//  Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//       http://www.apache.org/licenses/LICENSE-2.0
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 package controllers
 
 import (
 	"context"
-	//"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,9 +30,6 @@ import (
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
 
-	//"github.com/dell/csm-operator/pkg/resources/configmap"
-	//"github.com/dell/csm-operator/pkg/resources/rbac"
-	//"github.com/dell/csm-operator/pkg/resources/serviceaccount"
 	"github.com/dell/csm-operator/pkg/utils"
 	"go.uber.org/zap"
 
@@ -37,11 +45,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/ratelimiter"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"sync"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-
-	//storagev1 "k8s.io/api/storage/v1"
-	"sync"
 )
 
 const (
@@ -62,7 +69,7 @@ const (
 
 	CertPersisterSidecarImage string = "<CERT_PERSISTER_IMAGE>"
 
-	AccInitContainerName string = "apex-connectivity-client-init"
+	AccInitContainerName string = "connectivity-client-init"
 
 	AccInitContainerImage string = "<ACC_INIT_CONTAINER_IMAGE>"
 )
@@ -131,7 +138,6 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
 			return reconcile.Result{}, nil
-
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, nil
@@ -167,7 +173,7 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 
 		if err := r.removeFinalizer(ctx, acc); err != nil {
 			r.EventRecorder.Event(acc, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to delete finalizer: %s", err))
-			log.Errorw("Remove Apex Connectivity client finalizer", "error", err.Error())
+			log.Errorw("Remove Apex Connectivity Client finalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
 		}
 		r.EventRecorder.Event(acc, corev1.EventTypeNormal, csmv1.EventDeleted, "Object finalizer is deleted")
@@ -248,14 +254,10 @@ func (r *ApexConnectivityClientReconciler) handleStatefulSetUpdate(oldObj interf
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
 	ready := d.Status.ReadyReplicas
-	//numberUnavailable := d.Status.UnavailableReplicas
-
-	//Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
 
 	log.Infow("statefulSet", "desired", desired)
 	log.Infow("statefulSet", "numberReady", ready)
 	log.Infow("statefulSet", "available", available)
-	//log.Infow("deployment", "numberUnavailable", numberUnavailable)
 
 	ns := d.Namespace
 	log.Debugw("statefulSet", "namespace", ns, "name", name)
@@ -273,7 +275,7 @@ func (r *ApexConnectivityClientReconciler) handleStatefulSetUpdate(oldObj interf
 	newStatus := acc.GetApexConnectivityClientStatus()
 	newStatus.ClientStatus.Available = strconv.Itoa(int(available))
 	newStatus.ClientStatus.Desired = strconv.Itoa(int(desired))
-	//newStatus.ClientStatus.Failed = strconv.Itoa(int(numberUnavailable))
+
 	err = utils.UpdateAccStatus(ctx, acc, r, newStatus)
 	if err != nil {
 		log.Debugw("statefulSet status ", "pods", err.Error())
