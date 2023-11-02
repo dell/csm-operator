@@ -250,6 +250,10 @@ type Client struct {
 	// ForceRemoveClient is the boolean flag used to remove client deployment when CR is deleted
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Client"
 	ForceRemoveClient bool `json:"forceRemoveClient,omitempty" yaml:"forceRemoveClient"`
+
+	// ConnectionTarget is the target that the client connects to in the Dell datacenter
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Connection Target"
+	ConnectionTarget string `json:"connectionTarget,omitempty" yaml:"connectionTarget"`
 }
 
 // ContainerTemplate template

@@ -205,7 +205,10 @@ spec:
                         type: array
                     type: object
                   configVersion:
-                    description: ConfigVersion is the configuration version of the driver
+                    description: ConfigVersion is the configuration version of the client
+                    type: string
+                  connectionTarget:
+                    description: ConnectionTarget is the target that the client connects to in the Dell datacenter
                     type: string
                   csmClientType:
                     description: ClientType is the Client type for Dell Technologies - e.g, ApexConnectivityClient
