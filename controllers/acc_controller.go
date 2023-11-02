@@ -57,6 +57,10 @@ const (
 
 	AccNamespace string = "<NAMESPACE>"
 
+	AggregatorURLDefault string = "connect-into.dell.com"
+
+	AggregatorURL string = "<AGGREGATOR_URL>"
+
 	ConnectivityClientContainerName string = "connectivity-client-docker-k8s"
 
 	ConnectivityClientContainerImage string = "<CONNECTIVITY_CLIENT_IMAGE>"
@@ -438,12 +442,17 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 
 func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivityClient) string {
 	namespace := ""
+	aggregatorURL := AggregatorURLDefault
 	connectivityClientImage := ""
 	kubeProxyImage := ""
 	certPersisterImage := ""
 	accInitContainerImage := ""
 
 	namespace = cr.Namespace
+
+	if cr.Spec.Client.ConnectionTarget != "" {
+		aggregatorURL = string(cr.Spec.Client.ConnectionTarget)
+	}
 
 	if cr.Spec.Client.Common.Name == ConnectivityClientContainerName {
 		if cr.Spec.Client.Common.Image != "" {
@@ -471,6 +480,7 @@ func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivity
 		}
 	}
 	yamlString = strings.ReplaceAll(yamlString, AccNamespace, namespace)
+	yamlString = strings.ReplaceAll(yamlString, AggregatorURL, aggregatorURL)
 	yamlString = strings.ReplaceAll(yamlString, ConnectivityClientContainerImage, connectivityClientImage)
 	yamlString = strings.ReplaceAll(yamlString, AccInitContainerImage, accInitContainerImage)
 	yamlString = strings.ReplaceAll(yamlString, KubernetesProxySidecarImage, kubeProxyImage)

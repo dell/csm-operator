@@ -15,7 +15,7 @@ metadata:
   name: connectivity-client-docker-k8s-configmap
   namespace: <NAMESPACE>
 data:
-  AGGREGATOR_URL: connect-into.dell.com
+  AGGREGATOR_URL: <AGGREGATOR_URL>
   ANNOUNCE_INTERVAL: "5m"
   MIN_BACKOFF: "5s"
   MAX_BACKOFF: "1m"
@@ -120,6 +120,13 @@ spec:
             {}
           image: "<CONNECTIVITY_CLIENT_IMAGE>"
           imagePullPolicy: Always
+          args:
+            - "--aggregator"
+            - <AGGREGATOR_URL>
+            - "--announce.interval"
+            - 5m
+            - "--cacert"
+            - /opt/dellemc/certs/loadbalancer_root_ca_cert.crt,/opt/dellemc/certs/aggregator_internal_root_ca_cert.crt
           env:
             - name: LOG_LEVEL
               value: Info
