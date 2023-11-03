@@ -47,7 +47,6 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: dell-csm-operator-manager-role
 rules:
 - nonResourceURLs:
@@ -829,6 +828,18 @@ rules:
   - create
   - delete
   - list
+  - update
+  - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
   - update
   - watch
 ---

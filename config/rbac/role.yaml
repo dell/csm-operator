@@ -787,3 +787,15 @@ rules:
   - list
   - update
   - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
