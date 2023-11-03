@@ -214,7 +214,7 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 		log.Error(err, "Failed to update CR status")
 	}
 
-	if err := DeployApexConnectivityClient(ctx, false, *op, *acc, crc); err == nil {
+	if err = DeployApexConnectivityClient(ctx, false, *op, *acc, crc); err == nil {
 		r.EventRecorder.Eventf(acc, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", acc.Name)
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
 	}
