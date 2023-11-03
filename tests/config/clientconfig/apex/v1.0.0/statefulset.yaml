@@ -28,7 +28,7 @@ metadata:
   name: connectivity-client-docker-k8s
   namespace: <NAMESPACE>
 rules:
-  - apiGroups: ["*"]
+  - apiGroups: [""]
     resources: ["pods"]
     verbs: ["list", "watch"]
   - apiGroups: [""]
