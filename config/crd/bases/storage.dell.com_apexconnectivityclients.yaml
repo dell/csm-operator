@@ -721,6 +721,10 @@ spec:
                           type: array
                       type: object
                     type: array
+                  usePrivateCaCerts:
+                    description: UsePrivateCaCerts is used to specify private CA signed
+                      certs
+                    type: boolean
                 type: object
             type: object
           status:

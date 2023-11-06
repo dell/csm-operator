@@ -125,8 +125,8 @@ spec:
             - <AGGREGATOR_URL>
             - "--announce.interval"
             - 5m
-            - "--cacert"
-            - /opt/dellemc/certs/loadbalancer_root_ca_cert.crt,/opt/dellemc/certs/aggregator_internal_root_ca_cert.crt
+            - <CACERT_OPTION>
+            - <CACERTS>
           env:
             - name: LOG_LEVEL
               value: Info

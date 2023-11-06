@@ -254,6 +254,10 @@ type Client struct {
 	// ConnectionTarget is the target that the client connects to in the Dell datacenter
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Connection Target"
 	ConnectionTarget string `json:"connectionTarget,omitempty" yaml:"connectionTarget"`
+
+	// UsePrivateCaCerts is used to specify private CA signed certs
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Use Private CA Certs"
+	UsePrivateCaCerts bool `json:"usePrivateCaCerts,omitempty" yaml:"usePrivateCaCerts"`
 }
 
 // ContainerTemplate template

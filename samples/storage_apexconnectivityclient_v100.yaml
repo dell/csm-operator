@@ -20,9 +20,9 @@ spec:
     sideCars:
       - name: kubernetes-proxy
         image: bitnami/kubectl:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
       - name: cert-persister
-        image: dellemc/cert-persister
+        image: dellemc/connectivity-cert-persister-k8s
         imagePullPolicy: IfNotPresent
 ---
 apiVersion: v1

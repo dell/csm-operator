@@ -2824,6 +2824,18 @@ spec:
           - list
           - update
           - watch
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - backups
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         serviceAccountName: dell-csm-operator-manager-service-account
       deployments:
       - name: dell-csm-operator-controller-manager

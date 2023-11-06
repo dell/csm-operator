@@ -61,6 +61,14 @@ const (
 
 	AggregatorURL string = "<AGGREGATOR_URL>"
 
+	CaCertOption string = "<CACERT_OPTION>"
+
+	CaCertFlag string = "--cacert"
+
+	CaCerts string = "<CACERTS>"
+
+	CaCertsList string = "/opt/dellemc/certs/loadbalancer_root_ca_cert.crt,/opt/dellemc/certs/aggregator_internal_root_ca_cert.crt"
+
 	ConnectivityClientContainerName string = "connectivity-client-docker-k8s"
 
 	ConnectivityClientContainerImage string = "<CONNECTIVITY_CLIENT_IMAGE>"
@@ -447,6 +455,8 @@ func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivity
 	kubeProxyImage := ""
 	certPersisterImage := ""
 	accInitContainerImage := ""
+	caCertFlag := ""
+	caCertsList := ""
 
 	namespace = cr.Namespace
 
@@ -454,11 +464,17 @@ func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivity
 		aggregatorURL = string(cr.Spec.Client.ConnectionTarget)
 	}
 
+	if cr.Spec.Client.UsePrivateCaCerts {
+		caCertFlag = CaCertFlag
+		caCertsList = CaCertsList
+	}
+
 	if cr.Spec.Client.Common.Name == ConnectivityClientContainerName {
 		if cr.Spec.Client.Common.Image != "" {
 			connectivityClientImage = string(cr.Spec.Client.Common.Image)
 		}
 	}
+
 	for _, initContainer := range cr.Spec.Client.InitContainers {
 		if initContainer.Name == AccInitContainerName {
 			if initContainer.Image != "" {
@@ -479,8 +495,11 @@ func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivity
 			}
 		}
 	}
+
 	yamlString = strings.ReplaceAll(yamlString, AccNamespace, namespace)
 	yamlString = strings.ReplaceAll(yamlString, AggregatorURL, aggregatorURL)
+	yamlString = strings.ReplaceAll(yamlString, CaCertOption, caCertFlag)
+	yamlString = strings.ReplaceAll(yamlString, CaCerts, caCertsList)
 	yamlString = strings.ReplaceAll(yamlString, ConnectivityClientContainerImage, connectivityClientImage)
 	yamlString = strings.ReplaceAll(yamlString, AccInitContainerImage, accInitContainerImage)
 	yamlString = strings.ReplaceAll(yamlString, KubernetesProxySidecarImage, kubeProxyImage)
