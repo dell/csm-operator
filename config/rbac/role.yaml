@@ -499,6 +499,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - monitoring.coreos.com
   resources:
   - servicemonitors
@@ -785,17 +797,5 @@ rules:
   - create
   - delete
   - list
-  - update
-  - watch
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - backups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
   - update
   - watch
