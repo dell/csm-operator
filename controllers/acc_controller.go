@@ -360,14 +360,22 @@ func (r *ApexConnectivityClientReconciler) ClientContentWatch() error {
 	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
 
 	statefulSetInformer := sharedInformerFactory.Apps().V1().StatefulSets().Informer()
-	statefulSetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := statefulSetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleStatefulSetUpdate,
 	})
 
+	if err != nil {
+		return fmt.Errorf("ClientContentWatch failed adding event handler to daemonsetInformer: %v", err)
+	}
+
 	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
-	podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handlePodsUpdate,
 	})
+
+	if err != nil {
+		return fmt.Errorf("ClientContentWatch failed adding event handler to podsInformer: %v", err)
+	}
 
 	sharedInformerFactory.Start(AccStopWatch)
 	return nil
