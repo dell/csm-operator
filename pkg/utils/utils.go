@@ -340,7 +340,7 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	return YamlString
 }
 
-// ModifyCommonCR -
+// ModifyCommonCRs - update with common values
 func ModifyCommonCRs(YamlString string, cr csmv1.ApexConnectivityClient) string {
 	if cr.Name != "" {
 		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseName, cr.Name)
@@ -363,7 +363,7 @@ func ModifyCommonCRs(YamlString string, cr csmv1.ApexConnectivityClient) string 
 	return YamlString
 }
 
-// GetCTRLObject -
+// GetCTRLObject - get controller object
 func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 	ctrlObjects := []crclient.Object{}
 
@@ -936,6 +936,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	return replicaEnabled, clusterClients, nil
 }
 
+// GetAccDefaultClusters - get default clusters
 func GetAccDefaultClusters(ctx context.Context, instance csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster, error) {
 	clusterClients := []ReplicaCluster{
 		{
@@ -949,7 +950,7 @@ func GetAccDefaultClusters(ctx context.Context, instance csmv1.ApexConnectivityC
 	return replicaEnabled, clusterClients, nil
 }
 
-// GetSecret -
+// GetSecret -get secret
 func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*corev1.Secret, error) {
 	found := &corev1.Secret{}
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: namespace}, found)
@@ -986,7 +987,7 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 	return false
 }
 
-// Contains -
+// Contains - check if slice contains the specified string
 func Contains(slice []string, str string) bool {
 	for _, v := range slice {
 		if v == str {

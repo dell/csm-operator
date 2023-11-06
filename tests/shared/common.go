@@ -90,7 +90,7 @@ func MakeCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
 	return csmObj
 }
 
-// MakeCSM returns a csm from given params
+// MakeAcc - returns a csm from given params
 func MakeAcc(name, ns, configVersion string) csmv1.ApexConnectivityClient {
 
 	ApexConnectivityClientObj := MakeApexConnectivityClient(configVersion, "true")

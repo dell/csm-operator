@@ -59,8 +59,8 @@ type ApexConnectivityClient struct {
 	Status ApexConnectivityClientStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:object:root=true
 // ApexConnectivityClientList contains a list of ApexConnectivityClient
+// +kubebuilder:object:root=true
 type ApexConnectivityClientList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -76,7 +76,7 @@ func (cr *ApexConnectivityClient) GetApexConnectivityClientStatus() *ApexConnect
 	return &cr.Status
 }
 
-// GetClientName - Returns the Client
+// GetApexConnectivityClientName - Returns the Client
 func (cr *ApexConnectivityClient) GetApexConnectivityClientName() string {
 	return fmt.Sprintf("%s", cr.Name)
 }

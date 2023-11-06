@@ -386,6 +386,7 @@ func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerSto
 	instance.GetCSMStatus().NodeStatus = newStatus.NodeStatus
 }
 
+// SetAccStatus of csm
 func SetAccStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ApexConnectivityClient, newStatus *csmv1.ApexConnectivityClientStatus) {
 
 	log := logger.GetLogger(ctx)
@@ -443,7 +444,7 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	return merr
 }
 
-// UpdateStatus of csm
+// UpdateAccStatus of csm
 func UpdateAccStatus(ctx context.Context, instance *csmv1.ApexConnectivityClient, r ReconcileCSM, newStatus *csmv1.ApexConnectivityClientStatus) error {
 	dMutex.Lock()
 	defer dMutex.Unlock()
@@ -492,7 +493,7 @@ func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorage
 	return LogBannerAndReturn(reconcile.Result{Requeue: false}, validationError)
 }
 
-// HandleValidationError for csm
+// HandleAccValidationError for csm
 func HandleAccValidationError(ctx context.Context, instance *csmv1.ApexConnectivityClient, r ReconcileCSM,
 	validationError error) (reconcile.Result, error) {
 	dMutex.Lock()
@@ -537,7 +538,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 	return LogBannerAndReturn(reconcile.Result{}, nil)
 }
 
-// HandleSuccess for csm
+// HandleAccSuccess for csm
 func HandleAccSuccess(ctx context.Context, instance *csmv1.ApexConnectivityClient, r ReconcileCSM, newStatus, oldStatus *csmv1.ApexConnectivityClientStatus) (reconcile.Result, error) {
 	dMutex.Lock()
 	defer dMutex.Unlock()

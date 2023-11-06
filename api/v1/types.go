@@ -34,6 +34,7 @@ type ModuleType string
 // ObservabilityComponentType - type representing the type of components inside observability module. e.g. - topology
 type ObservabilityComponentType string
 
+// ClientType - the type of the client
 type ClientType string
 
 const (
@@ -88,6 +89,7 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// DreadnoughtClient - placeholder for the APEX Connectivity Client
 	DreadnoughtClient ClientType = "apexconnectivityclient"
 
 	// Provisioner - placeholder for constant
@@ -223,6 +225,7 @@ type Driver struct {
 	ForceRemoveDriver bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
 }
 
+// Client - APEX Connectivity Client deployment info
 // +k8s:openapi-gen=true
 type Client struct {
 
