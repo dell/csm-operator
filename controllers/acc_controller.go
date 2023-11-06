@@ -354,7 +354,7 @@ func (r *ApexConnectivityClientReconciler) handlePodsUpdate(oldObj interface{}, 
 	}
 }
 
-// ClientContentWatch - watch updates on deployment and deamonset
+// ClientContentWatch - watch updates on deployment and statefulset
 func (r *ApexConnectivityClientReconciler) ClientContentWatch() error {
 
 	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
@@ -365,7 +365,7 @@ func (r *ApexConnectivityClientReconciler) ClientContentWatch() error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("ClientContentWatch failed adding event handler to daemonsetInformer: %v", err)
+		return fmt.Errorf("ClientContentWatch failed adding event handler to statefulsetInformer: %v", err)
 	}
 
 	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
