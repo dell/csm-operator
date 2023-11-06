@@ -193,44 +193,6 @@ func (suite *AccControllerTestSuite) TestCsmFinalizerError() {
 	updateAccError = false
 }
 
-// Test all edge cases in RemoveDriver
-/* func (suite *AccControllerTestSuite) TestRemoveClient() {
-	r := suite.createAccReconciler()
-	csmWoType := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
-	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
-
-	removeClientTests := []struct {
-		name          string
-		csm           ApexConnectivityClient
-		errorInjector *bool
-		expectedErr   string
-	}{
-		{"getAccDriverConfig error", csmWoType, nil, "no such file or directory"},
-		// can't find objects since they are not created. In this case error is nil
-		{"delete obj not found", csm, nil, ""},
-		{"get SA error", csm, &getAccSAError, getAccSAErrorStr},
-		{"get CR error", csm, &getAccCRError, getAccCRErrorStr},
-		{"get CRB error", csm, &getAccCRBError, getAccCRBErrorStr},
-		{"get CM error", csm, &getAccCMError, getAccCMErrorStr},
-		{"get Client error", csm, &getAccError, getAccErrorStr},
-		{"delete SA error", csm, &deleteAccSAError, deleteAccSAErrorStr},
-		{"delete Deployment error", csm, &deleteAccDeploymentError, deleteAccDeploymentErrorStr},
-	}
-
-	for _, tt := range removeClientTests {
-		suite.T().Run(tt.name, func(t *testing.T) {
-
-			err := r.ForceRemoveClient(accCtx, tt.csm, accOperatorConfig)
-			if tt.expectedErr == "" {
-				assert.Nil(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
-			}
-		})
-	}
-} */
-
 func (suite *AccControllerTestSuite) TestCsmPreCheckVersionError() {
 	// set bad version error
 	accConfigVersion = "v0"
@@ -255,36 +217,6 @@ func (suite *AccControllerTestSuite) TestCsmPreCheckVersionError() {
 	assert.NotNil(suite.T(), err)
 	accConfigVersion = shared.AccConfigVersion
 }
-
-/*func (suite *AccControllerTestSuite) TestCsmPreCheckTypeError() {
-	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
-	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
-	csm.Spec.Client.Common.Image = "image"
-	csm.Annotations[configVersionKey] = accConfigVersion
-
-	sec := shared.MakeSecret("connectivity-client-docker-k8s-loadbalancer-ca-cert", suite.namespace, accConfigVersion)
-	suite.fakeClient.Create(accCtx, sec)
-
-	sec = shared.MakeSecret("connectivity-client-docker-k8s-aggregator-internal-ca-cert", suite.namespace, accConfigVersion)
-	suite.fakeClient.Create(accCtx, sec)
-
-	sec = shared.MakeSecret("connectivity-client-docker-k8s-loadbalancer-ca-cert", suite.namespace, accConfigVersion)
-	suite.fakeClient.Create(accCtx, sec)
-
-	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
-	suite.fakeClient.Create(accCtx, &csm)
-	reconciler := suite.createAccReconciler()
-
-	accConfigVersion = shared.AccConfigVersion
-	_, err := reconciler.Reconcile(accCtx, accReq)
-	assert.NotNil(suite.T(), err)
-	// set it back to good version for other tests
-	suite.deleteAcc(accName)
-	reconciler = suite.createAccReconciler()
-	_, err = reconciler.Reconcile(accCtx, accReq)
-	assert.NotNil(suite.T(), err)
-	accConfigVersion = shared.AccConfigVersion
-}*/
 
 func (suite *AccControllerTestSuite) TestPreCheckAccError() {
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
