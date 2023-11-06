@@ -1,4 +1,4 @@
-include docker.mk 
+include docker.mk
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -211,3 +211,8 @@ catalog-build: gen-semver opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: gen-semver ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+# Run linter.
+.PHONY: lint
+lint: build
+	golangci-lint run --fix

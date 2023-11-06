@@ -162,7 +162,6 @@ func (suite *AccControllerTestSuite) TestReconcileAcc() {
 }
 
 func (suite *AccControllerTestSuite) TestAccConnectivityClientAnnotation() {
-
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
 	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
 	csm.Spec.Client.Common.Image = "image"
@@ -178,11 +177,9 @@ func (suite *AccControllerTestSuite) TestAccConnectivityClientAnnotation() {
 	_, err := reconciler.Reconcile(accCtx, accReq)
 	assert.Error(suite.T(), err)
 	updateAccError = false
-
 }
 
 func (suite *AccControllerTestSuite) TestCsmFinalizerError() {
-
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
 	csm.ObjectMeta.Finalizers = []string{"foo"}
 	suite.fakeClient.Create(accCtx, &csm)
@@ -235,7 +232,6 @@ func (suite *AccControllerTestSuite) TestCsmFinalizerError() {
 } */
 
 func (suite *AccControllerTestSuite) TestCsmPreCheckVersionError() {
-
 	// set bad version error
 	accConfigVersion = "v0"
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
@@ -291,7 +287,6 @@ func (suite *AccControllerTestSuite) TestCsmPreCheckVersionError() {
 }*/
 
 func (suite *AccControllerTestSuite) TestPreCheckAccError() {
-
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
 	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
 	csm.Spec.Client.Common.Image = "image"
@@ -310,7 +305,6 @@ func (suite *AccControllerTestSuite) TestPreCheckAccError() {
 }
 
 func (suite *AccControllerTestSuite) TestPreCheckAccUnsupportedVersion() {
-
 	acc := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
 	acc.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
 	acc.Spec.Client.Common.Image = "image"
@@ -360,13 +354,12 @@ func (suite *AccControllerTestSuite) TestClientContentWatch() {
 	suite.createAccReconciler().SetupWithManager(nil, expRateLimiter, 1)
 	close(AccStopWatch)
 
-	//version, err := utils.GetModuleDefaultVersion("v0.1.0", "apex-client", csmv1.Authorization, "../operatorconfig")
-	//assert.NotNil(suite.T(), err)
-	//assert.NotNil(suite.T(), version)
+	// version, err := utils.GetModuleDefaultVersion("v0.1.0", "apex-client", csmv1.Authorization, "../operatorconfig")
+	// assert.NotNil(suite.T(), err)
+	// assert.NotNil(suite.T(), version)
 }
 
 func (suite *AccControllerTestSuite) createAccReconciler() (reconciler *ApexConnectivityClientReconciler) {
-
 	logType := logger.DevelopmentLogLevel
 	logger.SetLoggerLevel(logType)
 	_, log := logger.GetNewContextWithLogger("0")
@@ -528,7 +521,7 @@ func (suite *AccControllerTestSuite) handleStatefulSetUpdateTest(r *ApexConnecti
 
 	r.handleStatefulSetUpdate(statefulSet, statefulSet)
 
-	//Make Pod and set pod status
+	// Make Pod and set pod status
 	pod := shared.MakePod(name, suite.namespace)
 	pod.Labels["acc"] = accName
 	pod.Status.Phase = corev1.PodPending
@@ -579,14 +572,13 @@ func (suite *AccControllerTestSuite) TestAccDeleteErrorReconcile() {
 	suite.deleteAcc(accName)
 	reconciler := suite.createAccReconciler()
 	_, err := reconciler.Reconcile(accCtx, accReq)
-	//assert.NotNil(suite.T(), err)
+	// assert.NotNil(suite.T(), err)
 	fmt.Println(err)
 	updateAccCSMError = false
 }
 
 // helper method to create k8s objects
 func (suite *AccControllerTestSuite) makeFakeAcc(name, ns string, withFinalizer bool) {
-
 	// make pre-requisite secrets
 	sec := shared.MakeSecret(name+"-creds", ns, accConfigVersion)
 	err := suite.fakeClient.Create(accCtx, sec)

@@ -106,7 +106,7 @@ const (
 	Sdcmonitor = "sdc-monitor"
 	// Externalhealthmonitor - placeholder for constant
 	Externalhealthmonitor = "external-health-monitor"
-	//Sdc - placeholder for constant
+	// Sdc - placeholder for constant
 	Sdc = "sdc"
 
 	// EventDeleted - Deleted in event recorder
@@ -228,7 +228,6 @@ type Driver struct {
 // Client - APEX Connectivity Client deployment info
 // +k8s:openapi-gen=true
 type Client struct {
-
 	// ClientType is the Client type for Dell Technologies - e.g, ApexConnectivityClient
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Client Type"
 	CSMClientType ClientType `json:"csmClientType" yaml:"csmClientType"`
@@ -265,7 +264,6 @@ type Client struct {
 
 // ContainerTemplate template
 type ContainerTemplate struct {
-
 	// Name is the name of Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Name"
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`

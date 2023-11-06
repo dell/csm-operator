@@ -15,10 +15,9 @@ package utils
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
-
-	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -110,7 +109,7 @@ const (
 	DefaultReleaseNamespace = "<DriverDefaultReleaseNamespace>"
 	// DefaultImagePullPolicy constant
 	DefaultImagePullPolicy = "IfNotPresent"
-	//KubeletConfigDir path
+	// KubeletConfigDir path
 	KubeletConfigDir = "<KUBELET_CONFIG_DIR>"
 	// ReplicationControllerNameSpace -
 	ReplicationControllerNameSpace = "dell-replication-controller"
@@ -218,14 +217,14 @@ func UpdateinitContainerApply(initContainers []csmv1.ContainerTemplate, c *acore
 			c.Args = ReplaceAllArgs(c.Args, init.Args)
 
 		}
-
 	}
 }
 
 // ReplaceAllApplyCustomEnvs -
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 	commonEnv []corev1.EnvVar,
-	nrEnv []corev1.EnvVar) []acorev1.EnvVarApplyConfiguration {
+	nrEnv []corev1.EnvVar,
+) []acorev1.EnvVarApplyConfiguration {
 	newEnv := make([]acorev1.EnvVarApplyConfiguration, 0)
 	temp := make(map[string]string)
 	for _, update := range commonEnv {
@@ -246,7 +245,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 			if val == "NA" {
 				val = ""
 			}
-			//log.Info("debug overwrite ", "name", *old.Name, "value", val)
+			// log.Info("debug overwrite ", "name", *old.Name, "value", val)
 			e := acorev1.EnvVarApplyConfiguration{
 				Name:  old.Name,
 				Value: &val,
@@ -776,7 +775,6 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 	}
 
 	return "", fmt.Errorf("%s driver does not exist in file %s", dType, configMapPath)
-
 }
 
 func versionParser(version string) (int, int, error) {
@@ -836,8 +834,10 @@ func getClusterIDs(replica csmv1.Module) ([]string, error) {
 func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Client) ([]byte, error) {
 	log := logger.GetLogger(ctx)
 	secret := &corev1.Secret{}
-	if err := ctrlClient.Get(ctx, t1.NamespacedName{Name: clusterID,
-		Namespace: ReplicationControllerNameSpace}, secret); err != nil {
+	if err := ctrlClient.Get(ctx, t1.NamespacedName{
+		Name:      clusterID,
+		Namespace: ReplicationControllerNameSpace,
+	}, secret); err != nil {
 		if k8serror.IsNotFound(err) {
 			return []byte("error"), fmt.Errorf("failed to find secret %s in namespace %s", clusterID, ReplicationControllerNameSpace)
 		}
@@ -877,7 +877,6 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 	}
 
 	return NewK8sClientWrapper(clusterConfigData)
-
 }
 
 // IsResiliencyModuleEnabled - check if resiliency module is enabled or not

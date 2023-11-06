@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -44,8 +45,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/ratelimiter"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	"sync"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -356,14 +355,12 @@ func (r *ApexConnectivityClientReconciler) handlePodsUpdate(oldObj interface{}, 
 
 // ClientContentWatch - watch updates on deployment and statefulset
 func (r *ApexConnectivityClientReconciler) ClientContentWatch() error {
-
 	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
 
 	statefulSetInformer := sharedInformerFactory.Apps().V1().StatefulSets().Informer()
 	_, err := statefulSetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handleStatefulSetUpdate,
 	})
-
 	if err != nil {
 		return fmt.Errorf("ClientContentWatch failed adding event handler to statefulsetInformer: %v", err)
 	}
@@ -421,7 +418,6 @@ func (r *ApexConnectivityClientReconciler) PreChecks(ctx context.Context, cr *cs
 }
 
 func applyAccConfigVersionAnnotations(ctx context.Context, instance *csmv1.ApexConnectivityClient) bool {
-
 	log := logger.GetLogger(ctx)
 
 	// If client has not been initialized yet, we first annotate the client with the config version annotation
