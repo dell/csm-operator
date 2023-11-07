@@ -191,14 +191,14 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 		// check for force cleanup
 		if acc.Spec.Client.ForceRemoveClient {
 			// remove all resources deployed from CR by operator
-			if err := DeployApexConnectivityClient(ctx, true, *op, *acc, crc); err != nil {
+			if err = DeployApexConnectivityClient(ctx, true, *op, *acc, crc); err != nil {
 				r.EventRecorder.Event(acc, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove client: %s", err))
 				log.Errorw("remove client", "error", err.Error())
 				return ctrl.Result{}, fmt.Errorf("error when deleting client: %v", err)
 			}
 		}
 
-		if err := r.removeFinalizer(ctx, acc); err != nil {
+		if err = r.removeFinalizer(ctx, acc); err != nil {
 			r.EventRecorder.Event(acc, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to delete finalizer: %s", err))
 			log.Errorw("Remove Apex Connectivity Client finalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
@@ -211,7 +211,7 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 	// Add finalizer
 	if !acc.HasFinalizer(AccFinalizerName) {
 		log.Infow("HandleFinalizer", "name", AccFinalizerName)
-		if err := r.addFinalizer(ctx, acc); err != nil {
+		if err = r.addFinalizer(ctx, acc); err != nil {
 			r.EventRecorder.Event(acc, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed to add finalizer: %s", err))
 			log.Errorw("HandleFinalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when adding finalizer: %v", err)
