@@ -339,6 +339,16 @@ func (suite *AccControllerTestSuite) TestIgnoreUpdatePredicate() {
 	assert.NotNil(suite.T(), s)
 }
 
+func (suite *AccControllerTestSuite) TestDeleteError() {
+	suite.makeFakeAcc(accName, suite.namespace, true)
+	suite.runFakeAccManager("", false)
+	suite.deleteAcc(accName)
+
+	deleteStatefulSetError = true
+	suite.runFakeAccManager(deleteStatefulSetErrorStr, true)
+	deleteStatefulSetError = false
+}
+
 // helper method to create and run reconciler
 func TestCustomAcc(t *testing.T) {
 	testSuite := new(AccControllerTestSuite)
@@ -351,10 +361,6 @@ func (suite *AccControllerTestSuite) TestClientContentWatch() {
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	suite.createAccReconciler().SetupWithManager(nil, expRateLimiter, 1)
 	close(AccStopWatch)
-
-	// version, err := utils.GetModuleDefaultVersion("v0.1.0", "apex-client", csmv1.Authorization, "../operatorconfig")
-	// assert.NotNil(suite.T(), err)
-	// assert.NotNil(suite.T(), version)
 }
 
 func (suite *AccControllerTestSuite) createAccReconciler() (reconciler *ApexConnectivityClientReconciler) {
@@ -570,7 +576,6 @@ func (suite *AccControllerTestSuite) TestAccDeleteErrorReconcile() {
 	suite.deleteAcc(accName)
 	reconciler := suite.createAccReconciler()
 	_, err := reconciler.Reconcile(accCtx, accReq)
-	// assert.NotNil(suite.T(), err)
 	fmt.Println(err)
 	updateAccCSMError = false
 }
