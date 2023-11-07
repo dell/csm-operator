@@ -73,7 +73,6 @@ func GetKey(obj runtime.Object) (StorageKey, error) {
 
 // MakeCSM returns a csm from given params
 func MakeCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
-
 	driverObj := MakeDriver(configVersion, "true")
 
 	csmObj := csmv1.ContainerStorageModule{
@@ -92,7 +91,6 @@ func MakeCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
 
 // MakeAcc - returns a csm from given params
 func MakeAcc(name, ns, configVersion string) csmv1.ApexConnectivityClient {
-
 	ApexConnectivityClientObj := MakeApexConnectivityClient(configVersion, "true")
 
 	csmObj := csmv1.ApexConnectivityClient{
@@ -111,7 +109,6 @@ func MakeAcc(name, ns, configVersion string) csmv1.ApexConnectivityClient {
 
 // MakeModuleCSM returns a csm from given params
 func MakeModuleCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
-
 	moduleObj := MakeModule(configVersion)
 
 	csmObj := csmv1.ContainerStorageModule{

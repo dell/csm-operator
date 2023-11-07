@@ -205,7 +205,6 @@ func (suite *AccControllerTestSuite) TestAccConnectivityClientDcmImage() {
 	assert.Nil(suite.T(), err)
 }
 
-
 func (suite *AccControllerTestSuite) TestAccConnectivityClientAnnotation() {
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
 	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
