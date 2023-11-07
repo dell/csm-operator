@@ -119,7 +119,7 @@ const (
 	// AccMetadataPrefix - prefix for all labels & annotations
 	AccMetadataPrefix = "storage.dell.com"
 
-	// AccFinalizerName -
+	// AccFinalizerName - the name of the finalizer
 	AccFinalizerName = "finalizer.dell.com"
 )
 
@@ -311,7 +311,7 @@ func (r *ApexConnectivityClientReconciler) handleStatefulSetUpdate(oldObj interf
 	}
 }
 
-func (r *ApexConnectivityClientReconciler) handlePodsUpdate(oldObj interface{}, obj interface{}) {
+func (r *ApexConnectivityClientReconciler) handlePodsUpdate(_ interface{}, obj interface{}) {
 	accdMutex.Lock()
 	defer accdMutex.Unlock()
 

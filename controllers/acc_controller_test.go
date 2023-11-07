@@ -114,6 +114,8 @@ var (
 
 	accConfigVersion = "v1.0.0"
 
+	accContainerName = "connectivity-client-docker-k8s"
+
 	accReq = reconcile.Request{
 		NamespacedName: types.NamespacedName{
 			Namespace: "test",
@@ -127,7 +129,7 @@ var (
 )
 
 // AccContrllerTestSuite implements testify suite
-// opeartorClient is the client for controller runtime
+// operatorClient is the client for controller runtime
 // k8sClient is the client for client go kubernetes, which
 // is responsible for creating daemonset/deployment Interface and apply operations
 // It also implements ErrorInjector interface so that we can force error
@@ -160,6 +162,49 @@ func (suite *AccControllerTestSuite) TestReconcileAcc() {
 	suite.deleteAcc(accName)
 	suite.runFakeAccManager("", true)
 }
+
+func (suite *AccControllerTestSuite) TestAccConnectivityClientConnectionTarget() {
+	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
+	csm.Spec.Client.Common.Image = "image"
+	csm.Spec.Client.ConnectionTarget = "dev-svc.example.com"
+
+	csm.ObjectMeta.Finalizers = []string{AccFinalizerName}
+
+	suite.fakeClient.Create(accCtx, &csm)
+	reconciler := suite.createAccReconciler()
+	_, err := reconciler.Reconcile(accCtx, accReq)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *AccControllerTestSuite) TestAccConnectivityClientCaCert() {
+	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
+	csm.Spec.Client.Common.Image = "image"
+	csm.Spec.Client.UsePrivateCaCerts = true
+
+	csm.ObjectMeta.Finalizers = []string{AccFinalizerName}
+
+	suite.fakeClient.Create(accCtx, &csm)
+	reconciler := suite.createAccReconciler()
+	_, err := reconciler.Reconcile(accCtx, accReq)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *AccControllerTestSuite) TestAccConnectivityClientDcmImage() {
+	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
+	csm.Spec.Client.Common.Name = accContainerName
+	csm.Spec.Client.Common.Image = "image"
+
+	csm.ObjectMeta.Finalizers = []string{AccFinalizerName}
+
+	suite.fakeClient.Create(accCtx, &csm)
+	reconciler := suite.createAccReconciler()
+	_, err := reconciler.Reconcile(accCtx, accReq)
+	assert.Nil(suite.T(), err)
+}
+
 
 func (suite *AccControllerTestSuite) TestAccConnectivityClientAnnotation() {
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
