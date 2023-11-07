@@ -99,19 +99,19 @@ To uninstall CSI drivers and CSM modules installed using the operator please ref
 
 ## Install Apex Connectivity Client
   1. Ensure that CSM Operator is installed and the operator pods are up and running.
-  2. Edit the images to point to the correct location in `storage_apexconnectivityclient_v100.yaml` sample file located at `csm-operator\samples` folder.
-  3. To deploy Apex Connectivity Client, execute `kubectl create -f samples\storage_apexconnectivityclient_v100.yaml`.
+  2. Edit the images to point to the correct location in `connectivity_client_v100.yaml` sample file located at `csm-operator\samples` folder.
+  3. To deploy Apex Connectivity Client, execute `kubectl create -f samples\connectivity_client_v100.yaml`.
   4. Ensure that the Apex Connectivity Client pods are up and running.
 
 ## Update Apex Connectivity Client
   1. Ensure that CSM Operator is installed and the operator pods are up and running.
-  2. Edit the required images to point to the correct location in `storage_apexconnectivityclient_v100.yaml` sample file located at `csm-operator\samples` folder.
-  3. To update Apex Connectivity Client, execute `kubectl apply -f samples\storage_apexconnectivityclient_v100.yaml`.
+  2. Edit the required images to point to the correct location in `connectivity_client_v100.yaml` sample file located at `csm-operator\samples` folder.
+  3. To update Apex Connectivity Client, execute `kubectl apply -f samples\connectivity_client_v100.yaml`.
   4. Ensure that the Apex Connectivity Client pods are up and running.
 
 ## Uninstall Apex Connectivity Client
   1. Ensure that CSM Operator is installed and the operator pods are up and running.
-  3. To uninstall Apex Connectivity Client, execute `kubectl delete -f samples\storage_apexconnectivityclient_v100.yaml`
+  3. To uninstall Apex Connectivity Client, execute `kubectl delete -f samples\connectivity_client_v100.yaml`
   4. Ensure that the Apex Connectivity Client pods are deleted.
 
 ## Versioning
