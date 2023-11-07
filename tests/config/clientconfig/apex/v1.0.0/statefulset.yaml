@@ -247,11 +247,13 @@ spec:
             sources:
               - secret:
                   name: connectivity-client-docker-k8s-loadbalancer-ca-cert
+                  optional: true
                   items:
                     - key: loadbalancer_root_ca_cert.crt
                       path: loadbalancer_root_ca_cert.crt
               - secret:
                   name: connectivity-client-docker-k8s-aggregator-internal-ca-cert
+                  optional: true
                   items:
                     - key: aggregator_internal_root_ca_cert.crt
                       path: aggregator_internal_root_ca_cert.crt
