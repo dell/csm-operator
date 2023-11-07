@@ -205,6 +205,28 @@ func (suite *AccControllerTestSuite) TestAccConnectivityClientDcmImage() {
 	assert.Nil(suite.T(), err)
 }
 
+func (suite *AccControllerTestSuite) TestAccConnectivityClientNoReconciler() {
+	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
+	csm.Spec.Client.Common.Name = accContainerName
+	csm.Spec.Client.Common.Image = "image"
+
+	csm.ObjectMeta.Finalizers = []string{AccFinalizerName}
+
+	suite.fakeClient.Create(accCtx, &csm)
+	reconciler := suite.createAccReconciler()
+
+	// Trigger error by using fake namespace
+	oldNamespace := accReq.Namespace
+	accReq.Namespace = "nonexistantnamespace"
+	_, err := reconciler.Reconcile(accCtx, accReq)
+	assert.Nil(suite.T(), err)
+
+	// Restore namespace
+	suite.deleteAcc(accName)
+	accReq.Namespace = oldNamespace
+}
+
 func (suite *AccControllerTestSuite) TestAccConnectivityClientAnnotation() {
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
 	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
