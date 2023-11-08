@@ -8,6 +8,7 @@ bin
 testbin/*
 vendor/
 semver.mk
+__debug_bin*
 
 # Test binary, build with `go test -c`
 *.test
