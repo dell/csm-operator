@@ -73,5 +73,8 @@ var PodStatusRemoveString = "rpc error: code = Unknown desc = Error response fro
 // CsmLabel - label driver resources
 var CsmLabel = "csm"
 
+// AccLabel - label client resources
+var AccLabel = "acc"
+
 // NotFoundMsg - error message
 var NotFoundMsg = "not found"
