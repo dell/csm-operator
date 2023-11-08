@@ -16,9 +16,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
-
 	"reflect"
+	"time"
 
 	"github.com/dell/csm-operator/tests/shared"
 	appsv1 "k8s.io/api/apps/v1"
@@ -47,7 +46,7 @@ type subResourceClient struct {
 }
 
 // ensure subResourceClient implements client.SubResourceClient.
-//var _ client.SubResourceClient = &subResourceClient{}
+// var _ client.SubResourceClient = &subResourceClient{}
 
 // NewFakeClient creates a new client
 func NewFakeClient(objectMap map[shared.StorageKey]runtime.Object, errorInjector shared.ErrorInjector) *Client {

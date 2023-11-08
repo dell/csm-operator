@@ -1,4 +1,4 @@
-include docker.mk 
+include docker.mk
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -111,7 +111,7 @@ docker-push: docker-build ## Builds, tags and pushes docker image with the manag
 ##@ Deployment
 
 static-crd: manifests kustomize ## Copies CRDs to deploy folder.
-	$(KUSTOMIZE) build config/crd > deploy/crds/storage.dell.com_containerstoragemodules.yaml
+	$(KUSTOMIZE) build config/crd > deploy/crds/storage.dell.com.crds.all.yaml
 
 static-manager: manifests kustomize ## Creates the operator manifests in deploy folder.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
@@ -211,3 +211,8 @@ catalog-build: gen-semver opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: gen-semver ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+# Run linter.
+.PHONY: lint
+lint: build
+	golangci-lint run --fix

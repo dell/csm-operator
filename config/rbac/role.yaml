@@ -255,6 +255,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - auditregistration.k8s.io
   resources:
   - auditsinks
@@ -436,6 +448,14 @@ rules:
   - get
   - update
 - apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - csi.storage.k8s.io
   resources:
   - csinodeinfos
@@ -476,6 +496,18 @@ rules:
   - delete
   - get
   - list
+  - update
+  - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
   - update
   - watch
 - apiGroups:
@@ -641,6 +673,32 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - storage.dell.com
   resources:

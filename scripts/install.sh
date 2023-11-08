@@ -133,7 +133,8 @@ function install_or_update_crd() {
   else
     log step "Install/Update CRD"
   fi
-  kubectl apply -f ${DEPLOYDIR}/crds/storage.dell.com_containerstoragemodules.yaml 2>&1 >/dev/null
+  kubectl apply -f ${DEPLOYDIR}/crds/storage.dell.com.crds.all.yaml 2>&1 >/dev/null
+  
   if [ $? -ne 0 ]; then
     log error "Failed to install/update CRD"
   fi

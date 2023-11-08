@@ -3,6 +3,7 @@
 # It should be run by config/default
 resources:
 - bases/storage.dell.com_containerstoragemodules.yaml
+- bases/storage.dell.com_apexconnectivityclients.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
