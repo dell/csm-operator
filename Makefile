@@ -98,11 +98,13 @@ build: gen-semver fmt vet ## Build manager binary.
 run: generate gen-semver fmt vet static-manifests ## Run a controller from your host.
 	go run ./main.go
 
-podman-build: gen-semver ## Build podman image with the manager.
-	podman build . -t ${DEFAULT_IMG}
+podman-build: gen-semver download-csm-common ## Build podman image with the manager.
+	$(eval include csm-common.mk)
+	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE)
 
-docker-build: gen-semver ## Build docker image with the manager.
-	docker build . -t ${DEFAULT_IMG}
+docker-build: gen-semver download-csm-common ## Build docker image with the manager.
+	$(eval include csm-common.mk)
+	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}
@@ -167,8 +169,9 @@ bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and m
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build
-bundle-build: gen-semver ## Build the bundle image.
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+bundle-build: gen-semver download-csm-common ## Build the bundle image.
+	$(eval include csm-common.mk)
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) .
 
 .PHONY: bundle-push
 bundle-push: gen-semver ## Push the bundle image.
@@ -216,3 +219,8 @@ catalog-push: gen-semver ## Push a catalog image.
 .PHONY: lint
 lint: build
 	golangci-lint run --fix
+
+# Download common CSM configuration file used for builds
+.PHONY: download-csm-common
+download-csm-common:
+	curl -O -L https://raw.githubusercontent.com/dell/csm/main/config/csm-common.mk
