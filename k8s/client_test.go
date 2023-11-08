@@ -102,7 +102,6 @@ func Test_IsOpenShift(t *testing.T) {
 					return fake.NewSimpleClientset(), errors.New(" error listing pods")
 				},
 			}
-
 		},
 	}
 	for name, tc := range tests {
@@ -124,7 +123,6 @@ func Test_IsOpenShift(t *testing.T) {
 				assert.NoError(t, err)
 				assert.True(t, isOpenshift)
 			}
-
 		})
 	}
 }
@@ -144,7 +142,6 @@ func Test_GetVersion(t *testing.T) {
 					return fakeClientSet, nil
 				},
 			}
-
 		},
 		"fail - to get client set": func(*testing.T) (bool, string, string, testOverrides) {
 			return false, "", "", testOverrides{
@@ -171,7 +168,6 @@ func Test_GetVersion(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, out, fmt.Sprintf("%s.%s", major, minor))
 			}
-
 		})
 	}
 }
@@ -247,7 +243,6 @@ users:
 			} else {
 				assert.NoError(t, err)
 			}
-
 		})
 	}
 }
