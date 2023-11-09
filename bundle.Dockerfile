@@ -1,5 +1,6 @@
-FROM registry.access.redhat.com/ubi9/ubi-micro@sha256:630cf7bdef807f048cadfe7180d6c27eb3aaa99323ffc3628811da230ed3322a
+ARG BASEIMAGE
 
+FROM $BASEIMAGE as final
 # Core bundle labels.
 LABEL operators.operatorframework.io.bundle.mediatype.v1=registry+v1
 LABEL operators.operatorframework.io.bundle.manifests.v1=manifests/

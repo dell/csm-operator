@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ARG BASEIMAGE
+
 # Build the manager binary
 FROM golang:1.21 as builder
 
@@ -35,9 +37,7 @@ COPY tests/ tests/
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
-# Tag corresponding to digest sha256:630cf7bdef807f048cadfe7180d6c27eb3aaa99323ffc3628811da230ed3322a for ubi9 micro is 9.2-13
-FROM registry.access.redhat.com/ubi9/ubi-micro@sha256:630cf7bdef807f048cadfe7180d6c27eb3aaa99323ffc3628811da230ed3322a
-
+FROM $BASEIMAGE as final
 ENV USER_UID=1001 \
     USER_NAME=dell-csm-operator
 WORKDIR /
