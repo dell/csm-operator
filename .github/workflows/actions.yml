@@ -98,7 +98,7 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v3
       - name: Build Docker Images
-        run: docker build . -t csm-operator:latest
+        run: DEFAULT_IMG=csm-operator:latest make -o gen-semver docker-build 
       - name: Scan controller Image
         uses: Azure/container-scan@v0
         env: 
