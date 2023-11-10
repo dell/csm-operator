@@ -47,7 +47,6 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: dell-csm-operator-manager-role
 rules:
 - nonResourceURLs:
@@ -299,6 +298,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - auditregistration.k8s.io
   resources:
   - auditsinks
@@ -479,6 +490,14 @@ rules:
   verbs:
   - get
   - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - csi.storage.k8s.io
   resources:
@@ -688,6 +707,32 @@ rules:
 - apiGroups:
   - storage.dell.com
   resources:
+  - apexconnectivityclients
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - storage.dell.com
+  resources:
   - containerstoragemodules
   verbs:
   - create
@@ -783,6 +828,18 @@ rules:
   - create
   - delete
   - list
+  - update
+  - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
   - update
   - watch
 ---
@@ -911,7 +968,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: docker.io/dellemc/dell-csm-operator:v1.3.0
+        image: docker.io/dellemc/dell-csm-operator:v1.4.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -929,7 +986,7 @@ spec:
         resources:
           limits:
             cpu: 200m
-            memory: 256Mi
+            memory: 512Mi
           requests:
             cpu: 100m
             memory: 192Mi

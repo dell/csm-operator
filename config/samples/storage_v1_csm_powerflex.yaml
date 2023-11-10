@@ -16,13 +16,13 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.8.0
+    configVersion: v2.9.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.8.0"
+      image: "dellemc/csi-vxflexos:v2.9.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -42,10 +42,14 @@ spec:
           value: "false"
 
     sideCars:
+    # 'k8s' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        args: ["--volume-name-prefix=k8s"]
+
     # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:3.6.1
+        image: dellemc/sdc:4.5
         envs:
         - name: HOST_PID
           value: "1"
@@ -157,7 +161,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:3.6.1
+      - image: dellemc/sdc:4.5
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:

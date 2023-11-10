@@ -17,10 +17,6 @@ powerscale:
       resiliency: "v1.7.0"
 powerflex:
   # List of Driver versions and modules that supports the version
-  v2.6.0:
-      authorization: "v1.6.0"
-      observability: "v1.5.0"
-      replication: "v1.4.0"
   v2.7.0:
       authorization: "v1.7.0"
       observability: "v1.5.0"
@@ -31,11 +27,18 @@ powerflex:
       observability: "v1.6.0"
       replication: "v1.6.0"
       resiliency: "v1.6.0"
+  v2.9.0:
+      authorization: "v1.7.0"
+      observability: "v1.6.0"
+      replication: "v1.6.0"
+      resiliency: "v1.6.0"
 powerstore:
   # List of Driver versions and modules that supports the version
   v2.7.0:
       resiliency: "v1.6.0"
   v2.8.0:
+      resiliency: "v1.7.0"
+  v2.9.0:
       resiliency: "v1.7.0"
 powermax:
   # List of Driver versions and modules that supports the version
