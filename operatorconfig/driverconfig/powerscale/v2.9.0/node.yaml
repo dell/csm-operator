@@ -77,7 +77,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-isilon:v2.6.0
+          image: dellemc/csi-isilon:v2.9.0
           imagePullPolicy: IfNotPresent
           env:
             - name: CSI_ENDPOINT
@@ -129,6 +129,8 @@ spec:
               mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
+            - name: csi-path
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
@@ -142,7 +144,7 @@ spec:
             - name: csi-isilon-config-params
               mountPath: /csi-isilon-config-params
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -162,10 +164,25 @@ spec:
             - name: driver-path
               mountPath: /csi
       volumes:
+        - name: usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+        - name: kubelet-pods
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: var-run
+          hostPath:
+            path: /var/run
+            type: Directory
         - name: registration-dir
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins_registry/
             type: DirectoryOrCreate
+        - name: csi-path
+          hostPath:
+            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
         - name: driver-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
