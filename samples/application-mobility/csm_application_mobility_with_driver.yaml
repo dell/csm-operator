@@ -159,7 +159,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:3.6.1
+      - image: dellemc/sdc:3.6.0.6
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -391,13 +391,13 @@ spec:
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: true
-      configVersion: v0.3.0
+      configVersion: v1.0.0
       forceRemoveModule: true
       components:
       - name: application-mobility-controller-manager
         # enable: Enable/Disable application mobility controller-manager
         enabled: true
-        image: 
+        image: amaas-eos-mw1.cec.lab.emc.com:5036/csm-app-mob:updated1 
         imagePullPolicy: IfNotPresent
         envs:
           # Replica count for application mobility
@@ -449,7 +449,7 @@ spec:
           # This field HAS to be changed to a functional backup storage url 
           # Default value: localhost:8000
           - name: "BACKUP_STORAGE_URL"
-            value: ""
+            value: "http://10.247.101.226:32000"
 
           # Name of the secret in velero namespace that has credentials to access object store
           # We can leave the field empty if there no existing secret in velero installed namespace 
@@ -465,16 +465,16 @@ spec:
             name: cloud-creds
             #Specify the object store access credentials to be stored in a secret with key "cloud".
             secretContents: 
-              aws_access_key_id:  #Provide the access key id here
-              aws_secret_access_key:  #provide the access key here 
+              aws_access_key_id: console  #Provide the access key id here
+              aws_secret_access_key: console123
               
 
     # Init containers to be added to the Velero and Node-agent deployment's spec.
     - initContainer:
         #initContainer image for the dell velero plugin
       - name: dell-custom-velero-plugin
-        image: 
+        image: amaas-eos-mw1.cec.lab.emc.com:5098/dell-velero-plugin:latest
 
         #initContainer image for the configuration provider aws
       - name: velero-plugin-for-aws
-        image: 
+        image: velero/velero-plugin-for-aws:v1.5.0

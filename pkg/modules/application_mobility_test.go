@@ -428,7 +428,7 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 
 			tmpCR := customResource
 			appMobility := tmpCR.Spec.Modules[0]
-			appMobility.ConfigVersion = "v0.3.0"
+			appMobility.ConfigVersion = "v1.0.0"
 			ns := "default"
 			licenceCred := getSecret(ns, "dls-license")
 			ivLicense := getSecret(ns, "iv")

@@ -27,7 +27,7 @@ spec:
     singular: backup
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: Backup is the Schema for the backups API
@@ -218,7 +218,7 @@ spec:
     singular: clusterconfig
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: ClusterConfig is the Schema for the clusterconfigs API
@@ -284,7 +284,7 @@ spec:
     singular: podvolumebackup
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: PodVolumeBackup is the Schema for the podvolumebackups API
@@ -379,7 +379,7 @@ spec:
     singular: podvolumerestore
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: PodVolumeRestore is the Schema for the podvolumerestores API
@@ -463,7 +463,7 @@ spec:
     singular: restore
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: Restore is the Schema for the restores API
@@ -580,7 +580,7 @@ spec:
     - jsonPath: .status.lastBackupTime
       name: lastBackupTime
       type: date
-    name: v1alpha1
+    name: v1
     schema:
       openAPIV3Schema:
         description: Schedule is the Schema for the schedules API
