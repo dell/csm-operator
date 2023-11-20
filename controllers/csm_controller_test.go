@@ -1323,7 +1323,7 @@ func getAppMob() []csmv1.Module {
 		{
 			Name:          csmv1.ApplicationMobility,
 			Enabled:       true,
-			ConfigVersion: "v0.3.0",
+			ConfigVersion: "v1.0.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "application-mobility-controller-manager",

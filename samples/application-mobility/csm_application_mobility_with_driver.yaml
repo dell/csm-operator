@@ -159,7 +159,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:3.6.1
+      - image: dellemc/sdc:3.6.2
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -391,14 +391,14 @@ spec:
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: true
-      configVersion: v0.3.0
+      configVersion: v1.0.0
       forceRemoveModule: true
       components:
       - name: application-mobility-controller-manager
         # enable: Enable/Disable application mobility controller-manager
         enabled: true
         image: 
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         envs:
           # Replica count for application mobility
           # Allowed values: string
@@ -466,7 +466,7 @@ spec:
             #Specify the object store access credentials to be stored in a secret with key "cloud".
             secretContents: 
               aws_access_key_id:  #Provide the access key id here
-              aws_secret_access_key:  #provide the access key here 
+              aws_secret_access_key: #provide the access key here 
               
 
     # Init containers to be added to the Velero and Node-agent deployment's spec.
