@@ -87,7 +87,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-powermax:v2.6.0
+          image: dellemc/csi-powermax:v2.9.0
           imagePullPolicy: IfNotPresent
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
@@ -126,7 +126,7 @@ spec:
             - name: X_CSI_POWERMAX_PROXY_SERVICE_NAME
               value: "powermax-reverseproxy"
             - name: X_CSI_ISCSI_CHROOT
-              value: /noderoot
+              value: noderoot
             - name: X_CSI_GRPC_MAX_THREADS
               value: "50"
             - name: X_CSI_TRANSPORT_PROTOCOL
@@ -145,6 +145,8 @@ spec:
               value: "<X_CSI_POWERMAX_PORTGROUPS>"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_MAX_VOLUMES_PER_NODE
+              value: "<X_CSI_MAX_VOLUMES_PER_NODE>"
             - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
               value: "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
             - name: X_CSI_VSPHERE_ENABLED
@@ -191,7 +193,7 @@ spec:
             - name: node-topology-config
               mountPath: /node-topology-config
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.3
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -252,5 +254,5 @@ spec:
              name: <DriverDefaultReleaseName>-config-params
         - name: node-topology-config
           configMap:
-            name: node-topology-config
-            optional: true
+             name: node-topology-config
+             optional: true
