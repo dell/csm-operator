@@ -118,6 +118,8 @@ spec:
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
+            - name: noderoot
+              mountPath: /noderoot
             - name: dev
               mountPath: /dev
             - name: vxflexos-config
@@ -219,6 +221,10 @@ spec:
         - name: pods-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
+            type: Directory
+        - name: noderoot
+          hostPath:
+            path: /
             type: Directory
         - name: dev
           hostPath:
