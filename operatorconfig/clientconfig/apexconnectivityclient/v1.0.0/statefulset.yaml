@@ -269,6 +269,13 @@ spec:
               mountPath: "/home/connectivity-client/.certs"
             - name: connectivity-client-docker-k8s-cert
               mountPath: /dcm-client-secret-data
+          securityContext:
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL                          
       volumes:
         - name: ca-certs
           projected:
