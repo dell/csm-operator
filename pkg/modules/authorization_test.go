@@ -279,7 +279,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.8.0"
+			auth.ConfigVersion = "v1.9.0"
 
 			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
@@ -425,7 +425,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.8.0"
+			auth.ConfigVersion = "v1.9.0"
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
 			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
