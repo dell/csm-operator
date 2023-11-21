@@ -122,8 +122,6 @@ spec:
             - ALL
       containers:
         - name: connectivity-client-docker-k8s
-          securityContext:
-            {}
           image: "<CONNECTIVITY_CLIENT_IMAGE>"
           imagePullPolicy: Always
           args:
@@ -197,6 +195,14 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             failureThreshold: 3
+          securityContext:
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL            
         - name: kubernetes-proxy
           image: "<KUBERNETES_PROXY_IMAGE>"
           imagePullPolicy: Always
@@ -219,6 +225,14 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             failureThreshold: 3
+          securityContext:
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL            
         - name: cert-persister
           image: "<CERT_PERSISTER_IMAGE>"
           imagePullPolicy: Always
@@ -231,6 +245,14 @@ spec:
           volumeMounts:
             - name: certs-store-tmpdir
               mountPath: "/home/connectivity-client/.certs"
+          securityContext:
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL              
       initContainers:
         - name: connectivity-client-init
           image: "<ACC_INIT_CONTAINER_IMAGE>"
