@@ -114,6 +114,12 @@ spec:
         fsGroup: 1001
         runAsGroup: 1001
         runAsUser: 1001
+        runAsNonRoot: true
+        readOnlyRootFilesystem: false
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
       containers:
         - name: connectivity-client-docker-k8s
           securityContext:
