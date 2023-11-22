@@ -152,7 +152,7 @@ spec:
         - name: sdc-monitor
           securityContext:
             privileged: true
-          image: dellemc/sdc:3.6.1
+          image: dellemc/sdc:4.5
           imagePullPolicy: IfNotPresent
           env:
             - name: HOST_PID
@@ -178,7 +178,7 @@ spec:
         - name: sdc
           securityContext:
             privileged: true
-          image: dellemc/sdc:3.6.1
+          image: dellemc/sdc:4.5
           imagePullPolicy: IfNotPresent
           env:
             - name: NODENAME
