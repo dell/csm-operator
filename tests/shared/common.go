@@ -34,8 +34,8 @@ const (
 	OldConfigVersion         string = "v2.2.0"
 	BadConfigVersion         string = "v0"
 	PStoreConfigVersion      string = "v2.9.0"
-	PScaleConfigVersion      string = "v2.8.0"
 	UnityConfigVersion       string = "v2.9.0"
+	PScaleConfigVersion      string = "v2.9.0"
 	PmaxConfigVersion        string = "v2.8.0"
 	AccConfigVersion         string = "v1.0.0"
 )
