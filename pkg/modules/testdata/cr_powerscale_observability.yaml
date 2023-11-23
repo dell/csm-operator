@@ -6,11 +6,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.8.0
+    configVersion: v2.9.0
     authSecret: isilon-creds
     replicas: 1
     common:
-      image: "dellemc/csi-isilon:v2.8.0"
+      image: "dellemc/csi-isilon:v2.9.0"
       imagePullPolicy: IfNotPresent
 
   modules:
