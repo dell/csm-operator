@@ -16,16 +16,16 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI PowerScale v2.8.0 driver
-    configVersion: v2.8.0
+    # Config version for CSI PowerScale v2.9.0 driver
+    configVersion: v2.9.0
     authSecret: isilon-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerScale driver v2.8.0
-      image: "dellemc/csi-isilon:v2.8.0"
+      # Image for CSI PowerScale driver v2.9.0
+      image: "dellemc/csi-isilon:v2.9.0"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
