@@ -18,11 +18,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.6.0
+    configVersion: v2.8.0
     authSecret: test-powermax-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powermax:v2.6.0"
+      image: "dellemc/csi-powermax:v2.8.0"
       imagePullPolicy: IfNotPresent
 
   modules:
