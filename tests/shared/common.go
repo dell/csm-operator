@@ -36,7 +36,6 @@ const (
 	PStoreConfigVersion      string = "v2.9.0"
 	UnityConfigVersion       string = "v2.9.0"
 	PScaleConfigVersion      string = "v2.9.0"
-	UnityConfigVersion       string = "v2.8.0"
 	PmaxConfigVersion        string = "v2.9.0"
 	AccConfigVersion         string = "v1.0.0"
 )
