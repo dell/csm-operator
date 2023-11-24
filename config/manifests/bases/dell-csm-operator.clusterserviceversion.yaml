@@ -688,7 +688,7 @@ spec:
     name: csipowermax-reverseproxy
   - image: docker.io/dellemc/csi-powerstore:v2.9.0
     name: csi-powerstore
-  - image: docker.io/dellemc/csi-unity:v2.8.0
+  - image: docker.io/dellemc/csi-unity:v2.9.0
     name: csi-unity
   - image: docker.io/dellemc/csi-vxflexos:v2.9.0
     name: csi-vxflexos
