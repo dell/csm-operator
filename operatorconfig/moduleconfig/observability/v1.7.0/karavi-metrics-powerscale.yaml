@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: karavi-metrics-powerscale-controller
+  namespace: karavi
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: karavi-metrics-powerscale-controller
+rules:
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes", "storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes", "nodes"]
+    verbs: ["list"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["*"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: karavi-metrics-powerscale-controller
+subjects:
+  - kind: ServiceAccount
+    name: karavi-metrics-powerscale-controller
+    namespace: karavi
+roleRef:
+  kind: ClusterRole
+  name: karavi-metrics-powerscale-controller
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: karavi-metrics-powerscale
+    app.kubernetes.io/instance: karavi
+  name: karavi-metrics-powerscale
+  namespace: karavi
+spec:
+  type: ClusterIP
+  ports:
+    - name: karavi-metrics-powerscale
+      port: 8080
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: karavi-metrics-powerscale
+    app.kubernetes.io/instance: karavi
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karavi-metrics-powerscale-configmap
+  namespace: karavi
+data:
+  karavi-metrics-powerscale.yaml : |
+    COLLECTOR_ADDR: <COLLECTOR_ADDRESS>
+    PROVISIONER_NAMES: csi-isilon.dellemc.com
+    POWERSCALE_MAX_CONCURRENT_QUERIES: <POWERSCALE_MAX_CONCURRENT_QUERIES>
+    POWERSCALE_CAPACITY_METRICS_ENABLED: <POWERSCALE_CAPACITY_METRICS_ENABLED>
+    POWERSCALE_PERFORMANCE_METRICS_ENABLED: <POWERSCALE_PERFORMANCE_METRICS_ENABLED>
+    POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY: <POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY>
+    POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY: <POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY>
+    POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY: <POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY>
+    POWERSCALE_ISICLIENT_INSECURE: <ISICLIENT_INSECURE>
+    POWERSCALE_ISICLIENT_AUTH_TYPE: <ISICLIENT_AUTH_TYPE>
+    POWERSCALE_ISICLIENT_VERBOSE: <ISICLIENT_VERBOSE>
+    LOG_LEVEL: <POWERSCALE_LOG_LEVEL>
+    LOG_FORMAT: <POWERSCALE_LOG_FORMAT>
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: karavi
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: debug
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-metrics-powerscale
+  namespace: karavi
+  labels:
+    app.kubernetes.io/name: karavi-metrics-powerscale
+    app.kubernetes.io/instance: karavi
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: karavi-metrics-powerscale
+      app.kubernetes.io/instance: karavi
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: karavi-metrics-powerscale
+        app.kubernetes.io/instance: karavi
+    spec:
+      serviceAccount: karavi-metrics-powerscale-controller
+      containers:
+        - name: karavi-metrics-powerscale
+          image: <POWERSCALE_OBS_IMAGE>
+          resources: {}
+          env:
+            - name: POWERSCALE_METRICS_ENDPOINT
+              value: "karavi-metrics-powerscale"
+            - name: POWERSCALE_METRICS_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TLS_ENABLED
+              value: "true"
+          volumeMounts:
+            - name: isilon-creds
+              mountPath: /isilon-creds
+            - name: tls-secret
+              mountPath: /etc/ssl/certs
+              readOnly: true
+            - name: karavi-metrics-powerscale-configmap
+              mountPath: /etc/config
+      volumes:
+        - name: isilon-creds
+          secret:
+            secretName: <DriverDefaultReleaseName>-creds
+        - name: tls-secret
+          secret:
+            secretName: otel-collector-tls
+            items:
+              - key: tls.crt
+                path: cert.crt
+        - name: karavi-metrics-powerscale-configmap
+          configMap:
+            name: karavi-metrics-powerscale-configmap
+        - name: csi-isilon-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
+      restartPolicy: Always
+status: {}
+
