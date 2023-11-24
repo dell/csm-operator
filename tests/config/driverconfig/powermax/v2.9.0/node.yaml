@@ -87,7 +87,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-powermax:v2.8.0
+          image: dellemc/csi-powermax:v2.9.0
           imagePullPolicy: IfNotPresent
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
@@ -189,7 +189,7 @@ spec:
             - name: node-topology-config
               mountPath: /node-topology-config
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"

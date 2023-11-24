@@ -606,10 +606,10 @@ metadata:
                     "value": ""
                   }
                 ],
-                "image": "dellemc/csi-powermax:v2.8.0",
+                "image": "dellemc/csi-powermax:v2.9.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.8.0",
+              "configVersion": "v2.9.0",
               "controller": {
                 "envs": [
                   {
@@ -695,11 +695,11 @@ metadata:
                         "value": "powermax-reverseproxy-config"
                       }
                     ],
-                    "image": "dellemc/csipowermax-reverseproxy:v2.7.0",
+                    "image": "dellemc/csipowermax-reverseproxy:v2.8.0",
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
-                "configVersion": "v2.7.0",
+                "configVersion": "v2.8.0",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "csireverseproxy"
@@ -2934,9 +2934,9 @@ spec:
     name: dell-csm-operator
   - image: docker.io/dellemc/csi-isilon:v2.9.0
     name: csi-isilon
-  - image: docker.io/dellemc/csi-powermax:v2.8.0
+  - image: docker.io/dellemc/csi-powermax:v2.9.0
     name: csi-powermax
-  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.7.0
+  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.8.0
     name: csipowermax-reverseproxy
   - image: docker.io/dellemc/csi-powerstore:v2.9.0
     name: csi-powerstore
