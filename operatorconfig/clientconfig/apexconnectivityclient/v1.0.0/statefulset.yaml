@@ -268,7 +268,6 @@ spec:
               mountPath: /dcm-client-secret-data
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1001
             allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
