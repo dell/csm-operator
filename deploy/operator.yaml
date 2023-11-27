@@ -47,6 +47,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   name: dell-csm-operator-manager-role
 rules:
 - nonResourceURLs:
@@ -542,6 +543,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - monitoring.coreos.com
   resources:
   - servicemonitors
@@ -830,18 +843,6 @@ rules:
   - list
   - update
   - watch
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - backups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -968,7 +969,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: docker.io/dellemc/dell-csm-operator:v1.4.0
+        image: 10.247.98.98:5000/csm-operator:test
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -986,7 +987,7 @@ spec:
         resources:
           limits:
             cpu: 200m
-            memory: 512Mi
+            memory: 256Mi
           requests:
             cpu: 100m
             memory: 192Mi

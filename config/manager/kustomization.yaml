@@ -12,5 +12,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: docker.io/dellemc/dell-csm-operator
-  newTag: v1.4.0
+  newName: 10.247.98.98:5000/csm-operator
+  newTag: test
