@@ -267,6 +267,7 @@ spec:
             - name: connectivity-client-docker-k8s-cert
               mountPath: /dcm-client-secret-data
           securityContext:
+            runAsNonRoot: true
             allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
