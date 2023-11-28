@@ -130,7 +130,7 @@ spec:
               mountPath: /certs
               readOnly: true
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -152,7 +152,7 @@ spec:
         - name: sdc-monitor
           securityContext:
             privileged: true
-          image: dellemc/sdc:3.6.1
+          image: dellemc/sdc:4.5
           imagePullPolicy: IfNotPresent
           env:
             - name: HOST_PID
@@ -178,7 +178,7 @@ spec:
         - name: sdc
           securityContext:
             privileged: true
-          image: dellemc/sdc:3.6.1
+          image: dellemc/sdc:4.5
           imagePullPolicy: IfNotPresent
           env:
             - name: NODENAME

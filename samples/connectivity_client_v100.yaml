@@ -15,7 +15,7 @@ spec:
       imagePullPolicy: IfNotPresent
     initContainers:
       - name: connectivity-client-init
-        image: registry.access.redhat.com/ubi9/ubi-micro
+        image: dellemc/connectivity-client-docker-k8s
         imagePullPolicy: IfNotPresent
     sideCars:
       - name: kubernetes-proxy
