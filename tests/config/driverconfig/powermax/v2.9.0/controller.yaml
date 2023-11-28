@@ -315,7 +315,7 @@ spec:
               mountPath: /certs
               readOnly: true
             - name: powermax-config-params
-              mountPath: /csi-isilon-config-params
+              mountPath: /csi-powermax-config-params
       volumes:
         - name: socket-dir
           emptyDir:
