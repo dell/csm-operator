@@ -118,6 +118,8 @@ spec:
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
+            - name: noderoot
+              mountPath: /noderoot
             - name: dev
               mountPath: /dev
             - name: vxflexos-config
@@ -128,7 +130,7 @@ spec:
               mountPath: /certs
               readOnly: true
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -219,6 +221,10 @@ spec:
         - name: pods-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
+            type: Directory
+        - name: noderoot
+          hostPath:
+            path: /
             type: Directory
         - name: dev
           hostPath:

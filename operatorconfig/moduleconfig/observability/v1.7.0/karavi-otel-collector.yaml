@@ -1,0 +1,152 @@
+apiVersion: v1
+data:
+  otel-collector-config.yaml: |-
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:55680
+            tls:
+              cert_file: /etc/ssl/certs/tls.crt
+              key_file: /etc/ssl/certs/tls.key
+    
+    exporters:
+      prometheus:
+        endpoint: 0.0.0.0:8889
+      logging:
+    
+    extensions:
+      health_check: {}
+    
+    service:
+      extensions: [health_check]
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: []
+          exporters: [logging,prometheus]
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: karavi
+
+---
+
+apiVersion: v1
+data:
+  nginx.conf: |-
+    worker_processes  1;
+    events {
+      worker_connections  1024;
+    }
+    
+    pid /tmp/nginx.pid;
+    
+    http {
+      include       mime.types;
+      default_type  application/octet-stream;
+      sendfile        on;
+      keepalive_timeout  65;
+      server {
+        listen       8443 ssl;
+        server_name  localhost;
+        ssl_certificate      /etc/ssl/certs/tls.crt;
+        ssl_certificate_key  /etc/ssl/certs/tls.key;
+        ssl_protocols TLSv1.2;
+        ssl_ciphers AESGCM:-aNULL:-DH:-kRSA:@STRENGTH;
+        ssl_prefer_server_ciphers on;
+        location / {
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header Host $http_host;
+          proxy_pass http://127.0.0.1:8889/;
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: karavi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: karavi
+  labels:
+    app.kubernetes.io/name: otel-collector
+    app.kubernetes.io/instance: karavi-observability
+spec:
+  type: ClusterIP
+  ports:
+    - port: 55680
+      targetPort: 55680
+      name: receiver
+    - port: 8443
+      targetPort: 8443
+      name: exporter-https
+  selector:
+    app.kubernetes.io/name: otel-collector
+    app.kubernetes.io/instance: karavi-observability
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: karavi
+  labels:
+    app.kubernetes.io/name: otel-collector
+    app.kubernetes.io/instance: karavi-observability
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otel-collector
+      app.kubernetes.io/instance: karavi-observability
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: otel-collector
+        app.kubernetes.io/instance: karavi-observability
+    spec:
+      volumes:
+        - name: tls-secret
+          secret:
+            secretName: otel-collector-tls
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: otel-collector-config
+          configMap:
+            name: otel-collector-config
+      containers:
+        - name: nginx-proxy
+          image: <NGINX_PROXY_IMAGE>
+          volumeMounts:
+            - name: tls-secret
+              mountPath: /etc/ssl/certs
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+        - name: otel-collector
+          image: <OTEL_COLLECTOR_IMAGE>
+          args:
+            - --config=/etc/otel-collector-config.yaml
+          resources: {}
+          volumeMounts:
+            - name: otel-collector-config
+              mountPath: /etc/otel-collector-config.yaml
+              subPath: otel-collector-config.yaml
+            - name: tls-secret
+              mountPath: /etc/ssl/certs
+      restartPolicy: Always
+status: {}
