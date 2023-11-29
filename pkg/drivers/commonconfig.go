@@ -52,7 +52,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if cr.Spec.Driver.CSIDriverType == "unity" {
 		YamlString = ModifyUnityCR(YamlString, cr, "Controller")
 	}
-
+	if cr.Spec.Driver.CSIDriverType == "powerflex" {
+		YamlString = ModifyPowerflexCR(YamlString, cr, "Controller")
+	}
 	if cr.Spec.Driver.CSIDriverType == "powermax" {
 		YamlString = ModifyPowermaxCR(YamlString, cr, "Controller")
 	}
