@@ -51,6 +51,9 @@ const (
 
 	// CsiHealthMonitorEnabled - health monitor flag
 	CsiHealthMonitorEnabled = "<X_CSI_HEALTH_MONITOR_ENABLED>"
+
+	// CsiStorageCapacityEnabled - Storage capacity flag
+	CsiStorageCapacityEnabled = "false"
 )
 
 // PrecheckPowerFlex do input validation
