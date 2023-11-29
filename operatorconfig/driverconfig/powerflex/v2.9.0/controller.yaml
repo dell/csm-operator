@@ -229,7 +229,7 @@ spec:
             - name: SSL_CERT_DIR
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
-              value: false
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
             - name: X_CSI_QUOTA_ENABLED
               value: <X_CSI_QUOTA_ENABLED>
           volumeMounts:
