@@ -228,8 +228,18 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	maxVolumesPerNode := ""
 	storageCapacity := "false"
 	enableQuota := ""
+	healthMonitorController := ""
+	healthMonitorNode := ""
 
 	switch fileType {
+	case "Controller":
+		for _, env := range cr.Spec.Driver.Controller.Envs {
+			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+				healthMonitorController = env.Value
+			}
+		}
+		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+
 	case "Node":
 		for _, env := range cr.Spec.Driver.Node.Envs {
 			if env.Name == "X_CSI_APPROVE_SDC_ENABLED" {
@@ -247,11 +257,16 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_QUOTA_ENABLED" {
 				enableQuota = env.Value
 			}
+			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+				healthMonitorController = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
+		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
