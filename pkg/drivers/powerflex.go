@@ -238,7 +238,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	healthMonitorNode := ""
 
 	switch fileType {
-
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Controller.Envs {
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
