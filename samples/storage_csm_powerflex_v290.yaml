@@ -49,7 +49,7 @@ spec:
     # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:3.6.1
+        image: dellemc/sdc:4.5
         envs:
         - name: HOST_PID
           value: "1"
@@ -161,7 +161,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:3.6.1
+      - image: dellemc/sdc:4.5
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -190,14 +190,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.6.0
+      configVersion: v1.7.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.6.0
+          image: dellemc/csm-topology:v1.7.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -230,7 +230,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:v1.6.0
+          image: dellemc/csm-metrics-powerflex:v1.7.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -348,10 +348,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.7.0
+      configVersion: v1.8.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.7.0
+          image: dellemc/podmon:v1.8.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-vxflexos"
@@ -365,7 +365,7 @@ spec:
             - "--mode=controller"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
         - name: podmon-node
-          image: dellemc/podmon:v1.7.0
+          image: dellemc/podmon:v1.8.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

@@ -1,6 +1,6 @@
 parameter name, grep option for paramater value, parameter value,resource to describe,number of occurences of parameter name
 sdc-monitor,,,node,1
-Image,,dellemc/sdc:3.6.1,node,1
+Image,,dellemc/sdc:4.5,node,1
 csi-external-health-monitor-controller,,,controller,1
 X_CSI_HEALTH_MONITOR_ENABLED,,true,controller,1
 X_CSI_HEALTH_MONITOR_ENABLED,,true,node,1
