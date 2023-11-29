@@ -48,12 +48,6 @@ const (
 
 	// CsiVxflexosQuotaEnabled - Flag to enable/disable setting of quota for NFS volumes
 	CsiVxflexosQuotaEnabled = "<X_CSI_QUOTA_ENABLED>"
-
-	// CsiHealthMonitorEnabled - health monitor flag
-	CsiHealthMonitorEnabled = "<X_CSI_HEALTH_MONITOR_ENABLED>"
-
-	// CsiStorageCapacityEnabled - Storage capacity flag
-	CsiStorageCapacityEnabled = "false"
 )
 
 // PrecheckPowerFlex do input validation
