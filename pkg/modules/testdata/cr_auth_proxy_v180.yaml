@@ -26,28 +26,10 @@ spec:
         envs:
           # base hostname for the ingress rules that expose the services
           # the proxy-server ingress will use this hostname
-          # the tenant-service ingress will use tenant.hostname
-          # the role-service ingress will use role.hostname
-          # the storage-service ingress will use storage.hostname
           # Allowed values: string
           # Default value: csm-authorization.com
           - name: "PROXY_HOST"
             value: "csm-authorization.com"
-
-          # Authorization log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "AUTHORIZATION_LOG_LEVEL"
-            value: "debug"
-
-          # Zipkin tracing configuration
-          # this can be updated on the fly via the csm-config-params configMap
-          # Default value: None 
-          - name: "AUTHORIZATION_ZIPKIN_COLLECTORURI"
-            value: ""          
-          # Default value: None 
-          - name: "AUTHORIZATION_ZIPKIN_PROBABILITY"
-            value: ""
 
           # Proxy-service ingress configuration
           # Default value: nginx
@@ -58,25 +40,10 @@ spec:
           - name: "PROXY_INGRESS_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
 
-          # Tenant-service ingress configuration
-          # Default value: nginx
-          - name: "TENANT_INGRESS_CLASSNAME"
-            value: "nginx"
-
-          # Role-service ingress configuration
-          # Default value: nginx
-          - name: "ROLE_INGRESS_CLASSNAME"
-            value: "nginx" 
-
-          # Storage-service ingress configuration
-          # Default value: nginx
-          - name: "STORAGE_INGRESS_CLASSNAME"
-            value: "nginx" 
-
           # Specify storage class for redis. Otherwise, default storage class is used.
           # Default value: None
           - name: "REDIS_STORAGE_CLASS"
-            value: "local-storage"
+            value: ""
 
       # enabled: Enable/Disable nginx ingress
       # Allowed values:
@@ -93,6 +60,7 @@ spec:
       # Default value: true
       - name: cert-manager
         enabled: true
+
 ---
 apiVersion: v1
 kind: ConfigMap
