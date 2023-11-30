@@ -357,11 +357,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.8.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.9.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.8.0",
+                "configVersion": "v1.9.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -542,7 +542,7 @@ metadata:
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.7.0",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -717,11 +717,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.8.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.9.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.8.0",
+                "configVersion": "v1.9.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -955,7 +955,7 @@ metadata:
                       "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powerstore.dellemc.com"
                     ],
-                    "image": "dellemc/podmon:v1.7.0",
+                    "image": "dellemc/podmon:v1.8.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -977,12 +977,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "dellemc/podmon:v1.7.0",
+                    "image": "dellemc/podmon:v1.8.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.7.0",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -1215,11 +1215,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.8.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.9.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.8.0",
+                "configVersion": "v1.9.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -1364,7 +1364,7 @@ metadata:
                       "--mode=controller",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
                     ],
-                    "image": "dellemc/podmon:v1.7.0",
+                    "image": "dellemc/podmon:v1.8.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -1385,12 +1385,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "dellemc/podmon:v1.7.0",
+                    "image": "dellemc/podmon:v1.8.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.7.0",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -2946,7 +2946,7 @@ spec:
     name: csi-vxflexos
   - image: docker.io/dellemc/sdc:4.5
     name: sdc
-  - image: docker.io/dellemc/csm-authorization-sidecar:v1.8.0
+  - image: docker.io/dellemc/csm-authorization-sidecar:v1.9.0
     name: karavi-authorization-proxy
   - image: docker.io/dellemc/dell-csi-replicator:v1.6.0
     name: dell-csi-replicator
