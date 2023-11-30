@@ -258,7 +258,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				enableQuota = env.Value
 			}
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorController = env.Value
+				healthMonitorNode = env.Value
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
