@@ -9,16 +9,16 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.9.0
+      configVersion: v1.8.0
       forceRemoveModule: true
       components:
       - name: karavi-authorization-proxy-server
         # enable: Enable/Disable csm-authorization proxy server
         enabled: true
-        proxyService: dellemc/csm-authorization-proxy:v1.9.0
-        tenantService: dellemc/csm-authorization-tenant:v1.9.0
-        roleService: dellemc/csm-authorization-role:v1.9.0
-        storageService: dellemc/csm-authorization-storage:v1.9.0
+        proxyService: dellemc/csm-authorization-proxy:v1.8.0
+        tenantService: dellemc/csm-authorization-tenant:v1.8.0
+        roleService: dellemc/csm-authorization-role:v1.8.0
+        storageService: dellemc/csm-authorization-storage:v1.8.0
         redis: redis:6.0.8-alpine
         commander: rediscommander/redis-commander:latest
         opa: openpolicyagent/opa
