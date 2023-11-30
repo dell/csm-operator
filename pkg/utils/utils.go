@@ -975,9 +975,6 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	return replicaEnabled, clusterClients, nil
 }
 
-<<<<<<< HEAD
-// GetSecret - check if the secret is present
-=======
 // GetAccDefaultClusters - get default clusters
 func GetAccDefaultClusters(ctx context.Context, instance csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster, error) {
 	clusterClients := []ReplicaCluster{
@@ -992,8 +989,7 @@ func GetAccDefaultClusters(ctx context.Context, instance csmv1.ApexConnectivityC
 	return replicaEnabled, clusterClients, nil
 }
 
-// GetSecret -get secret
->>>>>>> main
+// GetSecret - check if the secret is present
 func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*corev1.Secret, error) {
 	found := &corev1.Secret{}
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: namespace}, found)
@@ -1054,7 +1050,6 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 	return false
 }
 
-<<<<<<< HEAD
 // IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
 func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
 	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)
@@ -1071,10 +1066,7 @@ func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.Container
 	return false
 }
 
-// Contains -
-=======
 // Contains - check if slice contains the specified string
->>>>>>> main
 func Contains(slice []string, str string) bool {
 	for _, v := range slice {
 		if v == str {

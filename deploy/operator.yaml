@@ -831,7 +831,6 @@ rules:
   - list
   - update
   - watch
-<<<<<<< HEAD
 - apiGroups: 
   - mobility.storage.dell.com
   resources: 
@@ -998,11 +997,6 @@ rules:
 - apiGroups:
   - velero.io
   resources:
-=======
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
->>>>>>> main
   - backups
   verbs:
   - create
@@ -1012,7 +1006,6 @@ rules:
   - patch
   - update
   - watch
-<<<<<<< HEAD
 - apiGroups:
   - velero.io
   resources:
@@ -1164,8 +1157,6 @@ rules:
   - '*'
   verbs:
   - '*'
-=======
->>>>>>> main
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
