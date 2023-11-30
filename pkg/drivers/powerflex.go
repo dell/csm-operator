@@ -232,6 +232,8 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	storageCapacity := "false"
 	enableQuota := ""
 	powerflexExternalAccess := ""
+	healthMonitorController := ""
+	healthMonitorNode := ""
 
 	switch fileType {
 	case "Controller":
@@ -239,8 +241,13 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_POWERFLEX_EXTERNAL_ACCESS" {
 				powerflexExternalAccess = env.Value
 			}
+			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+				healthMonitorController = env.Value
+			}
 		}
-		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
+		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+    yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
+
 	case "Node":
 		for _, env := range cr.Spec.Driver.Node.Envs {
 			if env.Name == "X_CSI_APPROVE_SDC_ENABLED" {
@@ -258,11 +265,16 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_QUOTA_ENABLED" {
 				enableQuota = env.Value
 			}
+			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+				healthMonitorNode = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
+		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
