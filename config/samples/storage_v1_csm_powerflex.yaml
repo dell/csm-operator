@@ -78,6 +78,12 @@ spec:
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
 
+        # X_CSI_POWERFLEX_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
+        # Allowed Values: x.x.x.x/xx or x.x.x.x
+        # Default Value: None
+        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+          value:
+
       #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs

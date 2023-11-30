@@ -48,6 +48,9 @@ const (
 
 	// CsiVxflexosQuotaEnabled - Flag to enable/disable setting of quota for NFS volumes
 	CsiVxflexosQuotaEnabled = "<X_CSI_QUOTA_ENABLED>"
+
+	// CsiPowerflexExternalAccess -  External Access flag
+	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -228,17 +231,22 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	maxVolumesPerNode := ""
 	storageCapacity := "false"
 	enableQuota := ""
+	powerflexExternalAccess := ""
 	healthMonitorController := ""
 	healthMonitorNode := ""
 
 	switch fileType {
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Controller.Envs {
+			if env.Name == "X_CSI_POWERFLEX_EXTERNAL_ACCESS" {
+				powerflexExternalAccess = env.Value
+			}
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorController = env.Value
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
 
 	case "Node":
 		for _, env := range cr.Spec.Driver.Node.Envs {
