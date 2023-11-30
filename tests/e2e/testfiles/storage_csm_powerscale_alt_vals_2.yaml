@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "None"
-    configVersion: v2.7.0
+    configVersion: v2.9.0
     authSecret: csm-creds
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
@@ -245,10 +245,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.5.0
+      configVersion: v1.7.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.5.0
+        image: dellemc/csm-authorization-sidecar:v1.7.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"

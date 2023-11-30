@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.7.0
+    configVersion: v2.9.0
     authSecret: csm-creds
     # currently fails with something about nodes taints etc
     replicas: 3
@@ -75,6 +75,14 @@ spec:
         - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
           #value: "false"
           value: "true"
+
+        # X_CSI_ISI_AUTH_TYPE: Specify the authentication method to be used.
+        # Allowed values:
+        #   0: basic authentication
+        #   1: session-based authentication
+        # Default value: 0
+        - name: X_CSI_ISI_AUTH_TYPE
+          value: "1"
 
         # X_CSI_CUSTOM_TOPOLOGY_ENABLED: Specify if custom topology label <provisionerName>.dellemc.com/<powerscalefqdnorip>:<provisionerName>
         # has to be used for making connection to backend PowerScale Array.
@@ -253,10 +261,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.5.0
+      configVersion: v1.7.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.5.0
+        image: dellemc/csm-authorization-sidecar:v1.7.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"

@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.8.0
+    configVersion: v2.9.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -35,10 +35,6 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
-        - name: X_CSI_NFS_ACLS
-          value: "0777"
-        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
-          value: ""
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
 
@@ -47,7 +43,7 @@ spec:
     # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: true
-        image: dellemc/sdc:3.6.1
+        image: dellemc/sdc:4.5
         envs:
         - name: HOST_PID
           value: "1"
@@ -160,7 +156,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:3.6.1
+      - image: dellemc/sdc:4.5
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -172,10 +168,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.5.0
+      configVersion: v1.7.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.5.0
+        image: dellemc/csm-authorization-sidecar:v1.7.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"

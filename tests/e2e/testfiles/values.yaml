@@ -1553,3 +1553,67 @@
     run:
       - sh verify-app-mobility.sh
 
+- scenario: "Install PowerMax Driver(Standalone)"
+  paths:
+    - "testfiles/storage_csm_powermax.yaml"
+  modules:
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Run custom test"
+    # Last two steps perform Clean Up
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    # name of custom test to run
+    name: Cert CSI
+    # Provide command-line argument to run. Ginkgo will run the command and return output
+    # The command should be accessible from e2e_test repo. The cert-csi path is supplied in the values file.
+    # Example:
+    #   ./hello_world.sh
+    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
+    run: 
+      - ./cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
+
+- scenario: "Install PowerMax Driver(With Observability)"
+  paths:
+    - "testfiles/storage_csm_powermax_observability.yaml"
+  modules:
+    - "observability"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up secret with template [testfiles/powermax-templates/powermax-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmax]"
+    - "Apply custom resource [1]"
+    - "Set up secret from [testfiles/observability-cert.yaml] in namespace [karavi]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
+    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
+
+- scenario: "Install PowerMax Driver(Standalone), Enable/Disable Observability"
+  paths:
+    - "testfiles/storage_csm_powerscale.yaml"
+  modules:
+    - "observability"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Enable [observability] module from CR [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    - "Disable [observability] module from CR [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"

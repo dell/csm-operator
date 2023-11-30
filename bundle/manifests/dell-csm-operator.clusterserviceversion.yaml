@@ -8,8 +8,214 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "isilon",
-            "namespace": "isilon"
+            "name": "powermax",
+            "namespace": "powermax"
+          },
+          "spec": {
+            "driver": {
+              "authSecret": "powermax-creds",
+              "common": {
+                "envs": [
+                  {
+                    "name": "X_CSI_MANAGED_ARRAYS",
+                    "value": "000000000000,000000000001"
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_ENDPOINT",
+                    "value": "https://0.0.0.0:8443/"
+                  },
+                  {
+                    "name": "X_CSI_K8S_CLUSTER_PREFIX",
+                    "value": "XYZ"
+                  },
+                  {
+                    "name": "KUBELET_CONFIG_DIR",
+                    "value": "/var/lib/kubelet"
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_PORTGROUPS",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_TRANSPORT_PROTOCOL",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_PROXY_SERVICE_NAME",
+                    "value": "csipowermax-reverseproxy"
+                  },
+                  {
+                    "name": "X_CSI_VSPHERE_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_VSPHERE_PORTGROUP",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_VSPHERE_HOSTNAME",
+                    "value": ""
+                  },
+                  {
+                    "name": "X_CSI_VCENTER_HOST",
+                    "value": ""
+                  }
+                ],
+                "image": "dellemc/csi-powermax:v2.7.0",
+                "imagePullPolicy": "IfNotPresent"
+              },
+              "configVersion": "v2.7.0",
+              "controller": {
+                "envs": [
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  }
+                ]
+              },
+              "csiDriverSpec": {
+                "fSGroupPolicy": "ReadWriteOnceWithFSType",
+                "storageCapacity": false
+              },
+              "csiDriverType": "powermax",
+              "dnsPolicy": "ClusterFirstWithHostNet",
+              "forceRemoveDriver": true,
+              "forceUpdate": false,
+              "node": {
+                "envs": [
+                  {
+                    "name": "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_TOPOLOGY_CONTROL_ENABLED",
+                    "value": "false"
+                  }
+                ]
+              },
+              "replicas": 2,
+              "sideCars": [
+                {
+                  "args": [
+                    "--monitor-interval=60s"
+                  ],
+                  "enabled": false,
+                  "name": "external-health-monitor"
+                }
+              ]
+            },
+            "modules": [
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "X_CSI_REVPROXY_TLS_SECRET",
+                        "value": "csirevproxy-tls-secret"
+                      },
+                      {
+                        "name": "X_CSI_REVPROXY_PORT",
+                        "value": "2222"
+                      },
+                      {
+                        "name": "X_CSI_CONFIG_MAP_NAME",
+                        "value": "powermax-reverseproxy-config"
+                      }
+                    ],
+                    "image": "dellemc/csipowermax-reverseproxy:v2.6.0",
+                    "name": "csipowermax-reverseproxy"
+                  }
+                ],
+                "configVersion": "v2.6.0",
+                "enabled": true,
+                "forceRemoveModule": true,
+                "name": "csireverseproxy"
+              },
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "PROXY_HOST",
+                        "value": "csm-authorization.com"
+                      },
+                      {
+                        "name": "SKIP_CERTIFICATE_VALIDATION",
+                        "value": "true"
+                      }
+                    ],
+                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
+                    "name": "karavi-authorization-proxy"
+                  }
+                ],
+                "configVersion": "v1.6.0",
+                "enabled": false,
+                "name": "authorization"
+              },
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "X_CSI_REPLICATION_PREFIX",
+                        "value": "replication.storage.dell.com"
+                      },
+                      {
+                        "name": "X_CSI_REPLICATION_CONTEXT_PREFIX",
+                        "value": "powermax"
+                      }
+                    ],
+                    "image": "dellemc/dell-csi-replicator:v1.4.0",
+                    "name": "dell-csi-replicator"
+                  },
+                  {
+                    "envs": [
+                      {
+                        "name": "TARGET_CLUSTERS_IDS",
+                        "value": "target-cluster-1"
+                      },
+                      {
+                        "name": "REPLICATION_CTRL_LOG_LEVEL",
+                        "value": "debug"
+                      },
+                      {
+                        "name": "REPLICATION_CTRL_REPLICAS",
+                        "value": "1"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MIN",
+                        "value": "1s"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MAX",
+                        "value": "5m"
+                      }
+                    ],
+                    "image": "dellemc/dell-replication-controller:v1.4.0",
+                    "name": "dell-replication-controller-manager"
+                  },
+                  {
+                    "image": "dellemc/dell-replication-init:v1.0.0",
+                    "name": "dell-replication-controller-init"
+                  }
+                ],
+                "configVersion": "v1.4.0",
+                "enabled": false,
+                "name": "replication"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "storage.dell.com/v1",
+          "kind": "ContainerStorageModule",
+          "metadata": {
+            "name": "test-isilon",
+            "namespace": "test-isilon"
           },
           "spec": {
             "driver": {
@@ -57,10 +263,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.8.0",
+                "image": "dellemc/csi-isilon:v2.9.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.8.0",
+              "configVersion": "v2.9.0",
               "controller": {
                 "envs": [
                   {
@@ -151,11 +357,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.8.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.7.0",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -172,7 +378,7 @@ metadata:
                         "value": "powerscale"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.5.0",
+                    "image": "dellemc/dell-csi-replicator:v1.6.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -198,15 +404,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.5.0",
+                    "image": "dellemc/dell-replication-controller:v1.6.0",
                     "name": "dell-replication-controller-manager"
-                  },
-                  {
-                    "image": "dellemc/dell-replication-init:v1.0.1",
-                    "name": "dell-replication-controller-init"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -220,7 +422,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.5.0",
+                    "image": "dellemc/csm-topology:v1.7.0",
                     "name": "topology"
                   },
                   {
@@ -233,6 +435,10 @@ metadata:
                     ],
                     "image": "otel/opentelemetry-collector:0.42.0",
                     "name": "otel-collector"
+                  },
+                  {
+                    "enabled": false,
+                    "name": "cert-manager"
                   },
                   {
                     "enabled": false,
@@ -286,11 +492,11 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "dellemc/csm-metrics-powerscale:v1.2.0",
+                    "image": "dellemc/csm-metrics-powerscale:v1.4.0",
                     "name": "metrics-powerscale"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -303,11 +509,14 @@ metadata:
                       "--skipArrayConnectionValidation=false",
                       "--driverPodLabelValue=dell-storage",
                       "--ignoreVolumelessPods=false",
+                      "--arrayConnectivityConnectionLossThreshold=3",
                       "--csisock=unix:/var/run/csi/csi.sock",
                       "--mode=controller",
                       "--driverPath=csi-isilon.dellemc.com",
                       "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
                     ],
+                    "image": "dellemc/podmon:v1.6.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
                   {
@@ -328,10 +537,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "dellemc/podmon:v1.6.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -395,17 +606,19 @@ metadata:
                     "value": ""
                   }
                 ],
-                "image": "dellemc/csi-powermax:v2.8.0",
+                "image": "dellemc/csi-powermax:v2.9.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.8.0",
+              "configVersion": "v2.9.0",
               "controller": {
                 "envs": [
                   {
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
                   }
-                ]
+                ],
+                "nodeSelector": null,
+                "tolerations": null
               },
               "csiDriverSpec": {
                 "fSGroupPolicy": "ReadWriteOnceWithFSType",
@@ -428,6 +641,28 @@ metadata:
                   {
                     "name": "X_CSI_TOPOLOGY_CONTROL_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_MAX_VOLUMES_PER_NODE",
+                    "value": "0"
+                  }
+                ],
+                "nodeSelector": null,
+                "tolerations": [
+                  {
+                    "effect": "NoExecute",
+                    "key": "node.kubernetes.io/memory-pressure",
+                    "operator": "Exists"
+                  },
+                  {
+                    "effect": "NoExecute",
+                    "key": "node.kubernetes.io/disk-pressure",
+                    "operator": "Exists"
+                  },
+                  {
+                    "effect": "NoExecute",
+                    "key": "node.kubernetes.io/network-unavailable",
+                    "operator": "Exists"
                   }
                 ]
               },
@@ -460,11 +695,11 @@ metadata:
                         "value": "powermax-reverseproxy-config"
                       }
                     ],
-                    "image": "dellemc/csipowermax-reverseproxy:v2.6.0",
+                    "image": "dellemc/csipowermax-reverseproxy:v2.8.0",
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
-                "configVersion": "v2.6.0",
+                "configVersion": "v2.8.0",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "csireverseproxy"
@@ -482,11 +717,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.8.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.7.0",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -503,7 +738,7 @@ metadata:
                         "value": "powermax"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.5.0",
+                    "image": "dellemc/dell-csi-replicator:v1.6.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -529,17 +764,89 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.5.0",
+                    "image": "dellemc/dell-replication-controller:v1.6.0",
                     "name": "dell-replication-controller-manager"
-                  },
-                  {
-                    "image": "dellemc/dell-replication-init:v1.0.1",
-                    "name": "dell-replication-controller-init"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "replication"
+              },
+              {
+                "components": [
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "TOPOLOGY_LOG_LEVEL",
+                        "value": "INFO"
+                      }
+                    ],
+                    "image": "dellemc/csm-topology:v1.7.0",
+                    "name": "topology"
+                  },
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "NGINX_PROXY_IMAGE",
+                        "value": "nginxinc/nginx-unprivileged:1.20"
+                      }
+                    ],
+                    "image": "otel/opentelemetry-collector:0.42.0",
+                    "name": "otel-collector"
+                  },
+                  {
+                    "enabled": false,
+                    "name": "cert-manager"
+                  },
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "POWERMAX_MAX_CONCURRENT_QUERIES",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERMAX_CAPACITY_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERMAX_PERFORMANCE_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERMAX_CAPACITY_POLL_FREQUENCY",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERMAX_PERFORMANCE_POLL_FREQUENCY",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERMAX_LOG_LEVEL",
+                        "value": "INFO"
+                      },
+                      {
+                        "name": "POWERMAX_LOG_FORMAT",
+                        "value": "TEXT"
+                      },
+                      {
+                        "name": "COLLECTOR_ADDRESS",
+                        "value": "otel-collector:55680"
+                      },
+                      {
+                        "name": "X_CSI_CONFIG_MAP_NAME",
+                        "value": "powermax-reverseproxy-config"
+                      }
+                    ],
+                    "image": "dellemc/csm-metrics-powermax:v1.1.0",
+                    "name": "metrics-powermax"
+                  }
+                ],
+                "configVersion": "v1.7.0",
+                "enabled": false,
+                "name": "observability"
               }
             ]
           }
@@ -573,10 +880,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-powerstore:v2.8.0",
+                "image": "dellemc/csi-powerstore:v2.9.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.8.0",
+              "configVersion": "v2.9.0",
               "controller": {
                 "envs": [
                   {
@@ -612,6 +919,10 @@ metadata:
                   {
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE",
+                    "value": "0"
                   }
                 ],
                 "nodeSelector": null,
@@ -638,11 +949,14 @@ metadata:
                       "--skipArrayConnectionValidation=false",
                       "--driverPodLabelValue=dell-storage",
                       "--ignoreVolumelessPods=false",
+                      "--arrayConnectivityConnectionLossThreshold=3",
                       "--csisock=unix:/var/run/csi/csi.sock",
                       "--mode=controller",
                       "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powerstore.dellemc.com"
                     ],
+                    "image": "dellemc/podmon:v1.7.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
                   {
@@ -663,10 +977,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "dellemc/podmon:v1.7.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -721,10 +1037,10 @@ metadata:
                     "value": "true"
                   }
                 ],
-                "image": "dellemc/csi-unity:v2.7.0",
+                "image": "dellemc/csi-unity:v2.9.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.7.0",
+              "configVersion": "v2.9.0",
               "controller": {
                 "envs": [
                   {
@@ -796,12 +1112,16 @@ metadata:
                   {
                     "name": "CERT_SECRET_COUNT",
                     "value": "0"
+                  },
+                  {
+                    "name": "X_CSI_QUOTA_ENABLED",
+                    "value": "false"
                   }
                 ],
-                "image": "dellemc/csi-vxflexos:v2.8.0",
+                "image": "dellemc/csi-vxflexos:v2.9.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.8.0",
+              "configVersion": "v2.9.0",
               "controller": {
                 "envs": [
                   {
@@ -828,7 +1148,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:3.6.1",
+                  "image": "dellemc/sdc:4.5",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "sdc"
                 }
@@ -846,6 +1166,10 @@ metadata:
                   {
                     "name": "X_CSI_RENAME_SDC_PREFIX",
                     "value": ""
+                  },
+                  {
+                    "name": "X_CSI_MAX_VOLUMES_PER_NODE",
+                    "value": "0"
                   }
                 ],
                 "nodeSelector": null,
@@ -865,7 +1189,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:3.6.1",
+                  "image": "dellemc/sdc:4.5",
                   "name": "sdc-monitor"
                 },
                 {
@@ -891,11 +1215,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.7.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.8.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.7.0",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -909,7 +1233,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.5.0",
+                    "image": "dellemc/csm-topology:v1.7.0",
                     "name": "topology"
                   },
                   {
@@ -922,6 +1246,10 @@ metadata:
                     ],
                     "image": "otel/opentelemetry-collector:0.42.0",
                     "name": "otel-collector"
+                  },
+                  {
+                    "enabled": false,
+                    "name": "cert-manager"
                   },
                   {
                     "enabled": false,
@@ -967,11 +1295,11 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "dellemc/csm-metrics-powerflex:v1.5.0",
+                    "image": "dellemc/csm-metrics-powerflex:v1.7.0",
                     "name": "metrics-powerflex"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -988,7 +1316,7 @@ metadata:
                         "value": "powerflex"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.5.0",
+                    "image": "dellemc/dell-csi-replicator:v1.6.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -1014,15 +1342,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.5.0",
+                    "image": "dellemc/dell-replication-controller:v1.6.0",
                     "name": "dell-replication-controller-manager"
-                  },
-                  {
-                    "image": "dellemc/dell-replication-init:v1.0.1",
-                    "name": "dell-replication-controller-init"
                   }
                 ],
-                "configVersion": "v1.5.0",
+                "configVersion": "v1.6.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -1034,10 +1358,14 @@ metadata:
                       "--skipArrayConnectionValidation=false",
                       "--driverPodLabelValue=dell-storage",
                       "--ignoreVolumelessPods=false",
+                      "--arrayConnectivityPollRate=5",
+                      "--arrayConnectivityConnectionLossThreshold=3",
                       "--csisock=unix:/var/run/csi/csi.sock",
                       "--mode=controller",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
                     ],
+                    "image": "dellemc/podmon:v1.7.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
                   {
@@ -1046,6 +1374,7 @@ metadata:
                       "--leaderelection=false",
                       "--driverPodLabelValue=dell-storage",
                       "--ignoreVolumelessPods=false",
+                      "--arrayConnectivityPollRate=5",
                       "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock",
                       "--mode=node",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
@@ -1056,10 +1385,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "dellemc/podmon:v1.7.0",
+                    "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -1069,19 +1400,210 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Storage
-    containerImage: docker.io/dellemc/dell-csm-operator:v1.3.0
+    containerImage: docker.io/dellemc/dell-csm-operator:v1.4.0
     createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     operators.operatorframework.io/builder: operator-sdk-v1.14.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.3.0
+  name: dell-csm-operator.v1.4.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - description: ApexConnectivityClient is the Schema for the ApexConnectivityClient
+        API
+      displayName: Apex Connectivity Client
+      kind: ApexConnectivityClient
+      name: apexconnectivityclients.storage.dell.com
+      specDescriptors:
+      - description: Common is the common specification for both controller and node
+          plugins
+        displayName: Common specification
+        path: client.common
+      - description: Args is the set of arguments for the container
+        displayName: Container Arguments
+        path: client.common.args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: client.common.commander
+      - description: Enabled is used to indicate wether or not to deploy a module
+        displayName: Enabled
+        path: client.common.enabled
+      - description: Envs is the set of environment variables for the container
+        displayName: Container Environment vars
+        path: client.common.envs
+      - description: Image is the image tag for the Container
+        displayName: Container Image
+        path: client.common.image
+      - description: ImagePullPolicy is the image pull policy for the image
+        displayName: Container Image Pull Policy
+        path: client.common.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: Name is the name of Container
+        displayName: Container Name
+        path: client.common.name
+      - description: NodeSelector is a selector which must be true for the pod to
+          fit on a node. Selector which must match a node's labels for the pod to
+          be scheduled on that node.
+        displayName: NodeSelector
+        path: client.common.nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: client.common.opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: client.common.opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: client.common.proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: client.common.redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: client.common.roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: client.common.storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: client.common.tenantService
+      - description: Tolerations is the list of tolerations for the driver pods
+        displayName: Tolerations
+        path: client.common.tolerations
+      - description: ConfigVersion is the configuration version of the driver
+        displayName: Config Version
+        path: client.configVersion
+      - description: ClientType is the Client type for Dell Technologies - e.g, ApexConnectivityClient
+        displayName: Client Type
+        path: client.csmClientType
+      - description: ForceRemoveClient is the boolean flag used to remove client deployment
+          when CR is deleted
+        displayName: Force Remove Client
+        path: client.forceRemoveClient
+      - description: Args is the set of arguments for the container
+        displayName: Container Arguments
+        path: client.initContainers[0].args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: client.initContainers[0].commander
+      - description: Enabled is used to indicate wether or not to deploy a module
+        displayName: Enabled
+        path: client.initContainers[0].enabled
+      - description: Envs is the set of environment variables for the container
+        displayName: Container Environment vars
+        path: client.initContainers[0].envs
+      - description: Image is the image tag for the Container
+        displayName: Container Image
+        path: client.initContainers[0].image
+      - description: ImagePullPolicy is the image pull policy for the image
+        displayName: Container Image Pull Policy
+        path: client.initContainers[0].imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: Name is the name of Container
+        displayName: Container Name
+        path: client.initContainers[0].name
+      - description: NodeSelector is a selector which must be true for the pod to
+          fit on a node. Selector which must match a node's labels for the pod to
+          be scheduled on that node.
+        displayName: NodeSelector
+        path: client.initContainers[0].nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: client.initContainers[0].opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: client.initContainers[0].opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: client.initContainers[0].proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: client.initContainers[0].redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: client.initContainers[0].roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: client.initContainers[0].storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: client.initContainers[0].tenantService
+      - description: Tolerations is the list of tolerations for the driver pods
+        displayName: Tolerations
+        path: client.initContainers[0].tolerations
+      - description: SideCars is the specification for CSI sidecar containers
+        displayName: CSI SideCars specification
+        path: client.sideCars
+      - description: Args is the set of arguments for the container
+        displayName: Container Arguments
+        path: client.sideCars[0].args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: client.sideCars[0].commander
+      - description: Enabled is used to indicate wether or not to deploy a module
+        displayName: Enabled
+        path: client.sideCars[0].enabled
+      - description: Envs is the set of environment variables for the container
+        displayName: Container Environment vars
+        path: client.sideCars[0].envs
+      - description: Image is the image tag for the Container
+        displayName: Container Image
+        path: client.sideCars[0].image
+      - description: ImagePullPolicy is the image pull policy for the image
+        displayName: Container Image Pull Policy
+        path: client.sideCars[0].imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: Name is the name of Container
+        displayName: Container Name
+        path: client.sideCars[0].name
+      - description: NodeSelector is a selector which must be true for the pod to
+          fit on a node. Selector which must match a node's labels for the pod to
+          be scheduled on that node.
+        displayName: NodeSelector
+        path: client.sideCars[0].nodeSelector
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: client.sideCars[0].opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: client.sideCars[0].opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: client.sideCars[0].proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: client.sideCars[0].redis
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: client.sideCars[0].roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: client.sideCars[0].storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: client.sideCars[0].tenantService
+      - description: Tolerations is the list of tolerations for the driver pods
+        displayName: Tolerations
+        path: client.sideCars[0].tolerations
+      statusDescriptors:
+      - description: ClientStatus is the status of Client pods
+        displayName: ClientStatus
+        path: clientStatus
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podStatuses
+      - description: State is the state of the client installation
+        displayName: State
+        path: state
+        x-descriptors:
+        - urn:alm:descriptor:text
+      version: v1
     - description: ContainerStorageModule is the Schema for the containerstoragemodules
         API
       displayName: Container Storage Module
@@ -1652,6 +2174,7 @@ spec:
           verbs:
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
@@ -1699,6 +2222,7 @@ spec:
           - orders
           - orders/status
           verbs:
+          - patch
           - update
         - apiGroups:
           - acme.cert-manager.io
@@ -1768,6 +2292,18 @@ spec:
           - update
           - watch
         - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
           - auditregistration.k8s.io
           resources:
           - auditsinks
@@ -1798,6 +2334,32 @@ spec:
           - list
           - update
           - watch
+        - apiGroups:
+          - storage.dell.com
+          resources:
+          - apexconnectivityclients
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - storage.dell.com
+          resources:
+          - apexconnectivityclients/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - storage.dell.com
+          resources:
+          - apexconnectivityclients/status
+          verbs:
+          - get
+          - patch
+          - update
         - apiGroups:
           - cert-manager.io
           resources:
@@ -1838,6 +2400,7 @@ spec:
           - certificaterequests/status
           - certificates/status
           verbs:
+          - patch
           - update
         - apiGroups:
           - cert-manager.io
@@ -1847,6 +2410,7 @@ spec:
           verbs:
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
@@ -1868,6 +2432,7 @@ spec:
           verbs:
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
@@ -1893,6 +2458,7 @@ spec:
           resources:
           - certificatesigningrequests/status
           verbs:
+          - patch
           - update
         - apiGroups:
           - certificates.k8s.io
@@ -1945,6 +2511,14 @@ spec:
           - get
           - update
         - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - csi.storage.k8s.io
           resources:
           - csinodeinfos
@@ -1959,6 +2533,33 @@ spec:
           verbs:
           - get
           - list
+          - watch
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - gateways
+          - httproutes
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - gateways/finalizers
+          - httproutes/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - httproutes
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - update
           - watch
         - apiGroups:
           - monitoring.coreos.com
@@ -1999,28 +2600,6 @@ spec:
           - list
           - update
           - watch
-        - apiGroups:
-          - networking.x-k8s.io
-          resources:
-          - gateways
-          - httproutes
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - networking.x-k8s.io
-          resources:
-          - gateways/finalizers
-          - httproutes/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - networking.x-k8s.io
-          resources:
-          - httproutes
-          verbs:
-          - '*'
         - apiGroups:
           - rbac.authorization.k8s.io
           resources:
@@ -2245,6 +2824,18 @@ spec:
           - list
           - update
           - watch
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - backups
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         serviceAccountName: dell-csm-operator-manager-service-account
       deployments:
       - name: dell-csm-operator-controller-manager
@@ -2278,7 +2869,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: docker.io/dellemc/dell-csm-operator:v1.3.0
+                image: docker.io/dellemc/dell-csm-operator:v1.4.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -2339,39 +2930,41 @@ spec:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
   relatedImages:
-  - image: docker.io/dellemc/dell-csm-operator:v1.3.0
+  - image: docker.io/dellemc/dell-csm-operator:v1.4.0
     name: dell-csm-operator
-  - image: docker.io/dellemc/csi-isilon:v2.8.0
+  - image: docker.io/dellemc/csi-isilon:v2.9.0
     name: csi-isilon
-  - image: docker.io/dellemc/csi-powermax:v2.8.0
+  - image: docker.io/dellemc/csi-powermax:v2.9.0
     name: csi-powermax
-  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.6.0
+  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.8.0
     name: csipowermax-reverseproxy
-  - image: docker.io/dellemc/csi-powerstore:v2.8.0
+  - image: docker.io/dellemc/csi-powerstore:v2.9.0
     name: csi-powerstore
-  - image: docker.io/dellemc/csi-unity:v2.7.0
+  - image: docker.io/dellemc/csi-unity:v2.9.0
     name: csi-unity
-  - image: docker.io/dellemc/csi-vxflexos:v2.7.0
+  - image: docker.io/dellemc/csi-vxflexos:v2.9.0
     name: csi-vxflexos
-  - image: docker.io/dellemc/sdc:3.6.1
+  - image: docker.io/dellemc/sdc:4.5
     name: sdc
-  - image: docker.io/dellemc/csm-authorization-sidecar:v1.7.0
+  - image: docker.io/dellemc/csm-authorization-sidecar:v1.8.0
     name: karavi-authorization-proxy
-  - image: docker.io/dellemc/dell-csi-replicator:v1.5.0
+  - image: docker.io/dellemc/dell-csi-replicator:v1.6.0
     name: dell-csi-replicator
-  - image: docker.io/dellemc/dell-replication-controller:v1.5.0
+  - image: docker.io/dellemc/dell-replication-controller:v1.6.0
     name: dell-replication-controller-manager
-  - image: docker.io/dellemc/dell-replication-init:v1.0.1
-    name: dell-replication-controller-init
-  - image: docker.io/dellemc/csm-topology:v1.5.0
+  - image: docker.io/dellemc/csm-topology:v1.7.0
     name: topology
   - image: docker.io/otel/opentelemetry-collector:0.42.0
     name: otel-collector
-  - image: docker.io/dellemc/csm-metrics-powerscale:v1.2.0
+  - image: docker.io/dellemc/csm-metrics-powerscale:v1.4.0
     name: metrics-powerscale
-  - image: docker.io/dellemc/csm-metrics-powerflex:v1.5.0
+  - image: docker.io/dellemc/csm-metrics-powermax:v1.1.0
+    name: metrics-powermax
+  - image: docker.io/dellemc/csm-metrics-powerflex:v1.7.0
     name: metrics-powerflex
+  - image: docker.io/dellemc/podmon:v1.6.0
+    name: podmon-node
   - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
     name: kube-rbac-proxy
-  replaces: dell-csm-operator.v1.2.0
-  version: 1.3.0
+  replaces: dell-csm-operator.v1.3.0
+  version: 1.4.0

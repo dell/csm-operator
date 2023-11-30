@@ -894,7 +894,7 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
 	close(StopWatch)
-	version, err := utils.GetModuleDefaultVersion("v2.3.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
+	version, err := utils.GetModuleDefaultVersion("v2.4.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
 	assert.NotNil(suite.T(), err)
 	assert.NotNil(suite.T(), version)
 }
@@ -1169,7 +1169,7 @@ func getObservabilityModule() []csmv1.Module {
 		{
 			Name:          csmv1.Observability,
 			Enabled:       true,
-			ConfigVersion: "v1.4.0",
+			ConfigVersion: "v1.7.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "topology",
@@ -1221,7 +1221,7 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.5.0",
+			ConfigVersion: "v1.6.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ReplicationSideCarName,
@@ -1234,9 +1234,6 @@ func getReplicaModule() []csmv1.Module {
 							Value: "skip-replication-cluster-check",
 						},
 					},
-				},
-				{
-					Name: utils.ReplicationControllerInit,
 				},
 			},
 		},
@@ -1261,7 +1258,7 @@ func getAuthModule() []csmv1.Module {
 		{
 			Name:          csmv1.Authorization,
 			Enabled:       true,
-			ConfigVersion: "v1.5.0",
+			ConfigVersion: "v1.8.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: "karavi-authorization-proxy",

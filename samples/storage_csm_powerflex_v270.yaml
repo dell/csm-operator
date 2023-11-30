@@ -35,6 +35,10 @@ spec:
           value: "0"
 
     sideCars:
+    # 'k8s' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        args: ["--volume-name-prefix=k8s"]
+
     # sdc-monitor is disabled by default, due to high CPU usage 
       - name: sdc-monitor
         enabled: false
@@ -358,7 +362,6 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
             - "--arrayConnectivityPollRate=5"
-            - "--arrayConnectivityConnectionLossThreshold=3"
             # Below 3 args should not be modified.
             - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
             - "--mode=node"

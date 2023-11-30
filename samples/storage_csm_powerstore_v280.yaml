@@ -57,6 +57,10 @@ spec:
           value: debug
 
     sideCars:
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        args: ["--volume-name-prefix=csivol"]
+
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -197,7 +201,6 @@ spec:
             - "--leaderelection=false"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
-            - "--arrayConnectivityConnectionLossThreshold=3"
             # Below 4 args should not be modified.
             - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
             - "--mode=node"

@@ -1,5 +1,6 @@
-FROM registry.access.redhat.com/ubi9/ubi-micro@sha256:18a01cb5c53560ca2295e8a218454fe33b330ad6fac0d0ea43a513cd93787b7f
+ARG BASEIMAGE
 
+FROM $BASEIMAGE as final
 # Core bundle labels.
 LABEL operators.operatorframework.io.bundle.mediatype.v1=registry+v1
 LABEL operators.operatorframework.io.bundle.manifests.v1=manifests/
@@ -14,7 +15,7 @@ LABEL operators.operatorframework.io.metrics.project_layout=go.kubebuilder.io/v3
 # Labels for testing.
 LABEL operators.operatorframework.io.test.mediatype.v1=scorecard+v1
 LABEL operators.operatorframework.io.test.config.v1=tests/scorecard/
-LABEL com.redhat.openshift.versions=v4.12-v4.13
+LABEL com.redhat.openshift.versions=v4.13-v4.14
 LABEL com.redhat.delivery.backport=false
 LABEL com.redhat.delivery.operator.bundle=true
 

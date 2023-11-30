@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// StepDefinition -
+// StepDefinition - definition of a step
 type StepDefinition struct {
 	Handler reflect.Value
 	Expr    *regexp.Regexp
@@ -70,10 +70,16 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
 	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
 	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
-	//Configure authorization-proxy-server for [powerflex]
+
+	// Configure authorization-proxy-server for [powerflex]
 	runner.addStep(`^Configure authorization-proxy-server for \[([^"]*)\]$`, step.configureAuthorizationProxyServer)
 	runner.addStep(`^Set up application mobility CR \[([^"]*)\]$`, step.configureAMInstall)
 
+	// Connectivity Client steps
+	runner.addStep(`^Install connectivity client from CR \[(\d+)\]$`, step.applyCustomResource)
+	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is installed$`, step.validateConnectivityClientInstalled)
+	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is not installed$`, step.validateConnectivityClientNotInstalled)
+	runner.addStep(`^Uninstall connectivity client from CR \[(\d+)\]`, step.uninstallConnectivityClient)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
@@ -107,7 +113,7 @@ func (runner *Runner) addStep(expr string, stepFunc interface{}) {
 
 }
 
-// RunStep -
+// RunStep - runs a step
 func (runner *Runner) RunStep(stepName string, res Resource) error {
 	for _, stepDef := range runner.Definitions {
 		if stepDef.Expr.MatchString(stepName) {
@@ -132,7 +138,6 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 			}
 			return nil
 		}
-
 	}
 
 	return fmt.Errorf("no method for step: %s", stepName)

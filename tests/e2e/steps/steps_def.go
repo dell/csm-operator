@@ -126,7 +126,6 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	}
 
 	return nil
-
 }
 
 func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string) error {
@@ -1282,6 +1281,59 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 		if err != nil {
 			return err
 		}
+// Steps for Connectivity Client
+
+func (step *Step) validateConnectivityClientInstalled(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1]
+	found := new(csmv1.ApexConnectivityClient)
+
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name}, found); err != nil {
+		return err
+	}
+
+	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
+}
+
+func (step *Step) validateConnectivityClientNotInstalled(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1]
+	found := new(csmv1.ApexConnectivityClient)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name}, found); err == nil {
+		return fmt.Errorf("Found traces of client installation in namespace %s: %v", cr.Namespace, found)
+	}
+
+	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
+}
+
+// uninstallConnectivityClient - uninstall the client
+func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1]
+
+	found := new(csmv1.ApexConnectivityClient)
+	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name}, found,
+	)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
+	if err != nil {
+		return fmt.Errorf("failed to read testdata: %v", err)
+	}
+
+	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to delete CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
 	}
 
 	return nil
@@ -1308,3 +1360,4 @@ func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStor
 	fmt.Println("All AM pods removed ")
 	return nil
 }
+

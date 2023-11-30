@@ -45,7 +45,9 @@ func getInt32(pointer *int32) int32 {
 	return *pointer
 }
 
-func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
+// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
+// TODO: Can be uncommented once this issues gets sorted out
+/* func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
 	deployment := &appsv1.Deployment{}
 	log := logger.GetLogger(ctx)
 
@@ -130,6 +132,87 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	}
 
 	log.Infof("Deployment totalReplicas count %d totalReadyPods %d totalFailedCount %d", totalReplicas, totalReadyPods, totalFailedCount)
+
+	return totalReplicas, csmv1.PodStatus{
+		Available: fmt.Sprintf("%d", totalReadyPods),
+		Desired:   fmt.Sprintf("%d", totalReplicas),
+		Failed:    fmt.Sprintf("%d", totalFailedCount),
+	}, err
+} */
+
+func getAccStatefulSetStatus(ctx context.Context, instance *csmv1.ApexConnectivityClient, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
+	statefulSet := &appsv1.StatefulSet{}
+	log := logger.GetLogger(ctx)
+
+	var err error
+	var msg string
+	totalReplicas := int32(0)
+	totalReadyPods := 0
+	totalFailedCount := 0
+
+	_, clusterClients, err := GetAccDefaultClusters(ctx, *instance, r)
+	if err != nil {
+		return int32(totalReplicas), csmv1.PodStatus{}, err
+	}
+
+	for _, cluster := range clusterClients {
+		log.Infof("statefulSet status for cluster: %s", cluster.ClusterID)
+		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
+
+		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetApexConnectivityClientName(),
+			Namespace: instance.GetNamespace()}, statefulSet)
+		if err != nil {
+			return 0, csmv1.PodStatus{}, err
+		}
+		replicas := getInt32(statefulSet.Spec.Replicas)
+		readyPods := 0
+		failedCount := 0
+
+		label := instance.GetNamespace() + "-controller"
+		opts := []client.ListOption{
+			client.InNamespace(instance.GetNamespace()),
+			client.MatchingLabels{"app": label},
+		}
+
+		podList := &corev1.PodList{}
+		err = cluster.ClusterCTRLClient.List(ctx, podList, opts...)
+		if err != nil {
+			return statefulSet.Status.ReadyReplicas, csmv1.PodStatus{}, err
+		}
+
+		for _, pod := range podList.Items {
+
+			log.Infof("statefulSet pod count %d name %s status %s", readyPods, pod.Name, pod.Status.Phase)
+			if pod.Status.Phase == corev1.PodRunning {
+				readyPods++
+			} else if pod.Status.Phase == corev1.PodPending {
+				failedCount++
+				errMap := make(map[string]string)
+				for _, cs := range pod.Status.ContainerStatuses {
+					if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
+						log.Infow("container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
+						shortMsg := strings.Replace(cs.State.Waiting.Message,
+							constants.PodStatusRemoveString, "", 1)
+						errMap[cs.State.Waiting.Reason] = shortMsg
+					}
+					if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
+						errMap[cs.State.Waiting.Reason] = constants.PendingCreate
+					}
+				}
+				for k, v := range errMap {
+					msg += k + "=" + v
+				}
+			}
+		}
+
+		totalReplicas += replicas
+		totalReadyPods += readyPods
+		totalFailedCount += failedCount
+	}
+
+	if totalFailedCount > 0 {
+		err = errors.New(msg)
+	}
 
 	return totalReplicas, csmv1.PodStatus{
 		Available: fmt.Sprintf("%d", totalReadyPods),
@@ -306,6 +389,29 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	return running, err
 }
 
+func calculateAccState(ctx context.Context, instance *csmv1.ApexConnectivityClient, r ReconcileCSM, newStatus *csmv1.ApexConnectivityClientStatus) (bool, error) {
+	log := logger.GetLogger(ctx)
+	running := false
+	controllerReplicas, clientStatus, controllerErr := getAccStatefulSetStatus(ctx, instance, r)
+	newStatus.ClientStatus = clientStatus
+
+	newStatus.State = constants.Failed
+	log.Infof("statefulSet controllerReplicas [%d]", controllerReplicas)
+	log.Infof("statefulSet clientStatus.Available [%s]", clientStatus.Available)
+
+	if fmt.Sprintf("%d", controllerReplicas) == clientStatus.Available {
+		running = true
+		newStatus.State = constants.Succeeded
+	}
+	log.Infof("calculate overall state [%s]", newStatus.State)
+	var err error
+	if controllerErr != nil {
+		err = controllerErr
+	}
+	SetAccStatus(ctx, r, instance, newStatus)
+	return running, err
+}
+
 // SetStatus of csm
 func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
 
@@ -321,6 +427,16 @@ func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerSto
 		instance.GetCSMStatus().ControllerStatus = newStatus.ControllerStatus
 		instance.GetCSMStatus().NodeStatus = newStatus.NodeStatus
 	}
+}
+
+// SetAccStatus of csm
+func SetAccStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ApexConnectivityClient, newStatus *csmv1.ApexConnectivityClientStatus) {
+
+	log := logger.GetLogger(ctx)
+	instance.GetApexConnectivityClientStatus().State = newStatus.State
+	log.Infow("Apex Client State", "Client",
+		newStatus.ClientStatus)
+	instance.GetApexConnectivityClientStatus().ClientStatus = newStatus.ClientStatus
 }
 
 // UpdateStatus of csm
@@ -371,6 +487,36 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	return merr
 }
 
+// UpdateAccStatus of csm
+func UpdateAccStatus(ctx context.Context, instance *csmv1.ApexConnectivityClient, r ReconcileCSM, newStatus *csmv1.ApexConnectivityClientStatus) error {
+	dMutex.Lock()
+	defer dMutex.Unlock()
+
+	log := logger.GetLogger(ctx)
+	log.Infow("update current csm status", "status", instance.Status.State)
+	statusString := fmt.Sprintf("update new Status: (State - %s)",
+		newStatus.State)
+	log.Info(statusString)
+	log.Infow("Update State", "Client",
+		newStatus.ClientStatus)
+
+	_, merr := calculateAccState(ctx, instance, r, newStatus)
+	csm := new(csmv1.ApexConnectivityClient)
+	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,
+		Namespace: instance.GetNamespace()}, csm)
+	if err != nil {
+		return err
+	}
+	csm.Status = instance.Status
+	err = r.GetClient().Status().Update(ctx, csm)
+	if err != nil {
+		log.Error(err, " Failed to update CR status")
+		return err
+	}
+	log.Info("Update done")
+	return merr
+}
+
 // HandleValidationError for csm
 func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM,
 	validationError error) (reconcile.Result, error) {
@@ -387,6 +533,25 @@ func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorage
 	}
 	log.Error(validationError, fmt.Sprintf(" *************Create/Update %s failed ********",
 		instance.GetDriverType()))
+	return LogBannerAndReturn(reconcile.Result{Requeue: false}, validationError)
+}
+
+// HandleAccValidationError for csm
+func HandleAccValidationError(ctx context.Context, instance *csmv1.ApexConnectivityClient, r ReconcileCSM,
+	validationError error) (reconcile.Result, error) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
+	log := logger.GetLogger(ctx)
+
+	newStatus := instance.GetApexConnectivityClientStatus()
+	// Update the status
+	newStatus.State = constants.Failed
+	err := r.GetClient().Status().Update(ctx, instance)
+	if err != nil {
+		log.Error(err, "Failed to update CR status HandleValidationError")
+	}
+	log.Error(validationError, fmt.Sprintf(" *************Create/Update %s failed ********",
+		instance.GetClientType()))
 	return LogBannerAndReturn(reconcile.Result{Requeue: false}, validationError)
 }
 
@@ -410,6 +575,32 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		// If previously we were in running state
 		if oldStatus.State == constants.Running {
 			log.Info("HandleSuccess Driver state didn't change from Running")
+		}
+		return reconcile.Result{}, nil
+	}
+	return LogBannerAndReturn(reconcile.Result{}, nil)
+}
+
+// HandleAccSuccess for csm
+func HandleAccSuccess(ctx context.Context, instance *csmv1.ApexConnectivityClient, r ReconcileCSM, newStatus, oldStatus *csmv1.ApexConnectivityClientStatus) (reconcile.Result, error) {
+	dMutex.Lock()
+	defer dMutex.Unlock()
+
+	log := logger.GetLogger(ctx)
+
+	running, err := calculateAccState(ctx, instance, r, newStatus)
+	if err != nil {
+		log.Error("HandleSuccess ApexConnectivityClient status ", "error: ", err.Error())
+		newStatus.State = constants.Failed
+	}
+	if running {
+		newStatus.State = constants.Running
+	}
+	log.Infow("HandleSuccess Apex Client state ", "newStatus.State", newStatus.State)
+	if newStatus.State == constants.Running {
+		// If previously we were in running state
+		if oldStatus.State == constants.Running {
+			log.Info("HandleSuccess Apex Client state didn't change from Running")
 		}
 		return reconcile.Result{}, nil
 	}

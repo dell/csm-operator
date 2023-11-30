@@ -9,6 +9,8 @@ testbin/*
 vendor/
 semver.mk
 cert-csi
+csm-common.mk
+__debug_bin*
 
 # Test binary, build with `go test -c`
 *.test

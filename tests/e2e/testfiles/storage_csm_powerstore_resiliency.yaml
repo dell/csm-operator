@@ -28,8 +28,8 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
-    # Config version for CSI PowerStore v2.8.0 driver
-    configVersion: v2.8.0
+    # Config version for CSI PowerStore v2.9.0 driver
+    configVersion: v2.9.0
     authSecret: powerstore-config
     # Controller count
     replicas: 2

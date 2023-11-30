@@ -15,10 +15,9 @@ package utils
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
-
-	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -112,7 +111,7 @@ const (
 	DefaultReleaseNamespace = "<DriverDefaultReleaseNamespace>"
 	// DefaultImagePullPolicy constant
 	DefaultImagePullPolicy = "IfNotPresent"
-	//KubeletConfigDir path
+	// KubeletConfigDir path
 	KubeletConfigDir = "<KUBELET_CONFIG_DIR>"
 	// ReplicationControllerNameSpace -
 	ReplicationControllerNameSpace = "dell-replication-controller"
@@ -222,14 +221,14 @@ func UpdateinitContainerApply(initContainers []csmv1.ContainerTemplate, c *acore
 			c.Args = ReplaceAllArgs(c.Args, init.Args)
 
 		}
-
 	}
 }
 
 // ReplaceAllApplyCustomEnvs -
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 	commonEnv []corev1.EnvVar,
-	nrEnv []corev1.EnvVar) []acorev1.EnvVarApplyConfiguration {
+	nrEnv []corev1.EnvVar,
+) []acorev1.EnvVarApplyConfiguration {
 	newEnv := make([]acorev1.EnvVarApplyConfiguration, 0)
 	temp := make(map[string]string)
 	for _, update := range commonEnv {
@@ -250,7 +249,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 			if val == "NA" {
 				val = ""
 			}
-			//log.Info("debug overwrite ", "name", *old.Name, "value", val)
+			// log.Info("debug overwrite ", "name", *old.Name, "value", val)
 			e := acorev1.EnvVarApplyConfiguration{
 				Name:  old.Name,
 				Value: &val,
@@ -344,7 +343,30 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	return YamlString
 }
 
-// GetCTRLObject -
+// ModifyCommonCRs - update with common values
+func ModifyCommonCRs(YamlString string, cr csmv1.ApexConnectivityClient) string {
+	if cr.Name != "" {
+		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseName, cr.Name)
+	}
+	if cr.Namespace != "" {
+		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseNamespace, cr.Namespace)
+	}
+	if string(cr.Spec.Client.Common.ImagePullPolicy) != "" {
+		YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Client.Common.ImagePullPolicy))
+	}
+	path := ""
+	for _, env := range cr.Spec.Client.Common.Envs {
+		if env.Name == "KUBELET_CONFIG_DIR" {
+			path = env.Value
+			break
+		}
+	}
+	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
+
+	return YamlString
+}
+
+// GetCTRLObject - get controller object
 func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 	ctrlObjects := []crclient.Object{}
 
@@ -590,6 +612,14 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 			ctrlObjects = append(ctrlObjects, &ct)
 
+		case "StatefulSet":
+
+			var ss appsv1.StatefulSet
+			if err := yaml.Unmarshal(raw, &ss); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ss)
 		}
 	}
 
@@ -785,7 +815,6 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 	}
 
 	return "", fmt.Errorf("%s driver does not exist in file %s", dType, configMapPath)
-
 }
 
 func versionParser(version string) (int, int, error) {
@@ -845,8 +874,10 @@ func getClusterIDs(replica csmv1.Module) ([]string, error) {
 func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Client) ([]byte, error) {
 	log := logger.GetLogger(ctx)
 	secret := &corev1.Secret{}
-	if err := ctrlClient.Get(ctx, t1.NamespacedName{Name: clusterID,
-		Namespace: ReplicationControllerNameSpace}, secret); err != nil {
+	if err := ctrlClient.Get(ctx, t1.NamespacedName{
+		Name:      clusterID,
+		Namespace: ReplicationControllerNameSpace,
+	}, secret); err != nil {
 		if k8serror.IsNotFound(err) {
 			return []byte("error"), fmt.Errorf("failed to find secret %s in namespace %s", clusterID, ReplicationControllerNameSpace)
 		}
@@ -886,7 +917,6 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 	}
 
 	return NewK8sClientWrapper(clusterConfigData)
-
 }
 
 // IsResiliencyModuleEnabled - check if resiliency module is enabled or not
@@ -945,7 +975,25 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	return replicaEnabled, clusterClients, nil
 }
 
+<<<<<<< HEAD
 // GetSecret - check if the secret is present
+=======
+// GetAccDefaultClusters - get default clusters
+func GetAccDefaultClusters(ctx context.Context, instance csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster, error) {
+	clusterClients := []ReplicaCluster{
+		{
+			ClusterCTRLClient: r.GetClient(),
+			ClusterK8sClient:  r.GetK8sClient(),
+			ClusterID:         DefaultSourceClusterID,
+		},
+	}
+
+	replicaEnabled := false
+	return replicaEnabled, clusterClients, nil
+}
+
+// GetSecret -get secret
+>>>>>>> main
 func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*corev1.Secret, error) {
 	found := &corev1.Secret{}
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: namespace}, found)
@@ -1006,6 +1054,7 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 	return false
 }
 
+<<<<<<< HEAD
 // IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
 func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
 	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)
@@ -1023,6 +1072,9 @@ func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.Container
 }
 
 // Contains -
+=======
+// Contains - check if slice contains the specified string
+>>>>>>> main
 func Contains(slice []string, str string) bool {
 	for _, v := range slice {
 		if v == str {

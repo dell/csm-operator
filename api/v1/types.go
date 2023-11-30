@@ -34,6 +34,9 @@ type ModuleType string
 // ObservabilityComponentType - type representing the type of components inside observability module. e.g. - topology
 type ObservabilityComponentType string
 
+// ClientType - the type of the client
+type ClientType string
+
 const (
 	// Replication - placeholder for replication constant
 	Replication ModuleType = "replication"
@@ -89,6 +92,9 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// DreadnoughtClient - placeholder for the APEX Connectivity Client
+	DreadnoughtClient ClientType = "apexconnectivityclient"
+
 	// Provisioner - placeholder for constant
 	Provisioner = "provisioner"
 	// Attacher - placeholder for constant
@@ -103,7 +109,7 @@ const (
 	Sdcmonitor = "sdc-monitor"
 	// Externalhealthmonitor - placeholder for constant
 	Externalhealthmonitor = "external-health-monitor"
-	//Sdc - placeholder for constant
+	// Sdc - placeholder for constant
 	Sdc = "sdc"
 
 	// EventDeleted - Deleted in event recorder
@@ -227,9 +233,45 @@ type Driver struct {
 	ForceRemoveDriver bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
 }
 
+// Client - APEX Connectivity Client deployment info
+// +k8s:openapi-gen=true
+type Client struct {
+	// ClientType is the Client type for Dell Technologies - e.g, ApexConnectivityClient
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Client Type"
+	CSMClientType ClientType `json:"csmClientType" yaml:"csmClientType"`
+
+	// ConfigVersion is the configuration version of the client
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
+	ConfigVersion string `json:"configVersion" yaml:"configVersion"`
+
+	// Common is the common specification for both controller and node plugins
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Common specification"
+	Common ContainerTemplate `json:"common" yaml:"common"`
+
+	// SideCars is the specification for CSI sidecar containers
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI SideCars specification"
+	SideCars []ContainerTemplate `json:"sideCars,omitempty" yaml:"sideCars"`
+
+	// InitContainers is the specification for Driver InitContainers
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="InitContainers"
+	InitContainers []ContainerTemplate `json:"initContainers,omitempty" yaml:"initContainers"`
+
+	// ForceRemoveClient is the boolean flag used to remove client deployment when CR is deleted
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Client"
+	ForceRemoveClient bool `json:"forceRemoveClient,omitempty" yaml:"forceRemoveClient"`
+
+	// ConnectionTarget is the target that the client connects to in the Dell datacenter
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Connection Target"
+	ConnectionTarget string `json:"connectionTarget,omitempty" yaml:"connectionTarget"`
+
+	// UsePrivateCaCerts is used to specify private CA signed certs
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Use Private CA Certs"
+	UsePrivateCaCerts bool `json:"usePrivateCaCerts,omitempty" yaml:"usePrivateCaCerts"`
+}
+
 // ContainerTemplate template
 type ContainerTemplate struct {
-
 	// Name is the name of Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Name"
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`
