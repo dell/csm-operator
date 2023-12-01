@@ -9,16 +9,16 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.6.0
+      configVersion: v1.8.0
       forceRemoveModule: true
       components:
       - name: karavi-authorization-proxy-server
         # enable: Enable/Disable csm-authorization proxy server
         enabled: true
-        proxyService: dellemc/csm-authorization-proxy:v1.6.0
-        tenantService: dellemc/csm-authorization-tenant:v1.6.0
-        roleService: dellemc/csm-authorization-role:v1.6.0
-        storageService: dellemc/csm-authorization-storage:v1.6.0
+        proxyService: dellemc/csm-authorization-proxy:v1.8.0
+        tenantService: dellemc/csm-authorization-tenant:v1.8.0
+        roleService: dellemc/csm-authorization-role:v1.8.0
+        storageService: dellemc/csm-authorization-storage:v1.8.0
         redis: redis:6.0.8-alpine
         commander: rediscommander/redis-commander:latest
         opa: openpolicyagent/opa
@@ -26,28 +26,10 @@ spec:
         envs:
           # base hostname for the ingress rules that expose the services
           # the proxy-server ingress will use this hostname
-          # the tenant-service ingress will use tenant.hostname
-          # the role-service ingress will use role.hostname
-          # the storage-service ingress will use storage.hostname
           # Allowed values: string
           # Default value: csm-authorization.com
           - name: "PROXY_HOST"
             value: "csm-authorization.com"
-
-          # Authorization log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "AUTHORIZATION_LOG_LEVEL"
-            value: "debug"
-
-          # Zipkin tracing configuration
-          # this can be updated on the fly via the csm-config-params configMap
-          # Default value: None 
-          - name: "AUTHORIZATION_ZIPKIN_COLLECTORURI"
-            value: ""          
-          # Default value: None 
-          - name: "AUTHORIZATION_ZIPKIN_PROBABILITY"
-            value: ""
 
           # Proxy-service ingress configuration
           # Default value: nginx
@@ -57,21 +39,6 @@ spec:
           # Default value: authorization-ingress-nginx-controller.namespace.svc.cluster.local
           - name: "PROXY_INGRESS_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-
-          # Tenant-service ingress configuration
-          # Default value: nginx
-          - name: "TENANT_INGRESS_CLASSNAME"
-            value: "nginx"
-
-          # Role-service ingress configuration
-          # Default value: nginx
-          - name: "ROLE_INGRESS_CLASSNAME"
-            value: "nginx" 
-
-          # Storage-service ingress configuration
-          # Default value: nginx
-          - name: "STORAGE_INGRESS_CLASSNAME"
-            value: "nginx" 
 
           # Specify storage class for redis. Otherwise, default storage class is used.
           # Default value: None
@@ -93,6 +60,7 @@ spec:
       # Default value: true
       - name: cert-manager
         enabled: true
+
 ---
 apiVersion: v1
 kind: ConfigMap
