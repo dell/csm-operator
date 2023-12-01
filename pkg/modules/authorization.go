@@ -26,7 +26,6 @@ import (
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
-	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -535,12 +534,6 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 	YamlString = string(buf)
 	authNamespace := cr.Namespace
 
-	var versionLessThan170 bool
-	if semver.Compare(auth.ConfigVersion, "v1.7.0") == -1 {
-		versionLessThan170 = true
-	}
-
-	var tenantIngressClassName, roleIngressClassName, storageIngressClassName string
 	for _, component := range auth.Components {
 		if component.Name == AuthProxyServerComponent {
 			for _, env := range component.Envs {
@@ -550,14 +543,6 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 					proxyIngressHost = env.Value
 				} else if env.Name == "PROXY_INGRESS_CLASSNAME" {
 					proxyIngressClassName = env.Value
-				} else if versionLessThan170 {
-					if env.Name == "TENANT_INGRESS_CLASSNAME" {
-						tenantIngressClassName = env.Value
-					} else if env.Name == "ROLE_INGRESS_CLASSNAME" {
-						roleIngressClassName = env.Value
-					} else if env.Name == "STORAGE_INGRESS_CLASSNAME" {
-						storageIngressClassName = env.Value
-					}
 				}
 			}
 		}
@@ -567,12 +552,6 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, proxyIngressHost)
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressClassName, proxyIngressClassName)
-
-	if versionLessThan170 {
-		YamlString = strings.ReplaceAll(YamlString, AuthTenantIngressClassName, tenantIngressClassName)
-		YamlString = strings.ReplaceAll(YamlString, AuthRoleIngressClassName, roleIngressClassName)
-		YamlString = strings.ReplaceAll(YamlString, AuthStorageIngressClassName, storageIngressClassName)
-	}
 
 	return YamlString, nil
 }

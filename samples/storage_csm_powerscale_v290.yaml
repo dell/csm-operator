@@ -265,10 +265,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.6.0
+      configVersion: v1.9.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.6.0
+        image: dellemc/csm-authorization-sidecar:v1.9.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
@@ -451,10 +451,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.7.0
+      configVersion: v1.8.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.6.0
+          image: dellemc/podmon:v1.8.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-isilon"
@@ -469,7 +469,7 @@ spec:
             - "--driverPath=csi-isilon.dellemc.com"
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
         - name: podmon-node
-          image: dellemc/podmon:v1.6.0
+          image: dellemc/podmon:v1.8.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
