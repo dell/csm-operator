@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -30,12 +31,14 @@ import (
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -133,6 +136,10 @@ var (
 	operatorConfig = utils.OperatorConfig{
 		ConfigDirectory: "../operatorconfig",
 	}
+
+	badOperatorConfig = utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
 )
 
 // CSMContrllerTestSuite implements testify suite
@@ -154,8 +161,11 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	unittestLogger.Info("Init unit test...")
 
 	csmv1.AddToScheme(scheme.Scheme)
+	velerov1.AddToScheme(scheme.Scheme)
+	apiextv1.AddToScheme(scheme.Scheme)
 
 	apiextv1.AddToScheme(scheme.Scheme)
+	certmanagerv1.AddToScheme(scheme.Scheme)
 
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)
@@ -175,6 +185,13 @@ func (suite *CSMControllerTestSuite) TestReconcile() {
 func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.makeFakeAuthServerCSM(csmName, suite.namespace, getAuthProxyServer())
 	suite.runFakeAuthCSMManager("timed out waiting for the condition", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeAuthCSMManager("", true)
+}
+
+func (suite *CSMControllerTestSuite) TestAppMobReconcile() {
+	suite.makeFakeAppMobCSM(csmName, suite.namespace, getAppMob())
+	suite.runFakeAuthCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true)
 }
@@ -218,9 +235,6 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyError() {
 	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
 	csm.Spec.Modules = getReverseProxyModule()
 	reconciler := suite.createReconciler()
-	badOperatorConfig := utils.OperatorConfig{
-		ConfigDirectory: "../in-valid-path",
-	}
 	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 }
@@ -471,6 +485,8 @@ func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
 // Test all edge cases in RemoveDriver
 func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	r := suite.createReconciler()
+	csmBadType := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = "powerscale"
@@ -481,7 +497,9 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 		errorInjector *bool
 		expectedErr   string
 	}{
-		{"getDriverConfig error", csmWoType, nil, "no such file or directory"},
+		{"getDriverConfig error", csmBadType, nil, "no such file or directory"},
+		// don't return error if there's no driver- could be a valid case like Auth server or App Mobility
+		{"getDriverConfig no driver", csmWoType, nil, ""},
 		// can't find objects since they are not created. In this case error is nil
 		{"delete obj not found", csm, nil, ""},
 		{"get SA error", csm, &getSAError, getSAErrorStr},
@@ -515,6 +533,47 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 			if tt.errorInjector != nil {
 				*tt.errorInjector = false
 				r.Client.(*crclient.Client).Clear()
+			}
+		})
+	}
+
+}
+
+// Test all edge cases in SyncCSM
+func (suite *CSMControllerTestSuite) TestSyncCSM() {
+	r := suite.createReconciler()
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csmBadType := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
+	authProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	authProxyServerCSM.Spec.Modules = getAuthProxyServer()
+	appMobCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	appMobCSM.Spec.Modules = getAppMob()
+	reverseProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
+
+	syncCSMTests := []struct {
+		name        string
+		csm         csmv1.ContainerStorageModule
+		op          utils.OperatorConfig
+		expectedErr string
+	}{
+		{"auth proxy server bad op conf", authProxyServerCSM, badOperatorConfig, "failed to deploy authorization proxy server"},
+		{"app mobility happy path", appMobCSM, operatorConfig, ""},
+		{"app mobility bad op conf", appMobCSM, badOperatorConfig, "failed to deploy application mobility"},
+		{"reverse proxy server bad op conf", reverseProxyServerCSM, badOperatorConfig, "failed to deploy reverseproxy proxy server"},
+		{"getDriverConfig bad op config", csm, badOperatorConfig, ""},
+		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},
+	}
+
+	for _, tt := range syncCSMTests {
+		suite.T().Run(tt.name, func(t *testing.T) {
+			err := r.SyncCSM(ctx, tt.csm, tt.op, r.Client)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
 	}
@@ -568,17 +627,16 @@ func (suite *CSMControllerTestSuite) TestRemoveModule() {
 func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 	tests := map[string]func(t *testing.T) (csm *csmv1.ContainerStorageModule, errorInjector *bool, expectedErr string){
 		"Success - Enable all modules": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
-			suite.makeFakeCSM(csmName, suite.namespace, false, append(getReplicaModule(), getObservabilityModule()...))
-
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...))
 			csm := &csmv1.ContainerStorageModule{}
 			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
 			err := suite.fakeClient.Get(ctx, key, csm)
 			assert.Nil(suite.T(), err)
-			csm.Spec.Modules = append(getReplicaModule(), getObservabilityModule()...)
+			csm.Spec.Modules = append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...)
 			return csm, &[]bool{false}[0], ""
 		},
 		"Success - Disable all modules": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
-			suite.makeFakeCSM(csmName, suite.namespace, false, append(getReplicaModule(), getObservabilityModule()...))
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...))
 
 			csm := &csmv1.ContainerStorageModule{}
 			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
@@ -586,13 +644,15 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			assert.Nil(suite.T(), err)
 			replica := getReplicaModule()
 			replica[0].Enabled = false
+			appMob := getAppMob()
+			appMob[0].Enabled = false
 			obs := getObservabilityModule()
 			obs[0].Enabled = false
-			csm.Spec.Modules = append(replica, obs...)
+			csm.Spec.Modules = append(append(replica, obs...), appMob...)
 			return csm, &[]bool{false}[0], ""
 		},
 		"Success - Disable Components": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
-			suite.makeFakeCSM(csmName, suite.namespace, false, append(getReplicaModule(), getObservabilityModule()...))
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...))
 
 			csm := &csmv1.ContainerStorageModule{}
 			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
@@ -600,7 +660,9 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			assert.Nil(suite.T(), err)
 			obs := getObservabilityModule()
 			obs[0].Components[0].Enabled = &[]bool{false}[0]
-			csm.Spec.Modules = append(getReplicaModule(), obs...)
+			appMob := getAppMob()
+			appMob[0].Components[0].Enabled = &[]bool{false}[0]
+			csm.Spec.Modules = append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...)
 			return csm, &[]bool{false}[0], ""
 		},
 	}
@@ -709,6 +771,11 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// error in App-Mobility
+	csm.Spec.Modules = getAppMob()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
@@ -758,6 +825,12 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	// error in Authorization Proxy Server
 	csm.Spec.Modules = getAuthProxyServer()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in App Mobility
+	csm.Spec.Modules = getAppMob()
+	csm.Spec.Modules[0].ConfigVersion = "8.0.0"
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
@@ -1242,6 +1315,59 @@ func getAuthProxyServer() []csmv1.Module {
 	}
 }
 
+func getAppMob() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.ApplicationMobility,
+			Enabled:       true,
+			ConfigVersion: "v1.0.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:    "application-mobility-controller-manager",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "APPLICATION_MOBILITY_REPLICA_COUNT",
+							Value: "1",
+						},
+					},
+				},
+				{
+					Name:    "cert-manager",
+					Enabled: &[]bool{true}[0],
+				},
+				{
+					Name:    "velero",
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "BACKUPSTORAGELOCATION_NAME",
+							Value: "default",
+						},
+						{
+							Name:  "CONFIG_PROVIDER",
+							Value: "aws",
+						},
+						{
+							Name:  "BUCKET_NAME",
+							Value: "velero-bucket",
+						},
+						{
+							Name:  "VOL_SNAPSHOT_LOCATION_NAME",
+							Value: "default",
+						},
+						{
+							Name:  "BACKUP_STORAGE_URL",
+							Value: "localhost:8000",
+						},
+					},
+				},
+			},
+			ForceRemoveModule: true,
+		},
+	}
+}
+
 func getReverseProxyModule() []csmv1.Module {
 	return []csmv1.Module{
 		{
@@ -1366,6 +1492,40 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 	}
 }
 
+func (suite *CSMControllerTestSuite) TestReconcileAppMob() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getAppMob()
+	reconciler := suite.createReconciler()
+	badOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
+	goodOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../operatorconfig",
+	}
+	err := reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	er := reconciler.reconcileAppMobilityCRDS(ctx, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), er)
+
+	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.Error(suite.T(), err)
+
+	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
+	err = reconciler.reconcileAppMobility(ctx, false, goodOperatorConfig, csm, suite.fakeClient)
+	assert.Nil(suite.T(), err)
+
+	// Restore the status
+	for _, c := range csm.Spec.Modules[0].Components {
+		c.Enabled = &[]bool{false}[0]
+	}
+}
+
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool, modules []csmv1.Module) {
 
@@ -1478,6 +1638,42 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 }
 
 // helper method to create k8s objects
+func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, modules []csmv1.Module) {
+
+	// this secret required by application-mobility module
+	sec := shared.MakeSecret("cloud-creds", ns, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by application-mobility module
+	sec = shared.MakeSecret("dls-license", "default", configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by application-mobility module
+	sec = shared.MakeSecret("iv", "default", configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by application-mobility module
+	sec = shared.MakeSecret("velero-restic-credentials", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by application-mobility module
+	sec = shared.MakeSecret("cert-manager-webhook-ca", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeModuleCSM(name, ns, configVersion)
+
+	csm.Spec.Modules = getAppMob()
+	csm.Spec.Modules[0].ForceRemoveModule = true
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
 func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, modules []csmv1.Module) {
 
 	// this secret required by authorization module

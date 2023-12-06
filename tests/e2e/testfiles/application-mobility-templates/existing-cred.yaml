@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: existing-cred
+  namespace: application-mobility
+  labels:
+    app.kubernetes.io/name: application-mobility-velero
+    app.kubernetes.io/instance: application-mobility
+type: Opaque
+stringData:
+  cloud: |
+    [default]
+    aws_access_key_id=access_key
+    aws_secret_access_key=access_key123

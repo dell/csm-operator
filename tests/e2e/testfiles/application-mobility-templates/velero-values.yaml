@@ -1,0 +1,60 @@
+
+# values file for installing velero
+# will be used to test operator behavior when velero is installed already (not technically supported config)
+
+upgradeCRDs: true
+
+cleanUpCRDs: false
+
+deployNodeAgent: true
+
+
+nodeAgent:
+  # Set to true if installing on OpenShift
+  privileged: false
+
+image:
+  repository: velero/velero
+  tag: v1.10.0
+  pullPolicy: IfNotPresent
+
+
+credentials:
+  useSecret: true 
+  name: existing-cloud-creds
+  secretContents:
+    cloud: |
+      [default]
+      aws_access_key_id=console
+      aws_secret_access_key=console123
+
+
+configuration:
+  # Cloud provider being used (e.g. aws, azure, gcp).
+  provider: aws
+
+  backupStorageLocation:
+    name: default
+    provider: aws
+    bucket: REPLACE_BUCKET_NAME
+    config: {
+      region: minio,
+      s3ForcePathStyle: true,
+      s3Url: http://REPLACE_S3URL
+    }
+
+    volumeSnapshotLocation:
+    - name: aws-default
+      provider: aws
+
+initContainers:
+- name: dell-custom-velero-plugin
+  image: REPLACE_PLUGIN_IMAGE
+  volumeMounts:
+  - mountPath: /target
+    name: plugins
+- name: velero-plugin-for-aws
+  image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e
+  volumeMounts:
+  - mountPath: /target
+    name: plugins
