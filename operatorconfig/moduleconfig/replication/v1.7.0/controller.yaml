@@ -24,7 +24,6 @@ rules:
   verbs:
   - get
   - list
-  - update
   - watch
 - apiGroups:
   - apiextensions.k8s.io
@@ -33,7 +32,6 @@ rules:
   verbs:
   - get
   - list
-  - patch
   - watch
 - apiGroups:
   - coordination.k8s.io
@@ -259,12 +257,6 @@ spec:
         control-plane: controller-manager
     spec:
       serviceAccountName: dell-replication-controller-sa
-      initContainers:
-      - name: init-rg-migration
-        imagePullPolicy: Always
-        image: <REPLICATION_INIT_IMAGE>
-        command:
-        - /upgrade/migrate_rg.sh
       containers:
       - args:
         - --enable-leader-election
