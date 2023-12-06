@@ -54,7 +54,7 @@ initContainers:
   - mountPath: /target
     name: plugins
 - name: velero-plugin-for-aws
-  image: amaas-eos-mw1.cec.lab.emc.com:5036/velero-plugin-for-aws:latest
+  image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e
   volumeMounts:
   - mountPath: /target
     name: plugins
