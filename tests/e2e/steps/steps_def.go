@@ -1281,6 +1281,11 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
 // Steps for Connectivity Client
 
 func (step *Step) validateConnectivityClientInstalled(res Resource, crNumStr string) error {
