@@ -17,7 +17,7 @@ powerscale:
       resiliency: "v1.7.0"
   v2.9.0:
       authorization: "v1.9.0"
-      replication: "v1.6.0"
+      replication: "v1.7.0"
       observability: "v1.7.0"
       resiliency: "v1.8.0"
 powerflex:
@@ -35,7 +35,7 @@ powerflex:
   v2.9.0:
       authorization: "v1.9.0"
       observability: "v1.7.0"
-      replication: "v1.6.0"
+      replication: "v1.7.0"
       resiliency: "v1.8.0"
 powerstore:
   # List of Driver versions and modules that supports the version
@@ -58,4 +58,4 @@ powermax:
   v2.9.0:
     csireverseproxy: "v2.8.0"
     authorization: "v1.9.0"
-    replication: "v1.6.0"
+    replication: "v1.7.0"
