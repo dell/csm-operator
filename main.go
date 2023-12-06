@@ -37,12 +37,14 @@ import (
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/controllers"
 	"github.com/dell/csm-operator/core"
 	k8sClient "github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -72,7 +74,11 @@ func init() {
 
 	utilruntime.Must(csmv1.AddToScheme(scheme))
 
+	utilruntime.Must(velerov1.AddToScheme(scheme))
+
 	utilruntime.Must(apiextv1.AddToScheme(scheme))
+
+	utilruntime.Must(certmanagerv1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
 

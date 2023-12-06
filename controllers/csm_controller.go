@@ -123,6 +123,7 @@ var (
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles/finalizers,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=subjectaccessreviews,verbs=create
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles,verbs=get;list;watch;update;create;delete;patch
+// +kubebuilder:rbac:groups="*",resources=*,resourceNames=application-mobility-velero-server,verbs=*
 // +kubebuilder:rbac:groups="monitoring.coreos.com",resources=servicemonitors,verbs=get;create
 // +kubebuilder:rbac:groups="",resources=deployments/finalizers,resourceNames=dell-csm-operator-controller-manager,verbs=update
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csidrivers,verbs=get;list;watch;create;update;delete;patch
@@ -138,7 +139,7 @@ var (
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=*
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions/status,verbs=get;list;patch;watch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments/status,verbs=patch
-// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=get;list;watch;create;update;delete;patch
 // +kubebuilder:rbac:groups="security.openshift.io",resources=securitycontextconstraints,resourceNames=privileged,verbs=use
 // +kubebuilder:rbac:urls="/metrics",verbs=get
 // +kubebuilder:rbac:groups="authentication.k8s.io",resources=tokenreviews,verbs=create
@@ -154,9 +155,37 @@ var (
 // +kubebuilder:rbac:groups="",resources=secrets,resourceNames=cert-manager-webhook-ca,verbs=get;list;watch;update
 // +kubebuilder:rbac:groups="cert-manager.io",resources=configmaps,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=cert-manager-controller,verbs=get;update;patch
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=backups,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=backups/finalizers,verbs=update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=backups/status,verbs=get;patch;update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=clusterconfigs,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=clusterconfigs/finalizers,verbs=update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=clusterconfigs/status,verbs=get;patch;update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=podvolumebackups,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=podvolumebackups/finalizers,verbs=update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=podvolumebackups/status,verbs=get;patch;update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=podvolumerestores,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=podvolumerestores/finalizers,verbs=update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=podvolumerestores/status,verbs=get;patch;update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=restores,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=restores/finalizers,verbs=update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=restores/status,verbs=get;patch;update
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=schedules,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=schedules/status,verbs=get;patch;update
+// +kubebuilder:rbac:groups="velero.io",resources=backups,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="velero.io",resources=backups/finalizers,verbs=upate
+// +kubebuilder:rbac:groups="velero.io",resources=backups/status,verbs=get;list;patch;update
+// +kubebuilder:rbac:groups="velero.io",resources=backupstoragelocations,verbs=get;list;patch;update;watch
+// +kubebuilder:rbac:groups="velero.io",resources=deletebackuprequests,verbs=create;delete;get;list;watch
+// +kubebuilder:rbac:groups="velero.io",resources=podvolumebackups,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="velero.io",resources=podvolumebackups/finalizers,verbs=update
+// +kubebuilder:rbac:groups="velero.io",resources=podvolumebackups/status,verbs=create;get;list;patch;update
+// +kubebuilder:rbac:groups="velero.io",resources=podvolumerestores,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="velero.io",resources=backuprepositories,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="velero.io",resources=restores,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-controller,verbs=get;update;patch
-// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=create
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=create;patch
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders,verbs=create;delete;get;list;watch
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders;orders/status,verbs=update;patch
 // +kubebuilder:rbac:groups="acme.cert-manager.io",resources=orders;challenges,verbs=get;list;watch;create;delete;deletecollection;patch;update
@@ -179,8 +208,8 @@ var (
 // +kubebuilder:rbac:groups="apiregistration.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;update
 // +kubebuilder:rbac:groups="auditregistration.k8s.io",resources=auditsinks,verbs=get;list;watch;update
 // +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=ingress-controller-leader,verbs=get;update
-// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=ingress-controller-leader,verbs=get;update
-// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=create;list;watch
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=ingress-controller-leader,verbs=get;update;patch
+// +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=create;list;watch;patch
 // +kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core,verbs=get;update;patch
 // +kubebuilder:rbac:groups="discovery.k8s.io",resources=endpointslices,verbs=list;watch;get
 // +kubebuilder:rbac:groups="certificates.k8s.io",resources=certificatesigningrequests,verbs=get;list;watch;update
@@ -609,6 +638,24 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 				}
 			}
 		}
+
+		//check if application mobility needs to be uninstalled
+		oldApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *oldCR, csmv1.ApplicationMobility)
+		newApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, csmv1.ApplicationMobility)
+
+		if oldApplicationmobilityEnabled && !newApplicationmobilityEnabled {
+			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
+			if err != nil {
+				return err
+			}
+
+			for _, cluster := range clusterClients {
+				log.Infow("Deleting application mobility")
+				if err := r.reconcileAppMobility(ctx, true, operatorConfig, *oldCR, cluster.ClusterCTRLClient); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	copyCR := newCR.DeepCopy()
@@ -638,6 +685,16 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return nil
 	}
 
+	if appmobilityEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ApplicationMobility); appmobilityEnabled {
+		log.Infow("Create/Update application mobility")
+		if err := r.reconcileAppMobilityCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
+			return fmt.Errorf("failed to deploy application mobility: %v", err)
+		}
+		if err := r.reconcileAppMobility(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+			return fmt.Errorf("failed to deploy application mobility: %v", err)
+		}
+	}
+
 	//Create/Update Reverseproxy Server
 	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled {
 		log.Infow("Trying Create/Update reverseproxy...")
@@ -652,6 +709,12 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	if err != nil {
 		return err
 	}
+
+	// driverConfig = nil means no driver specified in manifest
+	if driverConfig == nil {
+		return nil
+	}
+
 	err = r.oldStandAloneModuleCleanup(ctx, &cr, operatorConfig, driverConfig)
 	if err != nil {
 		return err
@@ -799,7 +862,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 	}
-
 	return nil
 }
 
@@ -888,6 +950,63 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 	return nil
 }
 
+func (r *ContainerStorageModuleReconciler) reconcileAppMobilityCRDS(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+
+	// AppMobility installs Application Mobility CRDS
+	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
+		log.Infow("Reconcile Application Mobility CRDS")
+		if err := modules.AppMobCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile Application Mobility CRDs: %v", err)
+		}
+		if err := modules.VeleroCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile Velero CRDS : %v", err)
+		}
+	}
+
+	return nil
+}
+
+// reconcileAppMobility - deploy Application Mobility
+func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+
+	// AppMobility installs Application Mobility Controller Manager
+	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
+		log.Infow("Reconcile Application Mobility Controller Manager")
+		if err := modules.AppMobilityWebhookService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to deploy WebhookService for Application Mobility: %v", err)
+		}
+		if err := modules.ControllerManagerMetricService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to deploy MetricService for Application Mobility: %v", err)
+		}
+		if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
+			if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile cert-manager for Application Mobility: %v", err)
+			}
+		}
+		if err := modules.IssuerCertService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to deploy Certificate & Issuer for Application Mobility: %v", err)
+		}
+		if err := modules.AppMobilityDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile Application Mobility controller Manager: %v", err)
+		}
+	}
+
+	// Appmobility installs velero
+	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobVeleroComponent) {
+		log.Infow("Reconcile application mobility velero")
+		if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile velero for Application Mobility: %v", err)
+		}
+		if err := modules.UseBackupStorageLoc(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to apply backupstorage location for Application Mobility: %v", err)
+		}
+	}
+
+	return nil
+}
+
 func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
 	operatorConfig utils.OperatorConfig) (*DriverConfig, error) {
@@ -899,6 +1018,12 @@ func getDriverConfig(ctx context.Context,
 		controller *utils.ControllerYAML
 		log        = logger.GetLogger(ctx)
 	)
+
+	//if no driver is specified, return nil
+	if cr.Spec.Driver.CSIDriverType == "" {
+		log.Infof("No driver specified in manifest")
+		return nil, nil
+	}
 
 	// Get Driver resources
 	log.Infof("Getting %s CSI Driver for Dell Technologies", cr.Spec.Driver.CSIDriverType)
@@ -1036,6 +1161,10 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		log.Error("error in getDriverConfig")
 		return err
 	}
+	// driverConfig = nil means no driver specified in manifest
+	if driverConfig == nil {
+		return nil
+	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, instance, r)
 	if err != nil {
@@ -1076,6 +1205,12 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 		}
 	}
 
+	if appMobilityEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ApplicationMobility); appMobilityEnabled {
+		log.Infow("Deleting Application Mobility")
+		if err := r.reconcileAppMobility(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+			return err
+		}
+	}
 	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled {
 		log.Infow("Deleting ReverseProxy")
 		if err := r.reconcileReverseProxy(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
@@ -1090,6 +1225,7 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 
 	log := logger.GetLogger(ctx)
+	var am bool
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
@@ -1123,6 +1259,12 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			if m.Name == csmv1.AuthorizationServer {
 				return nil
 			}
+			if m.Name == csmv1.ApplicationMobility {
+				am = true
+			}
+		}
+		if am {
+			break
 		}
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
@@ -1155,6 +1297,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	}
 
 	// check modules
+	log.Infow("Starting prechecks for modules")
 	for _, m := range cr.Spec.Modules {
 		if m.Enabled {
 			switch m.Name {
@@ -1182,6 +1325,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 				// observability precheck
 				if err := modules.ObservabilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed observability validation: %v", err)
+				}
+			case csmv1.ApplicationMobility:
+				//ApplicationMobility precheck
+				if err := modules.ApplicationMobilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
+					return fmt.Errorf("failed Appmobility validation: %v", err)
 				}
 			case csmv1.ReverseProxy:
 				if err := modules.ReverseProxyPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {

@@ -26,6 +26,8 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	goYAML "github.com/go-yaml/yaml"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -133,6 +135,8 @@ const (
 	PodmonControllerComponent = "podmon-controller"
 	// PodmonNodeComponent - podmon-node
 	PodmonNodeComponent = "podmon-node"
+	// ApplicationMobilityNamespace - application-mobility
+	ApplicationMobilityNamespace = "application-mobility"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -545,7 +549,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &mwc)
 
 		case "ConfigMap":
-
 			var cm corev1.ConfigMap
 			if err := yaml.Unmarshal(raw, &cm); err != nil {
 				return ctrlObjects, err
@@ -554,7 +557,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &cm)
 
 		case "Secret":
-
 			var s corev1.Secret
 			if err := yaml.Unmarshal(raw, &s); err != nil {
 				return ctrlObjects, err
@@ -563,13 +565,52 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &s)
 
 		case "Deployment":
-
 			var dp appsv1.Deployment
 			if err := yaml.Unmarshal(raw, &dp); err != nil {
 				return ctrlObjects, err
 			}
 
 			ctrlObjects = append(ctrlObjects, &dp)
+
+		case "DaemonSet":
+			var ds appsv1.DaemonSet
+			if err := yaml.Unmarshal(raw, &ds); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ds)
+
+		case "BackupStorageLocation":
+			var bsl velerov1.BackupStorageLocation
+			if err := yaml.Unmarshal(raw, &bsl); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &bsl)
+
+		case "VolumeSnapshotLocation":
+			var vs velerov1.VolumeSnapshotLocation
+			if err := yaml.Unmarshal(raw, &vs); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &vs)
+
+		case "Issuer":
+			var is certmanagerv1.Issuer
+			if err := yaml.Unmarshal(raw, &is); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &is)
+
+		case "Certificate":
+			var ct certmanagerv1.Certificate
+			if err := yaml.Unmarshal(raw, &ct); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ct)
 
 		case "StatefulSet":
 
@@ -579,7 +620,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &ss)
-
 		}
 	}
 
@@ -949,7 +989,7 @@ func GetAccDefaultClusters(ctx context.Context, instance csmv1.ApexConnectivityC
 	return replicaEnabled, clusterClients, nil
 }
 
-// GetSecret -get secret
+// GetSecret - check if the secret is present
 func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*corev1.Secret, error) {
 	found := &corev1.Secret{}
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: namespace}, found)
@@ -957,6 +997,30 @@ func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.
 		return nil, fmt.Errorf("no secrets found or error: %v", err)
 	}
 	return found, nil
+}
+
+// GetVolumeSnapshotLocation - check if the Volume Snapshot Location is present
+func GetVolumeSnapshotLocation(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*velerov1.VolumeSnapshotLocation, error) {
+	snapshotLocation := &velerov1.VolumeSnapshotLocation{}
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Namespace: namespace, Name: name},
+		snapshotLocation,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return snapshotLocation, nil
+}
+
+// GetBackupStorageLocation - check if the Backup Storage Location is present
+func GetBackupStorageLocation(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*velerov1.BackupStorageLocation, error) {
+	backupStorage := &velerov1.BackupStorageLocation{}
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Namespace: namespace, Name: name},
+		backupStorage,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return backupStorage, nil
 }
 
 // IsModuleEnabled - check if the module is enabled
@@ -978,6 +1042,22 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 	}
 
 	for _, c := range module.Components {
+		if c.Name == componentType && *c.Enabled {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
+func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
+	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)
+	if !appMobilityEnabled {
+		return false
+	}
+
+	for _, c := range appmobility.Components {
 		if c.Name == componentType && *c.Enabled {
 			return true
 		}

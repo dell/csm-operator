@@ -43,6 +43,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 		clientSet:  clientSet,
 	}
 	runner.addStep(`^Given an environment with k8s or openshift, and CSM operator installed$`, step.validateTestEnvironment)
+	runner.addStep(`^Install \[([^"]*)\]$`, step.installThirdPartyModule)
+	runner.addStep(`^Uninstall \[([^"]*)\]$`, step.uninstallThirdPartyModule)
 	runner.addStep(`^Apply custom resource \[(\d+)\]$`, step.applyCustomResource)
 	runner.addStep(`^Validate custom resource \[(\d+)\]$`, step.validateCustomResourceStatus)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
@@ -50,6 +52,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 
 	runner.addStep(`^Run custom test$`, step.runCustomTest)
 	runner.addStep(`^Enable forceRemoveDriver on CR \[(\d+)\]$`, step.enableForceRemoveDriver)
+	runner.addStep(`^Enable forceRemoveModule on CR \[(\d+)\]$`, step.enableForceRemoveModule)
 	runner.addStep(`^Delete custom resource \[(\d+)\]$`, step.deleteCustomResource)
 
 	runner.addStep(`^Validate \[([^"]*)\] module from CR \[(\d+)\] is installed$`, step.validateModuleInstalled)
@@ -70,6 +73,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 
 	// Configure authorization-proxy-server for [powerflex]
 	runner.addStep(`^Configure authorization-proxy-server for \[([^"]*)\]$`, step.configureAuthorizationProxyServer)
+	runner.addStep(`^Set up application mobility CR \[([^"]*)\]$`, step.configureAMInstall)
 
 	// Connectivity Client steps
 	runner.addStep(`^Install connectivity client from CR \[(\d+)\]$`, step.applyCustomResource)

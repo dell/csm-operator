@@ -1,0 +1,154 @@
+- scenario: "Install App Mobility and powerflex driver in different CRs"
+  paths:
+    - "testfiles/storage_csm_powerflex.yaml"
+    - "testfiles/application-mobility-templates/csm_application_mobility_vanilla.yaml"
+  modules:
+    - "applicationmobility"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_vanilla.yaml]"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Install [wordpress]"
+    - "Apply custom resource [2]"
+    - "Validate [application-mobility] module from CR [2] is installed"
+    - "Run custom test"
+    - "Uninstall [wordpress]"
+    # Last steps perform Clean UP
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_vanilla.yaml] for [application-mobility]"
+    - "Enable forceRemoveModule on CR [1]"
+    - "Delete custom resource [2]"
+    - "Delete custom resource [1]"
+  customTest:
+    name: verify app-mobility
+    run:
+      - sh verify-app-mobility.sh
+
+- scenario: "Install powerflex driver, enable and disable application-mobility"
+  paths:
+    - "testfiles/application-mobility-templates/powerflex_noAM.yaml"
+  modules:
+    - "applicationmobility"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/powerflex_noAM.yaml]"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-app-mobility-config] in namespace [test-vxflexos] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [application-mobility] module from CR [1] is not installed"
+    - "Install [wordpress]"
+    - "Enable [application-mobility] module from CR [1]"
+    - "Validate [application-mobility] module from CR [1] is installed"
+    - "Run custom test"
+    - "Disable [application-mobility] module from CR [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [application-mobility] module from CR [1] is not installed"
+    - "Uninstall [wordpress]"
+    # Last steps perform Clean UP
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/application-mobility-templates/powerflex_noAM.yaml] for [application-mobility]"
+    - "Enable forceRemoveModule on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    name: verify app-mobility
+    run:
+      - sh verify-app-mobility.sh
+
+- scenario: "Install App Mobility when Velero and Cert-Manager already installed"
+  paths:
+    - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"
+  modules:
+    - "applicationmobility"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/velero-values.yaml]"
+    - "Install [velero]"
+    - "Install [cert-manager]"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml]"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-app-mobility-config] in namespace [test-vxflexos] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate [application-mobility] module from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Install [wordpress]"
+    - "Run custom test"
+    - "Uninstall [wordpress]"
+    - "Uninstall [velero]"
+    # Last steps perform Clean UP
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml] for [application-mobility]"
+    - "Restore template [testfiles/application-mobility-templates/velero-values.yaml] for [application-mobility]"
+    - "Enable forceRemoveModule on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    name: verify app-mobility
+    run:
+      - sh verify-app-mobility.sh
+
+- scenario: "Install App Mobility Velero with different env variables than default"
+  paths:
+    - "testfiles/application-mobility-templates/alt-velero-secret.yaml"
+    - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex_alt.yaml"
+  modules:
+    - "applicationmobility"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install [cert-manager]"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/alt-velero-secret.yaml]"
+    - "Apply custom resource [1]"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_with_pflex_alt.yaml]"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-app-mobility-config] in namespace [test-vxflexos] for [pflex]"
+    - "Apply custom resource [2]"
+    - "Validate [application-mobility] module from CR [2] is installed"
+    - "Validate [powerflex] driver from CR [2] is installed"
+    - "Install [wordpress]"
+    - "Run custom test"
+    # Last steps perform Clean Up
+    - "Uninstall [wordpress]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex_alt.yaml] for [application-mobility]"
+    - "Uninstall [cert-manager]"
+    - "Enable forceRemoveModule on CR [2]"
+    - "Delete custom resource [1]"
+    - "Delete custom resource [2]"
+  customTest:
+    name: verify app-mobility
+    run:
+      - sh verify-app-mobility.sh
+
+- scenario: "Install App Mobility with powerflex driver- default"
+  paths:
+    - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"
+  modules:
+    - "applicationmobility"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml]"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-app-mobility-config] in namespace [test-vxflexos] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate [application-mobility] module from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Install [wordpress]"
+    - "Run custom test"
+    - "Uninstall [wordpress]"
+    # Last steps perform Clean UP
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml] for [application-mobility]"
+    - "Enable forceRemoveModule on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    name: verify app-mobility
+    run:
+      - sh verify-app-mobility.sh
+
