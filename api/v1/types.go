@@ -65,6 +65,9 @@ const (
 	// ReverseProxyServer - placeholder for constant csipowermax-reverseproxy
 	ReverseProxyServer ModuleType = "csipowermax-reverseproxy"
 
+	// ApplicationMobility - placeholder for constant application-mobility
+	ApplicationMobility ModuleType = "application-mobility"
+
 	// Topology - placeholder for constant topology
 	Topology ObservabilityComponentType = "topology"
 
@@ -151,6 +154,11 @@ type Module struct {
 	// ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Module"
 	ForceRemoveModule bool `json:"forceRemoveModule,omitempty" yaml:"forceRemoveModule"`
+
+	// InitContainer is the specification for Module InitContainer
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="InitContainer"
+	InitContainer []ContainerTemplate `json:"initContainer,omitempty" yaml:"initContainer"`
 }
 
 // PodStatus - Represents PodStatus in a daemonset or deployment
@@ -328,6 +336,34 @@ type ContainerTemplate struct {
 	// OpaKubeMgmt is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Opa Kube Management Container Image"
 	OpaKubeMgmt string `json:"opaKubeMgmt,omitempty" yaml:"opaKubeMgmt,omitempty"`
+
+	// ReplicaCount is the replica count for app mobility
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Replica Count"
+	ReplicaCount string `json:"replicaCount,omitempty" yaml:"replicaCount,omitempty"`
+
+	// VeleroNamespace is the namespace that Velero is installed in
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Velero namespace"
+	VeleroNamespace string `json:"veleroNamespace,omitempty" yaml:"veleroNamespace,omitempty"`
+
+	// LicenseName is the name of the license for app-mobility
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="License Name for Application Mobility"
+	LicenseName string `json:"licenseName,omitempty" yaml:"licenseName,omitempty"`
+
+	// ObjectStoreSecretName is the name of the secret for the object store for app-mobility
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Object Store Secret"
+	ObjectStoreSecretName string `json:"objectStoreSecretName,omitempty" yaml:"objectStoreSecretName,omitempty"`
+
+	//UseSnapshot is to check whether volume snapshot is enabled under velero component
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="use-volume-snapshots for Application Mobilit- Velero"
+	UseSnapshot bool `json:"useVolumeSnapshot,omitempty" yaml:"useVolumeSnapshot,omitempty"`
+
+	//ComponentCred is to store the velero credential contents
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ComponentCred for velero component"
+	ComponentCred []Credential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+
+	//DeployNodeAgent is to enable/disable node-agent services
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Deploy node-agent for Application Mobility"
+	DeployNodeAgent bool `json:"deployNodeAgent,omitempty" yaml:"deployNodeAgent,omitempty"`
 }
 
 // SnapshotClass struct
@@ -345,4 +381,29 @@ type SnapshotClass struct {
 type CSIDriverSpec struct {
 	FSGroupPolicy   string `json:"fSGroupPolicy,omitempty" yaml:"fSGroupPolicy,omitempty"`
 	StorageCapacity bool   `json:"storageCapacity,omitempty" yaml:"storageCapacity"`
+}
+
+// Credential struct
+type Credential struct {
+	// CreateWithInstall is used to indicate wether or not to create a secret for objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CreateWithInstall"
+	CreateWithInstall bool `json:"createWithInstall,omitempty" yaml:"createWithInstall,omitempty"`
+
+	// Name is the name of secret which contains credentials to access objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+
+	// SecretContents contains credentials to access objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="secretContents"
+	SecretContents Credkey `json:"secretContents,omitempty" yaml:"secretContents"`
+}
+
+// Credkey struct
+type Credkey struct {
+	// AccessKeyID is a name of key ID to access objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKeyID"
+	AccessKeyID string `json:"aws_access_key_id,omitempty" yaml:"aws_access_key_id,omitempty"`
+	// AccessKey contains the key to access objectstore
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKey"
+	AccessKey string `json:"aws_secret_access_key,omitempty" yaml:"aws_secret_access_key,omitempty"`
 }

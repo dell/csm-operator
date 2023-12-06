@@ -17,7 +17,7 @@ export GINKGO_OPTS="-v"
 # export KUBECONFIG=""
 
 # Must supply path to values file if different from testfiles/values.yaml
-export VALUES_FILE="testfiles/values.yaml"
+export VALUES_FILE="testfiles/appmob-values.yaml"
 
 # USER MODIFICATION REQUIRED: must supply path to your cert-csi binary
 export CERT_CSI="/root/cert-csi"
@@ -28,6 +28,7 @@ export CERT_CSI="/root/cert-csi"
 # export OBSERVABILITY=true
 # export AUTHORIZATIONPROXYSERVER=true
 # export RESILIENCY=true
+# export APPLICATIONMOBILITY=true
 
 # [Optional] namespace of operator if you deployed it to a namespace diffrent form the one below.
 # export OPERATOR_NAMESPACE="dell-csm-operator"
@@ -66,4 +67,13 @@ export PSCALE_ENDPOINT=""
 export PSCALE_AUTH_ENDPOINT=""
 export PSCALE_AUTH_PORT=""
 
-
+# The following are for testing AM
+export VOL_NS=wordpress
+export RES_NS=res-wordpress
+export AM_NS=test-vxflexos
+export BACKEND_STORAGE_URL=""
+export BUCKET_NAME=""
+export ALT_BUCKET_NAME="" 
+# Be sure to escape / with \
+export AM_CONTROLLER_IMAGE=""
+export AM_PLUGIN_IMAGE=""

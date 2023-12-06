@@ -117,6 +117,14 @@ rules:
   - update
   - watch
 - apiGroups:
+  - '*'
+  resourceNames:
+  - application-mobility-velero-server
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
   - acme.cert-manager.io
   resources:
   - '*/*'
@@ -415,6 +423,7 @@ rules:
   - delete
   - get
   - list
+  - patch
   - update
   - watch
 - apiGroups:
@@ -446,6 +455,7 @@ rules:
   - leases
   verbs:
   - get
+  - patch
   - update
 - apiGroups:
   - ""
@@ -510,6 +520,144 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - backups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - backups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - clusterconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - clusterconfigs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - clusterconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - podvolumebackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - podvolumebackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - podvolumebackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - podvolumerestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - podvolumerestores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - podvolumerestores/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - restores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - restores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - restores/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - schedules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mobility.storage.dell.com
+  resources:
+  - schedules/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - monitoring.coreos.com
   resources:
@@ -788,6 +936,117 @@ rules:
   - volumeattachments/status
   verbs:
   - patch
+- apiGroups:
+  - velero.io
+  resources:
+  - backuprepositories
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
+  - backups/finalizers
+  verbs:
+  - upate
+- apiGroups:
+  - velero.io
+  resources:
+  - backups/status
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+- apiGroups:
+  - velero.io
+  resources:
+  - backupstoragelocations
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
+  - deletebackuprequests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
+  - podvolumebackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
+  - podvolumebackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - velero.io
+  resources:
+  - podvolumebackups/status
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+- apiGroups:
+  - velero.io
+  resources:
+  - podvolumerestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
+  - restores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - volumegroup.storage.dell.com
   resources:
