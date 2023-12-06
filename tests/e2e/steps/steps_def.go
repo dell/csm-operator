@@ -1365,4 +1365,3 @@ func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStor
 	fmt.Println("All AM pods removed ")
 	return nil
 }
-
