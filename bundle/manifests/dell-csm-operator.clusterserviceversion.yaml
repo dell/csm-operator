@@ -169,7 +169,7 @@ metadata:
                         "value": "powermax"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.4.0",
+                    "image": "dellemc/dell-csi-replicator:v1.7.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -195,7 +195,7 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.4.0",
+                    "image": "dellemc/dell-replication-controller:v1.7.0",
                     "name": "dell-replication-controller-manager"
                   },
                   {
@@ -203,7 +203,7 @@ metadata:
                     "name": "dell-replication-controller-init"
                   }
                 ],
-                "configVersion": "v1.4.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "replication"
               }
@@ -378,7 +378,7 @@ metadata:
                         "value": "powerscale"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.6.0",
+                    "image": "dellemc/dell-csi-replicator:v1.7.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -404,11 +404,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.6.0",
+                    "image": "dellemc/dell-replication-controller:v1.7.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -1316,7 +1316,7 @@ metadata:
                         "value": "powerflex"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.6.0",
+                    "image": "dellemc/dell-csi-replicator:v1.7.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -1342,11 +1342,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.6.0",
+                    "image": "dellemc/dell-replication-controller:v1.7.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.6.0",
+                "configVersion": "v1.7.0",
                 "enabled": false,
                 "name": "replication"
               },
