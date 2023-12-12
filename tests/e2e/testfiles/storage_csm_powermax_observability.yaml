@@ -242,7 +242,7 @@ spec:
           # enabled: Enable/Disable PowerMax metrics
           enabled: true
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powermax:v1.1.0
+          image: dellemc/csm-metrics-powermax:v1.2.0
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int

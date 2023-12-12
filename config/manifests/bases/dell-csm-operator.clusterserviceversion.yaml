@@ -706,7 +706,7 @@ spec:
     name: otel-collector
   - image: docker.io/dellemc/csm-metrics-powerscale:v1.4.0
     name: metrics-powerscale
-  - image: docker.io/dellemc/csm-metrics-powermax:v1.1.0
+  - image: docker.io/dellemc/csm-metrics-powermax:v1.2.0
     name: metrics-powermax
   - image: docker.io/dellemc/csm-metrics-powerflex:v1.7.0
     name: metrics-powerflex
