@@ -11,7 +11,7 @@
 # limitations under the License.
 
 # [Optional] ginko options for custom runs
-export GINKGO_OPTS="-v"
+export GINKGO_OPTS="-v --timeout=4h"
 
 # [Optional] Path to .kube configuration if it is not in the default location
 # export KUBECONFIG=""
