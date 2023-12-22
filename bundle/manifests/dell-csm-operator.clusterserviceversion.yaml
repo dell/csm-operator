@@ -8,214 +8,8 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
-            "name": "powermax",
-            "namespace": "powermax"
-          },
-          "spec": {
-            "driver": {
-              "authSecret": "powermax-creds",
-              "common": {
-                "envs": [
-                  {
-                    "name": "X_CSI_MANAGED_ARRAYS",
-                    "value": "000000000000,000000000001"
-                  },
-                  {
-                    "name": "X_CSI_POWERMAX_ENDPOINT",
-                    "value": "https://0.0.0.0:8443/"
-                  },
-                  {
-                    "name": "X_CSI_K8S_CLUSTER_PREFIX",
-                    "value": "XYZ"
-                  },
-                  {
-                    "name": "KUBELET_CONFIG_DIR",
-                    "value": "/var/lib/kubelet"
-                  },
-                  {
-                    "name": "X_CSI_POWERMAX_PORTGROUPS",
-                    "value": ""
-                  },
-                  {
-                    "name": "X_CSI_TRANSPORT_PROTOCOL",
-                    "value": ""
-                  },
-                  {
-                    "name": "X_CSI_POWERMAX_PROXY_SERVICE_NAME",
-                    "value": "csipowermax-reverseproxy"
-                  },
-                  {
-                    "name": "X_CSI_VSPHERE_ENABLED",
-                    "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_VSPHERE_PORTGROUP",
-                    "value": ""
-                  },
-                  {
-                    "name": "X_CSI_VSPHERE_HOSTNAME",
-                    "value": ""
-                  },
-                  {
-                    "name": "X_CSI_VCENTER_HOST",
-                    "value": ""
-                  }
-                ],
-                "image": "dellemc/csi-powermax:v2.7.0",
-                "imagePullPolicy": "IfNotPresent"
-              },
-              "configVersion": "v2.7.0",
-              "controller": {
-                "envs": [
-                  {
-                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
-                    "value": "false"
-                  }
-                ]
-              },
-              "csiDriverSpec": {
-                "fSGroupPolicy": "ReadWriteOnceWithFSType",
-                "storageCapacity": false
-              },
-              "csiDriverType": "powermax",
-              "dnsPolicy": "ClusterFirstWithHostNet",
-              "forceRemoveDriver": true,
-              "forceUpdate": false,
-              "node": {
-                "envs": [
-                  {
-                    "name": "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP",
-                    "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
-                    "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_TOPOLOGY_CONTROL_ENABLED",
-                    "value": "false"
-                  }
-                ]
-              },
-              "replicas": 2,
-              "sideCars": [
-                {
-                  "args": [
-                    "--monitor-interval=60s"
-                  ],
-                  "enabled": false,
-                  "name": "external-health-monitor"
-                }
-              ]
-            },
-            "modules": [
-              {
-                "components": [
-                  {
-                    "envs": [
-                      {
-                        "name": "X_CSI_REVPROXY_TLS_SECRET",
-                        "value": "csirevproxy-tls-secret"
-                      },
-                      {
-                        "name": "X_CSI_REVPROXY_PORT",
-                        "value": "2222"
-                      },
-                      {
-                        "name": "X_CSI_CONFIG_MAP_NAME",
-                        "value": "powermax-reverseproxy-config"
-                      }
-                    ],
-                    "image": "dellemc/csipowermax-reverseproxy:v2.6.0",
-                    "name": "csipowermax-reverseproxy"
-                  }
-                ],
-                "configVersion": "v2.6.0",
-                "enabled": true,
-                "forceRemoveModule": true,
-                "name": "csireverseproxy"
-              },
-              {
-                "components": [
-                  {
-                    "envs": [
-                      {
-                        "name": "PROXY_HOST",
-                        "value": "csm-authorization.com"
-                      },
-                      {
-                        "name": "SKIP_CERTIFICATE_VALIDATION",
-                        "value": "true"
-                      }
-                    ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.6.0",
-                    "name": "karavi-authorization-proxy"
-                  }
-                ],
-                "configVersion": "v1.6.0",
-                "enabled": false,
-                "name": "authorization"
-              },
-              {
-                "components": [
-                  {
-                    "envs": [
-                      {
-                        "name": "X_CSI_REPLICATION_PREFIX",
-                        "value": "replication.storage.dell.com"
-                      },
-                      {
-                        "name": "X_CSI_REPLICATION_CONTEXT_PREFIX",
-                        "value": "powermax"
-                      }
-                    ],
-                    "image": "dellemc/dell-csi-replicator:v1.7.0",
-                    "name": "dell-csi-replicator"
-                  },
-                  {
-                    "envs": [
-                      {
-                        "name": "TARGET_CLUSTERS_IDS",
-                        "value": "target-cluster-1"
-                      },
-                      {
-                        "name": "REPLICATION_CTRL_LOG_LEVEL",
-                        "value": "debug"
-                      },
-                      {
-                        "name": "REPLICATION_CTRL_REPLICAS",
-                        "value": "1"
-                      },
-                      {
-                        "name": "RETRY_INTERVAL_MIN",
-                        "value": "1s"
-                      },
-                      {
-                        "name": "RETRY_INTERVAL_MAX",
-                        "value": "5m"
-                      }
-                    ],
-                    "image": "dellemc/dell-replication-controller:v1.7.0",
-                    "name": "dell-replication-controller-manager"
-                  },
-                  {
-                    "image": "dellemc/dell-replication-init:v1.0.0",
-                    "name": "dell-replication-controller-init"
-                  }
-                ],
-                "configVersion": "v1.7.0",
-                "enabled": false,
-                "name": "replication"
-              }
-            ]
-          }
-        },
-        {
-          "apiVersion": "storage.dell.com/v1",
-          "kind": "ContainerStorageModule",
-          "metadata": {
-            "name": "test-isilon",
-            "namespace": "test-isilon"
+            "name": "isilon",
+            "namespace": "isilon"
           },
           "spec": {
             "driver": {
@@ -245,6 +39,10 @@ metadata:
                   {
                     "name": "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION",
                     "value": "true"
+                  },
+                  {
+                    "name": "X_CSI_ISI_AUTH_TYPE",
+                    "value": "0"
                   },
                   {
                     "name": "X_CSI_CUSTOM_TOPOLOGY_ENABLED",
@@ -670,6 +468,12 @@ metadata:
               "sideCars": [
                 {
                   "args": [
+                    "--volume-name-prefix=pmax"
+                  ],
+                  "name": "provisioner"
+                },
+                {
+                  "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
@@ -932,6 +736,12 @@ metadata:
               "sideCars": [
                 {
                   "args": [
+                    "--volume-name-prefix=csivol"
+                  ],
+                  "name": "provisioner"
+                },
+                {
+                  "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
@@ -1073,6 +883,12 @@ metadata:
               "sideCars": [
                 {
                   "args": [
+                    "--volume-name-prefix=csivol"
+                  ],
+                  "name": "provisioner"
+                },
+                {
+                  "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
@@ -1127,6 +943,10 @@ metadata:
                   {
                     "name": "X_CSI_HEALTH_MONITOR_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_POWERFLEX_EXTERNAL_ACCESS",
+                    "value": null
                   }
                 ],
                 "nodeSelector": null,
@@ -1160,6 +980,10 @@ metadata:
                     "value": "false"
                   },
                   {
+                    "name": "X_CSI_HEALTH_MONITOR_ENABLED",
+                    "value": "false"
+                  },
+                  {
                     "name": "X_CSI_RENAME_SDC_ENABLED",
                     "value": "false"
                   },
@@ -1177,6 +1001,12 @@ metadata:
               },
               "replicas": 1,
               "sideCars": [
+                {
+                  "args": [
+                    "--volume-name-prefix=k8s"
+                  ],
+                  "name": "provisioner"
+                },
                 {
                   "enabled": false,
                   "envs": [
@@ -1401,9 +1231,9 @@ metadata:
     capabilities: Basic Install
     categories: Storage
     containerImage: docker.io/dellemc/dell-csm-operator:v1.4.0
-    createdAt: "2022-03-29T11:59:59Z"
+    createdAt: "2023-12-22T09:14:07Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
-    operators.operatorframework.io/builder: operator-sdk-v1.14.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
@@ -1429,6 +1259,29 @@ spec:
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: client.common.commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: client.common.credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: client.common.credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: client.common.credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: client.common.credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: client.common.credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: client.common.credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: client.common.deployNodeAgent
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: client.common.enabled
@@ -1443,6 +1296,9 @@ spec:
         path: client.common.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: client.common.licenseName
       - description: Name is the name of Container
         displayName: Container Name
         path: client.common.name
@@ -1451,6 +1307,10 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: client.common.nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: client.common.objectStoreSecretName
       - description: Opa is the image tag for the Container
         displayName: Authorization Opa Container Image
         path: client.common.opa
@@ -1463,6 +1323,9 @@ spec:
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: client.common.redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: client.common.replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: client.common.roleService
@@ -1475,9 +1338,20 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: client.common.tolerations
-      - description: ConfigVersion is the configuration version of the driver
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: client.common.useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: client.common.veleroNamespace
+      - description: ConfigVersion is the configuration version of the client
         displayName: Config Version
         path: client.configVersion
+      - description: ConnectionTarget is the target that the client connects to in
+          the Dell datacenter
+        displayName: Connection Target
+        path: client.connectionTarget
       - description: ClientType is the Client type for Dell Technologies - e.g, ApexConnectivityClient
         displayName: Client Type
         path: client.csmClientType
@@ -1491,6 +1365,29 @@ spec:
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: client.initContainers[0].commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: client.initContainers[0].credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: client.initContainers[0].credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: client.initContainers[0].credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: client.initContainers[0].credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: client.initContainers[0].credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: client.initContainers[0].credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: client.initContainers[0].deployNodeAgent
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: client.initContainers[0].enabled
@@ -1505,6 +1402,9 @@ spec:
         path: client.initContainers[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: client.initContainers[0].licenseName
       - description: Name is the name of Container
         displayName: Container Name
         path: client.initContainers[0].name
@@ -1513,6 +1413,10 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: client.initContainers[0].nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: client.initContainers[0].objectStoreSecretName
       - description: Opa is the image tag for the Container
         displayName: Authorization Opa Container Image
         path: client.initContainers[0].opa
@@ -1525,6 +1429,9 @@ spec:
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: client.initContainers[0].redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: client.initContainers[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: client.initContainers[0].roleService
@@ -1537,6 +1444,13 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: client.initContainers[0].tolerations
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: client.initContainers[0].useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: client.initContainers[0].veleroNamespace
       - description: SideCars is the specification for CSI sidecar containers
         displayName: CSI SideCars specification
         path: client.sideCars
@@ -1546,6 +1460,29 @@ spec:
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: client.sideCars[0].commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: client.sideCars[0].credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: client.sideCars[0].credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: client.sideCars[0].credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: client.sideCars[0].credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: client.sideCars[0].credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: client.sideCars[0].credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: client.sideCars[0].deployNodeAgent
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: client.sideCars[0].enabled
@@ -1560,6 +1497,9 @@ spec:
         path: client.sideCars[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: client.sideCars[0].licenseName
       - description: Name is the name of Container
         displayName: Container Name
         path: client.sideCars[0].name
@@ -1568,6 +1508,10 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: client.sideCars[0].nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: client.sideCars[0].objectStoreSecretName
       - description: Opa is the image tag for the Container
         displayName: Authorization Opa Container Image
         path: client.sideCars[0].opa
@@ -1580,6 +1524,9 @@ spec:
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: client.sideCars[0].redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: client.sideCars[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: client.sideCars[0].roleService
@@ -1592,6 +1539,16 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: client.sideCars[0].tolerations
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: client.sideCars[0].useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: client.sideCars[0].veleroNamespace
+      - description: UsePrivateCaCerts is used to specify private CA signed certs
+        displayName: Use Private CA Certs
+        path: client.usePrivateCaCerts
       statusDescriptors:
       - description: ClientStatus is the status of Client pods
         displayName: ClientStatus
@@ -1623,6 +1580,29 @@ spec:
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.common.commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: driver.common.credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: driver.common.credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: driver.common.credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: driver.common.credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: driver.common.credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: driver.common.credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: driver.common.deployNodeAgent
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.common.enabled
@@ -1637,6 +1617,9 @@ spec:
         path: driver.common.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: driver.common.licenseName
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.common.name
@@ -1645,6 +1628,10 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.common.nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: driver.common.objectStoreSecretName
       - description: Opa is the image tag for the Container
         displayName: Authorization Opa Container Image
         path: driver.common.opa
@@ -1657,6 +1644,9 @@ spec:
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.common.redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: driver.common.replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.common.roleService
@@ -1669,6 +1659,13 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.common.tolerations
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: driver.common.useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: driver.common.veleroNamespace
       - description: ConfigVersion is the configuration version of the driver
         displayName: Config Version
         path: driver.configVersion
@@ -1681,6 +1678,29 @@ spec:
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.controller.commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: driver.controller.credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: driver.controller.credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: driver.controller.credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: driver.controller.credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: driver.controller.credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: driver.controller.credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: driver.controller.deployNodeAgent
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.controller.enabled
@@ -1695,6 +1715,9 @@ spec:
         path: driver.controller.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: driver.controller.licenseName
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.controller.name
@@ -1703,6 +1726,10 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.controller.nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: driver.controller.objectStoreSecretName
       - description: Opa is the image tag for the Container
         displayName: Authorization Opa Container Image
         path: driver.controller.opa
@@ -1715,6 +1742,9 @@ spec:
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.controller.redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: driver.controller.replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.controller.roleService
@@ -1727,6 +1757,13 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.controller.tolerations
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: driver.controller.useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: driver.controller.veleroNamespace
       - description: CSIDriverSpec is the specification for CSIDriver
         displayName: CSI Driver Spec
         path: driver.csiDriverSpec
@@ -1751,6 +1788,29 @@ spec:
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.initContainers[0].commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: driver.initContainers[0].credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: driver.initContainers[0].credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: driver.initContainers[0].credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: driver.initContainers[0].credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: driver.initContainers[0].credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: driver.initContainers[0].credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: driver.initContainers[0].deployNodeAgent
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.initContainers[0].enabled
@@ -1765,6 +1825,9 @@ spec:
         path: driver.initContainers[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: driver.initContainers[0].licenseName
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.initContainers[0].name
@@ -1773,6 +1836,10 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.initContainers[0].nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: driver.initContainers[0].objectStoreSecretName
       - description: Opa is the image tag for the Container
         displayName: Authorization Opa Container Image
         path: driver.initContainers[0].opa
@@ -1785,6 +1852,9 @@ spec:
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.initContainers[0].redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: driver.initContainers[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.initContainers[0].roleService
@@ -1797,6 +1867,13 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.initContainers[0].tolerations
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: driver.initContainers[0].useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: driver.initContainers[0].veleroNamespace
       - description: Node is the specification for Node plugin only
         displayName: Node specification
         path: driver.node
@@ -1806,6 +1883,29 @@ spec:
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.node.commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: driver.node.credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: driver.node.credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: driver.node.credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: driver.node.credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: driver.node.credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: driver.node.credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: driver.node.deployNodeAgent
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.node.enabled
@@ -1820,6 +1920,9 @@ spec:
         path: driver.node.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: driver.node.licenseName
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.node.name
@@ -1828,6 +1931,10 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.node.nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: driver.node.objectStoreSecretName
       - description: Opa is the image tag for the Container
         displayName: Authorization Opa Container Image
         path: driver.node.opa
@@ -1840,6 +1947,9 @@ spec:
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.node.redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: driver.node.replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.node.roleService
@@ -1852,6 +1962,13 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.node.tolerations
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: driver.node.useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: driver.node.veleroNamespace
       - description: Replicas is the count of controllers for Controller plugin
         displayName: Controller count
         path: driver.replicas
@@ -1864,6 +1981,29 @@ spec:
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.sideCars[0].commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: driver.sideCars[0].credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: driver.sideCars[0].credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: driver.sideCars[0].credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: driver.sideCars[0].credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: driver.sideCars[0].credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: driver.sideCars[0].credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: driver.sideCars[0].deployNodeAgent
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: driver.sideCars[0].enabled
@@ -1878,6 +2018,9 @@ spec:
         path: driver.sideCars[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: driver.sideCars[0].licenseName
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.sideCars[0].name
@@ -1886,6 +2029,10 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: driver.sideCars[0].nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: driver.sideCars[0].objectStoreSecretName
       - description: Opa is the image tag for the Container
         displayName: Authorization Opa Container Image
         path: driver.sideCars[0].opa
@@ -1898,6 +2045,9 @@ spec:
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.sideCars[0].redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: driver.sideCars[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.sideCars[0].roleService
@@ -1910,6 +2060,13 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.sideCars[0].tolerations
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: driver.sideCars[0].useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: driver.sideCars[0].veleroNamespace
       - description: SnapshotClass is the specification for Snapshot Classes
         displayName: Snapshot Classes
         path: driver.snapshotClass
@@ -1932,6 +2089,29 @@ spec:
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: modules[0].components[0].commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: modules[0].components[0].credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: modules[0].components[0].credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: modules[0].components[0].credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: modules[0].components[0].credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: modules[0].components[0].credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: modules[0].components[0].credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: modules[0].components[0].deployNodeAgent
       - description: Enabled is used to indicate wether or not to deploy a module
         displayName: Enabled
         path: modules[0].components[0].enabled
@@ -1946,6 +2126,9 @@ spec:
         path: modules[0].components[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: modules[0].components[0].licenseName
       - description: Name is the name of Container
         displayName: Container Name
         path: modules[0].components[0].name
@@ -1954,6 +2137,10 @@ spec:
           be scheduled on that node.
         displayName: NodeSelector
         path: modules[0].components[0].nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: modules[0].components[0].objectStoreSecretName
       - description: Opa is the image tag for the Container
         displayName: Authorization Opa Container Image
         path: modules[0].components[0].opa
@@ -1966,6 +2153,9 @@ spec:
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: modules[0].components[0].redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: modules[0].components[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: modules[0].components[0].roleService
@@ -1978,6 +2168,13 @@ spec:
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: modules[0].components[0].tolerations
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: modules[0].components[0].useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: modules[0].components[0].veleroNamespace
       - description: ConfigVersion is the configuration version of the module
         displayName: Config Version
         path: modules[0].configVersion
@@ -1988,6 +2185,98 @@ spec:
           proxy server deployment when CR is deleted
         displayName: Force Remove Module
         path: modules[0].forceRemoveModule
+      - description: Args is the set of arguments for the container
+        displayName: Container Arguments
+        path: modules[0].initContainer[0].args
+      - description: Commander is the image tag for the Container
+        displayName: Authorization Commander Container Image
+        path: modules[0].initContainer[0].commander
+      - description: ComponentCred is to store the velero credential contents
+        displayName: ComponentCred for velero component
+        path: modules[0].initContainer[0].credentials
+      - description: CreateWithInstall is used to indicate wether or not to create
+          a secret for objectstore
+        displayName: CreateWithInstall
+        path: modules[0].initContainer[0].credentials[0].createWithInstall
+      - description: Name is the name of secret which contains credentials to access
+          objectstore
+        displayName: Name
+        path: modules[0].initContainer[0].credentials[0].name
+      - description: SecretContents contains credentials to access objectstore
+        displayName: secretContents
+        path: modules[0].initContainer[0].credentials[0].secretContents
+      - description: AccessKeyID is a name of key ID to access objectstore
+        displayName: AccessKeyID
+        path: modules[0].initContainer[0].credentials[0].secretContents.aws_access_key_id
+      - description: AccessKey contains the key to access objectstore
+        displayName: AccessKey
+        path: modules[0].initContainer[0].credentials[0].secretContents.aws_secret_access_key
+      - description: DeployNodeAgent is to enable/disable node-agent services
+        displayName: Deploy node-agent for Application Mobility
+        path: modules[0].initContainer[0].deployNodeAgent
+      - description: Enabled is used to indicate wether or not to deploy a module
+        displayName: Enabled
+        path: modules[0].initContainer[0].enabled
+      - description: Envs is the set of environment variables for the container
+        displayName: Container Environment vars
+        path: modules[0].initContainer[0].envs
+      - description: Image is the image tag for the Container
+        displayName: Container Image
+        path: modules[0].initContainer[0].image
+      - description: ImagePullPolicy is the image pull policy for the image
+        displayName: Container Image Pull Policy
+        path: modules[0].initContainer[0].imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: LicenseName is the name of the license for app-mobility
+        displayName: License Name for Application Mobility
+        path: modules[0].initContainer[0].licenseName
+      - description: Name is the name of Container
+        displayName: Container Name
+        path: modules[0].initContainer[0].name
+      - description: NodeSelector is a selector which must be true for the pod to
+          fit on a node. Selector which must match a node's labels for the pod to
+          be scheduled on that node.
+        displayName: NodeSelector
+        path: modules[0].initContainer[0].nodeSelector
+      - description: ObjectStoreSecretName is the name of the secret for the object
+          store for app-mobility
+        displayName: Application Mobility Object Store Secret
+        path: modules[0].initContainer[0].objectStoreSecretName
+      - description: Opa is the image tag for the Container
+        displayName: Authorization Opa Container Image
+        path: modules[0].initContainer[0].opa
+      - description: OpaKubeMgmt is the image tag for the Container
+        displayName: Authorization Opa Kube Management Container Image
+        path: modules[0].initContainer[0].opaKubeMgmt
+      - description: ProxyService is the image tag for the Container
+        displayName: Authorization Proxy Service Container Image
+        path: modules[0].initContainer[0].proxyService
+      - description: Redis is the image tag for the Container
+        displayName: Authorization Redis Container Image
+        path: modules[0].initContainer[0].redis
+      - description: ReplicaCount is the replica count for app mobility
+        displayName: Application Mobility Replica Count
+        path: modules[0].initContainer[0].replicaCount
+      - description: RoleService is the image tag for the Container
+        displayName: Authorization Role Service Container Image
+        path: modules[0].initContainer[0].roleService
+      - description: StorageService is the image tag for the Container
+        displayName: Authorization Storage Service Container Image
+        path: modules[0].initContainer[0].storageService
+      - description: TenantService is the image tag for the Container
+        displayName: Authorization Tenant Service Container Image
+        path: modules[0].initContainer[0].tenantService
+      - description: Tolerations is the list of tolerations for the driver pods
+        displayName: Tolerations
+        path: modules[0].initContainer[0].tolerations
+      - description: UseSnapshot is to check whether volume snapshot is enabled under
+          velero component
+        displayName: use-volume-snapshots for Application Mobilit- Velero
+        path: modules[0].initContainer[0].useVolumeSnapshot
+      - description: VeleroNamespace is the namespace that Velero is installed in
+        displayName: Velero namespace
+        path: modules[0].initContainer[0].veleroNamespace
       - description: Name is name of ContainerStorageModule modules
         displayName: Name
         path: modules[0].name
@@ -2153,6 +2442,14 @@ spec:
           - list
           - update
           - watch
+        - apiGroups:
+          - '*'
+          resourceNames:
+          - application-mobility-velero-server
+          resources:
+          - '*'
+          verbs:
+          - '*'
         - apiGroups:
           - acme.cert-manager.io
           resources:
@@ -2335,32 +2632,6 @@ spec:
           - update
           - watch
         - apiGroups:
-          - storage.dell.com
-          resources:
-          - apexconnectivityclients
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - storage.dell.com
-          resources:
-          - apexconnectivityclients/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - storage.dell.com
-          resources:
-          - apexconnectivityclients/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
           - cert-manager.io
           resources:
           - '*/*'
@@ -2478,6 +2749,7 @@ spec:
           - delete
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
@@ -2509,6 +2781,7 @@ spec:
           - leases
           verbs:
           - get
+          - patch
           - update
         - apiGroups:
           - ""
@@ -2561,6 +2834,156 @@ spec:
           - list
           - update
           - watch
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - backups
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - backups/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - backups/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - clusterconfigs
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - clusterconfigs/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - clusterconfigs/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - podvolumebackups
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - podvolumebackups/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - podvolumebackups/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - podvolumerestores
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - podvolumerestores/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - podvolumerestores/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - restores
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - restores/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - restores/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - schedules
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - mobility.storage.dell.com
+          resources:
+          - schedules/status
+          verbs:
+          - get
+          - patch
+          - update
         - apiGroups:
           - monitoring.coreos.com
           resources:
@@ -2727,6 +3150,32 @@ spec:
         - apiGroups:
           - storage.dell.com
           resources:
+          - apexconnectivityclients
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - storage.dell.com
+          resources:
+          - apexconnectivityclients/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - storage.dell.com
+          resources:
+          - apexconnectivityclients/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - storage.dell.com
+          resources:
           - containerstoragemodules
           verbs:
           - create
@@ -2814,18 +3263,19 @@ spec:
           verbs:
           - patch
         - apiGroups:
-          - volumegroup.storage.dell.com
+          - velero.io
           resources:
-          - dellcsivolumegroupsnapshots
-          - dellcsivolumegroupsnapshots/status
+          - backuprepositories
           verbs:
           - create
           - delete
+          - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
-          - mobility.storage.dell.com
+          - velero.io
           resources:
           - backups
           verbs:
@@ -2836,9 +3286,109 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - velero.io
+          resources:
+          - backups/finalizers
+          verbs:
+          - upate
+        - apiGroups:
+          - velero.io
+          resources:
+          - backups/status
+          verbs:
+          - get
+          - list
+          - patch
+          - update
+        - apiGroups:
+          - velero.io
+          resources:
+          - backupstoragelocations
+          verbs:
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - velero.io
+          resources:
+          - deletebackuprequests
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - velero.io
+          resources:
+          - podvolumebackups
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - velero.io
+          resources:
+          - podvolumebackups/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - velero.io
+          resources:
+          - podvolumebackups/status
+          verbs:
+          - create
+          - get
+          - list
+          - patch
+          - update
+        - apiGroups:
+          - velero.io
+          resources:
+          - podvolumerestores
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - velero.io
+          resources:
+          - restores
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - volumegroup.storage.dell.com
+          resources:
+          - dellcsivolumegroupsnapshots
+          - dellcsivolumegroupsnapshots/status
+          verbs:
+          - create
+          - delete
+          - list
+          - update
+          - watch
         serviceAccountName: dell-csm-operator-manager-service-account
       deployments:
-      - name: dell-csm-operator-controller-manager
+      - label:
+          control-plane: controller-manager
+        name: dell-csm-operator-controller-manager
         spec:
           replicas: 1
           selector:
@@ -2929,42 +3479,5 @@ spec:
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
-  relatedImages:
-  - image: docker.io/dellemc/dell-csm-operator:v1.4.0
-    name: dell-csm-operator
-  - image: docker.io/dellemc/csi-isilon:v2.9.0
-    name: csi-isilon
-  - image: docker.io/dellemc/csi-powermax:v2.9.0
-    name: csi-powermax
-  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.8.0
-    name: csipowermax-reverseproxy
-  - image: docker.io/dellemc/csi-powerstore:v2.9.0
-    name: csi-powerstore
-  - image: docker.io/dellemc/csi-unity:v2.9.0
-    name: csi-unity
-  - image: docker.io/dellemc/csi-vxflexos:v2.9.0
-    name: csi-vxflexos
-  - image: docker.io/dellemc/sdc:4.5
-    name: sdc
-  - image: docker.io/dellemc/csm-authorization-sidecar:v1.9.0
-    name: karavi-authorization-proxy
-  - image: docker.io/dellemc/dell-csi-replicator:v1.7.0
-    name: dell-csi-replicator
-  - image: docker.io/dellemc/dell-replication-controller:v1.7.0
-    name: dell-replication-controller-manager
-  - image: docker.io/dellemc/csm-topology:v1.7.0
-    name: topology
-  - image: docker.io/otel/opentelemetry-collector:0.42.0
-    name: otel-collector
-  - image: docker.io/dellemc/csm-metrics-powerscale:v1.4.0
-    name: metrics-powerscale
-  - image: docker.io/dellemc/csm-metrics-powermax:v1.2.0
-    name: metrics-powermax
-  - image: docker.io/dellemc/csm-metrics-powerflex:v1.7.0
-    name: metrics-powerflex
-  - image: docker.io/dellemc/podmon:v1.8.0
-    name: podmon-node
-  - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-    name: kube-rbac-proxy
   replaces: dell-csm-operator.v1.3.0
   version: 1.4.0
