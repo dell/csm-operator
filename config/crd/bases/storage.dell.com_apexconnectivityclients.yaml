@@ -70,6 +70,39 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      credentials:
+                        description: ComponentCred is to store the velero credential
+                          contents
+                        items:
+                          description: Credential struct
+                          properties:
+                            createWithInstall:
+                              description: CreateWithInstall is used to indicate wether
+                                or not to create a secret for objectstore
+                              type: boolean
+                            name:
+                              description: Name is the name of secret which contains
+                                credentials to access objectstore
+                              type: string
+                            secretContents:
+                              description: SecretContents contains credentials to
+                                access objectstore
+                              properties:
+                                aws_access_key_id:
+                                  description: AccessKeyID is a name of key ID to
+                                    access objectstore
+                                  type: string
+                                aws_secret_access_key:
+                                  description: AccessKey contains the key to access
+                                    objectstore
+                                  type: string
+                              type: object
+                          type: object
+                        type: array
+                      deployNodeAgent:
+                        description: DeployNodeAgent is to enable/disable node-agent
+                          services
+                        type: boolean
                       enabled:
                         description: Enabled is used to indicate wether or not to
                           deploy a module
@@ -196,6 +229,9 @@ spec:
                         description: ImagePullPolicy is the image pull policy for
                           the image
                         type: string
+                      licenseName:
+                        description: LicenseName is the name of the license for app-mobility
+                        type: string
                       name:
                         description: Name is the name of Container
                         type: string
@@ -206,6 +242,10 @@ spec:
                           for the pod to fit on a node. Selector which must match
                           a node's labels for the pod to be scheduled on that node.
                         type: object
+                      objectStoreSecretName:
+                        description: ObjectStoreSecretName is the name of the secret
+                          for the object store for app-mobility
+                        type: string
                       opa:
                         description: Opa is the image tag for the Container
                         type: string
@@ -217,6 +257,9 @@ spec:
                         type: string
                       redis:
                         description: Redis is the image tag for the Container
+                        type: string
+                      replicaCount:
+                        description: ReplicaCount is the replica count for app mobility
                         type: string
                       roleService:
                         description: RoleService is the image tag for the Container
@@ -270,6 +313,14 @@ spec:
                               type: string
                           type: object
                         type: array
+                      useVolumeSnapshot:
+                        description: UseSnapshot is to check whether volume snapshot
+                          is enabled under velero component
+                        type: boolean
+                      veleroNamespace:
+                        description: VeleroNamespace is the namespace that Velero
+                          is installed in
+                        type: string
                     type: object
                   configVersion:
                     description: ConfigVersion is the configuration version of the
@@ -300,6 +351,39 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        credentials:
+                          description: ComponentCred is to store the velero credential
+                            contents
+                          items:
+                            description: Credential struct
+                            properties:
+                              createWithInstall:
+                                description: CreateWithInstall is used to indicate
+                                  wether or not to create a secret for objectstore
+                                type: boolean
+                              name:
+                                description: Name is the name of secret which contains
+                                  credentials to access objectstore
+                                type: string
+                              secretContents:
+                                description: SecretContents contains credentials to
+                                  access objectstore
+                                properties:
+                                  aws_access_key_id:
+                                    description: AccessKeyID is a name of key ID to
+                                      access objectstore
+                                    type: string
+                                  aws_secret_access_key:
+                                    description: AccessKey contains the key to access
+                                      objectstore
+                                    type: string
+                                type: object
+                            type: object
+                          type: array
+                        deployNodeAgent:
+                          description: DeployNodeAgent is to enable/disable node-agent
+                            services
+                          type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to
                             deploy a module
@@ -427,6 +511,10 @@ spec:
                           description: ImagePullPolicy is the image pull policy for
                             the image
                           type: string
+                        licenseName:
+                          description: LicenseName is the name of the license for
+                            app-mobility
+                          type: string
                         name:
                           description: Name is the name of Container
                           type: string
@@ -437,6 +525,10 @@ spec:
                             for the pod to fit on a node. Selector which must match
                             a node's labels for the pod to be scheduled on that node.
                           type: object
+                        objectStoreSecretName:
+                          description: ObjectStoreSecretName is the name of the secret
+                            for the object store for app-mobility
+                          type: string
                         opa:
                           description: Opa is the image tag for the Container
                           type: string
@@ -448,6 +540,9 @@ spec:
                           type: string
                         redis:
                           description: Redis is the image tag for the Container
+                          type: string
+                        replicaCount:
+                          description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
@@ -502,6 +597,14 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        useVolumeSnapshot:
+                          description: UseSnapshot is to check whether volume snapshot
+                            is enabled under velero component
+                          type: boolean
+                        veleroNamespace:
+                          description: VeleroNamespace is the namespace that Velero
+                            is installed in
+                          type: string
                       type: object
                     type: array
                   sideCars:
@@ -517,6 +620,39 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        credentials:
+                          description: ComponentCred is to store the velero credential
+                            contents
+                          items:
+                            description: Credential struct
+                            properties:
+                              createWithInstall:
+                                description: CreateWithInstall is used to indicate
+                                  wether or not to create a secret for objectstore
+                                type: boolean
+                              name:
+                                description: Name is the name of secret which contains
+                                  credentials to access objectstore
+                                type: string
+                              secretContents:
+                                description: SecretContents contains credentials to
+                                  access objectstore
+                                properties:
+                                  aws_access_key_id:
+                                    description: AccessKeyID is a name of key ID to
+                                      access objectstore
+                                    type: string
+                                  aws_secret_access_key:
+                                    description: AccessKey contains the key to access
+                                      objectstore
+                                    type: string
+                                type: object
+                            type: object
+                          type: array
+                        deployNodeAgent:
+                          description: DeployNodeAgent is to enable/disable node-agent
+                            services
+                          type: boolean
                         enabled:
                           description: Enabled is used to indicate wether or not to
                             deploy a module
@@ -644,6 +780,10 @@ spec:
                           description: ImagePullPolicy is the image pull policy for
                             the image
                           type: string
+                        licenseName:
+                          description: LicenseName is the name of the license for
+                            app-mobility
+                          type: string
                         name:
                           description: Name is the name of Container
                           type: string
@@ -654,6 +794,10 @@ spec:
                             for the pod to fit on a node. Selector which must match
                             a node's labels for the pod to be scheduled on that node.
                           type: object
+                        objectStoreSecretName:
+                          description: ObjectStoreSecretName is the name of the secret
+                            for the object store for app-mobility
+                          type: string
                         opa:
                           description: Opa is the image tag for the Container
                           type: string
@@ -665,6 +809,9 @@ spec:
                           type: string
                         redis:
                           description: Redis is the image tag for the Container
+                          type: string
+                        replicaCount:
+                          description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
@@ -719,6 +866,14 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        useVolumeSnapshot:
+                          description: UseSnapshot is to check whether volume snapshot
+                            is enabled under velero component
+                          type: boolean
+                        veleroNamespace:
+                          description: VeleroNamespace is the namespace that Velero
+                            is installed in
+                          type: string
                       type: object
                     type: array
                   usePrivateCaCerts:
