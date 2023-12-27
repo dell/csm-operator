@@ -11,16 +11,16 @@ spec:
     forceRemoveClient: true
     common:
       name: connectivity-client-docker-k8s
-      image: dellemc/connectivity-client-docker-k8s
+      image: dellemc/connectivity-client-docker-k8s:1.1.4
       imagePullPolicy: IfNotPresent
     initContainers:
       - name: connectivity-client-init
-        image: dellemc/connectivity-client-docker-k8s
+        image: dellemc/connectivity-client-docker-k8s:1.1.4
         imagePullPolicy: IfNotPresent
     sideCars:
       - name: kubernetes-proxy
         image: bitnami/kubectl:latest
         imagePullPolicy: IfNotPresent
       - name: cert-persister
-        image: dellemc/connectivity-cert-persister-k8s
+        image: dellemc/connectivity-cert-persister-k8s:0.7.0
         imagePullPolicy: IfNotPresent
