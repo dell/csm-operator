@@ -1009,7 +1009,7 @@ rules:
   resources:
   - backups/finalizers
   verbs:
-  - upate
+  - update
 - apiGroups:
   - velero.io
   resources:
@@ -1102,6 +1102,8 @@ rules:
   - list
   - update
   - watch
+  - get
+  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
