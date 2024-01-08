@@ -173,7 +173,7 @@ var (
 // +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=schedules,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups="mobility.storage.dell.com",resources=schedules/status,verbs=get;patch;update
 // +kubebuilder:rbac:groups="velero.io",resources=backups,verbs=create;delete;get;list;patch;update;watch
-// +kubebuilder:rbac:groups="velero.io",resources=backups/finalizers,verbs=upate
+// +kubebuilder:rbac:groups="velero.io",resources=backups/finalizers,verbs=update
 // +kubebuilder:rbac:groups="velero.io",resources=backups/status,verbs=get;list;patch;update
 // +kubebuilder:rbac:groups="velero.io",resources=backupstoragelocations,verbs=get;list;patch;update;watch
 // +kubebuilder:rbac:groups="velero.io",resources=deletebackuprequests,verbs=create;delete;get;list;watch
