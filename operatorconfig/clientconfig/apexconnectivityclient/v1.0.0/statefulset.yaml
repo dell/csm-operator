@@ -60,7 +60,7 @@ rules:
     verbs: ["list", "watch", "get"]
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["list","get", "create", "update"]
+    verbs: ["list","get", "create", "update", "delete"]
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["get", "create", "delete", "update"]
