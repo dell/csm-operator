@@ -42,7 +42,7 @@ rules:
     verbs: ["list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["storageclasses"]
-    verbs: ["list", "watch", "create"]
+    verbs: ["list", "watch", "create", "delete"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
     verbs: ["list", "watch"]
@@ -66,10 +66,16 @@ rules:
     verbs: ["get", "create", "delete", "update"]
   - apiGroups: ["storage.dell.com"]
     resources: ["containerstoragemodules"]
-    verbs: ["list", "create", "get"]
+    verbs: ["list", "create", "get", "delete"]
   - apiGroups: ["mobility.storage.dell.com"]
     resources: ["backups"]
     verbs: ["list", "create", "get"]
+  - apiGroups: ["cert-manager.io"]
+    resources: ["issuers"]
+    verbs: ["list", "get", "create", "delete"]
+  - apiGroups: ["cert-manager.io"]
+    resources: ["certificates"]
+    verbs: ["list", "get", "create", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -199,7 +205,7 @@ spec:
               type: RuntimeDefault
             capabilities:
               drop:
-                - ALL            
+                - ALL
         - name: kubernetes-proxy
           image: "<KUBERNETES_PROXY_IMAGE>"
           imagePullPolicy: Always
@@ -229,7 +235,7 @@ spec:
               type: RuntimeDefault
             capabilities:
               drop:
-                - ALL            
+                - ALL
         - name: cert-persister
           image: "<CERT_PERSISTER_IMAGE>"
           imagePullPolicy: Always
@@ -249,7 +255,7 @@ spec:
               type: RuntimeDefault
             capabilities:
               drop:
-                - ALL              
+                - ALL
       initContainers:
         - name: connectivity-client-init
           image: "<ACC_INIT_CONTAINER_IMAGE>"
@@ -273,7 +279,7 @@ spec:
               type: RuntimeDefault
             capabilities:
               drop:
-                - ALL                          
+                - ALL
       volumes:
         - name: ca-certs
           projected:
