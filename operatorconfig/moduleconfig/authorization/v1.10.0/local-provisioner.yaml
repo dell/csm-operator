@@ -15,7 +15,7 @@ spec:
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Delete
+  persistentVolumeReclaimPolicy: Recycle
   storageClassName: csm-authorization-local-storage
   hostPath:
     path: /csm-authorization/redis
