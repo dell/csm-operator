@@ -87,7 +87,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-powermax:v2.9.0
+          image: dellemc/csi-powermax:v2.9.1
           imagePullPolicy: IfNotPresent
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
@@ -145,6 +145,8 @@ spec:
               value: "<X_CSI_POWERMAX_PORTGROUPS>"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_MAX_VOLUMES_PER_NODE
+              value: "<X_CSI_MAX_VOLUMES_PER_NODE>"
             - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
               value: "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
             - name: X_CSI_VSPHERE_ENABLED
@@ -153,6 +155,8 @@ spec:
               value: "<X_CSI_VSPHERE_PORTGROUP>"
             - name: X_CSI_VCENTER_HOST
               value: "<X_CSI_VCENTER_HOST>"
+            - name: X_CSI_VSPHERE_HOSTNAME
+              value: "<X_CSI_VSPHERE_HOSTNAME>"
             - name: X_CSI_VCENTER_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -247,8 +251,8 @@ spec:
             optional: true
         - name: powermax-config-params
           configMap:
-            name: <DriverDefaultReleaseName>-config-params
+             name: <DriverDefaultReleaseName>-config-params
         - name: node-topology-config
           configMap:
-            name: node-topology-config
-            optional: true
+             name: node-topology-config
+             optional: true
