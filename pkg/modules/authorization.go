@@ -46,6 +46,8 @@ const (
 	AuthNginxIngressManifest = "nginx-ingress-controller.yaml"
 	// AuthPolicyManifest -
 	AuthPolicyManifest = "policies.yaml"
+	// AuthLocalProvisionerManifest -
+	AuthLocalProvisionerManifest = "local-provisioner.yaml"
 
 	// AuthNamespace -
 	AuthNamespace = "<NAMESPACE>"
@@ -97,6 +99,8 @@ const (
 	AuthNginxIngressComponent = "ingress-nginx"
 	// AuthCertManagerComponent - cert-manager component
 	AuthCertManagerComponent = "cert-manager"
+
+	AuthLocalStorageClass = "csm-authorization-local-storage"
 )
 
 var (
@@ -496,7 +500,11 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 
 			for _, env := range component.Envs {
 				if env.Name == "REDIS_STORAGE_CLASS" {
-					redisStorageClass = env.Value
+					if env.Value == "" {
+						redisStorageClass = AuthLocalStorageClass
+					} else {
+						redisStorageClass = env.Value
+					}
 				}
 			}
 		}
@@ -508,8 +516,57 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	return YamlString, nil
 }
 
+func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (bool, string, error) {
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return false, "", err
+	}
+
+	for _, component := range auth.Components {
+		if component.Name == AuthProxyServerComponent {
+			for _, env := range component.Envs {
+				if env.Name == "REDIS_STORAGE_CLASS" {
+					if env.Value == "" {
+						path := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthLocalProvisionerManifest)
+						buf, err := os.ReadFile(filepath.Clean(path))
+						if err != nil {
+							return false, "", err
+						}
+						return true, string(buf), nil
+					}
+				}
+			}
+		}
+	}
+	return false, "", nil
+}
+
 // AuthorizationServerDeployment - apply/delete deployment objects
 func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(op, cr, csmv1.Module{})
+	if err != nil {
+		return err
+	}
+
+	if useLocalStorage {
+		deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+		if err != nil {
+			return err
+		}
+
+		for _, ctrlObj := range deployObjects {
+			if isDeleting {
+				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	YamlString, err := getAuthorizationServerDeployment(op, cr, csmv1.Module{})
 	if err != nil {
 		return err
