@@ -61,10 +61,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.9.0",
+                "image": "dellemc/csi-isilon:v2.9.1",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.0",
+              "configVersion": "v2.9.1",
               "controller": {
                 "envs": [
                   {
@@ -404,10 +404,10 @@ metadata:
                     "value": ""
                   }
                 ],
-                "image": "dellemc/csi-powermax:v2.9.0",
+                "image": "dellemc/csi-powermax:v2.9.1",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.0",
+              "configVersion": "v2.9.1",
               "controller": {
                 "envs": [
                   {
@@ -847,10 +847,10 @@ metadata:
                     "value": "true"
                   }
                 ],
-                "image": "dellemc/csi-unity:v2.9.0",
+                "image": "dellemc/csi-unity:v2.9.1",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.0",
+              "configVersion": "v2.9.1",
               "controller": {
                 "envs": [
                   {
@@ -934,10 +934,10 @@ metadata:
                     "value": "false"
                   }
                 ],
-                "image": "dellemc/csi-vxflexos:v2.9.0",
+                "image": "dellemc/csi-vxflexos:v2.9.1",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.0",
+              "configVersion": "v2.9.1",
               "controller": {
                 "envs": [
                   {
