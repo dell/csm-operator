@@ -100,6 +100,7 @@ const (
 	// AuthCertManagerComponent - cert-manager component
 	AuthCertManagerComponent = "cert-manager"
 
+	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
 )
 
