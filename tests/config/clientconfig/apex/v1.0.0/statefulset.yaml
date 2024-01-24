@@ -94,7 +94,7 @@ roleRef:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: apex-connectivity-client
+  name: dell-connectivity-client
   namespace: <NAMESPACE>
   labels:
     app.kubernetes.io/name: connectivity-client-docker-k8s
