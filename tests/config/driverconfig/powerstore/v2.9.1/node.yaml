@@ -91,7 +91,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-powerstore:v2.9.0
+          image: dellemc/csi-powerstore:v2.9.1
           imagePullPolicy:  IfNotPresent
           command: [ "/csi-powerstore" ]
           args:

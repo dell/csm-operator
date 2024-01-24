@@ -55,6 +55,8 @@ powerstore:
       resiliency: "v1.7.0"
   v2.9.0:
       resiliency: "v1.8.0"
+  v2.9.1:
+      resiliency: "v1.8.0"
 powermax:
   # List of Driver versions and modules that supports the version
   v2.7.0:
