@@ -27,4 +27,4 @@ images:
   sdcmonitor: dellemc/sdc:4.5
 
   #"images.metadataretriever" defines the container images used for csi metadata retriever
-  metadataretriever: dellemc/csi-metadata-retriever:v1.6.0
+  metadataretriever: dellemc/csi-metadata-retriever:v1.6.1
