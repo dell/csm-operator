@@ -16,8 +16,8 @@ spec:
         # enable: Enable/Disable csm-authorization proxy server
         enabled: true
         proxyService: dellemc/csm-authorization-proxy:v1.9.1
-        tenantService: dellemc/csm-authorization-tenant:v1.9.q
-        roleService: dellemc/csm-authorization-role:v1.9.q
+        tenantService: dellemc/csm-authorization-tenant:v1.9.1
+        roleService: dellemc/csm-authorization-role:v1.9.1
         storageService: dellemc/csm-authorization-storage:v1.9.1
         redis: redis:6.0.8-alpine
         commander: rediscommander/redis-commander:latest
@@ -43,7 +43,7 @@ spec:
           # Specify storage class for redis. Otherwise, default storage class is used.
           # Default value: None
           - name: "REDIS_STORAGE_CLASS"
-            value: "local-storage"
+            value: ""
 
       # enabled: Enable/Disable nginx ingress
       # Allowed values:

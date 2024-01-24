@@ -1153,7 +1153,7 @@ spec:
     name: csi-vxflexos
   - image: docker.io/dellemc/sdc:4.5
     name: sdc
-  - image: docker.io/dellemc/csm-authorization-sidecar:v1.9.0
+  - image: docker.io/dellemc/csm-authorization-sidecar:v1.9.1
     name: karavi-authorization-proxy
   - image: docker.io/dellemc/dell-csi-replicator:v1.7.1
     name: dell-csi-replicator
@@ -1169,7 +1169,7 @@ spec:
     name: metrics-powermax
   - image: docker.io/dellemc/csm-metrics-powerflex:v1.7.0
     name: metrics-powerflex
-  - image: docker.io/dellemc/podmon:v1.8.0
+  - image: docker.io/dellemc/podmon:v1.8.1
     name: podmon-node
   - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
     name: kube-rbac-proxy

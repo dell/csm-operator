@@ -169,10 +169,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.8.0
+      configVersion: v1.8.1
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.8.0
+          image: dellemc/podmon:v1.8.1
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -187,7 +187,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:v1.8.0
+          image: dellemc/podmon:v1.8.1
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

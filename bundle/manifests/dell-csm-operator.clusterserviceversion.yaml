@@ -155,11 +155,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.9.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.9.1",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.9.0",
+                "configVersion": "v1.9.1",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -313,7 +313,7 @@ metadata:
                       "--driverPath=csi-isilon.dellemc.com",
                       "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
                     ],
-                    "image": "dellemc/podmon:v1.8.0",
+                    "image": "dellemc/podmon:v1.8.1",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -335,12 +335,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "dellemc/podmon:v1.8.0",
+                    "image": "dellemc/podmon:v1.8.1",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.8.0",
+                "configVersion": "v1.8.1",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -521,11 +521,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.9.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.9.1",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.9.0",
+                "configVersion": "v1.9.1",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -765,7 +765,7 @@ metadata:
                       "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powerstore.dellemc.com"
                     ],
-                    "image": "dellemc/podmon:v1.8.0",
+                    "image": "dellemc/podmon:v1.8.1",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -787,12 +787,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "dellemc/podmon:v1.8.0",
+                    "image": "dellemc/podmon:v1.8.1",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.8.0",
+                "configVersion": "v1.8.1",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -1045,11 +1045,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.9.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.9.1",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.9.0",
+                "configVersion": "v1.9.1",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -1194,7 +1194,7 @@ metadata:
                       "--mode=controller",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
                     ],
-                    "image": "dellemc/podmon:v1.8.0",
+                    "image": "dellemc/podmon:v1.8.1",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -1215,12 +1215,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "dellemc/podmon:v1.8.0",
+                    "image": "dellemc/podmon:v1.8.1",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.8.0",
+                "configVersion": "v1.8.1",
                 "enabled": false,
                 "name": "resiliency"
               }
