@@ -406,7 +406,7 @@ func (suite *AccControllerTestSuite) runFakeAccManager(expectedErr string, recon
 	// If delete, we shouldn't call these methods since reconcile
 	// would return before this
 	if !reconcileDelete {
-		suite.handleStatefulSetUpdateTest(reconciler, "apex-connectivity-client")
+		suite.handleStatefulSetUpdateTest(reconciler, "dell-connectivity-client")
 		suite.handleAccPodTest(reconciler, "acc-pod")
 		_, err = reconciler.Reconcile(accCtx, accReq)
 		if expectedErr == "" {
