@@ -45,7 +45,6 @@ var (
 		// expected error
 		expectedErr string
 	}{
-
 		{"happy path", powerStoreCSM, powerStoreClient, powerStoreSecret, ""},
 		{"bad version", powerStoreCSMBadVersion, powerStoreClient, powerStoreSecret, "not supported"},
 	}

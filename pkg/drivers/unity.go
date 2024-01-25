@@ -116,7 +116,6 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 	switch fileType {
 	case "Node":
 		for _, env := range cr.Spec.Driver.Node.Envs {
-
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorNode = env.Value
 			}
@@ -124,7 +123,6 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Controller.Envs {
-
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorController = env.Value
 			}
@@ -148,7 +146,6 @@ func ModifyUnityConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule) 
 
 		if env.Name == "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS" {
 			keyValue += fmt.Sprintf("\n %s: %s", "ALLOW_MULTI_POD_ACCESS", env.Value)
-
 		}
 		if env.Name == "MAX_UNITY_VOLUMES_PER_NODE" {
 			keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
@@ -168,7 +165,6 @@ func ModifyUnityConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule) 
 	}
 
 	return configMapData
-
 }
 
 func getApplyCertVolumeUnity(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {

@@ -48,7 +48,6 @@ var (
 		// expected error
 		expectedErr string
 	}{
-
 		{"happy path", csmUnity, unityClient, unitySecret, ""},
 		{"bad version", unityCSMBadVersion, unityClient, unitySecret, "not supported"},
 		{"invalid value for skip cert validation", unityCSMBadSkipCert, unityClient, unitySecret, "is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"},

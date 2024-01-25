@@ -127,6 +127,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 
 	return nil
 }
+
 func getReverseProxyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.ReverseProxy {

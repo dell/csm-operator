@@ -375,7 +375,7 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		return err
 	}
 
-	//update secret volume and inject authorization to deployment
+	// update secret volume and inject authorization to deployment
 	var dpApply *confv1.DeploymentApplyConfiguration
 	foundDp := false
 	for i, obj := range powerscaleMetricsObjects {
@@ -723,7 +723,6 @@ func getObservabilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, erro
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.Observability {
 			return m, nil
-
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("could not find observability module")

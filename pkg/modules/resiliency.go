@@ -81,7 +81,6 @@ func ResiliencyPrecheck(ctx context.Context, op utils.OperatorConfig, resiliency
 
 	log.Infof("\nperformed pre checks for: %s", resiliency.Name)
 	return nil
-
 }
 
 // ResiliencyInjectClusterRole - inject resiliency into clusterrole

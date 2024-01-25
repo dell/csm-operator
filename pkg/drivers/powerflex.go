@@ -55,7 +55,6 @@ const (
 
 // PrecheckPowerFlex do input validation
 func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) error {
-
 	log := logger.GetLogger(ctx)
 
 	// Check if driver version is supported by doing a stat on a config file
@@ -109,7 +108,6 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 
 // GetMDMFromSecret - Get MDM value from secret
 func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) (string, error) {
-
 	log := logger.GetLogger(ctx)
 	secretName := cr.Name + "-config"
 	credSecret, err := utils.GetSecret(ctx, secretName, cr.GetNamespace(), ct)
@@ -191,7 +189,6 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 		return "", fmt.Errorf("Arrays details are not provided in vxflexos-config secret")
 	}
 	return mdmVal, nil
-
 }
 
 // ValidateIPAddress validates that a proper set of IPs has been provided
@@ -213,9 +210,7 @@ func ValidateIPAddress(ipAdd string) (string, bool) {
 	return newIP, true
 }
 
-var (
-	ipRegex, _ = regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
-)
+var ipRegex, _ = regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
 
 // IsIpv4Regex - Matches Ipaddress with regex and returns error if the Ip Address doesn't match regex
 func IsIpv4Regex(ipAddress string) bool {
@@ -224,7 +219,6 @@ func IsIpv4Regex(ipAddress string) bool {
 
 // ModifyPowerflexCR - Set environment variables provided in CR
 func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
-
 	approveSdcEnabled := ""
 	renameSdcEnabled := ""
 	renameSdcPrefix := ""

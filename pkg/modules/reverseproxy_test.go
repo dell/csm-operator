@@ -204,11 +204,9 @@ func TestReverseProxyPrecheck(t *testing.T) {
 			err := ReverseProxyPrecheck(ctx, operatorConfig, reverseProxy, tmpCR, &fakeReconcile)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -260,7 +258,6 @@ func TestReverseProxyServer(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }

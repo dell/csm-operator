@@ -204,7 +204,6 @@ func (suite *CSMControllerTestSuite) TestResiliencyReconcile() {
 }
 
 func (suite *CSMControllerTestSuite) TestResiliencyReconcileError() {
-
 	suite.makeFakeResiliencyCSM(csmName, suite.namespace, false, append(getResiliencyModule(), getResiliencyModule()...), "unsupported-driver")
 	reconciler := suite.createReconciler()
 	res, err := reconciler.Reconcile(ctx, req)
@@ -259,7 +258,6 @@ func (suite *CSMControllerTestSuite) TestErrorInjection() {
 }
 
 func (suite *CSMControllerTestSuite) TestPowerScaleAnnotation() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
@@ -275,11 +273,9 @@ func (suite *CSMControllerTestSuite) TestPowerScaleAnnotation() {
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
-
 }
 
 func (suite *CSMControllerTestSuite) TestPowerFlexAnnotation() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
@@ -295,11 +291,9 @@ func (suite *CSMControllerTestSuite) TestPowerFlexAnnotation() {
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
-
 }
 
 func (suite *CSMControllerTestSuite) TestPowerStoreAnnotation() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
@@ -315,11 +309,9 @@ func (suite *CSMControllerTestSuite) TestPowerStoreAnnotation() {
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
-
 }
 
 func (suite *CSMControllerTestSuite) TestUnityAnnotation() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.Unity
@@ -335,11 +327,9 @@ func (suite *CSMControllerTestSuite) TestUnityAnnotation() {
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
-
 }
 
 func (suite *CSMControllerTestSuite) TestPowermaxAnnotation() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
@@ -355,11 +345,9 @@ func (suite *CSMControllerTestSuite) TestPowermaxAnnotation() {
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
-
 }
 
 func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
@@ -382,11 +370,9 @@ func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Nil(suite.T(), err)
-
 }
 
 func (suite *CSMControllerTestSuite) TestCsmUpgradeVersionTooOld() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
@@ -409,11 +395,9 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeVersionTooOld() {
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
-
 }
 
 func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
@@ -436,11 +420,9 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
-
 }
 
 func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
@@ -463,11 +445,9 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
-
 }
 
 func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.ObjectMeta.Finalizers = []string{"foo"}
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
@@ -514,7 +494,6 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 
 	for _, tt := range removeDriverTests {
 		suite.T().Run(tt.name, func(t *testing.T) {
-
 			if tt.errorInjector != nil {
 				// need to create all objs before running removeDriver to hit unknown error
 				suite.makeFakeCSM(csmName, suite.namespace, true, append(getAuthModule(), getObservabilityModule()...))
@@ -536,7 +515,6 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 			}
 		})
 	}
-
 }
 
 // Test all edge cases in SyncCSM
@@ -577,7 +555,6 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 			}
 		})
 	}
-
 }
 
 func (suite *CSMControllerTestSuite) TestRemoveModule() {
@@ -692,7 +669,6 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 }
 
 func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
-
 	// set bad version error
 	configVersion = "v0"
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -719,7 +695,6 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 }
 
 func (suite *CSMControllerTestSuite) TestCsmPreCheckTypeError() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
 	csm.Spec.Driver.Common.Image = "image"
@@ -744,7 +719,6 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckTypeError() {
 }
 
 func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	csm.Spec.Driver.Common.Image = "image"
@@ -803,7 +777,6 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 }
 
 func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	csm.Spec.Driver.Common.Image = "image"
@@ -900,7 +873,6 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 }
 
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {
-
 	logType := logger.DevelopmentLogLevel
 	logger.SetLoggerLevel(logType)
 	_, log := logger.GetNewContextWithLogger("0")
@@ -1121,7 +1093,7 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 
 	r.handleDeploymentUpdate(deployment, deployment)
 
-	//Make Pod and set pod status
+	// Make Pod and set pod status
 	pod := shared.MakePod(name, suite.namespace)
 	pod.Labels["csm"] = csmName
 	pod.Status.Phase = corev1.PodPending
@@ -1239,6 +1211,7 @@ func getReplicaModule() []csmv1.Module {
 		},
 	}
 }
+
 func getResiliencyModule() []csmv1.Module {
 	return []csmv1.Module{
 		{
@@ -1253,6 +1226,7 @@ func getResiliencyModule() []csmv1.Module {
 		},
 	}
 }
+
 func getAuthModule() []csmv1.Module {
 	return []csmv1.Module{
 		{
@@ -1528,7 +1502,6 @@ func (suite *CSMControllerTestSuite) TestReconcileAppMob() {
 
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer bool, modules []csmv1.Module) {
-
 	// make pre-requisite secrets
 	sec := shared.MakeSecret(name+"-creds", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
@@ -1603,7 +1576,6 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 }
 
 func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, withFinalizer bool, modules []csmv1.Module, driverType string) {
-
 	sec := shared.MakeSecret(name+"-config", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
@@ -1639,7 +1611,6 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, modules []csmv1.Module) {
-
 	// this secret required by application-mobility module
 	sec := shared.MakeSecret("cloud-creds", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
@@ -1675,7 +1646,6 @@ func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, modules 
 }
 
 func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, modules []csmv1.Module) {
-
 	// this secret required by authorization module
 	sec := shared.MakeSecret("karavi-config-secret", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
