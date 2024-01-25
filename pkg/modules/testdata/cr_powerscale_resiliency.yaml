@@ -1,0 +1,60 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: isilon
+  namespace: isilon
+spec:
+  driver:
+    csiDriverType: "isilon"
+    configVersion: v2.9.0
+    authSecret: isilon-creds-custom 
+    replicas: 1
+    common:
+      image: "dellemc/csi-isilon:v2.9.0"
+      imagePullPolicy: IfNotPresent
+
+  modules:
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.8.0
+      components:
+        - name: podmon-controller
+          image: dellemc/podmon:v1.8.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--labelvalue=csi-isilon"
+            - "--arrayConnectivityPollRate=60"
+            - "--skipArrayConnectionValidation=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityConnectionLossThreshold=3"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--mode=controller"
+            - "--driverPath=csi-isilon.dellemc.com"
+            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+        - name: podmon-node
+          image: dellemc/podmon:v1.8.0
+          imagePullPolicy: IfNotPresent
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+          args:
+            - "--labelvalue=csi-isilon"
+            - "--arrayConnectivityPollRate=60"
+            - "--leaderelection=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
+            - "--mode=node"
+            - "--driverPath=csi-isilon.dellemc.com"
+            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
