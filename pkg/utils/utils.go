@@ -24,7 +24,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
-	goYAML "github.com/go-yaml/yaml"
+	goYAML "gopkg.in/yaml.v3"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
