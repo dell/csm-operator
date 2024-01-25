@@ -71,7 +71,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			return false, controllerYAML.Deployment, tmpOperatorConfig, customResource
 		},
 		"success - valid Powerscale driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
-			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+			customResource, err := getCustomResource("./testdata/cr_powerscale_resiliency.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -86,7 +86,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			return true, *newDeployment, operatorConfig, customResource
 		},
 		"success - valid Powerflex driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
-			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+			customResource, err := getCustomResource("./testdata/cr_powerflex_resiliency.yaml")
 			if err != nil {
 				panic(err)
 			}
