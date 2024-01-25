@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/cert-manager/cert-manager v1.12.3
-	github.com/go-yaml/yaml v2.1.0+incompatible
+	github.com/go-yaml/yaml v2.3.0+incompatible
 	github.com/stretchr/testify v1.8.2
 	github.com/vmware-tanzu/velero v1.12.0
 	go.uber.org/zap v1.24.0
