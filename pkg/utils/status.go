@@ -38,7 +38,7 @@ import (
 
 var dMutex sync.RWMutex
 
-var moduleToStatusCheck = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus){
+var moduleToStatusCheck = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus) (bool, error){
 	csmv1.Observability: observabilityStatusCheck,
 	csmv1.ApplicationMobility: appMobStatusCheck,
 }
@@ -352,7 +352,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
 	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
-		for module := range instance.Modules {
+		for module := range instance.Spec.Modules {
 			moduleStatusChecker, exists := moduleToStatusCheck[module.ModuleType]
 			if exists {
 				moduleRunning, err := moduleStatusChecker(ctx, instance, r, newStatus)
