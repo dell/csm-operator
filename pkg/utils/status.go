@@ -352,7 +352,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
 	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
-		for module := range instance.Spec.Modules {
+		for _, module := range instance.Spec.Modules {
 			moduleStatusChecker, exists := moduleToStatusCheck[module.ModuleType]
 			if exists {
 				moduleRunning, err := moduleStatusChecker(ctx, instance, r, newStatus)
@@ -373,7 +373,6 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	} else {
 		running = false
 		newStatus.State = constants.Failed
-		log.Infof("%s driver not running", module)
 	}
 	log.Infof("calculate overall state [%s]", newStatus.State)
 
@@ -690,7 +689,7 @@ func checkForServices(ctx context.Context, instance *csmv1.ContainerStorageModul
 }
 
 // statusForAppMob - calculate success state for application-mobility module
-func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 
 	running := false
 	var appRunning bool
@@ -737,11 +736,10 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		client.InNamespace(ObservabilityNamespace),
 	}
 	podList := &corev1.PodList{}
-	err = r.GetClient().List(ctx, podList, opts...)
+	err := r.GetClient().List(ctx, podList, opts...)
 
 	// Check to see which ones are in running state
 	for _, pod := range podList.Items {
-		log.Infof("deployment pod count %d name %s status %s", readyPods, pod.Name, pod.Status.Phase)
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
 		}
