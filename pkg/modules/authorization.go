@@ -78,8 +78,6 @@ const (
 
 	// AuthProxyHost -
 	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
-	//AuthProxyHostInsecure -
-	AuthProxyHostInsecure = "<ProxyHostInsecure>"
 	// AuthProxyIngressHost -
 	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
 	// AuthProxyIngressClassName -
