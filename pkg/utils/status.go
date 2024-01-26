@@ -745,6 +745,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
 		}
+	}
 
 	// Return num of pods in running state
 	return expectedObservabilityPods == readyPods, nil
