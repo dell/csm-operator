@@ -21,7 +21,6 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
-	"github.com/dell/csm-operator/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -735,7 +734,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 
 	// Get all pods in karavi namespace
 	opts := []client.ListOption{
-		client.InNamespace(utils.ObservabilityNamespace)
+		client.InNamespace(ObservabilityNamespace)
 	}
 	podList := &corev1.PodList{}
 	err = r.GetClient().List(ctx, podList, opts...)
