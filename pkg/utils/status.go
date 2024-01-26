@@ -734,7 +734,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 
 	// Get all pods in karavi namespace
 	opts := []client.ListOption{
-		client.InNamespace(ObservabilityNamespace)
+		client.InNamespace(ObservabilityNamespace),
 	}
 	podList := &corev1.PodList{}
 	err = r.GetClient().List(ctx, podList, opts...)
