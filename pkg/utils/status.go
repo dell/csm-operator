@@ -353,7 +353,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 
 	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
 		for _, module := range instance.Spec.Modules {
-			moduleStatusChecker, exists := moduleToStatusCheck[module.ModuleType]
+			moduleStatusChecker, exists := moduleToStatusCheck[module.Name]
 			if exists {
 				moduleRunning, err := moduleStatusChecker(ctx, instance, r, newStatus)
 				if err != nil {
@@ -731,20 +731,20 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	expectedObservabilityPods := 3
 	readyPods := 0
 
-	// Get all pods in karavi namespace
 	opts := []client.ListOption{
 		client.InNamespace(ObservabilityNamespace),
 	}
 	podList := &corev1.PodList{}
 	err := r.GetClient().List(ctx, podList, opts...)
+	if err != nil {
+		return false, err
+	}
 
-	// Check to see which ones are in running state
 	for _, pod := range podList.Items {
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
 		}
 	}
 
-	// Return num of pods in running state
 	return expectedObservabilityPods == readyPods, nil
 }
