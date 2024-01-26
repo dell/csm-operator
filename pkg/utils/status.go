@@ -21,6 +21,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
+	"github.com/dell/csm-operator/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -352,7 +353,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
 	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
-		for module in instance.Modules {
+		for module := range instance.Modules {
 			moduleStatusChecker, exists := moduleToStatusCheck[module.ModuleType]
 			if exists {
 				moduleRunning, err := moduleStatusChecker(ctx, instance, r, newStatus)
@@ -375,7 +376,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		newStatus.State = constants.Failed
 		log.Infof("%s driver not running", module)
 	}
-		log.Infof("calculate overall state [%s]", newStatus.State)
+	log.Infof("calculate overall state [%s]", newStatus.State)
 
 	if daemonSetErr != nil {
 		err = daemonSetErr
@@ -728,3 +729,24 @@ func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule
 
 // observabilityStatusCheck - calculate success state for observability module
 func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+	// Observability launches three pods in the karavi namespace
+	expectedObservabilityPods := 3
+	readyPods := 0
+
+	// Get all pods in karavi namespace
+	opts := []client.ListOption{
+		client.InNamespace(utils.ObservabilityNamespace)
+	}
+	podList := &corev1.PodList{}
+	err = r.GetClient().List(ctx, podList, opts...)
+
+	// Check to see which ones are in running state
+	for _, pod := range podList.Items {
+		log.Infof("deployment pod count %d name %s status %s", readyPods, pod.Name, pod.Status.Phase)
+		if pod.Status.Phase == corev1.PodRunning {
+			readyPods++
+		}
+
+	// Return num of pods in running state
+	return expectedObservabilityPods == readyPods, nil
+}
