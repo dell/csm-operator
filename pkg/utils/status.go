@@ -38,6 +38,16 @@ import (
 
 var dMutex sync.RWMutex
 
+var moduleToStatusCheck = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus){
+	csmv1.Observability: observabilityStatusCheck,
+	csmv1.ApplicationMobility: appMobStatusCheck,
+}
+
+var boolToConst = map[bool]csmv1.CSMStateType{
+	false: constants.Failed,
+	true: constants.Succeeded,
+}
+
 func getInt32(pointer *int32) int32 {
 	if pointer == nil {
 		return 0
@@ -326,65 +336,52 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
-	running := false
+	running := true
 	var err error = nil
-	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
-	// TODO: Can be uncommented once this issues gets sorted out
-	/* controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
-	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
-	newStatus.ControllerStatus = controllerStatus
-	newStatus.NodeStatus = nodeStatus */
 
 	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 	newStatus.NodeStatus = nodeStatus
 	controllerReplicas := newStatus.ControllerStatus.Desired
 	controllerStatus := newStatus.ControllerStatus
 
-	newStatus.State = constants.Failed
+	newStatus.State = constants.Succeeded
 	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
 	log.Infof("daemonset expected [%d]", expected)
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
-	if instance.GetName() == "application-mobility" {
-		modrunning, err := statusForAppMob(ctx, instance, r, newStatus)
-		if err != nil {
-			log.Infof("statusForAppMob err msg [%s]", err.Error())
+	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
+		for module in instance.Modules {
+			moduleStatusChecker, exists := moduleToStatusCheck[module.ModuleType]
+			if exists {
+				moduleRunning, err := moduleStatusChecker(ctx, instance, r, newStatus)
+				if err != nil {
+					log.Infof("status checker for %s module errored out with [%s]", module, err.Error())
+					running = false
+					newStatus.State = constants.Failed
+					break
+				}
+				if !moduleRunning {
+					running = false
+					newStatus.State = constants.Failed
+					log.Infof("%s module not running", module)
+					break
+				}
+			}
 		}
-		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && modrunning {
-			running = true
-			newStatus.State = constants.Succeeded
-		}
-		log.Infof("calculate overall state [%s]", newStatus.State)
 	} else {
-		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
-			running = true
-			newStatus.State = constants.Succeeded
-		}
-		log.Infof("calculate overall state [%s]", newStatus.State)
-
+		running = false
+		newStatus.State = constants.Failed
+		log.Infof("%s driver not running", module)
 	}
-	//var err error = nil
-	// TODO: Uncomment this when the controller runtime API gets fixed
-	/*
-		if controllerErr != nil {
-			err = controllerErr
-		}
-		if daemonSetErr != nil {
-			err = daemonSetErr
-		}
-		if daemonSetErr != nil && controllerErr != nil {
-			err = fmt.Errorf("ControllerError: %s, Daemonseterror: %s", controllerErr.Error(), daemonSetErr.Error())
-			log.Infof("calculate overall error msg [%s]", err.Error())
-		} */
+		log.Infof("calculate overall state [%s]", newStatus.State)
 
 	if daemonSetErr != nil {
 		err = daemonSetErr
 		log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
 	}
 
-	//}
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err
 }
@@ -728,3 +725,6 @@ func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule
 	return running, err
 
 }
+
+// observabilityStatusCheck - calculate success state for observability module
+func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
