@@ -355,6 +355,8 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		for _, module := range instance.Spec.Modules {
 			moduleStatusChecker, exists := moduleToStatusCheck[module.Name]
 			if exists && module.Enabled {
+				log.Infof("[JOOSLOG] exists: %+v", exists)
+				log.Infof("[JOOSLOG] module.Enabled: %+v", module.Enabled)
 				moduleRunning, err := moduleStatusChecker(ctx, instance, r, newStatus)
 				if err != nil {
 					log.Infof("status checker for %s module errored out with [%s]", module, err.Error())
