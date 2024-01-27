@@ -742,11 +742,15 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		return false, err
 	}
 
+	fmt.printf("podList: %+v\n", podList)
+
 	for _, pod := range podList.Items {
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
 		}
 	}
+
+	fmt.printf("readyPods: %+v\n", readyPods)
 
 	return expectedObservabilityPods == readyPods, nil
 }
