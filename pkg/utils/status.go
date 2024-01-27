@@ -354,7 +354,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
 		for _, module := range instance.Spec.Modules {
 			moduleStatusChecker, exists := moduleToStatusCheck[module.Name]
-			if exists and module.Enabled {
+			if exists && module.Enabled {
 				moduleRunning, err := moduleStatusChecker(ctx, instance, r, newStatus)
 				if err != nil {
 					log.Infof("status checker for %s module errored out with [%s]", module, err.Error())
