@@ -729,6 +729,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 
 // observabilityStatusCheck - calculate success state for observability module
 func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+	log := logger.GetLogger(ctx)
 	// Observability launches three pods in the karavi namespace
 	expectedObservabilityPods := 3
 	readyPods := 0
@@ -742,7 +743,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		return false, err
 	}
 
-	fmt.printf("podList: %+v\n", podList)
+	log.Info("podList: %+v\n", podList)
 
 	for _, pod := range podList.Items {
 		if pod.Status.Phase == corev1.PodRunning {
@@ -750,7 +751,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		}
 	}
 
-	fmt.printf("readyPods: %+v\n", readyPods)
+	log.Info("readyPods: %+v\n", readyPods)
 
 	return expectedObservabilityPods == readyPods, nil
 }
