@@ -173,7 +173,7 @@ NAME_LOOP:
 }
 
 // CheckApplyContainersAuth --
-func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, drivertype string) error {
+func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, drivertype string, skipCertificateValidation bool) error {
 	authString := "karavi-authorization-proxy"
 	for _, cnt := range containers {
 		if *cnt.Name == authString {
@@ -189,9 +189,19 @@ func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, 
 			}
 
 			for _, env := range cnt.Env {
-				if *env.Name == "SKIP_CERTIFICATE_VALIDATION" {
+				if *env.Name == "SKIP_CERTIFICATE_VALIDATION" || *env.Name == "INSECURE" {
 					if _, err := strconv.ParseBool(*env.Value); err != nil {
 						return fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", *env.Value, err)
+					}
+
+					if skipCertificateValidation {
+						if *env.Value != "true" {
+							return fmt.Errorf("expected SKIP_CERTIFICATE_VALIDATION/INSECURE to be true")
+						}
+					} else {
+						if *env.Value != "false" {
+							return fmt.Errorf("expected SKIP_CERTIFICATE_VALIDATION/INSECURE to be false")
+						}
 					}
 				}
 				if *env.Name == "PROXY_HOST" && *env.Value == "" {
@@ -243,7 +253,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 
 	skipCertValid := false
 	for _, env := range authModule.Components[0].Envs {
-		if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
+		if env.Name == "INSECURE" || env.Name == "SKIP_CERTIFICATE_VALIDATION" {
 			skipCertValid, _ = strconv.ParseBool(env.Value)
 		}
 	}
@@ -254,6 +264,14 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 			if *c.Name == certString {
 				container.VolumeMounts[i] = container.VolumeMounts[len(container.VolumeMounts)-1]
 				container.VolumeMounts = container.VolumeMounts[:len(container.VolumeMounts)-1]
+			}
+
+		}
+	} else {
+		for i, e := range container.Env {
+			if *e.Name == "INSECURE" || *e.Name == "SKIP_CERTIFICATE_VALIDATION" {
+				value := strconv.FormatBool(skipCertValid)
+				container.Env[i].Value = &value
 			}
 
 		}
