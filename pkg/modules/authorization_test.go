@@ -74,7 +74,7 @@ func TestCheckApplyContainersAuth(t *testing.T) {
 			*acorev1.Container().WithName("karavi-authorization-proxy"),
 		}
 		driver := "powerscale"
-		err := CheckApplyContainersAuth(got, driver)
+		err := CheckApplyContainersAuth(got, driver, true)
 		if err == nil {
 			t.Errorf("got %v, expected karavi-authorization-config to be injected", got)
 		}
@@ -83,7 +83,7 @@ func TestCheckApplyContainersAuth(t *testing.T) {
 	t.Run("it handles an empty container", func(t *testing.T) {
 		got := []acorev1.ContainerApplyConfiguration{}
 		driver := "powerscale"
-		err := CheckApplyContainersAuth(got, driver)
+		err := CheckApplyContainersAuth(got, driver, true)
 		if err == nil {
 			t.Errorf("got %v, expected karavi-authorization-config to be injected", got)
 		}
@@ -92,7 +92,7 @@ func TestCheckApplyContainersAuth(t *testing.T) {
 
 func TestAuthInjectDaemonset(t *testing.T) {
 	ctx := context.Background()
-	correctlyInjected := func(ds applyv1.DaemonSetApplyConfiguration, drivertype string) error {
+	correctlyInjected := func(ds applyv1.DaemonSetApplyConfiguration, drivertype string, skipCertificateValidation bool) error {
 		err := CheckAnnotationAuth(ds.Annotations)
 		if err != nil {
 			return err
@@ -102,15 +102,15 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			return err
 		}
 
-		err = CheckApplyContainersAuth(ds.Spec.Template.Spec.Containers, drivertype)
+		err = CheckApplyContainersAuth(ds.Spec.Template.Spec.Containers, drivertype, skipCertificateValidation)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	//*appsv1.DaemonSet
-	tests := map[string]func(t *testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig){
-		"success - greenfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig){
+		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -120,9 +120,9 @@ func TestAuthInjectDaemonset(t *testing.T) {
 				panic(err)
 			}
 
-			return true, nodeYAML.DaemonSetApplyConfig, operatorConfig
+			return true, true, nodeYAML.DaemonSetApplyConfig, operatorConfig
 		},
-		"success - brownfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
+		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -136,9 +136,25 @@ func TestAuthInjectDaemonset(t *testing.T) {
 				panic(err)
 			}
 
-			return true, *newDaemonSet, operatorConfig
+			return true, true, *newDaemonSet, operatorConfig
 		},
-		"fail - bad config path": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
+		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_validate_cert.yaml")
+			if err != nil {
+				panic(err)
+			}
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml")
+			if err != nil {
+				panic(err)
+			}
+			newDaemonSet, err := AuthInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig)
+			if err != nil {
+				panic(err)
+			}
+
+			return true, false, *newDaemonSet, operatorConfig
+		},
+		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -150,12 +166,12 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			tmpOperatorConfig := operatorConfig
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
 
-			return false, nodeYAML.DaemonSetApplyConfig, tmpOperatorConfig
+			return false, false, nodeYAML.DaemonSetApplyConfig, tmpOperatorConfig
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, ds, opConfig := tc(t)
+			success, skipCertificateValidation, ds, opConfig := tc(t)
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -163,7 +179,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			newDaemonSet, err := AuthInjectDaemonset(ds, customResource, opConfig)
 			if success {
 				assert.NoError(t, err)
-				if err := correctlyInjected(*newDaemonSet, string(customResource.Spec.Driver.CSIDriverType)); err != nil {
+				if err := correctlyInjected(*newDaemonSet, string(customResource.Spec.Driver.CSIDriverType), skipCertificateValidation); err != nil {
 					assert.NoError(t, err)
 				}
 			} else {
@@ -176,7 +192,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 
 func TestAuthInjectDeployment(t *testing.T) {
 	ctx := context.Background()
-	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration, drivertype string) error {
+	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration, drivertype string, skipCertificateValidation bool) error {
 		err := CheckAnnotationAuth(dp.Annotations)
 		if err != nil {
 			return err
@@ -185,15 +201,15 @@ func TestAuthInjectDeployment(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		err = CheckApplyContainersAuth(dp.Spec.Template.Spec.Containers, drivertype)
+		err = CheckApplyContainersAuth(dp.Spec.Template.Spec.Containers, drivertype, skipCertificateValidation)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule){
-		"success - greenfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -202,9 +218,9 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			return true, controllerYAML.Deployment, operatorConfig, customResource
+			return true, true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - brownfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -219,9 +235,26 @@ func TestAuthInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 
-			return true, *newDeployment, operatorConfig, customResource
+			return true, true, *newDeployment, operatorConfig, customResource
 		},
-		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_validate_cert.yaml")
+			if err != nil {
+				panic(err)
+			}
+			tmpCR := customResource
+			controllerYAML, err := drivers.GetController(ctx, tmpCR, operatorConfig, csmv1.PowerScaleName)
+			if err != nil {
+				panic(err)
+			}
+			newDeployment, err := AuthInjectDeployment(controllerYAML.Deployment, tmpCR, operatorConfig)
+			if err != nil {
+				panic(err)
+			}
+
+			return true, false, *newDeployment, operatorConfig, customResource
+		},
+		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -233,16 +266,16 @@ func TestAuthInjectDeployment(t *testing.T) {
 			tmpOperatorConfig := operatorConfig
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
 
-			return false, controllerYAML.Deployment, tmpOperatorConfig, customResource
+			return false, true, controllerYAML.Deployment, tmpOperatorConfig, customResource
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, dp, opConfig, cr := tc(t)
+			success, skipCertificateValidation, dp, opConfig, cr := tc(t)
 			newDeployment, err := AuthInjectDeployment(dp, cr, opConfig)
 			if success {
 				assert.NoError(t, err)
-				if err := correctlyInjected(*newDeployment, string(cr.Spec.Driver.CSIDriverType)); err != nil {
+				if err := correctlyInjected(*newDeployment, string(cr.Spec.Driver.CSIDriverType), skipCertificateValidation); err != nil {
 					assert.NoError(t, err)
 				}
 			} else {
