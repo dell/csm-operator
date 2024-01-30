@@ -109,11 +109,6 @@ spec:
               value: <X_CSI_RENAME_SDC_PREFIX>
             - name: X_CSI_MAX_VOLUMES_PER_NODE
               value: <X_CSI_MAX_VOLUMES_PER_NODE>
-            - name: X_CSI_POWERFLEX_KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
