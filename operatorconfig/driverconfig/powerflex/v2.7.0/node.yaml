@@ -107,11 +107,6 @@ spec:
               value: <X_CSI_RENAME_SDC_ENABLED>
             - name: X_CSI_RENAME_SDC_PREFIX
               value: <X_CSI_RENAME_SDC_PREFIX>
-            - name: X_CSI_POWERFLEX_KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
