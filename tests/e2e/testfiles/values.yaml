@@ -13,7 +13,7 @@
     - "Configure authorization-proxy-server for [powerflex]"
     - "Delete custom resource [1]"
 
-- scenario: "Install Authorization Proxy Server"
+- scenario: "Install Authorization Proxy Server With Default Redis Storage Class"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_default_redis.yaml"
   modules:
