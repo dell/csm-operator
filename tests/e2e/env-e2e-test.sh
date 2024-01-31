@@ -36,6 +36,10 @@ export CERT_CSI="/root/cert-csi"
 # USER MODIFICATION REQUIRED: must supply path to your karavictl binary
 # export KARAVICTL="/root/karavictl"
 
+# USER MODIFICATION REQUIRED: must supply address of Authorization Proxy Server
+# Since this e2e exposes the Proxy Server via NodePort, you can use a cluster node IP
+# export PROXY_HOST="10.0.0.1"
+
 # The following are Authorization Proxy Server specific:
 # Must supply storage array details
 # Storage type examples - powerscale, powerflex, powermax

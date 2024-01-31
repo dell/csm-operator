@@ -15,10 +15,10 @@ spec:
       - name: karavi-authorization-proxy-server
         # enable: Enable/Disable csm-authorization proxy server
         enabled: true
-        proxyService: dellemc/csm-authorization-proxy:nightly
-        tenantService: dellemc/csm-authorization-tenant:nightly
-        roleService: dellemc/csm-authorization-role:nightly
-        storageService: dellemc/csm-authorization-storage:nightly
+        proxyService: dellemc/csm-authorization-proxy:v1.9.0
+        tenantService: dellemc/csm-authorization-tenant:v1.9.0
+        roleService: dellemc/csm-authorization-role:v1.9.0
+        storageService: dellemc/csm-authorization-storage:v1.9.0
         redis: redis:6.0.8-alpine
         commander: rediscommander/redis-commander:latest
         opa: openpolicyagent/opa
@@ -26,7 +26,6 @@ spec:
         envs:
           # base hostname for the ingress rules that expose the services
           # the proxy-server ingress will use this hostname
-          # the storage-service ingress will use storage.hostname
           # Allowed values: string
           # Default value: csm-authorization.com
           - name: "PROXY_HOST"
@@ -41,10 +40,12 @@ spec:
           - name: "PROXY_INGRESS_HOST"
             value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
 
-          # Specify storage class for redis. Otherwise, default storage class is used.
+          # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
+          # to use a different storage class for redis, specify the name of the storage class
+          # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
           - name: "REDIS_STORAGE_CLASS"
-            value: "local-storage"
+            value: ""
 
       # enabled: Enable/Disable nginx ingress
       # Allowed values:
@@ -60,7 +61,7 @@ spec:
       #   false: disable deployment of cert-manager only if it's already deployed
       # Default value: true
       - name: cert-manager
-        enabled: false
+        enabled: true
 
 ---
 apiVersion: v1

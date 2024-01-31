@@ -34,6 +34,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -620,7 +621,24 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &ss)
+
+		case "StorageClass":
+			var sc storagev1.StorageClass
+			if err := yaml.Unmarshal(raw, &sc); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &sc)
+
+		case "PersistentVolume":
+			var pv corev1.PersistentVolume
+			if err := yaml.Unmarshal(raw, &pv); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &pv)
 		}
+
 	}
 
 	return ctrlObjects, nil
