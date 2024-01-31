@@ -69,7 +69,8 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 	if err != nil {
 		return err
 	}
-	err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType))
+
+	err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType), false)
 	if err != nil {
 		return err
 	}
@@ -1019,6 +1020,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 		storageType     = ""
 		pool            = ""
 		driverNamespace = ""
+		proxyHost       = ""
 	)
 
 	//by default, use set defined in env file
@@ -1067,6 +1069,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 		driverNamespace = os.Getenv("DRIVER_NAMESPACE")
 	}
 
+	proxyHost = os.Getenv("PROXY_HOST")
+
 	port, err := getPortContainerizedAuth()
 	if err != nil {
 		return err
@@ -1101,7 +1105,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 		"--user", user,
 		"--password", password,
 		"--array-insecure",
-		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -1115,7 +1119,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"tenant", "create",
-		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
+		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
@@ -1134,7 +1138,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 		"role", "create",
 		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
 			roleName, storageType, sysID, pool, quotaLimit),
-		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 
 	fmt.Println("=== Role === \n", cmd.String())
@@ -1152,7 +1156,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 		"rolebinding", "create",
 		"--tenant", tenantName,
 		"--role", roleName,
-		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 	fmt.Println("=== Binding Role ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -1167,7 +1171,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 		"--admin-token", "/tmp/adminToken.yaml",
 		"generate", "token",
 		"--tenant", tenantName,
-		"--insecure", "--addr", fmt.Sprintf("authorization-ingress-nginx-controller.authorization.svc.cluster.local:%s", port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 		"--access-token-expiration", fmt.Sprint(10*time.Minute),
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
