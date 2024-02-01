@@ -243,17 +243,6 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 
 		nodeName := instance.GetNodeName()
 
-		// Application-mobility has a different node name than the drivers
-		/*if instance.GetName() == "application-mobility" {
-			log.Infof("Changing nodeName for application-mobility")
-			nodeName = "application-mobility-node-agent"
-		}*/
-		/*for _, m := range instance.Spec.Modules {
-			if (m.Name == "application-mobility" && m.Enabled) {
-				log.Infof("Changing nodename for application-mobility")
-				nodeName = "application-mobility-node-agent"
-			}
-		}*/
 		log.Infof("nodeName is %s", nodeName)
 		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: nodeName,
 			Namespace: instance.GetNamespace()}, ds)
@@ -267,29 +256,6 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 			client.InNamespace(instance.GetNamespace()),
 			client.MatchingLabels{"app": label},
 		}
-
-		//if instance is AM, need to search for different named daemonset
-		/*if instance.GetName() == "application-mobility" {
-			log.Infof("Changing labels for application-mobility")
-			label = "application-mobility-node-agent"
-			opts = []client.ListOption{
-				client.InNamespace(instance.GetNamespace()),
-				client.MatchingLabels{"name": label},
-			}
-
-		}*/
-
-		/*for _, m := range instance.Spec.Modules {
-			if (m.Name == "application-mobility" && m.Enabled) {
-				log.Infof("Changing labels for application-mobility")
-				label = "application-mobility-node-agent"
-				opts = []client.ListOption{
-					client.InNamespace(instance.GetNamespace()),
-					client.MatchingLabels{"name": label},
-				}
-			}
-		}*/
-
 
 		log.Infof("Label is %s", label)
 		err = cluster.ClusterCTRLClient.List(ctx, podList, opts...)
@@ -364,11 +330,11 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	controllerStatus := newStatus.ControllerStatus
 
 	newStatus.State = constants.Failed
-	//log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
-	//log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
+	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
+	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
-	//log.Infof("daemonset expected [%d]", expected)
-	//log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
+	log.Infof("daemonset expected [%d]", expected)
+	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
 	for _, m := range instance.Spec.Modules {
 		if(m.Name =="application-mobility" && m.Enabled) {
