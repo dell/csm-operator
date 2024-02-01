@@ -687,6 +687,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	}
 
 	for _, deployment := range deploymentList.Items {
+		deployment := deployment
 		switch deployment.Name {
 		case "cert-manager":
 			if certEnabled {
@@ -813,6 +814,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	for _, deployment := range deploymentList.Items {
+		deployment := deployment
 		switch deployment.Name {
 		case "otel-collector":
 			if otelEnabled {
@@ -842,6 +844,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	for _, deployment := range deploymentCertList.Items {
+		deployment := deployment
 		switch deployment.Name {
 		case "cert-manager":
 			if certEnabled {
