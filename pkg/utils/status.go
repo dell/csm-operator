@@ -38,6 +38,11 @@ import (
 
 var dMutex sync.RWMutex
 
+var checkModuleStatus = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus) (bool, error){
+	csmv1.Observability:       observabilityStatusCheck,
+	csmv1.ApplicationMobility: appMobStatusCheck,
+}
+
 func getInt32(pointer *int32) int32 {
 	if pointer == nil {
 		return 0
@@ -311,10 +316,10 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := false
-	appEnabled := false
-	var appRunning bool
-	obsEnabled := false
-	var obsRunning bool
+	//appEnabled := false
+	//var appRunning bool
+	//obsEnabled := false
+	//var obsRunning bool
 	//modrunning := false
 	var err error = nil
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
@@ -336,60 +341,37 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("daemonset expected [%d]", expected)
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
-	for _, m := range instance.Spec.Modules {
-		if(m.Name =="application-mobility" && m.Enabled) {
-			appEnabled = true
-			appRunning, err = statusForAppMob(ctx, instance, r, newStatus)
+	for _, module := range instance.Spec.Modules {
+		moduleStatus, exists := checkModuleStatus[module.Name]
+		if exists && module.Enabled {
+			moduleRunning, err := moduleStatus(ctx, instance, r, newStatus)
 			if err != nil {
 				log.Infof("status for Application-Mobility err msg [%s]", err.Error())
 			}
-		}
 
-		if(m.Name == "observability" && m.Enabled) {
-			obsEnabled = true
-			obsRunning, err = observabilityStatusCheck(ctx, instance, r, newStatus)
-			if err != nil {
-				log.Infof("status for Observability err msg [%s]", err.Error())
+			if moduleRunning {
+				if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
+					running = true
+					newStatus.State = constants.Succeeded
+				} else {
+					newStatus.State = constants.Failed
+				}
+
+			} else {
+				running = false
+				newStatus.State = constants.Failed
+				log.Infof("%s module not running", module)
+				break
+
 			}
 		}
 	}
 
-	if(appEnabled && obsEnabled) {
-		newStatus.State = constants.Failed
-		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && appRunning && obsRunning{
-			running = true
-			newStatus.State = constants.Succeeded
-		}
-		log.Infof("calculate overall state [%s]", newStatus.State)
-		if daemonSetErr != nil {
-			err = daemonSetErr
-			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
-		}
-	} else if(!appEnabled && obsEnabled) {
-		newStatus.State = constants.Failed
-		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && obsRunning{
-			running = true
-			newStatus.State = constants.Succeeded
-		}
-		log.Infof("calculate overall state [%s]", newStatus.State)
-		if daemonSetErr != nil {
-			err = daemonSetErr
-			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
-		}
-
-	} else if(appEnabled && !obsEnabled) {
-		newStatus.State = constants.Failed
-		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && appRunning{
-			running = true
-			newStatus.State = constants.Succeeded
-		}
-		log.Infof("calculate overall state [%s]", newStatus.State)
-		if daemonSetErr != nil {
-			err = daemonSetErr
-			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
-		}
-
-	} 
+	log.Infof("calculate overall state [%s]", newStatus.State)
+	if daemonSetErr != nil {
+		err = daemonSetErr
+		log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
+	}
 
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err
@@ -655,8 +637,7 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 }
 
 // statusForAppMob - calculate success state for application-mobility module
-func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
-
+func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 
 	log := logger.GetLogger(ctx)
 	veleroEnabled := false
@@ -708,27 +689,27 @@ func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule
 	for _, deployment := range deploymentList.Items {
 		switch deployment.Name {
 		case "cert-manager":
-				if certEnabled {
-					certManagerRunning = checkFn(&deployment)
-				}
+			if certEnabled {
+				certManagerRunning = checkFn(&deployment)
+			}
 		case "cert-manager-cainjector":
-				if certEnabled {
-					certManagerCainInjectorRunning = checkFn(&deployment)
-				}
+			if certEnabled {
+				certManagerCainInjectorRunning = checkFn(&deployment)
+			}
 		case "cert-manager-webhook":
-				if certEnabled {
-					certManagerWebhookRunning = checkFn(&deployment)
-				}
+			if certEnabled {
+				certManagerWebhookRunning = checkFn(&deployment)
+			}
 		case "application-mobility-controller-manager":
-				appMobRunning = checkFn(&deployment)
+			appMobRunning = checkFn(&deployment)
 		case "application-mobility-velero":
-				if veleroEnabled {
-					veleroRunning = checkFn(&deployment)
-				}
+			if veleroEnabled {
+				veleroRunning = checkFn(&deployment)
+			}
 		}
 
 	}
-	
+
 	label := "application-mobility-node-agent"
 	opts = []client.ListOption{
 		client.InNamespace(instance.GetNamespace()),
@@ -753,27 +734,23 @@ func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule
 		daemonRunning = true
 	}
 
-	if(certEnabled && veleroEnabled) {
+	if certEnabled && veleroEnabled {
 		return appMobRunning && certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && veleroRunning && daemonRunning, nil
 	}
 
-	if(!certEnabled && !veleroEnabled) {
+	if !certEnabled && !veleroEnabled {
 		return appMobRunning && daemonRunning, nil
 	}
 
-	if(!certEnabled && veleroEnabled) {
+	if !certEnabled && veleroEnabled {
 		return appMobRunning && daemonRunning && veleroRunning, nil
 	}
 
-	if(certEnabled && !veleroEnabled) {
+	if certEnabled && !veleroEnabled {
 		return appMobRunning && certManagerCainInjectorRunning && certManagerRunning && certManagerWebhookRunning && daemonRunning, nil
 	}
 
-
 	return false, nil
-
-
-
 
 }
 
@@ -812,7 +789,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 						certEnabled = true
 					}
 				}
-				if c.Name == fmt.Sprintf("metrics-%s",instance.Spec.Driver.CSIDriverType)  {
+				if c.Name == fmt.Sprintf("metrics-%s", instance.Spec.Driver.CSIDriverType) {
 					if *c.Enabled {
 						metricsEnabled = true
 					}
@@ -845,7 +822,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 			if metricsEnabled {
 				metricsRunning = checkFn(&deployment)
 			}
-		case fmt.Sprintf("%s-topology",namespace):
+		case fmt.Sprintf("%s-topology", namespace):
 			if topologyEnabled {
 				topologyRunning = checkFn(&deployment)
 			}
@@ -867,33 +844,27 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	for _, deployment := range deploymentCertList.Items {
 		switch deployment.Name {
 		case "cert-manager":
-				if certEnabled {
-					certManagerRunning = checkFn(&deployment)
-				}
+			if certEnabled {
+				certManagerRunning = checkFn(&deployment)
+			}
 		case "cert-manager-cainjector":
-				if certEnabled {
-					certManagerCainInjectorRunning = checkFn(&deployment)
-				}
+			if certEnabled {
+				certManagerCainInjectorRunning = checkFn(&deployment)
+			}
 		case "cert-manager-webhook":
-				if certEnabled {
-					certManagerWebhookRunning = checkFn(&deployment)
-				}
+			if certEnabled {
+				certManagerWebhookRunning = checkFn(&deployment)
+			}
 		}
 	}
 
-
-
-
-
-	if(certEnabled && otelEnabled && metricsEnabled && topologyEnabled) {
+	if certEnabled && otelEnabled && metricsEnabled && topologyEnabled {
 		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && otelRunning && metricsRunning && topologyRunning, nil
 	}
 
-	if(!certEnabled && otelEnabled && metricsEnabled && topologyEnabled) {
+	if !certEnabled && otelEnabled && metricsEnabled && topologyEnabled {
 		return otelRunning && metricsRunning && topologyRunning, nil
 	}
-
-	
 
 	return false, nil
 }
