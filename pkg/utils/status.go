@@ -248,12 +248,12 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 			log.Infof("Changing nodeName for application-mobility")
 			nodeName = "application-mobility-node-agent"
 		}*/
-		for _, m := range instance.Spec.Modules {
+		/*for _, m := range instance.Spec.Modules {
 			if (m.Name == "application-mobility" && m.Enabled) {
 				log.Infof("Changing nodename for application-mobility")
 				nodeName = "application-mobility-node-agent"
 			}
-		}
+		}*/
 		log.Infof("nodeName is %s", nodeName)
 		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: nodeName,
 			Namespace: instance.GetNamespace()}, ds)
@@ -279,7 +279,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 
 		}*/
 
-		for _, m := range instance.Spec.Modules {
+		/*for _, m := range instance.Spec.Modules {
 			if (m.Name == "application-mobility" && m.Enabled) {
 				log.Infof("Changing labels for application-mobility")
 				label = "application-mobility-node-agent"
@@ -288,7 +288,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 					client.MatchingLabels{"name": label},
 				}
 			}
-		}
+		}*/
 
 
 		log.Infof("Label is %s", label)
@@ -346,11 +346,9 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log := logger.GetLogger(ctx)
 	running := false
 	appEnabled := false
-	appRunning := false
-	authRunning := false
-	authEnabled := false
-	//obsEnabled := false
-	//obsRunning := false
+	var appRunning bool
+	obsEnabled := false
+	var obsRunning bool
 	//modrunning := false
 	var err error = nil
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
@@ -366,78 +364,67 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	controllerStatus := newStatus.ControllerStatus
 
 	newStatus.State = constants.Failed
-	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
-	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
+	//log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
+	//log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
-	log.Infof("daemonset expected [%d]", expected)
-	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
+	//log.Infof("daemonset expected [%d]", expected)
+	//log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
 	for _, m := range instance.Spec.Modules {
 		if(m.Name =="application-mobility" && m.Enabled) {
-			log.Infof("***INSIDE CALCULATE STATE FOR APP_MOB ******")
 			appEnabled = true
 			appRunning, err = statusForAppMob(ctx, instance, r, newStatus)
 			if err != nil {
 				log.Infof("status for Application-Mobility err msg [%s]", err.Error())
 			}
 		}
-		log.Infof("****running APP_MOB***:[%+v]", running)
 
-		/*if(m.Name == "observability" && m.Enabled) {
+		if(m.Name == "observability" && m.Enabled) {
 			obsEnabled = true
 			obsRunning, err = observabilityStatusCheck(ctx, instance, r, newStatus)
 			if err != nil {
-				log.Infof("statusForAppMob err msg [%s]", err.Error())
-			}
-		}*/
-
-		if(m.Name == "authorization" && m.Enabled) {
-			authEnabled = true
-			authRunning, err = statusForAuthorization(ctx, instance, r, newStatus)
-			if err != nil {
-				log.Infof("status for Auhtorization err msg [%s]", err.Error())
+				log.Infof("status for Observability err msg [%s]", err.Error())
 			}
 		}
 	}
 
-	if(appEnabled && authEnabled) {
-		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && appRunning && authRunning{
+	if(appEnabled && obsEnabled) {
+		newStatus.State = constants.Failed
+		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && appRunning && obsRunning{
 			running = true
 			newStatus.State = constants.Succeeded
 		}
 		log.Infof("calculate overall state [%s]", newStatus.State)
-		log.Infof("*****RUNNING***:[%+v]",running)
-	} else if(!appEnabled && authEnabled) {
-		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && authRunning{
+		if daemonSetErr != nil {
+			err = daemonSetErr
+			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
+		}
+	} else if(!appEnabled && obsEnabled) {
+		newStatus.State = constants.Failed
+		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && obsRunning{
 			running = true
 			newStatus.State = constants.Succeeded
 		}
 		log.Infof("calculate overall state [%s]", newStatus.State)
-		log.Infof("*****RUNNING***:[%+v]",running)
+		if daemonSetErr != nil {
+			err = daemonSetErr
+			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
+		}
 
-	} else if(appEnabled && !authEnabled) {
+	} else if(appEnabled && !obsEnabled) {
+		newStatus.State = constants.Failed
 		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) && appRunning{
 			running = true
 			newStatus.State = constants.Succeeded
 		}
 		log.Infof("calculate overall state [%s]", newStatus.State)
-		log.Infof("*****RUNNING***:[%+v]",running)
-
-	} else {
-		if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
-			running = true
-			newStatus.State = constants.Succeeded
+		if daemonSetErr != nil {
+			err = daemonSetErr
+			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
 		}
-		log.Infof("calculate overall state [%s]", newStatus.State)
-		log.Infof("*****RUNNING***:[%+v]",running)
-	}
 
-	if daemonSetErr != nil {
-		err = daemonSetErr
-		log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
-	}
+	} 
 
-	//}
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err
 }
@@ -701,92 +688,21 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 	return wait.PollImmediate(time.Second, timeout, GetNginxControllerStatus(ctx, instance, r))
 }
 
-// checkForServices - Calculate success state for services deployed with app-mob
-/*func checkForServices(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, isDaemonset bool) (bool, error) {
-
-	log := logger.GetLogger(ctx)
-	running := false
-	var err error = nil
-	if isDaemonset {
-		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
-		newStatus.NodeStatus = nodeStatus
-		newStatus.State = constants.Failed
-		log.Infof("daemonset expected [%d]", expected)
-		log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
-		if fmt.Sprintf("%d", expected) == nodeStatus.Available {
-			running = true
-			newStatus.State = constants.Succeeded
-		}
-		if daemonSetErr != nil {
-			err = daemonSetErr
-			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
-		}
-
-	} else {
-		log.Infof("*****Inside App-mob controller STATUS *** ")
-		controllerReplicas := newStatus.ControllerStatus.Desired
-		controllerStatus := newStatus.ControllerStatus
-		newStatus.State = constants.Failed
-		log.Infof("AM deployment controllerReplicas [%s]", controllerReplicas)
-		log.Infof("AM deployment controllerStatus.Available [%s]", controllerStatus.Available)
-		if controllerReplicas == controllerStatus.Available {
-			running = true
-			newStatus.State = constants.Succeeded
-		}
-	}
-	log.Infof("calculate overall state [%s] of module", newStatus.State)
-
-	return running, err
-
-}*/
-
 // statusForAppMob - calculate success state for application-mobility module
 func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 
-	/*running := false
-	var appRunning bool
-	var velRunning bool
-	var certRunning bool
-	var restRunning bool
-	var err error = nil
-	for _, m := range instance.Spec.Modules {
-		if m.Name == csmv1.ApplicationMobility {
-			appRunning, err = checkForServices(ctx, instance, r, newStatus, false)
-			for _, c := range m.Components {
-				if c.Name == "velero" {
-					if *c.Enabled {
-						velRunning, err = checkForServices(ctx, instance, r, newStatus, false)
-						if c.DeployNodeAgent {
-							restRunning, err = checkForServices(ctx, instance, r, newStatus, true)
-						}
-					}
-				} else if c.Name == "cert-manager" {
-					if *c.Enabled {
-						certRunning, err = checkForServices(ctx, instance, r, newStatus, false)
-					}
 
-				}
-			}
-		}
-
-	}
-
-	running = appRunning && velRunning && certRunning && restRunning
-
-	return running, err*/
-
+	log := logger.GetLogger(ctx)
 	veleroEnabled := false
 	certEnabled := false
-	certManagerRunning := false
-	certManagerCainInjectorRunning := false
-	certManagerWebhookRunning := false
+	var certManagerRunning bool
+	var certManagerCainInjectorRunning bool
+	var certManagerWebhookRunning bool
 	appMobRunning := false
 	veleroRunning := false
-	//appMobNodeRunning := false
-
-	//labelKey := "csm"
-	//label := "application-mobility"
-
+	var daemonRunning bool
+	readyPods := 0
+	expected := 2
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
 			for _, c := range m.Components {
@@ -846,48 +762,15 @@ func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule
 		}
 
 	}
-
-	if(certEnabled && veleroEnabled) {
-		return appMobRunning && certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && veleroRunning, nil
+	
+	label := "application-mobility-node-agent"
+	opts = []client.ListOption{
+		client.InNamespace(instance.GetNamespace()),
+		client.MatchingLabels{"name": label},
 	}
 
-	/*daemonsetList := &appsv1.DaemonSetList{}
-	err = r.GetClient().List(ctx, daemonsetList, opts...)
-	if err != nil {
-		return false, err
-	}
-
-
-	checkFnDaemonset := func(daemonset *appsv1.DaemonSet) bool {
-		return daemonset.Status.DesiredNumberScheduled == *daemonset.Spec.totalAvialable
-	}
-
-	for _, daemonset := range daemonsetList.Items {
-		switch daemonset.Name {
-		case "application-mobility-node-agent":
-				appMobNodeRunning = checkFnDaemonset(&daemonset)
-		}
-	}*/
-
-	return false, nil
-
-
-
-
-}
-
-// observabilityStatusCheck - calculate success state for observability module
-/*func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
-	log := logger.GetLogger(ctx)
-	// Observability launches three pods in the karavi namespace
-	expectedObservabilityPods := 3
-	readyPods := 0
-
-	opts := []client.ListOption{
-		client.InNamespace(ObservabilityNamespace),
-	}
 	podList := &corev1.PodList{}
-	err := r.GetClient().List(ctx, podList, opts...)
+	err = r.GetClient().List(ctx, podList, opts...)
 	if err != nil {
 		return false, err
 	}
@@ -900,49 +783,82 @@ func statusForAppMob(ctx context.Context, instance *csmv1.ContainerStorageModule
 		}
 	}
 
-	log.Info("readyPods: %+v\n", readyPods)
+	if readyPods == expected {
+		daemonRunning = true
+	}
 
-	return expectedObservabilityPods == readyPods, nil
-}*/
+	if(certEnabled && veleroEnabled) {
+		return appMobRunning && certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && veleroRunning && daemonRunning, nil
+	}
 
-func statusForAuthorization(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
-	var (
-		proxyServerRunning    bool
-		tenantServiceRunning  bool
-		roleServiceRunning    bool
-		storageServiceRunning bool
-		redisRunning          bool
-		redisCommanderRunning bool
+	if(!certEnabled && !veleroEnabled) {
+		return appMobRunning && daemonRunning, nil
+	}
 
-		nginxEnabled                   bool
-		nginxRunning                   bool
-		certManagerEnabled             bool
-		certManagerRunning             bool
-		certManagerCainInjectorRunning bool
-		certManagerWebhookRunning      bool
-	)
+	if(!certEnabled && veleroEnabled) {
+		return appMobRunning && daemonRunning && veleroRunning, nil
+	}
+
+	if(certEnabled && !veleroEnabled) {
+		return appMobRunning && certManagerCainInjectorRunning && certManagerRunning && certManagerWebhookRunning && daemonRunning, nil
+	}
+
+
+	return false, nil
+
+
+
+
+}
+
+// observabilityStatusCheck - calculate success state for observability module
+func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+	//log := logger.GetLogger(ctx)
+	// Observability launches three pods in the karavi namespace
+	//expectedObservabilityPods := 3
+	//readyPods := 0
+	topologyEnabled := false
+	otelEnabled := false
+	certEnabled := false
+	metricsEnabled := false
+	certManagerRunning := false
+	certManagerCainInjectorRunning := false
+	certManagerWebhookRunning := false
+	otelRunning := false
+	metricsRunning := false
+	topologyRunning := false
 
 	for _, m := range instance.Spec.Modules {
-		if m.Name == csmv1.Authorization {
+		if m.Name == csmv1.Observability {
 			for _, c := range m.Components {
-				if c.Name == "ingress-nginx" {
+				if c.Name == "topology" {
 					if *c.Enabled {
-						nginxEnabled = true
+						topologyEnabled = true
+					}
+				}
+				if c.Name == "otel-collector" {
+					if *c.Enabled {
+						otelEnabled = true
 					}
 				}
 				if c.Name == "cert-manager" {
 					if *c.Enabled {
-						certManagerEnabled = true
+						certEnabled = true
+					}
+				}
+				if c.Name == fmt.Sprintf("metrics-%s",instance.Spec.Driver.CSIDriverType)  {
+					if *c.Enabled {
+						metricsEnabled = true
 					}
 				}
 			}
 		}
 	}
-	namespace := instance.GetNamespace()
+
+	namespace := "karavi"
 	opts := []client.ListOption{
 		client.InNamespace(namespace),
 	}
-
 	deploymentList := &appsv1.DeploymentList{}
 	err := r.GetClient().List(ctx, deploymentList, opts...)
 	if err != nil {
@@ -955,60 +871,63 @@ func statusForAuthorization(ctx context.Context, instance *csmv1.ContainerStorag
 
 	for _, deployment := range deploymentList.Items {
 		switch deployment.Name {
-		// primary Authorization components
-		case "proxy-server":
-			proxyServerRunning = checkFn(&deployment)
-		case "storage-service":
-			storageServiceRunning = checkFn(&deployment)
-		case "tenant-service":
-			tenantServiceRunning = checkFn(&deployment)
-		case "role-service":
-			roleServiceRunning = checkFn(&deployment)
-		case "redis-primary":
-			redisRunning = checkFn(&deployment)
-		case "redis-commander":
-			redisCommanderRunning = checkFn(&deployment)
-
-		// optional dependecies
-		case fmt.Sprintf("%s-ingress-ngnx-controller", namespace):
-			if nginxEnabled {
-				nginxRunning = checkFn(&deployment)
+		case "otel-collector":
+			if otelEnabled {
+				otelRunning = checkFn(&deployment)
 			}
-		case "cert-manager":
-			if certManagerEnabled {
-				certManagerRunning = checkFn(&deployment)
+		case fmt.Sprintf("%s-metrics-%s", namespace, instance.Spec.Driver.CSIDriverType):
+			if metricsEnabled {
+				metricsRunning = checkFn(&deployment)
 			}
-		case "cert-manager-cainjector":
-			if certManagerEnabled {
-				certManagerCainInjectorRunning = checkFn(&deployment)
-			}
-		case "cert-manager-webhook":
-			if certManagerEnabled {
-				certManagerWebhookRunning = checkFn(&deployment)
+		case fmt.Sprintf("%s-topology",namespace):
+			if topologyEnabled {
+				topologyRunning = checkFn(&deployment)
 			}
 		}
 	}
 
-	if !nginxEnabled && !certManagerEnabled {
-		return proxyServerRunning && storageServiceRunning && tenantServiceRunning && roleServiceRunning && redisRunning && redisCommanderRunning, nil
+	namespaceCert := instance.GetNamespace()
+	opts = []client.ListOption{
+		client.InNamespace(namespaceCert),
+		//client.MatchingLabels{labelKey: label},
 	}
 
-	if nginxEnabled && !certManagerEnabled {
-		return proxyServerRunning && storageServiceRunning && tenantServiceRunning && roleServiceRunning && redisRunning && redisCommanderRunning &&
-			nginxRunning, nil
+	deploymentCertList := &appsv1.DeploymentList{}
+	err = r.GetClient().List(ctx, deploymentCertList, opts...)
+	if err != nil {
+		return false, err
 	}
 
-	if !nginxEnabled && certManagerEnabled {
-		return proxyServerRunning && storageServiceRunning && tenantServiceRunning && roleServiceRunning && redisRunning && redisCommanderRunning &&
-			certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning, nil
+	for _, deployment := range deploymentCertList.Items {
+		switch deployment.Name {
+		case "cert-manager":
+				if certEnabled {
+					certManagerRunning = checkFn(&deployment)
+				}
+		case "cert-manager-cainjector":
+				if certEnabled {
+					certManagerCainInjectorRunning = checkFn(&deployment)
+				}
+		case "cert-manager-webhook":
+				if certEnabled {
+					certManagerWebhookRunning = checkFn(&deployment)
+				}
+		}
 	}
 
-	if nginxEnabled && certManagerEnabled {
-		return proxyServerRunning && storageServiceRunning && tenantServiceRunning && roleServiceRunning && redisRunning && redisCommanderRunning &&
-			nginxRunning &&
-			certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning, nil
+
+
+
+
+	if(certEnabled && otelEnabled && metricsEnabled && topologyEnabled) {
+		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && otelRunning && metricsRunning && topologyRunning, nil
 	}
 
-	// should never reach here
+	if(!certEnabled && otelEnabled && metricsEnabled && topologyEnabled) {
+		return otelRunning && metricsRunning && topologyRunning, nil
+	}
+
+	
+
 	return false, nil
 }

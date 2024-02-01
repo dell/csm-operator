@@ -105,6 +105,8 @@ const (
 	AppMobCertManagerComponent = "cert-manager"
 	// AppMobVeleroComponent - velero component
 	AppMobVeleroComponent = "velero"
+	// CSMName - name
+	CSMName = "<NAME>"
 )
 
 // getAppMobilityModule - get instance of app mobility module
@@ -250,7 +252,8 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 		}
 	}
 
-	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
+	yamlString = strings.ReplaceAll(yamlString, CSMName, cr.Name)
+	yamlString = strings.ReplaceAll(yamlString,AppMobNamespace, cr.Namespace )
 	yamlString = strings.ReplaceAll(yamlString, ControllerImg, controllerImage)
 	yamlString = strings.ReplaceAll(yamlString, ControllerImagePullPolicy, controllerImagePullPolicy)
 	yamlString = strings.ReplaceAll(yamlString, AppMobReplicaCount, replicaCount)
@@ -652,6 +655,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 		}
 	}
 
+	yamlString = strings.ReplaceAll(yamlString, CSMName, cr.Name)
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, VeleroImage, veleroImg)
 	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
