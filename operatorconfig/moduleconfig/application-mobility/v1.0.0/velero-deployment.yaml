@@ -102,7 +102,7 @@ spec:
     metadata:
       labels:
         name: application-mobility-velero
-        csm: application-mobility
+        csm: <NAME>
         app.kubernetes.io/name: application-mobility-velero
         app.kubernetes.io/instance: application-mobility
 
