@@ -253,7 +253,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, CSMName, cr.Name)
-	yamlString = strings.ReplaceAll(yamlString,AppMobNamespace, cr.Namespace )
+	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, ControllerImg, controllerImage)
 	yamlString = strings.ReplaceAll(yamlString, ControllerImagePullPolicy, controllerImagePullPolicy)
 	yamlString = strings.ReplaceAll(yamlString, AppMobReplicaCount, replicaCount)
