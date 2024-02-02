@@ -31,7 +31,7 @@ metadata:
               ],
               "sideCars": [
                 {
-                  "image": "bitnami/kubectl:latest",
+                  "image": "bitnami/kubectl:1.28",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "kubernetes-proxy"
                 },
@@ -1271,7 +1271,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Storage
     containerImage: docker.io/dellemc/dell-csm-operator:v1.4.1
-    createdAt: "2024-01-30T09:57:02Z"
+    createdAt: "2024-02-02T08:59:42Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
