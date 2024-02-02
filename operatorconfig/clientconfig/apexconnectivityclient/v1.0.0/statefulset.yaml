@@ -66,7 +66,7 @@ rules:
     verbs: ["get", "create", "delete", "update"]
   - apiGroups: ["storage.dell.com"]
     resources: ["containerstoragemodules"]
-    verbs: ["list", "create", "get", "delete"]
+    verbs: ["list", "create", "get", "delete", "watch"]
   - apiGroups: ["mobility.storage.dell.com"]
     resources: ["backups"]
     verbs: ["list", "create", "get"]
