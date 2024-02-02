@@ -19,8 +19,17 @@ spec:
         imagePullPolicy: IfNotPresent
     sideCars:
       - name: kubernetes-proxy
-        image: bitnami/kubectl:latest
+        image: bitnami/kubectl:1.28
         imagePullPolicy: IfNotPresent
       - name: cert-persister
         image: dellemc/connectivity-cert-persister-k8s:0.7.0
         imagePullPolicy: IfNotPresent
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: connectivity-client-docker-k8s-cert
+  namespace: dell-connectivity-client
+type: Opaque
+data:
+  cert.pem: ""
