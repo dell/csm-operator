@@ -44,8 +44,8 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerMax driver v2.9.0
-      image: dellemc/csi-powermax:v2.9.0
+      # Image for CSI PowerMax driver v2.9.1
+      image: dellemc/csi-powermax:v2.9.1
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
