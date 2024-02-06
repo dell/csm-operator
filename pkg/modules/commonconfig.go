@@ -90,6 +90,7 @@ func getCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	YamlString = string(buf)
 	certNamespace := cr.Namespace
 	YamlString = strings.ReplaceAll(YamlString, CommonNamespace, certNamespace)
+	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 
 	return YamlString, nil
 }

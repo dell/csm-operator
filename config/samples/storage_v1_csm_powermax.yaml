@@ -31,8 +31,8 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI PowerMax v2.9.0 driver
-    configVersion: v2.9.0
+    # Config version for CSI PowerMax v2.9.1 driver
+    configVersion: v2.9.1
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
@@ -44,8 +44,8 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerMax driver v2.9.0
-      image: dellemc/csi-powermax:v2.9.0
+      # Image for CSI PowerMax driver v2.9.1
+      image: dellemc/csi-powermax:v2.9.1
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -256,10 +256,10 @@ spec:
     - name: authorization
       # enabled: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.9.0
+      configVersion: v1.9.1
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.9.0
+        image: dellemc/csm-authorization-sidecar:v1.9.1
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
@@ -277,13 +277,13 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.7.0
+      configVersion: v1.7.1
       components:
       - name: dell-csi-replicator
         # image: Image to use for dell-csi-replicator. This shouldn't be changed
         # Allowed values: string
         # Default value: None
-        image: dellemc/dell-csi-replicator:v1.7.0
+        image: dellemc/dell-csi-replicator:v1.7.1
         envs:
           # replicationPrefix: prefix to prepend to storage classes parameters
           # Allowed values: string
@@ -299,7 +299,7 @@ spec:
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.7.0
+        image: dellemc/dell-replication-controller:v1.7.1
         envs:
           # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
           # Set the value to "self" in case of stretched/single cluster configuration
