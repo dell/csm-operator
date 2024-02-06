@@ -315,7 +315,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
-	running := false
+	running := true
 	//appEnabled := false
 	//var appRunning bool
 	//obsEnabled := false
@@ -334,37 +334,34 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	controllerReplicas := newStatus.ControllerStatus.Desired
 	controllerStatus := newStatus.ControllerStatus
 
-	newStatus.State = constants.Failed
+	newStatus.State = constants.Succeeded
 	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
 	log.Infof("daemonset expected [%d]", expected)
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
-	for _, module := range instance.Spec.Modules {
-		moduleStatus, exists := checkModuleStatus[module.Name]
-		if exists && module.Enabled {
-			moduleRunning, err := moduleStatus(ctx, instance, r, newStatus)
-			if err != nil {
-				log.Infof("status for Application-Mobility err msg [%s]", err.Error())
-			}
+	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
 
-			if moduleRunning {
-				if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
-					running = true
-					newStatus.State = constants.Succeeded
-				} else {
-					newStatus.State = constants.Failed
+		for _, module := range instance.Spec.Modules {
+			moduleStatus, exists := checkModuleStatus[module.Name]
+			if exists && module.Enabled {
+				moduleRunning, err := moduleStatus(ctx, instance, r, newStatus)
+				if err != nil {
+					log.Infof("status for module err msg [%s]", err.Error())
 				}
 
-			} else {
-				running = false
-				newStatus.State = constants.Failed
-				log.Infof("%s module not running", module)
-				break
-
+				if !moduleRunning {
+					running = false
+					newStatus.State = constants.Failed
+					log.Infof("%s module not running", module)
+					break
+				}
 			}
 		}
+	} else {
+		running = false
+		newStatus.State = constants.Failed
 	}
 
 	log.Infof("calculate overall state [%s]", newStatus.State)
