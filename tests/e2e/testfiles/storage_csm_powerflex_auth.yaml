@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.9.0
+    configVersion: v2.9.1
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -137,7 +137,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.9.0
+      configVersion: v1.9.1
       components:
       - name: karavi-authorization-proxy
         image: dellemc/csm-authorization-sidecar:nightly

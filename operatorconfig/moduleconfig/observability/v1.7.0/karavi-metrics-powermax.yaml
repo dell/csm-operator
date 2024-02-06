@@ -110,6 +110,7 @@ spec:
       labels:
         app.kubernetes.io/name: karavi-metrics-powermax
         app.kubernetes.io/instance: karavi
+        csm: <NAME>
     spec:
       serviceAccountName: karavi-metrics-powermax-controller
       containers:
