@@ -341,7 +341,6 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
 	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
-
 		for _, module := range instance.Spec.Modules {
 			moduleStatus, exists := checkModuleStatus[module.Name]
 			if exists && module.Enabled {
@@ -757,7 +756,6 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 
 // observabilityStatusCheck - calculate success state for observability module
 func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
-
 	topologyEnabled := false
 	otelEnabled := false
 	certEnabled := false
