@@ -32,7 +32,7 @@ type FakeDaemonSets struct {
 }
 
 // Apply takes the given apply declarative configuration, applies it and returns the applied daemonSet.
-func (c *FakeDaemonSets) Apply(ctx context.Context, daemonSet *applyconfigurationsappsv1.DaemonSetApplyConfiguration, opts v1.ApplyOptions) (result *appsv1.DaemonSet, err error) {
+func (c *FakeDaemonSets) Apply(ctx context.Context, daemonSet *applyconfigurationsappsv1.DaemonSetApplyConfiguration, _ v1.ApplyOptions) (result *appsv1.DaemonSet, err error) {
 	result = new(appsv1.DaemonSet)
 
 	data, err := json.Marshal(daemonSet)
@@ -57,7 +57,7 @@ func (c *FakeDaemonSets) Apply(ctx context.Context, daemonSet *applyconfiguratio
 }
 
 // Get takes name of the daemonSet, and returns the corresponding daemonSet object, and an error if there is any.
-func (c *FakeDaemonSets) Get(ctx context.Context, name string, options v1.GetOptions) (result *appsv1.DaemonSet, err error) {
+func (c *FakeDaemonSets) Get(ctx context.Context, name string, _ v1.GetOptions) (result *appsv1.DaemonSet, err error) {
 	result = new(appsv1.DaemonSet)
 
 	k := types.NamespacedName{
@@ -70,49 +70,49 @@ func (c *FakeDaemonSets) Get(ctx context.Context, name string, options v1.GetOpt
 }
 
 // Create takes the representation of a daemonSet and creates it.  Returns the server's representation of the daemonSet, and an error, if there is any.
-func (c *FakeDaemonSets) Create(ctx context.Context, daemonSet *appsv1.DaemonSet, opts v1.CreateOptions) (result *appsv1.DaemonSet, err error) {
+func (c *FakeDaemonSets) Create(ctx context.Context, daemonSet *appsv1.DaemonSet, _ v1.CreateOptions) (result *appsv1.DaemonSet, err error) {
 	err = c.FakeClient.Create(ctx, daemonSet)
 	return daemonSet, err
 }
 
 // List takes label and field selectors, and returns the list of DaemonSets that match those selectors.
-func (c *FakeDaemonSets) List(ctx context.Context, opts v1.ListOptions) (result *appsv1.DaemonSetList, err error) {
+func (c *FakeDaemonSets) List(_ context.Context, _ v1.ListOptions) (result *appsv1.DaemonSetList, err error) {
 	panic("implement me")
 }
 
 // Watch returns a watch.Interface that watches the requested daemonSets.
-func (c *FakeDaemonSets) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeDaemonSets) Watch(_ context.Context, _ v1.ListOptions) (watch.Interface, error) {
 	panic("implement me")
 }
 
 // Update takes the representation of a daemonSet and updates it. Returns the server's representation of the daemonSet, and an error, if there is any.
-func (c *FakeDaemonSets) Update(ctx context.Context, daemonSet *appsv1.DaemonSet, opts v1.UpdateOptions) (result *appsv1.DaemonSet, err error) {
+func (c *FakeDaemonSets) Update(_ context.Context, _ *appsv1.DaemonSet, _ v1.UpdateOptions) (result *appsv1.DaemonSet, err error) {
 	panic("implement me")
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeDaemonSets) UpdateStatus(ctx context.Context, daemonSet *appsv1.DaemonSet, opts v1.UpdateOptions) (*appsv1.DaemonSet, error) {
+func (c *FakeDaemonSets) UpdateStatus(_ context.Context, _ *appsv1.DaemonSet, _ v1.UpdateOptions) (*appsv1.DaemonSet, error) {
 	panic("implement me")
 }
 
 // Delete takes name of the daemonSet and deletes it. Returns an error if one occurs.
-func (c *FakeDaemonSets) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+func (c *FakeDaemonSets) Delete(_ context.Context, _ string, _ v1.DeleteOptions) error {
 	panic("implement me")
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeDaemonSets) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+func (c *FakeDaemonSets) DeleteCollection(_ context.Context, _ v1.DeleteOptions, _ v1.ListOptions) error {
 	panic("implement me")
 }
 
 // Patch applies the patch and returns the patched daemonSet.
-func (c *FakeDaemonSets) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *appsv1.DaemonSet, err error) {
+func (c *FakeDaemonSets) Patch(_ context.Context, _ string, _ types.PatchType, _ []byte, _ v1.PatchOptions, _ ...string) (result *appsv1.DaemonSet, err error) {
 	panic("implement me")
 }
 
 // ApplyStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-func (c *FakeDaemonSets) ApplyStatus(ctx context.Context, daemonSet *applyconfigurationsappsv1.DaemonSetApplyConfiguration, opts v1.ApplyOptions) (result *appsv1.DaemonSet, err error) {
+func (c *FakeDaemonSets) ApplyStatus(_ context.Context, _ *applyconfigurationsappsv1.DaemonSetApplyConfiguration, _ v1.ApplyOptions) (result *appsv1.DaemonSet, err error) {
 	panic("implement me")
 }

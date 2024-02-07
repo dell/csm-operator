@@ -98,7 +98,6 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := AppMobilityDeployment(context.TODO(), isDeleting, op, cr, sourceClient)
@@ -107,10 +106,10 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
+
 func TestAppMobilityWebhookService(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
@@ -182,20 +181,18 @@ func TestAppMobilityWebhookService(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := AppMobilityWebhookService(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
+
 func TestControllerManagerMetricService(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
@@ -268,17 +265,14 @@ func TestControllerManagerMetricService(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := ControllerManagerMetricService(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -372,10 +366,10 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
+
 func TestApplicationMobilityPrecheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
@@ -479,14 +473,13 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 			err := ApplicationMobilityPrecheck(context.TODO(), operatorConfig, appMobility, tmpCR, &fakeReconcile)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
+
 func TestAppMobilityVelero(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
@@ -576,10 +569,10 @@ func TestAppMobilityVelero(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
+
 func TestAppMobilityCertManager(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
@@ -640,20 +633,18 @@ func TestAppMobilityCertManager(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := AppMobilityCertManager(ctx, isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
+
 func TestVeleroCrdDeploy(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
@@ -726,20 +717,18 @@ func TestVeleroCrdDeploy(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, cr, sourceClient, op := tc(t)
 
 			err := VeleroCrdDeploy(ctx, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
+
 func TestAppMobCrdDeploy(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
@@ -812,20 +801,18 @@ func TestAppMobCrdDeploy(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, cr, sourceClient, op := tc(t)
 
 			err := AppMobCrdDeploy(ctx, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
+
 func TestBackupStorageLoc(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
@@ -910,11 +897,9 @@ func TestBackupStorageLoc(t *testing.T) {
 			err := UseBackupStorageLoc(ctx, isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }

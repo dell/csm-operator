@@ -10,11 +10,10 @@ package modules
 
 import (
 	"context"
-	"os"
-	"testing"
-
 	"fmt"
 	"log"
+	"os"
+	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	utils "github.com/dell/csm-operator/pkg/utils"
@@ -53,7 +52,6 @@ func getCustomResource(path string) (csmv1.ContainerStorageModule, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatalf("failed to read testdata: %v", err)
-
 	}
 	customResource := csmv1.ContainerStorageModule{}
 	err = yaml.Unmarshal(b, &customResource)
@@ -62,7 +60,6 @@ func getCustomResource(path string) (csmv1.ContainerStorageModule, error) {
 	}
 
 	return customResource, nil
-
 }
 
 func getSecret(namespace, secretName string) *corev1.Secret {
@@ -97,6 +94,7 @@ func getConfigMap(namespace, configmapName string) *corev1.ConfigMap {
 		},
 	}
 }
+
 func TestCommonCertManager(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
@@ -146,17 +144,14 @@ func TestCommonCertManager(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := CommonCertManager(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
