@@ -958,7 +958,7 @@ func (suite *CSMControllerTestSuite) runFakeAuthCSMManager(expectedErr string, r
 }
 
 // call reconcile with different injection errors in k8s client
-func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(reqName, expectedErr string) {
+func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(_, expectedErr string) {
 	reconciler := suite.createReconciler()
 
 	// create would fail
@@ -1610,7 +1610,7 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 }
 
 // helper method to create k8s objects
-func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, modules []csmv1.Module) {
+func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, _ []csmv1.Module) {
 	// this secret required by application-mobility module
 	sec := shared.MakeSecret("cloud-creds", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
@@ -1645,7 +1645,7 @@ func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, modules 
 	assert.Nil(suite.T(), err)
 }
 
-func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, modules []csmv1.Module) {
+func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, _ []csmv1.Module) {
 	// this secret required by authorization module
 	sec := shared.MakeSecret("karavi-config-secret", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)

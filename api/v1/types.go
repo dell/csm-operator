@@ -63,7 +63,7 @@ const (
 	ReverseProxy ModuleType = "csireverseproxy"
 
 	// ReverseProxyServer - placeholder for constant csipowermax-reverseproxy
-	ReverseProxyServer ModuleType = "csipowermax-reverseproxy"
+	ReverseProxyServer ModuleType = "csipowermax-reverseproxy" // #nosec G101
 
 	// ApplicationMobility - placeholder for constant application-mobility
 	ApplicationMobility ModuleType = "application-mobility"

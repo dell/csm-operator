@@ -214,7 +214,7 @@ var defaultSecretsName = map[csmv1.DriverType]string{
 var defaultAuthSecretsName = []string{"karavi-authorization-config", "proxy-authz-tokens", "proxy-server-root-certificate"}
 
 // ObservabilityPrecheck  - runs precheck for CSM Observability
-func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csmv1.Module, cr csmv1.ContainerStorageModule, _ utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
 	if _, ok := ObservabilitySupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
@@ -729,7 +729,7 @@ func getObservabilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, erro
 }
 
 // appendObservabilitySecrets - append secrets from driver namespace including auth secrets, change their namespace to Observability Namespace
-func appendObservabilitySecrets(ctx context.Context, cr csmv1.ContainerStorageModule, objects []client.Object, ctrlClient client.Client, k8sClient kubernetes.Interface) ([]client.Object, error) {
+func appendObservabilitySecrets(ctx context.Context, cr csmv1.ContainerStorageModule, objects []client.Object, ctrlClient client.Client, _ kubernetes.Interface) ([]client.Object, error) {
 	driverSecretName := strings.ReplaceAll(defaultSecretsName[cr.GetDriverType()], DriverDefaultReleaseName, cr.Name)
 
 	if cr.Spec.Driver.AuthSecret != "" {

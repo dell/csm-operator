@@ -275,7 +275,6 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 				value := strconv.FormatBool(skipCertValid)
 				container.Env[i].Value = &value
 			}
-
 		}
 	}
 

@@ -139,7 +139,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 }
 
 // ModifyUnityConfigMap - Modify the Configmap parameters
-func ModifyUnityConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule) map[string]string {
+func ModifyUnityConfigMap(_ context.Context, cr csmv1.ContainerStorageModule) map[string]string {
 	keyValue := ""
 	var configMapData map[string]string
 	for _, env := range cr.Spec.Driver.Common.Envs {

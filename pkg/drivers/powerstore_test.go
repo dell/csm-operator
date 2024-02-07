@@ -68,7 +68,7 @@ var (
 func TestPrecheckPowerStore(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range powerStorePrecheckTests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
 			err := PrecheckPowerStore(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
@@ -80,7 +80,7 @@ func TestPrecheckPowerStore(t *testing.T) {
 
 	for _, tt := range powerStoreTests {
 		tt.ct.Create(ctx, tt.sec)
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
 			err := PrecheckPowerStore(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)

@@ -320,12 +320,12 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := false
-	//appEnabled := false
-	//var appRunning bool
-	//obsEnabled := false
-	//var obsRunning bool
-	//modrunning := false
-	var err error = nil
+	// appEnabled := false
+	// var appRunning bool
+	// obsEnabled := false
+	// var obsRunning bool
+	// modrunning := false
+	var err error
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 	// TODO: Can be uncommented once this issues gets sorted out
 	/* controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
@@ -360,7 +360,6 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 				} else {
 					newStatus.State = constants.Failed
 				}
-
 			} else {
 				running = false
 				newStatus.State = constants.Failed
@@ -405,7 +404,7 @@ func calculateAccState(ctx context.Context, instance *csmv1.ApexConnectivityClie
 }
 
 // SetStatus of csm
-func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
+func SetStatus(ctx context.Context, _ ReconcileCSM, instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
 	log := logger.GetLogger(ctx)
 	instance.GetCSMStatus().State = newStatus.State
 	log.Infow("Driver State", "Controller",
@@ -415,7 +414,7 @@ func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerSto
 }
 
 // SetAccStatus of csm
-func SetAccStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ApexConnectivityClient, newStatus *csmv1.ApexConnectivityClientStatus) {
+func SetAccStatus(ctx context.Context, _ ReconcileCSM, instance *csmv1.ApexConnectivityClient, newStatus *csmv1.ApexConnectivityClientStatus) {
 	log := logger.GetLogger(ctx)
 	instance.GetApexConnectivityClientStatus().State = newStatus.State
 	log.Infow("Apex Client State", "Client",
@@ -646,8 +645,7 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 }
 
 // statusForAppMob - calculate success state for application-mobility module
-func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
-
+func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	veleroEnabled := false
 	certEnabled := false
@@ -674,15 +672,12 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 				}
 
 			}
-
 		}
-
 	}
 
 	namespace := instance.GetNamespace()
 	opts := []client.ListOption{
 		client.InNamespace(namespace),
-		//client.MatchingLabels{labelKey: label},
 	}
 
 	deploymentList := &appsv1.DeploymentList{}
@@ -761,15 +756,14 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	}
 
 	return false, nil
-
 }
 
 // observabilityStatusCheck - calculate success state for observability module
-func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
-	//log := logger.GetLogger(ctx)
+func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+	// log := logger.GetLogger(ctx)
 	// Observability launches three pods in the karavi namespace
-	//expectedObservabilityPods := 3
-	//readyPods := 0
+	// expectedObservabilityPods := 3
+	// readyPods := 0
 	topologyEnabled := false
 	otelEnabled := false
 	certEnabled := false
@@ -843,7 +837,6 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	namespaceCert := instance.GetNamespace()
 	opts = []client.ListOption{
 		client.InNamespace(namespaceCert),
-		//client.MatchingLabels{labelKey: label},
 	}
 
 	deploymentCertList := &appsv1.DeploymentList{}

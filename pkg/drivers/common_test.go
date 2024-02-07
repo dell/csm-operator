@@ -29,8 +29,8 @@ var (
 	pflexCredsName = pflexCSMName + "-config"
 	pFlexNS        = "pflex-test"
 
-	trueBool  bool = true
-	falseBool bool = false
+	trueBool  = true
+	falseBool = false
 )
 
 // makes a csm object with tolerations

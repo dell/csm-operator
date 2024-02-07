@@ -412,7 +412,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	}
 }
 
-func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, obj interface{}) {
+func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj interface{}) {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
@@ -1280,11 +1280,9 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 				if m.Name == cr.Name {
 					log.Infow("Owner reference is found and matches")
 					break
-				} else {
-					return fmt.Errorf("required Owner reference not found. Please re-install driver ")
 				}
+				return fmt.Errorf("required Owner reference not found. Please re-install driver ")
 			}
-
 		}
 	}
 

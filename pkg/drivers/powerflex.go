@@ -229,6 +229,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	healthMonitorController := ""
 	healthMonitorNode := ""
 
+	// nolint:gosec
 	switch fileType {
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Controller.Envs {

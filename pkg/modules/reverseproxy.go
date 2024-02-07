@@ -31,7 +31,7 @@ import (
 
 // Constants to be used in reverse proxy config files
 const (
-	ReverseProxyServerComponent = "csipowermax-reverseproxy"
+	ReverseProxyServerComponent = "csipowermax-reverseproxy" // #nosec G101
 	ReverseProxyDeployement     = "controller.yaml"
 	ReverseProxyImage           = "<REVERSEPROXY_PROXY_SERVER_IMAGE>"
 	ReverseProxyTLSSecret       = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101

@@ -938,7 +938,7 @@ func getClusterK8SClient(ctx context.Context, clusterID string, ctrlClient crcli
 }
 
 // IsResiliencyModuleEnabled - check if resiliency module is enabled or not
-func IsResiliencyModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) bool {
+func IsResiliencyModuleEnabled(_ context.Context, instance csmv1.ContainerStorageModule, _ ReconcileCSM) bool {
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Resiliency && m.Enabled {
 			return true
@@ -994,7 +994,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 }
 
 // GetAccDefaultClusters - get default clusters
-func GetAccDefaultClusters(ctx context.Context, instance csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster, error) {
+func GetAccDefaultClusters(_ context.Context, _ csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster, error) {
 	clusterClients := []ReplicaCluster{
 		{
 			ClusterCTRLClient: r.GetClient(),
@@ -1042,7 +1042,7 @@ func GetBackupStorageLocation(ctx context.Context, name, namespace string, ctrlC
 }
 
 // IsModuleEnabled - check if the module is enabled
-func IsModuleEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType) (bool, csmv1.Module) {
+func IsModuleEnabled(_ context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType) (bool, csmv1.Module) {
 	for _, m := range instance.Spec.Modules {
 		if m.Name == mod && m.Enabled {
 			return true, m
@@ -1069,7 +1069,7 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 }
 
 // IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
-func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
+func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, _ ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
 	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)
 	if !appMobilityEnabled {
 		return false

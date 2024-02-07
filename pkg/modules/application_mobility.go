@@ -380,7 +380,7 @@ func IssuerCertService(ctx context.Context, isDeleting bool, op utils.OperatorCo
 }
 
 // ApplicationMobilityPrecheck - runs precheck for CSM Application Mobility
-func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob csmv1.Module, _ csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
 	// check if provided version is supported
@@ -659,7 +659,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 }
 
 // getUseVolumeSnapshot - gets the velero - volume snapshot location manifest
-func getUseVolumeSnapshot(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) (string, string, error) {
+func getUseVolumeSnapshot(_ context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, _ crclient.Client) (string, string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -697,7 +697,7 @@ func getUseVolumeSnapshot(ctx context.Context, op utils.OperatorConfig, cr csmv1
 }
 
 // getBackupStorageLoc - gets the velero Backup Storage Location manifest
-func getBackupStorageLoc(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) (string, string, error) {
+func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, _ crclient.Client) (string, string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
