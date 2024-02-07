@@ -851,5 +851,21 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		return otelRunning && metricsRunning && topologyRunning, nil
 	}
 
+	if certEnabled && otelEnabled && metricsEnabled && !topologyEnabled {
+		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && otelRunning && metricsRunning, nil
+	}
+
+	if !certEnabled && otelEnabled && metricsEnabled && !topologyEnabled {
+		return otelRunning && metricsRunning, nil
+	}
+
+	if certEnabled && metricsEnabled && !topologyEnabled && !otelEnabled {
+		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && metricsRunning, nil
+	}
+
+	if !certEnabled && metricsEnabled && !topologyEnabled && !otelEnabled {
+		return metricsRunning, nil
+	}
+
 	return false, nil
 }
