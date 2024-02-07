@@ -638,8 +638,9 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	appMobRunning := false
 	veleroRunning := false
 	var daemonRunning bool
-	readyPods := 0
-	expected := 2
+	var readyPods int
+	var notreadyPods int
+
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
 			for _, c := range m.Components {
@@ -715,10 +716,14 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	for _, pod := range podList.Items {
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
+		} else {
+			notreadyPods++
 		}
 	}
 
-	if readyPods == expected {
+	if notreadyPods > 0 {
+		daemonRunning = false
+	} else {
 		daemonRunning = true
 	}
 
