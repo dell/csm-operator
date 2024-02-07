@@ -14,15 +14,15 @@ package deployment
 
 import (
 	"context"
+	"time"
+
 	//"fmt"
 
 	"github.com/dell/csm-operator/pkg/logger"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	appsv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
-
 	//"reflect"
-	"time"
 )
 
 // SleepTime - minimum time to sleep before checking the state of controller pod

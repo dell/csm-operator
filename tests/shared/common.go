@@ -127,7 +127,7 @@ func MakeModuleCSM(name, ns, configVersion string) csmv1.ContainerStorageModule 
 }
 
 // MakeApexConnectivityClient returns a driver object from given params
-func MakeApexConnectivityClient(configVersion, skipCertValid string) csmv1.Client {
+func MakeApexConnectivityClient(configVersion, _ string) csmv1.Client {
 	ApexConnectivityClientObj := csmv1.Client{
 		ConfigVersion: configVersion,
 	}
@@ -184,7 +184,7 @@ func MakeModule(configVersion string) csmv1.Module {
 }
 
 // MakeSecret  returns a driver pre-req secret array-config
-func MakeSecret(name, ns, configVersion string) *corev1.Secret {
+func MakeSecret(name, ns, _ string) *corev1.Secret {
 	data := map[string][]byte{
 		"config": []byte("csm"),
 	}
@@ -194,7 +194,7 @@ func MakeSecret(name, ns, configVersion string) *corev1.Secret {
 }
 
 // MakeConfigMap returns a driver pre-req configmap array-config
-func MakeConfigMap(name, ns, configVersion string) *corev1.ConfigMap {
+func MakeConfigMap(name, ns, _ string) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
@@ -235,7 +235,7 @@ func MakePod(name, ns string) corev1.Pod {
 }
 
 // MakeReverseProxyModule returns a csireverseproxy object
-func MakeReverseProxyModule(configVersion string) csmv1.Module {
+func MakeReverseProxyModule(_ string) csmv1.Module {
 	revproxy := csmv1.Module{
 		Name:          csmv1.ReverseProxy,
 		Enabled:       true,

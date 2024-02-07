@@ -62,7 +62,7 @@ func NewFakeClientNoInjector(objectMap map[shared.StorageKey]runtime.Object) *Cl
 }
 
 // Get implements client.Client.
-func (f Client) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+func (f Client) Get(_ context.Context, key client.ObjectKey, obj client.Object, _ ...client.GetOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("Get", obj); err != nil {
 			return err
@@ -97,7 +97,7 @@ func (f Client) Get(ctx context.Context, key client.ObjectKey, obj client.Object
 }
 
 // List implements client.Client.
-func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+func (f Client) List(ctx context.Context, list client.ObjectList, _ ...client.ListOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("List", list); err != nil {
 			return err
@@ -122,7 +122,7 @@ func (f Client) listPodList(list *corev1.PodList) error {
 	return nil
 }
 
-func (f Client) listDeploymentList(ctx context.Context, list *appsv1.DeploymentList) error {
+func (f Client) listDeploymentList(_ context.Context, list *appsv1.DeploymentList) error {
 	for k, v := range f.Objects {
 		if k.Kind == "Deployment" {
 			list.Items = append(list.Items, *v.(*appsv1.Deployment))
@@ -132,7 +132,7 @@ func (f Client) listDeploymentList(ctx context.Context, list *appsv1.DeploymentL
 }
 
 // Create implements client.Client.
-func (f Client) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+func (f Client) Create(_ context.Context, obj client.Object, _ ...client.CreateOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("Create", obj); err != nil {
 			return err
@@ -159,7 +159,7 @@ func (f Client) Create(ctx context.Context, obj client.Object, opts ...client.Cr
 }
 
 // Delete implements client.Client.
-func (f Client) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+func (f Client) Delete(_ context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("Delete", obj); err != nil {
 			return err
@@ -208,7 +208,7 @@ func (f Client) Clear() {
 }
 
 // SetDeletionTimeStamp so that reconcile can go into deletion part of code
-func (f Client) SetDeletionTimeStamp(ctx context.Context, obj client.Object) error {
+func (f Client) SetDeletionTimeStamp(_ context.Context, obj client.Object) error {
 	k, err := shared.GetKey(obj)
 	if err != nil {
 		return err
@@ -224,7 +224,7 @@ func (f Client) SetDeletionTimeStamp(ctx context.Context, obj client.Object) err
 }
 
 // Update implements client.StatusWriter.
-func (f Client) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+func (f Client) Update(_ context.Context, obj client.Object, _ ...client.UpdateOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("Update", obj); err != nil {
 			return err
@@ -251,22 +251,22 @@ func (f Client) Update(ctx context.Context, obj client.Object, opts ...client.Up
 }
 
 // Patch implements client.Client.
-func (f Client) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (f Client) Patch(_ context.Context, _ client.Object, _ client.Patch, _ ...client.PatchOption) error {
 	panic("implement me")
 }
 
 // DeleteAllOf implements client.Client.
-func (f Client) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
+func (f Client) DeleteAllOf(_ context.Context, _ client.Object, _ ...client.DeleteAllOfOption) error {
 	panic("implement me")
 }
 
 // GroupVersionKindFor returns the GroupVersionKind for the given object.
-func (f Client) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+func (f Client) GroupVersionKindFor(_ runtime.Object) (schema.GroupVersionKind, error) {
 	panic("implement me")
 }
 
 // IsObjectNamespaced returns true if the GroupVersionKind of the object is namespaced.
-func (f Client) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+func (f Client) IsObjectNamespaced(_ runtime.Object) (bool, error) {
 	panic("implement me")
 }
 
@@ -291,22 +291,22 @@ func (f Client) RESTMapper() meta.RESTMapper {
 }
 
 // Create implements client.SubResourceClient
-func (sc *subResourceClient) Create(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceCreateOption) error {
+func (sc *subResourceClient) Create(_ context.Context, _ client.Object, _ client.Object, _ ...client.SubResourceCreateOption) error {
 	panic("implement me")
 }
 
 // Update implements client.SubResourceClient
-func (sc *subResourceClient) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+func (sc *subResourceClient) Update(ctx context.Context, obj client.Object, _ ...client.SubResourceUpdateOption) error {
 	// We are currently not using options in update so they don't need to be passed
 	return sc.client.Update(ctx, obj)
 }
 
 // Patch implements client.SubResourceWriter
-func (sc *subResourceClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
+func (sc *subResourceClient) Patch(_ context.Context, _ client.Object, _ client.Patch, _ ...client.SubResourcePatchOption) error {
 	panic("implement me")
 }
 
 // Get out of here
-func (sc *subResourceClient) Get(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceGetOption) error {
+func (sc *subResourceClient) Get(_ context.Context, _ client.Object, _ client.Object, _ ...client.SubResourceGetOption) error {
 	panic("not implemented")
 }

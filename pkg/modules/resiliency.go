@@ -62,7 +62,7 @@ var ResiliencySupportedDrivers = map[string]SupportedDriverParam{
 }
 
 // ResiliencyPrecheck - Resiliency module precheck for supported versions
-func ResiliencyPrecheck(ctx context.Context, op utils.OperatorConfig, resiliency csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+func ResiliencyPrecheck(ctx context.Context, op utils.OperatorConfig, resiliency csmv1.Module, cr csmv1.ContainerStorageModule, _ utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
 	if _, ok := ResiliencySupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
@@ -81,7 +81,6 @@ func ResiliencyPrecheck(ctx context.Context, op utils.OperatorConfig, resiliency
 
 	log.Infof("\nperformed pre checks for: %s", resiliency.Name)
 	return nil
-
 }
 
 // ResiliencyInjectClusterRole - inject resiliency into clusterrole
@@ -117,7 +116,7 @@ func getResiliencyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) 
 	return csmv1.Module{}, fmt.Errorf("could not find resiliency module")
 }
 
-func getResiliencyEnv(resiliencyModule csmv1.Module, driverType csmv1.DriverType) string {
+func getResiliencyEnv(resiliencyModule csmv1.Module, _ csmv1.DriverType) string {
 	for _, component := range resiliencyModule.Components {
 		if component.Name == utils.PodmonNodeComponent {
 			for _, env := range component.Envs {

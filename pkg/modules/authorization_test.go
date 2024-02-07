@@ -185,7 +185,6 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -281,11 +280,10 @@ func TestAuthInjectDeployment(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
-
 }
+
 func TestAuthorizationPreCheck(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client){
 		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
@@ -414,11 +412,9 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			err := AuthorizationPrecheck(context.TODO(), operatorConfig, auth, tmpCR, client)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -427,7 +423,6 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
-
 		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
@@ -535,11 +530,9 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			err := AuthorizationServerPrecheck(context.TODO(), operatorConfig, auth, tmpCR, &fakeReconcile)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -606,7 +599,6 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := AuthorizationServerDeployment(context.TODO(), isDeleting, op, cr, sourceClient)
@@ -615,7 +607,6 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -784,7 +775,6 @@ func TestAuthorizationIngress(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			fakeReconcile := utils.FakeReconcileCSM{
 				Client:    sourceClient,
@@ -796,7 +786,6 @@ func TestAuthorizationIngress(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -852,7 +841,6 @@ func TestInstallPolicies(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := InstallPolicies(context.TODO(), isDeleting, op, cr, sourceClient)
@@ -861,7 +849,6 @@ func TestInstallPolicies(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -915,17 +902,14 @@ func TestNginxIngressController(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := NginxIngressController(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }

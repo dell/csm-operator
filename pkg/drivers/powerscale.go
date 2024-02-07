@@ -35,7 +35,7 @@ const (
 	PowerScalePluginIdentifier = "powerscale"
 
 	// PowerScaleConfigParamsVolumeMount -
-	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params"
+	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params" // #nosec G101
 )
 
 // PrecheckPowerScale do input validation

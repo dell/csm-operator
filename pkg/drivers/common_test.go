@@ -29,8 +29,8 @@ var (
 	pflexCredsName = pflexCSMName + "-config"
 	pFlexNS        = "pflex-test"
 
-	trueBool  bool = true
-	falseBool bool = false
+	trueBool  = true
+	falseBool = false
 )
 
 // makes a csm object with tolerations
@@ -117,28 +117,28 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM(customCSMName, pFlexNS, shared.PFlexConfigVersion)
 
 	// Add sdc initcontainer
-	res.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{csmv1.ContainerTemplate{
+	res.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{{
 		Name:            "sdc",
 		Enabled:         &trueBool,
 		Image:           "image",
 		ImagePullPolicy: "IfNotPresent",
 		Args:            []string{},
-		Envs:            []corev1.EnvVar{corev1.EnvVar{Name: "MDM"}},
+		Envs:            []corev1.EnvVar{{Name: "MDM"}},
 		Tolerations:     []corev1.Toleration{},
 	}}
 
 	// Add sdc-monitor Sidecar
-	res.Spec.Driver.SideCars = []csmv1.ContainerTemplate{csmv1.ContainerTemplate{
+	res.Spec.Driver.SideCars = []csmv1.ContainerTemplate{{
 		Name:            "sdc-monitor",
 		Enabled:         &falseBool,
 		Image:           "image",
 		ImagePullPolicy: "IfNotPresent",
 		Args:            []string{},
-		Envs:            []corev1.EnvVar{corev1.EnvVar{Name: "MDM"}},
+		Envs:            []corev1.EnvVar{{Name: "MDM"}},
 		Tolerations:     []corev1.Toleration{},
 	}}
 
-	//res.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "ReadWriteOnceWithFSType"
+	// res.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "ReadWriteOnceWithFSType"
 
 	// Add pflex driver version
 	res.Spec.Driver.ConfigVersion = shared.PFlexConfigVersion

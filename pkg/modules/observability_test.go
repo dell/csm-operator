@@ -227,11 +227,9 @@ func TestObservabilityPrecheck(t *testing.T) {
 			err := ObservabilityPrecheck(ctx, operatorConfig, observability, tmpCR, &fakeReconcile)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -289,17 +287,14 @@ func TestObservabilityTopologyController(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := ObservabilityTopology(ctx, isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -371,7 +366,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds, karaviAuthconfig, proxyAuthzTokens).Build()
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 
-			//pre-run to generate objects
+			// pre-run to generate objects
 			err = PowerScaleMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
 			if err != nil {
 				panic(err)
@@ -425,7 +420,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 			fakeClient.Create(ctx, karaviAuthconfig)
 			fakeClient.Create(ctx, proxyAuthzTokens)
 			k8sClient := clientgoclient.NewFakeClient(fakeClient)
-			//pre-run to generate objects
+			// pre-run to generate objects
 			err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
 			if err != nil {
 				panic(err)
@@ -507,17 +502,14 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 			err := PowerScaleMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -574,17 +566,14 @@ func TestOtelCollector(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := OtelCollector(ctx, isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -656,7 +645,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds, karaviAuthconfig, proxyAuthzTokens).Build()
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 
-			//pre-run to generate objects
+			// pre-run to generate objects
 			err = PowerFlexMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
 			if err != nil {
 				panic(err)
@@ -710,7 +699,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 			fakeClient.Create(ctx, karaviAuthconfig)
 			fakeClient.Create(ctx, proxyAuthzTokens)
 			k8sClient := clientgoclient.NewFakeClient(fakeClient)
-			//pre-run to generate objects
+			// pre-run to generate objects
 			err = PowerFlexMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
 			if err != nil {
 				panic(err)
@@ -769,17 +758,14 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 			err := PowerFlexMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -851,7 +837,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds, karaviAuthconfig, proxyAuthzTokens).Build()
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 
-			//pre-run to generate objects
+			// pre-run to generate objects
 			err = PowerMaxMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
 			if err != nil {
 				panic(err)
@@ -905,7 +891,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 			fakeClient.Create(ctx, karaviAuthconfig)
 			fakeClient.Create(ctx, proxyAuthzTokens)
 			k8sClient := clientgoclient.NewFakeClient(fakeClient)
-			//pre-run to generate objects
+			// pre-run to generate objects
 			err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
 			if err != nil {
 				panic(err)
@@ -968,17 +954,14 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 			err := PowerMaxMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }

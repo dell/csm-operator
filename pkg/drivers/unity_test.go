@@ -48,7 +48,6 @@ var (
 		// expected error
 		expectedErr string
 	}{
-
 		{"happy path", csmUnity, unityClient, unitySecret, ""},
 		{"bad version", unityCSMBadVersion, unityClient, unitySecret, "not supported"},
 		{"invalid value for skip cert validation", unityCSMBadSkipCert, unityClient, unitySecret, "is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"},
@@ -75,7 +74,7 @@ var (
 func TestPrecheckUnity(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range unityPrecheckTests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
 			err := PrecheckUnity(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
@@ -87,7 +86,7 @@ func TestPrecheckUnity(t *testing.T) {
 
 	for _, tt := range unityTests {
 		tt.ct.Create(ctx, tt.sec)
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
 			err := PrecheckUnity(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)

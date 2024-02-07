@@ -81,7 +81,6 @@ func init() {
 	utilruntime.Must(certmanagerv1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
-
 }
 
 func printVersion(log *zap.SugaredLogger) {
@@ -107,7 +106,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	if err != nil {
 		log.Info(fmt.Sprintf("kubeVersion err %s", kubeAPIServerVersion))
 	}
-	//format the required k8s version
+	// format the required k8s version
 	majorVersion := kubeAPIServerVersion.Major
 	minorVersion := strings.TrimSuffix(kubeAPIServerVersion.Minor, "+")
 	kubeVersion := fmt.Sprintf("%s.%s", majorVersion, minorVersion)
