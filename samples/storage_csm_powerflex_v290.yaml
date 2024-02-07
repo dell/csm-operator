@@ -203,12 +203,12 @@ spec:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
-      enabled: true
+      enabled: false
       configVersion: v1.7.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
-          enabled: true
+          enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/csm-topology:v1.7.0
@@ -221,7 +221,7 @@ spec:
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: true
+          enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
           image: otel/opentelemetry-collector:0.42.0
@@ -238,11 +238,11 @@ spec:
         #   false: disable deployment of cert-manager only if it's already deployed
         # Default value: false
         - name: cert-manager
-          enabled: true
+          enabled: false
 
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
-          enabled: true
+          enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
           image: dellemc/csm-metrics-powerflex:v1.7.0
           envs:
