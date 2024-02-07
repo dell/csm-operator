@@ -47,16 +47,16 @@ func (c *FakeAppsV1) RESTClient() rest.Interface {
 }
 
 // ControllerRevisions takes a namespace and returns an ControllerRevisionInterface
-func (c *FakeAppsV1) ControllerRevisions(namespace string) v1.ControllerRevisionInterface {
+func (c *FakeAppsV1) ControllerRevisions(_ string) v1.ControllerRevisionInterface {
 	panic("implement me")
 }
 
 // ReplicaSets takes a namespace and returns an ReplicaSetInterface
-func (c *FakeAppsV1) ReplicaSets(namespace string) v1.ReplicaSetInterface {
+func (c *FakeAppsV1) ReplicaSets(_ string) v1.ReplicaSetInterface {
 	panic("implement me")
 }
 
 // StatefulSets takes a namespace and returns an StatefulSetInterface
-func (c *FakeAppsV1) StatefulSets(namespace string) v1.StatefulSetInterface {
+func (c *FakeAppsV1) StatefulSets(_ string) v1.StatefulSetInterface {
 	panic("implement me")
 }

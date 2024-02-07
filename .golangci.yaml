@@ -2,8 +2,6 @@ run:
   timeout: 20m
   tests: true
   skip-dirs-use-default: true
-  skip-dirs:
-    - "tests"
   modules-download-mode: readonly
 
 issues:
