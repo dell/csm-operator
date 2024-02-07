@@ -120,6 +120,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	storageCapacity := "true"
 	maxVolumesPerNode := ""
 
+	// #nosec G101 - False positives
 	switch fileType {
 	case "Node":
 		for _, env := range cr.Spec.Driver.Common.Envs {

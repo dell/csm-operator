@@ -63,7 +63,7 @@ const (
 	ReverseProxy ModuleType = "csireverseproxy"
 
 	// ReverseProxyServer - placeholder for constant csipowermax-reverseproxy
-	ReverseProxyServer ModuleType = "csipowermax-reverseproxy"
+	ReverseProxyServer ModuleType = "csipowermax-reverseproxy" // #nosec G101
 
 	// ApplicationMobility - placeholder for constant application-mobility
 	ApplicationMobility ModuleType = "application-mobility"
@@ -353,15 +353,15 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Object Store Secret"
 	ObjectStoreSecretName string `json:"objectStoreSecretName,omitempty" yaml:"objectStoreSecretName,omitempty"`
 
-	//UseSnapshot is to check whether volume snapshot is enabled under velero component
+	// UseSnapshot is to check whether volume snapshot is enabled under velero component
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="use-volume-snapshots for Application Mobilit- Velero"
 	UseSnapshot bool `json:"useVolumeSnapshot,omitempty" yaml:"useVolumeSnapshot,omitempty"`
 
-	//ComponentCred is to store the velero credential contents
+	// ComponentCred is to store the velero credential contents
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ComponentCred for velero component"
 	ComponentCred []Credential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
 
-	//DeployNodeAgent is to enable/disable node-agent services
+	// DeployNodeAgent is to enable/disable node-agent services
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Deploy node-agent for Application Mobility"
 	DeployNodeAgent bool `json:"deployNodeAgent,omitempty" yaml:"deployNodeAgent,omitempty"`
 }
