@@ -16,6 +16,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"sync"
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -25,9 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
-	"sync"
+	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	t1 "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -164,8 +164,10 @@ func getAccStatefulSetStatus(ctx context.Context, instance *csmv1.ApexConnectivi
 		log.Infof("statefulSet status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
-		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetApexConnectivityClientName(),
-			Namespace: instance.GetNamespace()}, statefulSet)
+		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
+			Name:      instance.GetApexConnectivityClientName(),
+			Namespace: instance.GetNamespace(),
+		}, statefulSet)
 		if err != nil {
 			return 0, csmv1.PodStatus{}, err
 		}
@@ -249,8 +251,10 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		nodeName := instance.GetNodeName()
 
 		log.Infof("nodeName is %s", nodeName)
-		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: nodeName,
-			Namespace: instance.GetNamespace()}, ds)
+		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
+			Name:      nodeName,
+			Namespace: instance.GetNamespace(),
+		}, ds)
 		if err != nil {
 			return 0, csmv1.PodStatus{}, err
 		}
@@ -275,8 +279,8 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 				failedCount++
 				for _, cs := range pod.Status.ContainerStatuses {
 					if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
-						//message: Back-off pulling image "dellec/csi-isilon:xxxx"
-						//reason: ImagePullBackOff
+						// message: Back-off pulling image "dellec/csi-isilon:xxxx"
+						// reason: ImagePullBackOff
 						log.Infow("daemonset pod container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
 						shortMsg := strings.Replace(cs.State.Waiting.Message,
 							constants.PodStatusRemoveString, "", 1)
@@ -316,12 +320,12 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := false
-	//appEnabled := false
-	//var appRunning bool
-	//obsEnabled := false
-	//var obsRunning bool
-	//modrunning := false
-	var err error = nil
+	// appEnabled := false
+	// var appRunning bool
+	// obsEnabled := false
+	// var obsRunning bool
+	// modrunning := false
+	var err error
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 	// TODO: Can be uncommented once this issues gets sorted out
 	/* controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
@@ -356,7 +360,6 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 				} else {
 					newStatus.State = constants.Failed
 				}
-
 			} else {
 				running = false
 				newStatus.State = constants.Failed
@@ -401,8 +404,7 @@ func calculateAccState(ctx context.Context, instance *csmv1.ApexConnectivityClie
 }
 
 // SetStatus of csm
-func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
-
+func SetStatus(ctx context.Context, _ ReconcileCSM, instance *csmv1.ContainerStorageModule, newStatus *csmv1.ContainerStorageModuleStatus) {
 	log := logger.GetLogger(ctx)
 	instance.GetCSMStatus().State = newStatus.State
 	log.Infow("Driver State", "Controller",
@@ -412,8 +414,7 @@ func SetStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ContainerSto
 }
 
 // SetAccStatus of csm
-func SetAccStatus(ctx context.Context, r ReconcileCSM, instance *csmv1.ApexConnectivityClient, newStatus *csmv1.ApexConnectivityClientStatus) {
-
+func SetAccStatus(ctx context.Context, _ ReconcileCSM, instance *csmv1.ApexConnectivityClient, newStatus *csmv1.ApexConnectivityClientStatus) {
 	log := logger.GetLogger(ctx)
 	instance.GetApexConnectivityClientStatus().State = newStatus.State
 	log.Infow("Apex Client State", "Client",
@@ -440,8 +441,10 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		log := logger.GetLogger(ctx)
 
 		csm := new(csmv1.ContainerStorageModule)
-		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,
-			Namespace: instance.GetNamespace()}, csm)
+		err := r.GetClient().Get(ctx, t1.NamespacedName{
+			Name:      instance.Name,
+			Namespace: instance.GetNamespace(),
+		}, csm)
 		if err != nil {
 			return err
 		}
@@ -484,8 +487,10 @@ func UpdateAccStatus(ctx context.Context, instance *csmv1.ApexConnectivityClient
 
 	_, merr := calculateAccState(ctx, instance, r, newStatus)
 	csm := new(csmv1.ApexConnectivityClient)
-	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,
-		Namespace: instance.GetNamespace()}, csm)
+	err := r.GetClient().Get(ctx, t1.NamespacedName{
+		Name:      instance.Name,
+		Namespace: instance.GetNamespace(),
+	}, csm)
 	if err != nil {
 		return err
 	}
@@ -501,7 +506,8 @@ func UpdateAccStatus(ctx context.Context, instance *csmv1.ApexConnectivityClient
 
 // HandleValidationError for csm
 func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM,
-	validationError error) (reconcile.Result, error) {
+	validationError error,
+) (reconcile.Result, error) {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 	log := logger.GetLogger(ctx)
@@ -520,7 +526,8 @@ func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorage
 
 // HandleAccValidationError for csm
 func HandleAccValidationError(ctx context.Context, instance *csmv1.ApexConnectivityClient, r ReconcileCSM,
-	validationError error) (reconcile.Result, error) {
+	validationError error,
+) (reconcile.Result, error) {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 	log := logger.GetLogger(ctx)
@@ -599,7 +606,8 @@ func GetNginxControllerStatus(ctx context.Context, instance csmv1.ContainerStora
 
 		err := r.GetClient().Get(ctx, t1.NamespacedName{
 			Name:      name,
-			Namespace: instance.GetNamespace()}, deployment)
+			Namespace: instance.GetNamespace(),
+		}, deployment)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return false, err
@@ -637,8 +645,7 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 }
 
 // statusForAppMob - calculate success state for application-mobility module
-func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
-
+func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	veleroEnabled := false
 	certEnabled := false
@@ -665,15 +672,12 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 				}
 
 			}
-
 		}
-
 	}
 
 	namespace := instance.GetNamespace()
 	opts := []client.ListOption{
 		client.InNamespace(namespace),
-		//client.MatchingLabels{labelKey: label},
 	}
 
 	deploymentList := &appsv1.DeploymentList{}
@@ -752,15 +756,14 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	}
 
 	return false, nil
-
 }
 
 // observabilityStatusCheck - calculate success state for observability module
-func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
-	//log := logger.GetLogger(ctx)
+func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+	// log := logger.GetLogger(ctx)
 	// Observability launches three pods in the karavi namespace
-	//expectedObservabilityPods := 3
-	//readyPods := 0
+	// expectedObservabilityPods := 3
+	// readyPods := 0
 	topologyEnabled := false
 	otelEnabled := false
 	certEnabled := false
@@ -834,7 +837,6 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	namespaceCert := instance.GetNamespace()
 	opts = []client.ListOption{
 		client.InNamespace(namespaceCert),
-		//client.MatchingLabels{labelKey: label},
 	}
 
 	deploymentCertList := &appsv1.DeploymentList{}

@@ -1,6 +1,5 @@
 run:
   timeout: 20m
-  issue-exit-code: 0 # we will change this later
   tests: true
   skip-dirs-use-default: true
   modules-download-mode: readonly

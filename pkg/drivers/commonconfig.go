@@ -168,7 +168,6 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	}
 
 	return &controllerYAML, nil
-
 }
 
 // GetNode get node yaml
@@ -300,7 +299,6 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 
 	return &nodeYaml, nil
-
 }
 
 // GetUpgradeInfo -
@@ -325,7 +323,6 @@ func GetUpgradeInfo(ctx context.Context, operatorConfig utils.OperatorConfig, dr
 
 	// Example return value: "v2.2.0"
 	return upgradePath.MinUpgradePath, nil
-
 }
 
 // GetConfigMap get configmap
@@ -360,7 +357,6 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		configMap.Data = ModifyUnityConfigMap(ctx, cr)
 	}
 	return &configMap, nil
-
 }
 
 // GetCSIDriver get driver

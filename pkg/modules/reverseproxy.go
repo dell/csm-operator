@@ -31,7 +31,7 @@ import (
 
 // Constants to be used in reverse proxy config files
 const (
-	ReverseProxyServerComponent = "csipowermax-reverseproxy"
+	ReverseProxyServerComponent = "csipowermax-reverseproxy" // #nosec G101
 	ReverseProxyDeployement     = "controller.yaml"
 	ReverseProxyImage           = "<REVERSEPROXY_PROXY_SERVER_IMAGE>"
 	ReverseProxyTLSSecret       = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
@@ -127,6 +127,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 
 	return nil
 }
+
 func getReverseProxyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.ReverseProxy {
