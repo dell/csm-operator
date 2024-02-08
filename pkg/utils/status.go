@@ -315,12 +315,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
-	running := false
-	//appEnabled := false
-	//var appRunning bool
-	//obsEnabled := false
-	//var obsRunning bool
-	//modrunning := false
+	running := true
 	var err error = nil
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 	// TODO: Can be uncommented once this issues gets sorted out
@@ -334,40 +329,36 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	controllerReplicas := newStatus.ControllerStatus.Desired
 	controllerStatus := newStatus.ControllerStatus
 
-	newStatus.State = constants.Failed
+	newStatus.State = constants.Succeeded
 	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
 	log.Infof("daemonset expected [%d]", expected)
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
-	for _, module := range instance.Spec.Modules {
-		moduleStatus, exists := checkModuleStatus[module.Name]
-		if exists && module.Enabled {
-			moduleRunning, err := moduleStatus(ctx, instance, r, newStatus)
-			if err != nil {
-				log.Infof("status for Application-Mobility err msg [%s]", err.Error())
-			}
+	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
 
-			if moduleRunning {
-				if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
-					running = true
-					newStatus.State = constants.Succeeded
-				} else {
-					newStatus.State = constants.Failed
+		for _, module := range instance.Spec.Modules {
+			moduleStatus, exists := checkModuleStatus[module.Name]
+			if exists && module.Enabled {
+				moduleRunning, err := moduleStatus(ctx, instance, r, newStatus)
+				if err != nil {
+					log.Infof("status for module err msg [%s]", err.Error())
 				}
 
-			} else {
-				running = false
-				newStatus.State = constants.Failed
-				log.Infof("%s module not running", module)
-				break
-
+				if !moduleRunning {
+					running = false
+					newStatus.State = constants.Failed
+					log.Infof("%s module not running", module)
+					break
+				}
 			}
 		}
+	} else {
+		running = false
+		newStatus.State = constants.Failed
 	}
 
-	log.Infof("calculate overall state [%s]", newStatus.State)
 	if daemonSetErr != nil {
 		err = daemonSetErr
 		log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
@@ -637,8 +628,7 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 }
 
 // statusForAppMob - calculate success state for application-mobility module
-func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
-
+func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	veleroEnabled := false
 	certEnabled := false
@@ -648,8 +638,9 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	appMobRunning := false
 	veleroRunning := false
 	var daemonRunning bool
-	readyPods := 0
-	expected := 2
+	var readyPods int
+	var notreadyPods int
+
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.ApplicationMobility {
 			for _, c := range m.Components {
@@ -665,15 +656,12 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 				}
 
 			}
-
 		}
-
 	}
 
 	namespace := instance.GetNamespace()
 	opts := []client.ListOption{
 		client.InNamespace(namespace),
-		//client.MatchingLabels{labelKey: label},
 	}
 
 	deploymentList := &appsv1.DeploymentList{}
@@ -728,10 +716,14 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	for _, pod := range podList.Items {
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
+		} else {
+			notreadyPods++
 		}
 	}
 
-	if readyPods == expected {
+	if notreadyPods > 0 {
+		daemonRunning = false
+	} else {
 		daemonRunning = true
 	}
 
@@ -752,15 +744,11 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	}
 
 	return false, nil
-
 }
 
 // observabilityStatusCheck - calculate success state for observability module
-func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
-	//log := logger.GetLogger(ctx)
-	// Observability launches three pods in the karavi namespace
-	//expectedObservabilityPods := 3
-	//readyPods := 0
+func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+
 	topologyEnabled := false
 	otelEnabled := false
 	certEnabled := false
@@ -834,7 +822,6 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	namespaceCert := instance.GetNamespace()
 	opts = []client.ListOption{
 		client.InNamespace(namespaceCert),
-		//client.MatchingLabels{labelKey: label},
 	}
 
 	deploymentCertList := &appsv1.DeploymentList{}
@@ -867,6 +854,22 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 
 	if !certEnabled && otelEnabled && metricsEnabled && topologyEnabled {
 		return otelRunning && metricsRunning && topologyRunning, nil
+	}
+
+	if certEnabled && otelEnabled && metricsEnabled && !topologyEnabled {
+		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && otelRunning && metricsRunning, nil
+	}
+
+	if !certEnabled && otelEnabled && metricsEnabled && !topologyEnabled {
+		return otelRunning && metricsRunning, nil
+	}
+
+	if certEnabled && metricsEnabled && !topologyEnabled && !otelEnabled {
+		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && metricsRunning, nil
+	}
+
+	if !certEnabled && metricsEnabled && !topologyEnabled && !otelEnabled {
+		return metricsRunning, nil
 	}
 
 	return false, nil
