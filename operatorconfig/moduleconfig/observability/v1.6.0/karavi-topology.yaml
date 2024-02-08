@@ -88,6 +88,7 @@ spec:
       labels:
         app.kubernetes.io/name: karavi-topology
         app.kubernetes.io/instance: karavi-observability
+        csm: <NAME>
     spec:
       volumes:
         - name: karavi-topology-secret-volume
