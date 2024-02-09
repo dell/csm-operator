@@ -1270,14 +1270,14 @@ metadata:
       ]
     capabilities: Seamless Upgrades
     categories: Storage
-    containerImage: docker.io/dellemc/dell-csm-operator:v1.4.1
-    createdAt: "2024-02-02T08:59:42Z"
+    containerImage: docker.io/dellemc/dell-csm-operator:v1.4.2
+    createdAt: "2024-02-09T08:58:52Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.4.1
+  name: dell-csm-operator.v1.4.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -3459,7 +3459,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: docker.io/dellemc/dell-csm-operator:v1.4.1
+                image: docker.io/dellemc/dell-csm-operator:v1.4.2
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -3576,4 +3576,4 @@ spec:
     name: cert-persister
   skips:
     - dell-csm-operator.v1.4.0
-  version: 1.4.1
+  version: 1.4.2
