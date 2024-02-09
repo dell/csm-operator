@@ -69,7 +69,7 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 	if err != nil {
 		return err
 	}
-	err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType))
+	err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType), false)
 	if err != nil {
 		return err
 	}
