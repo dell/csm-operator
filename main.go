@@ -59,9 +59,9 @@ const (
 	// Operatorconfig sub folder for deployment files
 	Operatorconfig = "operatorconfig"
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
-	K8sMinimumSupportedVersion = "1.21"
+	K8sMinimumSupportedVersion = "1.27"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.28"
+	K8sMaximumSupportedVersion = "1.29"
 )
 
 var (
