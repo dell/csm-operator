@@ -285,6 +285,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	totalAvialable := int32(0)
 	totalDesired := int32(0)
 	totalFailedCount := 0
+	totalRunning := int32(0)
 
 	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
 	if err != nil {
@@ -356,16 +357,19 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 					}
 				}
 			}
+			if pod.Status.Phase == corev1.PodRunning {
+				totalRunning++
+			}
 		}
 		for k, v := range errMap {
 			msg += k + "=" + v
 		}
 
-		log.Infof("daemonset status available pods %d", ds.Status.NumberAvailable)
+		log.Infof("daemonset status available pods %d", totalRunning)
 		log.Infof("daemonset status failedCount pods %d", failedCount)
 		log.Infof("daemonset status desired pods %d", ds.Status.DesiredNumberScheduled)
 
-		totalAvialable += ds.Status.NumberAvailable
+		totalAvialable += totalRunning
 		totalDesired += ds.Status.DesiredNumberScheduled
 		totalFailedCount += failedCount
 
