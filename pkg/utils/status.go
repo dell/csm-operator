@@ -50,6 +50,7 @@ func getInt32(pointer *int32) int32 {
 	return *pointer
 }
 
+// calculates deployment state of drivers only; module deployment status will be checked in checkModuleStatus
 func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
 	log := logger.GetLogger(ctx)
 	var msg string
@@ -70,9 +71,10 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		log.Infof("deployment status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
-		log.Infof("DEBUG: instance being looked at is: %v", instance)
-		log.Infof("DEBUG: instance name being looked at is: %v", instance.Name)
-		log.Infof("DEBUG: instance spec being looked at is: %v", instance.GetContainerStorageModuleSpec())
+		if instance.Name == "" {
+			log.Infof("Not a driver instance, will not check deploymentstatus")
+			return 0, csmv1.PodStatus{}, err
+		}
 
 		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
 			Namespace: instance.GetNamespace()}, deployment)
