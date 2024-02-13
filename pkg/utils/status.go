@@ -1002,6 +1002,8 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 		}
 	}
 
+	log.Info("auth proxy deployment successful")
+
 	return true, nil
 
 	//return proxyServerRunning && redisCommanderRunning && redisPrimaryRunning && roleServiceRunning && storageServiceRunning && tenantServiceRunning &&

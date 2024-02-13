@@ -370,7 +370,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		return
 	}
 
-	log.Debugw("deployment modified generation", d.Generation, old.Generation)
+	log.Debugw("deployment modified generation", d.Name, d.Generation, old.Generation)
 
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
