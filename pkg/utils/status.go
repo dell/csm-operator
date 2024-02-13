@@ -909,7 +909,7 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 	tenantServiceRunning := false
 
 	for _, m := range instance.Spec.Modules {
-		if m.Name == csmv1.Observability {
+		if m.Name == csmv1.AuthorizationServer {
 			for _, c := range m.Components {
 				if c.Name == "ingress-nginx" && *c.Enabled {
 					nginxEnabled = true
@@ -965,8 +965,9 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 			storageServiceRunning = checkFn(&deployment)
 		case "tenant-service":
 			tenantServiceRunning = checkFn(&deployment)
+		}
 	}
 
 	return proxyServerRunning && redisCommanderRunning && redisPrimaryRunning && roleServiceRunning && storageServiceRunning && tenantServiceRunning && 
-		(!certEnabled || (certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning)) && (!nginxEnabled || nginxRunning)
+		(!certEnabled || (certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning)) && (!nginxEnabled || nginxRunning), nil
 }
