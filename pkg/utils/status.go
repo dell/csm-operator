@@ -911,16 +911,6 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 	log := logger.GetLogger(ctx)
 	certEnabled := false
 	nginxEnabled := false
-	certManagerRunning := false
-	certManagerCainInjectorRunning := false
-	certManagerWebhookRunning := false
-	nginxRunning := false
-	proxyServerRunning := false
-	redisCommanderRunning := false
-	redisPrimaryRunning := false
-	roleServiceRunning := false
-	storageServiceRunning := false
-	tenantServiceRunning := false
 
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.AuthorizationServer {
