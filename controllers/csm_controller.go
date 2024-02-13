@@ -384,7 +384,10 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	log.Infow("deployment", "available", available)
 	log.Infow("deployment", "numberUnavailable", numberUnavailable)
 
-	ns := d.Namespace
+	ns := p.GetLabels()[modules.CSMNameSpace]
+	if ns == "" {
+		ns = d.Namespace
+	}
 	log.Debugw("deployment", "namespace", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
@@ -488,7 +491,10 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	log.Infow("daemonset ", "available", available)
 	log.Infow("daemonset ", "numberUnavailable", numberUnavailable)
 
-	ns := d.Namespace
+	ns := p.GetLabels()[modules.CSMNameSpace]
+	if ns == "" {
+		ns = d.Namespace
+	}
 	r.Log.Debugw("daemonset ", "ns", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
