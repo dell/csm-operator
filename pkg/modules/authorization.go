@@ -678,7 +678,6 @@ func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	YamlString = string(buf)
 	authNamespace := cr.Namespace
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 
 	return YamlString, nil
 }
