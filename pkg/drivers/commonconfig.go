@@ -375,22 +375,6 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	}
 
 	var csidriver storagev1.CSIDriver
-	err = yaml.Unmarshal(buf, &csidriver)
-	if err != nil {
-		log.Errorw("GetCSIDriver yaml marshall failed", "Error", err.Error())
-		return nil, err
-	}
-
-	if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy != "" {
-		fsGroupPolicy := storagev1.NoneFSGroupPolicy
-		if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "ReadWriteOnceWithFSType" {
-			fsGroupPolicy = storagev1.ReadWriteOnceWithFSTypeFSGroupPolicy
-		} else if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "File" {
-			fsGroupPolicy = storagev1.FileFSGroupPolicy
-		}
-		csidriver.Spec.FSGroupPolicy = &fsGroupPolicy
-		log.Debugw("GetCSIDriver", "fsGroupPolicy", fsGroupPolicy)
-	}
 
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 	switch cr.Spec.Driver.CSIDriverType {
@@ -409,6 +393,17 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	if err != nil {
 		log.Errorw("GetCSIDriver yaml marshall failed", "Error", err.Error())
 		return nil, err
+	}
+	// overriding default FSGroupPolicy if this was provided in manifest
+	if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy != "" {
+		fsGroupPolicy := storagev1.NoneFSGroupPolicy
+		if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "ReadWriteOnceWithFSType" {
+			fsGroupPolicy = storagev1.ReadWriteOnceWithFSTypeFSGroupPolicy
+		} else if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "File" {
+			fsGroupPolicy = storagev1.FileFSGroupPolicy
+		}
+		csidriver.Spec.FSGroupPolicy = &fsGroupPolicy
+		log.Debugw("GetCSIDriver", "fsGroupPolicy", fsGroupPolicy)
 	}
 
 	return &csidriver, nil
