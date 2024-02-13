@@ -677,7 +677,8 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	log := logger.GetLogger(ctx)
 
 	// Create/Update Authorization Proxy Server
-	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer); authorizationEnabled {
+	authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer)
+	if authorizationEnabled {
 		log.Infow("Create/Update authorization")
 		if err := r.reconcileAuthorization(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
