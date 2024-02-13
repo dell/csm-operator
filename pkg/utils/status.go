@@ -955,22 +955,16 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 			}
 		case "proxy-server":
 			proxyServerRunning = checkFn(&deployment)
-		}
 		case "redis-commander":
 			redisCommanderRunning = checkFn(&deployment)
-		}
 		case "redis-primary":
 			redisPrimaryRunning = checkFn(&deployment)
-		}
 		case "role-service":
 			roleServiceRunning = checkFn(&deployment)
-		}
 		case "storage-service":
 			storageServiceRunning = checkFn(&deployment)
-		}
 		case "tenant-service":
 			tenantServiceRunning = checkFn(&deployment)
-		}
 	}
 
 	return proxyServerRunning && redisCommanderRunning && redisPrimaryRunning && roleServiceRunning && storageServiceRunning && tenantServiceRunning && 
