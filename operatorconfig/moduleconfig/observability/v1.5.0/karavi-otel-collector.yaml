@@ -113,6 +113,7 @@ spec:
         app.kubernetes.io/name: otel-collector
         app.kubernetes.io/instance: karavi-observability
         csm: <NAME>
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       volumes:
         - name: tls-secret
