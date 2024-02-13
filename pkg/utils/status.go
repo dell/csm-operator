@@ -901,6 +901,12 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 	certManagerCainInjectorRunning := false
 	certManagerWebhookRunning := false
 	nginxRunning := false
+	proxyServerRunning := false
+	redisCommanderRunning := false
+	redisPrimaryRunning := false
+	roleServiceRunning := false
+	storageServiceRunning := false
+	tenantServiceRunning := false
 
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Observability {
@@ -928,18 +934,6 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 		return deployment.Status.ReadyReplicas == *deployment.Spec.Replicas
 	}
 
-deployment.apps/authorization-ingress-nginx-controller   1/1     1            1           55s
-deployment.apps/cert-manager                             1/1     1            1           55s
-deployment.apps/cert-manager-cainjector                  1/1     1            1           55s
-deployment.apps/cert-manager-webhook                     1/1     1            1           55s
-deployment.apps/proxy-server                             1/1     1            1           57s
-deployment.apps/redis-commander                          1/1     1            1           57s
-deployment.apps/redis-primary                            1/1     1            1           57s
-deployment.apps/role-service                             1/1     1            1           57s
-deployment.apps/storage-service                          1/1     1            1           57s
-deployment.apps/tenant-service                           1/1     1            1           57s
-
-
 	for _, deployment := range deploymentList.Items {
 		deployment := deployment
 		switch deployment.Name {
@@ -960,14 +954,25 @@ deployment.apps/tenant-service                           1/1     1            1 
 				certManagerWebhookRunning = checkFn(&deployment)
 			}
 		case "proxy-server":
+			proxyServerRunning = checkFn(&deployment)
+		}
+		case "redis-commander":
+			redisCommanderRunning = checkFn(&deployment)
+		}
+		case "redis-primary":
+			redisPrimaryRunning = checkFn(&deployment)
+		}
+		case "role-service":
+			roleServiceRunning = checkFn(&deployment)
+		}
+		case "storage-service":
+			storageServiceRunning = checkFn(&deployment)
+		}
+		case "tenant-service":
+			tenantServiceRunning = checkFn(&deployment)
 		}
 	}
 
-	certEnabled := false
-	nginxEnabled := false
-	certManagerRunning := false
-	certManagerCainInjectorRunning := false
-	certManagerWebhookRunning := false
-	nginxRunning := false
-	return authRunning && (!certEnabled || (certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning)) && (!nginxEnabled or nginxRunning)
+	return proxyServerRunning && redisCommanderRunning && redisPrimaryRunning && roleServiceRunning && storageServiceRunning && tenantServiceRunning && 
+		(!certEnabled || (certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning)) && (!nginxEnabled or nginxRunning)
 }
