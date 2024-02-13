@@ -841,9 +841,11 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			return err
 		}
 
-		// Create/Update DeamonSet
-		if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
-			return err
+		// Create/Update DeamonSet, except for auth proxy
+		if !authorizationEnabled {
+			if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
+				return err
+			}
 		}
 
 		if replicationEnabled {
