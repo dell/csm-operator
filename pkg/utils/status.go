@@ -335,6 +335,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log := logger.GetLogger(ctx)
 	running := true
 	var err error = nil
+	nodeStatusGood := true
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 	// TODO: Can be uncommented once this issues gets sorted out
 	/* controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
@@ -342,8 +343,21 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	newStatus.ControllerStatus = controllerStatus
 	newStatus.NodeStatus = nodeStatus */
 
-	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
-	newStatus.NodeStatus = nodeStatus
+	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
+	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
+	if instance.GetName() != string(csmv1.AuthorizationServer) {
+		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
+		newStatus.NodeStatus = nodeStatus
+		if daemonSetErr != nil {
+			err = daemonSetErr
+			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
+		}
+
+		log.Infof("daemonset expected [%d]", expected)
+		log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
+		nodeStatusGood = (fmt.Sprintf("%d", expected) == nodeStatus.Available)
+	}
+
 	controllerReplicas := newStatus.ControllerStatus.Desired
 	controllerStatus := newStatus.ControllerStatus
 
@@ -351,10 +365,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
-	log.Infof("daemonset expected [%d]", expected)
-	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
-
-	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
+	if (controllerReplicas == controllerStatus.Available) && nodeStatusGood {
 
 		for _, module := range instance.Spec.Modules {
 			moduleStatus, exists := checkModuleStatus[module.Name]
@@ -375,11 +386,6 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	} else {
 		running = false
 		newStatus.State = constants.Failed
-	}
-
-	if daemonSetErr != nil {
-		err = daemonSetErr
-		log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
 	}
 
 	SetStatus(ctx, r, instance, newStatus)
@@ -554,6 +560,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 	log := logger.GetLogger(ctx)
 
 	running, err := calculateState(ctx, instance, r, newStatus)
+	log.Info("calculateState returns ", "running", running)
 	if err != nil {
 		log.Error("HandleSuccess Driver status ", "error", err.Error())
 		newStatus.State = constants.Failed
