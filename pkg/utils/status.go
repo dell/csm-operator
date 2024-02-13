@@ -573,13 +573,15 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		newStatus.State = constants.Failed
 	}
 	if running {
-		newStatus.State = constants.Running
+		newStatus.State = constants.Succeeded
 	}
 	log.Infow("HandleSuccess Driver state ", "newStatus.State", newStatus.State)
-	if newStatus.State == constants.Running {
+	if newStatus.State == constants.Succeeded {
 		// If previously we were in running state
-		if oldStatus.State == constants.Running {
-			log.Info("HandleSuccess Driver state didn't change from Running")
+		if oldStatus.State == constants.Succeeded {
+			log.Info("HandleSuccess Driver state didn't change from Succeeded")
+		} else {
+			UpdateStatus(ctx, instance, r, newStatus)
 		}
 		return reconcile.Result{}, nil
 	}
