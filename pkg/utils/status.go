@@ -347,7 +347,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
 	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
 	log.Infof("instance.GetName() is %s", instance.GetName())
-	if instance.GetName() != "authorization" {
+	if instance.GetName() != string(csmv1.Authorization) {
 		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 		newStatus.NodeStatus = nodeStatus
 		if daemonSetErr != nil {
@@ -394,6 +394,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		newStatus.State = constants.Failed
 	}
 
+	log.Infof("setting status to ", "newStatus", newStatus)
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err
 }
