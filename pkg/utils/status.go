@@ -393,7 +393,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	// TODO: Can be uncommented once this issues gets sorted out
 	controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
 	if controllerErr != nil {
-		log.Infof("eror from getDeploymentStatus: %s", controllerErr.Error())
+		log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
 	}
 
 	newStatus.ControllerStatus = controllerStatus
