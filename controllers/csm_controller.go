@@ -370,7 +370,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		return
 	}
 
-	log.Debugw("deployment modified generation", d.Generation, old.Generation)
+	log.Debugw("deployment modified generation", d.Name, d.Generation, old.Generation)
 
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
@@ -687,7 +687,8 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	log := logger.GetLogger(ctx)
 
 	// Create/Update Authorization Proxy Server
-	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer); authorizationEnabled {
+	authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer)
+	if authorizationEnabled {
 		log.Infow("Create/Update authorization")
 		if err := r.reconcileAuthorization(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
@@ -851,9 +852,11 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			return err
 		}
 
-		// Create/Update DeamonSet
-		if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
-			return err
+		// Create/Update DeamonSet, except for auth proxy
+		if !authorizationEnabled {
+			if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
+				return err
+			}
 		}
 
 		if replicationEnabled {
@@ -1204,7 +1207,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	return nil
 }
 
-// removeModule - remove authorization proxy server
+// removeModule - remove standalone modules
 func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
