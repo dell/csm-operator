@@ -14,6 +14,7 @@ spec:
   template:
     metadata:
       labels:
+        csm: <NAME>
         app: proxy-server
     spec:
       containers:
@@ -92,6 +93,7 @@ spec:
   template:
     metadata:
       labels:
+        csm: <NAME>
         app: tenant-service
     spec:
       containers:
@@ -176,6 +178,7 @@ spec:
   template:
     metadata:
       labels:
+        csm: <NAME>
         app: role-service
     spec:
       serviceAccountName: role-service
@@ -254,6 +257,7 @@ spec:
   template:
     metadata:
       labels:
+        csm: <NAME>
         app: storage-service
     spec:
       serviceAccountName: storage-service
@@ -316,6 +320,7 @@ spec:
   template:
     metadata:
       labels:
+        csm: <NAME>
         app: redis
         role: primary
         tier: backend
@@ -367,6 +372,7 @@ spec:
   template:
     metadata:
       labels:
+        csm: <NAME>
         app: redis-commander
         tier: backend
     spec:
