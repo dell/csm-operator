@@ -420,7 +420,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
-	if (controllerReplicas == controllerStatus.Available) && nodeStatusGood {
+	if (fmt.Sprintf("%d", controllerReplicas) == controllerStatus.Available) && nodeStatusGood {
 
 
 		for _, module := range instance.Spec.Modules {
