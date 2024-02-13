@@ -1,7 +1,7 @@
 name: Workflow
 on:
   push:
-    branches: [ auth-proxy-status-fix ]
+    branches: [ main ]
   pull_request:
     branches: [ '**' ]
 jobs:
