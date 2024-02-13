@@ -50,6 +50,57 @@ func getInt32(pointer *int32) int32 {
 	return *pointer
 }
 
+// calculates deployment state of drivers only; module deployment status will be checked in checkModuleStatus
+func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
+	log := logger.GetLogger(ctx)
+	var msg string
+	deployment := &appsv1.Deployment{}
+	var err error
+	desired := int32(0)
+	available := int32(0)
+	ready := int32(0)
+	numberUnavailable := int32(0)
+	totalReplicas := int32(0)
+
+	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
+	if err != nil {
+		return int32(totalReplicas), csmv1.PodStatus{}, err
+	}
+
+	for _, cluster := range clusterClients {
+		log.Infof("deployment status for cluster: %s", cluster.ClusterID)
+		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
+
+		if instance.Name == "" {
+			log.Infof("Not a driver instance, will not check deploymentstatus")
+			return 0, csmv1.PodStatus{}, nil
+		}
+
+		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
+			Namespace: instance.GetNamespace()}, deployment)
+		if err != nil {
+			return 0, csmv1.PodStatus{}, err
+		}
+		log.Infof("Calculating status for deployment: %s", deployment.Name)
+		desired = deployment.Status.Replicas
+		available = deployment.Status.AvailableReplicas
+		ready = deployment.Status.ReadyReplicas
+		numberUnavailable = deployment.Status.UnavailableReplicas
+
+		log.Infow("deployment", "desired", desired)
+		log.Infow("deployment", "numberReady", ready)
+		log.Infow("deployment", "available", available)
+		log.Infow("deployment", "numberUnavailable", numberUnavailable)
+	}
+
+	return ready, csmv1.PodStatus{
+		Available: fmt.Sprintf("%d", available),
+		Desired:   fmt.Sprintf("%d", desired),
+		Failed:    fmt.Sprintf("%d", numberUnavailable),
+	}, err
+
+}
+
 // TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 // TODO: Can be uncommented once this issues gets sorted out
 /* func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
@@ -234,6 +285,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	totalAvialable := int32(0)
 	totalDesired := int32(0)
 	totalFailedCount := 0
+	totalRunning := int32(0)
 
 	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
 	if err != nil {
@@ -305,16 +357,19 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 					}
 				}
 			}
+			if pod.Status.Phase == corev1.PodRunning {
+				totalRunning++
+			}
 		}
 		for k, v := range errMap {
 			msg += k + "=" + v
 		}
 
-		log.Infof("daemonset status available pods %d", ds.Status.NumberAvailable)
+		log.Infof("daemonset status available pods %d", totalRunning)
 		log.Infof("daemonset status failedCount pods %d", failedCount)
 		log.Infof("daemonset status desired pods %d", ds.Status.DesiredNumberScheduled)
 
-		totalAvialable += ds.Status.NumberAvailable
+		totalAvialable += totalRunning
 		totalDesired += ds.Status.DesiredNumberScheduled
 		totalFailedCount += failedCount
 
@@ -336,15 +391,14 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	var err error = nil
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 	// TODO: Can be uncommented once this issues gets sorted out
-	/* controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
-	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
-	newStatus.ControllerStatus = controllerStatus
-	newStatus.NodeStatus = nodeStatus */
+	controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
+	if controllerErr != nil {
+		log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
+	}
 
+	newStatus.ControllerStatus = controllerStatus
 	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 	newStatus.NodeStatus = nodeStatus
-	controllerReplicas := newStatus.ControllerStatus.Desired
-	controllerStatus := newStatus.ControllerStatus
 
 	newStatus.State = constants.Succeeded
 	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
@@ -353,7 +407,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("daemonset expected [%d]", expected)
 	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
 
-	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
+	if (fmt.Sprintf("%d", controllerReplicas) == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
 
 		for _, module := range instance.Spec.Modules {
 			moduleStatus, exists := checkModuleStatus[module.Name]
