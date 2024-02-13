@@ -41,6 +41,7 @@ var dMutex sync.RWMutex
 var checkModuleStatus = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus) (bool, error){
 	csmv1.Observability:       observabilityStatusCheck,
 	csmv1.ApplicationMobility: appMobStatusCheck,
+	csmv1.AuthorizationServer: authProxyStatusCheck,
 }
 
 func getInt32(pointer *int32) int32 {
@@ -804,9 +805,8 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		}
 	}
 
-	namespace := "karavi"
 	opts := []client.ListOption{
-		client.InNamespace(namespace),
+		client.InNamespace(ObservabilityNamespace),
 	}
 	deploymentList := &appsv1.DeploymentList{}
 	err := r.GetClient().List(ctx, deploymentList, opts...)
@@ -825,11 +825,11 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 			if otelEnabled {
 				otelRunning = checkFn(&deployment)
 			}
-		case fmt.Sprintf("%s-metrics-%s", namespace, instance.Spec.Driver.CSIDriverType):
+		case fmt.Sprintf("%s-metrics-%s", ObservabilityNamespace, instance.Spec.Driver.CSIDriverType):
 			if metricsEnabled {
 				metricsRunning = checkFn(&deployment)
 			}
-		case fmt.Sprintf("%s-topology", namespace):
+		case fmt.Sprintf("%s-topology", ObservabilityNamespace):
 			if topologyEnabled {
 				topologyRunning = checkFn(&deployment)
 			}
@@ -890,4 +890,84 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	return false, nil
+}
+
+// authProxyStatusCheck - calculate success state for auth proxy
+func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+
+	certEnabled := false
+	nginxEnabled := false
+	certManagerRunning := false
+	certManagerCainInjectorRunning := false
+	certManagerWebhookRunning := false
+	nginxRunning := false
+
+	for _, m := range instance.Spec.Modules {
+		if m.Name == csmv1.Observability {
+			for _, c := range m.Components {
+				if c.Name == "ingress-nginx" && *c.Enabled {
+					nginxEnabled = true
+				}
+				if c.Name == "cert-manager" && *c.Enabled {
+					certEnabled = true
+				}
+			}
+		}
+	}
+
+	opts := []client.ListOption{
+		client.InNamespace(instance.GetNamespace()),
+	}
+	deploymentList := &appsv1.DeploymentList{}
+	err := r.GetClient().List(ctx, deploymentList, opts...)
+	if err != nil {
+		return false, err
+	}
+
+	checkFn := func(deployment *appsv1.Deployment) bool {
+		return deployment.Status.ReadyReplicas == *deployment.Spec.Replicas
+	}
+
+deployment.apps/authorization-ingress-nginx-controller   1/1     1            1           55s
+deployment.apps/cert-manager                             1/1     1            1           55s
+deployment.apps/cert-manager-cainjector                  1/1     1            1           55s
+deployment.apps/cert-manager-webhook                     1/1     1            1           55s
+deployment.apps/proxy-server                             1/1     1            1           57s
+deployment.apps/redis-commander                          1/1     1            1           57s
+deployment.apps/redis-primary                            1/1     1            1           57s
+deployment.apps/role-service                             1/1     1            1           57s
+deployment.apps/storage-service                          1/1     1            1           57s
+deployment.apps/tenant-service                           1/1     1            1           57s
+
+
+	for _, deployment := range deploymentList.Items {
+		deployment := deployment
+		switch deployment.Name {
+		case "authorization-ingress-nginx-controller":
+			if nginxEnabled {
+				nginxRunning = checkFn(&deployment)
+			}
+		case "cert-manager":
+			if certEnabled {
+				certManagerRunning = checkFn(&deployment)
+			}
+		case "cert-manager-cainjector":
+			if certEnabled {
+				certManagerCainInjectorRunning = checkFn(&deployment)
+			}
+		case "cert-manager-webhook":
+			if certEnabled {
+				certManagerWebhookRunning = checkFn(&deployment)
+			}
+		case "proxy-server":
+		}
+	}
+
+	certEnabled := false
+	nginxEnabled := false
+	certManagerRunning := false
+	certManagerCainInjectorRunning := false
+	certManagerWebhookRunning := false
+	nginxRunning := false
+	return authRunning && (!certEnabled || (certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning)) && (!nginxEnabled or nginxRunning)
 }
