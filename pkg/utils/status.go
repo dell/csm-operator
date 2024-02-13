@@ -379,7 +379,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 				if !moduleRunning {
 					running = false
 					newStatus.State = constants.Failed
-					log.Infof("%s module not running", module)
+					log.Infof("%s module not running", module.Name)
 					break
 				}
 				log.Infof("%s module running", module.Name)
