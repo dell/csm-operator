@@ -171,6 +171,9 @@ const (
 
 	// PMaxObsYamlFile - powermax metrics yaml file
 	PMaxObsYamlFile string = "karavi-metrics-powermax.yaml"
+
+	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	CSMNameSpace = "<CSM_NAMESPACE>"
 )
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
@@ -292,6 +295,7 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, TopologyLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, TopologyImage, topologyImage)
 	return YamlString, nil

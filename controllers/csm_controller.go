@@ -420,7 +420,11 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.CsmLabel]
-	ns := p.Namespace
+	//if this pod is an obs. pod, namespace might not match csm namespace
+	ns := p.GetLabels()[modules.CSMNameSpace]
+	if ns == "" {
+		ns = p.Namespace
+	}
 	if name == "" {
 		return
 	}
