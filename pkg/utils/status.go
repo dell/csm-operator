@@ -422,7 +422,6 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 
 	if (fmt.Sprintf("%d", controllerReplicas) == controllerStatus.Available) && nodeStatusGood {
 
-
 		for _, module := range instance.Spec.Modules {
 			moduleStatus, exists := checkModuleStatus[module.Name]
 			if exists && module.Enabled {
