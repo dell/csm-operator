@@ -908,7 +908,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 
 // authProxyStatusCheck - calculate success state for auth proxy
 func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
-
+	log := logger.GetLogger(ctx)
 	certEnabled := false
 	nginxEnabled := false
 	certManagerRunning := false
@@ -953,35 +953,67 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 		switch deployment.Name {
 		case "authorization-ingress-nginx-controller":
 			if nginxEnabled {
-				nginxRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		case "cert-manager":
 			if certEnabled {
-				certManagerRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		case "cert-manager-cainjector":
 			if certEnabled {
-				certManagerCainInjectorRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		case "cert-manager-webhook":
 			if certEnabled {
-				certManagerWebhookRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		case "proxy-server":
-			proxyServerRunning = checkFn(&deployment)
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
 		case "redis-commander":
-			redisCommanderRunning = checkFn(&deployment)
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
 		case "redis-primary":
-			redisPrimaryRunning = checkFn(&deployment)
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
 		case "role-service":
-			roleServiceRunning = checkFn(&deployment)
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
 		case "storage-service":
-			storageServiceRunning = checkFn(&deployment)
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
 		case "tenant-service":
-			tenantServiceRunning = checkFn(&deployment)
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
 		}
 	}
 
-	return proxyServerRunning && redisCommanderRunning && redisPrimaryRunning && roleServiceRunning && storageServiceRunning && tenantServiceRunning &&
-		(!certEnabled || (certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning)) && (!nginxEnabled || nginxRunning), nil
+	return true, nil
+
+	//return proxyServerRunning && redisCommanderRunning && redisPrimaryRunning && roleServiceRunning && storageServiceRunning && tenantServiceRunning &&
+		//(!certEnabled || (certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning)) && (!nginxEnabled || nginxRunning), nil
 }
