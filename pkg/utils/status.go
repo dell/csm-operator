@@ -336,6 +336,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	running := true
 	var err error = nil
 	nodeStatusGood := true
+	newStatus.State = constants.Succeeded
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 	// TODO: Can be uncommented once this issues gets sorted out
 	/* controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
@@ -362,7 +363,6 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	controllerReplicas := newStatus.ControllerStatus.Desired
 	controllerStatus := newStatus.ControllerStatus
 
-	newStatus.State = constants.Succeeded
 	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
@@ -382,9 +382,14 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 					log.Infof("%s module not running", module)
 					break
 				}
+				log.Infof("%s module running", module.Name)
 			}
 		}
 	} else {
+		log.Infof("either controllerReplicas != controllerStatus.Available or nodeStatus is bad")
+		log.Infof("controllerReplicas", controllerReplicas)
+		log.Infof("controllerStatus.Available", controllerStatus.Available)
+		log.Infof("nodeStatusGood", nodeStatusGood)
 		running = false
 		newStatus.State = constants.Failed
 	}
