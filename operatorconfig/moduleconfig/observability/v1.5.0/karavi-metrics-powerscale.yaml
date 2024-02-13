@@ -112,6 +112,7 @@ spec:
       labels:
         app.kubernetes.io/name: karavi-metrics-powerscale
         app.kubernetes.io/instance: karavi
+        csm: <NAME>
     spec:
       serviceAccount: karavi-metrics-powerscale-controller
       containers:
