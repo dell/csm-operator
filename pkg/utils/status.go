@@ -976,6 +976,6 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 		}
 	}
 
-	return proxyServerRunning && redisCommanderRunning && redisPrimaryRunning && roleServiceRunning && storageServiceRunning && tenantServiceRunning && 
+	return proxyServerRunning && redisCommanderRunning && redisPrimaryRunning && roleServiceRunning && storageServiceRunning && tenantServiceRunning &&
 		(!certEnabled || (certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning)) && (!nginxEnabled || nginxRunning), nil
 }
