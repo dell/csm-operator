@@ -379,16 +379,16 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 
 	//Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
 
-	log.Infow("deployment", "desired", desired)
-	log.Infow("deployment", "numberReady", ready)
-	log.Infow("deployment", "available", available)
-	log.Infow("deployment", "numberUnavailable", numberUnavailable)
+	log.Infow("deployment", "deployment name", d.Name, "desired", desired)
+	log.Infow("deployment", "deployment name", d.Name, "numberReady", ready)
+	log.Infow("deployment", "deployment name", d.Name, "available", available)
+	log.Infow("deployment", "deployment name", d.Name, "numberUnavailable", numberUnavailable)
 
-	ns := d.GetLabels()[modules.CSMNameSpace]
+	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
 	if ns == "" {
 		ns = d.Namespace
 	}
-	log.Debugw("deployment", "namespace", ns, "name", name)
+	log.Debugw("csm being modified in handledeployment", "namespace", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
 		Namespace: ns,
@@ -424,7 +424,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.CsmLabel]
 	//if this pod is an obs. pod, namespace might not match csm namespace
-	ns := p.GetLabels()[modules.CSMNameSpace]
+	ns := p.GetLabels()[constants.CsmNamespaceLabel]
 	if ns == "" {
 		ns = p.Namespace
 	}
@@ -491,7 +491,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	log.Infow("daemonset ", "available", available)
 	log.Infow("daemonset ", "numberUnavailable", numberUnavailable)
 
-	ns := d.GetLabels()[modules.CSMNameSpace]
+	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
 	if ns == "" {
 		ns = d.Namespace
 	}
