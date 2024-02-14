@@ -72,7 +72,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		log.Infof("deployment status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
-		if instance.Name == "" {
+		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) {
 			log.Infof("Not a driver instance, will not check deploymentstatus")
 			return 0, csmv1.PodStatus{}, nil
 		}
@@ -402,7 +402,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
 	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
 	log.Infof("instance.GetName() is %s", instance.GetName())
-	if instance.GetName() != string(csmv1.Authorization) {
+	if instance.GetName() != "" && instance.GetName() != string(csmv1.Authorization) {
 		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 		newStatus.NodeStatus = nodeStatus
 		if daemonSetErr != nil {
@@ -514,6 +514,9 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)
+
+		log.Infow("UpdateStatus", "instance.Name", instance.Name)
+		log.Infow("UpdateStatus", "instance.GetNamespace", instance.GetNamespace())
 
 		csm := new(csmv1.ContainerStorageModule)
 		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,

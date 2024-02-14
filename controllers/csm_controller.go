@@ -384,7 +384,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	log.Infow("deployment", "available", available)
 	log.Infow("deployment", "numberUnavailable", numberUnavailable)
 
-	ns := d.GetLabels()[modules.CSMNameSpace]
+	ns := d.GetLabels()[constants.CsmNamespaceLabel]
 	if ns == "" {
 		ns = d.Namespace
 	}
@@ -424,7 +424,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.CsmLabel]
 	//if this pod is an obs. pod, namespace might not match csm namespace
-	ns := p.GetLabels()[modules.CSMNameSpace]
+	ns := p.GetLabels()[constants.CsmNamespaceLabel]
 	if ns == "" {
 		ns = p.Namespace
 	}
@@ -491,7 +491,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	log.Infow("daemonset ", "available", available)
 	log.Infow("daemonset ", "numberUnavailable", numberUnavailable)
 
-	ns := d.GetLabels()[modules.CSMNameSpace]
+	ns := d.GetLabels()[constants.CsmNamespaceLabel]
 	if ns == "" {
 		ns = d.Namespace
 	}
