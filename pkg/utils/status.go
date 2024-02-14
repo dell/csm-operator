@@ -72,7 +72,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		log.Infof("deployment status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
-		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) {
+		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) || instance.GetName() == string(csmv1.ApplicationMobility) {
 			log.Infof("Not a driver instance, will not check deploymentstatus")
 			return 0, csmv1.PodStatus{Available: "0"}, nil
 		}
@@ -80,7 +80,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
 			Namespace: instance.GetNamespace()}, deployment)
 		if err != nil {
-			return 0, csmv1.PodStatus{}, err
+			return 0, csmv1.PodStatus{Available: "0"}, err
 		}
 		log.Infof("Calculating status for deployment: %s", deployment.Name)
 		desired = deployment.Status.Replicas
