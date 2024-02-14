@@ -888,6 +888,9 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	checkFn := func(deployment *appsv1.Deployment) bool {
+		log.Infof("deployment: %s readyreplicas: %s", deployment.Name, deployment.Status.ReadyReplicas)
+		log.Infof("deployment: %s replicas: %s", deployment.Name, *deployment.Spec.Replicas)
+		log.Infof("no pointer deployment: %s replicas: %s", deployment.Name, deployment.Spec.Replicas)
 		return deployment.Status.ReadyReplicas == *deployment.Spec.Replicas
 	}
 
