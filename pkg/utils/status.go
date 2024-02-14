@@ -515,9 +515,6 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)
 
-		log.Infow("UpdateStatus", "instance.Name", instance.Name)
-		log.Infow("UpdateStatus", "instance.GetNamespace", instance.GetNamespace())
-
 		csm := new(csmv1.ContainerStorageModule)
 		err := r.GetClient().Get(ctx, t1.NamespacedName{Name: instance.Name,
 			Namespace: instance.GetNamespace()}, csm)
@@ -839,7 +836,6 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 
 // observabilityStatusCheck - calculate success state for observability module
 func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
-	log := logger.GetLogger(ctx)
 	topologyEnabled := false
 	otelEnabled := false
 	certEnabled := false
@@ -896,14 +892,11 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	checkFn := func(deployment *appsv1.Deployment) bool {
-		log.Infof("deployment: %s readyreplicas: %s", deployment.Name, deployment.Status.ReadyReplicas)
-		log.Infof("deployment: %s replicas: %s", deployment.Name, *deployment.Spec.Replicas)
 		return deployment.Status.ReadyReplicas == *deployment.Spec.Replicas
 	}
 
 	for _, deployment := range deploymentList.Items {
 		deployment := deployment
-		log.Infof("deployment: %s in deploymentList.Items", deployment.Name)
 		switch deployment.Name {
 		case "otel-collector":
 			if otelEnabled {
@@ -948,14 +941,6 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 			}
 		}
 	}
-
-	log.Infof("certManagerRunning: %s", certManagerRunning)
-	log.Infof("certManagerCainInjectorRunning: %s", certManagerCainInjectorRunning)
-	log.Infof("certManagerWebhookRunning: %s", certManagerWebhookRunning)
-	log.Infof("otelRunning: %s", otelRunning)
-	log.Infof("metricsEnabled:  %s", metricsEnabled)
-	log.Infof("metricsRunning:  %s", metricsRunning)
-	log.Infof("topologyRunning: %s", topologyRunning)
 
 	if certEnabled && otelEnabled && metricsEnabled && topologyEnabled {
 		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && otelRunning && metricsRunning && topologyRunning, nil
