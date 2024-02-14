@@ -74,7 +74,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 
 		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) {
 			log.Infof("Not a driver instance, will not check deploymentstatus")
-			return 0, csmv1.PodStatus{}, nil
+			return 0, csmv1.PodStatus{Available: "0"}, nil
 		}
 
 		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
