@@ -851,6 +851,14 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	metricsRunning := false
 	topologyRunning := false
 
+	driverName := instance.Spec.Driver.CSIDriverType
+
+	//TODO: PowerScale DriverType should be changed from "isilon" to "powerscale"
+	// this is a temporary fix until we can do that
+	if driverName == "isilon" {
+		driverName = "powerscale"
+	}
+
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Observability {
 			for _, c := range m.Components {
@@ -869,7 +877,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 						certEnabled = true
 					}
 				}
-				if c.Name == fmt.Sprintf("metrics-%s", instance.Spec.Driver.CSIDriverType) {
+				if c.Name == fmt.Sprintf("metrics-%s", driverName) {
 					if *c.Enabled {
 						metricsEnabled = true
 					}
@@ -901,7 +909,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 			if otelEnabled {
 				otelRunning = checkFn(&deployment)
 			}
-		case fmt.Sprintf("%s-metrics-%s", ObservabilityNamespace, instance.Spec.Driver.CSIDriverType):
+		case fmt.Sprintf("%s-metrics-%s", ObservabilityNamespace, driverName):
 			if metricsEnabled {
 				metricsRunning = checkFn(&deployment)
 			}
