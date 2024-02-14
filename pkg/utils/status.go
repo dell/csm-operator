@@ -890,12 +890,12 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	checkFn := func(deployment *appsv1.Deployment) bool {
 		log.Infof("deployment: %s readyreplicas: %s", deployment.Name, deployment.Status.ReadyReplicas)
 		log.Infof("deployment: %s replicas: %s", deployment.Name, *deployment.Spec.Replicas)
-		log.Infof("no pointer deployment: %s replicas: %s", deployment.Name, deployment.Spec.Replicas)
 		return deployment.Status.ReadyReplicas == *deployment.Spec.Replicas
 	}
 
 	for _, deployment := range deploymentList.Items {
 		deployment := deployment
+		log.Infof("deployment: %s in deploymentList.Items", deployment.Name)
 		switch deployment.Name {
 		case "otel-collector":
 			if otelEnabled {
@@ -945,6 +945,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	log.Infof("certManagerCainInjectorRunning: %s", certManagerCainInjectorRunning)
 	log.Infof("certManagerWebhookRunning: %s", certManagerWebhookRunning)
 	log.Infof("otelRunning: %s", otelRunning)
+	log.Infof("metricsEnabled:  %s", metricsEnabled)
 	log.Infof("metricsRunning:  %s", metricsRunning)
 	log.Infof("topologyRunning: %s", topologyRunning)
 
