@@ -72,15 +72,15 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		log.Infof("deployment status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
-		if instance.Name == "" {
+		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) || instance.GetName() == string(csmv1.ApplicationMobility) {
 			log.Infof("Not a driver instance, will not check deploymentstatus")
-			return 0, csmv1.PodStatus{}, nil
+			return 0, csmv1.PodStatus{Available: "0"}, nil
 		}
 
 		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
 			Namespace: instance.GetNamespace()}, deployment)
 		if err != nil {
-			return 0, csmv1.PodStatus{}, err
+			return 0, csmv1.PodStatus{Available: "0"}, err
 		}
 		log.Infof("Calculating status for deployment: %s", deployment.Name)
 		desired = deployment.Status.Replicas
@@ -402,7 +402,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
 	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
 	log.Infof("instance.GetName() is %s", instance.GetName())
-	if instance.GetName() != string(csmv1.Authorization) {
+	if instance.GetName() != "" && instance.GetName() != string(csmv1.Authorization) {
 		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 		newStatus.NodeStatus = nodeStatus
 		if daemonSetErr != nil {
@@ -836,7 +836,6 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 
 // observabilityStatusCheck - calculate success state for observability module
 func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
-
 	topologyEnabled := false
 	otelEnabled := false
 	certEnabled := false
@@ -847,6 +846,14 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	otelRunning := false
 	metricsRunning := false
 	topologyRunning := false
+
+	driverName := instance.Spec.Driver.CSIDriverType
+
+	//TODO: PowerScale DriverType should be changed from "isilon" to "powerscale"
+	// this is a temporary fix until we can do that
+	if driverName == "isilon" {
+		driverName = "powerscale"
+	}
 
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Observability {
@@ -866,7 +873,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 						certEnabled = true
 					}
 				}
-				if c.Name == fmt.Sprintf("metrics-%s", instance.Spec.Driver.CSIDriverType) {
+				if c.Name == fmt.Sprintf("metrics-%s", driverName) {
 					if *c.Enabled {
 						metricsEnabled = true
 					}
@@ -895,7 +902,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 			if otelEnabled {
 				otelRunning = checkFn(&deployment)
 			}
-		case fmt.Sprintf("%s-metrics-%s", ObservabilityNamespace, instance.Spec.Driver.CSIDriverType):
+		case fmt.Sprintf("%s-metrics-%s", ObservabilityNamespace, driverName):
 			if metricsEnabled {
 				metricsRunning = checkFn(&deployment)
 			}
