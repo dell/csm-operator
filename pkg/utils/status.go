@@ -839,7 +839,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 
 // observabilityStatusCheck - calculate success state for observability module
 func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
-
+	log := logger.GetLogger(ctx)
 	topologyEnabled := false
 	otelEnabled := false
 	certEnabled := false
@@ -937,6 +937,13 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 			}
 		}
 	}
+
+	log.Infof("certManagerRunning: %s", certManagerRunning)
+	log.Infof("certManagerCainInjectorRunning: %s", certManagerCainInjectorRunning)
+	log.Infof("certManagerWebhookRunning: %s", certManagerWebhookRunning)
+	log.Infof("otelRunning: %s", otelRunning)
+	log.Infof("metricsRunning:  %s", metricsRunning)
+	log.Infof("topologyRunning: %s", topologyRunning)
 
 	if certEnabled && otelEnabled && metricsEnabled && topologyEnabled {
 		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && otelRunning && metricsRunning && topologyRunning, nil
