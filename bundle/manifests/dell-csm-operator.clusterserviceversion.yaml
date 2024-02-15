@@ -101,10 +101,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.9.1",
+                "image": "dellemc/csi-isilon:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -444,10 +444,10 @@ metadata:
                     "value": ""
                   }
                 ],
-                "image": "dellemc/csi-powermax:v2.9.1",
+                "image": "dellemc/csi-powermax:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -539,11 +539,11 @@ metadata:
                         "value": "powermax-reverseproxy-config"
                       }
                     ],
-                    "image": "dellemc/csipowermax-reverseproxy:v2.8.0",
+                    "image": "dellemc/csipowermax-reverseproxy:v2.9.0",
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
-                "configVersion": "v2.8.0",
+                "configVersion": "v2.9.0",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "csireverseproxy"
@@ -724,10 +724,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-powerstore:v2.9.1",
+                "image": "dellemc/csi-powerstore:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -887,10 +887,10 @@ metadata:
                     "value": "true"
                   }
                 ],
-                "image": "dellemc/csi-unity:v2.9.1",
+                "image": "dellemc/csi-unity:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -974,10 +974,10 @@ metadata:
                     "value": "false"
                   }
                 ],
-                "image": "dellemc/csi-vxflexos:v2.9.1",
+                "image": "dellemc/csi-vxflexos:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -1270,14 +1270,14 @@ metadata:
       ]
     capabilities: Seamless Upgrades
     categories: Storage
-    containerImage: docker.io/dellemc/dell-csm-operator:v1.4.1
-    createdAt: "2024-02-02T08:59:42Z"
+    containerImage: docker.io/dellemc/dell-csm-operator:v1.5.0
+    createdAt: "2023-12-22T09:14:07Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.4.1
+  name: dell-csm-operator.v1.5.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -3459,7 +3459,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: docker.io/dellemc/dell-csm-operator:v1.4.1
+                image: docker.io/dellemc/dell-csm-operator:v1.5.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -3515,7 +3515,7 @@ spec:
   - email: container.storage.modules@dell.com
     name: Dell Container Storage Modules
   maturity: stable
-  minKubeVersion: 1.21.0
+  minKubeVersion: 1.27.0
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
