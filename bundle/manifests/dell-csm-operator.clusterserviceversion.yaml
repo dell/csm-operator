@@ -3556,19 +3556,19 @@ spec:
     name: podmon-node
   - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
     name: kube-rbac-proxy
-  - image: registry.k8s.io/sig-storage/csi-attacher:v4.4.2
+  - image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
     name: attacher
-  - image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.2
+  - image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
     name: provisioner
-  - image: registry.k8s.io/sig-storage/csi-snapshotter:v6.3.2
+  - image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
     name: snapshotter
-  - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
+  - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
     name: registrar
-  - image: registry.k8s.io/sig-storage/csi-resizer:v1.9.2
+  - image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
     name: resizer
-  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.10.0
+  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
     name: externalhealthmonitorcontroller
-  - image: dellemc/csi-metadata-retriever:v1.6.1
+  - image: dellemc/csi-metadata-retriever:v1.7.0
     name: metadataretriever
   - image: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
     name: dell-connectivity-client
