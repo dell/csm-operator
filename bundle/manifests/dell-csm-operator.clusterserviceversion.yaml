@@ -539,11 +539,11 @@ metadata:
                         "value": "powermax-reverseproxy-config"
                       }
                     ],
-                    "image": "dellemc/csipowermax-reverseproxy:v2.8.0",
+                    "image": "dellemc/csipowermax-reverseproxy:v2.8.1",
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
-                "configVersion": "v2.8.0",
+                "configVersion": "v2.8.1",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "csireverseproxy"
@@ -1271,7 +1271,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Storage
     containerImage: docker.io/dellemc/dell-csm-operator:v1.4.2
-    createdAt: "2024-02-09T10:04:24Z"
+    createdAt: "2024-02-15T06:30:39Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
