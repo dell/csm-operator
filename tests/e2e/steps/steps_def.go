@@ -864,7 +864,7 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 	}
 	for _, cluster := range clusterClients {
 		// check AuthorizationProxyServer in all clusters
-		if err := checkAuthorizationProxyServerPods(context.TODO(), utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAuthorizationProxyServerPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed to check for AuthorizationProxyServer installation in %s: %v", cluster.ClusterID, err)
 		}
 	}
@@ -887,7 +887,7 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 	}
 	for _, cluster := range clusterClients {
 		// check AuthorizationProxyServer is not installed
-		if err := checkAuthorizationProxyServerNoRunningPods(context.TODO(), utils.AuthorizationNamespace, cluster.ClusterK8sClient); err != nil {
+		if err := checkAuthorizationProxyServerNoRunningPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
 			return fmt.Errorf("failed AuthorizationProxyServer installation check %s: %v", cluster.ClusterID, err)
 		}
 	}
