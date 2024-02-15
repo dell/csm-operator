@@ -1159,15 +1159,15 @@ spec:
     name: dell-csi-replicator
   - image: docker.io/dellemc/dell-replication-controller:v1.8.0
     name: dell-replication-controller-manager
-  - image: docker.io/dellemc/csm-topology:v1.7.0
+  - image: docker.io/dellemc/csm-topology:v1.8.0
     name: topology
   - image: docker.io/otel/opentelemetry-collector:0.42.0
     name: otel-collector
-  - image: docker.io/dellemc/csm-metrics-powerscale:v1.4.0
+  - image: docker.io/dellemc/csm-metrics-powerscale:v1.5.0
     name: metrics-powerscale
-  - image: docker.io/dellemc/csm-metrics-powermax:v1.2.0
+  - image: docker.io/dellemc/csm-metrics-powermax:v1.3.0
     name: metrics-powermax
-  - image: docker.io/dellemc/csm-metrics-powerflex:v1.7.0
+  - image: docker.io/dellemc/csm-metrics-powerflex:v1.8.0
     name: metrics-powerflex
   - image: docker.io/dellemc/podmon:v1.9.0
     name: podmon-node
