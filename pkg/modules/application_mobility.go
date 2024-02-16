@@ -362,6 +362,21 @@ func getIssuerCertService(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	return yamlString, nil
 }
 
+// IssuerCertService - apply and delete the app mobility issuer and certificate service
+func IssuerCertService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	yamlString, err := getIssuerCertService(op, cr)
+	if err != nil {
+		return err
+	}
+
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
+	}
+
+	return nil
+}
+
 // ApplicationMobilityPrecheck - runs precheck for CSM Application Mobility
 func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob csmv1.Module, _ csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
