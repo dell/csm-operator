@@ -14,21 +14,9 @@
 #
 #
 name: podmon
-image: dellemc/podmon:v1.6.0
+image: dellemc/podmon:v1.9.0
 imagePullPolicy: IfNotPresent
-securityContext:
-  privileged: true
-  capabilities:
-    add: ["SYS_ADMIN"]
-  allowPrivilegeEscalation: true
 env:
-  - name: KUBE_NODE_NAME
-    valueFrom:
-      fieldRef:
-        apiVersion: v1
-        fieldPath: spec.nodeName
-  - name: X_CSI_PRIVATE_MOUNT_DIR
-    value: /var/lib/kubelet
   - name: MY_NODE_NAME
     valueFrom:
       fieldRef:
@@ -42,17 +30,7 @@ env:
       fieldRef:
         fieldPath: metadata.namespace
 volumeMounts:
-  - name: kubelet-pods
-    mountPath: <KUBELET_CONFIG_DIR>/pods
-    mountPropagation: "Bidirectional"
-  - name: driver-path
-    mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
-    mountPropagation: "Bidirectional"
-  - name: dev
-    mountPath: /dev
-  - name: usr-bin
-    mountPath: /usr-bin
-  - name: var-run
-    mountPath: /var/run
+  - name: socket-dir
+    mountPath: /var/run/csi
   - name: vxflexos-config-params
-    mountPath: /vxflexos-config-params 
+    mountPath: /vxflexos-config-params

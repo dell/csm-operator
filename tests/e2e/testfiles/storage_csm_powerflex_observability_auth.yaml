@@ -41,7 +41,7 @@ spec:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:4.5
+        image: dellemc/sdc:4.5.1
         envs:
           - name: HOST_PID
             value: "1"
@@ -126,7 +126,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:4.5
+      - image: dellemc/sdc:4.5.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -138,7 +138,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.9.1
+      configVersion: v1.10.0
       components:
       - name: karavi-authorization-proxy
         image: dellemc/csm-authorization-sidecar:nightly
@@ -154,7 +154,7 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.7.0
+      configVersion: v1.8.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
