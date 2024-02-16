@@ -929,10 +929,10 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error {
 	fmt.Println("=== Creating Authorization Proxy Server Prerequisites ===")
 
-	cmd := exec.Command("kubectl", "get", "ns", "authorization")
+	cmd := exec.Command("kubectl", "get", "ns", cr.Namespace)
 	err := cmd.Run()
 	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "ns", "authorization")
+		cmd = exec.Command("kubectl", "delete", "ns", cr.Namespace)
 		b, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to delete authorization namespace: %v\nErrMessage:\n%s", err, string(b))
@@ -940,7 +940,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	}
 
 	cmd = exec.Command("kubectl", "create",
-		"ns", "authorization",
+		"ns", cr.Namespace,
 	)
 	b, err := cmd.CombinedOutput()
 	if err != nil {
@@ -960,7 +960,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	cmd = exec.Command("kubectl", "create",
 		"secret", "generic",
 		"karavi-config-secret",
-		"-n", "authorization",
+		"-n", cr.Namespace,
 		"--from-file=config.yaml=testfiles/authorization-templates/csm_authorization_config.yaml",
 	)
 	b, err = cmd.CombinedOutput()
@@ -968,7 +968,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		return fmt.Errorf("failed to create config secret for JWT: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	cmd = exec.Command("kubectl", "create",
+	cmd = exec.Command("kubectl", "create", "-n", cr.Namespace,
 		"-f", "testfiles/authorization-templates/csm_authorization_storage_secret.yaml",
 	)
 	b, err = cmd.CombinedOutput()
@@ -994,7 +994,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		return fmt.Errorf("failed to create local storage for redis: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	cmd = exec.Command("kubectl", "create",
+	cmd = exec.Command("kubectl", "create", "-n", cr.Namespace,
 		"-f", "testfiles/authorization-templates/csm_authorization_certificate.yaml",
 	)
 	b, err = cmd.CombinedOutput()
@@ -1005,8 +1005,11 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
-func (step *Step) configureAuthorizationProxyServer(res Resource, driver string) error {
+func (step *Step) configureAuthorizationProxyServer(res Resource, driver string, crNumStr string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
+
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1]
 
 	var b []byte
 	var err error
@@ -1070,7 +1073,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string)
 
 	proxyHost = os.Getenv("PROXY_HOST")
 
-	port, err := getPortContainerizedAuth()
+	port, err := getPortContainerizedAuth(cr.Namespace)
 	if err != nil {
 		return err
 	}
