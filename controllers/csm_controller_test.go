@@ -1141,7 +1141,7 @@ func getObservabilityModule() []csmv1.Module {
 		{
 			Name:          csmv1.Observability,
 			Enabled:       true,
-			ConfigVersion: "v1.7.0",
+			ConfigVersion: "v1.8.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "topology",
@@ -1217,7 +1217,7 @@ func getResiliencyModule() []csmv1.Module {
 		{
 			Name:          csmv1.Resiliency,
 			Enabled:       true,
-			ConfigVersion: "v1.6.0",
+			ConfigVersion: "v1.9.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ResiliencySideCarName,
@@ -1253,7 +1253,7 @@ func getAuthProxyServer() []csmv1.Module {
 		{
 			Name:          csmv1.AuthorizationServer,
 			Enabled:       true,
-			ConfigVersion: "v1.7.0",
+			ConfigVersion: "v1.10.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "karavi-authorization-proxy-server",
