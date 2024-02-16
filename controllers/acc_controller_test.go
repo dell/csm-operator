@@ -418,7 +418,7 @@ func (suite *AccControllerTestSuite) runFakeAccManager(expectedErr string, recon
 }
 
 // call reconcile with different injection errors in k8s client
-func (suite *AccControllerTestSuite) reconcileAccWithErrorInjection(reqName, expectedErr string) {
+func (suite *AccControllerTestSuite) reconcileAccWithErrorInjection(_, expectedErr string) {
 	reconciler := suite.createAccReconciler()
 
 	// create would fail

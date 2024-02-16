@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.9.1
+      configVersion: v1.10.0
       forceRemoveModule: true
       components:
       - name: karavi-authorization-proxy-server
@@ -60,7 +60,7 @@ spec:
       #   false: disable deployment of cert-manager only if it's already deployed
       # Default value: true
       - name: cert-manager
-        enabled: true
+        enabled: false
 
 ---
 apiVersion: v1

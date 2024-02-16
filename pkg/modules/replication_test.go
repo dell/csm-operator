@@ -27,12 +27,10 @@ import (
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-var (
-	// where to find all the yaml files
-	config = utils.OperatorConfig{
-		ConfigDirectory: "../../tests/config",
-	}
-)
+// where to find all the yaml files
+var config = utils.OperatorConfig{
+	ConfigDirectory: "../../tests/config",
+}
 
 func TestReplicationInjectDeployment(t *testing.T) {
 	ctx := context.Background()
@@ -90,7 +88,6 @@ func TestReplicationInjectDeployment(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -179,7 +176,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
 			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
-			var configJSONFileGood = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerFlex)
+			configJSONFileGood := fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerFlex)
 			driverSecret1 := shared.MakeSecretWithJSON(customResource.Name+"-config", customResource.Namespace, configJSONFileGood)
 			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
 
@@ -351,11 +348,9 @@ func TestReplicationPreCheck(t *testing.T) {
 			err := ReplicationPrecheck(context.TODO(), operatorConfig, replica, tmpCR, &fakeReconcile)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -400,17 +395,14 @@ func TestReplicationManagerController(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := ReplicationManagerController(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }

@@ -18,11 +18,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.7.0
+    configVersion: v2.10.0
     authSecret: powermax-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powermax:v2.7.0"
+      image: "dellemc/csi-powermax:v2.10.0"
       imagePullPolicy: IfNotPresent
 
   modules:
@@ -30,13 +30,13 @@ spec:
     - name: "csireverseproxy"
       # enabled: Always set to true
       enabled: true
-      configVersion: v2.7.0
+      configVersion: v2.9.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          # Example: "csipowermax-reverseproxy:v2.7.0"
-          image: dellemc/csipowermax-reverseproxy:v2.7.0
+          # Example: "csipowermax-reverseproxy:v2.9.0"
+          image: dellemc/csipowermax-reverseproxy:v2.9.0
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -53,7 +53,7 @@ spec:
       enabled: false
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:v1.7.0
+          image: dellemc/csm-authorization-sidecar:v1.10.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

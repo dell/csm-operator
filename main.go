@@ -59,9 +59,9 @@ const (
 	// Operatorconfig sub folder for deployment files
 	Operatorconfig = "operatorconfig"
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
-	K8sMinimumSupportedVersion = "1.21"
+	K8sMinimumSupportedVersion = "1.27"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.28"
+	K8sMaximumSupportedVersion = "1.29"
 )
 
 var (
@@ -81,7 +81,6 @@ func init() {
 	utilruntime.Must(certmanagerv1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
-
 }
 
 func printVersion(log *zap.SugaredLogger) {
@@ -107,7 +106,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	if err != nil {
 		log.Info(fmt.Sprintf("kubeVersion err %s", kubeAPIServerVersion))
 	}
-	//format the required k8s version
+	// format the required k8s version
 	majorVersion := kubeAPIServerVersion.Major
 	minorVersion := strings.TrimSuffix(kubeAPIServerVersion.Minor, "+")
 	kubeVersion := fmt.Sprintf("%s.%s", majorVersion, minorVersion)

@@ -166,6 +166,7 @@ func TestResiliencyInjectClusterRole(t *testing.T) {
 		})
 	}
 }
+
 func TestResiliencyPrecheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
@@ -267,11 +268,9 @@ func TestResiliencyPrecheck(t *testing.T) {
 			err := ResiliencyPrecheck(context.TODO(), operatorConfig, replica, tmpCR, &fakeReconcile)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
