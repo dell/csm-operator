@@ -266,7 +266,7 @@ spec:
           name: grpc
         env:
           - name: NAMESPACE
-            value: authorization
+            value: <NAMESPACE>
         volumeMounts:
         - name: storage-volume
           mountPath: /etc/karavi-authorization/storage
