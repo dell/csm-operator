@@ -172,6 +172,9 @@ const (
 	// PMaxObsYamlFile - powermax metrics yaml file
 	PMaxObsYamlFile string = "karavi-metrics-powermax.yaml"
 
+	// SelfSignedCert - self-signed certificate file
+	SelfSignedCert string = "selfsigned-cert.yaml"
+
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	CSMNameSpace = "<CSM_NAMESPACE>"
 )
@@ -797,6 +800,40 @@ func createObsSecretObj(driverSecret corev1.Secret, newNameSpace, newSecretName 
 // getNewAuthSecretName - add prefix to secretName
 func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string {
 	return fmt.Sprintf("%s-%s", driverType, secretName)
+}
+
+// getIssuerCertService - gets the app mobility cert manager's issuer and certificate manifest
+func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+	obs, err := getObservabilityModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	selfSignedCertPath := fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, SelfSignedCert)
+	buf, err := os.ReadFile(filepath.Clean(selfSignedCertPath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+
+	return yamlString, nil
+}
+
+// IssuerCertService - apply and delete the app mobility issuer and certificate service
+func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	yamlString, err := getIssuerCertServiceObs(op, cr)
+	if err != nil {
+		return err
+	}
+
+	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+	if er != nil {
+		return er
+	}
+
+	return nil
 }
 
 // PowerMaxMetrics - delete or update powermax metrics objects
