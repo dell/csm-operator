@@ -58,7 +58,7 @@ var (
 	// XCSIReplicaCTXPrefix -
 	XCSIReplicaCTXPrefix = "X_CSI_REPLICATION_CONTEXT_PREFIX"
 	// XCSIReplicaPrefix -
-	XCSIReplicaPrefix = "X_CSI_REPLICATION_PREFIX"
+	XCSIReplicaPrefix = "X_CSI_REPLICATION_PREFIX" // #nosec G101
 )
 
 // ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier

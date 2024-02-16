@@ -46,6 +46,8 @@ const (
 	AuthNginxIngressManifest = "nginx-ingress-controller.yaml"
 	// AuthPolicyManifest -
 	AuthPolicyManifest = "policies.yaml"
+	// AuthLocalProvisionerManifest -
+	AuthLocalProvisionerManifest = "local-provisioner.yaml"
 
 	// AuthNamespace -
 	AuthNamespace = "<NAMESPACE>"
@@ -97,6 +99,9 @@ const (
 	AuthNginxIngressComponent = "ingress-nginx"
 	// AuthCertManagerComponent - cert-manager component
 	AuthCertManagerComponent = "cert-manager"
+
+	// AuthLocalStorageClass -
+	AuthLocalStorageClass = "csm-authorization-local-storage"
 )
 
 var (
@@ -152,7 +157,6 @@ func CheckAnnotationAuth(annotation map[string]string) error {
 		return nil
 	}
 	return errors.New("annotation is nil")
-
 }
 
 // CheckApplyVolumesAuth --
@@ -210,7 +214,6 @@ func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, 
 			}
 			return nil
 		}
-
 	}
 	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
@@ -265,7 +268,13 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 				container.VolumeMounts[i] = container.VolumeMounts[len(container.VolumeMounts)-1]
 				container.VolumeMounts = container.VolumeMounts[:len(container.VolumeMounts)-1]
 			}
-
+		}
+	} else {
+		for i, e := range container.Env {
+			if *e.Name == "INSECURE" || *e.Name == "SKIP_CERTIFICATE_VALIDATION" {
+				value := strconv.FormatBool(skipCertValid)
+				container.Env[i].Value = &value
+			}
 		}
 	} else {
 		for i, e := range container.Env {
@@ -283,11 +292,9 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 			container.VolumeMounts[i].Name = &newName
 			break
 		}
-
 	}
 
 	return &authModule, &container, nil
-
 }
 
 func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, auth csmv1.ContainerTemplate) ([]acorev1.VolumeApplyConfiguration, error) {
@@ -323,9 +330,7 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfi
 				return vols[:len(vols)-1], nil
 
 			}
-
 		}
-
 	}
 	return vols, nil
 }
@@ -384,7 +389,6 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, vols...)
 
 	return &dp, nil
-
 }
 
 // AuthorizationPrecheck  - runs precheck for CSM Authorization
@@ -420,13 +424,14 @@ func AuthorizationPrecheck(ctx context.Context, op utils.OperatorConfig, auth cs
 	secrets := []string{"karavi-authorization-config", "proxy-authz-tokens"}
 	if !skipCertValid {
 		secrets = append(secrets, "proxy-server-root-certificate")
-
 	}
 
 	for _, name := range secrets {
 		found := &corev1.Secret{}
-		err := ctrlClient.Get(ctx, types.NamespacedName{Name: name,
-			Namespace: cr.GetNamespace()}, found)
+		err := ctrlClient.Get(ctx, types.NamespacedName{
+			Name:      name,
+			Namespace: cr.GetNamespace(),
+		}, found)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
@@ -497,7 +502,11 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 
 			for _, env := range component.Envs {
 				if env.Name == "REDIS_STORAGE_CLASS" {
-					redisStorageClass = env.Value
+					if env.Value == "" {
+						redisStorageClass = AuthLocalStorageClass
+					} else {
+						redisStorageClass = env.Value
+					}
 				}
 			}
 		}
@@ -510,8 +519,57 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	return YamlString, nil
 }
 
+func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (bool, string, error) {
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return false, "", err
+	}
+
+	for _, component := range auth.Components {
+		if component.Name == AuthProxyServerComponent {
+			for _, env := range component.Envs {
+				if env.Name == "REDIS_STORAGE_CLASS" {
+					if env.Value == "" {
+						path := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthLocalProvisionerManifest)
+						buf, err := os.ReadFile(filepath.Clean(path))
+						if err != nil {
+							return false, "", err
+						}
+						return true, string(buf), nil
+					}
+				}
+			}
+		}
+	}
+	return false, "", nil
+}
+
 // AuthorizationServerDeployment - apply/delete deployment objects
 func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(op, cr, csmv1.Module{})
+	if err != nil {
+		return err
+	}
+
+	if useLocalStorage {
+		deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+		if err != nil {
+			return err
+		}
+
+		for _, ctrlObj := range deployObjects {
+			if isDeleting {
+				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	YamlString, err := getAuthorizationServerDeployment(op, cr, csmv1.Module{})
 	if err != nil {
 		return err
