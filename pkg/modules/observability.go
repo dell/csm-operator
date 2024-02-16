@@ -11,6 +11,8 @@ package modules
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -28,6 +30,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
