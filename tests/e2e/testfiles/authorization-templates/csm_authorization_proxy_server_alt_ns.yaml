@@ -2,7 +2,7 @@ apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: authorization
-  namespace: authorization
+  namespace: proxy-ns
 spec:
   modules:
     # Authorization: enable csm-authorization proxy server for RBAC
@@ -67,7 +67,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: csm-config-params
-  namespace: authorization
+  namespace: proxy-ns
 data:
   csm-config-params.yaml: |
     CONCURRENT_POWERFLEX_REQUESTS: 10
