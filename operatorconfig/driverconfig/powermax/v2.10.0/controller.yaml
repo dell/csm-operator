@@ -233,8 +233,6 @@ spec:
           image: dellemc/csi-powermax:v2.10.0
           imagePullPolicy: IfNotPresent
           command: [ "/csi-powermax.sh" ]
-          args:
-            - "--leader-election"
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
               value: csi-powermax.dellemc.com
