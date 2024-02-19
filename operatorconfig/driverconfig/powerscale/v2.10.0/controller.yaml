@@ -257,10 +257,6 @@ spec:
           imagePullPolicy: IfNotPresent
           command: [ "/csi-isilon" ]
           args:
-            - "--leader-election"
-            - "--leader-election-renew-deadline=10s"
-            - "--leader-election-lease-duration=15s"
-            - "--leader-election-retry-period=5s"
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
           env:
             - name: CSI_ENDPOINT
