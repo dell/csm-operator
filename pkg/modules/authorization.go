@@ -276,16 +276,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 				container.Env[i].Value = &value
 			}
 		}
-	} else {
-		for i, e := range container.Env {
-			if *e.Name == "INSECURE" || *e.Name == "SKIP_CERTIFICATE_VALIDATION" {
-				value := strconv.FormatBool(skipCertValid)
-				container.Env[i].Value = &value
-			}
-
-		}
 	}
-
 	for i, c := range container.VolumeMounts {
 		if *c.Name == DefaultDriverConfigParamsVolumeMount {
 			newName := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
