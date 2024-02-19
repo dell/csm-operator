@@ -185,7 +185,6 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -281,11 +280,10 @@ func TestAuthInjectDeployment(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
-
 }
+
 func TestAuthorizationPreCheck(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client){
 		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
@@ -312,7 +310,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.8.0"
+			auth.ConfigVersion = "v1.10.0"
 
 			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
@@ -414,11 +412,9 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			err := AuthorizationPrecheck(context.TODO(), operatorConfig, auth, tmpCR, client)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -427,7 +423,6 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
-
 		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
@@ -458,7 +453,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.8.0"
+			auth.ConfigVersion = "v1.10.0"
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
 			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
@@ -535,11 +530,9 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			err := AuthorizationServerPrecheck(context.TODO(), operatorConfig, auth, tmpCR, &fakeReconcile)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -579,6 +572,18 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"success - creating with default redis storage class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_no_redis.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
 		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -594,7 +599,6 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := AuthorizationServerDeployment(context.TODO(), isDeleting, op, cr, sourceClient)
@@ -603,7 +607,6 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -679,7 +682,7 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating v1.9.1": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating v1.10.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -718,8 +721,8 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating v1.8.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v180.yaml")
+		"success - creating v1.9.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v190.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -772,7 +775,6 @@ func TestAuthorizationIngress(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			fakeReconcile := utils.FakeReconcileCSM{
 				Client:    sourceClient,
@@ -784,7 +786,6 @@ func TestAuthorizationIngress(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -840,7 +841,6 @@ func TestInstallPolicies(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := InstallPolicies(context.TODO(), isDeleting, op, cr, sourceClient)
@@ -849,7 +849,6 @@ func TestInstallPolicies(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
@@ -903,17 +902,14 @@ func TestNginxIngressController(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := NginxIngressController(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
-
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }

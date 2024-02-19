@@ -28,8 +28,13 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
+<<<<<<< HEAD
     # Config version for CSI PowerStore v2.9.1 driver
     configVersion: v2.9.1
+=======
+    # Config version for CSI PowerStore v2.10.0 driver
+    configVersion: v2.10.0
+>>>>>>> main
     authSecret: powerstore-config
     # Controller count
     replicas: 2
@@ -153,7 +158,7 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.8.1
+      configVersion: v1.9.0
       components:
         - name: podmon-controller
           image: dellemc/podmon:nightly

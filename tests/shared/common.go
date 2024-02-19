@@ -27,16 +27,16 @@ import (
 
 // ConfigVersions used for all unit tests
 const (
-	PFlexConfigVersion       string = "v2.9.1"
-	ConfigVersion            string = "v2.7.0"
-	UpgradeConfigVersion     string = "v2.8.0"
-	JumpUpgradeConfigVersion string = "v2.9.1"
+	PFlexConfigVersion       string = "v2.10.0"
+	ConfigVersion            string = "v2.8.0"
+	UpgradeConfigVersion     string = "v2.9.0"
+	JumpUpgradeConfigVersion string = "v2.10.0"
 	OldConfigVersion         string = "v2.2.0"
 	BadConfigVersion         string = "v0"
-	PStoreConfigVersion      string = "v2.9.1"
-	UnityConfigVersion       string = "v2.9.1"
-	PScaleConfigVersion      string = "v2.9.1"
-	PmaxConfigVersion        string = "v2.9.1"
+	PStoreConfigVersion      string = "v2.10.0"
+	UnityConfigVersion       string = "v2.10.0"
+	PScaleConfigVersion      string = "v2.10.0"
+	PmaxConfigVersion        string = "v2.10.0"
 	AccConfigVersion         string = "v1.0.0"
 )
 
@@ -127,7 +127,7 @@ func MakeModuleCSM(name, ns, configVersion string) csmv1.ContainerStorageModule 
 }
 
 // MakeApexConnectivityClient returns a driver object from given params
-func MakeApexConnectivityClient(configVersion, skipCertValid string) csmv1.Client {
+func MakeApexConnectivityClient(configVersion, _ string) csmv1.Client {
 	ApexConnectivityClientObj := csmv1.Client{
 		ConfigVersion: configVersion,
 	}
@@ -184,7 +184,7 @@ func MakeModule(configVersion string) csmv1.Module {
 }
 
 // MakeSecret  returns a driver pre-req secret array-config
-func MakeSecret(name, ns, configVersion string) *corev1.Secret {
+func MakeSecret(name, ns, _ string) *corev1.Secret {
 	data := map[string][]byte{
 		"config": []byte("csm"),
 	}
@@ -194,7 +194,7 @@ func MakeSecret(name, ns, configVersion string) *corev1.Secret {
 }
 
 // MakeConfigMap returns a driver pre-req configmap array-config
-func MakeConfigMap(name, ns, configVersion string) *corev1.ConfigMap {
+func MakeConfigMap(name, ns, _ string) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
@@ -235,7 +235,7 @@ func MakePod(name, ns string) corev1.Pod {
 }
 
 // MakeReverseProxyModule returns a csireverseproxy object
-func MakeReverseProxyModule(configVersion string) csmv1.Module {
+func MakeReverseProxyModule(_ string) csmv1.Module {
 	revproxy := csmv1.Module{
 		Name:          csmv1.ReverseProxy,
 		Enabled:       true,

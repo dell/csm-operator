@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -54,9 +55,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sync"
+	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ContainerStorageModuleReconciler reconciles a ContainerStorageModule object
@@ -377,7 +376,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	ready := d.Status.ReadyReplicas
 	numberUnavailable := d.Status.UnavailableReplicas
 
-	//Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
+	// Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
 
 	log.Infow("deployment", "deployment name", d.Name, "desired", desired)
 	log.Infow("deployment", "deployment name", d.Name, "numberReady", ready)
@@ -396,7 +395,6 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 
 	csm := new(csmv1.ContainerStorageModule)
 	err := r.Client.Get(ctx, namespacedName, csm)
-
 	if err != nil {
 		log.Error("deployment get csm", "error", err.Error())
 	}
@@ -417,7 +415,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	}
 }
 
-func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, obj interface{}) {
+func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj interface{}) {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
@@ -461,7 +459,6 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(oldObj interface{}, 
 	} else {
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "%s Driver pods running OK", stamp)
 	}
-
 }
 
 func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interface{}, obj interface{}) {
@@ -515,12 +512,10 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	} else {
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver daemonset running OK")
 	}
-
 }
 
 // ContentWatch - watch updates on deployment and deamonset
 func (r *ContainerStorageModuleReconciler) ContentWatch() error {
-
 	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
 
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
@@ -553,7 +548,6 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter ratelimiter.RateLimiter, maxReconcilers int) error {
-
 	go r.ContentWatch()
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -649,7 +643,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 			}
 		}
 
-		//check if application mobility needs to be uninstalled
+		// check if application mobility needs to be uninstalled
 		oldApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *oldCR, csmv1.ApplicationMobility)
 		newApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, csmv1.ApplicationMobility)
 
@@ -706,7 +700,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 	}
 
-	//Create/Update Reverseproxy Server
+	// Create/Update Reverseproxy Server
 	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled {
 		log.Infow("Trying Create/Update reverseproxy...")
 		if err := r.reconcileReverseProxy(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
@@ -804,7 +798,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 				controller.Rbac.ClusterRole = *clusterRole
 			}
-
 		}
 	}
 
@@ -1022,7 +1015,8 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 
 func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
-	operatorConfig utils.OperatorConfig) (*DriverConfig, error) {
+	operatorConfig utils.OperatorConfig,
+) (*DriverConfig, error) {
 	var (
 		err        error
 		driver     *storagev1.CSIDriver
@@ -1032,7 +1026,7 @@ func getDriverConfig(ctx context.Context,
 		log        = logger.GetLogger(ctx)
 	)
 
-	//if no driver is specified, return nil
+	// if no driver is specified, return nil
 	if cr.Spec.Driver.CSIDriverType == "" {
 		log.Infof("No driver specified in manifest")
 		return nil, nil
@@ -1072,7 +1066,6 @@ func getDriverConfig(ctx context.Context,
 		Node:       node,
 		Controller: controller,
 	}, nil
-
 }
 
 // reconcileReverseProxy - deploy reverse proxy server
@@ -1236,7 +1229,6 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
-
 	log := logger.GetLogger(ctx)
 	var am bool
 	// Check drivers
@@ -1301,11 +1293,9 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 				if m.Name == cr.Name {
 					log.Infow("Owner reference is found and matches")
 					break
-				} else {
-					return fmt.Errorf("required Owner reference not found. Please re-install driver ")
 				}
+				return fmt.Errorf("required Owner reference not found. Please re-install driver ")
 			}
-
 		}
 	}
 
@@ -1340,7 +1330,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 					return fmt.Errorf("failed observability validation: %v", err)
 				}
 			case csmv1.ApplicationMobility:
-				//ApplicationMobility precheck
+				// ApplicationMobility precheck
 				if err := modules.ApplicationMobilityPrecheck(ctx, operatorConfig, m, *cr, r); err != nil {
 					return fmt.Errorf("failed Appmobility validation: %v", err)
 				}
@@ -1351,7 +1341,6 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			default:
 				return fmt.Errorf("unsupported module type %s", m.Name)
 			}
-
 		}
 	}
 
@@ -1380,7 +1369,7 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 			log.Infow("proceeding with modification of driver install")
 			return true, nil
 		}
-		//if not equal, it is an upgrade/downgrade
+		// if not equal, it is an upgrade/downgrade
 		// get minimum required version for upgrade
 		minUpgradePath, err := drivers.GetUpgradeInfo(ctx, operatorConfig, driverType, oldVersion)
 		if err != nil {
@@ -1402,7 +1391,6 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 
 // TODO: refactor this
 func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.ContainerStorageModule) bool {
-
 	log := logger.GetLogger(ctx)
 
 	// If driver has not been initialized yet, we first annotate the driver with the config version annotation

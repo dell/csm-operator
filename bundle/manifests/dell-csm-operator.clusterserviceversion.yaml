@@ -101,10 +101,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-isilon:v2.9.1",
+                "image": "dellemc/csi-isilon:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -195,11 +195,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.9.1",
+                    "image": "dellemc/csm-authorization-sidecar:v1.10.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.9.1",
+                "configVersion": "v1.10.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -216,7 +216,7 @@ metadata:
                         "value": "powerscale"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.7.1",
+                    "image": "dellemc/dell-csi-replicator:v1.8.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -242,11 +242,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.7.1",
+                    "image": "dellemc/dell-replication-controller:v1.8.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.7.1",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -260,7 +260,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.7.0",
+                    "image": "dellemc/csm-topology:v1.8.0",
                     "name": "topology"
                   },
                   {
@@ -330,7 +330,7 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "dellemc/csm-metrics-powerscale:v1.4.0",
+                    "image": "dellemc/csm-metrics-powerscale:v1.5.0",
                     "name": "metrics-powerscale"
                   }
                 ],
@@ -353,7 +353,7 @@ metadata:
                       "--driverPath=csi-isilon.dellemc.com",
                       "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
                     ],
-                    "image": "dellemc/podmon:v1.8.1",
+                    "image": "dellemc/podmon:v1.9.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -375,7 +375,7 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "dellemc/podmon:v1.8.1",
+                    "image": "dellemc/podmon:v1.9.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
@@ -444,10 +444,10 @@ metadata:
                     "value": ""
                   }
                 ],
-                "image": "dellemc/csi-powermax:v2.9.1",
+                "image": "dellemc/csi-powermax:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -539,11 +539,11 @@ metadata:
                         "value": "powermax-reverseproxy-config"
                       }
                     ],
-                    "image": "dellemc/csipowermax-reverseproxy:v2.8.1",
+                    "image": "dellemc/csipowermax-reverseproxy:v2.9.0",
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
-                "configVersion": "v2.8.1",
+                "configVersion": "v2.9.0",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "csireverseproxy"
@@ -561,11 +561,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.9.1",
+                    "image": "dellemc/csm-authorization-sidecar:v1.10.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.9.1",
+                "configVersion": "v1.10.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -582,7 +582,7 @@ metadata:
                         "value": "powermax"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.7.1",
+                    "image": "dellemc/dell-csi-replicator:v1.8.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -608,11 +608,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.7.1",
+                    "image": "dellemc/dell-replication-controller:v1.8.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.7.1",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -626,7 +626,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.7.0",
+                    "image": "dellemc/csm-topology:v1.8.0",
                     "name": "topology"
                   },
                   {
@@ -684,7 +684,7 @@ metadata:
                         "value": "powermax-reverseproxy-config"
                       }
                     ],
-                    "image": "dellemc/csm-metrics-powermax:v1.2.0",
+                    "image": "dellemc/csm-metrics-powermax:v1.3.0",
                     "name": "metrics-powermax"
                   }
                 ],
@@ -724,10 +724,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "dellemc/csi-powerstore:v2.9.1",
+                "image": "dellemc/csi-powerstore:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -805,7 +805,7 @@ metadata:
                       "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powerstore.dellemc.com"
                     ],
-                    "image": "dellemc/podmon:v1.8.1",
+                    "image": "dellemc/podmon:v1.9.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -827,7 +827,7 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "dellemc/podmon:v1.8.1",
+                    "image": "dellemc/podmon:v1.9.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
@@ -887,10 +887,10 @@ metadata:
                     "value": "true"
                   }
                 ],
-                "image": "dellemc/csi-unity:v2.9.1",
+                "image": "dellemc/csi-unity:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -974,10 +974,10 @@ metadata:
                     "value": "false"
                   }
                 ],
-                "image": "dellemc/csi-vxflexos:v2.9.1",
+                "image": "dellemc/csi-vxflexos:v2.10.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.9.1",
+              "configVersion": "v2.10.0",
               "controller": {
                 "envs": [
                   {
@@ -1008,7 +1008,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:4.5",
+                  "image": "dellemc/sdc:4.5.1",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "sdc"
                 }
@@ -1059,7 +1059,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:4.5",
+                  "image": "dellemc/sdc:4.5.1",
                   "name": "sdc-monitor"
                 },
                 {
@@ -1085,11 +1085,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.9.1",
+                    "image": "dellemc/csm-authorization-sidecar:v1.10.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.9.1",
+                "configVersion": "v1.10.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -1103,7 +1103,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "dellemc/csm-topology:v1.7.0",
+                    "image": "dellemc/csm-topology:v1.8.0",
                     "name": "topology"
                   },
                   {
@@ -1165,7 +1165,7 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "dellemc/csm-metrics-powerflex:v1.7.0",
+                    "image": "dellemc/csm-metrics-powerflex:v1.8.0",
                     "name": "metrics-powerflex"
                   }
                 ],
@@ -1186,7 +1186,7 @@ metadata:
                         "value": "powerflex"
                       }
                     ],
-                    "image": "dellemc/dell-csi-replicator:v1.7.1",
+                    "image": "dellemc/dell-csi-replicator:v1.8.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -1212,11 +1212,11 @@ metadata:
                         "value": "5m"
                       }
                     ],
-                    "image": "dellemc/dell-replication-controller:v1.7.1",
+                    "image": "dellemc/dell-replication-controller:v1.8.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.7.1",
+                "configVersion": "v1.8.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -1234,7 +1234,7 @@ metadata:
                       "--mode=controller",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
                     ],
-                    "image": "dellemc/podmon:v1.8.1",
+                    "image": "dellemc/podmon:v1.9.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -1255,7 +1255,7 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "dellemc/podmon:v1.8.1",
+                    "image": "dellemc/podmon:v1.9.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
@@ -1270,14 +1270,14 @@ metadata:
       ]
     capabilities: Seamless Upgrades
     categories: Storage
-    containerImage: docker.io/dellemc/dell-csm-operator:v1.4.2
-    createdAt: "2024-02-15T06:30:39Z"
+    containerImage: docker.io/dellemc/dell-csm-operator:v1.5.0
+    createdAt: "2023-12-22T09:14:07Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.4.2
+  name: dell-csm-operator.v1.5.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -3459,7 +3459,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: docker.io/dellemc/dell-csm-operator:v1.4.2
+                image: docker.io/dellemc/dell-csm-operator:v1.5.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -3515,7 +3515,7 @@ spec:
   - email: container.storage.modules@dell.com
     name: Dell Container Storage Modules
   maturity: stable
-  minKubeVersion: 1.21.0
+  minKubeVersion: 1.27.0
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
@@ -3534,41 +3534,41 @@ spec:
     name: csi-unity
   - image: docker.io/dellemc/csi-vxflexos:v2.9.1
     name: csi-vxflexos
-  - image: docker.io/dellemc/sdc:4.5
+  - image: docker.io/dellemc/sdc:4.5.1
     name: sdc
-  - image: docker.io/dellemc/csm-authorization-sidecar:v1.9.1
+  - image: docker.io/dellemc/csm-authorization-sidecar:v1.10.0
     name: karavi-authorization-proxy
-  - image: docker.io/dellemc/dell-csi-replicator:v1.7.1
+  - image: docker.io/dellemc/dell-csi-replicator:v1.8.0
     name: dell-csi-replicator
-  - image: docker.io/dellemc/dell-replication-controller:v1.7.1
+  - image: docker.io/dellemc/dell-replication-controller:v1.8.0
     name: dell-replication-controller-manager
-  - image: docker.io/dellemc/csm-topology:v1.7.0
+  - image: docker.io/dellemc/csm-topology:v1.8.0
     name: topology
   - image: docker.io/otel/opentelemetry-collector:0.42.0
     name: otel-collector
-  - image: docker.io/dellemc/csm-metrics-powerscale:v1.4.0
+  - image: docker.io/dellemc/csm-metrics-powerscale:v1.5.0
     name: metrics-powerscale
-  - image: docker.io/dellemc/csm-metrics-powermax:v1.2.0
+  - image: docker.io/dellemc/csm-metrics-powermax:v1.3.0
     name: metrics-powermax
-  - image: docker.io/dellemc/csm-metrics-powerflex:v1.7.0
+  - image: docker.io/dellemc/csm-metrics-powerflex:v1.8.0
     name: metrics-powerflex
-  - image: docker.io/dellemc/podmon:v1.8.1
+  - image: docker.io/dellemc/podmon:v1.9.0
     name: podmon-node
   - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
     name: kube-rbac-proxy
-  - image: registry.k8s.io/sig-storage/csi-attacher:v4.4.2
+  - image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
     name: attacher
-  - image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.2
+  - image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
     name: provisioner
-  - image: registry.k8s.io/sig-storage/csi-snapshotter:v6.3.2
+  - image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
     name: snapshotter
-  - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
+  - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
     name: registrar
-  - image: registry.k8s.io/sig-storage/csi-resizer:v1.9.2
+  - image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
     name: resizer
-  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.10.0
+  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
     name: externalhealthmonitorcontroller
-  - image: dellemc/csi-metadata-retriever:v1.6.1
+  - image: dellemc/csi-metadata-retriever:v1.7.0
     name: metadataretriever
   - image: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
     name: dell-connectivity-client
