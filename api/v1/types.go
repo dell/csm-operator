@@ -71,6 +71,9 @@ const (
 	// Topology - placeholder for constant topology
 	Topology ObservabilityComponentType = "topology"
 
+	// OtelCollector - placeholder for constant otel-collector
+	OtelCollector ObservabilityComponentType = "otel-collector"
+
 	// PowerFlex - placeholder for constant powerflex
 	PowerFlex DriverType = "powerflex"
 
