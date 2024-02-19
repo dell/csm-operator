@@ -370,11 +370,11 @@ type ContainerTemplate struct {
 
 	// Certificate is a certificate used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Certificate for certificate/private-key pair"
-	Certificate string `json:"certificate,omitempty" yaml:"certificate,omitempty"`
+	Certificate string `json:"certificate" yaml:"certificate"`
 
 	// PrivateKey is a private key used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Private key for certificate/private-key pair"
-	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
+	PrivateKey string `json:"privateKey" yaml:"privateKey"`
 }
 
 // SnapshotClass struct
