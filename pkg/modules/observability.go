@@ -178,8 +178,23 @@ const (
 	// SelfSignedCert - self-signed certificate file
 	SelfSignedCert string = "selfsigned-cert.yaml"
 
+	// CustomCert - custom certificate file
+	CustomCert string = "custom-cert.yaml"
+
+	// OtelCollectorCert
+	OtelCollectorCert string = "<TOPOLOGY-CERT>"
+
+	// OtelCollectorPrivateKey
+	OtelCollectorPrivateKey string = "<TOPOLOGY-PRIVATE-KEY>"
+
+	// TopologyCert
+	TopologyCert string = "<OTEL-CERT>"
+
+	// TopologyPrivateKey
+	TopologyPrivateKey string = "<OTEL-PRIVATE-KEY>"
+
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	CSMNameSpace = "<CSM_NAMESPACE>"
+	CSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
@@ -808,18 +823,48 @@ func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string
 // getIssuerCertService - gets the app mobility cert manager's issuer and certificate manifest
 func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
+	otelCert := ""
+	otelPrivateKey := ""
+	topologyCert := ""
+	topologyPrivateKey := ""
+	
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return yamlString, err
 	}
 
-	selfSignedCertPath := fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, SelfSignedCert)
-	buf, err := os.ReadFile(filepath.Clean(selfSignedCertPath))
+	for _, component := range obs.Components {
+		switch component.Name {
+		case string(csmv1.Topology):
+			topologyCert = component.Certificate
+			topologyPrivateKey = component.PrivateKey
+		case string(csmv1.OtelCollector):
+			otelCert = component.Certificate
+			otelPrivateKey = component.PrivateKey
+		}
+	}
+
+	if topologyCert || topologyPrivateKey || otelCert || otelPrivateKey {
+		if topologyCert && topologyPrivateKey && otelCert && otelPrivateKey {
+			certPath := fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, CustomCert)
+		} else {
+			return yamlString, fmt.Errorf("observability install failed -- not all certs and private keys provided for observability custom cert")
+		}
+	} else {
+		certPath := fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, SelfSignedCert)
+	}
+	
+	buf, err := os.ReadFile(filepath.Clean(certPath))
 	if err != nil {
 		return yamlString, err
 	}
 
 	yamlString = string(buf)
+
+	YamlString = strings.ReplaceAll(YamlString, OtelCollectorCert, otelCert)
+	YamlString = strings.ReplaceAll(YamlString, OtelCollectorPrivateKey, otelPrivateKey)
+	YamlString = strings.ReplaceAll(YamlString, TopologyCert, topologyCert)
+	YamlString = strings.ReplaceAll(YamlString, TopologyPrivateKey, topologyPrivateKey)
 
 	return yamlString, nil
 }
