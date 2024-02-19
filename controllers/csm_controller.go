@@ -92,7 +92,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.8.0"
+	CSMVersion = "v1.9.2"
 )
 
 var (
@@ -369,7 +369,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		return
 	}
 
-	log.Debugw("deployment modified generation", d.Generation, old.Generation)
+	log.Debugw("deployment modified generation", d.Name, d.Generation, old.Generation)
 
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
@@ -378,13 +378,16 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 
 	// Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
 
-	log.Infow("deployment", "desired", desired)
-	log.Infow("deployment", "numberReady", ready)
-	log.Infow("deployment", "available", available)
-	log.Infow("deployment", "numberUnavailable", numberUnavailable)
+	log.Infow("deployment", "deployment name", d.Name, "desired", desired)
+	log.Infow("deployment", "deployment name", d.Name, "numberReady", ready)
+	log.Infow("deployment", "deployment name", d.Name, "available", available)
+	log.Infow("deployment", "deployment name", d.Name, "numberUnavailable", numberUnavailable)
 
-	ns := d.Namespace
-	log.Debugw("deployment", "namespace", ns, "name", name)
+	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
+	if ns == "" {
+		ns = d.Namespace
+	}
+	log.Debugw("csm being modified in handledeployment", "namespace", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
 		Namespace: ns,
@@ -418,7 +421,11 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.CsmLabel]
-	ns := p.Namespace
+	//if this pod is an obs. pod, namespace might not match csm namespace
+	ns := p.GetLabels()[constants.CsmNamespaceLabel]
+	if ns == "" {
+		ns = p.Namespace
+	}
 	if name == "" {
 		return
 	}
@@ -481,7 +488,10 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	log.Infow("daemonset ", "available", available)
 	log.Infow("daemonset ", "numberUnavailable", numberUnavailable)
 
-	ns := d.Namespace
+	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
+	if ns == "" {
+		ns = d.Namespace
+	}
 	r.Log.Debugw("daemonset ", "ns", ns, "name", name)
 	namespacedName := t1.NamespacedName{
 		Name:      name,
@@ -671,7 +681,8 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	log := logger.GetLogger(ctx)
 
 	// Create/Update Authorization Proxy Server
-	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer); authorizationEnabled {
+	authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer)
+	if authorizationEnabled {
 		log.Infow("Create/Update authorization")
 		if err := r.reconcileAuthorization(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
@@ -834,9 +845,11 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			return err
 		}
 
-		// Create/Update DeamonSet
-		if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
-			return err
+		// Create/Update DeamonSet, except for auth proxy
+		if !authorizationEnabled {
+			if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
+				return err
+			}
 		}
 
 		if replicationEnabled {
@@ -1187,7 +1200,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	return nil
 }
 
-// removeModule - remove authorization proxy server
+// removeModule - remove standalone modules
 func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 

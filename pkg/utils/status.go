@@ -41,6 +41,7 @@ var dMutex sync.RWMutex
 var checkModuleStatus = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus) (bool, error){
 	csmv1.Observability:       observabilityStatusCheck,
 	csmv1.ApplicationMobility: appMobStatusCheck,
+	csmv1.AuthorizationServer: authProxyStatusCheck,
 }
 
 func getInt32(pointer *int32) int32 {
@@ -48,6 +49,57 @@ func getInt32(pointer *int32) int32 {
 		return 0
 	}
 	return *pointer
+}
+
+// calculates deployment state of drivers only; module deployment status will be checked in checkModuleStatus
+func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
+	log := logger.GetLogger(ctx)
+	var msg string
+	deployment := &appsv1.Deployment{}
+	var err error
+	desired := int32(0)
+	available := int32(0)
+	ready := int32(0)
+	numberUnavailable := int32(0)
+	totalReplicas := int32(0)
+
+	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
+	if err != nil {
+		return int32(totalReplicas), csmv1.PodStatus{}, err
+	}
+
+	for _, cluster := range clusterClients {
+		log.Infof("deployment status for cluster: %s", cluster.ClusterID)
+		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
+
+		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) || instance.GetName() == string(csmv1.ApplicationMobility) {
+			log.Infof("Not a driver instance, will not check deploymentstatus")
+			return 0, csmv1.PodStatus{Available: "0"}, nil
+		}
+
+		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
+			Namespace: instance.GetNamespace()}, deployment)
+		if err != nil {
+			return 0, csmv1.PodStatus{Available: "0"}, err
+		}
+		log.Infof("Calculating status for deployment: %s", deployment.Name)
+		desired = deployment.Status.Replicas
+		available = deployment.Status.AvailableReplicas
+		ready = deployment.Status.ReadyReplicas
+		numberUnavailable = deployment.Status.UnavailableReplicas
+
+		log.Infow("deployment", "desired", desired)
+		log.Infow("deployment", "numberReady", ready)
+		log.Infow("deployment", "available", available)
+		log.Infow("deployment", "numberUnavailable", numberUnavailable)
+	}
+
+	return ready, csmv1.PodStatus{
+		Available: fmt.Sprintf("%d", available),
+		Desired:   fmt.Sprintf("%d", desired),
+		Failed:    fmt.Sprintf("%d", numberUnavailable),
+	}, err
+
 }
 
 // TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
@@ -236,6 +288,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	totalAvialable := int32(0)
 	totalDesired := int32(0)
 	totalFailedCount := 0
+	totalRunning := int32(0)
 
 	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
 	if err != nil {
@@ -249,6 +302,12 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		ds := &appsv1.DaemonSet{}
 
 		nodeName := instance.GetNodeName()
+
+		// Application-mobility has a different node name than the drivers
+		if instance.GetName() == "application-mobility" {
+			log.Infof("Changing nodeName for application-mobility")
+			nodeName = "application-mobility-node-agent"
+		}
 
 		log.Infof("nodeName is %s", nodeName)
 		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
@@ -292,16 +351,19 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 					}
 				}
 			}
+			if pod.Status.Phase == corev1.PodRunning {
+				totalRunning++
+			}
 		}
 		for k, v := range errMap {
 			msg += k + "=" + v
 		}
 
-		log.Infof("daemonset status available pods %d", ds.Status.NumberAvailable)
+		log.Infof("daemonset status available pods %d", totalRunning)
 		log.Infof("daemonset status failedCount pods %d", failedCount)
 		log.Infof("daemonset status desired pods %d", ds.Status.DesiredNumberScheduled)
 
-		totalAvialable += ds.Status.NumberAvailable
+		totalAvialable += totalRunning
 		totalDesired += ds.Status.DesiredNumberScheduled
 		totalFailedCount += failedCount
 
@@ -320,27 +382,39 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := true
-	var err error
+	var err error = nil
+	nodeStatusGood := true
+	newStatus.State = constants.Succeeded
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 	// TODO: Can be uncommented once this issues gets sorted out
-	/* controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
-	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
+	controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
+	if controllerErr != nil {
+		log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
+	}
+
+	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
+	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
+	log.Infof("instance.GetName() is %s", instance.GetName())
+	if instance.GetName() != "" && instance.GetName() != string(csmv1.Authorization) {
+		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
+		newStatus.NodeStatus = nodeStatus
+		if daemonSetErr != nil {
+			err = daemonSetErr
+			log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
+		}
+
+		log.Infof("daemonset expected [%d]", expected)
+		log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
+		nodeStatusGood = (fmt.Sprintf("%d", expected) == nodeStatus.Available)
+	}
+
 	newStatus.ControllerStatus = controllerStatus
-	newStatus.NodeStatus = nodeStatus */
 
-	expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
-	newStatus.NodeStatus = nodeStatus
-	controllerReplicas := newStatus.ControllerStatus.Desired
-	controllerStatus := newStatus.ControllerStatus
-
-	newStatus.State = constants.Succeeded
 	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
-	log.Infof("daemonset expected [%d]", expected)
-	log.Infof("daemonset nodeStatus.Available [%s]", nodeStatus.Available)
+	if (fmt.Sprintf("%d", controllerReplicas) == controllerStatus.Available) && nodeStatusGood {
 
-	if (controllerReplicas == controllerStatus.Available) && (fmt.Sprintf("%d", expected) == nodeStatus.Available) {
 		for _, module := range instance.Spec.Modules {
 			moduleStatus, exists := checkModuleStatus[module.Name]
 			if exists && module.Enabled {
@@ -352,22 +426,22 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 				if !moduleRunning {
 					running = false
 					newStatus.State = constants.Failed
-					log.Infof("%s module not running", module)
+					log.Infof("%s module not running", module.Name)
 					break
 				}
+				log.Infof("%s module running", module.Name)
 			}
 		}
 	} else {
+		log.Infof("either controllerReplicas != controllerStatus.Available or nodeStatus is bad")
+		log.Infof("controllerReplicas", controllerReplicas)
+		log.Infof("controllerStatus.Available", controllerStatus.Available)
+		log.Infof("nodeStatusGood", nodeStatusGood)
 		running = false
 		newStatus.State = constants.Failed
 	}
 
-	log.Infof("calculate overall state [%s]", newStatus.State)
-	if daemonSetErr != nil {
-		err = daemonSetErr
-		log.Infof("calculate Daemonseterror msg [%s]", daemonSetErr.Error())
-	}
-
+	log.Infof("setting status to ", "newStatus", newStatus)
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err
 }
@@ -544,18 +618,21 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 	log := logger.GetLogger(ctx)
 
 	running, err := calculateState(ctx, instance, r, newStatus)
+	log.Info("calculateState returns ", "running", running)
 	if err != nil {
 		log.Error("HandleSuccess Driver status ", "error", err.Error())
 		newStatus.State = constants.Failed
 	}
 	if running {
-		newStatus.State = constants.Running
+		newStatus.State = constants.Succeeded
 	}
 	log.Infow("HandleSuccess Driver state ", "newStatus.State", newStatus.State)
-	if newStatus.State == constants.Running {
+	if newStatus.State == constants.Succeeded {
 		// If previously we were in running state
-		if oldStatus.State == constants.Running {
-			log.Info("HandleSuccess Driver state didn't change from Running")
+		if oldStatus.State == constants.Succeeded {
+			log.Info("HandleSuccess Driver state didn't change from Succeeded")
+		} else {
+			log.Info("HandleSuccess Driver stat changed to Succeeded")
 		}
 		return reconcile.Result{}, nil
 	}
@@ -767,6 +844,14 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	metricsRunning := false
 	topologyRunning := false
 
+	driverName := instance.Spec.Driver.CSIDriverType
+
+	//TODO: PowerScale DriverType should be changed from "isilon" to "powerscale"
+	// this is a temporary fix until we can do that
+	if driverName == "isilon" {
+		driverName = "powerscale"
+	}
+
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Observability {
 			for _, c := range m.Components {
@@ -785,7 +870,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 						certEnabled = true
 					}
 				}
-				if c.Name == fmt.Sprintf("metrics-%s", instance.Spec.Driver.CSIDriverType) {
+				if c.Name == fmt.Sprintf("metrics-%s", driverName) {
 					if *c.Enabled {
 						metricsEnabled = true
 					}
@@ -794,9 +879,8 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		}
 	}
 
-	namespace := "karavi"
 	opts := []client.ListOption{
-		client.InNamespace(namespace),
+		client.InNamespace(ObservabilityNamespace),
 	}
 	deploymentList := &appsv1.DeploymentList{}
 	err := r.GetClient().List(ctx, deploymentList, opts...)
@@ -815,11 +899,11 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 			if otelEnabled {
 				otelRunning = checkFn(&deployment)
 			}
-		case fmt.Sprintf("%s-metrics-%s", namespace, instance.Spec.Driver.CSIDriverType):
+		case fmt.Sprintf("%s-metrics-%s", ObservabilityNamespace, driverName):
 			if metricsEnabled {
 				metricsRunning = checkFn(&deployment)
 			}
-		case fmt.Sprintf("%s-topology", namespace):
+		case fmt.Sprintf("%s-topology", ObservabilityNamespace):
 			if topologyEnabled {
 				topologyRunning = checkFn(&deployment)
 			}
@@ -880,4 +964,105 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	return false, nil
+}
+
+// authProxyStatusCheck - calculate success state for auth proxy
+func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+	log := logger.GetLogger(ctx)
+	certEnabled := false
+	nginxEnabled := false
+
+	for _, m := range instance.Spec.Modules {
+		if m.Name == csmv1.AuthorizationServer {
+			for _, c := range m.Components {
+				if c.Name == "ingress-nginx" && *c.Enabled {
+					nginxEnabled = true
+				}
+				if c.Name == "cert-manager" && *c.Enabled {
+					certEnabled = true
+				}
+			}
+		}
+	}
+
+	opts := []client.ListOption{
+		client.InNamespace(instance.GetNamespace()),
+	}
+	deploymentList := &appsv1.DeploymentList{}
+	err := r.GetClient().List(ctx, deploymentList, opts...)
+	if err != nil {
+		return false, err
+	}
+
+	checkFn := func(deployment *appsv1.Deployment) bool {
+		return deployment.Status.ReadyReplicas == *deployment.Spec.Replicas
+	}
+
+	for _, deployment := range deploymentList.Items {
+		deployment := deployment
+		switch deployment.Name {
+		case "authorization-ingress-nginx-controller":
+			if nginxEnabled {
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
+			}
+		case "cert-manager":
+			if certEnabled {
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
+			}
+		case "cert-manager-cainjector":
+			if certEnabled {
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
+			}
+		case "cert-manager-webhook":
+			if certEnabled {
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
+			}
+		case "proxy-server":
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
+		case "redis-commander":
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
+		case "redis-primary":
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
+		case "role-service":
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
+		case "storage-service":
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
+		case "tenant-service":
+			if !checkFn(&deployment) {
+				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
+		}
+	}
+
+	log.Info("auth proxy deployment successful")
+
+	return true, nil
 }
