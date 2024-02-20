@@ -879,13 +879,13 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.Operato
 		if component.Name == ObservabilityOtelCollectorName && component.Enabled {
 			getIssuerCertServiceObs(op, cr, component.Name)
 			err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
-			if err = nil {
+			if err != nil {
 				return err
 			}
 		} else if component.Name == ObservabilityTopologyName && component.Enabled {
 			getIssuerCertServiceObs(op, cr, component.Name)
 			err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
-			if err = nil {
+			if err != nil {
 				return err
 			}
 		}
