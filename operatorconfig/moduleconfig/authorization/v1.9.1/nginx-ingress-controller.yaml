@@ -429,6 +429,7 @@ spec:
         app.kubernetes.io/component: controller
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/name: ingress-nginx
+        csm: <NAME>
     spec:
       containers:
       - args:

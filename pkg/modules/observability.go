@@ -171,6 +171,9 @@ const (
 
 	// PMaxObsYamlFile - powermax metrics yaml file
 	PMaxObsYamlFile string = "karavi-metrics-powermax.yaml"
+
+	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	CSMNameSpace = "<CSM_NAMESPACE>"
 )
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
@@ -292,6 +295,7 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, TopologyLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, TopologyImage, topologyImage)
 	return YamlString, nil
@@ -356,6 +360,7 @@ func getOtelCollector(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorImage, otelCollectorImage)
 	YamlString = strings.ReplaceAll(YamlString, NginxProxyImage, nginxProxyImage)
 	return YamlString, nil
@@ -502,6 +507,7 @@ func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStor
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, PowerScaleImage, pscaleImage)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PowerScaleMaxConcurrentQueries, maxConcurrentQueries)
@@ -703,6 +709,7 @@ func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexImage, pflexImage)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexMaxConcurrentQueries, maxConcurrentQueries)
@@ -923,6 +930,7 @@ func getPowerMaxMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorage
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, PmaxObsImage, pmaxImage)
 	YamlString = strings.ReplaceAll(YamlString, PmaxLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PmaxLogFormat, logFormat)

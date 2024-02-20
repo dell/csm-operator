@@ -105,8 +105,6 @@ const (
 	AppMobCertManagerComponent = "cert-manager"
 	// AppMobVeleroComponent - velero component
 	AppMobVeleroComponent = "velero"
-	// CSMName - name
-	CSMName = "<NAME>"
 )
 
 // getAppMobilityModule - get instance of app mobility module

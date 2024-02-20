@@ -33,6 +33,8 @@ const (
 	CertManagerManifest = "cert-manager.yaml"
 	// CommonNamespace -
 	CommonNamespace = "<NAMESPACE>"
+	// CSMName - name
+	CSMName = "<NAME>"
 )
 
 // SupportedDriverParam -
