@@ -872,14 +872,11 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.Operato
 	obs, err := getObservabilityModule(cr)
 	
 	for _, component := range obs.Components {
-		if component.Name == ObservabilityOtelCollectorName && *(component.Enabled) {
-			yamlString := getIssuerCertServiceObs(op, cr, component.Name)
-			err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) {
+			yamlString, err := getIssuerCertServiceObs(op, cr, component.Name)
 			if err != nil {
 				return err
 			}
-		} else if component.Name == ObservabilityTopologyName && *(component.Enabled) {
-			yamlString := getIssuerCertServiceObs(op, cr, component.Name)
 			err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
 			if err != nil {
 				return err
