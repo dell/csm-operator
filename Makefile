@@ -100,11 +100,11 @@ run: generate gen-semver fmt vet static-manifests ## Run a controller from your 
 
 podman-build: gen-semver download-csm-common ## Build podman image with the manager.
 	$(eval include csm-common.mk)
-	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE)
+	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-build: gen-semver download-csm-common ## Build docker image with the manager.
 	$(eval include csm-common.mk)
-	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE)
+	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}

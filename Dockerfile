@@ -11,9 +11,10 @@
 # limitations under the License.
 
 ARG BASEIMAGE
+ARG GOIMAGE
 
 # Build the manager binary
-FROM golang:1.21 as builder
+FROM $GOIMAGE as builder
 
 WORKDIR /workspace
 
