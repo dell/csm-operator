@@ -10,6 +10,7 @@ package modules
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -860,11 +861,11 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 	}
 
 	yamlString = string(buf)
-
-	YamlString = strings.ReplaceAll(YamlString, OtelCollectorCert, otelCert)
-	YamlString = strings.ReplaceAll(YamlString, OtelCollectorPrivateKey, otelPrivateKey)
-	YamlString = strings.ReplaceAll(YamlString, TopologyCert, topologyCert)
-	YamlString = strings.ReplaceAll(YamlString, TopologyPrivateKey, topologyPrivateKey)
+	// base64.StdEncoding.EncodeToString(giveninput)
+	YamlString = strings.ReplaceAll(YamlString, OtelCollectorCert, base64.StdEncoding.EncodeToString(otelCert))
+	YamlString = strings.ReplaceAll(YamlString, OtelCollectorPrivateKey, base64.StdEncoding.EncodeToString(otelPrivateKey))
+	YamlString = strings.ReplaceAll(YamlString, TopologyCert, base64.StdEncoding.EncodeToString(topologyCert))
+	YamlString = strings.ReplaceAll(YamlString, TopologyPrivateKey, base64.StdEncoding.EncodeToString(topologyPrivateKey))
 
 	return yamlString, nil
 }
