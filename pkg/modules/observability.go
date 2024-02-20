@@ -870,6 +870,9 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 // IssuerCertService - apply and delete the app mobility issuer and certificate service
 func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	obs, err := getObservabilityModule(cr)
+	if err != nil {
+		return err
+	}
 	
 	for _, component := range obs.Components {
 		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) {
