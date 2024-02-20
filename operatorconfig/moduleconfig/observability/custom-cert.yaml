@@ -2,34 +2,34 @@ apiVersion: v1
 kind: Secret
 type: kubernetes.io/tls
 metadata:
-  name: <OBSERVABILITY-COMPONENT>-secret
+  name: <OBSERVABILITY_COMPONENT>-secret
   namespace: karavi
 data:
   # replace with actual base64-encoded certificate
-  tls.crt: <BASE64-CERTIFICATE>
+  tls.crt: <BASE64_CERTIFICATE>
   # replace with actual base64-encoded private key
-  tls.key: <BASE64-PRIVATE-KEY>
+  tls.key: <BASE64_PRIVATE_KEY>
 
 ---
 
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: <OBSERVABILITY-COMPONENT>-issuer
+  name: <OBSERVABILITY_COMPONENT>-issuer
   namespace: karavi
 spec:
   ca:
-    secretName: <OBSERVABILITY-COMPONENT>-secret
+    secretName: <OBSERVABILITY_COMPONENT>-secret
 
 ---
 
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: <OBSERVABILITY-COMPONENT>
+  name: <OBSERVABILITY_COMPONENT>
   namespace: karavi
 spec:
-  secretName: <OBSERVABILITY-COMPONENT>-tls
+  secretName: <OBSERVABILITY_COMPONENT>-tls
   duration: 2160h # 90d
   renewBefore: 360h # 15d
   subject:
@@ -44,8 +44,8 @@ spec:
     - server auth
     - client auth
   dnsNames:
-  - <OBSERVABILITY-COMPONENT>
-  - <OBSERVABILITY-COMPONENT>.karavi.svc.kubernetes.local
+  - <OBSERVABILITY_COMPONENT>
+  - <OBSERVABILITY_COMPONENT>.karavi.svc.kubernetes.local
   issuerRef:
     name: <OBSERVABILITY-COMPONENT>-issuer
     kind: Issuer
