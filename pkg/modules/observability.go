@@ -260,6 +260,7 @@ func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csm
 
 // ObservabilityTopology - delete or update topology objects
 func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
 	YamlString, err := getTopology(op, cr)
 	if err != nil {
 		return err
@@ -271,6 +272,7 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.Operat
 	}
 
 	for _, ctrlObj := range topoObjects {
+		log.Infow("current topoObject is ", "ctrlObj", ctrlObj)
 		if isDeleting {
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
