@@ -92,7 +92,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.9.2"
+	CSMVersion = "v1.10.0"
 )
 
 var (
@@ -421,7 +421,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.CsmLabel]
-	//if this pod is an obs. pod, namespace might not match csm namespace
+	// if this pod is an obs. pod, namespace might not match csm namespace
 	ns := p.GetLabels()[constants.CsmNamespaceLabel]
 	if ns == "" {
 		ns = p.Namespace

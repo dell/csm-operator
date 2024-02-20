@@ -77,8 +77,10 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 			return 0, csmv1.PodStatus{Available: "0"}, nil
 		}
 
-		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{Name: instance.GetControllerName(),
-			Namespace: instance.GetNamespace()}, deployment)
+		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
+			Name:      instance.GetControllerName(),
+			Namespace: instance.GetNamespace(),
+		}, deployment)
 		if err != nil {
 			return 0, csmv1.PodStatus{Available: "0"}, err
 		}
@@ -99,7 +101,6 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		Desired:   fmt.Sprintf("%d", desired),
 		Failed:    fmt.Sprintf("%d", numberUnavailable),
 	}, err
-
 }
 
 // TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
@@ -382,7 +383,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := true
-	var err error = nil
+	var err error
 	nodeStatusGood := true
 	newStatus.State = constants.Succeeded
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
@@ -414,7 +415,6 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
 	if (fmt.Sprintf("%d", controllerReplicas) == controllerStatus.Available) && nodeStatusGood {
-
 		for _, module := range instance.Spec.Modules {
 			moduleStatus, exists := checkModuleStatus[module.Name]
 			if exists && module.Enabled {
@@ -632,7 +632,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		if oldStatus.State == constants.Succeeded {
 			log.Info("HandleSuccess Driver state didn't change from Succeeded")
 		} else {
-			log.Info("HandleSuccess Driver stat changed to Succeeded")
+			log.Info("HandleSuccess Driver state changed to Succeeded")
 		}
 		return reconcile.Result{}, nil
 	}
@@ -846,7 +846,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 
 	driverName := instance.Spec.Driver.CSIDriverType
 
-	//TODO: PowerScale DriverType should be changed from "isilon" to "powerscale"
+	// TODO: PowerScale DriverType should be changed from "isilon" to "powerscale"
 	// this is a temporary fix until we can do that
 	if driverName == "isilon" {
 		driverName = "powerscale"
