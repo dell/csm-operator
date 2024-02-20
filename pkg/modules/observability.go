@@ -828,6 +828,7 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 	otelPrivateKey := ""
 	topologyCert := ""
 	topologyPrivateKey := ""
+	certPath := ""
 	
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
@@ -845,14 +846,14 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 		}
 	}
 
-	if topologyCert || topologyPrivateKey || otelCert || otelPrivateKey {
-		if topologyCert && topologyPrivateKey && otelCert && otelPrivateKey {
-			certPath := fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, CustomCert)
+	if topologyCert 1= "" || topologyPrivateKey != "" || otelCert != "" || otelPrivateKey != "" {
+		if topologyCert != "" && topologyPrivateKey != "" && otelCert != "" && otelPrivateKey != "" {
+			certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, CustomCert)
 		} else {
 			return yamlString, fmt.Errorf("observability install failed -- not all certs and private keys provided for observability custom cert")
 		}
 	} else {
-		certPath := fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, SelfSignedCert)
+		certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, SelfSignedCert)
 	}
 	
 	buf, err := os.ReadFile(filepath.Clean(certPath))
@@ -862,10 +863,10 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 
 	yamlString = string(buf)
 	// base64.StdEncoding.EncodeToString(giveninput)
-	YamlString = strings.ReplaceAll(YamlString, OtelCollectorCert, base64.StdEncoding.EncodeToString(otelCert))
-	YamlString = strings.ReplaceAll(YamlString, OtelCollectorPrivateKey, base64.StdEncoding.EncodeToString(otelPrivateKey))
-	YamlString = strings.ReplaceAll(YamlString, TopologyCert, base64.StdEncoding.EncodeToString(topologyCert))
-	YamlString = strings.ReplaceAll(YamlString, TopologyPrivateKey, base64.StdEncoding.EncodeToString(topologyPrivateKey))
+	yamlString = strings.ReplaceAll(yamlString, OtelCollectorCert, base64.StdEncoding.EncodeToString([]byte(otelCert)))
+	yamlString = strings.ReplaceAll(yamlString, OtelCollectorPrivateKey, base64.StdEncoding.EncodeToString([]byte(otelPrivateKey)))
+	yamlString = strings.ReplaceAll(yamlString, TopologyCert, base64.StdEncoding.EncodeToString([]byte(topologyCert)))
+	yamlString = strings.ReplaceAll(yamlString, TopologyPrivateKey, base64.StdEncoding.EncodeToString([]byte(topologyPrivateKey)))
 
 	return yamlString, nil
 }
