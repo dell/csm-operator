@@ -824,13 +824,11 @@ func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string
 }
 
 // getIssuerCertService - gets the app mobility cert manager's issuer and certificate manifest
-func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, componentName string) (string, error) {
 	yamlString := ""
-	otelCert := ""
-	otelPrivateKey := ""
-	topologyCert := ""
-	topologyPrivateKey := ""
-	certPath := ""
+	certificate := ""
+	privateKey := ""
+	certificatePath := ""
 	
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
@@ -838,24 +836,20 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 	}
 
 	for _, component := range obs.Components {
-		switch component.Name {
-		case string(csmv1.Topology):
-			topologyCert = component.Certificate
-			topologyPrivateKey = component.PrivateKey
-		case string(csmv1.OtelCollector):
-			otelCert = component.Certificate
-			otelPrivateKey = component.PrivateKey
+		if component.Name == componentName {
+			certificate = component.Certificate
+			privateKey = component.PrivateKey
 		}
 	}
 
-	if topologyCert != "" || topologyPrivateKey != "" || otelCert != "" || otelPrivateKey != "" {
-		if topologyCert != "" && topologyPrivateKey != "" && otelCert != "" && otelPrivateKey != "" {
-			certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, CustomCert)
+	if certificate != "" || privateKey != "" {
+		if certificate != "" && privateKey != "" {
+			certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s-%s", op.ConfigDirectory, obs.ConfigVersion, componentName, CustomCert)
 		} else {
-			return yamlString, fmt.Errorf("observability install failed -- not all certs and private keys provided for observability custom cert")
+			return yamlString, fmt.Errorf("observability install failed -- either cert or privatekey missing for %s custom cert", componentName)
 		}
 	} else {
-		certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, SelfSignedCert)
+		certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s-%s", op.ConfigDirectory, obs.ConfigVersion, componentName, SelfSignedCert)
 	}
 	
 	buf, err := os.ReadFile(filepath.Clean(certPath))
@@ -864,25 +858,34 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 	}
 
 	yamlString = string(buf)
-	// base64.StdEncoding.EncodeToString(giveninput)
-	yamlString = strings.ReplaceAll(yamlString, OtelCollectorCert, base64.StdEncoding.EncodeToString([]byte(otelCert)))
-	yamlString = strings.ReplaceAll(yamlString, OtelCollectorPrivateKey, base64.StdEncoding.EncodeToString([]byte(otelPrivateKey)))
-	yamlString = strings.ReplaceAll(yamlString, TopologyCert, base64.StdEncoding.EncodeToString([]byte(topologyCert)))
-	yamlString = strings.ReplaceAll(yamlString, TopologyPrivateKey, base64.StdEncoding.EncodeToString([]byte(topologyPrivateKey)))
+
+	yamlString = strings.ReplaceAll(yamlString, ObservabilityCertificate, certificate)
+	yamlString = strings.ReplaceAll(yamlString, ObservabilityPrivateKey, otelPrivateKey)
 
 	return yamlString, nil
 }
 
 // IssuerCertService - apply and delete the app mobility issuer and certificate service
-func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, component string) error {
 	yamlString, err := getIssuerCertServiceObs(op, cr)
 	if err != nil {
 		return err
 	}
 
-	er := applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
-	if er != nil {
-		return er
+	for _, component := range obs.Components {
+		if component.Name == ObservabilityOtelCollectorName && component.Enabled {
+			getIssuerCertServiceObs(op, cr, component.Name)
+			err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+			if err = nil {
+				return err
+			}
+		} else if component.Name == ObservabilityTopologyName && component.Enabled {
+			getIssuerCertServiceObs(op, cr, component.Name)
+			err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+			if err = nil {
+				return err
+			}
+		}
 	}
 
 	return nil
