@@ -196,7 +196,7 @@ const (
 )
 
 // ComponentNameToSecretPrefix - map from component name to secret prefix
-var ComponentNameToSecretPrefix map[string]string = {ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology",}
+var ComponentNameToSecretPrefix map[string]string = {ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology"}
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
 var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
