@@ -11,10 +11,10 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: <OBSERVABILITY-COMPONENT>
+  name: <OBSERVABILITY_COMPONENT>
   namespace: karavi
 spec:
-  secretName: <OBSERVABILITY-COMPONENT>-tls
+  secretName: <OBSERVABILITY_COMPONENT>-tls
   duration: 2160h # 90d
   renewBefore: 360h # 15d
   subject:
@@ -29,8 +29,8 @@ spec:
     - server auth
     - client auth
   dnsNames:
-  - <OBSERVABILITY-COMPONENT>
-  - <OBSERVABILITY-COMPONENT>.karavi.svc.kubernetes.local
+  - <OBSERVABILITY_COMPONENT>
+  - <OBSERVABILITY_COMPONENT>.karavi.svc.kubernetes.local
   issuerRef:
     name: selfsigned-issuer
     kind: Issuer
