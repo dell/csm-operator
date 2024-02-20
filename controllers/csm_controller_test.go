@@ -1396,7 +1396,7 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	assert.NotNil(suite.T(), err)
 
 	for i := range csm.Spec.Modules[0].Components {
-		fmt.Println("Component name: %s", csm.Spec.Modules[0].Components[i].Name)
+		fmt.Printf("Component name: %s\n", csm.Spec.Modules[0].Components[i].Name)
 		csm.Spec.Modules[0].Components[i].Enabled = &[]bool{false}[0]
 		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
 		if i < len(csm.Spec.Modules[0].Components)-1 {
