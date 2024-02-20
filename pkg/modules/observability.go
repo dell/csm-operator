@@ -182,17 +182,11 @@ const (
 	// CustomCert - custom certificate file
 	CustomCert string = "custom-cert.yaml"
 
-	// OtelCollectorCert
-	OtelCollectorCert string = "<TOPOLOGY-CERT>"
+	// ObservabilityCertificate -- certificate for either topology or otel-collector in base64
+	ObservabilityCertificate string = "<BASE64-CERTIFICATE>"
 
 	// OtelCollectorPrivateKey
-	OtelCollectorPrivateKey string = "<TOPOLOGY-PRIVATE-KEY>"
-
-	// TopologyCert
-	TopologyCert string = "<OTEL-CERT>"
-
-	// TopologyPrivateKey
-	TopologyPrivateKey string = "<OTEL-PRIVATE-KEY>"
+	ObservabilityPrivateKey string = "<BASE64-PRIVATE-KEY>"
 
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	CSMNameSpace string = "<CSM_NAMESPACE>"
@@ -842,6 +836,8 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 		}
 	}
 
+	// If we have at least one of the certificate or privateKey fields filled in, we assume the customer is trying to use a custom cert.
+	// Otherwise, we give them the self-signed cert.
 	if certificate != "" || privateKey != "" {
 		if certificate != "" && privateKey != "" {
 			certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s-%s", op.ConfigDirectory, obs.ConfigVersion, componentName, CustomCert)
@@ -860,7 +856,7 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 	yamlString = string(buf)
 
 	yamlString = strings.ReplaceAll(yamlString, ObservabilityCertificate, certificate)
-	yamlString = strings.ReplaceAll(yamlString, ObservabilityPrivateKey, otelPrivateKey)
+	yamlString = strings.ReplaceAll(yamlString, ObservabilityPrivateKey, privateKey)
 
 	return yamlString, nil
 }
