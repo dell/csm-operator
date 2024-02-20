@@ -183,14 +183,20 @@ const (
 	CustomCert string = "custom-cert.yaml"
 
 	// ObservabilityCertificate -- certificate for either topology or otel-collector in base64
-	ObservabilityCertificate string = "<BASE64-CERTIFICATE>"
+	ObservabilityCertificate string = "<BASE64_CERTIFICATE>"
 
-	// OtelCollectorPrivateKey
-	ObservabilityPrivateKey string = "<BASE64-PRIVATE-KEY>"
+	// OtelCollectorPrivateKey -- private key for either topology or otel-collector in base64
+	ObservabilityPrivateKey string = "<BASE64_PRIVATE_KEY>"
+
+	// ObservabilityComponent --  placeholder for wither karavi-topology or otel-collector
+	ObservabilitySecretPrefix string = "<OBSERVABILITY_SECRET_PREFIX>"
 
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	CSMNameSpace string = "<CSM_NAMESPACE>"
 )
+
+// ComponentNameToSecretPrefix - map from component name to secret prefix
+var ComponentNameToSecretPrefix map[string]string = {ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology",}
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
 var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
@@ -840,12 +846,12 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 	// Otherwise, we give them the self-signed cert.
 	if certificate != "" || privateKey != "" {
 		if certificate != "" && privateKey != "" {
-			certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s-%s", op.ConfigDirectory, obs.ConfigVersion, componentName, CustomCert)
+			certPath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, CustomCert)
 		} else {
 			return yamlString, fmt.Errorf("observability install failed -- either cert or privatekey missing for %s custom cert", componentName)
 		}
 	} else {
-		certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s-%s", op.ConfigDirectory, obs.ConfigVersion, componentName, SelfSignedCert)
+		certPath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, SelfSignedCert)
 	}
 	
 	buf, err := os.ReadFile(filepath.Clean(certPath))
@@ -857,6 +863,7 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 
 	yamlString = strings.ReplaceAll(yamlString, ObservabilityCertificate, certificate)
 	yamlString = strings.ReplaceAll(yamlString, ObservabilityPrivateKey, privateKey)
+	yamlString = strings.ReplaceAll(yamlString, ObservabilitySecretPrefix, ComponentNameToSecretPrefix[componentName])
 
 	return yamlString, nil
 }
