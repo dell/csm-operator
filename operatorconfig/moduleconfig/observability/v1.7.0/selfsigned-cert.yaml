@@ -11,10 +11,10 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: otel-collector
+  name: <OBSERVABILITY-COMPONENT>
   namespace: karavi
 spec:
-  secretName: otel-collector-tls
+  secretName: <OBSERVABILITY-COMPONENT>-tls
   duration: 2160h # 90d
   renewBefore: 360h # 15d
   subject:
@@ -29,38 +29,8 @@ spec:
     - server auth
     - client auth
   dnsNames:
-  - otel-collector
-  - otel-collector.karavi.svc.kubernetes.local
-  issuerRef:
-    name: selfsigned-issuer
-    kind: Issuer
-    group: cert-manager.io
-
----
-
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: karavi-topology
-  namespace: karavi
-spec:
-  secretName: karavi-topology-tls
-  duration: 2160h # 90d
-  renewBefore: 360h # 15d
-  subject:
-    organizations:
-    - dell
-  isCA: false
-  privateKey:
-    algorithm: RSA
-    encoding: PKCS1
-    size: 2048
-  usages:
-    - server auth
-    - client auth
-  dnsNames:
-  - karavi-topology
-  - karavi-topology.karavi.svc.kubernetes.local
+  - <OBSERVABILITY-COMPONENT>
+  - <OBSERVABILITY-COMPONENT>.karavi.svc.kubernetes.local
   issuerRef:
     name: selfsigned-issuer
     kind: Issuer
