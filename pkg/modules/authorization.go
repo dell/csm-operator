@@ -277,7 +277,6 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 			}
 		}
 	}
-
 	for i, c := range container.VolumeMounts {
 		if *c.Name == DefaultDriverConfigParamsVolumeMount {
 			newName := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
@@ -490,6 +489,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
+			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 
 			for _, env := range component.Envs {
 				if env.Name == "REDIS_STORAGE_CLASS" {
@@ -505,6 +505,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisStorageClass, redisStorageClass)
+	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 
 	return YamlString, nil
 }
@@ -620,6 +621,7 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, proxyIngressHost)
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressClassName, proxyIngressClassName)
+	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 
 	return YamlString, nil
 }
@@ -675,6 +677,7 @@ func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = string(buf)
 	authNamespace := cr.Namespace
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
+	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 
 	return YamlString, nil
 }
