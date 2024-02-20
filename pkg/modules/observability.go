@@ -10,7 +10,6 @@ package modules
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -846,15 +845,15 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 	// Otherwise, we give them the self-signed cert.
 	if certificate != "" || privateKey != "" {
 		if certificate != "" && privateKey != "" {
-			certPath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, CustomCert)
+			certificatePath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, CustomCert)
 		} else {
 			return yamlString, fmt.Errorf("observability install failed -- either cert or privatekey missing for %s custom cert", componentName)
 		}
 	} else {
-		certPath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, SelfSignedCert)
+		certificatePath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, SelfSignedCert)
 	}
 	
-	buf, err := os.ReadFile(filepath.Clean(certPath))
+	buf, err := os.ReadFile(filepath.Clean(certificatePath))
 	if err != nil {
 		return yamlString, err
 	}
@@ -869,12 +868,9 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 }
 
 // IssuerCertService - apply and delete the app mobility issuer and certificate service
-func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, component string) error {
-	yamlString, err := getIssuerCertServiceObs(op, cr)
-	if err != nil {
-		return err
-	}
-
+func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	obs, err := getObservabilityModule(cr)
+	
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityOtelCollectorName && component.Enabled {
 			getIssuerCertServiceObs(op, cr, component.Name)
