@@ -846,7 +846,7 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 		}
 	}
 
-	if topologyCert 1= "" || topologyPrivateKey != "" || otelCert != "" || otelPrivateKey != "" {
+	if topologyCert != "" || topologyPrivateKey != "" || otelCert != "" || otelPrivateKey != "" {
 		if topologyCert != "" && topologyPrivateKey != "" && otelCert != "" && otelPrivateKey != "" {
 			certPath = fmt.Sprintf("%s/moduleconfig/observability/%s/%s", op.ConfigDirectory, obs.ConfigVersion, CustomCert)
 		} else {
