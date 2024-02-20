@@ -100,7 +100,7 @@ spec:
             - name: SSL_CERT_DIR
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
-              value: false
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
             - name: X_CSI_APPROVE_SDC_ENABLED
               value: <X_CSI_APPROVE_SDC_ENABLED>
             - name: X_CSI_RENAME_SDC_ENABLED
@@ -123,6 +123,8 @@ spec:
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
+            - name: noderoot
+              mountPath: /noderoot
             - name: dev
               mountPath: /dev
             - name: vxflexos-config
@@ -224,6 +226,10 @@ spec:
         - name: pods-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
+            type: Directory
+        - name: noderoot
+          hostPath:
+            path: /
             type: Directory
         - name: dev
           hostPath:

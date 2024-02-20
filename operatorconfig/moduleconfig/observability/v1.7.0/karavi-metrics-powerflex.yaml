@@ -111,6 +111,7 @@ spec:
         app.kubernetes.io/name: karavi-metrics-powerflex
         app.kubernetes.io/instance: karavi
         csm: <NAME>
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccount: karavi-metrics-powerflex-controller
       containers:
