@@ -11,9 +11,10 @@ spec:
   accessMode: ReadWrite
   objectStorage:
     bucket: <BUCKET_NAME>
+    caCert: <BACKUP_STORAGE_CERT_CA>
   default: true
   config: 
       region: minio
       s3ForcePathStyle: true
       s3Url: <BACKUP_STORAGE_URL>
-      caCert: <BACKUP_STORAGE_CERT_CA>
+      
