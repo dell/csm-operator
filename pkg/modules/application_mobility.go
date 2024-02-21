@@ -14,6 +14,7 @@ package modules
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -745,11 +746,15 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 	yamlString = strings.ReplaceAll(yamlString, VeleroBucketName, bucketName)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupURL)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
-	yamlString = strings.ReplaceAll(yamlString, BackupStorageCertCa, backupcert)
 
-	if backupcert == "" {
+	if backupcert != "" {
+		// need to encode base64 string
+		encodeString := base64.StdEncoding.EncodeToString([]byte(backupcert))
+		yamlString = strings.ReplaceAll(yamlString, BackupStorageCertCa, encodeString)
+	} else {
 		// caCert not being used for this BSL, need to remove it from BSL yaml
 		yamlString = strings.ReplaceAll(yamlString, "caCert:", "")
+		yamlString = strings.ReplaceAll(yamlString, BackupStorageCertCa, backupcert)
 	}
 
 	return backupStorageLocationName, yamlString, nil
