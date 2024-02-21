@@ -727,12 +727,12 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	} else if err != nil {
 		log.Errorw("error to find object in deleteObj", "Error", err.Error(), "Name:", name, "Kind:", kind)
 		return err
-	} else {
-		log.Infow("Deleting object", "Name:", name, "Kind:", kind)
-		err = ctrlClient.Delete(ctx, obj)
-		if err != nil && !k8serror.IsNotFound(err) {
-			return err
-		}
+	}
+		
+	log.Infow("Deleting object", "Name:", name, "Kind:", kind)
+	err = ctrlClient.Delete(ctx, obj)
+	if err != nil && !k8serror.IsNotFound(err) {
+		return err
 	}
 	return nil
 }
