@@ -12,8 +12,8 @@ spec:
   objectStorage:
     bucket: <BUCKET_NAME>
   default: true
-  caCert: <BACKUP_STORAGE_CERT_CA> 
   config: 
       region: minio
       s3ForcePathStyle: true
       s3Url: <BACKUP_STORAGE_URL>
+      caCert: <BACKUP_STORAGE_CERT_CA>
