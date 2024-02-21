@@ -698,7 +698,8 @@ func getUseVolumeSnapshot(_ context.Context, op utils.OperatorConfig, cr csmv1.C
 }
 
 // getBackupStorageLoc - gets the velero Backup Storage Location manifest
-func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, _ crclient.Client) (string, string, error) {
+func getBackupStorageLoc(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, _ crclient.Client) (string, string, error) {
+	log := logger.GetLogger(ctx)
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -707,6 +708,7 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 	}
 
 	BackupStorageLocPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, appMob.ConfigVersion, BackupStorageLoc)
+	log.Infof("BSL path is: %s", BackupStorageLocPath)
 	buf, err := os.ReadFile(filepath.Clean(BackupStorageLocPath))
 	if err != nil {
 		return "Error: ", yamlString, err
@@ -747,14 +749,18 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupURL)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
 
+
+	log.Infof("backupcert is: %s", backupcert )
 	if backupcert != "" {
 		// need to encode base64 string
 		encodeString := base64.StdEncoding.EncodeToString([]byte(backupcert))
 		yamlString = strings.ReplaceAll(yamlString, BackupStorageCertCa, encodeString)
+		log.Infof("replacing: %s with %s", BackupStorageCertCa, encodeString)
 	} else {
 		// caCert not being used for this BSL, need to remove it from BSL yaml
 		yamlString = strings.ReplaceAll(yamlString, "caCert:", "")
 		yamlString = strings.ReplaceAll(yamlString, BackupStorageCertCa, backupcert)
+		log.Infof("removing caCert from yaml")
 	}
 
 	return backupStorageLocationName, yamlString, nil
