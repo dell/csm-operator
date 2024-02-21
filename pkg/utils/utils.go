@@ -744,25 +744,35 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
 
-	if err != nil && k8serror.IsNotFound(err) {
-		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
-		err = ctrlClient.Create(ctx, obj)
-		if err != nil {
+		if err != nil && k8serror.IsNotFound(err) {
+			log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
+			err = ctrlClient.Create(ctx, obj)
+			if err != nil {
+				return err
+			}
+
+		} else if err != nil {
+			log.Errorw("Unknown error.", "Error", err.Error())
 			return err
+		} else {
+			log.Infow("Updating a new Object", "Name:", name, "Kind:", kind)
+			err = ctrlClient.Update(ctx, obj)
+			if err != nil {
+				return err
+			}
 		}
-
-	} else if err != nil {
-		log.Errorw("Unknown error.", "Error", err.Error())
+		return nil
+	})
+	if err != nil {
+		// May be conflict if max retries were hit, or may be something unrelated
+		// like permissions or a network error
+		log.Error(err, " Failed to apply object %s", name)
 		return err
-	} else {
-		log.Infow("Updating a new Object", "Name:", name, "Kind:", kind)
-		err = ctrlClient.Update(ctx, obj)
-		if err != nil {
-			return err
-		}
 	}
+	
 	return nil
 }
 
