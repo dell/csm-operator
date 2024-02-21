@@ -76,6 +76,8 @@ const (
 	VolSnapshotlocation = "<VOL_SNAPSHOT_LOCATION_NAME>"
 	// BackupStorageURL - cloud url for backup storage location
 	BackupStorageURL = "<BACKUP_STORAGE_URL>"
+	// BackupStorageCertCa- string value representing a base64 encoded CA bundle
+	BackupStorageCertCa = "<BACKUP_STORAGE_CERT_CA>"
 	// ConfigProvider - configurations provider
 	ConfigProvider = "<CONFIGURATION_PROVIDER>"
 	// VeleroImage - Image for velero
@@ -714,6 +716,7 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 	provider := ""
 	bucketName := ""
 	backupURL := ""
+	backupcert := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
@@ -729,6 +732,10 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 				if strings.Contains(BackupStorageURL, env.Name) {
 					backupURL = env.Value
 				}
+				if strings.Contains(BackupStorageCertCa, env.Name) {
+					backupcert = env.Value
+				}
+
 			}
 		}
 	}
@@ -738,6 +745,12 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 	yamlString = strings.ReplaceAll(yamlString, VeleroBucketName, bucketName)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupURL)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageCertCa, backupcert)
+
+	if backupcert == "" {
+		// caCert not being used for this BSL, need to remove it from BSL yaml
+		yamlString = strings.ReplaceAll(yamlString, "caCert:", "")
+	}
 
 	return backupStorageLocationName, yamlString, nil
 }
