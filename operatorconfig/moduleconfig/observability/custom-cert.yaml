@@ -47,6 +47,6 @@ spec:
   - <OBSERVABILITY_SECRET_PREFIX>
   - <OBSERVABILITY_SECRET_PREFIX>.karavi.svc.kubernetes.local
   issuerRef:
-    name: <OBSERVABILITY-COMPONENT>-issuer
+    name: <OBSERVABILITY_SECRET_PREFIX>-issuer
     kind: Issuer
     group: cert-manager.io
