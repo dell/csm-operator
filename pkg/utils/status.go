@@ -52,7 +52,7 @@ func getInt32(pointer *int32) int32 {
 }
 
 // calculates deployment state of drivers only; module deployment status will be checked in checkModuleStatus
-func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (int32, csmv1.PodStatus, error) {
+func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (csmv1.PodStatus, error) {
 	log := logger.GetLogger(ctx)
 	var msg string
 	deployment := &appsv1.Deployment{}
@@ -61,11 +61,15 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	available := int32(0)
 	ready := int32(0)
 	numberUnavailable := int32(0)
-	totalReplicas := int32(0)
+	emptyStatus := csmv1.PodStatus{
+		Available: "0",
+		Desired:   "0",
+		Failed:    "0",
+	}
 
 	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
 	if err != nil {
-		return int32(totalReplicas), csmv1.PodStatus{}, err
+		return emptyStatus, err
 	}
 
 	for _, cluster := range clusterClients {
@@ -74,7 +78,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 
 		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) || instance.GetName() == string(csmv1.ApplicationMobility) {
 			log.Infof("Not a driver instance, will not check deploymentstatus")
-			return 0, csmv1.PodStatus{Available: "0"}, nil
+			return emptyStatus, nil
 		}
 
 		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
@@ -82,7 +86,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 			Namespace: instance.GetNamespace(),
 		}, deployment)
 		if err != nil {
-			return 0, csmv1.PodStatus{Available: "0"}, err
+			return emptyStatus, err
 		}
 		log.Infof("Calculating status for deployment: %s", deployment.Name)
 		desired = deployment.Status.Replicas
@@ -96,7 +100,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		log.Infow("deployment", "numberUnavailable", numberUnavailable)
 	}
 
-	return ready, csmv1.PodStatus{
+	return csmv1.PodStatus{
 		Available: fmt.Sprintf("%d", available),
 		Desired:   fmt.Sprintf("%d", desired),
 		Failed:    fmt.Sprintf("%d", numberUnavailable),
@@ -352,8 +356,19 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 					}
 				}
 			}
-			if pod.Status.Phase == corev1.PodRunning {
+			// pod can be running even if not all containers are up
+			podReadyCondition := corev1.ConditionFalse
+			for _, condition := range pod.Status.Conditions {
+				if condition.Type == corev1.PodReady {
+					podReadyCondition = condition.Status
+				}
+			}
+
+			if pod.Status.Phase == corev1.PodRunning && podReadyCondition == corev1.ConditionTrue {
 				totalRunning++
+			}
+			if podReadyCondition != corev1.ConditionTrue {
+				log.Infof("daemonset pod: %s is running, but is not ready", pod.Name)
 			}
 		}
 		for k, v := range errMap {
@@ -388,7 +403,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	newStatus.State = constants.Succeeded
 	// TODO: Currently commented this block of code as the API used to get the latest deployment status is not working as expected
 	// TODO: Can be uncommented once this issues gets sorted out
-	controllerReplicas, controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
+	controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
 	if controllerErr != nil {
 		log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
 	}
@@ -411,10 +426,10 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 
 	newStatus.ControllerStatus = controllerStatus
 
-	log.Infof("deployment controllerReplicas [%s]", controllerReplicas)
+	log.Infof("deployment controllerStatus.Desired [%s]", controllerStatus.Desired)
 	log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
 
-	if (fmt.Sprintf("%d", controllerReplicas) == controllerStatus.Available) && nodeStatusGood {
+	if (controllerStatus.Desired == controllerStatus.Available) && nodeStatusGood {
 		for _, module := range instance.Spec.Modules {
 			moduleStatus, exists := checkModuleStatus[module.Name]
 			if exists && module.Enabled {
@@ -433,8 +448,8 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 			}
 		}
 	} else {
-		log.Infof("either controllerReplicas != controllerStatus.Available or nodeStatus is bad")
-		log.Infof("controllerReplicas", controllerReplicas)
+		log.Infof("either controllerStatus.Desired  != controllerStatus.Available or nodeStatus is bad")
+		log.Infof("controllerStatus.Desired", controllerStatus.Desired)
 		log.Infof("controllerStatus.Available", controllerStatus.Available)
 		log.Infof("nodeStatusGood", nodeStatusGood)
 		running = false
