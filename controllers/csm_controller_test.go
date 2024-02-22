@@ -1439,6 +1439,32 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadComponent
 	csm.Spec.Modules[0].Components = goodModules
 }
 
+func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadCert() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getObservabilityModule()
+	reconciler := suite.createReconciler()
+
+	goodModules := csm.Spec.Modules[0].Components
+	for index, component := range csm.Spec.Modules[0].Components {
+		if component.Name == "topology" {
+			csm.Spec.Modules[0].Components[index].Certificate = "bad-cert"
+		}
+		if component.Name == "metrics-powerscale" {
+			csm.Spec.Modules[0].Components[index].Enabled = &[]bool{false}[0]
+		}
+		if component.Name == "metrics-powerflex" {
+			csm.Spec.Modules[0].Components[index].Enabled = &[]bool{false}[0]
+		}
+	}
+
+	fmt.Printf("[TestReconcileObservabilityErrorBadCert] module components: %+v\n", csm.Spec.Modules[0].Components)
+
+	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components = goodModules
+}
+
 func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Modules = getAuthProxyServer()
