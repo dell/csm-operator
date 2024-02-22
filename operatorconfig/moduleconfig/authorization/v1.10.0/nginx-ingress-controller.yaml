@@ -426,6 +426,7 @@ spec:
   template:
     metadata:
       labels:
+        csm: <NAME>
         app.kubernetes.io/component: controller
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/name: ingress-nginx
