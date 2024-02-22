@@ -39,10 +39,10 @@ func SyncServiceAccount(ctx context.Context, sa corev1.ServiceAccount, client cl
 	} else if err != nil {
 		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
-	} else {
-		// Updating the service account keeps regenerating the secrets.
-		// We dont have to update the service account if it exists.
-		log.Infow("ServiceAccount already exists", "Name:", sa.Name)
 	}
+
+	// Updating the service account keeps regenerating the secrets.
+	// We dont have to update the service account if it exists.
+	log.Infow("ServiceAccount already exists", "Name:", sa.Name)
 	return nil
 }
