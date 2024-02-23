@@ -188,7 +188,7 @@ const (
 	ObservabilityPrivateKey string = "<BASE64_PRIVATE_KEY>"
 
 	// ObservabilitySecretPrefix --  placeholder for either karavi-topology or otel-collector
-	ObservabilitySecretPrefix string = "<OBSERVABILITY_SECRET_PREFIX>"
+	ObservabilitySecretPrefix string = "<OBSERVABILITY_SECRET_PREFIX>" // #nosec G101 -- false positive
 
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	CSMNameSpace string = "<CSM_NAMESPACE>"
