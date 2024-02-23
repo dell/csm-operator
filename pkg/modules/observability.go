@@ -11,6 +11,8 @@ package modules
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -27,6 +29,7 @@ import (
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -172,9 +175,27 @@ const (
 	// PMaxObsYamlFile - powermax metrics yaml file
 	PMaxObsYamlFile string = "karavi-metrics-powermax.yaml"
 
+	// SelfSignedCert - self-signed certificate file
+	SelfSignedCert string = "selfsigned-cert.yaml"
+
+	// CustomCert - custom certificate file
+	CustomCert string = "custom-cert.yaml"
+
+	// ObservabilityCertificate -- certificate for either topology or otel-collector in base64
+	ObservabilityCertificate string = "<BASE64_CERTIFICATE>"
+
+	// ObservabilityPrivateKey -- private key for either topology or otel-collector in base64
+	ObservabilityPrivateKey string = "<BASE64_PRIVATE_KEY>"
+
+	// ObservabilitySecretPrefix --  placeholder for either karavi-topology or otel-collector
+	ObservabilitySecretPrefix string = "<OBSERVABILITY_SECRET_PREFIX>" // #nosec G101 -- false positive
+
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	CSMNameSpace = "<CSM_NAMESPACE>"
+	CSMNameSpace string = "<CSM_NAMESPACE>"
 )
+
+// ComponentNameToSecretPrefix - map from component name to secret prefix
+var ComponentNameToSecretPrefix = map[string]string{ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology"}
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
 var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
@@ -238,6 +259,7 @@ func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csm
 
 // ObservabilityTopology - delete or update topology objects
 func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
 	YamlString, err := getTopology(op, cr)
 	if err != nil {
 		return err
@@ -249,6 +271,7 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.Operat
 	}
 
 	for _, ctrlObj := range topoObjects {
+		log.Infow("current topoObject is ", "ctrlObj", ctrlObj)
 		if isDeleting {
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
@@ -798,6 +821,69 @@ func createObsSecretObj(driverSecret corev1.Secret, newNameSpace, newSecretName 
 // getNewAuthSecretName - add prefix to secretName
 func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string {
 	return fmt.Sprintf("%s-%s", driverType, secretName)
+}
+
+// getIssuerCertServiceObs - gets cert manager issuer and certificate manifest for observability
+func getIssuerCertServiceObs(op utils.OperatorConfig, obs csmv1.Module, componentName string) (string, error) {
+	yamlString := ""
+	certificate := ""
+	privateKey := ""
+	certificatePath := ""
+
+	for _, component := range obs.Components {
+		if component.Name == componentName {
+			certificate = component.Certificate
+			privateKey = component.PrivateKey
+		}
+	}
+
+	// If we have at least one of the certificate or privateKey fields filled in, we assume the customer is trying to use a custom cert.
+	// Otherwise, we give them the self-signed cert.
+	if certificate != "" || privateKey != "" {
+		if certificate != "" && privateKey != "" {
+			certificatePath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, CustomCert)
+		} else {
+			return yamlString, fmt.Errorf("observability install failed -- either cert or privatekey missing for %s custom cert", componentName)
+		}
+	} else {
+		certificatePath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, SelfSignedCert)
+	}
+
+	buf, err := os.ReadFile(filepath.Clean(certificatePath))
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+
+	yamlString = strings.ReplaceAll(yamlString, ObservabilityCertificate, certificate)
+	yamlString = strings.ReplaceAll(yamlString, ObservabilityPrivateKey, privateKey)
+	yamlString = strings.ReplaceAll(yamlString, ObservabilitySecretPrefix, ComponentNameToSecretPrefix[componentName])
+
+	return yamlString, nil
+}
+
+// IssuerCertServiceObs - apply and delete the observability issuer and certificate service
+func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	obs, err := getObservabilityModule(cr)
+	if err != nil {
+		return err
+	}
+
+	for _, component := range obs.Components {
+		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) {
+			yamlString, err := getIssuerCertServiceObs(op, obs, component.Name)
+			if err != nil {
+				return err
+			}
+			err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // PowerMaxMetrics - delete or update powermax metrics objects

@@ -135,15 +135,21 @@ spec:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
-      enabled: false
+      enabled: true
       configVersion: v1.7.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
-          enabled: false
+          enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/csm-topology:v1.7.0
+          # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
+          # Allowed values: string
+          certificate: ""
+          # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
+          # Allowed values: string
+          privateKey: ""
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -153,10 +159,16 @@ spec:
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: false
+          enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
           image: otel/opentelemetry-collector:0.42.0
+          # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
+          # Allowed values: string
+          certificate: ""
+          # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
+          # Allowed values: string
+          privateKey: ""
           envs:
             # image of nginx proxy image
             # Allowed values: string
@@ -164,9 +176,17 @@ spec:
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
 
+        - name: cert-manager
+          # enabled: Enable/Disable cert-manager
+          # Allowed values:
+          #   true: enable deployment of cert-manager
+          #   false: disable deployment of cert-manager only if it's already deployed
+          # Default value: false
+          enabled: true
+
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
-          enabled: false
+          enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
           image: dellemc/csm-metrics-powerflex:v1.7.0
           envs:
