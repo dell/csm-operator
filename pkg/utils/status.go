@@ -988,8 +988,10 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 		}
 	}
 
+	authNamespace := instance.GetNamespace()
+
 	opts := []client.ListOption{
-		client.InNamespace(instance.GetNamespace()),
+		client.InNamespace(authNamespace),
 	}
 	deploymentList := &appsv1.DeploymentList{}
 	err := r.GetClient().List(ctx, deploymentList, opts...)
@@ -1004,7 +1006,7 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 	for _, deployment := range deploymentList.Items {
 		deployment := deployment
 		switch deployment.Name {
-		case "authorization-ingress-nginx-controller":
+		case fmt.Sprintf("%s-ingress-nginx-controller", authNamespace):
 			if nginxEnabled {
 				if !checkFn(&deployment) {
 					log.Info("%s component not running in auth proxy deployment", deployment.Name)
