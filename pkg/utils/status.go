@@ -751,47 +751,34 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 
 // observabilityStatusCheck - calculate success state for observability module
 func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+	log := logger.GetLogger(ctx)
 	topologyEnabled := false
 	otelEnabled := false
 	certEnabled := false
 	metricsEnabled := false
-	certManagerRunning := false
-	certManagerCainInjectorRunning := false
-	certManagerWebhookRunning := false
-	otelRunning := false
-	metricsRunning := false
-	topologyRunning := false
 
 	driverName := instance.Spec.Driver.CSIDriverType
 
-	// TODO: PowerScale DriverType should be changed from "isilon" to "powerscale"
+	// PowerScale DriverType should be changed from "isilon" to "powerscale"
 	// this is a temporary fix until we can do that
-	if driverName == "isilon" {
-		driverName = "powerscale"
+	if driverName == csmv1.PowerScale {
+		driverName = csmv1.PowerScaleName
 	}
 
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Observability {
 			for _, c := range m.Components {
-				if c.Name == "topology" {
-					if *c.Enabled {
-						topologyEnabled = true
-					}
+				if c.Name == "topology" && *c.Enabled {
+					topologyEnabled = true
 				}
-				if c.Name == "otel-collector" {
-					if *c.Enabled {
-						otelEnabled = true
-					}
+				if c.Name == "otel-collector" && *c.Enabled {
+					otelEnabled = true
 				}
-				if c.Name == "cert-manager" {
-					if *c.Enabled {
-						certEnabled = true
-					}
+				if c.Name == "cert-manager" && *c.Enabled {
+					certEnabled = true
 				}
-				if c.Name == fmt.Sprintf("metrics-%s", driverName) {
-					if *c.Enabled {
-						metricsEnabled = true
-					}
+				if c.Name == fmt.Sprintf("metrics-%s", driverName) && *c.Enabled {
+					metricsEnabled = true
 				}
 			}
 		}
@@ -815,15 +802,24 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		switch deployment.Name {
 		case "otel-collector":
 			if otelEnabled {
-				otelRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in observability deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		case fmt.Sprintf("%s-metrics-%s", ObservabilityNamespace, driverName):
 			if metricsEnabled {
-				metricsRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in observability deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		case fmt.Sprintf("%s-topology", ObservabilityNamespace):
 			if topologyEnabled {
-				topologyRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in observability deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		}
 	}
@@ -844,44 +840,29 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		switch deployment.Name {
 		case "cert-manager":
 			if certEnabled {
-				certManagerRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in observability deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		case "cert-manager-cainjector":
 			if certEnabled {
-				certManagerCainInjectorRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in observability deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		case "cert-manager-webhook":
 			if certEnabled {
-				certManagerWebhookRunning = checkFn(&deployment)
+				if !checkFn(&deployment) {
+					log.Info("%s component not running in observability deployment", deployment.Name)
+					return false, nil
+				}
 			}
 		}
 	}
 
-	if certEnabled && otelEnabled && metricsEnabled && topologyEnabled {
-		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && otelRunning && metricsRunning && topologyRunning, nil
-	}
-
-	if !certEnabled && otelEnabled && metricsEnabled && topologyEnabled {
-		return otelRunning && metricsRunning && topologyRunning, nil
-	}
-
-	if certEnabled && otelEnabled && metricsEnabled && !topologyEnabled {
-		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && otelRunning && metricsRunning, nil
-	}
-
-	if !certEnabled && otelEnabled && metricsEnabled && !topologyEnabled {
-		return otelRunning && metricsRunning, nil
-	}
-
-	if certEnabled && metricsEnabled && !topologyEnabled && !otelEnabled {
-		return certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && metricsRunning, nil
-	}
-
-	if !certEnabled && metricsEnabled && !topologyEnabled && !otelEnabled {
-		return metricsRunning, nil
-	}
-
-	return false, nil
+	return true, nil
 }
 
 // authProxyStatusCheck - calculate success state for auth proxy
