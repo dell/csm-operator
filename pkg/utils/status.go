@@ -212,13 +212,6 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		ds := &appsv1.DaemonSet{}
 
 		nodeName := instance.GetNodeName()
-
-		// Application-mobility has a different node name than the drivers
-		if instance.GetName() == "application-mobility" {
-			log.Infof("Changing nodeName for application-mobility")
-			nodeName = "application-mobility-node-agent"
-		}
-
 		log.Infof("nodeName is %s", nodeName)
 		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
 			Name:      nodeName,
@@ -314,7 +307,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
 	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
 	log.Infof("instance.GetName() is %s", instance.GetName())
-	if instance.GetName() != "" && instance.GetName() != string(csmv1.Authorization) {
+	if instance.GetName() != "" && instance.GetName() != string(csmv1.Authorization) && instance.GetName() != string(csmv1.ApplicationMobility) {
 		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 		newStatus.NodeStatus = nodeStatus
 		if daemonSetErr != nil {
