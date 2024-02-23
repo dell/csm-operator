@@ -1249,6 +1249,8 @@ spec:
     metadata:
       labels:
         control-plane: controller-manager
+      annotations:
+        storage.dell.com/CSMVersion: v1.10.0
     spec:
       containers:
       - args:
