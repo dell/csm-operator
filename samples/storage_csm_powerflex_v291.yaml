@@ -213,11 +213,13 @@ spec:
           # Allowed values: string
           image: dellemc/csm-topology:v1.7.0
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
           # Allowed values: string
-          certificate:
+          certificate: ""
           # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
           # Allowed values: string
-          privateKey:
+          privateKey: ""
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -232,11 +234,13 @@ spec:
           # Allowed values: string
           image: otel/opentelemetry-collector:0.42.0
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
           # Allowed values: string
-          certificate:
+          certificate: ""
           # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
           # Allowed values: string
-          privateKey:
+          privateKey: ""
           envs:
             # image of nginx proxy image
             # Allowed values: string
