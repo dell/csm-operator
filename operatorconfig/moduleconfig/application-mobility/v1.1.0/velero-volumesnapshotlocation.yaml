@@ -1,0 +1,14 @@
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: <VOL_SNAPSHOT_LOCATION_NAME>
+  namespace: <NAMESPACE>
+  annotations:
+  labels:
+    app.kubernetes.io/name: velero
+    app.kubernetes.io/instance: application-mobility
+
+spec:
+  provider: <CONFIGURATION_PROVIDER>
+  config: 
+      region: minio
