@@ -77,7 +77,6 @@ spec:
     # Configure when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
     #- name: provisioner
-    #  image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
     #  args: ["--capacity-poll-interval=5m"]
 
     controller:
