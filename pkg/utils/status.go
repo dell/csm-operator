@@ -833,6 +833,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 
 // observabilityStatusCheck - calculate success state for observability module
 func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+	log := logger.GetLogger(ctx)
 	topologyEnabled := false
 	otelEnabled := false
 	certEnabled := false
