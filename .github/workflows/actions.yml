@@ -30,6 +30,11 @@ jobs:
     name: Run Go unit tests on controller and check package coverage
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Go 1.22+
+        uses: actions/setup-go@v4
+        with:
+          go-version: ^1.22
+        id: go
       - name: Checkout the code
         uses: actions/checkout@v3
       - name: Checkout csm-operator
