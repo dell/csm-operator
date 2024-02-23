@@ -184,7 +184,7 @@ spec:
       configVersion: v1.9.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:nightly
+          image: dellemc/podmon:v1.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -199,7 +199,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:nightly
+          image: dellemc/podmon:v1.9.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

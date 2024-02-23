@@ -248,7 +248,7 @@ spec:
       configVersion: v1.10.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:nightly
+        image: dellemc/csm-authorization-sidecar:v1.10.0
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
@@ -333,7 +333,7 @@ spec:
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:nightly
+          image: dellemc/csm-topology:v1.8.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -439,7 +439,7 @@ spec:
       configVersion: v1.6.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:nightly
+          image: dellemc/podmon:v1.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
@@ -452,7 +452,7 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
-          image: dellemc/podmon:nightly
+          image: dellemc/podmon:v1.9.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
