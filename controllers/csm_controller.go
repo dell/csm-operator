@@ -914,6 +914,11 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		}
 	}
 
+	// We are doing this separately after creating other components because the certificates rely on cert-manager being up
+	if err := modules.IssuerCertServiceObs(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		return fmt.Errorf("unable to deploy Certificate & Issuer for Observability: %v", err)
+	}
+
 	return nil
 }
 
