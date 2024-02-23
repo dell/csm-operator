@@ -501,16 +501,17 @@ func checkAuthorizationProxyServerNoRunningPods(ctx context.Context, namespace s
 	return nil
 }
 
-func getPortContainerizedAuth() (string, error) {
+func getPortContainerizedAuth(namespace string) (string, error) {
 	port := ""
+	service := namespace + "-ingress-nginx-controller"
 	b, err := exec.Command(
 		"kubectl", "get",
-		"service", "authorization-ingress-nginx-controller",
-		"-n", "authorization",
+		"service", service,
+		"-n", namespace,
 		"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
 	).CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to get authorization-ingress-nginx-controller port: %s", b)
+		return "", fmt.Errorf("failed to get %s-ingress-nginx-controller port in namespace: %s: %s", namespace, namespace, b)
 	}
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil
