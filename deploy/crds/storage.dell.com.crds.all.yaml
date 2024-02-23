@@ -59,6 +59,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      certificate:
+                        description: Certificate is a certificate used for a certificate/private-key pair
+                        type: string
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -197,6 +200,9 @@ spec:
                       opaKubeMgmt:
                         description: OpaKubeMgmt is the image tag for the Container
                         type: string
+                      privateKey:
+                        description: PrivateKey is a private key used for a certificate/private-key pair
+                        type: string
                       proxyService:
                         description: ProxyService is the image tag for the Container
                         type: string
@@ -267,6 +273,9 @@ spec:
                           items:
                             type: string
                           type: array
+                        certificate:
+                          description: Certificate is a certificate used for a certificate/private-key pair
+                          type: string
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -404,6 +413,9 @@ spec:
                           type: string
                         opaKubeMgmt:
                           description: OpaKubeMgmt is the image tag for the Container
+                          type: string
+                        privateKey:
+                          description: PrivateKey is a private key used for a certificate/private-key pair
                           type: string
                         proxyService:
                           description: ProxyService is the image tag for the Container
@@ -464,6 +476,9 @@ spec:
                           items:
                             type: string
                           type: array
+                        certificate:
+                          description: Certificate is a certificate used for a certificate/private-key pair
+                          type: string
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -601,6 +616,9 @@ spec:
                           type: string
                         opaKubeMgmt:
                           description: OpaKubeMgmt is the image tag for the Container
+                          type: string
+                        privateKey:
+                          description: PrivateKey is a private key used for a certificate/private-key pair
                           type: string
                         proxyService:
                           description: ProxyService is the image tag for the Container
@@ -749,6 +767,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      certificate:
+                        description: Certificate is a certificate used for a certificate/private-key pair
+                        type: string
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -886,6 +907,9 @@ spec:
                         type: string
                       opaKubeMgmt:
                         description: OpaKubeMgmt is the image tag for the Container
+                        type: string
+                      privateKey:
+                        description: PrivateKey is a private key used for a certificate/private-key pair
                         type: string
                       proxyService:
                         description: ProxyService is the image tag for the Container
@@ -946,6 +970,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      certificate:
+                        description: Certificate is a certificate used for a certificate/private-key pair
+                        type: string
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -1083,6 +1110,9 @@ spec:
                         type: string
                       opaKubeMgmt:
                         description: OpaKubeMgmt is the image tag for the Container
+                        type: string
+                      privateKey:
+                        description: PrivateKey is a private key used for a certificate/private-key pair
                         type: string
                       proxyService:
                         description: ProxyService is the image tag for the Container
@@ -1162,6 +1192,9 @@ spec:
                           items:
                             type: string
                           type: array
+                        certificate:
+                          description: Certificate is a certificate used for a certificate/private-key pair
+                          type: string
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -1300,6 +1333,9 @@ spec:
                         opaKubeMgmt:
                           description: OpaKubeMgmt is the image tag for the Container
                           type: string
+                        privateKey:
+                          description: PrivateKey is a private key used for a certificate/private-key pair
+                          type: string
                         proxyService:
                           description: ProxyService is the image tag for the Container
                           type: string
@@ -1357,6 +1393,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      certificate:
+                        description: Certificate is a certificate used for a certificate/private-key pair
+                        type: string
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -1495,6 +1534,9 @@ spec:
                       opaKubeMgmt:
                         description: OpaKubeMgmt is the image tag for the Container
                         type: string
+                      privateKey:
+                        description: PrivateKey is a private key used for a certificate/private-key pair
+                        type: string
                       proxyService:
                         description: ProxyService is the image tag for the Container
                         type: string
@@ -1557,6 +1599,9 @@ spec:
                           items:
                             type: string
                           type: array
+                        certificate:
+                          description: Certificate is a certificate used for a certificate/private-key pair
+                          type: string
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -1694,6 +1739,9 @@ spec:
                           type: string
                         opaKubeMgmt:
                           description: OpaKubeMgmt is the image tag for the Container
+                          type: string
+                        privateKey:
+                          description: PrivateKey is a private key used for a certificate/private-key pair
                           type: string
                         proxyService:
                           description: ProxyService is the image tag for the Container
@@ -1778,6 +1826,9 @@ spec:
                             items:
                               type: string
                             type: array
+                          certificate:
+                            description: Certificate is a certificate used for a certificate/private-key pair
+                            type: string
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
@@ -1915,6 +1966,9 @@ spec:
                             type: string
                           opaKubeMgmt:
                             description: OpaKubeMgmt is the image tag for the Container
+                            type: string
+                          privateKey:
+                            description: PrivateKey is a private key used for a certificate/private-key pair
                             type: string
                           proxyService:
                             description: ProxyService is the image tag for the Container
@@ -1984,6 +2038,9 @@ spec:
                             items:
                               type: string
                             type: array
+                          certificate:
+                            description: Certificate is a certificate used for a certificate/private-key pair
+                            type: string
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
@@ -2121,6 +2178,9 @@ spec:
                             type: string
                           opaKubeMgmt:
                             description: OpaKubeMgmt is the image tag for the Container
+                            type: string
+                          privateKey:
+                            description: PrivateKey is a private key used for a certificate/private-key pair
                             type: string
                           proxyService:
                             description: ProxyService is the image tag for the Container
