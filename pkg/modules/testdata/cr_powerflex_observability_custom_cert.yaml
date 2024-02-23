@@ -1,0 +1,293 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: vxflexos
+  namespace: vxflexos
+spec:
+  driver:
+    csiDriverType: "powerflex"
+    csiDriverSpec:
+      # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
+      # Allowed values: ReadWriteOnceWithFSType, File , None
+      # Default value: ReadWriteOnceWithFSType
+      fSGroupPolicy: "File"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: true
+    configVersion: v2.10.0
+    replicas: 1
+    dnsPolicy: ClusterFirstWithHostNet
+    forceUpdate: false
+    forceRemoveDriver: true
+    common:
+      image: "dellemc/csi-vxflexos:v2.9.1"
+      imagePullPolicy: IfNotPresent
+      envs:
+        - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
+          value: "false"
+        - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
+          value: "false"
+        - name: X_CSI_DEBUG
+          value: "true"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: None
+        - name: KUBELET_CONFIG_DIR
+          value: "/var/lib/kubelet"
+        - name: "CERT_SECRET_COUNT"
+          value: "0"
+        - name: X_CSI_QUOTA_ENABLED
+          value: "false"
+
+    sideCars:
+    # 'k8s' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        args: ["--volume-name-prefix=k8s"]
+
+    # sdc-monitor is disabled by default, due to high CPU usage
+      - name: sdc-monitor
+        enabled: false
+        image: dellemc/sdc:4.5
+        envs:
+        - name: HOST_PID
+          value: "1"
+        - name: MDM
+          value: "10.xx.xx.xx,10.xx.xx.xx" #do not add mdm value here if it is present in secret
+
+    # health monitor is disabled by default, refer to driver documentation before enabling it
+    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+      - name: csi-external-health-monitor-controller
+        enabled: false
+        args: ["--monitor-interval=60s"]
+    # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+    # Configure when the storageCapacity is set as "true"
+    # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+    #- name: provisioner
+    #  args: ["--capacity-poll-interval=5m"]
+
+    controller:
+      envs:
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+
+        # X_CSI_POWERFLEX_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
+        # Allowed Values: x.x.x.x/xx or x.x.x.x
+        # Default Value: None
+        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+          value:
+
+      #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
+      # Leave as blank to use all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      #  node-role.kubernetes.io/master: ""
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # "controller.tolerations" defines tolerations that would be applied to controller deployment
+      # Leave as blank to install controller on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+
+    node:
+      envs:
+
+        # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
+        # Allowed values:
+        #    true: enable SDC approval
+        #    false: disable SDC approval
+        # Default value: false
+        - name: X_CSI_APPROVE_SDC_ENABLED
+          value: "false"
+        
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+          
+        # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
+        # Allowed values:
+        #   true: enable renaming
+        #   false: disable renaming
+        # Default value: false
+        - name: X_CSI_RENAME_SDC_ENABLED
+          value: "false"
+
+        # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
+        # "prefix" + "worker_node_hostname" should not exceed 31 chars.
+        # Default value: none
+        # Examples: "rhel-sdc", "sdc-test"
+        - name: X_CSI_RENAME_SDC_PREFIX
+          value: ""
+
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # If value is zero Container Orchestrator shall decide how many volumes of this type can be published by the controller to the node.
+        # This limit is applicable to all the nodes in the cluster for which node label 'maxVxflexosVolumesPerNode' is not set.
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
+
+
+
+      # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
+      # Leave as blank to use all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      #  node-role.kubernetes.io/master: ""
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # "node.tolerations" defines tolerations that would be applied to node daemonset
+      # Leave as blank to install node driver only on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+
+    initContainers:
+      - image: dellemc/sdc:4.5
+        imagePullPolicy: IfNotPresent
+        name: sdc
+        envs:
+          - name: MDM
+            value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
+
+  modules:
+    # observability: allows to configure observability
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: true
+      configVersion: v1.7.0
+      components:
+        - name: topology
+          # enabled: Enable/Disable topology
+          enabled: true
+          # image: Defines karavi-topology image. This shouldn't be changed
+          # Allowed values: string
+          image: dellemc/csm-topology:v1.7.0
+          # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
+          # Allowed values: string
+          certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCVENDQXUyZ0F3SUJBZ0lVVThsYncza09ITk5QSXppRitJb3NUT3pSZVZNd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2daRXhDekFKQmdOVkJBWVRBbFZUTVJFd0R3WURWUVFJREFoT1pYY2dXVzl5YXpFUk1BOEdBMVVFQnd3SQpUbVYzSUZsdmNtc3hEVEFMQmdOVkJBb01CRVJsYkd3eEREQUtCZ05WQkFzTUEwbFRSekVZTUJZR0ExVUVBd3dQClNtOXZjMlZ3Y0drSUNBZ0lDQWdJTVNVd0l3WUpLb1pJaHZjTkFRa0JGaFpxYjI5elpYQndhVjlzZFc1aFFHUmwKYkd3dVkyOXRNQjRYRFRJME1ESXlNVEU0TWpRME1sb1hEVEkwTURVeU1URTRNalEwTWxvd2daRXhDekFKQmdOVgpCQVlUQWxWVE1SRXdEd1lEVlFRSURBaE9aWGNnV1c5eWF6RVJNQThHQTFVRUJ3d0lUbVYzSUZsdmNtc3hEVEFMCkJnTlZCQW9NQkVSbGJHd3hEREFLQmdOVkJBc01BMGxUUnpFWU1CWUdBMVVFQXd3UFNtOXZjMlZ3Y0drSUNBZ0kKQ0FnSU1TVXdJd1lKS29aSWh2Y05BUWtCRmhacWIyOXpaWEJ3YVY5c2RXNWhRR1JsYkd3dVkyOXRNSUlCSWpBTgpCZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5SXhkZ04wNDdnZk41T0h3SHFhMjlHNWd3dDkzCmVidnEwZVdnZE5RWXUvUU91YktoQ3JWYUN6QXBzTGhRcnlhOEM4OWtTM3VmRHNLM3o3aHJIRXhnblc4ZzdGL1cKTjVpaXYzcU9GcDk2ZVc4VFR5UHJhVktKV3psay9xSWhWdkhGVGxTbk5jcmJTZW45RkhxZmR4RnA3ejNVSXdtVQprZk8vTTQ1RHkrcDU2cmdqOW4vSTYvVmtpMWVxalBIN1dZTnZJQXJNa0pvZTBhSFlVSTdqa3dEZ1N6ZE1jMnM3ClI5NWxQTFY1MDgxdFNCWTJtNno0VGt1dktQdG1RZ1pML3JKL2lHUTBLVTkyYmRFUC9USDVSeEkyRHZ2U3BQSzUKUkhzTEhPVDdUZWV5NGJXU1VQemJTRzBRQUE0b1JyNTV2M1VYbmlmMExwNEQ0OU5xcHRSK0VzZkx2d0lEQVFBQgpvMU13VVRBZEJnTlZIUTRFRmdRVVlZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dId1lEVlIwakJCZ3dGb0FVCllZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dEd1lEVlIwVEFRSC9CQVV3QXdFQi96QU5CZ2txaGtpRzl3MEIKQVFzRkFBT0NBUUVBS2dWUjRvQjhlb0hNWTZ2Tm9WUERJd29NU3d2eGUyWnVDN0N0bkRvRUJjUzlrQU12TURqRwpzeFN2b0o2TXlXckpNaUt4aDJmekdGcS9FVWxDcHdKUEwvNTlTYmR3cG54UUxGWjdyZkVjMS9WQ3dOUHcxM0pEClBnZmsvZnd6QVNEcS9mWm5pTmVldHpCa2dQdEdMWDFsU051OHFNSUZHczR0QlpZZS8xNnJ4VFFpMzRsUk56QVUKMlA2YTM3YjhWVU9yRUNhTTlOdUFaY3FWSjRiODhvNXBQSkRldm5Hb3JPOHRMQWhvT3kyclB5QnJKaVhNQ0ZKMAo4TzVQS1NrSlJyQ2x1enBPeEtxUURONTlmVDdYNEp6VzI3MVhqQlIzWVdJTUdha08rSnRUdEwyUDNBWXdtd2E1CnNibUV0UU5rSjNraDhneVNVL2p4WnQrVWVUVWRJYWxDV0E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t"
+          # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
+          # Allowed values: string
+          privateKey: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBeUl4ZGdOMDQ3Z2ZONU9Id0hxYTI5RzVnd3Q5M2VidnEwZVdnZE5RWXUvUU91YktoCkNyVmFDekFwc0xoUXJ5YThDODlrUzN1ZkRzSzN6N2hySEV4Z25XOGc3Ri9XTjVpaXYzcU9GcDk2ZVc4VFR5UHIKYVZLSld6bGsvcUloVnZIRlRsU25OY3JiU2VuOUZIcWZkeEZwN3ozVUl3bVVrZk8vTTQ1RHkrcDU2cmdqOW4vSQo2L1ZraTFlcWpQSDdXWU52SUFyTWtKb2UwYUhZVUk3amt3RGdTemRNYzJzN1I5NWxQTFY1MDgxdFNCWTJtNno0ClRrdXZLUHRtUWdaTC9ySi9pR1EwS1U5MmJkRVAvVEg1UnhJMkR2dlNwUEs1UkhzTEhPVDdUZWV5NGJXU1VQemIKU0cwUUFBNG9ScjU1djNVWG5pZjBMcDRENDlOcXB0UitFc2ZMdndJREFRQUJBb0lCQUUva2V5dG05ZEw5a094cApoYnJ3TjFwUXpvTlRlc2tvTDNmR3ZwRk1IVDVqRDZxeW1xMGxhZVdqSGppa2RLQVNFait5TXdaUERTSllOOW1zClloODMzaFZadkFmdWRleFlCaDI1dVBrU056eEJIN1FiWHlEcUhJWVc2MEQxWGNyQkxoVHliRnBsb2M1a1JNbnYKdjY4elpMeEdLVWg3L0kvWVJvZEhXWUxXdWhMaTYvVGpKMGNJbWlOVWxMeWhXNHJrUXRveUZmelYvWkZpZGYvWApSYjQwRHRCRk1QbytVdFRBbnJuTlF3UDN2cEF5U09OV2U3MW45dS9XdFlwYzVNeDJGaGZFbm5PcTlZcVNEMVNQCm5hUC9OUndOQ2xOY1BleWZaSU84SytWT3MvbFpBOGErMXREWTZzOFVOTHBvcm42YkRWdEsweU4rTU9YK1FLaXEKTG9KeDZtRUNnWUVBNlU3ZU96OEcybG9wd245ald6YXBobG5TU2RFTHZobS95cllNMy9TN2puTkRYNkd3TkRlKwpFQTFINUs1UDRLNnlleFMvZEllaWo4bDhiRytVb0V3Rm9pOVIxaTdGR21DL1p6WTRpa2IyQXI0MU8yV29kVk9UCkRjNnBjdmlkWnp5ZjJWaGlTMFNLZ3ZodDdzSTlQcjFyZWlyNW9TYXBuUC9hUFhCTkl3dDh3V01DZ1lFQTNBM1AKODNrOUlPdjNNUWhiL1JiUDVBRWZYaW85U0hJNW1oekFLankxY2M1WDdadjI2SmpIc21RNGQrb0s0UjljMGFIWApETDFBRlYrWTkyRTU4ZVE1SXJhQ3JTQVAwYk45bENqLzdEMDFrT2ZnTis5QXJzVy8yc0tFcFRtZENtc3ZGb1JuClNOUzBNYmpDdmQxOEtYdWNFYmdoZzZTcjZwaGN2QWVoaGtpcjZQVUNnWUVBcFl0bXVKZENINUUyYkdIRGVDZFQKSnBkNVZSTlZ4Nit4blA2TUtDVVpLRHkxSTVndzFQeHdpaWRDU2dzOWRtbS9Ed0pyengybXhXdnNNMjBCQXJTdQprcVFNNTNNTVBHbEZwdENjVWRHRUlmSWhCMkpjbzlPSFZwYTdPVzhiRVBPOVlKVU1PZWdLZUdBYWNQMjJRMXhZCmRMa2xvNmt4Vk10ZWFaWFR4ZmdTcjQwQ2dZRUF3K2lnSEZqeHJSK213TVo2YndZaUt4RTh4ZTdCQklCOCs5RmcKMjdtVXFDOVdaTG9YeGRoTzRXa01ST1hlcmJIb1J0SFl6UVNueXQrREphb3Zsa1RqQVI2UGxHWVk3MDduSEVLcwpKYndRdG1OWllUTGwyVE5BclJmRVUvekk3UCtqdWw1Q1BicndlZHZOdEk4OC9RbUpWdFVoTVR3bnVnSFBmYThsCmhKR3FTd2tDZ1lFQW1UKzJQY1VIdVZuYXU1ZjVYMXZPaVI1aGtyNEZYUFhwZVVRZDVyMFZZazBsb01Yc3FQVGsKc0lZN0lmSUlRZ01xbFNnUVhMeVBpbjJPWEN1ZnBKTlVDRlJRamtMV2ZCZW1QbEh6N2hjNURvVHJEU1doOUtETApNak9HL3d4ckRwZGlvRnZmcVA3bldIeGk3UzAxNXpHNHhtbkg2WUZ1TThuaHpyU3NSQzhzV20wPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ=="
+          envs:
+            # topology log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "TOPOLOGY_LOG_LEVEL"
+              value: "INFO"
+
+        - name: otel-collector
+          # enabled: Enable/Disable OpenTelemetry Collector
+          enabled: true
+          # image: Defines otel-collector image. This shouldn't be changed
+          # Allowed values: string
+          image: otel/opentelemetry-collector:0.42.0
+          # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
+          # Allowed values: string
+          certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUQrekNDQXVPZ0F3SUJBZ0lVUWd1aFg2U1BHR08rcVBFcEFGNG9nMlhPRnJrd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2dZd3hDekFKQmdOVkJBWVRBbFZUTVJNd0VRWURWUVFJREFwT1pTQUlkeUJaYjNKck1SRXdEd1lEVlFRSApEQWhPWlhjZ1dXOXlhekVOTUFzR0ExVUVDZ3dFUkdWc2JERU1NQW9HQTFVRUN3d0RTVk5ITVJFd0R3WURWUVFECkRBaEtiMjl6WlhCd2FURWxNQ01HQ1NxR1NJYjNEUUVKQVJZV2FtOXZjMlZ3Y0dsZmJIVnVZVUJrWld4c0xtTnYKYlRBZUZ3MHlOREF5TWpFeE9ESTJNRFphRncweU5EQTFNakV4T0RJMk1EWmFNSUdNTVFzd0NRWURWUVFHRXdKVgpVekVUTUJFR0ExVUVDQXdLVG1VZ0NIY2dXVzl5YXpFUk1BOEdBMVVFQnd3SVRtVjNJRmx2Y21zeERUQUxCZ05WCkJBb01CRVJsYkd3eEREQUtCZ05WQkFzTUEwbFRSekVSTUE4R0ExVUVBd3dJU205dmMyVndjR2t4SlRBakJna3EKaGtpRzl3MEJDUUVXRm1wdmIzTmxjSEJwWDJ4MWJtRkFaR1ZzYkM1amIyMHdnZ0VpTUEwR0NTcUdTSWIzRFFFQgpBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRREFQaE5Wb2dHdmFiL1EreE1zem04QW5uK1JvcytuaXNCUm12eTd0UWJ1CkFvN3lNZ2Vra0gxZFVxLzVzSTN3ZEVvckJWbUdkcHBZNm04Y2xLTkEwSndhQ2NGazRva2QxTXFxNURqeUxocHIKTkduYms5R2Rrc1UxN2NTbE5uTTRKRVVZUTVxMWM2RzlFbExQeUFBTXFVeDd1TEtVa0ZSRjBtTHJzTlRkWG5xcwo0U0p5WkU5bnBIallHVGQrT01RYVlWZldON01PYVNKclRTc0lFdFNOVXM5UWdCRzE4Z0lqUlVZUUpSWDNpeFE3CitMMlVtQTJqYmYxSG5wSVp6ejRIdWkxVWw0WllZMUVJeU1wZTVaQzdrUlliWDRWRFcvMGxRSmhleU5FODVDUlAKNUwxYUhjQ3JTcnRvb3ZNWVlGWG5ZYThJeVJxaFRsM1RjSE81OXJYdzdPemhBZ01CQUFHalV6QlJNQjBHQTFVZApEZ1FXQkJRV2JBalpCWlB3K1B6NXlOYXdwM3Q1SU14MTdEQWZCZ05WSFNNRUdEQVdnQlFXYkFqWkJaUHcrUHo1CnlOYXdwM3Q1SU14MTdEQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQTAKOUNaZXIySWZFZ0NqQkVseC8xRTMxak9XUHhhNDVMSFdNRHl0RlNTT3hEc0EyN2txcnc4ZHRqeUQyTVlST0c3VQpaSDFrVHB6dGtaWXJjMGQ5YWxUT2RWa0dRamFFc2tWM3p3NVFDZTJVV1k4ZmZGWkdFZ3IxbFVGc3lMMTZBT1phCjVCREIrZkx4Y3RBRnBjM0lPS08vRFBrdWdiZFR5OURtT0xGa0w2VTd2ZDI1bGlpV1VBZ0ZhQW9tZlVqY2N6ZUQKWGw5VFBlL1dVbzRIb2lpOVh3MDF3YVI3a0xkVzN6UlBwTlpyTmo5QlZqYTRCTm5jMTM0OERScXhWR1J2SGdwVApnVW81RC94SDN0YzRUQm9EYmlIY09Pb1Iweks4NUlUQUYzVExubG9yMEt2d2o5UUR2TFFkZ1liK0liZ0hZbDNVCjc5Z3E3WEt0V09jVzVvMG85cm9pCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+          # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
+          # Allowed values: string
+          privateKey: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBd0Q0VFZhSUJyMm0vMFBzVExNNXZBSjUva2FMUHA0ckFVWnI4dTdVRzdnS084aklICnBKQjlYVkt2K2JDTjhIUktLd1ZaaG5hYVdPcHZISlNqUU5DY0dnbkJaT0tKSGRUS3F1UTQ4aTRhYXpScDI1UFIKblpMRk5lM0VwVFp6T0NSRkdFT2F0WE9odlJKU3o4Z0FES2xNZTdpeWxKQlVSZEppNjdEVTNWNTZyT0VpY21SUApaNlI0MkJrM2ZqakVHbUZYMWplekRta2lhMDByQ0JMVWpWTFBVSUFSdGZJQ0kwVkdFQ1VWOTRzVU8vaTlsSmdOCm8yMzlSNTZTR2M4K0I3b3RWSmVHV0dOUkNNaktYdVdRdTVFV0cxK0ZRMXY5SlVDWVhzalJQT1FrVCtTOVdoM0EKcTBxN2FLTHpHR0JWNTJHdkNNa2FvVTVkMDNCenVmYTE4T3pzNFFJREFRQUJBb0lCQUJCdC9iY0cxb0FJV0tWaQpuOXZuZEtNbjZKMG92ZmlDcWpjUE9PUk43MTZ1QjB0NXJSK0tYYng1RWFNVVRMMHRJeDJVSW5lVWNWS0NEcWJ4CnFSWWovZ05YckJpVUo4WE41dGcrRXdQWG50aGtyVnRmd2IxbXlzWDJJU1ZCaHcxWVJETnpxNmd3VHJWYStJcmIKZSsyWkZubElhcks1dHdvVWxmR3d0akNKSDVEZ3N1YWVxdUNncVBjSXEwVzJWNytQMnhFYTFGTzgrZzYzN3prOApIdG1DYlVGU0s1NTV2TjMzSjZneWxrK0trN2FEVW92a1VvR3ZCQ2psaE8wOVpwcEF5cmlwVkJndHNYMEdDR3ZFCkF6ME9IL1VobFZhY1kwTkJDTzkrL2RGdEpOMWtFQ2xYMUt2WDJ4Q0NDc0FocGxXWkpGRWM1b09CdzdMZGlpTjAKRlg2NUNqRUNnWUVBM2RuSG52cExqQ3pFNmZJUHFSSk1qWms2MWhybGR1N2d6YWRmV2h6TFFvSG1CUEQ1V3lMMgpqYkVQczFNRDN2a0w1L3lWODJmOWM5NVJpejJKZDRwOTJtb0JhblJSWEhpZXpHZ2NqZDN0enoxWFpUS1kyWENwCmdIVWxSTzZKbUVPcXNnbW5UajZabWd3bDdwRTg5bkJjcWVJMmhRSHNXMUI0blQrbGg2MzgxaDBDZ1lFQTNkV08KM1Bva3MzV015QjBvY2RUMFE2S3dTUnlYR3JQMDVEK3ZmM3Z4Z2ZERlBySmFROVVkUE50OEJKNkx1S21VV0RaTApaWm52bTJDNUNkZWtLbXNwNTg1aUp2bHNzbndxcUVZejN6WSswRzVZMGlDdU5qdVhyYzN4dktUZ2kwckJpYUNoCnJ5N1QwMU1GdG4vbDkrSXR2NGRTa1RkWHp0VzdJOUFZNnpnc0pwVUNnWUIyeGhUUXNYSm0vc1VCOXoyWktCbmkKS1dwTm5LTERkUXJZTDhhbUNRcHRkZncvSXdCdFlaK2NwbklnY001K3Z0azMvNHdNZjkwNi9vaXJ3bXRwbTdUYgpqYXRxWWhINUx2N2RzdE91eEdXQWNYZnJ6eFgwUEJRVG1TUTE3bnV1RUhRLzAxbEdVOCtLb1B4aDZGSTZJbGdKCi8vbHVabVF6VXpid0FWWk8rTUNIcFFLQmdGVnZJZzVJNkVtVlJCcnQzOTIzUGp1dU5HWno5RjM4WUp4blNwZTIKakZTVy9lQWZvRlB2aDhzZ1hLc0t4SlRoK3BmZWtUc1lCZ2U1UUlwaDJuL2J0Yy9vMURSZWExWnlLNXVUTGZjUgpWUy9BejhSZGdicXhTTUZQUjRKM25XTUg3M0dwdzV0TVZaaFZxU1dZTEdGRFlvc1krdHVpak5iRHljY0pKZyt4CkdvL2hBb0dCQUorY0lCZzhENGNXNnJQMFV1dUIrQWFiVlJYWEQyd2lnL2ZFZlRtNUIyS0RJWXk0NGZUYWlIZlMKMzgwQnNmcm1CeWlWYnJNUzZ2b2t2MFJOSmUxZ1o3YlBUWk5GRjFJN1ZXY1hXdzE1QmhvMjd2cWFmcmFsOXBlOQp4RElRTHdPeFRFaVF5OXllbHZBZHpqRituMlR5SFNic3hVUlU5SzFNQWloTTdqVUU3N0VlCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0t"
+          envs:
+            # image of nginx proxy image
+            # Allowed values: string
+            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            - name: "NGINX_PROXY_IMAGE"
+              value: "nginxinc/nginx-unprivileged:1.20"
+
+        # enabled: Enable/Disable cert-manager
+        # Allowed values:
+        #   true: enable deployment of cert-manager
+        #   false: disable deployment of cert-manager only if it's already deployed
+        # Default value: false
+        - name: cert-manager
+          enabled: true
+
+        - name: metrics-powerflex
+          # enabled: Enable/Disable PowerFlex metrics
+          enabled: true
+          # image: Defines PowerFlex metrics image. This shouldn't be changed
+          image: dellemc/csm-metrics-powerflex:v1.7.0
+          envs:
+            # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_MAX_CONCURRENT_QUERIES"
+              value: "10"
+            # POWERFLEX_SDC_METRICS_ENABLED: enable/disable collection of sdc metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_SDC_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_VOLUME_METRICS_ENABLED: enable/disable collection of volume metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_VOLUME_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_STORAGE_POOL_METRICS_ENABLED: enable/disable collection of storage pool metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_STORAGE_POOL_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_SDC_IO_POLL_FREQUENCY: set polling frequency to get sdc metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_SDC_IO_POLL_FREQUENCY"
+              value: "10"
+            # POWERFLEX_VOLUME_IO_POLL_FREQUENCY: set polling frequency to get volume metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_VOLUME_IO_POLL_FREQUENCY"
+              value: "10"
+            # POWERFLEX_STORAGE_POOL_POLL_FREQUENCY: set polling frequency to get Quota capacity metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_STORAGE_POOL_POLL_FREQUENCY"
+              value: "10"
+            # PowerFlex metrics log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "POWERFLEX_LOG_LEVEL"
+              value: "INFO"
+            # PowerFlex Metrics Output logs in the specified format
+            # Valid values: TEXT, JSON
+            # Default value: "TEXT"
+            - name: "POWERFLEX_LOG_FORMAT"
+              value: "TEXT"
+            # Otel collector address
+            # Allowed values: String
+            # Default value: "otel-collector:55680"
+            - name: "COLLECTOR_ADDRESS"
+              value: "otel-collector:55680"

@@ -20,7 +20,6 @@ import (
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
-	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -971,29 +970,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 func TestObservabilityCertIssuer(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			cr := &appsv1.Deployment{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Deployment",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "application-mobility-certificate",
-				},
-			}
-			certmanagerv1.AddToScheme(scheme.Scheme)
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
-
-			return true, true, tmpCR, sourceClient, operatorConfig
-		},
-
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with self-signed cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -1005,7 +982,31 @@ func TestObservabilityCertIssuer(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with custom cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerflex_observability_custom_cert.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - creating with partial custom cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerflex_observability_custom_cert_missing_key.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - observability module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -1016,7 +1017,7 @@ func TestObservabilityCertIssuer(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - observability deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -1028,7 +1029,7 @@ func TestObservabilityCertIssuer(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - observability config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -1052,7 +1053,7 @@ func TestObservabilityCertIssuer(t *testing.T) {
 			}()
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := IssuerCertService(ctx, isDeleting, op, cr, sourceClient)
+			err := IssuerCertServiceObs(ctx, isDeleting, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {

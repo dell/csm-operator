@@ -29,8 +29,8 @@ import (
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -195,7 +195,7 @@ const (
 )
 
 // ComponentNameToSecretPrefix - map from component name to secret prefix
-var ComponentNameToSecretPrefix = map[string]string{ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology",}
+var ComponentNameToSecretPrefix = map[string]string{ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology"}
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
 var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
@@ -823,16 +823,11 @@ func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string
 }
 
 // getIssuerCertService - gets the app mobility cert manager's issuer and certificate manifest
-func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, componentName string) (string, error) {
+func getIssuerCertServiceObs(op utils.OperatorConfig, obs csmv1.Module, componentName string) (string, error) {
 	yamlString := ""
 	certificate := ""
 	privateKey := ""
 	certificatePath := ""
-	
-	obs, err := getObservabilityModule(cr)
-	if err != nil {
-		return yamlString, err
-	}
 
 	for _, component := range obs.Components {
 		if component.Name == componentName {
@@ -852,7 +847,7 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 	} else {
 		certificatePath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, SelfSignedCert)
 	}
-	
+
 	buf, err := os.ReadFile(filepath.Clean(certificatePath))
 	if err != nil {
 		return yamlString, err
@@ -873,10 +868,10 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.Operato
 	if err != nil {
 		return err
 	}
-	
+
 	for _, component := range obs.Components {
 		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) {
-			yamlString, err := getIssuerCertServiceObs(op, cr, component.Name)
+			yamlString, err := getIssuerCertServiceObs(op, obs, component.Name)
 			if err != nil {
 				return err
 			}
