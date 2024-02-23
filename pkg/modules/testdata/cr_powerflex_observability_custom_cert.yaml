@@ -16,13 +16,13 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.9.0
+    configVersion: v2.10.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.9.0"
+      image: "dellemc/csi-vxflexos:v2.9.1"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -183,43 +183,24 @@ spec:
             value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
 
   modules:
-    # Authorization: enable csm-authorization for RBAC
-    - name: authorization
-      # enable: Enable/Disable csm-authorization
-      enabled: false
-      configVersion: v1.9.0
-      components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.9.0
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "csm-authorization.com"
-
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
-
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
-      enabled: false
+      enabled: true
       configVersion: v1.7.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
-          enabled: false
+          enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/csm-topology:v1.7.0
-          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
-          #  for self-signed certs, leave empty string
+          # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
-          certificate: ""
-          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
-          #  for self-signed certs, leave empty string
+          certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCVENDQXUyZ0F3SUJBZ0lVVThsYncza09ITk5QSXppRitJb3NUT3pSZVZNd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2daRXhDekFKQmdOVkJBWVRBbFZUTVJFd0R3WURWUVFJREFoT1pYY2dXVzl5YXpFUk1BOEdBMVVFQnd3SQpUbVYzSUZsdmNtc3hEVEFMQmdOVkJBb01CRVJsYkd3eEREQUtCZ05WQkFzTUEwbFRSekVZTUJZR0ExVUVBd3dQClNtOXZjMlZ3Y0drSUNBZ0lDQWdJTVNVd0l3WUpLb1pJaHZjTkFRa0JGaFpxYjI5elpYQndhVjlzZFc1aFFHUmwKYkd3dVkyOXRNQjRYRFRJME1ESXlNVEU0TWpRME1sb1hEVEkwTURVeU1URTRNalEwTWxvd2daRXhDekFKQmdOVgpCQVlUQWxWVE1SRXdEd1lEVlFRSURBaE9aWGNnV1c5eWF6RVJNQThHQTFVRUJ3d0lUbVYzSUZsdmNtc3hEVEFMCkJnTlZCQW9NQkVSbGJHd3hEREFLQmdOVkJBc01BMGxUUnpFWU1CWUdBMVVFQXd3UFNtOXZjMlZ3Y0drSUNBZ0kKQ0FnSU1TVXdJd1lKS29aSWh2Y05BUWtCRmhacWIyOXpaWEJ3YVY5c2RXNWhRR1JsYkd3dVkyOXRNSUlCSWpBTgpCZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5SXhkZ04wNDdnZk41T0h3SHFhMjlHNWd3dDkzCmVidnEwZVdnZE5RWXUvUU91YktoQ3JWYUN6QXBzTGhRcnlhOEM4OWtTM3VmRHNLM3o3aHJIRXhnblc4ZzdGL1cKTjVpaXYzcU9GcDk2ZVc4VFR5UHJhVktKV3psay9xSWhWdkhGVGxTbk5jcmJTZW45RkhxZmR4RnA3ejNVSXdtVQprZk8vTTQ1RHkrcDU2cmdqOW4vSTYvVmtpMWVxalBIN1dZTnZJQXJNa0pvZTBhSFlVSTdqa3dEZ1N6ZE1jMnM3ClI5NWxQTFY1MDgxdFNCWTJtNno0VGt1dktQdG1RZ1pML3JKL2lHUTBLVTkyYmRFUC9USDVSeEkyRHZ2U3BQSzUKUkhzTEhPVDdUZWV5NGJXU1VQemJTRzBRQUE0b1JyNTV2M1VYbmlmMExwNEQ0OU5xcHRSK0VzZkx2d0lEQVFBQgpvMU13VVRBZEJnTlZIUTRFRmdRVVlZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dId1lEVlIwakJCZ3dGb0FVCllZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dEd1lEVlIwVEFRSC9CQVV3QXdFQi96QU5CZ2txaGtpRzl3MEIKQVFzRkFBT0NBUUVBS2dWUjRvQjhlb0hNWTZ2Tm9WUERJd29NU3d2eGUyWnVDN0N0bkRvRUJjUzlrQU12TURqRwpzeFN2b0o2TXlXckpNaUt4aDJmekdGcS9FVWxDcHdKUEwvNTlTYmR3cG54UUxGWjdyZkVjMS9WQ3dOUHcxM0pEClBnZmsvZnd6QVNEcS9mWm5pTmVldHpCa2dQdEdMWDFsU051OHFNSUZHczR0QlpZZS8xNnJ4VFFpMzRsUk56QVUKMlA2YTM3YjhWVU9yRUNhTTlOdUFaY3FWSjRiODhvNXBQSkRldm5Hb3JPOHRMQWhvT3kyclB5QnJKaVhNQ0ZKMAo4TzVQS1NrSlJyQ2x1enBPeEtxUURONTlmVDdYNEp6VzI3MVhqQlIzWVdJTUdha08rSnRUdEwyUDNBWXdtd2E1CnNibUV0UU5rSjNraDhneVNVL2p4WnQrVWVUVWRJYWxDV0E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t"
+          # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
-          privateKey: ""
+          privateKey: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBeUl4ZGdOMDQ3Z2ZONU9Id0hxYTI5RzVnd3Q5M2VidnEwZVdnZE5RWXUvUU91YktoCkNyVmFDekFwc0xoUXJ5YThDODlrUzN1ZkRzSzN6N2hySEV4Z25XOGc3Ri9XTjVpaXYzcU9GcDk2ZVc4VFR5UHIKYVZLSld6bGsvcUloVnZIRlRsU25OY3JiU2VuOUZIcWZkeEZwN3ozVUl3bVVrZk8vTTQ1RHkrcDU2cmdqOW4vSQo2L1ZraTFlcWpQSDdXWU52SUFyTWtKb2UwYUhZVUk3amt3RGdTemRNYzJzN1I5NWxQTFY1MDgxdFNCWTJtNno0ClRrdXZLUHRtUWdaTC9ySi9pR1EwS1U5MmJkRVAvVEg1UnhJMkR2dlNwUEs1UkhzTEhPVDdUZWV5NGJXU1VQemIKU0cwUUFBNG9ScjU1djNVWG5pZjBMcDRENDlOcXB0UitFc2ZMdndJREFRQUJBb0lCQUUva2V5dG05ZEw5a094cApoYnJ3TjFwUXpvTlRlc2tvTDNmR3ZwRk1IVDVqRDZxeW1xMGxhZVdqSGppa2RLQVNFait5TXdaUERTSllOOW1zClloODMzaFZadkFmdWRleFlCaDI1dVBrU056eEJIN1FiWHlEcUhJWVc2MEQxWGNyQkxoVHliRnBsb2M1a1JNbnYKdjY4elpMeEdLVWg3L0kvWVJvZEhXWUxXdWhMaTYvVGpKMGNJbWlOVWxMeWhXNHJrUXRveUZmelYvWkZpZGYvWApSYjQwRHRCRk1QbytVdFRBbnJuTlF3UDN2cEF5U09OV2U3MW45dS9XdFlwYzVNeDJGaGZFbm5PcTlZcVNEMVNQCm5hUC9OUndOQ2xOY1BleWZaSU84SytWT3MvbFpBOGErMXREWTZzOFVOTHBvcm42YkRWdEsweU4rTU9YK1FLaXEKTG9KeDZtRUNnWUVBNlU3ZU96OEcybG9wd245ald6YXBobG5TU2RFTHZobS95cllNMy9TN2puTkRYNkd3TkRlKwpFQTFINUs1UDRLNnlleFMvZEllaWo4bDhiRytVb0V3Rm9pOVIxaTdGR21DL1p6WTRpa2IyQXI0MU8yV29kVk9UCkRjNnBjdmlkWnp5ZjJWaGlTMFNLZ3ZodDdzSTlQcjFyZWlyNW9TYXBuUC9hUFhCTkl3dDh3V01DZ1lFQTNBM1AKODNrOUlPdjNNUWhiL1JiUDVBRWZYaW85U0hJNW1oekFLankxY2M1WDdadjI2SmpIc21RNGQrb0s0UjljMGFIWApETDFBRlYrWTkyRTU4ZVE1SXJhQ3JTQVAwYk45bENqLzdEMDFrT2ZnTis5QXJzVy8yc0tFcFRtZENtc3ZGb1JuClNOUzBNYmpDdmQxOEtYdWNFYmdoZzZTcjZwaGN2QWVoaGtpcjZQVUNnWUVBcFl0bXVKZENINUUyYkdIRGVDZFQKSnBkNVZSTlZ4Nit4blA2TUtDVVpLRHkxSTVndzFQeHdpaWRDU2dzOWRtbS9Ed0pyengybXhXdnNNMjBCQXJTdQprcVFNNTNNTVBHbEZwdENjVWRHRUlmSWhCMkpjbzlPSFZwYTdPVzhiRVBPOVlKVU1PZWdLZUdBYWNQMjJRMXhZCmRMa2xvNmt4Vk10ZWFaWFR4ZmdTcjQwQ2dZRUF3K2lnSEZqeHJSK213TVo2YndZaUt4RTh4ZTdCQklCOCs5RmcKMjdtVXFDOVdaTG9YeGRoTzRXa01ST1hlcmJIb1J0SFl6UVNueXQrREphb3Zsa1RqQVI2UGxHWVk3MDduSEVLcwpKYndRdG1OWllUTGwyVE5BclJmRVUvekk3UCtqdWw1Q1BicndlZHZOdEk4OC9RbUpWdFVoTVR3bnVnSFBmYThsCmhKR3FTd2tDZ1lFQW1UKzJQY1VIdVZuYXU1ZjVYMXZPaVI1aGtyNEZYUFhwZVVRZDVyMFZZazBsb01Yc3FQVGsKc0lZN0lmSUlRZ01xbFNnUVhMeVBpbjJPWEN1ZnBKTlVDRlJRamtMV2ZCZW1QbEh6N2hjNURvVHJEU1doOUtETApNak9HL3d4ckRwZGlvRnZmcVA3bldIeGk3UzAxNXpHNHhtbkg2WUZ1TThuaHpyU3NSQzhzV20wPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ=="
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -229,18 +210,16 @@ spec:
 
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: false
+          enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
           image: otel/opentelemetry-collector:0.42.0
-          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
-          #  for self-signed certs, leave empty string
+          # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
-          certificate: ""
-          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
-          #  for self-signed certs, leave empty string
+          certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUQrekNDQXVPZ0F3SUJBZ0lVUWd1aFg2U1BHR08rcVBFcEFGNG9nMlhPRnJrd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2dZd3hDekFKQmdOVkJBWVRBbFZUTVJNd0VRWURWUVFJREFwT1pTQUlkeUJaYjNKck1SRXdEd1lEVlFRSApEQWhPWlhjZ1dXOXlhekVOTUFzR0ExVUVDZ3dFUkdWc2JERU1NQW9HQTFVRUN3d0RTVk5ITVJFd0R3WURWUVFECkRBaEtiMjl6WlhCd2FURWxNQ01HQ1NxR1NJYjNEUUVKQVJZV2FtOXZjMlZ3Y0dsZmJIVnVZVUJrWld4c0xtTnYKYlRBZUZ3MHlOREF5TWpFeE9ESTJNRFphRncweU5EQTFNakV4T0RJMk1EWmFNSUdNTVFzd0NRWURWUVFHRXdKVgpVekVUTUJFR0ExVUVDQXdLVG1VZ0NIY2dXVzl5YXpFUk1BOEdBMVVFQnd3SVRtVjNJRmx2Y21zeERUQUxCZ05WCkJBb01CRVJsYkd3eEREQUtCZ05WQkFzTUEwbFRSekVSTUE4R0ExVUVBd3dJU205dmMyVndjR2t4SlRBakJna3EKaGtpRzl3MEJDUUVXRm1wdmIzTmxjSEJwWDJ4MWJtRkFaR1ZzYkM1amIyMHdnZ0VpTUEwR0NTcUdTSWIzRFFFQgpBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRREFQaE5Wb2dHdmFiL1EreE1zem04QW5uK1JvcytuaXNCUm12eTd0UWJ1CkFvN3lNZ2Vra0gxZFVxLzVzSTN3ZEVvckJWbUdkcHBZNm04Y2xLTkEwSndhQ2NGazRva2QxTXFxNURqeUxocHIKTkduYms5R2Rrc1UxN2NTbE5uTTRKRVVZUTVxMWM2RzlFbExQeUFBTXFVeDd1TEtVa0ZSRjBtTHJzTlRkWG5xcwo0U0p5WkU5bnBIallHVGQrT01RYVlWZldON01PYVNKclRTc0lFdFNOVXM5UWdCRzE4Z0lqUlVZUUpSWDNpeFE3CitMMlVtQTJqYmYxSG5wSVp6ejRIdWkxVWw0WllZMUVJeU1wZTVaQzdrUlliWDRWRFcvMGxRSmhleU5FODVDUlAKNUwxYUhjQ3JTcnRvb3ZNWVlGWG5ZYThJeVJxaFRsM1RjSE81OXJYdzdPemhBZ01CQUFHalV6QlJNQjBHQTFVZApEZ1FXQkJRV2JBalpCWlB3K1B6NXlOYXdwM3Q1SU14MTdEQWZCZ05WSFNNRUdEQVdnQlFXYkFqWkJaUHcrUHo1CnlOYXdwM3Q1SU14MTdEQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQTAKOUNaZXIySWZFZ0NqQkVseC8xRTMxak9XUHhhNDVMSFdNRHl0RlNTT3hEc0EyN2txcnc4ZHRqeUQyTVlST0c3VQpaSDFrVHB6dGtaWXJjMGQ5YWxUT2RWa0dRamFFc2tWM3p3NVFDZTJVV1k4ZmZGWkdFZ3IxbFVGc3lMMTZBT1phCjVCREIrZkx4Y3RBRnBjM0lPS08vRFBrdWdiZFR5OURtT0xGa0w2VTd2ZDI1bGlpV1VBZ0ZhQW9tZlVqY2N6ZUQKWGw5VFBlL1dVbzRIb2lpOVh3MDF3YVI3a0xkVzN6UlBwTlpyTmo5QlZqYTRCTm5jMTM0OERScXhWR1J2SGdwVApnVW81RC94SDN0YzRUQm9EYmlIY09Pb1Iweks4NUlUQUYzVExubG9yMEt2d2o5UUR2TFFkZ1liK0liZ0hZbDNVCjc5Z3E3WEt0V09jVzVvMG85cm9pCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+          # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
-          privateKey: ""
+          privateKey: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBd0Q0VFZhSUJyMm0vMFBzVExNNXZBSjUva2FMUHA0ckFVWnI4dTdVRzdnS084aklICnBKQjlYVkt2K2JDTjhIUktLd1ZaaG5hYVdPcHZISlNqUU5DY0dnbkJaT0tKSGRUS3F1UTQ4aTRhYXpScDI1UFIKblpMRk5lM0VwVFp6T0NSRkdFT2F0WE9odlJKU3o4Z0FES2xNZTdpeWxKQlVSZEppNjdEVTNWNTZyT0VpY21SUApaNlI0MkJrM2ZqakVHbUZYMWplekRta2lhMDByQ0JMVWpWTFBVSUFSdGZJQ0kwVkdFQ1VWOTRzVU8vaTlsSmdOCm8yMzlSNTZTR2M4K0I3b3RWSmVHV0dOUkNNaktYdVdRdTVFV0cxK0ZRMXY5SlVDWVhzalJQT1FrVCtTOVdoM0EKcTBxN2FLTHpHR0JWNTJHdkNNa2FvVTVkMDNCenVmYTE4T3pzNFFJREFRQUJBb0lCQUJCdC9iY0cxb0FJV0tWaQpuOXZuZEtNbjZKMG92ZmlDcWpjUE9PUk43MTZ1QjB0NXJSK0tYYng1RWFNVVRMMHRJeDJVSW5lVWNWS0NEcWJ4CnFSWWovZ05YckJpVUo4WE41dGcrRXdQWG50aGtyVnRmd2IxbXlzWDJJU1ZCaHcxWVJETnpxNmd3VHJWYStJcmIKZSsyWkZubElhcks1dHdvVWxmR3d0akNKSDVEZ3N1YWVxdUNncVBjSXEwVzJWNytQMnhFYTFGTzgrZzYzN3prOApIdG1DYlVGU0s1NTV2TjMzSjZneWxrK0trN2FEVW92a1VvR3ZCQ2psaE8wOVpwcEF5cmlwVkJndHNYMEdDR3ZFCkF6ME9IL1VobFZhY1kwTkJDTzkrL2RGdEpOMWtFQ2xYMUt2WDJ4Q0NDc0FocGxXWkpGRWM1b09CdzdMZGlpTjAKRlg2NUNqRUNnWUVBM2RuSG52cExqQ3pFNmZJUHFSSk1qWms2MWhybGR1N2d6YWRmV2h6TFFvSG1CUEQ1V3lMMgpqYkVQczFNRDN2a0w1L3lWODJmOWM5NVJpejJKZDRwOTJtb0JhblJSWEhpZXpHZ2NqZDN0enoxWFpUS1kyWENwCmdIVWxSTzZKbUVPcXNnbW5UajZabWd3bDdwRTg5bkJjcWVJMmhRSHNXMUI0blQrbGg2MzgxaDBDZ1lFQTNkV08KM1Bva3MzV015QjBvY2RUMFE2S3dTUnlYR3JQMDVEK3ZmM3Z4Z2ZERlBySmFROVVkUE50OEJKNkx1S21VV0RaTApaWm52bTJDNUNkZWtLbXNwNTg1aUp2bHNzbndxcUVZejN6WSswRzVZMGlDdU5qdVhyYzN4dktUZ2kwckJpYUNoCnJ5N1QwMU1GdG4vbDkrSXR2NGRTa1RkWHp0VzdJOUFZNnpnc0pwVUNnWUIyeGhUUXNYSm0vc1VCOXoyWktCbmkKS1dwTm5LTERkUXJZTDhhbUNRcHRkZncvSXdCdFlaK2NwbklnY001K3Z0azMvNHdNZjkwNi9vaXJ3bXRwbTdUYgpqYXRxWWhINUx2N2RzdE91eEdXQWNYZnJ6eFgwUEJRVG1TUTE3bnV1RUhRLzAxbEdVOCtLb1B4aDZGSTZJbGdKCi8vbHVabVF6VXpid0FWWk8rTUNIcFFLQmdGVnZJZzVJNkVtVlJCcnQzOTIzUGp1dU5HWno5RjM4WUp4blNwZTIKakZTVy9lQWZvRlB2aDhzZ1hLc0t4SlRoK3BmZWtUc1lCZ2U1UUlwaDJuL2J0Yy9vMURSZWExWnlLNXVUTGZjUgpWUy9BejhSZGdicXhTTUZQUjRKM25XTUg3M0dwdzV0TVZaaFZxU1dZTEdGRFlvc1krdHVpak5iRHljY0pKZyt4CkdvL2hBb0dCQUorY0lCZzhENGNXNnJQMFV1dUIrQWFiVlJYWEQyd2lnL2ZFZlRtNUIyS0RJWXk0NGZUYWlIZlMKMzgwQnNmcm1CeWlWYnJNUzZ2b2t2MFJOSmUxZ1o3YlBUWk5GRjFJN1ZXY1hXdzE1QmhvMjd2cWFmcmFsOXBlOQp4RElRTHdPeFRFaVF5OXllbHZBZHpqRituMlR5SFNic3hVUlU5SzFNQWloTTdqVUU3N0VlCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0t"
           envs:
             # image of nginx proxy image
             # Allowed values: string
@@ -254,11 +233,11 @@ spec:
         #   false: disable deployment of cert-manager only if it's already deployed
         # Default value: false
         - name: cert-manager
-          enabled: false
+          enabled: true
 
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
-          enabled: false
+          enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
           image: dellemc/csm-metrics-powerflex:v1.7.0
           envs:
@@ -312,104 +291,3 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
-
-    # Replication: allows to configure replication
-    # Replication CRDs must be installed before installing driver
-    - name: replication
-      # enabled: Enable/Disable replication feature
-      # Allowed values:
-      #   true: enable replication feature(install dell-csi-replicator sidecar)
-      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
-      # Default value: false
-      enabled: false
-      configVersion: v1.7.0
-      components:
-      - name: dell-csi-replicator
-        # image: Image to use for dell-csi-replicator. This shouldn't be changed
-        # Allowed values: string
-        # Default value: None
-        image: dellemc/dell-csi-replicator:v1.7.0
-        envs:
-          # replicationPrefix: prefix to prepend to storage classes parameters
-          # Allowed values: string
-          # Default value: replication.storage.dell.com
-          - name: "X_CSI_REPLICATION_PREFIX"
-            value: "replication.storage.dell.com"
-          # replicationContextPrefix: prefix to use for naming of resources created by replication feature
-          # Allowed values: string
-          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-            value: "powerflex"
-
-      - name: dell-replication-controller-manager
-        # image: Defines controller image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.7.0
-        envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
-          # Set the value to "self" in case of stretched/single cluster configuration
-          # Allowed values: string
-          - name: "TARGET_CLUSTERS_IDS"
-            value: "target-cluster-1"
-          # Replication log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "REPLICATION_CTRL_LOG_LEVEL"
-            value: "debug"
-
-          # replicas: Defines number of controller replicas
-          # Allowed values: int
-          # Default value: 1
-          - name: "REPLICATION_CTRL_REPLICAS"
-            value: "1"
-          # retryIntervalMin: Initial retry interval of failed reconcile request.
-          # It doubles with each failure, upto retry-interval-max
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MIN"
-            value: "1s"
-          # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MAX"
-            value: "5m"
-
-    - name: resiliency
-      # enabled: Enable/Disable Resiliency feature
-      # Allowed values:
-      #   true: enable Resiliency feature(deploy podmon sidecar)
-      #   false: disable Resiliency feature(do not deploy podmon sidecar)
-      # Default value: false
-      enabled: false
-      configVersion: v1.8.0
-      components:
-        - name: podmon-controller
-          image: dellemc/podmon:v1.8.0
-          imagePullPolicy: IfNotPresent
-          args:
-            - "--labelvalue=csi-vxflexos"
-            - "--skipArrayConnectionValidation=false"
-            - "--driverPodLabelValue=dell-storage"
-            - "--ignoreVolumelessPods=false"
-            - "--arrayConnectivityPollRate=5"
-            - "--arrayConnectivityConnectionLossThreshold=3"
-            # Below 3 args should not be modified.
-            - "--csisock=unix:/var/run/csi/csi.sock"
-            - "--mode=controller"
-            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
-        - name: podmon-node
-          image: dellemc/podmon:v1.8.0
-          imagePullPolicy: IfNotPresent
-          envs:
-            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
-            # Allowed values: Any valid and free port (string)
-            # Default value: 8083
-            - name: "X_CSI_PODMON_API_PORT"
-              value: "8083"
-          args:
-            - "--labelvalue=csi-vxflexos"
-            - "--leaderelection=false"
-            - "--driverPodLabelValue=dell-storage"
-            - "--ignoreVolumelessPods=false"
-            - "--arrayConnectivityPollRate=5"
-            # Below 3 args should not be modified.
-            - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
-            - "--mode=node"
-            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
