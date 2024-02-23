@@ -184,10 +184,10 @@ const (
 	// ObservabilityCertificate -- certificate for either topology or otel-collector in base64
 	ObservabilityCertificate string = "<BASE64_CERTIFICATE>"
 
-	// OtelCollectorPrivateKey -- private key for either topology or otel-collector in base64
+	// ObservabilityPrivateKey -- private key for either topology or otel-collector in base64
 	ObservabilityPrivateKey string = "<BASE64_PRIVATE_KEY>"
 
-	// ObservabilityComponent --  placeholder for wither karavi-topology or otel-collector
+	// ObservabilitySecretPrefix --  placeholder for either karavi-topology or otel-collector
 	ObservabilitySecretPrefix string = "<OBSERVABILITY_SECRET_PREFIX>"
 
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
@@ -822,7 +822,7 @@ func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string
 	return fmt.Sprintf("%s-%s", driverType, secretName)
 }
 
-// getIssuerCertService - gets the app mobility cert manager's issuer and certificate manifest
+// getIssuerCertServiceObs - gets cert manager issuer and certificate manifest for observability
 func getIssuerCertServiceObs(op utils.OperatorConfig, obs csmv1.Module, componentName string) (string, error) {
 	yamlString := ""
 	certificate := ""
@@ -862,7 +862,7 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, obs csmv1.Module, componen
 	return yamlString, nil
 }
 
-// IssuerCertService - apply and delete the app mobility issuer and certificate service
+// IssuerCertServiceObs - apply and delete the observability issuer and certificate service
 func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
