@@ -2,7 +2,6 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: selfsigned
-  namespace: authorization
 spec:
   selfSigned: {}
 ---
@@ -10,7 +9,6 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: karavi-auth
-  namespace: authorization
 spec:
   secretName: karavi-auth-tls
   duration: 2160h # 90d
