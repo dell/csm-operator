@@ -71,6 +71,9 @@ const (
 	// Topology - placeholder for constant topology
 	Topology ObservabilityComponentType = "topology"
 
+	// OtelCollector - placeholder for constant otel-collector
+	OtelCollector ObservabilityComponentType = "otel-collector"
+
 	// PowerFlex - placeholder for constant powerflex
 	PowerFlex DriverType = "powerflex"
 
@@ -364,6 +367,14 @@ type ContainerTemplate struct {
 	// DeployNodeAgent is to enable/disable node-agent services
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Deploy node-agent for Application Mobility"
 	DeployNodeAgent bool `json:"deployNodeAgent,omitempty" yaml:"deployNodeAgent,omitempty"`
+
+	// Certificate is a certificate used for a certificate/private-key pair
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Certificate for certificate/private-key pair"
+	Certificate string `json:"certificate,omitempty" yaml:"certificate,omitempty"`
+
+	// PrivateKey is a private key used for a certificate/private-key pair
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Private key for certificate/private-key pair"
+	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
 }
 
 // SnapshotClass struct
