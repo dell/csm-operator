@@ -44,7 +44,18 @@ spec:
     sideCars:
     # 'k8s' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
         args: ["--volume-name-prefix=k8s"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+      - name: csi-metadata-retriever
+        image: dellemc/csi-metadata-retriever:v1.7.0
 
     # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
@@ -61,6 +72,7 @@ spec:
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
