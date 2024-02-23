@@ -249,7 +249,18 @@ spec:
 
     sideCars:
       - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
         args: ["--volume-name-prefix=csipscale"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+      - name: csi-metadata-retriever
+        image: dellemc/csi-metadata-retriever:v1.7.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -268,7 +279,7 @@ spec:
       configVersion: v1.10.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.10.0
+        image: dellemc/csm-authorization-sidecar:nightly
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
@@ -293,7 +304,7 @@ spec:
         # image: Image to use for dell-csi-replicator. This shouldn't be changed
         # Allowed values: string
         # Default value: None
-        image: dellemc/dell-csi-replicator:v1.8.0
+        image: dellemc/dell-csi-replicator:nightly
         envs:
           # replicationPrefix: prefix to prepend to storage classes parameters
           # Allowed values: string
@@ -309,7 +320,7 @@ spec:
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.8.0
+        image: dellemc/dell-replication-controller:nightly
         envs:
           # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
           # Set the value to "self" in case of stretched/single cluster configuration
@@ -348,7 +359,7 @@ spec:
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.8.0
+          image: dellemc/csm-topology:nightly
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -382,7 +393,7 @@ spec:
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-metrics-powerscale:v1.5.0
+          image: dellemc/csm-metrics-powerscale:nightly
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int
@@ -454,7 +465,7 @@ spec:
       configVersion: v1.9.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.9.0
+          image: dellemc/podmon:nightly
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-isilon"
@@ -469,7 +480,7 @@ spec:
             - "--driverPath=csi-isilon.dellemc.com"
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
         - name: podmon-node
-          image: dellemc/podmon:v1.9.0
+          image: dellemc/podmon:nightly
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

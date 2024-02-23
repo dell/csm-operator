@@ -59,7 +59,19 @@ spec:
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
         args: ["--volume-name-prefix=csivol"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+      - name: csi-metadata-retriever
+        image: dellemc/csi-metadata-retriever:v1.7.0
+
 
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
@@ -172,7 +184,7 @@ spec:
       configVersion: v1.9.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.9.0
+          image: dellemc/podmon:nightly
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -187,7 +199,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:v1.9.0
+          image: dellemc/podmon:nightly
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

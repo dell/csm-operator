@@ -215,7 +215,18 @@ spec:
     sideCars:
       # 'pmax' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
         args: ["--volume-name-prefix=pmax"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+      - name: csi-metadata-retriever
+        image: dellemc/csi-metadata-retriever:v1.7.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -239,7 +250,7 @@ spec:
       # image: Define the container images used for the reverse proxy
       # Default value: None
       # Example: "csipowermax-reverseproxy:v2.9.0"
-        image: dellemc/csipowermax-reverseproxy:v2.9.0
+        image: dellemc/csipowermax-reverseproxy:nightly
         envs:
           # "tlsSecret" defines the TLS secret that is created with certificate
           # and its associated key
@@ -259,7 +270,7 @@ spec:
       configVersion: v1.10.0
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.10.0
+        image: dellemc/csm-authorization-sidecar:nightly
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
@@ -283,7 +294,7 @@ spec:
         # image: Image to use for dell-csi-replicator. This shouldn't be changed
         # Allowed values: string
         # Default value: None
-        image: dellemc/dell-csi-replicator:v1.8.0
+        image: dellemc/dell-csi-replicator:nightly
         envs:
           # replicationPrefix: prefix to prepend to storage classes parameters
           # Allowed values: string
@@ -299,7 +310,7 @@ spec:
       - name: dell-replication-controller-manager
         # image: Defines controller image. This shouldn't be changed
         # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.8.0
+        image: dellemc/dell-replication-controller:nightly
         envs:
           # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
           # Set the value to "self" in case of stretched/single cluster configuration
@@ -337,7 +348,7 @@ spec:
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.8.0
+          image: dellemc/csm-topology:nightly
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -370,7 +381,7 @@ spec:
           # enabled: Enable/Disable PowerMax metrics
           enabled: false
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powermax:v1.3.0
+          image: dellemc/csm-metrics-powermax:nightly
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int
