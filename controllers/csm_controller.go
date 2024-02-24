@@ -15,6 +15,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -338,6 +339,11 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	// Failed deployment
 	r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", syncErr.Error())
+
+	// syncErr can be nil, even if CSM state = failed
+	if syncErr == nil {
+		syncErr = errors.New("CSM state is failed")
+	}
 
 	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, syncErr)
 }
