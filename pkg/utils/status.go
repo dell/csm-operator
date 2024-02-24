@@ -530,6 +530,8 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 
 	log := logger.GetLogger(ctx)
 
+	// requeue will use reconcile.Result.Requeue field to track if operator should try reconcile again 
+	requeue := reconcile.Result{}
 	running, err := calculateState(ctx, instance, r, newStatus)
 	log.Info("calculateState returns ", "running: ", running)
 	if err != nil {
@@ -539,6 +541,11 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 	if running {
 		newStatus.State = constants.Succeeded
 	}
+
+	// if not running, state is failed, and we want to reconcile again 
+	if !running {
+		requeue = reconcile.Result{Requeue: true}  
+	}
 	log.Infow("HandleSuccess Driver state ", "newStatus.State", newStatus.State)
 	if newStatus.State == constants.Succeeded {
 		// If previously we were in running state
@@ -547,9 +554,9 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		} else {
 			log.Info("HandleSuccess Driver stat changed to Succeeded")
 		}
-		return reconcile.Result{}, nil
+		return requeue, nil
 	}
-	return LogBannerAndReturn(reconcile.Result{}, nil)
+	return LogBannerAndReturn(requeue, nil)
 }
 
 // HandleAccSuccess for csm
@@ -669,7 +676,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	}
 
 	checkFn := func(deployment *appsv1.Deployment) bool {
-		log.Infof("Deployment: %s has %s ready replicas and %s replicas", deployment.Name, deployment.Status.ReadyReplicas, deployment.Spec.Replicas)
+		log.Infof("Deployment: %s has %s ready replicas and %s replicas", deployment.Name, deployment.Status.ReadyReplicas, &deployment.Spec.Replicas)
 		return deployment.Status.ReadyReplicas == *deployment.Spec.Replicas
 	}
 
