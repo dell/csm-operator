@@ -530,7 +530,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 
 	log := logger.GetLogger(ctx)
 
-	// requeue will use reconcile.Result.Requeue field to track if operator should try reconcile again 
+	// requeue will use reconcile.Result.Requeue field to track if operator should try reconcile again
 	requeue := reconcile.Result{}
 	running, err := calculateState(ctx, instance, r, newStatus)
 	log.Info("calculateState returns ", "running: ", running)
@@ -542,9 +542,10 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		newStatus.State = constants.Succeeded
 	}
 
-	// if not running, state is failed, and we want to reconcile again 
+	// if not running, state is failed, and we want to reconcile again
 	if !running {
-		requeue = reconcile.Result{Requeue: true}  
+		requeue = reconcile.Result{Requeue: true}
+		log.Info("CSM state is failed, will requeue")
 	}
 	log.Infow("HandleSuccess Driver state ", "newStatus.State", newStatus.State)
 	if newStatus.State == constants.Succeeded {
@@ -718,7 +719,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 		return false, err
 	}
 
-	//log.Info("podList: %+v\n", podList)
+	// log.Info("podList: %+v\n", podList)
 
 	for _, pod := range podList.Items {
 		log.Infof("Checking Daemonset pod: %s", pod.Name)
@@ -744,7 +745,6 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	log.Infof("certManagerWebhookRunning: %s", certManagerWebhookRunning)
 	log.Infof("veleroRunning: %s", veleroRunning)
 	log.Infof("daemonRunning: %s", daemonRunning)
-
 
 	if certEnabled && veleroEnabled {
 		return appMobRunning && certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && veleroRunning && daemonRunning, nil
