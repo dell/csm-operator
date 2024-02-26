@@ -1,0 +1,282 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["create", "delete", "get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["security.openshift.io"]
+    resourceNames: ["privileged"]
+    resources: ["securitycontextconstraints"]
+    verbs: ["use"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "update", "delete"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+subjects:
+  - kind: ServiceAccount
+    name: <DriverDefaultReleaseName>-node
+    namespace: <DriverDefaultReleaseNamespace>
+roleRef:
+  kind: ClusterRole
+  name: <DriverDefaultReleaseName>-node
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+  annotations:
+    com.dell.karavi-authorization-proxy: "true"
+spec:
+  selector:
+    matchLabels:
+      app: <DriverDefaultReleaseName>-node
+  template:
+    metadata:
+      labels:
+        app: <DriverDefaultReleaseName>-node
+        driver.dellemc.com: dell-storage
+    spec:
+      serviceAccount: <DriverDefaultReleaseName>-node
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      hostPID: false
+      containers:  
+        - name: driver
+          securityContext:
+            privileged: true
+            allowPrivilegeEscalation: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          image: dellemc/csi-vxflexos:v2.9.2
+          imagePullPolicy: IfNotPresent
+          command: [ "/csi-vxflexos.sh" ]
+          args:
+            - "--array-config=/vxflexos-config/config"
+            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix://<KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/csi_sock
+            - name: X_CSI_MODE
+              value: node
+            - name: X_CSI_PRIVATE_MOUNT_DIR
+              value: "<KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/disks"
+            - name: X_CSI_ALLOW_RWO_MULTI_POD_ACCESS
+              value: false
+            - name: SSL_CERT_DIR
+              value: /certs
+            - name: X_CSI_HEALTH_MONITOR_ENABLED
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_APPROVE_SDC_ENABLED
+              value: <X_CSI_APPROVE_SDC_ENABLED>
+            - name: X_CSI_RENAME_SDC_ENABLED
+              value: <X_CSI_RENAME_SDC_ENABLED>
+            - name: X_CSI_RENAME_SDC_PREFIX
+              value: <X_CSI_RENAME_SDC_PREFIX>
+            - name: X_CSI_MAX_VOLUMES_PER_NODE
+              value: <X_CSI_MAX_VOLUMES_PER_NODE>
+          volumeMounts:
+            - name: driver-path
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
+            - name: volumedevices-path
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
+              mountPropagation: "Bidirectional"
+            - name: pods-path
+              mountPath: <KUBELET_CONFIG_DIR>/pods
+              mountPropagation: "Bidirectional"
+            - name: noderoot
+              mountPath: /noderoot
+            - name: dev
+              mountPath: /dev
+            - name: vxflexos-config
+              mountPath: /vxflexos-config
+            - name: vxflexos-config-params
+              mountPath: /vxflexos-config-params
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+        - name: registrar
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - --kubelet-registration-path=<KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/csi_sock
+          env:
+            - name: ADDRESS
+              value: /csi/csi_sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: registration-dir
+              mountPath: /registration
+            - name: driver-path
+              mountPath: /csi
+        - name: sdc-monitor
+          securityContext:
+            privileged: true
+          image: dellemc/sdc:4.5
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: HOST_PID
+              value: "1"
+            - name: HOST_NET
+              value: "1"
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: MODE
+              value: "monitoring"
+          volumeMounts:
+            - name: dev
+              mountPath: /dev
+            - name: os-release
+              mountPath: /host-os-release
+            - name: sdc-storage
+              mountPath: /storage
+            - name: udev-d
+              mountPath: /rules.d
+            - name: host-opt-emc-path
+              mountPath: /host_opt_emc_path
+      initContainers:
+        - name: sdc
+          securityContext:
+            privileged: true
+          image: dellemc/sdc:4.5
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: MODE
+              value: "config"
+            - name: MDM
+              valueFrom:
+                secretKeyRef:
+                  name: <DriverDefaultReleaseName>-config
+                  key: MDM
+            - name: HOST_DRV_CFG_PATH
+              value: /opt/emc/scaleio/sdc/bin
+          volumeMounts:
+            - name: dev
+              mountPath: /dev
+            - name: os-release
+              mountPath: /host-os-release
+            - name: sdc-storage
+              mountPath: /storage 
+            - name: udev-d
+              mountPath: /rules.d
+            - name: scaleio-path-opt
+              mountPath: /host_drv_cfg_path
+            - name: host-opt-emc-path
+              mountPath: /host_opt_emc_path
+      volumes:
+        - name: registration-dir
+          hostPath:
+            path: <KUBELET_CONFIG_DIR>/plugins_registry/
+            type: DirectoryOrCreate
+        - name: driver-path
+          hostPath:
+            path: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
+            type: DirectoryOrCreate
+        - name: volumedevices-path
+          hostPath:
+            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
+            type: DirectoryOrCreate
+        - name: pods-path
+          hostPath:
+            path: <KUBELET_CONFIG_DIR>/pods
+            type: Directory
+        - name: noderoot
+          hostPath:
+            path: /
+            type: Directory
+        - name: dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: scaleio-path-opt
+          hostPath:
+            path: /opt/emc/scaleio/sdc/bin
+            type: DirectoryOrCreate
+        - name: sdc-storage
+          hostPath:
+            path: /var/emc-scaleio
+            type: DirectoryOrCreate
+        - name: udev-d
+          hostPath:
+            path: /etc/udev/rules.d
+            type: Directory
+        - name: os-release
+          hostPath:
+            path: /etc/os-release
+            type: File
+        - name: host-opt-emc-path
+          hostPath:
+            path: /opt/emc
+            type: Directory
+        - name: vxflexos-config
+          secret:
+            secretName: <DriverDefaultReleaseName>-config
+        - name: vxflexos-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
+        - name: usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+        - name: kubelet-pods
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: var-run
+          hostPath:
+            path: /var/run
+            type: Directory
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: <DriverDefaultReleaseName>-certs-0
+                  items:
+                    - key: cert-0
+                      path: cert-0

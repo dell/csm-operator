@@ -206,7 +206,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-vxflexos:v2.9.1
+          image: dellemc/csi-vxflexos:v2.9.2
           imagePullPolicy: IfNotPresent
           command: [ "/csi-vxflexos.sh" ]
           args:
@@ -224,9 +224,11 @@ spec:
             - name: SSL_CERT_DIR
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
-              value: false
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
             - name: X_CSI_QUOTA_ENABLED
               value: <X_CSI_QUOTA_ENABLED>
+            - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+              value: <X_CSI_POWERFLEX_EXTERNAL_ACCESS>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
