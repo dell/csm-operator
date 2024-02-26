@@ -334,6 +334,11 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	// Update the driver
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig, r.Client)
 	if syncErr == nil && !requeue.Requeue {
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		if err != nil {
+			log.Error(err, "Failed to update CR status")
+			return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
+		}
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", csm.Name)
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
 	}
