@@ -675,7 +675,6 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	}
 
 	checkFn := func(deployment *appsv1.Deployment) bool {
-		log.Infof("Deployment: %s has %s ready replicas and %s replicas", deployment.Name, deployment.Status.ReadyReplicas, &deployment.Spec.Replicas)
 		return deployment.Status.ReadyReplicas == *deployment.Spec.Replicas
 	}
 
@@ -717,8 +716,6 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 		return false, err
 	}
 
-	// log.Info("podList: %+v\n", podList)
-
 	for _, pod := range podList.Items {
 		log.Infof("Checking Daemonset pod: %s", pod.Name)
 		if pod.Status.Phase == corev1.PodRunning {
@@ -733,16 +730,6 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	} else {
 		daemonRunning = true
 	}
-
-	log.Infof("readyPods: %s", readyPods)
-	log.Infof("notreadyPods: %s", notreadyPods)
-	log.Infof("certEnabled: %s", certEnabled)
-	log.Infof("veleroEnabled: %s", veleroEnabled)
-	log.Infof("certManagerRunning: %s", certManagerRunning)
-	log.Infof("certManagerCainInjectorRunning: %s", certManagerCainInjectorRunning)
-	log.Infof("certManagerWebhookRunning: %s", certManagerWebhookRunning)
-	log.Infof("veleroRunning: %s", veleroRunning)
-	log.Infof("daemonRunning: %s", daemonRunning)
 
 	if certEnabled && veleroEnabled {
 		return appMobRunning && certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && veleroRunning && daemonRunning, nil
