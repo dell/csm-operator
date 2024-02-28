@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.9.2
+    configVersion: v2.10.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -41,7 +41,7 @@ spec:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:4.5
+        image: dellemc/sdc:4.5.1
         envs:
           - name: HOST_PID
             value: "1"
@@ -126,7 +126,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:4.5
+      - image: dellemc/sdc:4.5.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -134,31 +134,15 @@ spec:
             value: "10.x.x.x,10.x.x.x"  #provide MDM value
 
   modules:
-      # Authorization: enable csm-authorization for RBAC
-    - name: authorization
-      # enable: Enable/Disable csm-authorization
-      enabled: true
-      configVersion: v1.9.1
-      components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:nightly
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.7.0
+      configVersion: v1.8.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
-          enabled: true
+          enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/csm-topology:nightly
@@ -186,11 +170,11 @@ spec:
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
-          certificate: ""
+          certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUQrekNDQXVPZ0F3SUJBZ0lVUWd1aFg2U1BHR08rcVBFcEFGNG9nMlhPRnJrd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2dZd3hDekFKQmdOVkJBWVRBbFZUTVJNd0VRWURWUVFJREFwT1pTQUlkeUJaYjNKck1SRXdEd1lEVlFRSApEQWhPWlhjZ1dXOXlhekVOTUFzR0ExVUVDZ3dFUkdWc2JERU1NQW9HQTFVRUN3d0RTVk5ITVJFd0R3WURWUVFECkRBaEtiMjl6WlhCd2FURWxNQ01HQ1NxR1NJYjNEUUVKQVJZV2FtOXZjMlZ3Y0dsZmJIVnVZVUJrWld4c0xtTnYKYlRBZUZ3MHlOREF5TWpFeE9ESTJNRFphRncweU5EQTFNakV4T0RJMk1EWmFNSUdNTVFzd0NRWURWUVFHRXdKVgpVekVUTUJFR0ExVUVDQXdLVG1VZ0NIY2dXVzl5YXpFUk1BOEdBMVVFQnd3SVRtVjNJRmx2Y21zeERUQUxCZ05WCkJBb01CRVJsYkd3eEREQUtCZ05WQkFzTUEwbFRSekVSTUE4R0ExVUVBd3dJU205dmMyVndjR2t4SlRBakJna3EKaGtpRzl3MEJDUUVXRm1wdmIzTmxjSEJwWDJ4MWJtRkFaR1ZzYkM1amIyMHdnZ0VpTUEwR0NTcUdTSWIzRFFFQgpBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRREFQaE5Wb2dHdmFiL1EreE1zem04QW5uK1JvcytuaXNCUm12eTd0UWJ1CkFvN3lNZ2Vra0gxZFVxLzVzSTN3ZEVvckJWbUdkcHBZNm04Y2xLTkEwSndhQ2NGazRva2QxTXFxNURqeUxocHIKTkduYms5R2Rrc1UxN2NTbE5uTTRKRVVZUTVxMWM2RzlFbExQeUFBTXFVeDd1TEtVa0ZSRjBtTHJzTlRkWG5xcwo0U0p5WkU5bnBIallHVGQrT01RYVlWZldON01PYVNKclRTc0lFdFNOVXM5UWdCRzE4Z0lqUlVZUUpSWDNpeFE3CitMMlVtQTJqYmYxSG5wSVp6ejRIdWkxVWw0WllZMUVJeU1wZTVaQzdrUlliWDRWRFcvMGxRSmhleU5FODVDUlAKNUwxYUhjQ3JTcnRvb3ZNWVlGWG5ZYThJeVJxaFRsM1RjSE81OXJYdzdPemhBZ01CQUFHalV6QlJNQjBHQTFVZApEZ1FXQkJRV2JBalpCWlB3K1B6NXlOYXdwM3Q1SU14MTdEQWZCZ05WSFNNRUdEQVdnQlFXYkFqWkJaUHcrUHo1CnlOYXdwM3Q1SU14MTdEQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQTAKOUNaZXIySWZFZ0NqQkVseC8xRTMxak9XUHhhNDVMSFdNRHl0RlNTT3hEc0EyN2txcnc4ZHRqeUQyTVlST0c3VQpaSDFrVHB6dGtaWXJjMGQ5YWxUT2RWa0dRamFFc2tWM3p3NVFDZTJVV1k4ZmZGWkdFZ3IxbFVGc3lMMTZBT1phCjVCREIrZkx4Y3RBRnBjM0lPS08vRFBrdWdiZFR5OURtT0xGa0w2VTd2ZDI1bGlpV1VBZ0ZhQW9tZlVqY2N6ZUQKWGw5VFBlL1dVbzRIb2lpOVh3MDF3YVI3a0xkVzN6UlBwTlpyTmo5QlZqYTRCTm5jMTM0OERScXhWR1J2SGdwVApnVW81RC94SDN0YzRUQm9EYmlIY09Pb1Iweks4NUlUQUYzVExubG9yMEt2d2o5UUR2TFFkZ1liK0liZ0hZbDNVCjc5Z3E3WEt0V09jVzVvMG85cm9pCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
           # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
-          privateKey: ""
+          privateKey: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBd0Q0VFZhSUJyMm0vMFBzVExNNXZBSjUva2FMUHA0ckFVWnI4dTdVRzdnS084aklICnBKQjlYVkt2K2JDTjhIUktLd1ZaaG5hYVdPcHZISlNqUU5DY0dnbkJaT0tKSGRUS3F1UTQ4aTRhYXpScDI1UFIKblpMRk5lM0VwVFp6T0NSRkdFT2F0WE9odlJKU3o4Z0FES2xNZTdpeWxKQlVSZEppNjdEVTNWNTZyT0VpY21SUApaNlI0MkJrM2ZqakVHbUZYMWplekRta2lhMDByQ0JMVWpWTFBVSUFSdGZJQ0kwVkdFQ1VWOTRzVU8vaTlsSmdOCm8yMzlSNTZTR2M4K0I3b3RWSmVHV0dOUkNNaktYdVdRdTVFV0cxK0ZRMXY5SlVDWVhzalJQT1FrVCtTOVdoM0EKcTBxN2FLTHpHR0JWNTJHdkNNa2FvVTVkMDNCenVmYTE4T3pzNFFJREFRQUJBb0lCQUJCdC9iY0cxb0FJV0tWaQpuOXZuZEtNbjZKMG92ZmlDcWpjUE9PUk43MTZ1QjB0NXJSK0tYYng1RWFNVVRMMHRJeDJVSW5lVWNWS0NEcWJ4CnFSWWovZ05YckJpVUo4WE41dGcrRXdQWG50aGtyVnRmd2IxbXlzWDJJU1ZCaHcxWVJETnpxNmd3VHJWYStJcmIKZSsyWkZubElhcks1dHdvVWxmR3d0akNKSDVEZ3N1YWVxdUNncVBjSXEwVzJWNytQMnhFYTFGTzgrZzYzN3prOApIdG1DYlVGU0s1NTV2TjMzSjZneWxrK0trN2FEVW92a1VvR3ZCQ2psaE8wOVpwcEF5cmlwVkJndHNYMEdDR3ZFCkF6ME9IL1VobFZhY1kwTkJDTzkrL2RGdEpOMWtFQ2xYMUt2WDJ4Q0NDc0FocGxXWkpGRWM1b09CdzdMZGlpTjAKRlg2NUNqRUNnWUVBM2RuSG52cExqQ3pFNmZJUHFSSk1qWms2MWhybGR1N2d6YWRmV2h6TFFvSG1CUEQ1V3lMMgpqYkVQczFNRDN2a0w1L3lWODJmOWM5NVJpejJKZDRwOTJtb0JhblJSWEhpZXpHZ2NqZDN0enoxWFpUS1kyWENwCmdIVWxSTzZKbUVPcXNnbW5UajZabWd3bDdwRTg5bkJjcWVJMmhRSHNXMUI0blQrbGg2MzgxaDBDZ1lFQTNkV08KM1Bva3MzV015QjBvY2RUMFE2S3dTUnlYR3JQMDVEK3ZmM3Z4Z2ZERlBySmFROVVkUE50OEJKNkx1S21VV0RaTApaWm52bTJDNUNkZWtLbXNwNTg1aUp2bHNzbndxcUVZejN6WSswRzVZMGlDdU5qdVhyYzN4dktUZ2kwckJpYUNoCnJ5N1QwMU1GdG4vbDkrSXR2NGRTa1RkWHp0VzdJOUFZNnpnc0pwVUNnWUIyeGhUUXNYSm0vc1VCOXoyWktCbmkKS1dwTm5LTERkUXJZTDhhbUNRcHRkZncvSXdCdFlaK2NwbklnY001K3Z0azMvNHdNZjkwNi9vaXJ3bXRwbTdUYgpqYXRxWWhINUx2N2RzdE91eEdXQWNYZnJ6eFgwUEJRVG1TUTE3bnV1RUhRLzAxbEdVOCtLb1B4aDZGSTZJbGdKCi8vbHVabVF6VXpid0FWWk8rTUNIcFFLQmdGVnZJZzVJNkVtVlJCcnQzOTIzUGp1dU5HWno5RjM4WUp4blNwZTIKakZTVy9lQWZvRlB2aDhzZ1hLc0t4SlRoK3BmZWtUc1lCZ2U1UUlwaDJuL2J0Yy9vMURSZWExWnlLNXVUTGZjUgpWUy9BejhSZGdicXhTTUZQUjRKM25XTUg3M0dwdzV0TVZaaFZxU1dZTEdGRFlvc1krdHVpak5iRHljY0pKZyt4CkdvL2hBb0dCQUorY0lCZzhENGNXNnJQMFV1dUIrQWFiVlJYWEQyd2lnL2ZFZlRtNUIyS0RJWXk0NGZUYWlIZlMKMzgwQnNmcm1CeWlWYnJNUzZ2b2t2MFJOSmUxZ1o3YlBUWk5GRjFJN1ZXY1hXdzE1QmhvMjd2cWFmcmFsOXBlOQp4RElRTHdPeFRFaVF5OXllbHZBZHpqRituMlR5SFNic3hVUlU5SzFNQWloTTdqVUU3N0VlCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0t"
           envs:
             # image of nginx proxy image
             # Allowed values: string
@@ -199,11 +183,11 @@ spec:
               value: "nginxinc/nginx-unprivileged:1.20"
 
         - name: cert-manager
-        # enabled: Enable/Disable cert-manager
-        # Allowed values:
-        #   true: enable deployment of cert-manager
-        #   false: disable deployment of cert-manager only if it's already deployed
-        # Default value: true
+          # enabled: Enable/Disable cert-manager
+          # Allowed values:
+          #   true: enable deployment of cert-manager
+          #   false: disable deployment of cert-manager only if it's already deployed
+          # Default value: true
           enabled: true
 
         - name: metrics-powerflex

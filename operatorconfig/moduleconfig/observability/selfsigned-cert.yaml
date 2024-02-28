@@ -1,21 +1,25 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: selfsigned
+  name: selfsigned-issuer
+  namespace: karavi
 spec:
   selfSigned: {}
+
 ---
+
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: karavi-auth
+  name: <OBSERVABILITY_SECRET_PREFIX>
+  namespace: karavi
 spec:
-  secretName: karavi-auth-tls
+  secretName: <OBSERVABILITY_SECRET_PREFIX>-tls
   duration: 2160h # 90d
   renewBefore: 360h # 15d
   subject:
     organizations:
-    - dellemc
+    - dell
   isCA: false
   privateKey:
     algorithm: RSA
@@ -25,11 +29,9 @@ spec:
     - server auth
     - client auth
   dnsNames:
-  - karavi-auth
-  - karavi-auth.authorization.svc.kubernetes.local
-  - csm-authorization.com
-  - authorization-ingress-nginx-controller.authorization.svc.cluster.local
+  - <OBSERVABILITY_SECRET_PREFIX>
+  - <OBSERVABILITY_SECRET_PREFIX>.karavi.svc.kubernetes.local
   issuerRef:
-    name: selfsigned
+    name: selfsigned-issuer
     kind: Issuer
     group: cert-manager.io
