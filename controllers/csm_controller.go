@@ -15,6 +15,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync/atomic"
@@ -326,15 +327,25 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	newStatus := csm.GetCSMStatus()
-	_, err = utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
+	requeue, err := utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
 	if err != nil {
 		log.Error(err, "Failed to update CR status")
 	}
 	// Update the driver
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig, r.Client)
-	if syncErr == nil {
+	if syncErr == nil && !requeue.Requeue {
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		if err != nil {
+			log.Error(err, "Failed to update CR status")
+			return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
+		}
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", csm.Name)
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
+	}
+
+	// syncErr can be nil, even if CSM state = failed
+	if syncErr == nil {
+		syncErr = errors.New("CSM state is failed")
 	}
 
 	// Failed deployment
