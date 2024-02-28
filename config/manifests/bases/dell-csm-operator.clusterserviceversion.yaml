@@ -1149,7 +1149,7 @@ spec:
     name: csi-powerstore
   - image: docker.io/dellemc/csi-unity:v2.9.1
     name: csi-unity
-  - image: docker.io/dellemc/csi-vxflexos:v2.9.1
+  - image: docker.io/dellemc/csi-vxflexos:v2.9.2
     name: csi-vxflexos
   - image: docker.io/dellemc/sdc:4.5
     name: sdc
