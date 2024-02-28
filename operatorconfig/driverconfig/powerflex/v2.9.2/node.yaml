@@ -211,7 +211,7 @@ spec:
             - name: udev-d
               mountPath: /rules.d
             - name: scaleio-path-opt
-              mountPath: /host_drv_cfg_path 
+              mountPath: /host_drv_cfg_path
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
       volumes:

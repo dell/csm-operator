@@ -215,14 +215,14 @@ func (suite *CSMControllerTestSuite) TestResiliencyReconcileError() {
 }
 
 func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
-	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, append(getReverseProxyModule()), string(v1.PowerMax))
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModule(), string(v1.PowerMax))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
 }
 
 func (suite *CSMControllerTestSuite) TestReverseProxyPreCheckError() {
-	suite.makeFakeRevProxyCSM(csmName, suite.namespace, false, append(getReverseProxyModule()), "badVersion")
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, false, getReverseProxyModule(), "badVersion")
 	reconciler := suite.createReconciler()
 	res, err := reconciler.Reconcile(ctx, req)
 	ctrl.Log.Info("reconcile response", "res is: ", res)
@@ -240,7 +240,7 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyError() {
 }
 
 func (suite *CSMControllerTestSuite) TestPowermaxReconcileError() {
-	suite.makeFakeRevProxyCSM(csmName, suite.namespace, false, append(getReverseProxyModule()), "badDriver")
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, false, getReverseProxyModule(), "badDriver")
 	reconciler := suite.createReconciler()
 	res, err := reconciler.Reconcile(ctx, req)
 	ctrl.Log.Info("reconcile response", "res is: ", res)

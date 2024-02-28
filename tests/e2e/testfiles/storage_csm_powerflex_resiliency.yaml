@@ -27,7 +27,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.9.1
+    configVersion: v2.9.2
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
