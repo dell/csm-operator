@@ -904,7 +904,9 @@ func TestBackupStorageLoc(t *testing.T) {
 	}
 }
 
-func TestBackupStorageLocYaml(t *testing.T) {
+// currently will test getBackupStorageLoc and getUseVolumeSnapshot, as these methods are expected to use a custom region
+// or use the default value "region" if custom region is not defined in CR
+func TestRegionSubstitutions(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"region default value": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
@@ -937,17 +939,24 @@ func TestBackupStorageLocYaml(t *testing.T) {
 			defaultRegion, cr, sourceClient, op := tc(t)
 
 			bslName, bslYaml, err := getBackupStorageLoc(ctx, op, cr, sourceClient)
+			vslName, vslYaml, errVsl := getUseVolumeSnapshot(ctx, op, cr, sourceClient)
+
+			assert.NoError(t, err)
+			assert.NoError(t, errVsl)
+
 			if defaultRegion {
 				// fields we set in testdata/cr_application_mobility.yaml
 				assert.Equal(t, bslName, "default")
+				assert.Equal(t, vslName, "default")
 				// region is not set in cr_application_mobility.yaml, so default value should be used
 				assert.Contains(t, bslYaml, "region: region")
-				assert.NoError(t, err)
+				assert.Contains(t, vslYaml, "region: region")
 			} else {
 				// fields we set in testdata/cr_application_mobility_custom_region.yaml
 				assert.Equal(t, bslName, "my-new-location")
+				assert.Equal(t, vslName, "my-new-location")
 				assert.Contains(t, bslYaml, "region: custom")
-				assert.NoError(t, err)
+				assert.Contains(t, vslYaml, "region: custom")
 
 			}
 		})

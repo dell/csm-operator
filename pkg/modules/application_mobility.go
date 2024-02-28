@@ -678,6 +678,7 @@ func getUseVolumeSnapshot(ctx context.Context, op utils.OperatorConfig, cr csmv1
 	yamlString = string(buf)
 	volSnapshotLocationName := ""
 	provider := ""
+	backupRegion := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
@@ -687,13 +688,22 @@ func getUseVolumeSnapshot(ctx context.Context, op utils.OperatorConfig, cr csmv1
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
 				}
+				if strings.Contains(BackupStorageRegion, env.Name) {
+					backupRegion = env.Value
+				}
 			}
 		}
+	}
+
+	// if BackupStorageRegion is not provided - use default variable
+	if backupRegion == "" {
+		backupRegion = BackupStorageRegionDefault
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, VolSnapshotlocation, volSnapshotLocationName)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageRegion, backupRegion)
 
 	return volSnapshotLocationName, yamlString, nil
 }
