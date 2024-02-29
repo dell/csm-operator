@@ -11,8 +11,6 @@ package modules
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -823,11 +821,10 @@ func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string
 }
 
 // getIssuerCertServiceObs - gets cert manager issuer and certificate manifest for observability
-func getIssuerCertServiceObs(op utils.OperatorConfig, obs csmv1.Module, componentName string) (string, error) {
+func getIssuerCertServiceObs(op utils.OperatorConfig, obs csmv1.Module, componentName string, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 	certificate := ""
 	privateKey := ""
-	certificatePath := ""
 
 	for _, component := range obs.Components {
 		if component.Name == componentName {
@@ -840,20 +837,23 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, obs csmv1.Module, componen
 	// Otherwise, we give them the self-signed cert.
 	if certificate != "" || privateKey != "" {
 		if certificate != "" && privateKey != "" {
-			certificatePath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, CustomCert)
+			buf, err := readConfigFile(obs, cr, op, CustomCert)
+			if err != nil {
+				return yamlString, err
+			}
+
+			yamlString = string(buf)
 		} else {
 			return yamlString, fmt.Errorf("observability install failed -- either cert or privatekey missing for %s custom cert", componentName)
 		}
 	} else {
-		certificatePath = fmt.Sprintf("%s/moduleconfig/observability/%s", op.ConfigDirectory, SelfSignedCert)
-	}
+		buf, err := readConfigFile(obs, cr, op, SelfSignedCert)
+		if err != nil {
+			return yamlString, err
+		}
 
-	buf, err := os.ReadFile(filepath.Clean(certificatePath))
-	if err != nil {
-		return yamlString, err
+		yamlString = string(buf)
 	}
-
-	yamlString = string(buf)
 
 	yamlString = strings.ReplaceAll(yamlString, ObservabilityCertificate, certificate)
 	yamlString = strings.ReplaceAll(yamlString, ObservabilityPrivateKey, privateKey)
@@ -871,7 +871,7 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.Operato
 
 	for _, component := range obs.Components {
 		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) {
-			yamlString, err := getIssuerCertServiceObs(op, obs, component.Name)
+			yamlString, err := getIssuerCertServiceObs(op, obs, component.Name, cr)
 			if err != nil {
 				return err
 			}
