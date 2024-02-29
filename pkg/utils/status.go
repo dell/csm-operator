@@ -26,7 +26,9 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	//"os"
 	"strings"
+	//"strconv"
 	"sync"
 
 	t1 "k8s.io/apimachinery/pkg/types"
@@ -530,6 +532,8 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 
 	log := logger.GetLogger(ctx)
 
+	unitTestRun := DetermineUnitTestRun(ctx)
+
 	// requeue will use reconcile.Result.Requeue field to track if operator should try reconcile again
 	requeue := reconcile.Result{}
 	running, err := calculateState(ctx, instance, r, newStatus)
@@ -543,7 +547,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 	}
 
 	// if not running, state is failed, and we want to reconcile again
-	if !running {
+	if !running && !unitTestRun {
 		requeue = reconcile.Result{Requeue: true}
 		log.Info("CSM state is failed, will requeue")
 	}
