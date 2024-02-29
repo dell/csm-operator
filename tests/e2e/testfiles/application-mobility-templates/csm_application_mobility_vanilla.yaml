@@ -9,7 +9,7 @@ spec:
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: true
-      configVersion: v1.1.0
+      configVersion: v1.0.2
       forceRemoveModule: true
       components:
       - name: application-mobility-controller-manager
