@@ -837,22 +837,22 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, obs csmv1.Module, componen
 	// Otherwise, we give them the self-signed cert.
 	if certificate != "" || privateKey != "" {
 		if certificate != "" && privateKey != "" {
-			certificatePath, err := readConfigFile(obs, cr, op, CustomCert)
+			buf, err := readConfigFile(obs, cr, op, CustomCert)
 			if err != nil {
 				return yamlString, err
 			}
 
-			yamlString = string(certificatePath)
+			yamlString = string(buf)
 		} else {
 			return yamlString, fmt.Errorf("observability install failed -- either cert or privatekey missing for %s custom cert", componentName)
 		}
 	} else {
-		certificatePath, err := readConfigFile(obs, cr, op, SelfSignedCert)
+		buf, err := readConfigFile(obs, cr, op, SelfSignedCert)
 		if err != nil {
 			return yamlString, err
 		}
 
-		yamlString = string(certificatePath)
+		yamlString = string(buf)
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, ObservabilityCertificate, certificate)
