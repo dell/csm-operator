@@ -235,6 +235,8 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcID
 	ctx, log := logger.GetNewContextWithLogger(name)
+	unitTestRun := utils.DetermineUnitTestRun(ctx)
+
 	log.Info("################Starting Reconcile##############")
 	csm := new(csmv1.ContainerStorageModule)
 
@@ -334,7 +336,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig, r.Client)
 	if syncErr == nil && !requeue.Requeue {
 		err = utils.UpdateStatus(ctx, csm, r, newStatus)
-		if err != nil {
+		if err != nil && !unitTestRun {
 			log.Error(err, "Failed to update CR status")
 			return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
 		}

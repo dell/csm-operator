@@ -76,6 +76,10 @@ const (
 	VolSnapshotlocation = "<VOL_SNAPSHOT_LOCATION_NAME>"
 	// BackupStorageURL - cloud url for backup storage location
 	BackupStorageURL = "<BACKUP_STORAGE_URL>"
+	// BackupStorageRegion - region for backup to take place in
+	BackupStorageRegion = "<BACKUP_REGION_URL>"
+	// BackupStorageRegionDefault - default value if BACKUP_REGION_URL is not specified
+	BackupStorageRegionDefault = "region"
 	// ConfigProvider - configurations provider
 	ConfigProvider = "<CONFIGURATION_PROVIDER>"
 	// VeleroImage - Image for velero
@@ -674,6 +678,7 @@ func getUseVolumeSnapshot(_ context.Context, op utils.OperatorConfig, cr csmv1.C
 	yamlString = string(buf)
 	volSnapshotLocationName := ""
 	provider := ""
+	backupRegion := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
@@ -683,13 +688,22 @@ func getUseVolumeSnapshot(_ context.Context, op utils.OperatorConfig, cr csmv1.C
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
 				}
+				if strings.Contains(BackupStorageRegion, env.Name) {
+					backupRegion = env.Value
+				}
 			}
 		}
+	}
+
+	// if BackupStorageRegion is not provided - use default variable
+	if backupRegion == "" {
+		backupRegion = BackupStorageRegionDefault
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, VolSnapshotlocation, volSnapshotLocationName)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageRegion, backupRegion)
 
 	return volSnapshotLocationName, yamlString, nil
 }
@@ -714,6 +728,7 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 	provider := ""
 	bucketName := ""
 	backupURL := ""
+	backupRegion := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
@@ -729,8 +744,16 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 				if strings.Contains(BackupStorageURL, env.Name) {
 					backupURL = env.Value
 				}
+				if strings.Contains(BackupStorageRegion, env.Name) {
+					backupRegion = env.Value
+				}
 			}
 		}
+	}
+
+	// if BackupStorageRegion is not provided - use default variable
+	if backupRegion == "" {
+		backupRegion = BackupStorageRegionDefault
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
@@ -738,6 +761,7 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 	yamlString = strings.ReplaceAll(yamlString, VeleroBucketName, bucketName)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupURL)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageRegion, backupRegion)
 
 	return backupStorageLocationName, yamlString, nil
 }
