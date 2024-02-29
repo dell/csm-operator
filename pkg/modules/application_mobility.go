@@ -43,9 +43,9 @@ const (
 	VeleroManifest = "velero-deployment.yaml"
 	// AppMobCertManagerManifest - filename of Cert-manager manifest for app-mobility
 	AppMobCertManagerManifest = "cert-manager.yaml"
-	//UseVolSnapshotManifest - filename of use volume snapshot manifest for velero
+	// UseVolSnapshotManifest - filename of use volume snapshot manifest for velero
 	UseVolSnapshotManifest = "velero-volumesnapshotlocation.yaml"
-	//BackupStorageLoc - filename of backupstoragelocation manifest for velero
+	// BackupStorageLoc - filename of backupstoragelocation manifest for velero
 	BackupStorageLoc = "velero-backupstoragelocation.yaml"
 	// CleanupCrdManifest - filename of Cleanup Crds manifest for app-mobility
 	CleanupCrdManifest = "cleanupcrds.yaml"
@@ -55,10 +55,10 @@ const (
 	VeleroAccessManifest = "velero-secret.yaml"
 	// CertManagerIssuerCertManifest - filename of the issuer and cert for app-mobility
 	CertManagerIssuerCertManifest = "certificate.yaml"
-	//NodeAgentCrdManifest - filename of node-agent manifest for app-mobility
+	// NodeAgentCrdManifest - filename of node-agent manifest for app-mobility
 	NodeAgentCrdManifest = "node-agent.yaml"
 
-	//ControllerImg - image for app-mobility-controller
+	// ControllerImg - image for app-mobility-controller
 	ControllerImg = "<CONTROLLER_IMAGE>"
 	// ControllerImagePullPolicy - default image pull policy in yamls
 	ControllerImagePullPolicy = "<CONTROLLER_IMAGE_PULLPOLICY>"
@@ -68,14 +68,18 @@ const (
 	AppMobReplicaCount = "<APPLICATION_MOBILITY_REPLICA_COUNT>"
 	// AppMobObjStoreSecretName - Secret name for object store
 	AppMobObjStoreSecretName = "<APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME>"
-	//BackupStorageLocation - name for Backup Storage Location
+	// BackupStorageLocation - name for Backup Storage Location
 	BackupStorageLocation = "<BACKUPSTORAGELOCATION_NAME>"
-	//VeleroBucketName - name for the used velero bucket
+	// VeleroBucketName - name for the used velero bucket
 	VeleroBucketName = "<BUCKET_NAME>"
-	//VolSnapshotlocation - name for Volume Snapshot location
+	// VolSnapshotlocation - name for Volume Snapshot location
 	VolSnapshotlocation = "<VOL_SNAPSHOT_LOCATION_NAME>"
-	//BackupStorageURL - cloud url for backup storage location
+	// BackupStorageURL - cloud url for backup storage location
 	BackupStorageURL = "<BACKUP_STORAGE_URL>"
+	// BackupStorageRegion - region for backup to take place in
+	BackupStorageRegion = "<BACKUP_REGION_URL>"
+	// BackupStorageRegionDefault - default value if BACKUP_REGION_URL is not specified
+	BackupStorageRegionDefault = "region"
 	// ConfigProvider - configurations provider
 	ConfigProvider = "<CONFIGURATION_PROVIDER>"
 	// VeleroImage - Image for velero
@@ -84,19 +88,19 @@ const (
 	VeleroImagePullPolicy = "<VELERO_IMAGE_PULLPOLICY>"
 	// VeleroAccess  -  Secret name for velero
 	VeleroAccess = "<VELERO_ACCESS>"
-	//AWSInitContainerName - Name of init container for velero - aws
+	// AWSInitContainerName - Name of init container for velero - aws
 	AWSInitContainerName = "<AWS_INIT_CONTAINER_NAME>"
-	//AWSInitContainerImage - Image of init container for velero -aws
+	// AWSInitContainerImage - Image of init container for velero -aws
 	AWSInitContainerImage = "<AWS_INIT_CONTAINER_IMAGE>"
-	//DELLInitContainerName - Name of init container for velero - dell
+	// DELLInitContainerName - Name of init container for velero - dell
 	DELLInitContainerName = "<DELL_INIT_CONTAINER_NAME>"
-	//DELLInitContainerImage - Image of init container for velero - dell
+	// DELLInitContainerImage - Image of init container for velero - dell
 	DELLInitContainerImage = "<DELL_INIT_CONTAINER_IMAGE>"
-	//AccessContents - contents of the object store secret
+	// AccessContents - contents of the object store secret
 	AccessContents = "<CRED_CONTENTS>"
-	//AKeyID - contains the aws access key id
+	// AKeyID - contains the aws access key id
 	AKeyID = "<KEY_ID>"
-	//AKey - contains the aws access key
+	// AKey - contains the aws access key
 	AKey = "<KEY>"
 
 	// AppMobCtrlMgrComponent - component name in cr for app-mobility controller-manager
@@ -139,7 +143,6 @@ func getVeleroCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule
 
 // VeleroCrdDeploy - apply and delete Velero crds deployment
 func VeleroCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	yamlString, err := getVeleroCrdDeploy(op, cr)
 	if err != nil {
 		return err
@@ -183,7 +186,6 @@ func getAppMobCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule
 
 // AppMobCrdDeploy - apply and delete Velero crds deployment
 func AppMobCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	yamlString, err := getAppMobCrdDeploy(op, cr)
 	if err != nil {
 		return err
@@ -205,7 +207,6 @@ func AppMobCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.Cont
 
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
 func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-
 	yamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
@@ -261,7 +262,6 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 
 // AppMobilityDeployment - apply and delete controller manager deployment
 func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	yamlString, err := getAppMobilityModuleDeployment(op, cr)
 	if err != nil {
 		return err
@@ -412,7 +412,6 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 
 // AppMobilityCertManager - Install/Delete cert-manager
 func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	yamlString, err := getCertManager(op, cr)
 	if err != nil {
 		return err
@@ -428,7 +427,6 @@ func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.Opera
 
 // CreateVeleroAccess - Install/Delete velero-secret yaml from operator config
 func CreateVeleroAccess(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	yamlString, err := getCreateVeleroAccess(op, cr)
 	if err != nil {
 		return err
@@ -444,7 +442,6 @@ func CreateVeleroAccess(ctx context.Context, isDeleting bool, op utils.OperatorC
 
 // getCreateVeleroAccess - gets the velero-secret manifest from operatorconfig
 func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -494,7 +491,6 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 
 // AppMobilityVelero - Install/Delete velero along with its features - use volume snapshot location and cleanup crds
 func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	var useSnap bool
 	var nodeAgent bool
 	envCredName := ""
@@ -527,12 +523,12 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 						}
 					}
 					for _, cred := range c.ComponentCred {
-						//if createWithInstall is enabled then create a secret
+						// if createWithInstall is enabled then create a secret
 						if cred.CreateWithInstall {
 							compCredName = string(cred.Name)
 							foundCred, _ := utils.GetSecret(ctx, compCredName, cr.Namespace, ctrlClient)
 							if foundCred == nil {
-								//creation of a secret
+								// creation of a secret
 								err := CreateVeleroAccess(ctx, isDeleting, op, cr, ctrlClient)
 								if err != nil {
 									return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", err)
@@ -551,7 +547,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		}
 	}
 
-	//create volume snapshot location
+	// create volume snapshot location
 	if useSnap {
 
 		vsName, yamlString2, err := getUseVolumeSnapshot(ctx, op, cr, ctrlClient)
@@ -578,7 +574,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		}
 	}
 
-	//enable node agent
+	// enable node agent
 	if nodeAgent {
 		yamlString4, err := getNodeAgent(op, cr)
 		if err != nil {
@@ -629,7 +625,6 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
 					objectSecretName = env.Value
 				}
-
 			}
 			for _, cred := range component.ComponentCred {
 				if cred.CreateWithInstall {
@@ -667,7 +662,6 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 
 // getUseVolumeSnapshot - gets the velero - volume snapshot location manifest
 func getUseVolumeSnapshot(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) (string, string, error) {
-
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -684,6 +678,7 @@ func getUseVolumeSnapshot(ctx context.Context, op utils.OperatorConfig, cr csmv1
 	yamlString = string(buf)
 	volSnapshotLocationName := ""
 	provider := ""
+	backupRegion := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
@@ -693,13 +688,22 @@ func getUseVolumeSnapshot(ctx context.Context, op utils.OperatorConfig, cr csmv1
 				if strings.Contains(ConfigProvider, env.Name) {
 					provider = env.Value
 				}
+				if strings.Contains(BackupStorageRegion, env.Name) {
+					backupRegion = env.Value
+				}
 			}
 		}
+	}
+
+	// if BackupStorageRegion is not provided - use default variable
+	if backupRegion == "" {
+		backupRegion = BackupStorageRegionDefault
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, VolSnapshotlocation, volSnapshotLocationName)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageRegion, backupRegion)
 
 	return volSnapshotLocationName, yamlString, nil
 }
@@ -724,6 +728,7 @@ func getBackupStorageLoc(ctx context.Context, op utils.OperatorConfig, cr csmv1.
 	provider := ""
 	bucketName := ""
 	backupURL := ""
+	backupRegion := ""
 	for _, component := range appMob.Components {
 		if component.Name == AppMobVeleroComponent {
 			for _, env := range component.Envs {
@@ -739,8 +744,16 @@ func getBackupStorageLoc(ctx context.Context, op utils.OperatorConfig, cr csmv1.
 				if strings.Contains(BackupStorageURL, env.Name) {
 					backupURL = env.Value
 				}
+				if strings.Contains(BackupStorageRegion, env.Name) {
+					backupRegion = env.Value
+				}
 			}
 		}
+	}
+
+	// if BackupStorageRegion is not provided - use default variable
+	if backupRegion == "" {
+		backupRegion = BackupStorageRegionDefault
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
@@ -748,13 +761,13 @@ func getBackupStorageLoc(ctx context.Context, op utils.OperatorConfig, cr csmv1.
 	yamlString = strings.ReplaceAll(yamlString, VeleroBucketName, bucketName)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageURL, backupURL)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
+	yamlString = strings.ReplaceAll(yamlString, BackupStorageRegion, backupRegion)
 
 	return backupStorageLocationName, yamlString, nil
 }
 
 // UseBackupStorageLoc - Apply/Delete velero-backupstoragelocation yaml from operator config
 func UseBackupStorageLoc(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	log := logger.GetLogger(ctx)
 	bslName, yamlString, err := getBackupStorageLoc(ctx, op, cr, ctrlClient)
 	if err != nil {
@@ -813,7 +826,6 @@ func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (str
 				if strings.Contains(AppMobObjStoreSecretName, env.Name) {
 					objectSecretName = env.Value
 				}
-
 			}
 			for _, cred := range component.ComponentCred {
 				if cred.CreateWithInstall {
@@ -833,7 +845,6 @@ func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (str
 
 // applyDeleteObjects - Applies/Deletes the object based on boolean value
 func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlString string, isDeleting bool) error {
-
 	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
@@ -852,5 +863,4 @@ func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlStr
 	}
 
 	return nil
-
 }
