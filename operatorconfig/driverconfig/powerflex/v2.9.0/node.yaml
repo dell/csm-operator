@@ -174,6 +174,8 @@ spec:
               mountPath: /storage
             - name: udev-d
               mountPath: /rules.d
+            - name: host-opt-emc-path
+              mountPath: /host_opt_emc_path
       initContainers:
         - name: sdc
           securityContext:
@@ -205,6 +207,8 @@ spec:
               mountPath: /rules.d
             - name: scaleio-path-opt
               mountPath: /host_drv_cfg_path 
+            - name: host-opt-emc-path
+              mountPath: /host_opt_emc_path
       volumes:
         - name: registration-dir
           hostPath:
@@ -246,6 +250,10 @@ spec:
           hostPath:
             path: /etc/os-release
             type: File
+        - name: host-opt-emc-path
+          hostPath:
+            path: /opt/emc
+            type: Directory
         - name: vxflexos-config
           secret:
             secretName: <DriverDefaultReleaseName>-config
