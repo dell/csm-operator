@@ -3599,7 +3599,7 @@ spec:
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
-relatedImages:
+  relatedImages:
   - image: docker.io/dellemc/dell-csm-operator:v1.4.3
     name: dell-csm-operator
   - image: docker.io/dellemc/csi-isilon:v2.9.1
