@@ -47,6 +47,11 @@ powerflex:
       observability: "v1.7.0"
       replication: "v1.7.1"
       resiliency: "v1.8.1"
+  v2.9.2:
+      authorization: "v1.9.1"
+      observability: "v1.7.0"
+      replication: "v1.7.1"
+      resiliency: "v1.8.1"
 powerstore:
   # List of Driver versions and modules that supports the version
   v2.7.0:
