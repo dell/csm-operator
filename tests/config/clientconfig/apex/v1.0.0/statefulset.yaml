@@ -204,21 +204,9 @@ spec:
           args:
             - "proxy"
             - "--port=8001"
-            - "--address=0.0.0.0"
-            - "--accept-hosts=^.*$"
+            - "--address=127.0.0.1"
+            - "--accept-hosts=^localhost$,^127.0.0.1$"
             - "--v=5"
-          ports:
-            - containerPort: 8001
-          livenessProbe:
-            httpGet:
-              path: /api/v1
-              port: 8001
-              scheme: HTTP
-            initialDelaySeconds: 5
-            timeoutSeconds: 2
-            periodSeconds: 30
-            successThreshold: 1
-            failureThreshold: 3
         - name: cert-persister
           image: "<CERT_PERSISTER_IMAGE>"
           imagePullPolicy: Always
