@@ -125,7 +125,7 @@ spec:
           securityContext:
             {}
           image: "<CONNECTIVITY_CLIENT_IMAGE>"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           args:
             - "--aggregator"
             - <AGGREGATOR_URL>
@@ -199,7 +199,7 @@ spec:
             failureThreshold: 3
         - name: kubernetes-proxy
           image: "<KUBERNETES_PROXY_IMAGE>"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: [ "kubectl" ]
           args:
             - "proxy"
@@ -209,7 +209,7 @@ spec:
             - "--v=5"
         - name: cert-persister
           image: "<CERT_PERSISTER_IMAGE>"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: DCM_IDENTITY_LOCATION
               valueFrom:
@@ -222,7 +222,7 @@ spec:
       initContainers:
         - name: connectivity-client-init
           image: "<ACC_INIT_CONTAINER_IMAGE>"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: DCM_IDENTITY_LOCATION
               valueFrom:
