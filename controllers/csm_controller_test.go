@@ -995,7 +995,7 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(_, expectedErr 
 	assert.Containsf(suite.T(), err.Error(), createCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	createCMError = false
 
-	//test CSM object with failed state leads to requeue
+	// test CSM object with failed state leads to requeue
 	os.Setenv("UNIT_TEST", "false")
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
