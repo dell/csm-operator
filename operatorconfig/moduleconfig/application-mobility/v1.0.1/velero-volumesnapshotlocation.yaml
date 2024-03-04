@@ -11,4 +11,4 @@ metadata:
 spec:
   provider: <CONFIGURATION_PROVIDER>
   config: 
-      region: minio
+      region: <BACKUP_REGION_URL>
