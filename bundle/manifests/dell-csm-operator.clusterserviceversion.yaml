@@ -3648,7 +3648,7 @@ spec:
     name: resizer
   - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
     name: externalhealthmonitorcontroller
-  - image: dellemc/csi-metadata-retriever:v1.7.0
+  - image: dellemc/csi-metadata-retriever:v1.7.2
     name: metadataretriever
   - image: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
     name: dell-connectivity-client
