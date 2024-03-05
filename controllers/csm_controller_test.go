@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -172,6 +173,8 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	suite.k8sClient = clientgoclient.NewFakeClient(suite.fakeClient)
 
 	suite.namespace = "test"
+
+	os.Setenv("UNIT_TEST", "true")
 }
 
 // test a happy path scenerio with deletion
@@ -992,6 +995,13 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(_, expectedErr 
 	assert.Containsf(suite.T(), err.Error(), createCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	createCMError = false
 
+	// test CSM object with failed state leads to requeue
+	os.Setenv("UNIT_TEST", "false")
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), "CSM state is failed", "expected error containing %q, got %s", expectedErr, err)
+	os.Setenv("UNIT_TEST", "true")
+
 	// create everything this time
 	reconciler.Reconcile(ctx, req)
 
@@ -1012,6 +1022,15 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(_, expectedErr 
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), updateCMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateCMError = false
+
+	// test CSM object with failed state, cannot update CSM object
+	os.Setenv("UNIT_TEST", "false")
+	updateCSMError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	assert.Containsf(suite.T(), err.Error(), updateCSMErrorStr, "expected error containing %q, got %s", expectedErr, err)
+	updateCSMError = false
+	os.Setenv("UNIT_TEST", "true")
 
 	getCRBError = true
 	_, err = reconciler.Reconcile(ctx, req)
@@ -1294,7 +1313,7 @@ func getAppMob() []csmv1.Module {
 		{
 			Name:          csmv1.ApplicationMobility,
 			Enabled:       true,
-			ConfigVersion: "v1.0.1",
+			ConfigVersion: "v1.0.2",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "application-mobility-controller-manager",

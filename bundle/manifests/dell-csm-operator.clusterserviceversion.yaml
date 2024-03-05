@@ -1296,6 +1296,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: client.common.args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: client.common.certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: client.common.commander
@@ -1357,6 +1361,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: client.common.opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: client.common.privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: client.common.proxyService
@@ -1402,6 +1410,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: client.initContainers[0].args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: client.initContainers[0].certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: client.initContainers[0].commander
@@ -1463,6 +1475,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: client.initContainers[0].opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: client.initContainers[0].privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: client.initContainers[0].proxyService
@@ -1497,6 +1513,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: client.sideCars[0].args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: client.sideCars[0].certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: client.sideCars[0].commander
@@ -1558,6 +1578,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: client.sideCars[0].opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: client.sideCars[0].privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: client.sideCars[0].proxyService
@@ -1617,6 +1641,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.common.args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: driver.common.certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.common.commander
@@ -1678,6 +1706,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: driver.common.opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: driver.common.privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.common.proxyService
@@ -1715,6 +1747,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.controller.args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: driver.controller.certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.controller.commander
@@ -1776,6 +1812,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: driver.controller.opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: driver.controller.privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.controller.proxyService
@@ -1825,6 +1865,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.initContainers[0].args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: driver.initContainers[0].certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.initContainers[0].commander
@@ -1886,6 +1930,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: driver.initContainers[0].opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: driver.initContainers[0].privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.initContainers[0].proxyService
@@ -1920,6 +1968,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.node.args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: driver.node.certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.node.commander
@@ -1981,6 +2033,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: driver.node.opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: driver.node.privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.node.proxyService
@@ -2018,6 +2074,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.sideCars[0].args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: driver.sideCars[0].certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.sideCars[0].commander
@@ -2079,6 +2139,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: driver.sideCars[0].opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: driver.sideCars[0].privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.sideCars[0].proxyService
@@ -2126,6 +2190,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: modules[0].components[0].args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: modules[0].components[0].certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: modules[0].components[0].commander
@@ -2187,6 +2255,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: modules[0].components[0].opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: modules[0].components[0].privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: modules[0].components[0].proxyService
@@ -2228,6 +2300,10 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: modules[0].initContainer[0].args
+      - description: Certificate is a certificate used for a certificate/private-key
+          pair
+        displayName: Certificate for certificate/private-key pair
+        path: modules[0].initContainer[0].certificate
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: modules[0].initContainer[0].commander
@@ -2289,6 +2365,10 @@ spec:
       - description: OpaKubeMgmt is the image tag for the Container
         displayName: Authorization Opa Kube Management Container Image
         path: modules[0].initContainer[0].opaKubeMgmt
+      - description: PrivateKey is a private key used for a certificate/private-key
+          pair
+        displayName: Private key for certificate/private-key pair
+        path: modules[0].initContainer[0].privateKey
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: modules[0].initContainer[0].proxyService
