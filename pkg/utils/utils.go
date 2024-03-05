@@ -1093,3 +1093,15 @@ func Contains(slice []string, str string) bool {
 	}
 	return false
 }
+
+// DetermineUnitTestRun will determine if this reconcile call is part of unit test run
+func DetermineUnitTestRun(ctx context.Context) bool {
+	log := logger.GetLogger(ctx)
+	unitTestRun, boolErr := strconv.ParseBool(os.Getenv("UNIT_TEST"))
+	if unitTestRun && boolErr == nil {
+		log.Info("Running in unit tests mode")
+	} else {
+		unitTestRun = false
+	}
+	return unitTestRun
+}
