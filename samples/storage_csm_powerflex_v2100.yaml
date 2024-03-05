@@ -55,7 +55,7 @@ spec:
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.7.0
+        image: dellemc/csi-metadata-retriever:v1.7.2
 
     # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor

@@ -93,7 +93,7 @@ spec:
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.7.0
+        image: dellemc/csi-metadata-retriever:v1.7.2
       # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
       # Configure when the storageCapacity is set as "true"
       # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
