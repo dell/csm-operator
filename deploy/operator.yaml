@@ -1102,6 +1102,8 @@ rules:
   - list
   - update
   - watch
+  - get
+  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -1153,6 +1155,31 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: dell-csm-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: dell-csm-operator-manager-service-account
+  namespace: dell-csm-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: application-mobility-velero-server
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: application-mobility-velero-server-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: application-mobility-velero-server
 subjects:
 - kind: ServiceAccount
   name: dell-csm-operator-manager-service-account
@@ -1222,6 +1249,8 @@ spec:
     metadata:
       labels:
         control-plane: controller-manager
+      annotations:
+        storage.dell.com/CSMVersion: v1.10.0
     spec:
       containers:
       - args:
