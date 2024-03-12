@@ -2,19 +2,19 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
-    features.operators.openshift.io/disconnected : "true" 
-    features.operators.openshift.io/fips-compliant: "false" 
-    features.operators.openshift.io/proxy-aware: "false"
-    features.operators.openshift.io/token-auth-azure: "false"
-    features.operators.openshift.io/token-auth-gcp: "false"
-    features.operators.openshift.io/tls-profiles:  "false"
-    features.operators.openshift.io/token-auth-aws: "false"
     alm-examples: '[]'
     capabilities: Seamless Upgrades
     categories: Storage
     containerImage: docker.io/dellemc/dell-csm-operator:v1.5.0
     createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
+    features.operators.openshift.io/disconnected: "true"
+    features.operators.openshift.io/fips-compliant: "false"
+    features.operators.openshift.io/proxy-aware: "false"
+    features.operators.openshift.io/tls-profiles: "false"
+    features.operators.openshift.io/token-auth-aws: "false"
+    features.operators.openshift.io/token-auth-azure: "false"
+    features.operators.openshift.io/token-auth-gcp: "false"
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
   name: dell-csm-operator.v1.5.0
