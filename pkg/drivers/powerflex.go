@@ -110,6 +110,10 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) (string, error) {
 	log := logger.GetLogger(ctx)
 	secretName := cr.Name + "-config"
+	if cr.Spec.Driver.AuthSecret != "" {
+		secretName = cr.Spec.Driver.AuthSecret
+	}
+	
 	credSecret, err := utils.GetSecret(ctx, secretName, cr.GetNamespace(), ct)
 	if err != nil {
 		return "", fmt.Errorf("reading secret [%s] error [%s]", secretName, err)
