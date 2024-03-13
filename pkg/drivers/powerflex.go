@@ -51,6 +51,10 @@ const (
 
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
+
+
+	// SecretName is a placeholder for the pflex config secret name
+	SecretName = "<SecretName>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -233,6 +237,11 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	healthMonitorController := ""
 	healthMonitorNode := ""
 
+	secretName := cr.Name + "-config"
+	if cr.Spec.Driver.AuthSecret != "" {
+		secretName = cr.Spec.Driver.AuthSecret
+	}
+
 	// nolint:gosec
 	switch fileType {
 	case "Controller":
@@ -273,6 +282,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+		yamlString = strings.ReplaceAll(yamlString, SecretName, secretName)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {

@@ -17,6 +17,7 @@ spec:
       #   false: disable storage capacity tracking
       storageCapacity: true
     configVersion: v2.10.0
+    authSecret: vxflexos-config
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false

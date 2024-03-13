@@ -261,7 +261,7 @@ spec:
             type: Directory
         - name: vxflexos-config
           secret:
-            secretName: <DriverDefaultReleaseName>-config
+            secretName: <SecretName>
         - name: vxflexos-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
