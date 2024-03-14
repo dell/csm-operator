@@ -57,6 +57,9 @@ const (
 	// AccNamespace - deployment namespace
 	AccNamespace string = "<NAMESPACE>"
 
+	// CsmNamespace - CSM deployment namespace
+	CsmNamespace string = "<CSM_NAMESPACE>"
+
 	// AggregatorURLDefault - default aggregator location
 	AggregatorURLDefault string = "connect-into.dell.com"
 
@@ -472,6 +475,7 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 // ModifyApexConnectivityClientCR - update the custom resource
 func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivityClient) string {
 	namespace := ""
+	csmnamespace := ""
 	aggregatorURL := AggregatorURLDefault
 	connectivityClientImage := ""
 	kubeProxyImage := ""
@@ -481,6 +485,10 @@ func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivity
 	caCertsList := ""
 
 	namespace = cr.Namespace
+
+	if cr.Spec.Client.CSMNamespace != "" {
+		csmnamespace = string(cr.Spec.Client.CSMNamespace)
+	}
 
 	if cr.Spec.Client.ConnectionTarget != "" {
 		aggregatorURL = string(cr.Spec.Client.ConnectionTarget)
@@ -519,6 +527,7 @@ func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivity
 	}
 
 	yamlString = strings.ReplaceAll(yamlString, AccNamespace, namespace)
+	yamlString = strings.ReplaceAll(yamlString, CsmNamespace, csmnamespace)
 	yamlString = strings.ReplaceAll(yamlString, AggregatorURL, aggregatorURL)
 	yamlString = strings.ReplaceAll(yamlString, CaCertOption, caCertFlag)
 	yamlString = strings.ReplaceAll(yamlString, CaCerts, caCertsList)
