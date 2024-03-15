@@ -336,9 +336,6 @@ spec:
                     description: ConnectionTarget is the target that the client connects
                       to in the Dell datacenter
                     type: string
-                  csmNamespace:
-                    description: Namespace where CSM will be installed
-                    type: string
                   csmClientType:
                     description: ClientType is the Client type for Dell Technologies
                       - e.g, ApexConnectivityClient

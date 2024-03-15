@@ -168,7 +168,6 @@ func (suite *AccControllerTestSuite) TestAccConnectivityClientConnectionTarget()
 	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
 	csm.Spec.Client.Common.Image = "image"
 	csm.Spec.Client.ConnectionTarget = "dev-svc.example.com"
-	csm.Spec.Client.CSMNamespace = "dell-csm"
 
 	csm.ObjectMeta.Finalizers = []string{AccFinalizerName}
 

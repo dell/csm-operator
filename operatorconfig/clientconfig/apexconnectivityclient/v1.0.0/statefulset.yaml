@@ -164,7 +164,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: connectivity-client-docker-k8s
-  namespace: <CSM_NAMESPACE>
+  namespace: "dell-csm"
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -174,7 +174,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: connectivity-client-docker-k8s
-  namespace: <CSM_NAMESPACE>
+  namespace: "dell-csm"
 subjects:
   - kind: ServiceAccount
     name: connectivity-client-docker-k8s
