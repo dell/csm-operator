@@ -620,6 +620,15 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &ss)
+
+		case "Namespace":
+
+			var ss corev1.Namespace
+			if err := yaml.Unmarshal(raw, &ss); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ss)
 		}
 	}
 
