@@ -1,4 +1,14 @@
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: karavi
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dell-csm
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: connectivity-client-docker-k8s
