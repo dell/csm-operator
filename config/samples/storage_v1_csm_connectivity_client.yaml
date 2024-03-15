@@ -7,6 +7,7 @@ spec:
   client:
     csmClientType: "apexConnectivityClient"
     configVersion: v1.0.0
+    csmNamespace : "csm"
     connectionTarget: connect-into.dell.com
     forceRemoveClient: true
     common:

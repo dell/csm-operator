@@ -133,6 +133,9 @@ spec:
           the Dell datacenter
         displayName: Connection Target
         path: client.connectionTarget
+      - description: CNamespace where CSM will be installed
+        displayName: CSM Namespace
+        path: client.csmNamespace
       - description: ClientType is the Client type for Dell Technologies - e.g, ApexConnectivityClient
         displayName: Client Type
         path: client.csmClientType
