@@ -60,6 +60,9 @@ const (
 	// CsmNamespace - CSM deployment namespace
 	CsmNamespace string = "<CSM_NAMESPACE>"
 
+	// CsmNamespaceDefault - Default namespace for CSM installation
+	CsmNamespaceDefault string = "dell-csm"
+
 	// AggregatorURLDefault - default aggregator location
 	AggregatorURLDefault string = "connect-into.dell.com"
 
@@ -475,7 +478,7 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 // ModifyApexConnectivityClientCR - update the custom resource
 func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivityClient) string {
 	namespace := ""
-	csmnamespace := ""
+	csmnamespace := CsmNamespaceDefault
 	aggregatorURL := AggregatorURLDefault
 	connectivityClientImage := ""
 	kubeProxyImage := ""
