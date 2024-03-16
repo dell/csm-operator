@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -1292,10 +1293,15 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
 
-	upgradeValid, err := checkUpgrade(ctx, cr, operatorConfig)
+	isUpgrade, isValidUpgrade, err := checkUpgrade(ctx, cr, operatorConfig)
 	if err != nil {
 		return fmt.Errorf("failed upgrade check: %v", err)
-	} else if !upgradeValid {
+	} else if isValidUpgrade {
+		err = updateVersionsAndImages(ctx, cr, operatorConfig)
+		if err != nil {
+			return fmt.Errorf("failed version and image update: %v", err)
+		}
+	} else if isUpgrade && !isValidUpgrade {
 		return fmt.Errorf("failed upgrade check because upgrade is not valid")
 	}
 
@@ -1365,8 +1371,63 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	return nil
 }
 
+// updateVersionsAndImages -- update driver image and module versions and images for upgrade
+func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+	log := logger.GetLogger(ctx)
+
+	// Update driver image tag
+	cr.Spec.Driver.Common.Image, err = updateImageTag(cr.Spec.Driver.Common.Image, cr.Spec.Driver.ConfigVersion)
+	if err {
+		return err
+	}
+	log.Infow("updated %s module to image %s", module.Name, module.Image)
+
+	// Loop through list of modules, update all versions and images to match driver version
+	for idx, module := range cr.Spec.Modules {
+		cr.Spec.Modules[idx].ConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
+		if err {
+			return err
+		}
+		log.Infow("updated %s module to version %s", module.Name, module.ConfigVersion)
+
+		// loop over components in module, update versions
+		for compIdx, component := range cr.Spec.Modules[idx].Components {
+			cr.Spec.Modules[idx].Components[compIdx].Image, err = updateImageTag(cr.Spec.Modules[idx].Components[compIdx].Image, getCompTag(module.Name, module.ConfigVersion)
+			if err {
+				return err
+			}
+
+	// If we don't hit errors, return nil
+	return nil
+}
+
+// updateImageTag -- update image tagged version (split on last ':' and replace everything after it with the version passed in)
+func updateImageTag(image csmv1.ImageType, configVersion string) (csmv1.ImageType, error) {
+	func splitFunc(r rune) bool {
+    		return r == ':' || r == '.'
+	}
+
+	imageComponents := strings.FieldsFunc(image, splitFunc)
+	imageNoTag := strings.Join(imageComponents[:len(imageComponents)-1], ":")
+
+	return imageNoTag + configVersion
+}
+
+// getCompTag -- get component version for module version
+func getCompTag(moduleName csmv1.ModuleType, configVersion string) (csmv1.ModuleType, error) {
+	func splitFunc(r rune) bool {
+    		return r == ':' || r == '.'
+	}
+
+	imageComponents := strings.FieldsFunc(image, splitFunc)
+	imageNoTag := strings.Join(imageComponents[:len(imageComponents)-1], ":")
+
+	return imageNoTag + configVersion
+}
+
 // Check for upgrade/if upgrade is appropriate
-func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (bool, error) {
+// return values: <is upgrade>, <is valid upgrade>, <error>
+func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (bool, bool, error) {
 	log := logger.GetLogger(ctx)
 	driverType := cr.Spec.Driver.CSIDriverType
 	if driverType == csmv1.PowerScale {
@@ -1385,26 +1446,27 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 		// if versions are equal, it is a modification
 		if oldVersion == cr.Spec.Driver.ConfigVersion {
 			log.Infow("proceeding with modification of driver install")
-			return true, nil
+			return false, false, nil
 		}
 		// if not equal, it is an upgrade/downgrade
 		// get minimum required version for upgrade
 		minUpgradePath, err := drivers.GetUpgradeInfo(ctx, operatorConfig, driverType, oldVersion)
 		if err != nil {
 			log.Infow("GetUpgradeInfo not successful")
-			return false, err
+			return true, false, err
 		}
 		//
 		installValid, _ := utils.MinVersionCheck(minUpgradePath, cr.Spec.Driver.ConfigVersion)
 		if installValid {
 			log.Infow("proceeding with valid driver upgrade from version %s to version %s", oldVersion, cr.Spec.Driver.ConfigVersion)
-			return installValid, nil
+			// Update module versions to match the driver version specified
+			return true, installValid, nil
 		}
 		log.Infow("not proceeding with invalid driver upgrade")
-		return installValid, fmt.Errorf("failed upgrade check: upgrade from version %s to %s not valid", oldVersion, cr.Spec.Driver.ConfigVersion)
+		return true, installValid, fmt.Errorf("failed upgrade check: upgrade from version %s to %s not valid", oldVersion, cr.Spec.Driver.ConfigVersion)
 	}
 	log.Infow("proceeding with fresh driver install")
-	return true, nil
+	return false, false, nil
 }
 
 // TODO: refactor this

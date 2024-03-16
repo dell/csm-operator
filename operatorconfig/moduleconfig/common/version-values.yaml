@@ -29,21 +29,25 @@ powerflex:
       replication: "v1.6.0"
       resiliency: "v1.6.0"
   v2.9.0:
+      application-mobility: "v1.0.0"
       authorization: "v1.9.0"
       observability: "v1.7.0"
       replication: "v1.7.0"
       resiliency: "v1.8.0"
   v2.9.1:
+      application-mobility: "v1.0.0"
       authorization: "v1.9.1"
       observability: "v1.7.0"
       replication: "v1.7.1"
       resiliency: "v1.8.1"
   v2.9.2:
+      application-mobility: "v1.0.2"
       authorization: "v1.9.1"
       observability: "v1.7.0"
       replication: "v1.7.1"
       resiliency: "v1.8.1"
   v2.10.0:
+      application-mobility: "v1.0.2"
       authorization: "v1.10.0"
       observability: "v1.8.0"
       replication: "v1.8.0"
