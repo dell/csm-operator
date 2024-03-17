@@ -1,0 +1,62 @@
+# Module Type
+application-mobility:
+  v1.0.2:
+    application-mobility-controller-manager: "v1.0.2"
+    velero: "v1.10.0"
+  v1.0.1:
+    application-mobility-controller-manager: "v1.0.1"
+    velero: "v1.10.0"
+  v1.0.0:
+    application-mobility-controller-manager: "v1.0.0"
+    velero: "v1.10.0"
+authorization:
+  v1.10.0:
+    karavi-authorization-proxy: "v1.10.0"
+  v1.9.1:
+    karavi-authorization-proxy: "v1.9.1"
+  v1.9.0:
+    karavi-authorization-proxy: "v1.9.0"
+  v1.8.0:
+    karavi-authorization-proxy: "v1.8.0"
+observability:
+  v1.8.0:
+    topology: "v1.8.0"
+    metrics-powerflex: "v1.8.0"
+    metrics-powerscale: "v1.8.0"
+    metrics-powermax: "v1.8.0"
+  v1.7.0:
+    topology: "v1.7.0"
+    metrics-powerflex: "v1.7.0"
+    metrics-powerscale: "v1.7.0"
+    metrics-powermax: "v1.7.0"
+  v1.6.0:
+    topology: "v1.6.0"
+    metrics-powerflex: "v1.6.0"
+    metrics-powerscale: "v1.6.0"
+    metrics-powermax: "v1.6.0"
+replication:
+  v1.8.0:
+    dell-csi-replicator: "v1.8.0"
+    dell-replication-controller-manager: "v1.8.0"
+  v1.7.1:
+    dell-csi-replicator: "v1.7.1"
+    dell-replication-controller-manager: "v1.7.1"
+  v1.7.0:
+    dell-csi-replicator: "v1.7.0"
+    dell-replication-controller-manager: "v1.7.0"
+  v1.6.0:
+    dell-csi-replicator: "v1.6.0"
+    dell-replication-controller-manager: "v1.6.0"
+resiliency:
+  v1.9.0:
+    podmon-controller: "v1.9.0"
+    podmon-node: "v1.9.0"
+  v1.8.1:
+    podmon-controller: "v1.8.1"
+    podmon-node: "v1.8.1"
+  v1.8.0:
+    podmon-controller: "v1.8.0"
+    podmon-node: "v1.8.0"
+  v1.7.0:
+    podmon-controller: "v1.7.0"
+    podmon-node: "v1.7.0"

@@ -835,6 +835,33 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 	return "", fmt.Errorf("%s driver does not exist in file %s", dType, configMapPath)
 }
 
+func GetComponentVersion(moduleName csmv1.ModuleType, moduleConfigVersion string, componentName string, configDirPath string) (string, error) {
+	configMapPath := fmt.Sprintf("%s/moduleconfig/common/version-values.yaml", path)
+	buf, err := os.ReadFile(filepath.Clean(configMapPath))
+	if err != nil {
+		return "", err
+	}
+
+	support := map[csmv1.ModuleType]map[string]map[string]string{}
+	err = yaml.Unmarshal(buf, &support)
+	if err != nil {
+		return "", err
+	}
+
+	if module, ok := support[moduleName]; ok {
+		if components, ok := module[moduleConfigVersion]; ok {
+			if componentVersion, ok := components[componentName]; ok {
+				return componentVersion, nil
+			}
+			return "", fmt.Errorf(" %s component for %s module does not exist in file %s", componentName, moduleName, configMapPath)
+		}
+		return "", fmt.Errorf("version %s of %s module does not exist in file %s", moduleConfigVersion, moduleName, configMapPath)
+
+	}
+
+	return "", fmt.Errorf("%s module does not exist in file %s", dType, configMapPath)
+}
+
 func versionParser(version string) (int, int, error) {
 	// strip v off of version string
 	versionNoV := strings.TrimLeft(version, "v")
