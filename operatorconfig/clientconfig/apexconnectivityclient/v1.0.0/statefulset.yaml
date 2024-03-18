@@ -42,16 +42,13 @@ rules:
     verbs: ["list", "watch"]
   - apiGroups: [""]
     resources: ["namespaces"]
-    verbs: ["get", "list", "watch", "create"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["list", "watch"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["storageclasses"]
-    verbs: ["list", "watch", "create", "delete"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
     verbs: ["list", "watch"]
@@ -68,20 +65,17 @@ rules:
     resources: ["csidrivers"]
     verbs: ["list", "watch", "get"]
   - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["list"]
+  - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get", "create", "delete", "update"]
-  - apiGroups: ["storage.dell.com"]
-    resources: ["containerstoragemodules"]
-    verbs: ["list", "create", "get", "delete", "watch"]
+    verbs: ["get"]
+  - apiGroups: [ "storage.dell.com" ]
+    resources: [ "containerstoragemodules" ]
+    verbs: [ "list", "get", "watch" ]
   - apiGroups: ["mobility.storage.dell.com"]
     resources: ["backups"]
     verbs: ["list", "create", "get"]
-  - apiGroups: ["cert-manager.io"]
-    resources: ["issuers"]
-    verbs: ["list", "get", "create", "delete"]
-  - apiGroups: ["cert-manager.io"]
-    resources: ["certificates"]
-    verbs: ["list", "get", "create", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -129,7 +123,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["list","get", "create", "update", "delete"]
+    verbs: ["get", "create", "update", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -178,6 +172,15 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["list","get", "create", "update", "delete"]
+  - apiGroups: [ "storage.k8s.io" ]
+    resources: [ "storageclasses" ]
+    verbs: [ "list", "watch", "create", "delete" ]
+  - apiGroups: [ "storage.dell.com" ]
+    resources: [ "containerstoragemodules" ]
+    verbs: [ "create", "delete" ]
+  - apiGroups: [ "" ]
+    resources: [ "configmaps" ]
+    verbs: [ "create", "delete", "update" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
