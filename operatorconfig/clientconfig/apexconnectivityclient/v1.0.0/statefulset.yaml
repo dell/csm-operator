@@ -49,6 +49,9 @@ rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["list", "watch"]
+  - apiGroups: [ "storage.k8s.io" ]
+    resources: [ "storageclasses" ]
+    verbs: [ "list", "watch", "create", "delete" ]
   - apiGroups: ["apps"]
     resources: ["deployments"]
     verbs: ["list", "watch"]
@@ -73,9 +76,6 @@ rules:
   - apiGroups: [ "storage.dell.com" ]
     resources: [ "containerstoragemodules" ]
     verbs: [ "list", "get", "watch" ]
-  - apiGroups: ["mobility.storage.dell.com"]
-    resources: ["backups"]
-    verbs: ["list", "create", "get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -100,6 +100,9 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["list","get", "create", "update", "delete"]
+  - apiGroups: [ "" ]
+    resources: [ "configmaps" ]
+    verbs: [ "create", "delete", "update" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -148,6 +151,9 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["list","get", "create", "update", "delete"]
+  - apiGroups: [ "" ]
+    resources: [ "configmaps" ]
+    verbs: [ "create", "delete", "update" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -172,15 +178,15 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["list","get", "create", "update", "delete"]
-  - apiGroups: [ "storage.k8s.io" ]
-    resources: [ "storageclasses" ]
-    verbs: [ "list", "watch", "create", "delete" ]
   - apiGroups: [ "storage.dell.com" ]
     resources: [ "containerstoragemodules" ]
     verbs: [ "create", "delete" ]
   - apiGroups: [ "" ]
     resources: [ "configmaps" ]
     verbs: [ "create", "delete", "update" ]
+  - apiGroups: ["mobility.storage.dell.com"]
+    resources: ["backups"]
+    verbs: ["list", "create", "get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
