@@ -170,13 +170,35 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csipscale"
                   ],
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v4.0.0",
                   "name": "provisioner"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.5.0",
+                  "name": "attacher"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0",
+                  "name": "registrar"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.10.0",
+                  "name": "resizer"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1",
+                  "name": "snapshotter"
+                },
+                {
+                  "image": "dellemc/csi-metadata-retriever:v1.7.2",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -253,6 +275,7 @@ metadata:
               {
                 "components": [
                   {
+                    "certificate": "",
                     "enabled": false,
                     "envs": [
                       {
@@ -261,9 +284,11 @@ metadata:
                       }
                     ],
                     "image": "dellemc/csm-topology:v1.8.0",
-                    "name": "topology"
+                    "name": "topology",
+                    "privateKey": ""
                   },
                   {
+                    "certificate": "",
                     "enabled": false,
                     "envs": [
                       {
@@ -272,7 +297,8 @@ metadata:
                       }
                     ],
                     "image": "otel/opentelemetry-collector:0.42.0",
-                    "name": "otel-collector"
+                    "name": "otel-collector",
+                    "privateKey": ""
                   },
                   {
                     "enabled": false,
@@ -510,13 +536,35 @@ metadata:
                   "args": [
                     "--volume-name-prefix=pmax"
                   ],
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v4.0.0",
                   "name": "provisioner"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.5.0",
+                  "name": "attacher"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0",
+                  "name": "registrar"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.10.0",
+                  "name": "resizer"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1",
+                  "name": "snapshotter"
+                },
+                {
+                  "image": "dellemc/csi-metadata-retriever:v1.7.2",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -619,6 +667,7 @@ metadata:
               {
                 "components": [
                   {
+                    "certificate": "",
                     "enabled": false,
                     "envs": [
                       {
@@ -627,9 +676,11 @@ metadata:
                       }
                     ],
                     "image": "dellemc/csm-topology:v1.8.0",
-                    "name": "topology"
+                    "name": "topology",
+                    "privateKey": ""
                   },
                   {
+                    "certificate": "",
                     "enabled": false,
                     "envs": [
                       {
@@ -638,7 +689,8 @@ metadata:
                       }
                     ],
                     "image": "otel/opentelemetry-collector:0.42.0",
-                    "name": "otel-collector"
+                    "name": "otel-collector",
+                    "privateKey": ""
                   },
                   {
                     "enabled": false,
@@ -778,13 +830,35 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csivol"
                   ],
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v4.0.0",
                   "name": "provisioner"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.5.0",
+                  "name": "attacher"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0",
+                  "name": "registrar"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.10.0",
+                  "name": "resizer"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1",
+                  "name": "snapshotter"
+                },
+                {
+                  "image": "dellemc/csi-metadata-retriever:v1.7.2",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -925,13 +999,35 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csivol"
                   ],
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v4.0.0",
                   "name": "provisioner"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.5.0",
+                  "name": "attacher"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0",
+                  "name": "registrar"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.10.0",
+                  "name": "resizer"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1",
+                  "name": "snapshotter"
+                },
+                {
+                  "image": "dellemc/csi-metadata-retriever:v1.7.2",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -1045,7 +1141,28 @@ metadata:
                   "args": [
                     "--volume-name-prefix=k8s"
                   ],
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v4.0.0",
                   "name": "provisioner"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.5.0",
+                  "name": "attacher"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0",
+                  "name": "registrar"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.10.0",
+                  "name": "resizer"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1",
+                  "name": "snapshotter"
+                },
+                {
+                  "image": "dellemc/csi-metadata-retriever:v1.7.2",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "enabled": false,
@@ -1067,6 +1184,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
                   "name": "csi-external-health-monitor-controller"
                 }
               ]
@@ -1096,6 +1214,7 @@ metadata:
               {
                 "components": [
                   {
+                    "certificate": "",
                     "enabled": false,
                     "envs": [
                       {
@@ -1104,9 +1223,11 @@ metadata:
                       }
                     ],
                     "image": "dellemc/csm-topology:v1.8.0",
-                    "name": "topology"
+                    "name": "topology",
+                    "privateKey": ""
                   },
                   {
+                    "certificate": "",
                     "enabled": false,
                     "envs": [
                       {
@@ -1115,7 +1236,8 @@ metadata:
                       }
                     ],
                     "image": "otel/opentelemetry-collector:0.42.0",
-                    "name": "otel-collector"
+                    "name": "otel-collector",
+                    "privateKey": ""
                   },
                   {
                     "enabled": false,
@@ -1271,7 +1393,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Storage
     containerImage: docker.io/dellemc/dell-csm-operator:v1.5.0
-    createdAt: "2024-03-08T07:26:57Z"
+    createdAt: "2024-03-19T11:05:35Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     features.operators.openshift.io/disconnected: "true"
     features.operators.openshift.io/fips-compliant: "false"
@@ -3606,61 +3728,6 @@ spec:
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
-  relatedImages:
-  - image: docker.io/dellemc/dell-csm-operator:v1.4.1
-    name: dell-csm-operator
-  - image: docker.io/dellemc/csi-isilon:v2.9.1
-    name: csi-isilon
-  - image: docker.io/dellemc/csi-powermax:v2.9.1
-    name: csi-powermax
-  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.8.1
-    name: csipowermax-reverseproxy
-  - image: docker.io/dellemc/csi-powerstore:v2.9.1
-    name: csi-powerstore
-  - image: docker.io/dellemc/csi-unity:v2.9.1
-    name: csi-unity
-  - image: docker.io/dellemc/csi-vxflexos:v2.9.1
-    name: csi-vxflexos
-  - image: docker.io/dellemc/sdc:4.5.1
-    name: sdc
-  - image: docker.io/dellemc/csm-authorization-sidecar:v1.10.0
-    name: karavi-authorization-proxy
-  - image: docker.io/dellemc/dell-csi-replicator:v1.8.0
-    name: dell-csi-replicator
-  - image: docker.io/dellemc/dell-replication-controller:v1.8.0
-    name: dell-replication-controller-manager
-  - image: docker.io/dellemc/csm-topology:v1.8.0
-    name: topology
-  - image: docker.io/otel/opentelemetry-collector:0.42.0
-    name: otel-collector
-  - image: docker.io/dellemc/csm-metrics-powerscale:v1.5.0
-    name: metrics-powerscale
-  - image: docker.io/dellemc/csm-metrics-powermax:v1.3.0
-    name: metrics-powermax
-  - image: docker.io/dellemc/csm-metrics-powerflex:v1.8.0
-    name: metrics-powerflex
-  - image: docker.io/dellemc/podmon:v1.9.0
-    name: podmon-node
-  - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-    name: kube-rbac-proxy
-  - image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
-    name: attacher
-  - image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
-    name: provisioner
-  - image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
-    name: snapshotter
-  - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
-    name: registrar
-  - image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
-    name: resizer
-  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
-    name: externalhealthmonitorcontroller
-  - image: dellemc/csi-metadata-retriever:v1.7.2
-    name: metadataretriever
-  - image: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
-    name: dell-connectivity-client
-  - image: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
-    name: cert-persister
   skips:
-  - dell-csm-operator.v1.4.2
+  - dell-csm-operator.v1.4.3
   version: 1.5.0
