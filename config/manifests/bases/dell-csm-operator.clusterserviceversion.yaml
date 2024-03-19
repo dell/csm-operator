@@ -1261,5 +1261,5 @@ spec:
   - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
     name: kube-rbac-proxy
   skips:
-  - dell-csm-operator.v1.4.2
+  - dell-csm-operator.v1.4.3
   version: 1.5.0
