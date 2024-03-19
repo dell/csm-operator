@@ -75,7 +75,7 @@ spec:
           value: "XYZ"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
-        # Default value: None
+        # Default value: /var/lib/kubelet
         - name: KUBELET_CONFIG_DIR
           value: /var/lib/kubelet
         # X_CSI_POWERMAX_PORTGROUPS: Define the set of existing port groups that the driver will use.
@@ -215,11 +215,23 @@ spec:
     sideCars:
       # 'pmax' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
         args: ["--volume-name-prefix=pmax"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+      - name: csi-metadata-retriever
+        image: dellemc/csi-metadata-retriever:v1.7.2
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: [ "--monitor-interval=60s" ]
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
       
       # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
       # Configure only when the storageCapacity is set as "true"
@@ -338,6 +350,14 @@ spec:
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/csm-topology:v1.8.0
+          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -351,6 +371,14 @@ spec:
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
           image: otel/opentelemetry-collector:0.42.0
+          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
           envs:
             # image of nginx proxy image
             # Allowed values: string
