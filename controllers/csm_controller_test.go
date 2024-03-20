@@ -408,7 +408,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
 	suite.fakeClient.Create(ctx, &csm)
-	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, shared.NMinus2ConfigVersion)
 	suite.fakeClient.Create(ctx, sec)
 
 	annotations := csm.GetAnnotations()

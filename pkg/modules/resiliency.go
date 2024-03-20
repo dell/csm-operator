@@ -84,7 +84,7 @@ func ResiliencyPrecheck(ctx context.Context, op utils.OperatorConfig, resiliency
 	if err != nil {
 		return fmt.Errorf("error getting %s module version for %s %s", resiliency.Name, cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.ConfigVersion)
 	}
-	if obs.ConfigVersion != moduleConfigVersion {
+	if resiliency.ConfigVersion != moduleConfigVersion {
 		return fmt.Errorf("%s %s requires %s %s, but current version in CR is %s", cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.ConfigVersion, moduleConfigVersion, resiliency.Name, resiliency.ConfigVersion)
 	}
 
