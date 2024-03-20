@@ -1376,6 +1376,7 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 	log := logger.GetLogger(ctx)
 
 	// Update driver image tag
+	err := nil
 	cr.Spec.Driver.Common.Image, err = updateImageTag(cr.Spec.Driver.Common.Image, cr.Spec.Driver.ConfigVersion)
 	if err {
 		return err
@@ -1392,13 +1393,15 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 
 		// loop over components in module, update versions
 		for compIdx, component := range cr.Spec.Modules[idx].Components {
-			if component.Name == "cert-manager" || component.Name == "otel-collector: {
+			if component.Name == "cert-manager" || component.Name == "otel-collector" {
 				continue
 			}
-			cr.Spec.Modules[idx].Components[compIdx].Image, err = updateImageTag(cr.Spec.Modules[idx].Components[compIdx].Image, utils.GetComponentVersion(module.Name, module.ConfigVersion, component.Name, op.ConfigDirectory)
+			cr.Spec.Modules[idx].Components[compIdx].Image, err = updateImageTag(cr.Spec.Modules[idx].Components[compIdx].Image, utils.GetComponentVersion(module.Name, module.ConfigVersion, component.Name, op.ConfigDirectory))
 			if err {
 				return err
 			}
+		}
+	}
 
 	// Loop through initContainers, update images as needed:wq
 
@@ -1408,7 +1411,7 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 
 // updateImageTag -- update image tagged version (split on last ':' and replace everything after it with the version passed in)
 func updateImageTag(image csmv1.ImageType, configVersion string) (csmv1.ImageType, error) {
-	func splitFunc(r rune) bool {
+	var splitFunc = func(r rune) bool {
     		return r == ':' || r == '.'
 	}
 
