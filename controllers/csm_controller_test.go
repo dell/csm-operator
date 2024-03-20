@@ -401,7 +401,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeVersionTooOld() {
 }
 
 func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
-	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm := shared.MakeCSM(csmName, suite.namespace, shared.NMinus2ConfigVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
@@ -416,7 +416,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
 		annotations = make(map[string]string)
 	}
 	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = jumpUpgradeConfigVersion
+		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
 
