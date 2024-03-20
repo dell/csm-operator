@@ -251,6 +251,15 @@ func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csm
 		}
 	}
 
+	// Check if given version is consistent with driver version
+	moduleConfigVersion, err := utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, obs.Name, op.ConfigDirectory)
+	if err != nil {
+		return fmt.Errorf("error getting %s module version for %s %s", obs.Name, cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.ConfigVersion)
+	}
+	if obs.ConfigVersion != moduleConfigVersion {
+		return fmt.Errorf("%s %s requires %s %s, but current version in CR is %s", cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.ConfigVersion, moduleConfigVersion, obs.Name, obs.ConfigVersion)
+	}
+
 	log.Infof("\nperformed pre checks for: %s", obs.Name)
 	return nil
 }
