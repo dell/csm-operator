@@ -18,10 +18,10 @@ spec:
         tenantService: dellemc/csm-authorization-tenant:v1.11.0
         roleService: dellemc/csm-authorization-role:v1.11.0
         storageService: dellemc/csm-authorization-storage:v1.11.0
-        redis: dellemc/redis:6.0.8-alpine
-        commander: dellemc/redis-commander:latest
-        opa: dellemc/opa
-        opaKubeMgmt: dellemc/kube-mgmt:0.11
+        redis: redis:6.0.8-alpine
+        commander: rediscommander/redis-commander:latest
+        opa: openpolicyagent/opa
+        opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
         envs:
           # proxy-server ingress will use this hostname
           # NOTE: an additional hostname can be configured in the PROXY_INGRESS_HOST environment variable
