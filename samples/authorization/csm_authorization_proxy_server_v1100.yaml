@@ -2,7 +2,6 @@ apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: authorization
-  namespace: authorization
 spec:
   modules:
     # Authorization: enable csm-authorization proxy server for RBAC
