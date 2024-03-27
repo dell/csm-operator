@@ -31,3 +31,12 @@ spec:
               name: proxy-server
               port:
                 number: 8080
+  - http:
+      paths:
+      - backend:
+          service:
+            name: proxy-server
+            port:
+              number: 8080
+        path: /
+        pathType: Prefix
