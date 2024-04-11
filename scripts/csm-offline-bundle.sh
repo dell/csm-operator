@@ -23,8 +23,10 @@ usage() {
    echo "-r <registry>  Required if preparing offline bundle with '-p'"
    echo "               Supply the registry name/path which will hold the images"
    echo "               For example: my.registry.com:5000/dell/csm"
+   echo "-k <registry>  Push images to customize reposirty "
+   echo "               Supply the registry name/path which will hold the images"
+   echo "               For example:  my.registry.com:1000/dell/csm"
    echo "-h             Displays this information"
-   echo
    echo "Exactly one of '-c' or '-p' needs to be specified"
    echo
 }
@@ -175,6 +177,8 @@ compress_bundle() {
 CREATE="false"
 PREPARE="false"
 REGISTRY=""
+PUSH="false"
+PORT=""
 
 # some directories
 SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
@@ -205,7 +209,7 @@ REQUIRED_FILES=(
   "${REPODIR}/LICENSE"
 )
 
-while getopts "cpr:h" opt; do
+while getopts "cpr:k:h" opt; do
   case $opt in
     c)
       CREATE="true"
@@ -214,6 +218,10 @@ while getopts "cpr:h" opt; do
       PREPARE="true"
       ;;
     r)
+      REGISTRY="${OPTARG}"
+      ;;
+    k)
+      PUSH="true"
       REGISTRY="${OPTARG}"
       ;;
     h)
@@ -235,6 +243,14 @@ done
 if [ "${CREATE}" == "${PREPARE}" ]; then
   usage
   exit 1
+fi
+
+# validate prepare arguments
+if [ "${PUSH}" == "true" ]; then
+  if [ "${REGISTRY}" == "" ]; then
+   usage
+   exit
+   fi
 fi
 
 # validate prepare arguments
@@ -274,6 +290,17 @@ if [ "${CREATE}" == "true" ]; then
 
   status "Complete"
   echo "Offline bundle file is: ${DISTFILE}"
+fi
+
+#Push the image to the registry
+if [ "${PUSH}" == "true" ]; then
+
+  echo "Pushing the image to the registry"
+  restore_images
+  fixup_files
+
+  status "Complete"
+  
 fi
 
 # prepare a bundle for installation
