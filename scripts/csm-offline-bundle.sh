@@ -26,6 +26,9 @@ usage() {
    echo "-k <registry>  Push images to customize reposirty "
    echo "               Supply the registry name/path which will hold the images"
    echo "               For example:  my.registry.com:1000/dell/csm"
+   echo "-t <registry>  Tag images to customize reposirty "
+   echo "               Supply the registry name/path which will hold the images"
+   echo "               For example:  my.registry.com:2000/dell/csm"
    echo "-h             Displays this information"
    echo "Exactly one of '-c' or '-p' needs to be specified"
    echo
@@ -121,13 +124,43 @@ restore_images() {
   status "Loading docker images"
   find "${IMAGEFILEDIR}" -name \*.tar -exec "${DOCKER}" load -i {} \; 2>/dev/null
 
+   # Check if images.manifest.tmp exists, create it if not
+  if [ ! -f "${TEMPIMAGEMANIFEST}" ]; then
+    touch "${TEMPIMAGEMANIFEST}"
+  fi
+
   status "Tagging and pushing images"
   while read line; do
       local NEWNAME="${REGISTRY}${line##*/}"
       echo "   $line -> ${NEWNAME}"
       run_command "${DOCKER}" tag "${line}" "${NEWNAME}"
       run_command "${DOCKER}" push "${NEWNAME}"
+        echo "${NEWNAME}" >> "${TEMPIMAGEMANIFEST}"
+
+
   done < "${IMAGEMANIFEST}"
+}
+
+# Restore the image manifest with new values
+restore_imanifest_with_new_value() {
+
+   mv "${TEMPIMAGEMANIFEST}" "${IMAGEMANIFEST}"
+   rm -f "${TEMPIMAGEMANIFEST}"
+
+}
+
+# Tag Docker images
+tag_images() {
+ status "Tagging docker images"
+ find "${IMAGEFILEDIR}" -name \*.tar -exec "${DOCKER}" load -i {} \; 2>/dev/null
+
+ while read line; do
+      local NEWNAME="${REGISTRY}${line##*/}"
+      echo "   $line -> ${NEWNAME}"
+      run_command "${DOCKER}" tag "${line}" "${NEWNAME}"
+
+  done < "${IMAGEMANIFEST}"
+
 }
 
 # copy in any necessary files
@@ -179,6 +212,8 @@ PREPARE="false"
 REGISTRY=""
 PUSH="false"
 PORT=""
+TAG="false"
+
 
 # some directories
 SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
@@ -191,7 +226,7 @@ DISTDIR="${DISTBASE}/${DRIVERDIR}"
 DISTFILE="${DISTBASE}/${DRIVERDIR}.tar.gz"
 IMAGEMANIFEST="${REPODIR}/scripts/images.manifest"
 IMAGEFILEDIR="${REPODIR}/scripts/images.tar"
-
+TEMPIMAGEMANIFEST="${REPODIR}/scripts/temp_images.manifest.temp"
 
 # directories to search all files for image names
 FILES_WITH_IMAGE_NAMES=(
@@ -209,7 +244,7 @@ REQUIRED_FILES=(
   "${REPODIR}/LICENSE"
 )
 
-while getopts "cpr:k:h" opt; do
+while getopts "cpr:hk:t:" opt; do
   case $opt in
     c)
       CREATE="true"
@@ -222,6 +257,10 @@ while getopts "cpr:k:h" opt; do
       ;;
     k)
       PUSH="true"
+      REGISTRY="${OPTARG}"
+      ;;
+    t)
+      TAG="true"
       REGISTRY="${OPTARG}"
       ;;
     h)
@@ -239,11 +278,12 @@ while getopts "cpr:k:h" opt; do
   esac
 done
 
-# make sure exatly one option for create/prepare was specified
-if [ "${CREATE}" == "${PREPARE}" ]; then
-  usage
-  exit 1
+# make sure exatly one option for create/prepare was specified, when push and tag command is abled no need to check the create/prepare
+if [[ ( "${PUSH}" != "true" && "${TAG}" != "true" ) && "${CREATE}" == "${PREPARE}" ]]; then
+   usage
+   exit 1
 fi
+
 
 # validate prepare arguments
 if [ "${PUSH}" == "true" ]; then
@@ -254,8 +294,25 @@ if [ "${PUSH}" == "true" ]; then
 fi
 
 # validate prepare arguments
+if [ "${TAG}" == "true" ]; then
+  if [ "${REGISTRY}" == "" ]; then
+    usage
+    exit 1
+  fi
+fi
+
+# validate prepare arguments
 if [ "${PREPARE}" == "true" ]; then
   if [ "${REGISTRY}" == "" ]; then
+    usage
+    exit 1
+  fi
+fi
+
+# Validate registry argument
+if [[ "${PUSH}" == "true" || "${TAG}" == "true" || "${PREPARE}" == "true" ]]; then
+  if [[ -z "${REGISTRY}" ]]; then
+    echo "Registry name/path must be specified with '-r', '-k', or '-t' option." >&2
     usage
     exit 1
   fi
@@ -294,11 +351,19 @@ fi
 
 #Push the image to the registry
 if [ "${PUSH}" == "true" ]; then
-
   echo "Pushing the image to the registry"
   restore_images
   fixup_files
+  restore_imanifest_with_new_value
+  status "Complete"
+  
+fi
 
+#Tag the images to the registry
+if [ "${TAG}" == "true" ]; then
+  echo "Tag the image to the registry"
+  tag_images
+  fixup_files
   status "Complete"
   
 fi
@@ -308,7 +373,6 @@ if [ "${PREPARE}" == "true" ]; then
   echo "Preparing a offline bundle for installation"
   restore_images
   fixup_files
-
   status "Complete"
 fi
 
