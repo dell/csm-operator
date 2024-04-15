@@ -211,7 +211,6 @@ CREATE="false"
 PREPARE="false"
 REGISTRY=""
 PUSH="false"
-PORT=""
 TAG="false"
 
 
