@@ -56,7 +56,12 @@ spec:
         # Allowed values: "error", "warn"/"warning", "info", "debug"
         # Default value: "info"
         - name: CSI_LOG_LEVEL
-          value: debug
+          value: "debug"
+        # CSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: "CSI_LOG_FORMAT"
+          value: "TEXT"
         # TENANT_NAME - Tenant name that need to added while adding host entry to the array.
         # Allowed values: string
         # Default value: ""
