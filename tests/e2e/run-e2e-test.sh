@@ -39,7 +39,7 @@ cp $CERT_CSI .
 #cp $KARAVICTL /usr/local/bin/
 
 # Copy certificates for Observability tests
-cp ../../samples/observability/selfsigned-cert.yaml ./testfiles/observability-cert.yaml
+#cp ../../samples/observability/selfsigned-cert.yaml ./testfiles/observability-cert.yaml
 
 PATH=$PATH:$(go env GOPATH)/bin
 

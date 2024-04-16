@@ -297,3 +297,18 @@ spec:
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: isilon-config-params
+  namespace: isilon
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: "debug"
+    CSI_LOG_FORMAT: "TEXT"
+    PODMON_CONTROLLER_LOG_LEVEL: "debug"
+    PODMON_CONTROLLER_LOG_FORMAT: "TEXT"
+    PODMON_NODE_LOG_LEVEL: "debug"
+    PODMON_NODE_LOG_FORMAT: "TEXT"
