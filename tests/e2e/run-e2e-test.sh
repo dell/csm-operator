@@ -38,9 +38,6 @@ cp $CERT_CSI .
 # Uncomment for authorization proxy server
 #cp $KARAVICTL /usr/local/bin/
 
-# Copy certificates for Observability tests
-#cp ../../samples/observability/selfsigned-cert.yaml ./testfiles/observability-cert.yaml
-
 PATH=$PATH:$(go env GOPATH)/bin
 
 OPTS=()

@@ -60,7 +60,7 @@ spec:
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
-        - name: "CSI_LOG_FORMAT"
+        - name: CSI_LOG_FORMAT
           value: "TEXT"
         # TENANT_NAME - Tenant name that need to added while adding host entry to the array.
         # Allowed values: string
