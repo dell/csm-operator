@@ -174,6 +174,7 @@ spec:
               mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
+              mountPropagation: "Bidirectional"
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
