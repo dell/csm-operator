@@ -51,7 +51,7 @@ const (
 	// TenantName - Name of the tenant
 	TenantName = "<TENANT_NAME>"
 
-	// Allowed networks - list of networks that can be used for NFS traffic
+	// AllowedNetworks - list of networks that can be used for NFS traffic
 	AllowedNetworks = "<X_CSI_ALLOWED_NETWORKS>"
 )
 
