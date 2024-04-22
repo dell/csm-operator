@@ -57,7 +57,12 @@ spec:
         - name: KUBELET_CONFIG_DIR
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
-          value: debug
+          value: "debug"
+        # CSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: "CSI_LOG_FORMAT"
+          value: "TEXT"
 
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver

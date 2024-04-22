@@ -114,7 +114,13 @@ spec:
         # Allowed values: "error", "warn"/"warning", "info", "debug"
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
-          value: "debug"
+          value: "info"
+      
+        # CSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: "CSI_LOG_FORMAT"
+          value: "TEXT"
 
     controller:
       envs:
