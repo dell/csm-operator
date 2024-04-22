@@ -1743,11 +1743,6 @@ spec:
         displayName: Use Private CA Certs
         path: client.usePrivateCaCerts
       statusDescriptors:
-      - description: ClientStatus is the status of Client pods
-        displayName: ClientStatus
-        path: clientStatus
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
       - description: State is the state of the client installation
         displayName: State
         path: state
