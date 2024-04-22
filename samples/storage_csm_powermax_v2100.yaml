@@ -127,6 +127,16 @@ spec:
         # Default value: "" <empty>
         - name: "X_CSI_VCENTER_HOST"
           value: ""
+        # CSI driver log level
+        # Allowed values: "error", "warn"/"warning", "info", "debug"
+        # Default value: "debug"
+        - name: "CSI_LOG_LEVEL"
+          value: "debug"
+        # CSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: "CSI_LOG_FORMAT"
+          value: "TEXT"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
