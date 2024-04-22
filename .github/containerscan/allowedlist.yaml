@@ -6,6 +6,7 @@ general:
     - CVE-2019-1010022
     - CVE-2023-0286
     - CVE-2023-4911 # this will be removed with the glibc library is updated in the UBI image
+    - CVE-2024-2961 # Another unfixed glibc CVE
 
   bestPracticeViolations:
     # list of best practies violatied that needs a fix
