@@ -11,6 +11,7 @@ spec:
   accessMode: ReadWrite
   objectStorage:
     bucket: <BUCKET_NAME>
+    cacert: <BUCKET_CACERT>
   default: true
   config: 
       region: <BACKUP_REGION_URL>
