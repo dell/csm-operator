@@ -100,6 +100,34 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			}
 			return true, *newDeployment, operatorConfig, customResource
 		},
+		"success - valid PowerMax driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_resiliency.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			if err != nil {
+				panic(err)
+			}
+			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerMax))
+			if err != nil {
+				panic(err)
+			}
+			return true, *newDeployment, operatorConfig, customResource
+		},
+		"fail - bad PowerMax config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_resiliency.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			if err != nil {
+				panic(err)
+			}
+			tmpOperatorConfig := operatorConfig
+			tmpOperatorConfig.ConfigDirectory = "bad/path"
+			return false, controllerYAML.Deployment, tmpOperatorConfig, customResource
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
