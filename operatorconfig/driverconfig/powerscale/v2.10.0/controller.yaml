@@ -113,6 +113,8 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-controller
+      annotations:
+        kubectl.kubernetes.io/default-container: driver
     spec:
       serviceAccount: <DriverDefaultReleaseName>-controller
       affinity:
