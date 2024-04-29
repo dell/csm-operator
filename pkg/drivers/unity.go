@@ -50,6 +50,9 @@ const (
 
 	// TenantName - Name of the tenant
 	TenantName = "<TENANT_NAME>"
+
+	// AllowedNetworks - list of networks that can be used for NFS traffic
+	AllowedNetworks = "<X_CSI_ALLOWED_NETWORKS>"
 )
 
 // PrecheckUnity do input validation
@@ -112,6 +115,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 	healthMonitorNode := ""
 	healthMonitorController := ""
 	storageCapacity := "false"
+	allowedNetworks := ""
 
 	switch fileType {
 	case "Node":
@@ -119,8 +123,12 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorNode = env.Value
 			}
+			if env.Name == "X_CSI_ALLOWED_NETWORKS" {
+				allowedNetworks = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+		yamlString = strings.ReplaceAll(yamlString, AllowedNetworks, allowedNetworks)
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Controller.Envs {
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
