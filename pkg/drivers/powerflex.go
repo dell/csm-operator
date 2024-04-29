@@ -51,6 +51,9 @@ const (
 
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
+
+	// CsiPowerflexCipherSuites - Cipher Suites
+	CsiPowerflexCipherSuites = "X_CSI_POWERFLEX_CIPHER_SUITES"
 )
 
 // PrecheckPowerFlex do input validation
@@ -228,6 +231,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	powerflexExternalAccess := ""
 	healthMonitorController := ""
 	healthMonitorNode := ""
+	powerflexCipherSuites := []string{}
 
 	// nolint:gosec
 	switch fileType {
@@ -239,9 +243,13 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorController = env.Value
 			}
+			if env.Name == "X_CSI_POWERFLEX_CIPHER_SUITES" {
+				powerflexCipherSuites = strings.Split(env.Value, ",")
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
+		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexCipherSuites, strings.Join(powerflexCipherSuites, ","))
 
 	case "Node":
 		for _, env := range cr.Spec.Driver.Node.Envs {

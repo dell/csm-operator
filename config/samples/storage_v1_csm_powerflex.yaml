@@ -96,6 +96,12 @@ spec:
         - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
           value:
 
+        # X_CSI_POWERFLEX_CIPHER_SUITES: Specifies the list of allowed cipher suites for the connection with the PowerFlex service.
+        # Allowed values: List of cipher suites, separated by comma.
+        # Default value: None
+        - name: X_CSI_POWERFLEX_CIPHER_SUITES
+          value: 
+          
       #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
