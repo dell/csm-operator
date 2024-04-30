@@ -1,6 +1,7 @@
 general:
   vulnerabilities:
     # list of CVEs that are currently unfixed
+    - CVE-2024-2961
     - CVE-2024-33599
 
   bestPracticeViolations:
