@@ -744,7 +744,8 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	dummyObj := obj.DeepCopyObject().(crclient.Object)
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, dummyObj)
 
 	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
@@ -759,7 +760,9 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	} else {
 		log.Infow("Updating a new Object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Update(ctx, obj)
-		if err != nil {
+		if err != nil && k8serror.IsForbidden(err) || k8serror.IsInvalid(err) {
+			log.Warnw("Object update failed", "Warning", err.Error())
+		} else if err != nil {
 			return err
 		}
 	}
