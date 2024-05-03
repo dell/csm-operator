@@ -15,7 +15,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	osruntime "runtime"
@@ -140,7 +139,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 		log.Infof("Current kubernetes version is %s which is a supported version ", kubeVersion)
 	}
 
-	_, err = ioutil.ReadDir(filepath.Clean(ConfigDir))
+	_, err = os.ReadDir(filepath.Clean(ConfigDir))
 	if err != nil {
 		log.Errorw(err.Error(), "cannot find driver config path", ConfigDir)
 		cfg.ConfigDirectory = Operatorconfig
@@ -152,7 +151,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 		k8sPath = fmt.Sprintf("%s%s", ConfigDir, k8sPath)
 	}
 
-	buf, err := ioutil.ReadFile(filepath.Clean(k8sPath))
+	buf, err := os.ReadFile(filepath.Clean(k8sPath))
 	if err != nil {
 		log.Info(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
 	}
