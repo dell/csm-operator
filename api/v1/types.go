@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -162,6 +162,10 @@ type Module struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="InitContainer"
 	InitContainer []ContainerTemplate `json:"initContainer,omitempty" yaml:"initContainer"`
+
+	// OpenShift is used to indicate if the Container Platform is OpenShift
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="OpenShift"
+	OpenShift bool `json:"openshift,omitempty" yaml:"openshift,omitempty"`
 }
 
 // PodStatus - Represents PodStatus in a daemonset or deployment
@@ -340,6 +344,22 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Opa Kube Management Container Image"
 	OpaKubeMgmt string `json:"opaKubeMgmt,omitempty" yaml:"opaKubeMgmt,omitempty"`
 
+	// Hostname is the authorization proxy server hostname
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Hostname"
+	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
+
+	// Zipkin is the authorization proxy server tracing configuration
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server tracing configuration"
+	Zipkin []Zipkin `json:"zipkin,omitempty" yaml:"zipkin,omitempty"`
+
+	// ProxyServerIngress is the authorization proxy server ingress configuration
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server ingress configuration"
+	ProxyServerIngress []ProxyServerIngress `json:"proxyServerIngress,omitempty" yaml:"proxyServerIngress,omitempty"`
+
+	// RedisStorageClass is the authorization proxy server redis storage class for persistence
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Redis storage class"
+	RedisStorageClass string `json:"storageclass,omitempty" yaml:"storageclass,omitempty"`
+
 	// ReplicaCount is the replica count for app mobility
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Replica Count"
 	ReplicaCount string `json:"replicaCount,omitempty" yaml:"replicaCount,omitempty"`
@@ -386,6 +406,32 @@ type SnapshotClass struct {
 	// Parameters is a map of driver specific parameters for snapshot class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Parameters"
 	Parameters map[string]string `json:"parameters,omitempty" yaml:"parameters"`
+}
+
+// Zipkin tracing struct
+type Zipkin struct {
+	// CollectorUri is the collectoruri for zipkin tracing
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Zipkin CollectorUri"
+	CollectorUri string `json:"collectoruri,omitempty" yaml:"collectoruri,omitempty"`
+
+	// Probability is the sampling probability for zipkin tracing
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Zipkin probability"
+	Probability int `json:"probability,omitempty" yaml:"probability,omitempty"`
+}
+
+// ProxyServerIngress is the authorization ingress configuration struct
+type ProxyServerIngress struct {
+	// IngressClassName is the ingressClassName
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Ingress Class Name"
+	IngressClassName string `json:"ingressClassName,omitempty" yaml:"ingressClassName,omitempty"`
+
+	// Hosts is the hosts rules for the ingress
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Hosts"
+	Hosts []string `json:"hosts,omitempty" yaml:"hosts,omitempty"`
+
+	// Annotations is an unstructured key value map that stores additional annotations for the ingress
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Annotations"
+	Annotations map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 }
 
 // CSIDriverSpec struct

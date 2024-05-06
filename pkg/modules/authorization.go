@@ -35,6 +35,13 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// TODO (SHAYNA): test with custom certs
+// TODO (SHAYNA): test on ocp, check for valid ingress/annotations
+// TODO (SHAYNA): test on k8s, check for valid ingress/annotations
+// TODO (SHAYNA): test with mulitple annotations
+// TODO (SHAYNA): test with mulitple hosts
+
+
 const (
 	// AuthDeploymentManifest - deployment resources and ingress rules for authorization module
 	AuthDeploymentManifest = "deployment.yaml"
@@ -48,17 +55,13 @@ const (
 	AuthPolicyManifest = "policies.yaml"
 	// AuthLocalProvisionerManifest -
 	AuthLocalProvisionerManifest = "local-provisioner.yaml"
+	// AuthSelfSignedCert - self-signed certificate file
+	AuthSelfSignedCert = "selfsigned-cert.yaml"
+	// AuthCustomCert - custom certificate file
+	AuthCustomCert = "custom-cert.yaml"
 
 	// AuthNamespace -
 	AuthNamespace = "<NAMESPACE>"
-	// AuthLogLevel -
-	AuthLogLevel = "<AUTHORIZATION_LOG_LEVEL>"
-	// AuthConcurrentPowerFlexRequests -
-	AuthConcurrentPowerFlexRequests = "<AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS>"
-	// AuthZipkinCollectorURI -
-	AuthZipkinCollectorURI = "<AUTHORIZATION_ZIPKIN_COLLECTORURI>"
-	// AuthZipkinProbability -
-	AuthZipkinProbability = "<AUTHORIZATION_ZIPKIN_PROBABILITY>"
 	// AuthServerImage -
 	AuthServerImage = "<AUTHORIZATION_PROXY_SERVER_IMAGE>"
 	// AuthOpaImage -
@@ -84,21 +87,22 @@ const (
 	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
 	// AuthProxyIngressClassName -
 	AuthProxyIngressClassName = "<PROXY_INGRESS_CLASSNAME>"
-	// AuthTenantIngressClassName -
-	AuthTenantIngressClassName = "<TENANT_INGRESS_CLASSNAME>"
-	// AuthRoleIngressClassName -
-	AuthRoleIngressClassName = "<ROLE_INGRESS_CLASSNAME>"
-	// AuthStorageIngressClassName -
-	AuthStorageIngressClassName = "<STORAGE_INGRESS_CLASSNAME>"
 
-	// AuthProxyServerComponent - karavi-authorization-proxy-server component
-	AuthProxyServerComponent = "karavi-authorization-proxy-server"
+	// AuthCert - for tls secret
+	AuthCert = "<BASE64_CERTIFICATE>"
+	// AuthPrivateKey - for tls secret
+	AuthPrivateKey = "<BASE64_PRIVATE_KEY>"
+
+	// AuthProxyServerComponent - proxy-server component
+	AuthProxyServerComponent = "proxy-server"
 	// AuthSidecarComponent - karavi-authorization-proxy component
 	AuthSidecarComponent = "karavi-authorization-proxy"
-	// AuthNginxIngressComponent - ingress-nginx component
-	AuthNginxIngressComponent = "ingress-nginx"
+	// AuthNginxIngressComponent - nginx component
+	AuthNginxIngressComponent = "nginx"
 	// AuthCertManagerComponent - cert-manager component
 	AuthCertManagerComponent = "cert-manager"
+	// AuthRedisComponent - redis component
+	AuthRedisComponent = "redis"
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
@@ -107,9 +111,17 @@ const (
 var (
 	redisStorageClass     string
 	authHostname          string
-	proxyIngressHost      string
+	proxyIngressHosts     []string
 	proxyIngressClassName string
+	authCertificate       string
+	authPrivateKey        string
 )
+
+type Ingress struct {
+	IngressClassName string
+	Annotations      map[string]string
+	Hosts            []string
+}
 
 // AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
 var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
@@ -463,15 +475,14 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 }
 
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
-func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (string, error) {
+func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return YamlString, err
 	}
 
-	deploymentPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthDeploymentManifest)
-	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
+	buf, err := readConfigFile(auth, cr, op, AuthDeploymentManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -480,6 +491,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	authNamespace := cr.Namespace
 
 	for _, component := range auth.Components {
+		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, component.ProxyService)
 			YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, component.Opa)
@@ -487,18 +499,18 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, component.TenantService)
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
+			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+		}
+
+		// redis component
+		if component.Name == AuthRedisComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
-			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 
-			for _, env := range component.Envs {
-				if env.Name == "REDIS_STORAGE_CLASS" {
-					if env.Value == "" {
-						redisStorageClass = AuthLocalStorageClass
-					} else {
-						redisStorageClass = env.Value
-					}
-				}
+			if component.RedisStorageClass == "" {
+				redisStorageClass = AuthLocalStorageClass
+			} else {
+				redisStorageClass = component.RedisStorageClass
 			}
 		}
 	}
@@ -510,25 +522,21 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	return YamlString, nil
 }
 
-func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (bool, string, error) {
+// getAuthorizationLocalProvisioner for redis
+func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return false, "", err
 	}
 
 	for _, component := range auth.Components {
-		if component.Name == AuthProxyServerComponent {
-			for _, env := range component.Envs {
-				if env.Name == "REDIS_STORAGE_CLASS" {
-					if env.Value == "" {
-						path := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthLocalProvisionerManifest)
-						buf, err := os.ReadFile(filepath.Clean(path))
-						if err != nil {
-							return false, "", err
-						}
-						return true, string(buf), nil
-					}
+		if component.Name == AuthRedisComponent {
+			if component.RedisStorageClass == "" {
+				buf, err := readConfigFile(auth, cr, op, AuthLocalProvisionerManifest)
+				if err != nil {
+					return false, "", err
 				}
+				return true, string(buf), nil
 			}
 		}
 	}
@@ -537,7 +545,7 @@ func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.Containe
 
 // AuthorizationServerDeployment - apply/delete deployment objects
 func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(op, cr, csmv1.Module{})
+	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(op, cr)
 	if err != nil {
 		return err
 	}
@@ -561,7 +569,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 		}
 	}
 
-	YamlString, err := getAuthorizationServerDeployment(op, cr, csmv1.Module{})
+	YamlString, err := getAuthorizationServerDeployment(op, cr)
 	if err != nil {
 		return err
 	}
@@ -594,8 +602,38 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 		return YamlString, err
 	}
 
-	deploymentPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthIngressManifest)
-	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
+	// get annotations
+	annotations, err := addAnnotationsToIngress(cr)
+	if err != nil {
+		return YamlString, fmt.Errorf("adding annotations to ingress: %v", err)
+	}
+
+	// get hosts
+	hosts, err := addHostsToIngress(cr)
+	if err != nil {
+		return YamlString, fmt.Errorf("adding hosts to ingress: %v", err)
+	}
+
+	// set the ingress class name in the Ingress manifest on kubernetes
+	for _, m := range cr.Spec.Modules {
+		if !m.OpenShift {
+			i := Ingress{
+				IngressClassName: AuthProxyIngressClassName,
+			}
+
+			yamlData, err := yaml.Marshal(&i)
+			if err != nil {
+				return "", fmt.Errorf("error while marshaling ingress class name %v", err)
+			}
+
+			err = os.WriteFile(AuthIngressManifest, yamlData, 0644)
+			if err != nil {
+				return "", fmt.Errorf("failed writing to %s: %v", AuthIngressManifest, err)
+			}
+		}
+	}
+
+	buf, err := readConfigFile(auth, cr, op, AuthIngressManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -605,22 +643,23 @@ func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerSto
 
 	for _, component := range auth.Components {
 		if component.Name == AuthProxyServerComponent {
-			for _, env := range component.Envs {
-				if env.Name == "PROXY_HOST" {
-					authHostname = env.Value
-				} else if env.Name == "PROXY_INGRESS_HOST" {
-					proxyIngressHost = env.Value
-				} else if env.Name == "PROXY_INGRESS_CLASSNAME" {
-					proxyIngressClassName = env.Value
+			authHostname = component.Hostname
+
+			for _, proxyServerIngress := range component.ProxyServerIngress {
+				for _, m := range cr.Spec.Modules {
+					if !m.OpenShift {
+						proxyIngressClassName = proxyServerIngress.IngressClassName
+						YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressClassName, proxyIngressClassName)
+					}
 				}
 			}
 		}
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
+	YamlString = strings.ReplaceAll(YamlString, "{}", string(annotations))
 	YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
-	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, proxyIngressHost)
-	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressClassName, proxyIngressClassName)
+	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, string(hosts))
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 
 	return YamlString, nil
@@ -668,8 +707,7 @@ func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorag
 		return YamlString, err
 	}
 
-	nginxIngressPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthNginxIngressManifest)
-	buf, err := os.ReadFile(filepath.Clean(nginxIngressPath))
+	buf, err := readConfigFile(auth, cr, op, AuthNginxIngressManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -718,8 +756,7 @@ func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 		return YamlString, err
 	}
 
-	policyPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthPolicyManifest)
-	buf, err := os.ReadFile(filepath.Clean(policyPath))
+	buf, err := readConfigFile(auth, cr, op, AuthPolicyManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -756,4 +793,153 @@ func InstallPolicies(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	}
 
 	return nil
+}
+
+func getCerts(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+	authNamespace := cr.Namespace
+
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	// get hosts
+	hosts, err := addHostsToIngress(cr)
+	if err != nil {
+		return YamlString, fmt.Errorf("adding hosts to ingress: %v", err)
+	}
+
+	for _, component := range auth.Components {
+		if component.Name == AuthProxyServerComponent {
+			authHostname = component.Hostname
+			authCertificate = component.Certificate
+			authPrivateKey = component.PrivateKey
+		}
+	}
+
+	if authCertificate == "" || authPrivateKey == "" {
+		// use custom tls secret
+		if authCertificate == "" && authPrivateKey == "" {
+			buf, err := readConfigFile(auth, cr, op, AuthCustomCert)
+			if err != nil {
+				return YamlString, err
+			}
+
+			YamlString = string(buf)
+			YamlString = strings.ReplaceAll(YamlString, AuthCert, authCertificate)
+			YamlString = strings.ReplaceAll(YamlString, AuthPrivateKey, authPrivateKey)
+		} else {
+			return YamlString, fmt.Errorf("authorization install failed -- either cert or privatekey missing for custom cert")
+		}
+	} else {
+		// using self-signed cert
+		buf, err := readConfigFile(auth, cr, op, AuthSelfSignedCert)
+		if err != nil {
+			return YamlString, err
+		}
+
+		YamlString = string(buf)
+		YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
+		YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, string(hosts))
+	}
+
+	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
+
+	return YamlString, nil
+}
+
+func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getCerts(op, cr)
+	if err != nil {
+		return err
+	}
+
+	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range deployObjects {
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func addAnnotationsToIngress(cr csmv1.ContainerStorageModule) ([]byte, error) {
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	annotations := make(map[string]string)
+	for _, component := range auth.Components {
+		if component.Name == AuthProxyServerComponent {
+			for _, proxyServerIngress := range component.ProxyServerIngress {
+				if len(proxyServerIngress.Annotations) != 0 {
+					for k, v := range proxyServerIngress.Annotations {
+						annotations[k] = v
+					}
+				}
+
+				for _, m := range cr.Spec.Modules {
+					// set termination route annotation on openshift
+					if m.OpenShift {
+						annotations["route.openshift.io/termination"] = "edge"
+					}
+				}
+			}
+		}
+	}
+
+	a := Ingress{
+		Annotations: annotations,
+	}
+
+	yamlData, err := yaml.Marshal(&a)
+	if err != nil {
+		return nil, fmt.Errorf("error while marshaling authorization annotations %v", err)
+	}
+
+	return yamlData, err
+}
+
+func addHostsToIngress(cr csmv1.ContainerStorageModule) ([]byte, error) {
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, component := range auth.Components {
+		if component.Name == AuthProxyServerComponent {
+			for _, proxyServerIngress := range component.ProxyServerIngress {
+				  // TODO (SHAYNA): if more than 1 host, need to add another host path in ingress
+				if len(proxyServerIngress.Hosts) != 0 {
+					for _, h := range proxyServerIngress.Hosts {
+						proxyIngressHosts = append(proxyServerIngress.Hosts, h)
+					}
+				}
+			}
+		}
+	}
+
+	h := Ingress{
+		Hosts: proxyIngressHosts,
+	}
+
+	yamlData, err := yaml.Marshal(&h)
+	if err != nil {
+		return nil, fmt.Errorf("error while marshaling authorization hosts %v", err)
+	}
+
+	return yamlData, err
 }

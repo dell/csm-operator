@@ -1286,10 +1286,6 @@ func getAuthProxyServer() []csmv1.Module {
 							Name:  "AUTHORIZATION_LOG_LEVEL",
 							Value: "debug",
 						},
-						{
-							Name:  "AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS",
-							Value: "10",
-						},
 					},
 				},
 				{
