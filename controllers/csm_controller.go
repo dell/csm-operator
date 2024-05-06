@@ -1370,7 +1370,7 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 	oldVersion, configVersionExists := annotations[configVersionKey]
 	// If annotation exists, we are doing an upgrade or modify
 	if configVersionExists {
-		if cr.HasModuleOfType(csmv1.AuthorizationServer) {
+		if cr.HasModule(csmv1.AuthorizationServer) {
 			newVersion := cr.Spec.Modules[0].ConfigVersion
 			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
 		}
@@ -1401,7 +1401,7 @@ func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.Containe
 
 	if _, ok := annotations[configVersionKey]; !ok {
 		configVersion := ""
-		if instance.HasModuleOfType(csmv1.AuthorizationServer) {
+		if instance.HasModule(csmv1.AuthorizationServer) {
 			configVersion = instance.GetModule(csmv1.AuthorizationServer).ConfigVersion
 		} else {
 			configVersion = instance.Spec.Driver.ConfigVersion
