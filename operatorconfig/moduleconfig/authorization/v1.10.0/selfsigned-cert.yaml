@@ -2,7 +2,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: selfsigned
-  namespace: authorization
+  namespace: <NAMESPACE>
 spec:
   selfSigned: {}
 ---
@@ -10,7 +10,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: karavi-auth
-  namespace: authorization
+  namespace: <NAMESPACE>
 spec:
   secretName: karavi-auth-tls
   duration: 2160h # 90d
@@ -27,8 +27,8 @@ spec:
     - server auth
     - client auth
   dnsNames:
-  - csm-authorization.com
-  - authorization-ingress-nginx-controller.authorization.svc.cluster.local
+  - <AUTHORIZATION_HOSTNAME>
+  - <PROXY_INGRESS_HOST>
   issuerRef:
     name: selfsigned
     kind: Issuer

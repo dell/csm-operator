@@ -58,8 +58,8 @@ spec:
         # Allowed values: string
         privateKey: ""
 
-        # base hostname for the ingress rules that expose the services
-        # the proxy-server ingress will use this hostname
+        # proxy-server ingress will use this hostname
+        # NOTE: an additional hostname can be configured in proxyServerIngress.hosts
         # NOTE: proxy-server ingress is configured to accept IP address connections so hostnames are not required
         hostname: "csm-authorization.com"
         

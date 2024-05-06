@@ -3,8 +3,8 @@ kind: Ingress
 metadata:
   name: proxy-server
   namespace: <NAMESPACE>
+  annotations: {}
 spec:
-  ingressClassName: <PROXY_INGRESS_CLASSNAME>
   tls:
   - hosts:
       - <AUTHORIZATION_HOSTNAME>
@@ -14,23 +14,23 @@ spec:
   - host: <AUTHORIZATION_HOSTNAME>
     http:
       paths:
-        - path: /
-          pathType: Prefix
-          backend:
+        - backend:
             service:
               name: proxy-server
               port:
                 number: 8080
+          path: /
+          pathType: Prefix
   - host: <PROXY_INGRESS_HOST>
     http:
       paths:
-        - path: /
-          pathType: Prefix
-          backend:
+        - backend:
             service:
               name: proxy-server
               port:
                 number: 8080
+          path: /
+          pathType: Prefix
   - http:
       paths:
       - backend:

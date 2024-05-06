@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import (
 // TODO (SHAYNA): test on k8s, check for valid ingress/annotations
 // TODO (SHAYNA): test with mulitple annotations
 // TODO (SHAYNA): test with mulitple hosts
-
 
 const (
 	// AuthDeploymentManifest - deployment resources and ingress rules for authorization module
@@ -111,7 +110,6 @@ const (
 var (
 	redisStorageClass     string
 	authHostname          string
-	proxyIngressHosts     []string
 	proxyIngressClassName string
 	authCertificate       string
 	authPrivateKey        string
@@ -799,7 +797,7 @@ func getCerts(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string,
 	YamlString := ""
 	authNamespace := cr.Namespace
 
-	auth, err := getAuthorizationModule(cr)
+	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return YamlString, err
 	}
@@ -810,7 +808,7 @@ func getCerts(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string,
 		return YamlString, fmt.Errorf("adding hosts to ingress: %v", err)
 	}
 
-	for _, component := range auth.Components {
+	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
 			authHostname = component.Hostname
 			authCertificate = component.Certificate
@@ -821,7 +819,7 @@ func getCerts(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string,
 	if authCertificate == "" || authPrivateKey == "" {
 		// use custom tls secret
 		if authCertificate == "" && authPrivateKey == "" {
-			buf, err := readConfigFile(auth, cr, op, AuthCustomCert)
+			buf, err := readConfigFile(authModule, cr, op, AuthCustomCert)
 			if err != nil {
 				return YamlString, err
 			}
@@ -834,7 +832,7 @@ func getCerts(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string,
 		}
 	} else {
 		// using self-signed cert
-		buf, err := readConfigFile(auth, cr, op, AuthSelfSignedCert)
+		buf, err := readConfigFile(authModule, cr, op, AuthSelfSignedCert)
 		if err != nil {
 			return YamlString, err
 		}
@@ -876,70 +874,64 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 }
 
 func addAnnotationsToIngress(cr csmv1.ContainerStorageModule) ([]byte, error) {
-	auth, err := getAuthorizationModule(cr)
+	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return nil, err
 	}
 
 	annotations := make(map[string]string)
-	for _, component := range auth.Components {
+	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
-			for _, proxyServerIngress := range component.ProxyServerIngress {
-				if len(proxyServerIngress.Annotations) != 0 {
-					for k, v := range proxyServerIngress.Annotations {
-						annotations[k] = v
-					}
-				}
-
-				for _, m := range cr.Spec.Modules {
-					// set termination route annotation on openshift
-					if m.OpenShift {
-						annotations["route.openshift.io/termination"] = "edge"
-					}
+			for _, ingress := range component.ProxyServerIngress {
+				for annotation, value := range ingress.Annotations {
+					annotations[annotation] = value
 				}
 			}
 		}
 	}
 
-	a := Ingress{
+	for _, module := range cr.Spec.Modules {
+		if module.OpenShift {
+			annotations["route.openshift.io/termination"] = "edge"
+		}
+	}
+
+	ingress := Ingress{
 		Annotations: annotations,
 	}
 
-	yamlData, err := yaml.Marshal(&a)
+	yamlData, err := yaml.Marshal(&ingress)
 	if err != nil {
-		return nil, fmt.Errorf("error while marshaling authorization annotations %v", err)
+		return nil, fmt.Errorf("failed to marshal authorization annotations: %v", err)
 	}
 
-	return yamlData, err
+	return yamlData, nil
 }
 
 func addHostsToIngress(cr csmv1.ContainerStorageModule) ([]byte, error) {
-	auth, err := getAuthorizationModule(cr)
+	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, component := range auth.Components {
+	var hosts []string
+	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
-			for _, proxyServerIngress := range component.ProxyServerIngress {
-				  // TODO (SHAYNA): if more than 1 host, need to add another host path in ingress
-				if len(proxyServerIngress.Hosts) != 0 {
-					for _, h := range proxyServerIngress.Hosts {
-						proxyIngressHosts = append(proxyServerIngress.Hosts, h)
-					}
-				}
+			for _, ingress := range component.ProxyServerIngress {
+				// TODO (SHAYNA): add additional host paths in ingress for multiple hosts
+				hosts = append(hosts, ingress.Hosts...)
 			}
 		}
 	}
 
-	h := Ingress{
-		Hosts: proxyIngressHosts,
+	ingress := Ingress{
+		Hosts: hosts,
 	}
 
-	yamlData, err := yaml.Marshal(&h)
+	yamlData, err := yaml.Marshal(&ingress)
 	if err != nil {
-		return nil, fmt.Errorf("error while marshaling authorization hosts %v", err)
+		return nil, fmt.Errorf("error while marshaling authorization hosts: %v", err)
 	}
 
-	return yamlData, err
+	return yamlData, nil
 }
