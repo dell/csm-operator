@@ -348,10 +348,6 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Hostname"
 	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 
-	// Zipkin is the authorization proxy server tracing configuration
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server tracing configuration"
-	Zipkin []Zipkin `json:"zipkin,omitempty" yaml:"zipkin,omitempty"`
-
 	// ProxyServerIngress is the authorization proxy server ingress configuration
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server ingress configuration"
 	ProxyServerIngress []ProxyServerIngress `json:"proxyServerIngress,omitempty" yaml:"proxyServerIngress,omitempty"`
@@ -406,17 +402,6 @@ type SnapshotClass struct {
 	// Parameters is a map of driver specific parameters for snapshot class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Parameters"
 	Parameters map[string]string `json:"parameters,omitempty" yaml:"parameters"`
-}
-
-// Zipkin tracing struct
-type Zipkin struct {
-	// CollectorUri is the collectoruri for zipkin tracing
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Zipkin CollectorUri"
-	CollectorUri string `json:"collectoruri,omitempty" yaml:"collectoruri,omitempty"`
-
-	// Probability is the sampling probability for zipkin tracing
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Zipkin probability"
-	Probability int `json:"probability,omitempty" yaml:"probability,omitempty"`
 }
 
 // ProxyServerIngress is the authorization ingress configuration struct
