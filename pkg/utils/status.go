@@ -807,21 +807,21 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		case "otel-collector":
 			if otelEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in observability deployment", deployment.Name)
+					log.Infof("%s component not running in observability deployment", deployment.Name)
 					return false, nil
 				}
 			}
 		case fmt.Sprintf("%s-metrics-%s", ObservabilityNamespace, driverName):
 			if metricsEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in observability deployment", deployment.Name)
+					log.Infof("%s component not running in observability deployment", deployment.Name)
 					return false, nil
 				}
 			}
 		case fmt.Sprintf("%s-topology", ObservabilityNamespace):
 			if topologyEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in observability deployment", deployment.Name)
+					log.Infof("%s component not running in observability deployment", deployment.Name)
 					return false, nil
 				}
 			}
@@ -845,21 +845,21 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		case "cert-manager":
 			if certEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in observability deployment", deployment.Name)
+					log.Infof("%s component not running in observability deployment", deployment.Name)
 					return false, nil
 				}
 			}
 		case "cert-manager-cainjector":
 			if certEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in observability deployment", deployment.Name)
+					log.Infof("%s component not running in observability deployment", deployment.Name)
 					return false, nil
 				}
 			}
 		case "cert-manager-webhook":
 			if certEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in observability deployment", deployment.Name)
+					log.Infof("%s component not running in observability deployment", deployment.Name)
 					return false, nil
 				}
 			}
@@ -909,59 +909,59 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 		case fmt.Sprintf("%s-ingress-nginx-controller", authNamespace):
 			if nginxEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 					return false, nil
 				}
 			}
 		case "cert-manager":
 			if certEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 					return false, nil
 				}
 			}
 		case "cert-manager-cainjector":
 			if certEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 					return false, nil
 				}
 			}
 		case "cert-manager-webhook":
 			if certEnabled {
 				if !checkFn(&deployment) {
-					log.Info("%s component not running in auth proxy deployment", deployment.Name)
+					log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 					return false, nil
 				}
 			}
 		case "proxy-server":
 			if !checkFn(&deployment) {
-				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 				return false, nil
 			}
 		case "redis-commander":
 			if !checkFn(&deployment) {
-				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 				return false, nil
 			}
 		case "redis-primary":
 			if !checkFn(&deployment) {
-				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 				return false, nil
 			}
 		case "role-service":
 			if !checkFn(&deployment) {
-				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 				return false, nil
 			}
 		case "storage-service":
 			if !checkFn(&deployment) {
-				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 				return false, nil
 			}
 		case "tenant-service":
 			if !checkFn(&deployment) {
-				log.Info("%s component not running in auth proxy deployment", deployment.Name)
+				log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 				return false, nil
 			}
 		}
