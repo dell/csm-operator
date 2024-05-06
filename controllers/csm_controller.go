@@ -1373,15 +1373,14 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 		if cr.HasModuleOfType(csmv1.AuthorizationServer) {
 			newVersion := cr.Spec.Modules[0].ConfigVersion
 			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
-		} else {
-			driverType := cr.Spec.Driver.CSIDriverType
-			if driverType == csmv1.PowerScale {
-				// use powerscale instead of isilon as the folder name is powerscale
-				driverType = csmv1.PowerScaleName
-			}
-			newVersion := cr.Spec.Driver.ConfigVersion
-			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
 		}
+		driverType := cr.Spec.Driver.CSIDriverType
+		if driverType == csmv1.PowerScale {
+			// use powerscale instead of isilon as the folder name is powerscale
+			driverType = csmv1.PowerScaleName
+		}
+		newVersion := cr.Spec.Driver.ConfigVersion
+		return utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
 	}
 	log.Infow("proceeding with fresh driver install")
 	return true, nil

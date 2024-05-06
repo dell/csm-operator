@@ -104,6 +104,7 @@ func (cr *ContainerStorageModule) GetDriverType() DriverType {
 	return cr.Spec.Driver.CSIDriverType
 }
 
+// GetModule - Returns the module of type moduleType
 func (cr *ContainerStorageModule) GetModule(moduleType ModuleType) Module {
 	for _, m := range cr.Spec.Modules {
 		if m.Name == moduleType {
@@ -113,8 +114,8 @@ func (cr *ContainerStorageModule) GetModule(moduleType ModuleType) Module {
 	return Module{}
 }
 
-// HasModuleOfType - checks if the cr has a module of type moduleType
-func (cr *ContainerStorageModule) HasModuleOfType(moduleType ModuleType) bool {
+// HasModule - Returns true if the cr has a module of type moduleType
+func (cr *ContainerStorageModule) HasModule(moduleType ModuleType) bool {
 	for _, m := range cr.Spec.Modules {
 		if m.Name == moduleType {
 			return true
