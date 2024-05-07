@@ -38,9 +38,12 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
@@ -49,6 +52,7 @@ import (
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	k8sClient "github.com/dell/csm-operator/k8s"
+	k8syaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 )
 
 // K8sImagesConfig -
@@ -1104,4 +1108,103 @@ func DetermineUnitTestRun(ctx context.Context) bool {
 		unitTestRun = false
 	}
 	return unitTestRun
+}
+
+// Get the namespaces of csm-objects in the cluster
+func GetNamespaces() ([]string, error) {
+	// Get K8s config
+	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
+	if err != nil {
+		return nil, fmt.Errorf("kube config creation failed with %s", err)
+	}
+
+	// Create a Kubernetes clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating clientset: %v", err)
+		//os.Exit(1)
+	}
+
+	// Define label selector
+	labelSelector := "csm"
+
+	// Get all pods in the cluster
+	pods, err := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting pods: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Set to store unique namespaces
+	namespaceSet := make(map[string]struct{})
+
+	// Using map so that duplicate namespace entries are not added
+	for _, pod := range pods.Items {
+		namespaceSet[pod.Namespace] = struct{}{}
+	}
+
+	// Convert set to slice
+	var namespaces []string
+	for namespace := range namespaceSet {
+		namespaces = append(namespaces, namespace)
+	}
+
+	return namespaces, nil
+}
+
+func BrownfieldDeployment(path string) error {
+	//Get the namespaces
+	namespace, err := GetNamespaces()
+	if err != nil {
+		return fmt.Errorf("error getting the namespaces %s", err)
+	}
+
+	buf, err := os.ReadFile(filepath.Clean(path))
+	if err != nil {
+		return err
+	}
+
+	//
+	for _, ns := range namespace {
+		AddRole(ns, string(buf))
+	}
+
+	return nil
+}
+
+func AddRole(namespace string, yamlFile string) error {
+	// Replace the namespace in the YAML file
+	yamlStr := strings.ReplaceAll(yamlFile, "<NAMESPACE>", namespace)
+
+	// Parse the YAML into an unstructured object
+	decUnstructured := k8syaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
+	obj := &unstructured.Unstructured{}
+	_, _, err := decUnstructured.Decode([]byte(yamlStr), nil, obj)
+	if err != nil {
+		return err
+	}
+
+	// Create the Kubernetes dynamic client
+	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	if err != nil {
+		return err
+	}
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	// Create the Role in the namespace
+	_, err = dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    "rbac.authorization.k8s.io",
+		Version:  "v1",
+		Resource: "roles",
+	}).Namespace(namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
