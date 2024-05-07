@@ -33,7 +33,7 @@ spec:
       - name: proxy-server
         # enable: Enable/Disable csm-authorization proxy server
         enabled: true
-        proxyService: dellemc/csm-authorization-proxy:v1.10.0
+        proxyService: 10.247.98.98:5000/proxy-server:bharath-proxy-server
         tenantService: dellemc/csm-authorization-tenant:v1.10.0
         roleService: dellemc/csm-authorization-role:v1.10.0
         storageService: dellemc/csm-authorization-storage:v1.10.0
