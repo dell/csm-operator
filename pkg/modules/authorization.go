@@ -14,6 +14,7 @@ package modules
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -27,7 +28,9 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
+	networking "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -37,9 +40,7 @@ import (
 
 // TODO (SHAYNA): test with custom certs
 // TODO (SHAYNA): test on ocp, check for valid ingress/annotations
-// TODO (SHAYNA): test on k8s, check for valid ingress/annotations
 // TODO (SHAYNA): test with mulitple annotations
-// TODO (SHAYNA): test with mulitple hosts
 
 const (
 	// AuthDeploymentManifest - deployment resources and ingress rules for authorization module
@@ -84,8 +85,6 @@ const (
 	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
 	// AuthProxyIngressHost -
 	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
-	// AuthProxyIngressClassName -
-	AuthProxyIngressClassName = "<PROXY_INGRESS_CLASSNAME>"
 
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
@@ -113,13 +112,9 @@ var (
 	proxyIngressClassName string
 	authCertificate       string
 	authPrivateKey        string
-)
 
-type Ingress struct {
-	IngressClassName string
-	Annotations      map[string]string
-	Hosts            []string
-}
+	pathType = networking.PathTypePrefix
+)
 
 // AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
 var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
@@ -549,21 +544,9 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 	}
 
 	if useLocalStorage {
-		deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+		err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
 		if err != nil {
 			return err
-		}
-
-		for _, ctrlObj := range deployObjects {
-			if isDeleting {
-				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			} else {
-				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			}
 		}
 	}
 
@@ -571,126 +554,43 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+
+	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
-	}
-
-	for _, ctrlObj := range deployObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
 }
 
-// getAuthorizationIngressRules - apply dynamic values to the Ingress manifest before installation
-func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
-
-	auth, err := getAuthorizationModule(cr)
-	if err != nil {
-		return YamlString, err
-	}
-
-	// get annotations
-	annotations, err := addAnnotationsToIngress(cr)
-	if err != nil {
-		return YamlString, fmt.Errorf("adding annotations to ingress: %v", err)
-	}
-
-	// get hosts
-	hosts, err := addHostsToIngress(cr)
-	if err != nil {
-		return YamlString, fmt.Errorf("adding hosts to ingress: %v", err)
-	}
-
-	// set the ingress class name in the Ingress manifest on kubernetes
-	for _, m := range cr.Spec.Modules {
-		if !m.OpenShift {
-			i := Ingress{
-				IngressClassName: AuthProxyIngressClassName,
-			}
-
-			yamlData, err := yaml.Marshal(&i)
-			if err != nil {
-				return "", fmt.Errorf("error while marshaling ingress class name %v", err)
-			}
-
-			err = os.WriteFile(AuthIngressManifest, yamlData, 0644)
-			if err != nil {
-				return "", fmt.Errorf("failed writing to %s: %v", AuthIngressManifest, err)
-			}
-		}
-	}
-
-	buf, err := readConfigFile(auth, cr, op, AuthIngressManifest)
-	if err != nil {
-		return YamlString, err
-	}
-
-	YamlString = string(buf)
-	authNamespace := cr.Namespace
-
-	for _, component := range auth.Components {
-		if component.Name == AuthProxyServerComponent {
-			authHostname = component.Hostname
-
-			for _, proxyServerIngress := range component.ProxyServerIngress {
-				for _, m := range cr.Spec.Modules {
-					if !m.OpenShift {
-						proxyIngressClassName = proxyServerIngress.IngressClassName
-						YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressClassName, proxyIngressClassName)
-					}
-				}
-			}
-		}
-	}
-
-	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-	YamlString = strings.ReplaceAll(YamlString, "{}", string(annotations))
-	YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
-	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, string(hosts))
-	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
-
-	return YamlString, nil
-}
-
 // AuthorizationIngress - apply/delete ingress objects
 func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
-	YamlString, err := getAuthorizationIngressRules(op, cr)
+	authModule := csmv1.Module{}
+	ingress, err := createIngress(cr)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating ingress: %v", err)
 	}
-	ingressObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+
+	ingressBytes, err := json.Marshal(ingress)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshaling ingress: %v", err)
+	}
+
+	ingressYaml, err := yaml.JSONToYAML(ingressBytes)
+	if err != nil {
+		return fmt.Errorf("marshaling ingress: %v", err)
 	}
 
 	// Wait for NGINX ingress controller to be ready before creating Ingresses
-	if !isDeleting {
+	if !isDeleting && !authModule.OpenShift {
 		if err := utils.WaitForNginxController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
 			return fmt.Errorf("NGINX ingress controller is not ready: %v", err)
 		}
 	}
 
-	for _, ctrlObj := range ingressObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
+	err = applyDeleteObjects(ctx, ctrlClient, string(ingressYaml), isDeleting)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -725,21 +625,9 @@ func NginxIngressController(ctx context.Context, isDeleting bool, op utils.Opera
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
-	}
-
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
@@ -773,21 +661,9 @@ func InstallPolicies(ctx context.Context, isDeleting bool, op utils.OperatorConf
 		return err
 	}
 
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
-	}
-
-	for _, ctrlObj := range deployObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
@@ -802,23 +678,22 @@ func getCerts(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string,
 		return YamlString, err
 	}
 
-	// get hosts
-	hosts, err := addHostsToIngress(cr)
-	if err != nil {
-		return YamlString, fmt.Errorf("adding hosts to ingress: %v", err)
-	}
-
+	var hosts []string
 	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
 			authHostname = component.Hostname
 			authCertificate = component.Certificate
 			authPrivateKey = component.PrivateKey
+
+			for _, proxyServerIngress := range component.ProxyServerIngress {
+				hosts = append(hosts, proxyServerIngress.Hosts...)
+			}
 		}
 	}
 
-	if authCertificate == "" || authPrivateKey == "" {
+	if authCertificate != "" || authPrivateKey != "" {
 		// use custom tls secret
-		if authCertificate == "" && authPrivateKey == "" {
+		if authCertificate != "" && authPrivateKey != "" {
 			buf, err := readConfigFile(authModule, cr, op, AuthCustomCert)
 			if err != nil {
 				return YamlString, err
@@ -839,7 +714,9 @@ func getCerts(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string,
 
 		YamlString = string(buf)
 		YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
-		YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, string(hosts))
+
+		// TODO (SHAYNA): support multiple hosts in cert
+		YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, hosts[0])
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
@@ -853,33 +730,72 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 		return err
 	}
 
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
-	}
-
-	for _, ctrlObj := range deployObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
 }
 
-func addAnnotationsToIngress(cr csmv1.ContainerStorageModule) ([]byte, error) {
+func createIngress(cr csmv1.ContainerStorageModule) (*networking.Ingress, error) {
+	className, err := getClassName(cr)
+	if err != nil {
+		return nil, fmt.Errorf("getting ingress class name: %v", err)
+	}
+
+	annotations, err := getAnnotations(cr)
+	if err != nil {
+		return nil, fmt.Errorf("getting annotations: %v", err)
+	}
+
+	hosts, err := getHosts(cr)
+	if err != nil {
+		return nil, fmt.Errorf("getting hosts: %v", err)
+	}
+
+	rules, err := setIngressRules(cr)
+	if err != nil {
+		return nil, fmt.Errorf("setting ingress rules: %v", err)
+	}
+
+	ingress := networking.Ingress{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Ingress",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "proxy-server",
+			Namespace:   cr.Namespace,
+			Annotations: annotations,
+		},
+		Spec: networking.IngressSpec{
+			IngressClassName: &className,
+			TLS: []networking.IngressTLS{
+				{
+					Hosts:      hosts,
+					SecretName: "karavi-auth-tls",
+				},
+			},
+			Rules: rules,
+		},
+	}
+
+	return &ingress, nil
+}
+
+func getAnnotations(cr csmv1.ContainerStorageModule) (map[string]string, error) {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return nil, err
 	}
 
 	annotations := make(map[string]string)
+	for _, m := range cr.Spec.Modules {
+		if m.OpenShift {
+			annotations["route.openshift.io/termination"] = "edge"
+		}
+	}
+
 	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
 			for _, ingress := range component.ProxyServerIngress {
@@ -890,25 +806,10 @@ func addAnnotationsToIngress(cr csmv1.ContainerStorageModule) ([]byte, error) {
 		}
 	}
 
-	for _, module := range cr.Spec.Modules {
-		if module.OpenShift {
-			annotations["route.openshift.io/termination"] = "edge"
-		}
-	}
-
-	ingress := Ingress{
-		Annotations: annotations,
-	}
-
-	yamlData, err := yaml.Marshal(&ingress)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal authorization annotations: %v", err)
-	}
-
-	return yamlData, nil
+	return annotations, nil
 }
 
-func addHostsToIngress(cr csmv1.ContainerStorageModule) ([]byte, error) {
+func getHosts(cr csmv1.ContainerStorageModule) ([]string, error) {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return nil, err
@@ -917,21 +818,102 @@ func addHostsToIngress(cr csmv1.ContainerStorageModule) ([]byte, error) {
 	var hosts []string
 	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
-			for _, ingress := range component.ProxyServerIngress {
-				// TODO (SHAYNA): add additional host paths in ingress for multiple hosts
-				hosts = append(hosts, ingress.Hosts...)
+			// hostname
+			hosts = append(hosts, component.Hostname)
+
+			for _, proxyServerIngress := range component.ProxyServerIngress {
+				// proxyServerIngress.hosts
+				hosts = append(hosts, proxyServerIngress.Hosts...)
 			}
 		}
 	}
 
-	ingress := Ingress{
-		Hosts: hosts,
-	}
+	return hosts, nil
+}
 
-	yamlData, err := yaml.Marshal(&ingress)
+func getClassName(cr csmv1.ContainerStorageModule) (string, error) {
+	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
-		return nil, fmt.Errorf("error while marshaling authorization hosts: %v", err)
+		return "", err
 	}
 
-	return yamlData, nil
+	for _, component := range authModule.Components {
+		if component.Name == AuthProxyServerComponent {
+			for _, proxyServerIngress := range component.ProxyServerIngress {
+				for _, m := range cr.Spec.Modules {
+					if !m.OpenShift {
+						proxyIngressClassName = proxyServerIngress.IngressClassName
+					} else {
+						proxyIngressClassName = ""
+					}
+				}
+			}
+		}
+	}
+
+	return proxyIngressClassName, nil
+}
+
+func setIngressRules(cr csmv1.ContainerStorageModule) ([]networking.IngressRule, error) {
+	var rules []networking.IngressRule
+	hosts, err := getHosts(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, host := range hosts {
+		rule := []networking.IngressRule{
+			{
+				Host: host,
+				IngressRuleValue: networking.IngressRuleValue{
+					HTTP: &networking.HTTPIngressRuleValue{
+						Paths: []networking.HTTPIngressPath{
+							{
+								Backend: networking.IngressBackend{
+									Service: &networking.IngressServiceBackend{
+										Name: "proxy-server",
+										Port: networking.ServiceBackendPort{
+											Number: 8080,
+										},
+									},
+								},
+								Path:     "/",
+								PathType: &pathType,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		rules = append(rules, rule...)
+	}
+
+	noHostRule := []networking.IngressRule{
+		{
+			// no host specified, uses cluster node IP address
+			IngressRuleValue: networking.IngressRuleValue{
+				HTTP: &networking.HTTPIngressRuleValue{
+					Paths: []networking.HTTPIngressPath{
+						{
+							Backend: networking.IngressBackend{
+								Service: &networking.IngressServiceBackend{
+									Name: "proxy-server",
+									Port: networking.ServiceBackendPort{
+										Number: 8080,
+									},
+								},
+							},
+							Path:     "/",
+							PathType: &pathType,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rules = append(rules, noHostRule...)
+
+	return rules, nil
 }
