@@ -1113,9 +1113,13 @@ func DetermineUnitTestRun(ctx context.Context) bool {
 // Get the namespaces of csm-objects in the cluster
 func GetNamespaces() ([]string, error) {
 	// Get K8s config
-	config, err := clientcmd.BuildConfigFromFlags("", "/etc/kubernetes/admin.conf")
+	kubeconfig := os.Getenv("KUBECONFIG") // Use the KUBECONFIG environment variable if set
+
+	// Create the config object from kubeconfig. If the environment variable is not set, it will fall back to the default location (~/.kube/config).
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return nil, fmt.Errorf("kube config creation failed with %s", err)
+		return nil, fmt.Errorf("error creating clientset: %v", err)
+		//os.Exit(1)
 	}
 
 	// Create a Kubernetes clientset
@@ -1168,7 +1172,15 @@ func BrownfieldDeployment(path string) error {
 
 	//
 	for _, ns := range namespace {
-		AddRole(ns, string(buf))
+		err := AddRole(ns, string(buf))
+		if err != nil {
+			return err
+		}
+
+		err = AddRoleBinding(ns, string(buf))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -1187,10 +1199,16 @@ func AddRole(namespace string, yamlFile string) error {
 	}
 
 	// Create the Kubernetes dynamic client
-	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	// Get K8s config
+	kubeconfig := os.Getenv("KUBECONFIG") // Use the KUBECONFIG environment variable if set
+
+	// Create the config object from kubeconfig. If the environment variable is not set, it will fall back to the default location (~/.kube/config).
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating clientset: %v", err)
+		//os.Exit(1)
 	}
+
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return err
@@ -1201,6 +1219,47 @@ func AddRole(namespace string, yamlFile string) error {
 		Group:    "rbac.authorization.k8s.io",
 		Version:  "v1",
 		Resource: "roles",
+	}).Namespace(namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AddRoleBinding(namespace string, yamlFile string) error {
+	// Replace the namespace in the YAML file
+	yamlStr := strings.ReplaceAll(yamlFile, "<NAMESPACE>", namespace)
+
+	// Parse the YAML into an unstructured object
+	decUnstructured := k8syaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
+	obj := &unstructured.Unstructured{}
+	_, _, err := decUnstructured.Decode([]byte(yamlStr), nil, obj)
+	if err != nil {
+		return err
+	}
+
+	// Create the Kubernetes dynamic client
+	// Get K8s config
+	kubeconfig := os.Getenv("KUBECONFIG") // Use the KUBECONFIG environment variable if set
+
+	// Create the config object from kubeconfig. If the environment variable is not set, it will fall back to the default location (~/.kube/config).
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return fmt.Errorf("error creating clientset: %v", err)
+		//os.Exit(1)
+	}
+
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	// Create the Role in the namespace
+	_, err = dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    "rbac.authorization.k8s.io",
+		Version:  "v1",
+		Resource: "rolebindings",
 	}).Namespace(namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 	if err != nil {
 		return err
