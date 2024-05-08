@@ -980,6 +980,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		}
 	}
 
+	log.Infow("Reconcile authorization certificates")
 	if err := modules.InstallWithCerts(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 		return fmt.Errorf("unable to install certificates for Authorization: %v", err)
 	}
