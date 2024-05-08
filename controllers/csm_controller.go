@@ -1371,7 +1371,7 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 	// If annotation exists, we are doing an upgrade or modify
 	if configVersionExists {
 		if cr.HasModule(csmv1.AuthorizationServer) {
-			newVersion := cr.GetModule().ConfigVersion
+			newVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
 			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
 		}
 		driverType := cr.Spec.Driver.CSIDriverType
