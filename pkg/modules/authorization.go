@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	certificate "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -39,8 +41,6 @@ import (
 )
 
 // TODO (SHAYNA): test with custom certs
-// TODO (SHAYNA): test on ocp, check for valid ingress/annotations
-// TODO (SHAYNA): test with mulitple annotations
 
 const (
 	// AuthDeploymentManifest - deployment resources and ingress rules for authorization module
@@ -113,10 +113,12 @@ var (
 	authCertificate       string
 	authPrivateKey        string
 
-	pathType = networking.PathTypePrefix
+	pathType    = networking.PathTypePrefix
+	duration    = 2160 * time.Hour // 90d
+	renewBefore = 360 * time.Hour  // 15d
 )
 
-// AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
+// AuthorizationSupportedDrvers is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
 var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
@@ -565,7 +567,6 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 
 // AuthorizationIngress - apply/delete ingress objects
 func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
-	authModule := csmv1.Module{}
 	ingress, err := createIngress(cr)
 	if err != nil {
 		return fmt.Errorf("creating ingress: %v", err)
@@ -581,10 +582,13 @@ func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.Operato
 		return fmt.Errorf("marshaling ingress: %v", err)
 	}
 
-	// Wait for NGINX ingress controller to be ready before creating Ingresses
-	if !isDeleting && !authModule.OpenShift {
-		if err := utils.WaitForNginxController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
-			return fmt.Errorf("NGINX ingress controller is not ready: %v", err)
+	for _, m := range cr.Spec.Modules {
+		// Wait for NGINX ingress controller to be ready before creating Ingresses
+		// Needed for Kubernetes only
+		if !isDeleting && !m.OpenShift {
+			if err := utils.WaitForNginxController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
+				return fmt.Errorf("NGINX ingress controller is not ready: %v", err)
+			}
 		}
 	}
 
@@ -669,25 +673,21 @@ func InstallPolicies(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	return nil
 }
 
-func getCerts(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
+	log := logger.GetLogger(ctx)
 	YamlString := ""
 	authNamespace := cr.Namespace
 
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
-		return YamlString, err
+		return false, YamlString, err
 	}
 
-	var hosts []string
 	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
 			authHostname = component.Hostname
 			authCertificate = component.Certificate
 			authPrivateKey = component.PrivateKey
-
-			for _, proxyServerIngress := range component.ProxyServerIngress {
-				hosts = append(hosts, proxyServerIngress.Hosts...)
-			}
 		}
 	}
 
@@ -696,38 +696,73 @@ func getCerts(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string,
 		if authCertificate != "" && authPrivateKey != "" {
 			buf, err := readConfigFile(authModule, cr, op, AuthCustomCert)
 			if err != nil {
-				return YamlString, err
+				return false, YamlString, err
 			}
 
 			YamlString = string(buf)
+			YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 			YamlString = strings.ReplaceAll(YamlString, AuthCert, authCertificate)
 			YamlString = strings.ReplaceAll(YamlString, AuthPrivateKey, authPrivateKey)
 		} else {
-			return YamlString, fmt.Errorf("authorization install failed -- either cert or privatekey missing for custom cert")
+			return false, YamlString, fmt.Errorf("authorization install failed -- either cert or privatekey missing for custom cert")
 		}
 	} else {
-		// using self-signed cert
-		buf, err := readConfigFile(authModule, cr, op, AuthSelfSignedCert)
-		if err != nil {
-			return YamlString, err
-		}
-
-		YamlString = string(buf)
-		YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
-
-		// TODO (SHAYNA): support multiple hosts in cert
-		YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, hosts[0])
+		// use self-signed cert
+		log.Info("using self-signed certificate for authorization")
+		return true, "", nil
 	}
 
-	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-
-	return YamlString, nil
+	return false, YamlString, nil
 }
 
 func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getCerts(op, cr)
+	useSelfSignedCert, YamlString, err := getCerts(ctx, op, cr)
 	if err != nil {
 		return err
+	}
+
+	if useSelfSignedCert {
+		issuer, err := createSelfSignedIssuer(cr)
+		if err != nil {
+			return err
+		}
+
+		issuerByes, err := json.Marshal(issuer)
+		if err != nil {
+			return fmt.Errorf("marshaling ingress: %v", err)
+		}
+
+		issuerYaml, err := yaml.JSONToYAML(issuerByes)
+		if err != nil {
+			return fmt.Errorf("marshaling ingress: %v", err)
+		}
+
+		// create/delete issuer
+		err = applyDeleteObjects(ctx, ctrlClient, string(issuerYaml), isDeleting)
+		if err != nil {
+			return err
+		}
+
+		cert, err := createSelfSignedCertificate(cr)
+		if err != nil {
+			return err
+		}
+
+		certBytes, err := json.Marshal(cert)
+		if err != nil {
+			return fmt.Errorf("marshaling ingress: %v", err)
+		}
+
+		certYaml, err := yaml.JSONToYAML(certBytes)
+		if err != nil {
+			return fmt.Errorf("marshaling ingress: %v", err)
+		}
+
+		// create/delete certificate
+		err = applyDeleteObjects(ctx, ctrlClient, string(certYaml), isDeleting)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
@@ -736,6 +771,74 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 	}
 
 	return nil
+}
+
+func createSelfSignedIssuer(cr csmv1.ContainerStorageModule) (*certificate.Issuer, error) {
+	issuer := &certificate.Issuer{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Issuer",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "selfsigned",
+			Namespace: cr.Namespace,
+		},
+		Spec: certificate.IssuerSpec{
+			IssuerConfig: certificate.IssuerConfig{
+				SelfSigned: &certificate.SelfSignedIssuer{
+					CRLDistributionPoints: []string{},
+				},
+			},
+		},
+	}
+
+	return issuer, nil
+}
+
+func createSelfSignedCertificate(cr csmv1.ContainerStorageModule) (*certificate.Certificate, error) {
+	hosts, err := getHosts(cr)
+	if err != nil {
+		return nil, fmt.Errorf("getting hosts: %v", err)
+	}
+
+	certificate := &certificate.Certificate{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Certificate",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karavi-auth",
+			Namespace: cr.Namespace,
+		},
+		Spec: certificate.CertificateSpec{
+			SecretName: "karavi-auth-tls",
+			Duration: &metav1.Duration{
+				Duration: duration, // 90d
+			},
+			RenewBefore: &metav1.Duration{
+				Duration: renewBefore, // 15d
+			},
+			Subject: &certificate.X509Subject{
+				Organizations: []string{"dellemc"},
+			},
+			IsCA: false,
+			PrivateKey: &certificate.CertificatePrivateKey{
+				Algorithm: "RSA",
+				Encoding:  "PKCS1",
+				Size:      2048,
+			},
+			Usages: []certificate.KeyUsage{
+				"client auth",
+				"server auth",
+			},
+			DNSNames: hosts,
+			IssuerRef: cmmetav1.ObjectReference{
+				Name:  "selfsigned",
+				Kind:  "Issuer",
+				Group: "cert-manager.io",
+			},
+		},
+	}
+
+	return certificate, nil
 }
 
 func createIngress(cr csmv1.ContainerStorageModule) (*networking.Ingress, error) {
@@ -844,7 +947,7 @@ func getClassName(cr csmv1.ContainerStorageModule) (string, error) {
 					if !m.OpenShift {
 						proxyIngressClassName = proxyServerIngress.IngressClassName
 					} else {
-						proxyIngressClassName = ""
+						proxyIngressClassName = "openshift-default"
 					}
 				}
 			}
