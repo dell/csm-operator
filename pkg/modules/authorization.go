@@ -14,6 +14,7 @@ package modules
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,8 +40,6 @@ import (
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
-
-// TODO (SHAYNA): test with custom certs
 
 const (
 	// AuthDeploymentManifest - deployment resources and ingress rules for authorization module
@@ -112,6 +111,7 @@ var (
 	proxyIngressClassName string
 	authCertificate       string
 	authPrivateKey        string
+	secretName            string
 
 	pathType    = networking.PathTypePrefix
 	duration    = 2160 * time.Hour // 90d
@@ -694,15 +694,28 @@ func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerSt
 	if authCertificate != "" || authPrivateKey != "" {
 		// use custom tls secret
 		if authCertificate != "" && authPrivateKey != "" {
+			log.Infof("Provided Certificate %s, Key %s", authCertificate, authPrivateKey)
 			buf, err := readConfigFile(authModule, cr, op, AuthCustomCert)
 			if err != nil {
 				return false, YamlString, err
 			}
 
+			certFile, err := os.ReadFile(authCertificate)
+			if err != nil {
+				return false, "", fmt.Errorf("reading cert file: %v", err)
+			}
+			encodedAuthCert := base64.StdEncoding.EncodeToString(certFile)
+
+			privateKeyFile, err := os.ReadFile(authPrivateKey)
+			if err != nil {
+				return false, "", fmt.Errorf("reading private key file: %v", err)
+			}
+			encodedAuthPrivateKey := base64.StdEncoding.EncodeToString(privateKeyFile)
+
 			YamlString = string(buf)
 			YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-			YamlString = strings.ReplaceAll(YamlString, AuthCert, authCertificate)
-			YamlString = strings.ReplaceAll(YamlString, AuthPrivateKey, authPrivateKey)
+			YamlString = strings.ReplaceAll(YamlString, AuthCert, encodedAuthCert)
+			YamlString = strings.ReplaceAll(YamlString, AuthPrivateKey, encodedAuthPrivateKey)
 		} else {
 			return false, YamlString, fmt.Errorf("authorization install failed -- either cert or privatekey missing for custom cert")
 		}
@@ -809,7 +822,7 @@ func createSelfSignedCertificate(cr csmv1.ContainerStorageModule) (*certificate.
 			Namespace: cr.Namespace,
 		},
 		Spec: certificate.CertificateSpec{
-			SecretName: "karavi-auth-tls",
+			SecretName: "karavi-selfsigned-tls",
 			Duration: &metav1.Duration{
 				Duration: duration, // 90d
 			},
@@ -842,6 +855,11 @@ func createSelfSignedCertificate(cr csmv1.ContainerStorageModule) (*certificate.
 }
 
 func createIngress(cr csmv1.ContainerStorageModule) (*networking.Ingress, error) {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
 	className, err := getClassName(cr)
 	if err != nil {
 		return nil, fmt.Errorf("getting ingress class name: %v", err)
@@ -862,6 +880,16 @@ func createIngress(cr csmv1.ContainerStorageModule) (*networking.Ingress, error)
 		return nil, fmt.Errorf("setting ingress rules: %v", err)
 	}
 
+	for _, component := range authModule.Components {
+		if component.Name == AuthProxyServerComponent {
+			if component.Certificate != "" && component.PrivateKey != "" {
+				secretName = "user-provided-tls"
+			} else {
+				secretName = "karavi-selfsigned-tls"
+			}
+		}
+	}
+
 	ingress := networking.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Ingress",
@@ -876,7 +904,7 @@ func createIngress(cr csmv1.ContainerStorageModule) (*networking.Ingress, error)
 			TLS: []networking.IngressTLS{
 				{
 					Hosts:      hosts,
-					SecretName: "karavi-auth-tls",
+					SecretName: secretName,
 				},
 			},
 			Rules: rules,
