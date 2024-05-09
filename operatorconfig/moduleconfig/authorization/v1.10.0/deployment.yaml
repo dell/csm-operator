@@ -1,4 +1,35 @@
 # Proxy service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: proxy-server
+  namespace: <NAMESPACE>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: proxy-server
+rules:
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["watch"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["storages", "csmtenants"]
+    verbs: ["get", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: proxy-server
+subjects:
+  - kind: ServiceAccount
+    name: proxy-server
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: proxy-server
+  apiGroup: rbac.authorization.k8s.io
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,12 +48,26 @@ spec:
         csm: <NAME>
         app: proxy-server
     spec:
+      serviceAccount: proxy-server
       containers:
       - name: proxy-server
         image: <AUTHORIZATION_PROXY_SERVER_IMAGE>
         imagePullPolicy: Always
+        env:
+          - name: SENTINELS
+            value:  "sentinel-0.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                    "sentinel-1.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                    "sentinel-2.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                    "sentinel-3.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                    "sentinel-4.sentinel.<NAMESPACE>svc.cluster.local:5000"
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-csm-secret
+                key: password
         args:
-          - "--redis-host=redis.<NAMESPACE>.svc.cluster.local:6379"
+          - "--redis-sentinel=$(SENTINELS)"
+          - "--redis-password=$(REDIS_PASSWORD)"
           - "--tenant-service=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
           - "--role-service=role-service.<NAMESPACE>.svc.cluster.local:50051"
           - "--storage-service=storage-service.<NAMESPACE>.svc.cluster.local:50051"
@@ -100,8 +145,21 @@ spec:
       - name: tenant-service
         image: <AUTHORIZATION_TENANT_SERVICE_IMAGE>
         imagePullPolicy: Always
+        env:
+          - name: SENTINELS
+            value:  "sentinel-0.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                    "sentinel-1.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                    "sentinel-2.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                    "sentinel-3.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                    "sentinel-4.sentinel.<NAMESPACE>svc.cluster.local:5000"
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-csm-secret
+                key: password
         args:
-          - "--redis-host=redis-csm.<NAMESPACE>.svc.cluster.local:6379"
+          - "--redis-sentinel=$(SENTINELS)"
+          - "--redis-password=$(REDIS_PASSWORD)"
         ports:
         - containerPort: 50051
           name: grpc
@@ -242,6 +300,20 @@ roleRef:
   name: storage-service
   apiGroup: rbac.authorization.k8s.io
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: storage-service-tokenreview-binding
+  namespace: <NAMESPACE>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: storage-service
+    namespace: <NAMESPACE>
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -265,6 +337,10 @@ spec:
       - name: storage-service
         image: <AUTHORIZATION_STORAGE_SERVICE_IMAGE>
         imagePullPolicy: Always
+        args:
+          - "--vault-address=<AUTHORIZATION_VAULT_ADDRESS>"
+          - "--vault-kv-engine-path=secret"
+          - "--vault-skip-certificate-validation=true"
         ports:
         - containerPort: 50051
           name: grpc
@@ -272,22 +348,24 @@ spec:
           - name: NAMESPACE
             value: <NAMESPACE>
         volumeMounts:
-        - name: storage-volume
-          mountPath: /etc/karavi-authorization/storage
         - name: config-volume
           mountPath: /etc/karavi-authorization/config
         - name: csm-config-params
           mountPath: /etc/karavi-authorization/csm-config-params
+        - name: vault-client-certificate
+          mountPath: /etc/vault
       volumes:
-      - name: storage-volume
-        secret:
-          secretName: karavi-storage-secret
       - name: config-volume
         secret:
           secretName: karavi-config-secret
       - name: csm-config-params
         configMap:
           name: csm-config-params
+      - name: vault-client-certificate
+        projected:
+          sources:
+          - secret:
+              name: storage-service-selfsigned-tls
 ---
 apiVersion: v1
 kind: Service
@@ -302,16 +380,41 @@ spec:
     targetPort: 50051
     name: grpc
 ---
-# Redis
-apiVersion: v1
-kind: Secret
+apiVersion: cert-manager.io/v1
+kind: Issuer
 metadata:
-  name: redis-csm-secret
+  name: storage-service-selfsigned
   namespace: <NAMESPACE>
-type: kubernetes.io/basic-auth
-stringData:
-  password: pass1234
+spec:
+  selfSigned: {}
 ---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: storage-service-selfsigned
+  namespace: <NAMESPACE>
+spec:
+  secretName: storage-service-selfsigned-tls
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  subject:
+    organizations:
+    - dellemc
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  usages:
+    - client auth
+  dnsNames:
+  - csm-authorization-storage-service
+  issuerRef:
+    name: storage-service-selfsigned
+    kind: Issuer
+    group: cert-manager.io
+---
+# Redis
 apiVersion: v1
 kind: Service
 metadata:
@@ -323,10 +426,10 @@ spec:
   selector:
     app: redis-csm
   ports:
-    - protocol: TCP
-      port: 6379
-      targetPort: 6379
-      name: redis-csm
+  - protocol: TCP
+    port: 6379
+    targetPort: 6379
+    name: redis-csm
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -344,8 +447,6 @@ spec:
       labels:
         csm: <NAME>
         app: redis-csm
-      annotations:
-        checksum/secret: { { include (print $.Template.BasePath "/redis-secret.yaml") . | sha256sum } }
     spec:
       initContainers:
       - name: config
@@ -432,8 +533,6 @@ spec:
         csm: <NAME>
         app: rediscommander
         tier: backend
-      annotations:
-        checksum/secret: { { include (print $.Template.BasePath "/redis-secret.yaml") . | sha256sum } }
     spec:
       containers:
       - name: rediscommander
@@ -441,10 +540,11 @@ spec:
         imagePullPolicy: IfNotPresent
         env:
         - name: SENTINELS
-          value: "sentinel-0.sentinel.{{ include "custom.namespace" . }}.svc.cluster.local:5000,
-                  sentinel-1.sentinel.{{ include "custom.namespace" . }}.svc.cluster.local:5000,
-                  sentinel-2.sentinel.{{ include "custom.namespace" . }}.svc.cluster.local:5000,
-                  sentinel-3.sentinel.{{ include "custom.namespace" . }}.svc.cluster.local:5000"
+          value:  "sentinel-0.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                  "sentinel-1.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                  "sentinel-2.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                  "sentinel-3.sentinel.<NAMESPACE>svc.cluster.local:5000",
+                  "sentinel-4.sentinel.<NAMESPACE>svc.cluster.local:5000"
         - name: K8S_SIGTERM
           value: "1"
         - name: REDIS_PASSWORD
@@ -505,100 +605,98 @@ spec:
     metadata:
       labels:
         app: sentinel
-      annotations:
-        checksum/secret: {{ include (print $.Template.BasePath "/redis-secret.yaml") . | sha256sum }}
     spec:
       initContainers:
-        - name: config
-          image: <AUTHORIZATION_REDIS_IMAGE>
-          command: [ "sh", "-c" ]
-          env:
-            - name: REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: redis-csm-secret
-                  key: password
-          args:
-            - |
-              #REDIS_PASSWORD=`echo $REDIS_PASSWORD | base64 -d`
-              echo "Password - " $REDIS_PASSWORD
-              nodes=redis-csm-0.redis-csm,redis-csm-1.redis-csm,redis-csm-2.redis-csm,redis-csm-3.redis-csm,redis-csm-4.redis-csm
-              loop=$(echo $nodes | sed -e "s/,/\n/g")
+      - name: config
+        image: <AUTHORIZATION_REDIS_IMAGE>
+        command: [ "sh", "-c" ]
+        env:
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-csm-secret
+                key: password
+        args:
+          - |
+            #REDIS_PASSWORD=`echo $REDIS_PASSWORD | base64 -d`
+            echo "Password - " $REDIS_PASSWORD
+            nodes=redis-csm-0.redis-csm,redis-csm-1.redis-csm,redis-csm-2.redis-csm,redis-csm-3.redis-csm,redis-csm-4.redis-csm
+            loop=$(echo $nodes | sed -e "s/,/\n/g")
               
-              for i in $loop
-              do                
-                  echo "finding master at $i"
-                  MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
-                  if [ "$MASTER" = "" ]; then
-                      echo "Master not found"
-                      echo "sleeping 5 seconds for pods to come up"
-                      sleep 5
-                      MASTER=
-                  else
-                      echo "Master found at $MASTER"
-                      break
-                  fi
-              done
+            for i in $loop
+            do                
+                echo "finding master at $i"
+                MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
+                if [ "$MASTER" = "" ]; then
+                    echo "Master not found"
+                    echo "sleeping 5 seconds for pods to come up"
+                    sleep 5
+                    MASTER=
+                else
+                    echo "Master found at $MASTER"
+                    break
+                fi
+            done
               
-              echo "sentinel monitor mymaster $MASTER 6379 2" >> /tmp/master
-              echo "port 5000
-              sentinel resolve-hostnames yes
-              sentinel announce-hostnames yes
-              $(cat /tmp/master)
-              sentinel down-after-milliseconds mymaster 5000
-              sentinel failover-timeout mymaster 60000
-              sentinel parallel-syncs mymaster 2
-              sentinel auth-pass mymaster $REDIS_PASSWORD
-              " > /etc/redis/sentinel.conf
-              cat /etc/redis/sentinel.conf
-          volumeMounts:
-            - name: redis-config
-              mountPath: /etc/redis/
-      containers:
-        - name: sentinel
-          image: <AUTHORIZATION_REDIS_IMAGE>
-          command: ["redis-sentinel"]
-          args: ["/etc/redis/sentinel.conf"]
-          ports:
-            - containerPort: 5000
-              name: sentinel
-          volumeMounts:
-            - name: redis-config
-              mountPath: /etc/redis/
-            - name: data
-              mountPath: /data
-      volumes:
+            echo "sentinel monitor mymaster $MASTER 6379 2" >> /tmp/master
+            echo "port 5000
+            sentinel resolve-hostnames yes
+            sentinel announce-hostnames yes
+            $(cat /tmp/master)
+            sentinel down-after-milliseconds mymaster 5000
+            sentinel failover-timeout mymaster 60000
+            sentinel parallel-syncs mymaster 2
+            sentinel auth-pass mymaster $REDIS_PASSWORD
+            " > /etc/redis/sentinel.conf
+            cat /etc/redis/sentinel.conf
+        volumeMounts:
         - name: redis-config
-          emptyDir: {}
+          mountPath: /etc/redis/
+      containers:
+      - name: sentinel
+        image: <AUTHORIZATION_REDIS_IMAGE>
+        command: ["redis-sentinel"]
+        args: ["/etc/redis/sentinel.conf"]
+        ports:
+        - containerPort: 5000
+          name: sentinel
+        volumeMounts:
+        - name: redis-config
+          mountPath: /etc/redis/
         - name: data
-          emptyDir : {}
+          mountPath: /data
+      volumes:
+      - name: redis-config
+        emptyDir: {}
+      - name: data
+        emptyDir : {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.redis.sentinel }}
+  name: sentinel
 spec:
   clusterIP: None
   ports:
-    - port: 5000
-      targetPort: 5000
-      name: sentinel
+  - port: 5000
+    targetPort: 5000
+    name: sentinel
   selector:
     app: sentinel
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.redis.sentinel }}-svc
+  name: sentinel-svc
 spec:
   type: NodePort
   ports:
-    - port: 5000
-      targetPort: 5000
-      nodePort: 32003
-      name: {{ .Values.redis.sentinel }}-svc
+  - port: 5000
+    targetPort: 5000
+    nodePort: 32003
+    name: sentinel-svc
   selector:
-    app: {{ .Values.redis.sentinel }}
+    app: sentinel
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1

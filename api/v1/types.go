@@ -356,6 +356,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Redis storage class"
 	RedisStorageClass string `json:"storageclass,omitempty" yaml:"storageclass,omitempty"`
 
+	//VaultAddress is the address of the vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Vault Address"
+	VaultAddress string `json:"vaultAddress,omitempty" yaml:"vaultAddress,omitempty"`
+
 	// ReplicaCount is the replica count for app mobility
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Replica Count"
 	ReplicaCount string `json:"replicaCount,omitempty" yaml:"replicaCount,omitempty"`

@@ -83,6 +83,9 @@ const (
 	// AuthProxyIngressHost -
 	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
 
+	//AuthVaultAddress -
+	AuthVaultAddress = "<AUTHORIZATION_VAULT_ADDRESS>"
+
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
 	// AuthPrivateKey - for tls secret
@@ -492,6 +495,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, component.TenantService)
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
+			YamlString = strings.ReplaceAll(YamlString, AuthVaultAddress, component.VaultAddress)
 			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 		}
 
