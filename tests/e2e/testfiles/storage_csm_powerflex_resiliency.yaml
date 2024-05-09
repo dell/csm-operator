@@ -150,6 +150,29 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled 
+      #  - key: "offline.vxflexos.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
+      #  - key: "vxflexos.podmon.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
+      #  - key: "offline.unity.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
+      # - key: "unity.podmon.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # - key: "offline.isilon.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # - key: "isilon.podmon.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
 
     initContainers:
       - image: dellemc/sdc:4.5.1
@@ -167,7 +190,7 @@ spec:
       # false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: true
-      configVersion: v1.7.1
+      configVersion: v1.9.0
       components:
         - name: podmon-controller
           image: dellemc/podmon:nightly
@@ -208,3 +231,7 @@ data:
   driver-config-params.yaml: |
     CSI_LOG_LEVEL: "debug"
     CSI_LOG_FORMAT: "TEXT"
+    PODMON_CONTROLLER_LOG_LEVEL: "debug"
+    PODMON_CONTROLLER_LOG_FORMAT: "TEXT"
+    PODMON_NODE_LOG_LEVEL: "debug"
+    PODMON_NODE_LOG_FORMAT: "TEXT"

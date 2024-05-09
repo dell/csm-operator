@@ -30,10 +30,10 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "update"]
-  - apiGroups: [ "security.openshift.io" ]
-    resourceNames: [ "privileged" ]
-    resources: [ "securitycontextconstraints" ]
-    verbs: [ "use" ]
+  - apiGroups: ["security.openshift.io"]
+    resourceNames: ["privileged"]
+    resources: ["securitycontextconstraints"]
+    verbs: ["use"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -54,6 +54,8 @@ metadata:
   name: <DriverDefaultReleaseName>-node
   namespace: <DriverDefaultReleaseNamespace>
 spec:
+  updateStrategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app: <DriverDefaultReleaseName>-node
@@ -61,97 +63,80 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
-      annotations:
-        kubectl.kubernetes.io/default-container: driver
     spec:
-      serviceAccount: <DriverDefaultReleaseName>-node
-      #nodeSelector:
-      #tolerations:
+      serviceAccountName: <DriverDefaultReleaseName>-node
+      hostIPC: true
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: driver
-          command: ["/csi-isilon"]
-          args:
-            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
           securityContext:
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-isilon:v2.10.0
-          imagePullPolicy: IfNotPresent
+          image: dellemc/csi-unity:v2.11.0
+          imagePullPolicy:  IfNotPresent
+          args:
+            - "--driver-name=csi-unity.dellemc.com"
+            - "--driver-config=/unity-config/driver-config-params.yaml"
+            - "--driver-secret=/unity-secret/config"
           env:
             - name: CSI_ENDPOINT
-              value: <KUBELET_CONFIG_DIR>/plugins/csi-isilon/csi_sock
+              value: unix:///var/lib/kubelet/plugins/unity.emc.dell.com/csi_sock
             - name: X_CSI_MODE
               value: node
-            - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
+            - name: X_CSI_UNITY_AUTOPROBE
               value: "true"
-            - name: X_CSI_ISI_AUTH_TYPE
-              value: "0"
-            - name: X_CSI_ALLOWED_NETWORKS
-              value: ""
-            - name: X_CSI_VERBOSE
-              value: "1"
-            - name: X_CSI_PRIVATE_MOUNT_DIR
-              value: "<KUBELET_CONFIG_DIR>/plugins/csi-isilon/disks"
-            - name: X_CSI_ISI_PORT
-              value: "8080"
-            - name: X_CSI_ISI_PATH
-              value: "/ifs/data/csi"
-            - name: X_CSI_ISI_NO_PROBE_ON_START
+            - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
               value: "false"
-            - name: X_CSI_ISI_AUTOPROBE
-              value: "true"
-            - name: X_CSI_NODE_NAME
+            - name: X_CSI_PRIVATE_MOUNT_DIR
+              value: "/var/lib/kubelet/plugins/unity.emc.dell.com/disks"
+            - name: X_CSI_EPHEMERAL_STAGING_PATH
+              value: "/var/lib/kubelet/plugins/kubernetes.io/csi/pv/"
+            - name: X_CSI_ISCSI_CHROOT
+              value: "/noderoot"
+            - name: X_CSI_UNITY_NODENAME
               valueFrom:
                 fieldRef:
+                  apiVersion: v1
                   fieldPath: spec.nodeName
-            - name: X_CSI_NODE_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
             - name: SSL_CERT_DIR
               value: /certs
-            - name: X_CSI_ISI_QUOTA_ENABLED
-              value: "true"
-            - name: X_CSI_CUSTOM_TOPOLOGY_ENABLED
-              value: "false"
-            - name: X_CSI_ISI_CONFIG_PATH
-              value: /isilon-configs/config
-            - name: X_CSI_MAX_VOLUMES_PER_NODE
-              value: "0"
+            - name: X_CSI_UNITY_SYNC_NODEINFO_INTERVAL
+              value: "15"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
-              value: "false"
-            - name: X_CSI_MAX_PATH_LIMIT
-              value: "192"
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
+              value: "true"
+            - name: X_CSI_ALLOWED_NETWORKS
+              value: "<X_CSI_ALLOWED_NETWORKS>"
           volumeMounts:
             - name: driver-path
-              mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
+              mountPath: /var/lib/kubelet/plugins/unity.emc.dell.com
             - name: volumedevices-path
-              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
-            - name: csi-path
-              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
+              mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi
+              mountPropagation: "Bidirectional"
             - name: pods-path
-              mountPath: <KUBELET_CONFIG_DIR>/pods
+              mountPath: /var/lib/kubelet/pods
               mountPropagation: "Bidirectional"
             - name: dev
               mountPath: /dev
+            - name: noderoot
+              mountPath: /noderoot
             - name: certs
               mountPath: /certs
               readOnly: true
-            - name: isilon-configs
-              mountPath: /isilon-configs
-            - name: csi-isilon-config-params
-              mountPath: /csi-isilon-config-params
+            - name: unity-config
+              mountPath: /unity-config
+            - name: unity-secret
+              mountPath: /unity-secret
         - name: registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
-          imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
-            - --kubelet-registration-path=<KUBELET_CONFIG_DIR>/plugins/csi-isilon/csi_sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/unity.emc.dell.com/csi_sock
           env:
             - name: ADDRESS
               value: /csi/csi_sock
@@ -166,40 +151,29 @@ spec:
             - name: driver-path
               mountPath: /csi
       volumes:
-        - name: usr-bin
-          hostPath:
-            path: /usr/bin
-            type: Directory
-        - name: kubelet-pods
-          hostPath:
-            path: /var/lib/kubelet/pods
-            type: Directory
-        - name: var-run
-          hostPath:
-            path: /var/run
-            type: Directory
         - name: registration-dir
           hostPath:
-            path: <KUBELET_CONFIG_DIR>/plugins_registry/
+            path: /var/lib/kubelet/plugins_registry/
             type: DirectoryOrCreate
-        - name: csi-path
-          hostPath:
-            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
         - name: driver-path
           hostPath:
-            path: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
+            path: /var/lib/kubelet/plugins/unity.emc.dell.com
             type: DirectoryOrCreate
         - name: volumedevices-path
           hostPath:
-            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
+            path: /var/lib/kubelet/plugins/kubernetes.io/csi
             type: DirectoryOrCreate
         - name: pods-path
           hostPath:
-            path: <KUBELET_CONFIG_DIR>/pods
+            path: /var/lib/kubelet/pods
             type: Directory
         - name: dev
           hostPath:
             path: /dev
+            type: Directory
+        - name: noderoot
+          hostPath:
+            path: /
             type: Directory
         - name: certs
           projected:
@@ -209,9 +183,9 @@ spec:
                   items:
                     - key: cert-0
                       path: cert-0
-        - name: isilon-configs
-          secret:
-            secretName: <DriverDefaultReleaseName>-creds
-        - name: csi-isilon-config-params
+        - name: unity-config
           configMap:
-             name: <DriverDefaultReleaseName>-config-params
+              name: <DriverDefaultReleaseName>-config-params
+        - name: unity-secret
+          secret:
+              secretName: <DriverDefaultReleaseName>-creds
