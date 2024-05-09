@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: <DriverDefaultReleaseNamespace>
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: "info"
+    CSI_LOG_FORMAT: "JSON"
+    ALLOW_RWO_MULTIPOD_ACCESS: "false"
+    MAX_UNITY_VOLUMES_PER_NODE: 0
+    SYNC_NODE_INFO_TIME_INTERVAL: 15
+    TENANT_NAME: ""
