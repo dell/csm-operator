@@ -69,7 +69,8 @@ spec:
 
               # additional host rules for the proxy-server ingress
               hosts:
-                - authorization-ingress-nginx-controller.authorization.svc.cluster.local
+                []
+                # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
 
               # additional annotations for the proxy-server ingress
               annotations: {}
@@ -81,7 +82,7 @@ spec:
           # to use a different storage class for redis, specify the name of the storage class
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
-          storageclass: "local-storage"
+          storageclass: ""
 
 ---
 apiVersion: v1

@@ -700,13 +700,13 @@ func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerSt
 				return false, YamlString, err
 			}
 
-			certFile, err := os.ReadFile(authCertificate)
+			certFile, err := os.ReadFile(filepath.Clean(authCertificate))
 			if err != nil {
 				return false, "", fmt.Errorf("reading cert file: %v", err)
 			}
 			encodedAuthCert := base64.StdEncoding.EncodeToString(certFile)
 
-			privateKeyFile, err := os.ReadFile(authPrivateKey)
+			privateKeyFile, err := os.ReadFile(filepath.Clean(authPrivateKey))
 			if err != nil {
 				return false, "", fmt.Errorf("reading private key file: %v", err)
 			}
