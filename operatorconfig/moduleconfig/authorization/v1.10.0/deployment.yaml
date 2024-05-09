@@ -1,3 +1,12 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-csm-secret
+  namespace: <NAMESPACE>
+type: kubernetes.io/basic-auth
+stringData:
+  password: K@ravi123!
+---
 # Proxy service
 apiVersion: v1
 kind: ServiceAccount
@@ -55,11 +64,7 @@ spec:
         imagePullPolicy: Always
         env:
           - name: SENTINELS
-            value:  "sentinel-0.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                    "sentinel-1.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                    "sentinel-2.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                    "sentinel-3.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                    "sentinel-4.sentinel.<NAMESPACE>svc.cluster.local:5000"
+            value: "sentinel-0.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-1.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-2.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-3.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-4.sentinel.<NAMESPACE>.svc.cluster.local:5000"
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -147,11 +152,7 @@ spec:
         imagePullPolicy: Always
         env:
           - name: SENTINELS
-            value:  "sentinel-0.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                    "sentinel-1.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                    "sentinel-2.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                    "sentinel-3.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                    "sentinel-4.sentinel.<NAMESPACE>svc.cluster.local:5000"
+            value: "sentinel-0.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-1.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-2.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-3.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-4.sentinel.<NAMESPACE>.svc.cluster.local:5000"
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -540,11 +541,7 @@ spec:
         imagePullPolicy: IfNotPresent
         env:
         - name: SENTINELS
-          value:  "sentinel-0.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                  "sentinel-1.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                  "sentinel-2.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                  "sentinel-3.sentinel.<NAMESPACE>svc.cluster.local:5000",
-                  "sentinel-4.sentinel.<NAMESPACE>svc.cluster.local:5000"
+          value: "sentinel-0.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-1.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-2.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-3.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-4.sentinel.<NAMESPACE>.svc.cluster.local:5000"
         - name: K8S_SIGTERM
           value: "1"
         - name: REDIS_PASSWORD
