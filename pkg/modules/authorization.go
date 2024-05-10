@@ -116,7 +116,7 @@ var (
 	renewBefore = 360 * time.Hour  // 15d
 )
 
-// AuthorizationSupportedDrvers is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
+// AuthorizationSupportedDrivers ... is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
 var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
@@ -564,7 +564,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 }
 
 // AuthorizationIngress - apply/delete ingress objects
-func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
+func AuthorizationIngress(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
 	ingress, err := createIngress(cr)
 	if err != nil {
 		return fmt.Errorf("creating ingress: %v", err)
@@ -726,6 +726,7 @@ func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerSt
 	return false, YamlString, nil
 }
 
+// InstallWithCerts - apply/delete certificate related objects
 func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	useSelfSignedCert, YamlString, err := getCerts(ctx, op, cr)
 	if err != nil {

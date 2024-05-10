@@ -192,6 +192,13 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.runFakeAuthCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcileOCP() {
+	suite.makeFakeAuthServerCSMOCP(csmName, suite.namespace, getAuthProxyServerOCP())
+	suite.runFakeAuthCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeAuthCSMManager("", true)
+}
+
 func (suite *CSMControllerTestSuite) TestAppMobReconcile() {
 	suite.makeFakeAppMobCSM(csmName, suite.namespace, getAppMob())
 	suite.runFakeAuthCSMManager("", false)
@@ -1305,6 +1312,44 @@ func getAuthProxyServer() []csmv1.Module {
 	}
 }
 
+func getAuthProxyServerOCP() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:              csmv1.AuthorizationServer,
+			Enabled:           true,
+			ConfigVersion:     "v1.10.0",
+			ForceRemoveModule: true,
+			OpenShift:         true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:     "proxy-server",
+					Enabled:  &[]bool{true}[0],
+					Hostname: "csm-auth.com",
+					ProxyServerIngress: []csmv1.ProxyServerIngress{
+						{
+							IngressClassName: "nginx",
+							Hosts:            []string{"additional-host.com"},
+							Annotations:      map[string]string{"test": "test"},
+						},
+					},
+				},
+				{
+					Name:    "cert-manager",
+					Enabled: &[]bool{true}[0],
+				},
+				{
+					Name:    "nginx",
+					Enabled: &[]bool{false}[0],
+				},
+				{
+					Name:              "redis",
+					RedisStorageClass: "test-storage",
+				},
+			},
+		},
+	}
+}
+
 func getAppMob() []csmv1.Module {
 	return []csmv1.Module{
 		{
@@ -1513,6 +1558,26 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 	}
 }
 
+func (suite *CSMControllerTestSuite) TestReconcileAuthorizationBadCert() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Modules = getAuthProxyServer()
+	reconciler := suite.createReconciler()
+
+	goodModules := csm.Spec.Modules[0].Components
+	for index, component := range csm.Spec.Modules[0].Components {
+		if component.Name == string(csmv1.AuthorizationServer) {
+			csm.Spec.Modules[0].Components[index].Certificate = "bad-cert"
+		}
+	}
+
+	fmt.Printf("[TestReconcileAuthorizationBadCert] module components: %+v\n", csm.Spec.Modules[0].Components)
+
+	err := reconciler.reconcileAuthorization(ctx, false, operatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	csm.Spec.Modules[0].Components = goodModules
+}
+
 func (suite *CSMControllerTestSuite) TestReconcileAppMob() {
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Modules = getAppMob()
@@ -1688,19 +1753,40 @@ func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, _ []csmv
 }
 
 func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, _ []csmv1.Module) {
-	// this secret required by authorization module
+	// this secret is required by authorization module
 	sec := shared.MakeSecret("karavi-config-secret", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	// this secret required by authorization module
-	sec = shared.MakeSecret("proxy-storage-secret", ns, configVersion)
+	// this secret is required by authorization module
+	sec = shared.MakeSecret("karavi-storage-secret", ns, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
 	csm := shared.MakeModuleCSM(name, ns, configVersion)
 
 	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ForceRemoveModule = true
+	csm.Annotations[configVersionKey] = configVersion
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) makeFakeAuthServerCSMOCP(name, ns string, _ []csmv1.Module) {
+	// this secret is required by authorization module
+	sec := shared.MakeSecret("karavi-config-secret", ns, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret is required by authorization module
+	sec = shared.MakeSecret("karavi-storage-secret", ns, configVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeModuleCSM(name, ns, configVersion)
+
+	csm.Spec.Modules = getAuthProxyServerOCP()
 	csm.Spec.Modules[0].ForceRemoveModule = true
 	csm.Annotations[configVersionKey] = configVersion
 

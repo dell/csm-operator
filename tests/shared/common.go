@@ -160,11 +160,7 @@ func MakeModule(configVersion string) csmv1.Module {
 	moduleObj := csmv1.Module{
 		ConfigVersion:     configVersion,
 		ForceRemoveModule: true,
-		Components: []csmv1.ContainerTemplate{
-			{
-				Hostname: "csm-auth.com",
-			},
-		},
+		Components:        []csmv1.ContainerTemplate{{}},
 	}
 
 	return moduleObj
