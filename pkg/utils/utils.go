@@ -130,8 +130,6 @@ const (
 	ObservabilityNamespace = "karavi"
 	// AuthorizationNamespace - authorization
 	AuthorizationNamespace = "authorization"
-	// AuthProxyServerComponent - karavi-authorization-proxy-server component
-	AuthProxyServerComponent = "karavi-authorization-proxy-server"
 	// PodmonControllerComponent - podmon-controller
 	PodmonControllerComponent = "podmon-controller"
 	// PodmonNodeComponent - podmon-node

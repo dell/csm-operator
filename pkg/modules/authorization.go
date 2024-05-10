@@ -54,8 +54,6 @@ const (
 	AuthPolicyManifest = "policies.yaml"
 	// AuthLocalProvisionerManifest -
 	AuthLocalProvisionerManifest = "local-provisioner.yaml"
-	// AuthSelfSignedCert - self-signed certificate file
-	AuthSelfSignedCert = "selfsigned-cert.yaml"
 	// AuthCustomCert - custom certificate file
 	AuthCustomCert = "custom-cert.yaml"
 
@@ -454,7 +452,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 	}
 
 	// Check for secrets
-	proxyServerSecrets := []string{"karavi-config-secret", "karavi-storage-secret", "karavi-auth-tls"}
+	proxyServerSecrets := []string{"karavi-config-secret", "karavi-storage-secret"}
 	for _, name := range proxyServerSecrets {
 		found := &corev1.Secret{}
 		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)

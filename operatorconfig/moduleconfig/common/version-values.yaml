@@ -2,7 +2,7 @@
 powerscale:
   # List of Driver versions and modules that supports the version
   v2.8.0:
-      authorization: "v1.8.0"
+      authorization: "v1.9.0"
       replication: "v1.6.0"
       observability: "v1.6.0"
       resiliency: "v1.7.0"
@@ -21,10 +21,11 @@ powerscale:
       replication: "v1.8.0"
       observability: "v1.8.0"
       resiliency: "v1.9.0"
+  v2.11.0:
+      authorization: "v2.0.0-alpha"
 powerflex:
   # List of Driver versions and modules that supports the version
   v2.8.0:
-      authorization: "v1.7.0"
       observability: "v1.6.0"
       replication: "v1.6.0"
       resiliency: "v1.6.0"
@@ -48,6 +49,8 @@ powerflex:
       observability: "v1.8.0"
       replication: "v1.8.0"
       resiliency: "v1.9.0"
+  v2.11.0:
+      authorization: "v2.0.0-alpha"
 powerstore:
   # List of Driver versions and modules that supports the version
   v2.8.0:
@@ -62,7 +65,6 @@ powermax:
   # List of Driver versions and modules that supports the version
   v2.8.0:
     csireverseproxy: "v2.7.0"
-    authorization: "v1.7.0"
     replication: "v1.6.0"
   v2.9.0:
     csireverseproxy: "v2.8.0"
@@ -76,3 +78,5 @@ powermax:
     csireverseproxy: "v2.9.0"
     authorization: "v1.10.0"
     replication: "v1.8.0"
+  v2.11.0:
+    authorization: "v2.0.0-alpha"

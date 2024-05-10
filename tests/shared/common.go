@@ -162,16 +162,7 @@ func MakeModule(configVersion string) csmv1.Module {
 		ForceRemoveModule: true,
 		Components: []csmv1.ContainerTemplate{
 			{
-				Envs: []corev1.EnvVar{
-					{
-						Name:  "PROXY_HOST",
-						Value: "csm-auth.com",
-					},
-					{
-						Name:  "AUTHORIZATION_LOG_LEVEL",
-						Value: "debug",
-					},
-				},
+				Hostname: "csm-auth.com",
 			},
 		},
 	}
