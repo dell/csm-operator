@@ -734,11 +734,7 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 	}
 
 	if useSelfSignedCert {
-		issuer, err := createSelfSignedIssuer(cr)
-		if err != nil {
-			return err
-		}
-
+		issuer:= createSelfSignedIssuer(cr)
 		issuerByes, err := json.Marshal(issuer)
 		if err != nil {
 			return fmt.Errorf("marshaling ingress: %v", err)
@@ -785,7 +781,7 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 	return nil
 }
 
-func createSelfSignedIssuer(cr csmv1.ContainerStorageModule) (*certificate.Issuer, error) {
+func createSelfSignedIssuer(cr csmv1.ContainerStorageModule) *certificate.Issuer {
 	issuer := &certificate.Issuer{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Issuer",
@@ -803,7 +799,7 @@ func createSelfSignedIssuer(cr csmv1.ContainerStorageModule) (*certificate.Issue
 		},
 	}
 
-	return issuer, nil
+	return issuer
 }
 
 func createSelfSignedCertificate(cr csmv1.ContainerStorageModule) (*certificate.Certificate, error) {
@@ -988,7 +984,7 @@ func setIngressRules(cr csmv1.ContainerStorageModule) ([]networking.IngressRule,
 	var rules []networking.IngressRule
 	hosts, err := getHosts(cr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting hosts: %v", err)
 	}
 
 	for _, host := range hosts {
