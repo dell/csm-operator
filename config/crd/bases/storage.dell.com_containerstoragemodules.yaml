@@ -1886,6 +1886,15 @@ spec:
                           vaultAddress:
                             description: VaultAddress is the address of vault for Authorization
                             type: string
+                          redisName:
+                            description: RedisName is the name of the redis statefulset for Authorization
+                            type: string
+                          redisCommander:
+                            description: RedisCommander is the name of the redis deployment for Authorization
+                            type: string
+                          sentinel:
+                            description: Sentinel is the name of the sentinel statefulSet for Authorization
+                            type: string
                           tolerations:
                             description: Tolerations is the list of tolerations for
                               the driver pods

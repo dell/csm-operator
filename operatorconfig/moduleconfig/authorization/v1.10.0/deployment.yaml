@@ -419,35 +419,35 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-csm
+  name: <AUTHORIZATION_REDIS_NAME>
   namespace: <NAMESPACE>
 spec:
   type:
   clusterIP: None
   selector:
-    app: redis-csm
+    app: <AUTHORIZATION_REDIS_NAME>
   ports:
   - protocol: TCP
     port: 6379
     targetPort: 6379
-    name: redis-csm
+    name: <AUTHORIZATION_REDIS_NAME>
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: redis-csm
+  name: <AUTHORIZATION_REDIS_NAME>
   namespace: <NAMESPACE>
 spec:
-  serviceName: redis-csm
+  serviceName: <AUTHORIZATION_REDIS_NAME>
   replicas: 5
   selector:
     matchLabels:
-      app: redis-csm
+      app: <AUTHORIZATION_REDIS_NAME>
   template:
     metadata:
       labels:
         csm: <NAME>
-        app: redis-csm
+        app: <AUTHORIZATION_REDIS_NAME>
     spec:
       initContainers:
       - name: config
@@ -501,7 +501,7 @@ spec:
         args: [ "/etc/redis/redis.conf" ]
         ports:
         - containerPort: 6379
-          name: redis-csm
+          name: <AUTHORIZATION_REDIS_NAME>
         volumeMounts:
         - name: redis-primary-volume
           mountPath: /data
@@ -521,22 +521,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rediscommander
+  name: <AUTHORIZATION_REDIS_COMMANDER>
   namespace: <NAMESPACE>
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rediscommander
+      app: <AUTHORIZATION_REDIS_COMMANDER>
   template:
     metadata:
       labels:
         csm: <NAME>
-        app: rediscommander
+        app: <AUTHORIZATION_REDIS_COMMANDER>
         tier: backend
     spec:
       containers:
-      - name: rediscommander
+      - name: <AUTHORIZATION_REDIS_COMMANDER>
         image: <AUTHORIZATION_REDIS_COMMANDER_IMAGE>
         imagePullPolicy: IfNotPresent
         env:
@@ -555,7 +555,7 @@ spec:
               name: redis-csm-secret
               key: password
         ports:
-        - name: rediscommander
+        - name: <AUTHORIZATION_REDIS_COMMANDER>
           containerPort: 8081
         livenessProbe:
           httpGet:
@@ -578,30 +578,33 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: rediscommander
+  name: <AUTHORIZATION_REDIS_COMMANDER>
   namespace: <NAMESPACE>
 spec:
   selector:
-    app: rediscommander
+    app: <AUTHORIZATION_REDIS_COMMANDER>
   ports:
   - protocol: TCP
     port: 8081
     targetPort: 8081
 ---
+# Sentinel
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: sentinel
+  name: <AUTHORIZATION_REDIS_SENTINEL>
+  namespace: <NAMESPACE>
 spec:
-  serviceName: sentinel
+  serviceName: <AUTHORIZATION_REDIS_SENTINEL>
   replicas: 5
   selector:
     matchLabels:
-      app: sentinel
+      app: <AUTHORIZATION_REDIS_SENTINEL>
   template:
     metadata:
       labels:
-        app: sentinel
+        csm: <NAME>
+        app: <AUTHORIZATION_REDIS_SENTINEL>
     spec:
       initContainers:
       - name: config
@@ -615,26 +618,36 @@ spec:
                 key: password
         args:
           - |
-            #REDIS_PASSWORD=`echo $REDIS_PASSWORD | base64 -d`
-            echo "Password - " $REDIS_PASSWORD
-            nodes=redis-csm-0.redis-csm,redis-csm-1.redis-csm,redis-csm-2.redis-csm,redis-csm-3.redis-csm,redis-csm-4.redis-csm
-            loop=$(echo $nodes | sed -e "s/,/\n/g")
-              
+            replicas=$( expr 5 - 1)          
+            for i in $(seq 0 $replicas)
+            do               
+                node=$( echo "redis-csm-$i.redis-csm" )
+                nodes=$( echo "$nodes*$node" )
+            done            
+            loop=$(echo $nodes | sed -e "s/"*"/\n/g")
+            
             for i in $loop
-            do                
-                echo "finding master at $i"
-                MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
-                if [ "$MASTER" = "" ]; then
-                    echo "Master not found"
-                    echo "sleeping 5 seconds for pods to come up"
-                    sleep 5
-                    MASTER=
-                else
-                    echo "Master found at $MASTER"
+            do
+                echo "Finding master at $i"
+                ROLE=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep role | cut -d ":" -f2)
+                if [ "$ROLE" = "master" ]; then
+                    MASTER=$i.authorization.svc.cluster.local
+                    echo "Master found at $MASTER..."
                     break
+                else
+                  MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
+                  if [ "$MASTER" = "" ]; then
+                      echo "Master not found..."
+                      echo "Sleeping 5 seconds for pods to come up..."
+                      sleep 5
+                      MASTER=
+                  else
+                      echo "Master found at $MASTER..."
+                      break
+                  fi
                 fi
             done
-              
+
             echo "sentinel monitor mymaster $MASTER 6379 2" >> /tmp/master
             echo "port 5000
             sentinel resolve-hostnames yes
@@ -650,13 +663,13 @@ spec:
         - name: redis-config
           mountPath: /etc/redis/
       containers:
-      - name: sentinel
+      - name: <AUTHORIZATION_REDIS_SENTINEL>
         image: <AUTHORIZATION_REDIS_IMAGE>
         command: ["redis-sentinel"]
         args: ["/etc/redis/sentinel.conf"]
         ports:
         - containerPort: 5000
-          name: sentinel
+          name: <AUTHORIZATION_REDIS_SENTINEL>
         volumeMounts:
         - name: redis-config
           mountPath: /etc/redis/
@@ -671,29 +684,31 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sentinel
+  name: <AUTHORIZATION_REDIS_SENTINEL>
+  namespace: <NAMESPACE>
 spec:
   clusterIP: None
   ports:
   - port: 5000
     targetPort: 5000
-    name: sentinel
+    name: <AUTHORIZATION_REDIS_SENTINEL>
   selector:
-    app: sentinel
+    app: <AUTHORIZATION_REDIS_SENTINEL>
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: sentinel-svc
+  name: <AUTHORIZATION_REDIS_SENTINEL>-svc
+  namespace: <NAMESPACE>
 spec:
   type: NodePort
   ports:
   - port: 5000
     targetPort: 5000
     nodePort: 32003
-    name: sentinel-svc
+    name: <AUTHORIZATION_REDIS_SENTINEL>-svc
   selector:
-    app: sentinel
+    app: <AUTHORIZATION_REDIS_SENTINEL>
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1

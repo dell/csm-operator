@@ -85,6 +85,12 @@ const (
 
 	//AuthVaultAddress -
 	AuthVaultAddress = "<AUTHORIZATION_VAULT_ADDRESS>"
+	//AuthRedisName -
+	AuthRedisName = "<AUTHORIZATION_REDIS_NAME>"
+	//AuthRedisCommander -
+	AuthRedisCommander = "<AUTHORIZATION_REDIS_COMMANDER>"
+	//AuthRedisSentinel -
+	AuthRedisSentinel = "<AUTHORIZATION_REDIS_SENTINEL>"
 
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
@@ -496,6 +502,9 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
 			YamlString = strings.ReplaceAll(YamlString, AuthVaultAddress, component.VaultAddress)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
 			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 		}
 

@@ -23,6 +23,10 @@ spec:
         storageService: dellemc/csm-authorization-storage:v1.10.0
         redis: redis:7.2.4-alpine
         commander: rediscommander/redis-commander:latest
+        vaultAddress: https://10.0.0.1:8400
+        redisName: redis-csm
+        redisCommander: redicommander
+        sentinel: sentinel
         opa: openpolicyagent/opa
         opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
         envs:
