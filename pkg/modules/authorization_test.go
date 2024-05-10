@@ -932,8 +932,8 @@ func TestAuthorizationCertificates(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 		"success - using custom tls secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			os.WriteFile("foo", []byte("foo"), 0644)
-			os.WriteFile("bar", []byte("bar"), 0644)
+			os.WriteFile("foo", []byte("foo"), 0o400)
+			os.WriteFile("bar", []byte("bar"), 0o400)
 
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_certs.yaml")
 			if err != nil {
