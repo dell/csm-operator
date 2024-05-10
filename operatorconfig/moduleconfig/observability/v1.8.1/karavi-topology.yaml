@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karavi-topology-configmap
+  namespace: karavi
+data:
+  karavi-topology.yaml: |
+    PROVISIONER_NAMES: csi-isilon.dellemc.com,csi-vxflexos.dellemc.com, csi-powermax.dellemc.com
+    LOG_LEVEL: <TOPOLOGY_LOG_LEVEL>
+    LOG_FORMAT: text
+    ZIPKIN_URI: ""
+    ZIPKIN_SERVICE_NAME: karavi-topology
+    ZIPKIN_PROBABILITY: 0.0
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: karavi-observability-topology-controller
+  namespace: karavi
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: karavi-observability-topology-controller
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["list"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: karavi-observability-topology-controller
+subjects:
+  - kind: ServiceAccount
+    name: karavi-observability-topology-controller
+    namespace: karavi
+roleRef:
+  kind: ClusterRole
+  name: karavi-observability-topology-controller
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: karavi-topology
+    app.kubernetes.io/instance: karavi-observability
+  name: karavi-topology
+  namespace: karavi
+spec:
+  type: ClusterIP
+  ports:
+    - name: karavi-topology
+      port: 8443
+      targetPort: 8443
+  selector:
+    app.kubernetes.io/name: karavi-topology
+    app.kubernetes.io/instance: karavi-observability
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-topology
+  namespace: karavi
+  labels:
+    app.kubernetes.io/name: karavi-topology
+    app.kubernetes.io/instance: karavi-observability
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: karavi-topology
+      app.kubernetes.io/instance: karavi-observability
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: karavi-topology
+        app.kubernetes.io/instance: karavi-observability
+        csm: <NAME>
+        csmNamespace: <CSM_NAMESPACE>
+    spec:
+      volumes:
+        - name: karavi-topology-secret-volume
+          secret:
+            secretName: karavi-topology-tls
+            items:
+              - key: tls.crt
+                path: localhost.crt
+              - key: tls.key
+                path: localhost.key
+        - name: karavi-topology-configmap
+          configMap:
+            name: karavi-topology-configmap
+      serviceAccount: karavi-observability-topology-controller
+      containers:
+        - name: karavi-topology
+          image: <TOPOLOGY_IMAGE>
+          resources: {}
+          env:
+            - name: PORT
+              value: "8443"
+            - name: DEBUG
+              value: "false"
+          volumeMounts:
+            - name: karavi-topology-secret-volume
+              mountPath: "/certs"
+            - name: karavi-topology-configmap
+              mountPath: "/etc/config"
+      restartPolicy: Always
+status: {}

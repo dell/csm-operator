@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.10.0
+    configVersion: v2.10.1
     authSecret: isilon-creds-auth
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
@@ -244,7 +244,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.10.0
+      configVersion: v1.10.1
       components:
       - name: karavi-authorization-proxy
         image: dellemc/csm-authorization-sidecar:nightly
