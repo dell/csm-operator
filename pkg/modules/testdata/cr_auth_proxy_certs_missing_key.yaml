@@ -51,7 +51,7 @@ spec:
           # certificate: path to certificate file -- add cert here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
-          certificate: ""
+          certificate: "foo"
 
           # privateKey: path to private key file -- add private key here to use custom certificates
           # for self-signed certs, leave empty string

@@ -956,19 +956,33 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		}
 	}
 
-	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
-		log.Infow("Reconcile authorization nginx ingress controller")
-		if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-			return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
+	for _, m := range cr.Spec.Modules {
+		if m.OpenShift {
+			log.Infow("Using OpenShift default ingress controller")
+			if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+				return fmt.Errorf("openshift enabled, skipping deployment of nginx ingress controller")
+			}
+		} else {
+			if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+				log.Infow("Reconcile authorization NGINX Ingress Controller")
+				if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+					return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
+				}
+			}
 		}
 	}
 
-	// Authorization Ingress rules are applied after NGINX ingress controller is installed
+	// Authorization Ingress rules
 	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization Ingresses")
-		if err := modules.AuthorizationIngress(ctx, isDeleting, op, cr, r, ctrlClient); err != nil {
+		if err := modules.AuthorizationIngress(ctx, isDeleting, cr, r, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
 		}
+	}
+
+	log.Infow("Reconcile authorization certificates")
+	if err := modules.InstallWithCerts(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		return fmt.Errorf("unable to install certificates for Authorization: %v", err)
 	}
 
 	return nil

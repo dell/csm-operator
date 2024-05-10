@@ -41,6 +41,20 @@
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Delete custom resource [1]"
 
+- scenario: "Install Authorization Proxy Server with OpenShift default ingress controller"
+  paths:
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_ocp.yaml"
+  modules:
+    - "authorizationproxyserver"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Apply custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powerscale] for CR [1]"
+    - "Configure authorization-proxy-server for [powerflex] for CR [1]"
+    - "Delete custom resource [1]"
+
 - scenario: "Install PowerScale Driver(Standalone)"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
@@ -425,7 +439,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization and Observability)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -462,7 +476,7 @@
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization, Enable Observability"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
   modules:
     - "authorizationproxyserver"
@@ -501,7 +515,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -547,7 +561,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -1028,7 +1042,7 @@
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization, Enable Observability"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
   modules:
     - "authorizationproxyserver"
@@ -1053,7 +1067,7 @@
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is not installed"
-#    - "Set secret for driver from CR [2] to [test-vxflexos-config-auth]"
+    #    - "Set secret for driver from CR [2] to [test-vxflexos-config-auth]"
     - "Enable [observability] module from CR [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
@@ -1069,7 +1083,7 @@
 
 - scenario: "Install PowerFlex Driver(With Authorization and Observability)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -1105,7 +1119,7 @@
 
 - scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -1150,7 +1164,7 @@
 
 - scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
   modules:
     - "authorizationproxyserver"
@@ -1210,7 +1224,7 @@
   customTest:
     name: CustomTest
     run:
-     - "echo Todo"
+      - "echo Todo"
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Resiliency"
   paths:
@@ -1233,7 +1247,7 @@
   customTest:
     name: CustomTest
     run:
-     - "echo Todo"
+      - "echo Todo"
 
 - scenario: "Install PowerFlex Driver(With Resiliency), Disable Resiliency module"
   paths:
@@ -1271,7 +1285,7 @@
   customTest:
     name: CustomTest
     run:
-     - "echo Todo"
+      - "echo Todo"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Resiliency"
   paths:
@@ -1294,7 +1308,7 @@
   customTest:
     name: CustomTest
     run:
-     - "echo Todo"
+      - "echo Todo"
 
 - scenario: "Install PowerScale Driver(With Resiliency), Disable Resiliency module"
   paths:
@@ -1375,7 +1389,7 @@
   customTest:
     name: CustomTest
     run:
-     - "echo Todo"
+      - "echo Todo"
 
 - scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
   paths:
@@ -1398,7 +1412,7 @@
   customTest:
     name: CustomTest
     run:
-     - "echo Todo"
+      - "echo Todo"
 
 - scenario: "Install PowerStore Driver(With Resiliency), Disable Resiliency module"
   paths:
@@ -1611,7 +1625,7 @@
     # Example:
     #   ./hello_world.sh
     #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: 
+    run:
       - ./cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerMax Driver(With Observability)"
