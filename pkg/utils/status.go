@@ -522,7 +522,7 @@ func HandleAccValidationError(ctx context.Context, instance *csmv1.ApexConnectiv
 }
 
 // HandleSuccess for csm
-func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus) (reconcile.Result, error) {
+func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus) reconcile.Result {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
@@ -556,9 +556,10 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		} else {
 			log.Info("HandleSuccess Driver state changed to Succeeded")
 		}
-		return requeue, nil
+		return requeue
 	}
-	return LogBannerAndReturn(requeue, nil)
+	requeue, _ = LogBannerAndReturn(requeue, nil)
+	return requeue
 }
 
 // HandleAccSuccess for csm

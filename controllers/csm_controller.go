@@ -328,10 +328,8 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	newStatus := csm.GetCSMStatus()
-	requeue, err := utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
-	if err != nil {
-		log.Error(err, "Failed to update CR status")
-	}
+	requeue := utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
+
 	// Update the driver
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig, r.Client)
 	if syncErr == nil && !requeue.Requeue {
