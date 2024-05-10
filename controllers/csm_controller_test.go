@@ -192,6 +192,13 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.runFakeAuthCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
+	suite.makeFakeAuthServerCSMWithoutPreRequisite(csmName, suite.namespace)
+	suite.runFakeAuthCSMManager("failed authorization proxy server validation", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeAuthCSMManager("", true)
+}
+
 func (suite *CSMControllerTestSuite) TestAppMobReconcile() {
 	suite.makeFakeAppMobCSM(csmName, suite.namespace, getAppMob())
 	suite.runFakeAuthCSMManager("", false)
@@ -1713,9 +1720,19 @@ func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, _ []
 
 	csm.Spec.Modules = getAuthProxyServer()
 	csm.Spec.Modules[0].ForceRemoveModule = true
-	csm.Annotations[configVersionKey] = shared.AuthServerConfigVersion
 
 	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) makeFakeAuthServerCSMWithoutPreRequisite(name, ns string) {
+	csm := shared.MakeModuleCSM(name, ns, shared.AuthServerConfigVersion)
+
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ForceRemoveModule = true
+	csm.Annotations[configVersionKey] = shared.AuthServerConfigVersion
+
+	err := suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
 }
 
