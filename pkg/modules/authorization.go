@@ -734,7 +734,7 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 	}
 
 	if useSelfSignedCert {
-		issuer:= createSelfSignedIssuer(cr)
+		issuer := createSelfSignedIssuer(cr)
 		issuerByes, err := json.Marshal(issuer)
 		if err != nil {
 			return fmt.Errorf("marshaling ingress: %v", err)
