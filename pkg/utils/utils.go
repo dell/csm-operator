@@ -15,6 +15,7 @@ package utils
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -744,8 +745,8 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	dummyObj := obj.DeepCopyObject().(crclient.Object)
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, dummyObj)
+	k8sObj := obj.DeepCopyObject().(crclient.Object)
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, k8sObj)
 
 	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
@@ -759,6 +760,12 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 		return err
 	} else {
 		log.Infow("Updating a new Object", "Name:", name, "Kind:", kind)
+		// Copy data/changes from obj to k8s object that already exists on the cluster
+		if jsonBytes, err := json.Marshal(obj); err == nil {
+			if err := json.Unmarshal(jsonBytes, &k8sObj); err == nil {
+				obj = k8sObj
+			}
+		}
 		err = ctrlClient.Update(ctx, obj)
 		if err != nil && k8serror.IsForbidden(err) || k8serror.IsInvalid(err) {
 			log.Warnw("Object update failed", "Warning", err.Error())
