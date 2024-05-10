@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: docker.io/dellemc/dell-csm-operator
-  newTag: v1.5.0
+  newTag: v1.5.1
