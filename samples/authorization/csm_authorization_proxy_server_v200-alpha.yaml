@@ -68,8 +68,7 @@ spec:
             - ingressClassName: nginx
 
               # additional host rules for the proxy-server ingress
-              hosts:
-                []
+              hosts: []
                 # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
 
               # additional annotations for the proxy-server ingress
