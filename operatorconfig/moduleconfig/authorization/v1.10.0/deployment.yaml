@@ -64,7 +64,7 @@ spec:
         imagePullPolicy: Always
         env:
           - name: SENTINELS
-            value: "sentinel-0.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-1.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-2.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-3.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-4.sentinel.<NAMESPACE>.svc.cluster.local:5000"
+            value: <AUTHORIZATION_REDIS_SENTINEL_VALUES>
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -152,7 +152,7 @@ spec:
         imagePullPolicy: Always
         env:
           - name: SENTINELS
-            value: "sentinel-0.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-1.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-2.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-3.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-4.sentinel.<NAMESPACE>.svc.cluster.local:5000"
+            value: <AUTHORIZATION_REDIS_SENTINEL_VALUES>
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -538,7 +538,7 @@ spec:
         imagePullPolicy: IfNotPresent
         env:
         - name: SENTINELS
-          value: "sentinel-0.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-1.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-2.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-3.sentinel.<NAMESPACE>.svc.cluster.local:5000, sentinel-4.sentinel.<NAMESPACE>.svc.cluster.local:5000"
+          value: <AUTHORIZATION_REDIS_SENTINEL_VALUES>
         - name: K8S_SIGTERM
           value: "1"
         - name: REDIS_PASSWORD
