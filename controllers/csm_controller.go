@@ -1372,21 +1372,21 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 }
 
 // updateVersionsAndImages -- update driver image and module versions and images for upgrade
-func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModule, op utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 
 	// Update driver image tag
-	err := nil
+	var err error
 	cr.Spec.Driver.Common.Image, err = updateImageTag(cr.Spec.Driver.Common.Image, cr.Spec.Driver.ConfigVersion)
-	if err {
+	if err != nil {
 		return err
 	}
-	log.Infow("updated %s module to image %s", module.Name, module.Image)
+	log.Infow("updated %s driver to image %s", cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.Common.Image)
 
 	// Loop through list of modules, update all versions and images to match driver version
 	for idx, module := range cr.Spec.Modules {
 		cr.Spec.Modules[idx].ConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
-		if err {
+		if err != nil {
 			return err
 		}
 		log.Infow("updated %s module to version %s", module.Name, module.ConfigVersion)
@@ -1396,14 +1396,18 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 			if component.Name == "cert-manager" || component.Name == "otel-collector" {
 				continue
 			}
-			cr.Spec.Modules[idx].Components[compIdx].Image, err = updateImageTag(cr.Spec.Modules[idx].Components[compIdx].Image, utils.GetComponentVersion(module.Name, module.ConfigVersion, component.Name, op.ConfigDirectory))
-			if err {
+			componentVersion, err := utils.GetComponentVersion(module.Name, module.ConfigVersion, component.Name, op.ConfigDirectory)
+			if err != nil {
+				return err
+			}
+			cr.Spec.Modules[idx].Components[compIdx].Image, err = updateImageTag(cr.Spec.Modules[idx].Components[compIdx].Image, componentVersion)
+			if err != nil {
 				return err
 			}
 		}
 	}
 
-	// Loop through initContainers, update images as needed:wq
+	// Loop through initContainers, update images as needed
 
 	// If we don't hit errors, return nil
 	return nil
@@ -1411,14 +1415,20 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 
 // updateImageTag -- update image tagged version (split on last ':' and replace everything after it with the version passed in)
 func updateImageTag(image csmv1.ImageType, configVersion string) (csmv1.ImageType, error) {
+	var newImage csmv1.ImageType
 	var splitFunc = func(r rune) bool {
     		return r == ':' || r == '.'
 	}
 
-	imageComponents := strings.FieldsFunc(image, splitFunc)
-	imageNoTag := strings.Join(imageComponents[:len(imageComponents)-1], ":")
+	imageComponents := strings.FieldsFunc(string(image), splitFunc)
+	if len(imageComponents) < 2 {
+		return image, errors.New(fmt.Sprintf("image and tag %s are not in a valid format (<image>:<tag>)", image))
+	}
 
-	return imageNoTag + configVersion
+	imageNoTag := strings.Join(imageComponents[:len(imageComponents)-1], ":")
+	newImage = imageNoTag + configVersion
+
+	return newImage, nil
 }
 
 // Check for upgrade/if upgrade is appropriate
