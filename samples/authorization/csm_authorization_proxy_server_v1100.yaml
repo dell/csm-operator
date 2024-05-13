@@ -12,30 +12,6 @@ spec:
       configVersion: v1.10.0
       forceRemoveModule: true
       components:
-<<<<<<< HEAD
-=======
-      - name: karavi-authorization-proxy-server
-        # enable: Enable/Disable csm-authorization proxy server
-        enabled: true
-        proxyService: 10.247.98.98:5000/proxy-server:bharath-proxy-server
-        tenantService: 10.247.98.98:5000/csm-authorization-tenant:bharath-csm-authorization-tenant
-        roleService: dellemc/csm-authorization-role:v1.10.0
-        storageService: dellemc/csm-authorization-storage:v1.10.0
-        redis: redis:7.2.4-alpine
-        commander: rediscommander/redis-commander:latest
-        vaultAddress: https://10.0.0.1:8400
-        redisName: redis-csm
-        redisCommander: redicommander
-        sentinel: sentinel
-        opa: openpolicyagent/opa
-        opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
-        envs:
-          # proxy-server ingress will use this hostname
-          # NOTE: an additional hostname can be configured in the PROXY_INGRESS_HOST environment variable
-          # NOTE: proxy-server ingress is configured to accept IP address connections so hostnames are not required
-          - name: "PROXY_HOST"
-            value: "csm-authorization.com"
->>>>>>> 82348e8 (add new changes as per helm)
 
       # For Kubernetes Container Platform only
       # enabled: Enable/Disable NGINX Ingress Controller
@@ -61,6 +37,7 @@ spec:
         tenantService: dellemc/csm-authorization-tenant:v1.10.0
         roleService: dellemc/csm-authorization-role:v1.10.0
         storageService: dellemc/csm-authorization-storage:v1.10.0
+        vaultAddress: https://10.0.0.1:8400
         opa: openpolicyagent/opa
         opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
 
@@ -93,6 +70,9 @@ spec:
       - name: redis
         redis: redis:6.0.8-alpine
         commander: rediscommander/redis-commander:latest
+        redisName: redis-csm
+        redisCommander: redicommander
+        sentinel: sentinel
         # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
         # to use a different storage class for redis, specify the name of the storage class
         # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
