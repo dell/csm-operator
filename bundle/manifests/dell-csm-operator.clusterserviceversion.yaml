@@ -1393,7 +1393,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Storage
     containerImage: docker.io/dellemc/dell-csm-operator:v1.5.0
-    createdAt: "2024-03-19T11:05:35Z"
+    createdAt: "2024-04-10T09:49:32Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     features.operators.openshift.io/disconnected: "true"
     features.operators.openshift.io/fips-compliant: "false"
@@ -2581,6 +2581,12 @@ spec:
     spec:
       clusterPermissions:
       - rules:
+        - apiGroups:
+          - '*'
+          resources:
+          - '*'
+          verbs:
+          - '*'
         - nonResourceURLs:
           - /metrics
           verbs:
@@ -3633,6 +3639,8 @@ spec:
           - list
           - update
           - watch
+          - get
+          - patch
         serviceAccountName: dell-csm-operator-manager-service-account
       deployments:
       - label:
@@ -3646,6 +3654,8 @@ spec:
           strategy: {}
           template:
             metadata:
+              annotations:
+                storage.dell.com/CSMVersion: v1.10.0
               labels:
                 control-plane: controller-manager
             spec:
@@ -3668,6 +3678,61 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
+                env:
+                - name: RELATED_IMAGE_dell-csm-operator
+                  value: docker.io/dellemc/dell-csm-operator:v1.5.0
+                - name: RELATED_IMAGE_csi-isilon
+                  value: docker.io/dellemc/csi-isilon:v2.10.0
+                - name: RELATED_IMAGE_csi-powermax
+                  value: docker.io/dellemc/csi-powermax:v2.10.0
+                - name: RELATED_IMAGE_csipowermax-reverseproxy
+                  value: docker.io/dellemc/csipowermax-reverseproxy:v2.9.0
+                - name: RELATED_IMAGE_csi-powerstore
+                  value: docker.io/dellemc/csi-powerstore:v2.10.0
+                - name: RELATED_IMAGE_csi-unity
+                  value: docker.io/dellemc/csi-unity:v2.10.0
+                - name: RELATED_IMAGE_csi-vxflexos
+                  value: docker.io/dellemc/csi-vxflexos:v2.10.0
+                - name: RELATED_IMAGE_sdc
+                  value: docker.io/dellemc/sdc:4.5.1
+                - name: RELATED_IMAGE_karavi-authorization-proxy
+                  value: docker.io/dellemc/csm-authorization-sidecar:v1.10.0
+                - name: RELATED_IMAGE_dell-csi-replicator
+                  value: docker.io/dellemc/dell-csi-replicator:v1.8.0
+                - name: RELATED_IMAGE_dell-replication-controller-manager
+                  value: docker.io/dellemc/dell-replication-controller:v1.8.0
+                - name: RELATED_IMAGE_topology
+                  value: docker.io/dellemc/csm-topology:v1.8.0
+                - name: RELATED_IMAGE_otel-collector
+                  value: docker.io/otel/opentelemetry-collector:0.42.0
+                - name: RELATED_IMAGE_metrics-powerscale
+                  value: docker.io/dellemc/csm-metrics-powerscale:v1.5.0
+                - name: RELATED_IMAGE_metrics-powermax
+                  value: docker.io/dellemc/csm-metrics-powermax:v1.3.0
+                - name: RELATED_IMAGE_metrics-powerflex
+                  value: docker.io/dellemc/csm-metrics-powerflex:v1.8.0
+                - name: RELATED_IMAGE_podmon-node
+                  value: docker.io/dellemc/podmon:v1.9.0
+                - name: RELATED_IMAGE_kube-rbac-proxy
+                  value: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+                - name: RELATED_IMAGE_attacher
+                  value: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+                - name: RELATED_IMAGE_provisioner
+                  value: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
+                - name: RELATED_IMAGE_snapshotter
+                  value: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+                - name: RELATED_IMAGE_registrar
+                  value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+                - name: RELATED_IMAGE_resizer
+                  value: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+                - name: RELATED_IMAGE_externalhealthmonitorcontroller
+                  value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+                - name: RELATED_IMAGE_metadataretriever
+                  value: dellemc/csi-metadata-retriever:v1.7.2
+                - name: RELATED_IMAGE_dell-connectivity-client
+                  value: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
+                - name: RELATED_IMAGE_cert-persister
+                  value: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
                 image: docker.io/dellemc/dell-csm-operator:v1.5.0
                 imagePullPolicy: Always
                 livenessProbe:
@@ -3729,19 +3794,19 @@ spec:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
   relatedImages:
-  - image: docker.io/dellemc/dell-csm-operator:v1.4.1
+  - image: docker.io/dellemc/dell-csm-operator:v1.5.0
     name: dell-csm-operator
-  - image: docker.io/dellemc/csi-isilon:v2.9.1
+  - image: docker.io/dellemc/csi-isilon:v2.10.0
     name: csi-isilon
-  - image: docker.io/dellemc/csi-powermax:v2.9.1
+  - image: docker.io/dellemc/csi-powermax:v2.10.0
     name: csi-powermax
-  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.8.1
+  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.9.0
     name: csipowermax-reverseproxy
-  - image: docker.io/dellemc/csi-powerstore:v2.9.1
+  - image: docker.io/dellemc/csi-powerstore:v2.10.0
     name: csi-powerstore
-  - image: docker.io/dellemc/csi-unity:v2.9.1
+  - image: docker.io/dellemc/csi-unity:v2.10.0
     name: csi-unity
-  - image: docker.io/dellemc/csi-vxflexos:v2.9.1
+  - image: docker.io/dellemc/csi-vxflexos:v2.10.0
     name: csi-vxflexos
   - image: docker.io/dellemc/sdc:4.5.1
     name: sdc
