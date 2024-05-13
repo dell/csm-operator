@@ -265,11 +265,20 @@ spec:
                       redis:
                         description: Redis is the image tag for the Container
                         type: string
+                      redisCommander:
+                        description: RedisCommander is the name of the redis deployment
+                        type: string
+                      redisName:
+                        description: RedisName is the name of the redis statefulset
+                        type: string
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
                       roleService:
                         description: RoleService is the image tag for the Container
+                        type: string
+                      sentinel:
+                        description: Sentinel is the name of the sentinel statefulSet
                         type: string
                       storageService:
                         description: StorageService is the image tag for the Container
@@ -322,6 +331,9 @@ spec:
                       useVolumeSnapshot:
                         description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                         type: boolean
+                      vaultAddress:
+                        description: VaultAddress is the address of the vault
+                        type: string
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
                         type: string
@@ -546,11 +558,20 @@ spec:
                         redis:
                           description: Redis is the image tag for the Container
                           type: string
+                        redisCommander:
+                          description: RedisCommander is the name of the redis deployment
+                          type: string
+                        redisName:
+                          description: RedisName is the name of the redis statefulset
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
+                          type: string
+                        sentinel:
+                          description: Sentinel is the name of the sentinel statefulSet
                           type: string
                         storageService:
                           description: StorageService is the image tag for the Container
@@ -603,6 +624,9 @@ spec:
                         useVolumeSnapshot:
                           description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                           type: boolean
+                        vaultAddress:
+                          description: VaultAddress is the address of the vault
+                          type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
                           type: string
@@ -816,11 +840,20 @@ spec:
                         redis:
                           description: Redis is the image tag for the Container
                           type: string
+                        redisCommander:
+                          description: RedisCommander is the name of the redis deployment
+                          type: string
+                        redisName:
+                          description: RedisName is the name of the redis statefulset
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
+                          type: string
+                        sentinel:
+                          description: Sentinel is the name of the sentinel statefulSet
                           type: string
                         storageService:
                           description: StorageService is the image tag for the Container
@@ -873,6 +906,9 @@ spec:
                         useVolumeSnapshot:
                           description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                           type: boolean
+                        vaultAddress:
+                          description: VaultAddress is the address of the vault
+                          type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
                           type: string
@@ -1176,11 +1212,20 @@ spec:
                       redis:
                         description: Redis is the image tag for the Container
                         type: string
+                      redisCommander:
+                        description: RedisCommander is the name of the redis deployment
+                        type: string
+                      redisName:
+                        description: RedisName is the name of the redis statefulset
+                        type: string
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
                       roleService:
                         description: RoleService is the image tag for the Container
+                        type: string
+                      sentinel:
+                        description: Sentinel is the name of the sentinel statefulSet
                         type: string
                       storageService:
                         description: StorageService is the image tag for the Container
@@ -1233,6 +1278,9 @@ spec:
                       useVolumeSnapshot:
                         description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                         type: boolean
+                      vaultAddress:
+                        description: VaultAddress is the address of the vault
+                        type: string
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
                         type: string
@@ -1446,11 +1494,20 @@ spec:
                       redis:
                         description: Redis is the image tag for the Container
                         type: string
+                      redisCommander:
+                        description: RedisCommander is the name of the redis deployment
+                        type: string
+                      redisName:
+                        description: RedisName is the name of the redis statefulset
+                        type: string
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
                       roleService:
                         description: RoleService is the image tag for the Container
+                        type: string
+                      sentinel:
+                        description: Sentinel is the name of the sentinel statefulSet
                         type: string
                       storageService:
                         description: StorageService is the image tag for the Container
@@ -1503,6 +1560,9 @@ spec:
                       useVolumeSnapshot:
                         description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                         type: boolean
+                      vaultAddress:
+                        description: VaultAddress is the address of the vault
+                        type: string
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
                         type: string
@@ -1735,11 +1795,20 @@ spec:
                         redis:
                           description: Redis is the image tag for the Container
                           type: string
+                        redisCommander:
+                          description: RedisCommander is the name of the redis deployment
+                          type: string
+                        redisName:
+                          description: RedisName is the name of the redis statefulset
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
+                          type: string
+                        sentinel:
+                          description: Sentinel is the name of the sentinel statefulSet
                           type: string
                         storageService:
                           description: StorageService is the image tag for the Container
@@ -1792,6 +1861,9 @@ spec:
                         useVolumeSnapshot:
                           description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                           type: boolean
+                        vaultAddress:
+                          description: VaultAddress is the address of the vault
+                          type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
                           type: string
@@ -2003,11 +2075,20 @@ spec:
                       redis:
                         description: Redis is the image tag for the Container
                         type: string
+                      redisCommander:
+                        description: RedisCommander is the name of the redis deployment
+                        type: string
+                      redisName:
+                        description: RedisName is the name of the redis statefulset
+                        type: string
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
                       roleService:
                         description: RoleService is the image tag for the Container
+                        type: string
+                      sentinel:
+                        description: Sentinel is the name of the sentinel statefulSet
                         type: string
                       storageService:
                         description: StorageService is the image tag for the Container
@@ -2060,6 +2141,9 @@ spec:
                       useVolumeSnapshot:
                         description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                         type: boolean
+                      vaultAddress:
+                        description: VaultAddress is the address of the vault
+                        type: string
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
                         type: string
@@ -2276,11 +2360,20 @@ spec:
                         redis:
                           description: Redis is the image tag for the Container
                           type: string
+                        redisCommander:
+                          description: RedisCommander is the name of the redis deployment
+                          type: string
+                        redisName:
+                          description: RedisName is the name of the redis statefulset
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
+                          type: string
+                        sentinel:
+                          description: Sentinel is the name of the sentinel statefulSet
                           type: string
                         storageService:
                           description: StorageService is the image tag for the Container
@@ -2333,6 +2426,9 @@ spec:
                         useVolumeSnapshot:
                           description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                           type: boolean
+                        vaultAddress:
+                          description: VaultAddress is the address of the vault
+                          type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
                           type: string
@@ -2571,10 +2667,10 @@ spec:
                             description: Redis is the image tag for the Container
                             type: string
                           redisCommander:
-                            description: RedisCommander is the name of the redis deployment for Authorization
+                            description: RedisCommander is the name of the redis deployment
                             type: string
                           redisName:
-                            description: RedisName is the name of the redis statefulset for Authorization
+                            description: RedisName is the name of the redis statefulset
                             type: string
                           replicaCount:
                             description: ReplicaCount is the replica count for app mobility
@@ -2583,7 +2679,7 @@ spec:
                             description: RoleService is the image tag for the Container
                             type: string
                           sentinel:
-                            description: Sentinel is the name of the sentinel statefulSet for Authorization
+                            description: Sentinel is the name of the sentinel statefulSet
                             type: string
                           storageService:
                             description: StorageService is the image tag for the Container
@@ -2637,7 +2733,7 @@ spec:
                             description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                             type: boolean
                           vaultAddress:
-                            description: VaultAddress is the address of vault for Authorization
+                            description: VaultAddress is the address of the vault
                             type: string
                           veleroNamespace:
                             description: VeleroNamespace is the namespace that Velero is installed in
@@ -2861,11 +2957,20 @@ spec:
                           redis:
                             description: Redis is the image tag for the Container
                             type: string
+                          redisCommander:
+                            description: RedisCommander is the name of the redis deployment
+                            type: string
+                          redisName:
+                            description: RedisName is the name of the redis statefulset
+                            type: string
                           replicaCount:
                             description: ReplicaCount is the replica count for app mobility
                             type: string
                           roleService:
                             description: RoleService is the image tag for the Container
+                            type: string
+                          sentinel:
+                            description: Sentinel is the name of the sentinel statefulSet
                             type: string
                           storageService:
                             description: StorageService is the image tag for the Container
@@ -2918,6 +3023,9 @@ spec:
                           useVolumeSnapshot:
                             description: UseSnapshot is to check whether volume snapshot is enabled under velero component
                             type: boolean
+                          vaultAddress:
+                            description: VaultAddress is the address of the vault
+                            type: string
                           veleroNamespace:
                             description: VeleroNamespace is the namespace that Velero is installed in
                             type: string

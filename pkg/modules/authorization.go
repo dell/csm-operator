@@ -502,9 +502,6 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
 			YamlString = strings.ReplaceAll(YamlString, AuthVaultAddress, component.VaultAddress)
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
 			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 		}
 
@@ -512,6 +509,9 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 		if component.Name == AuthRedisComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
 
 			if component.RedisStorageClass == "" {
 				redisStorageClass = AuthLocalStorageClass

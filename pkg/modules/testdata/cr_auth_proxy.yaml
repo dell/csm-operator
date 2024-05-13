@@ -77,6 +77,9 @@ spec:
         - name: redis
           redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest
+          redisName: redis-csm
+          redisCommander: redicommander
+          sentinel: sentinel
           # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
           # to use a different storage class for redis, specify the name of the storage class
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
