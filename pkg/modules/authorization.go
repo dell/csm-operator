@@ -83,13 +83,13 @@ const (
 	// AuthProxyIngressHost -
 	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
 
-	//AuthVaultAddress -
+	// AuthVaultAddress -
 	AuthVaultAddress = "<AUTHORIZATION_VAULT_ADDRESS>"
-	//AuthRedisName -
+	// AuthRedisName -
 	AuthRedisName = "<AUTHORIZATION_REDIS_NAME>"
-	//AuthRedisCommander -
+	// AuthRedisCommander -
 	AuthRedisCommander = "<AUTHORIZATION_REDIS_COMMANDER>"
-	//AuthRedisSentinel -
+	// AuthRedisSentinel -
 	AuthRedisSentinel = "<AUTHORIZATION_REDIS_SENTINEL>"
 
 	// AuthCert - for tls secret
