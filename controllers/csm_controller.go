@@ -1275,15 +1275,14 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			return fmt.Errorf("failed powermax validation: %v", err)
 		}
 	default:
-		for _, m := range cr.Spec.Modules {
-			if m.Name == csmv1.ApplicationMobility || m.Name == csmv1.AuthorizationServer {
-				goto checkUpgrade
-			}
+		// Go to checkUpgrade if it is standalone module i.e. app mobility or authorizatio proxy server
+		if cr.HasModule(csmv1.ApplicationMobility) || cr.HasModule(csmv1.AuthorizationServer) {
+			break
 		}
+
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
 
-checkUpgrade:
 	upgradeValid, err := checkUpgrade(ctx, cr, operatorConfig)
 	if err != nil {
 		return fmt.Errorf("failed upgrade check: %v", err)
