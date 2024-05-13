@@ -368,6 +368,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Deployment Name"
 	RedisCommander string `json:"redisCommander,omitempty" yaml:"redisCommander,omitempty"`
 
+	// RedisReplicas is the number of replicas for the redis deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Deployment Replicas"
+	RedisReplicas int `json:"redisReplicas,omitempty" yaml:"redisReplicas,omitempty"`
+
 	// Sentinel is the name of the sentinel statefulSet
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Sentinel StatefulSet Name"
 	Sentinel string `json:"sentinel,omitempty" yaml:"sentinel,omitempty"`

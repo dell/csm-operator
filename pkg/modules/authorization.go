@@ -93,6 +93,8 @@ const (
 	AuthRedisSentinel = "<AUTHORIZATION_REDIS_SENTINEL>"
 	// AuthRedisSentinelValues -
 	AuthRedisSentinelValues = "<AUTHORIZATION_REDIS_SENTINEL_VALUES>"
+	// AuthRedisReplicas -
+	AuthRedisReplicas = "<AUTHORIZATION_REDIS_REPLICAS>"
 
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
@@ -125,7 +127,6 @@ var (
 	pathType    = networking.PathTypePrefix
 	duration    = 2160 * time.Hour // 90d
 	renewBefore = 360 * time.Hour  // 15d
-	replicas    = 5
 )
 
 // AuthorizationSupportedDrivers ... is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
@@ -495,12 +496,6 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	YamlString = string(buf)
 	authNamespace := cr.Namespace
 
-	var sentinelValues []string
-	for i := 0; i < replicas; i++ {
-		sentinelValues = append(sentinelValues, fmt.Sprintf("sentinel-%d.sentinel.%s.svc.cluster.local:5000", i, authNamespace))
-	}
-	sentinels := strings.Join(sentinelValues, ", ")
-
 	for _, component := range auth.Components {
 		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
@@ -521,6 +516,13 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisReplicas, strconv.Itoa(component.RedisReplicas))
+
+			var sentinelValues []string
+			for i := 0; i < component.RedisReplicas; i++ {
+				sentinelValues = append(sentinelValues, fmt.Sprintf("sentinel-%d.sentinel.%s.svc.cluster.local:5000", i, authNamespace))
+			}
+			sentinels := strings.Join(sentinelValues, ", ")
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinelValues, sentinels)
 
 			if component.RedisStorageClass == "" {

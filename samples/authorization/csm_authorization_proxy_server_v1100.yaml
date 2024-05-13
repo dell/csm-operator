@@ -37,7 +37,6 @@ spec:
         tenantService: dellemc/csm-authorization-tenant:v1.10.0
         roleService: dellemc/csm-authorization-role:v1.10.0
         storageService: dellemc/csm-authorization-storage:v1.10.0
-        vaultAddress: https://10.0.0.1:8400
         opa: openpolicyagent/opa
         opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
 
@@ -68,11 +67,8 @@ spec:
             annotations: {}
 
       - name: redis
-        redis: redis:7.2.4-alpine
+        redis: redis:6.0.8-alpine
         commander: rediscommander/redis-commander:latest
-        redisName: redis-csm
-        redisCommander: redicommander
-        sentinel: sentinel
         # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
         # to use a different storage class for redis, specify the name of the storage class
         # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
@@ -89,12 +85,3 @@ data:
   csm-config-params.yaml: |
     CONCURRENT_POWERFLEX_REQUESTS: 10
     LOG_LEVEL: debug
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: redis-csm-cm
-  namespace: authorization
-
-data:
-  redis.conf: |

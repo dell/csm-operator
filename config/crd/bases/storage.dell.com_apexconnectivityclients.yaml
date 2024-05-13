@@ -301,6 +301,10 @@ spec:
                       redisName:
                         description: RedisName is the name of the redis statefulset
                         type: string
+                      redisReplicas:
+                        description: RedisReplicas is the number of replicas for the
+                          redis deployment
+                        type: integer
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
@@ -631,6 +635,10 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisReplicas:
+                          description: RedisReplicas is the number of replicas for
+                            the redis deployment
+                          type: integer
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -946,6 +954,10 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisReplicas:
+                          description: RedisReplicas is the number of replicas for
+                            the redis deployment
+                          type: integer
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
