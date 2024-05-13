@@ -127,9 +127,9 @@ spec:
   selector:
     app: tenant-service
   ports:
-    - port: 50051
-      targetPort: 50051
-      name: grpc
+  - port: 50051
+    targetPort: 50051
+    name: grpc
 ---
 # Role Service
 apiVersion: v1
@@ -298,9 +298,9 @@ spec:
   selector:
     app: storage-service
   ports:
-    - port: 50051
-      targetPort: 50051
-      name: grpc
+  - port: 50051
+    targetPort: 50051
+    name: grpc
 ---
 # Redis
 apiVersion: apps/v1
@@ -474,9 +474,9 @@ roleRef:
   name: view
   apiGroup: rbac.authorization.k8s.io
 subjects:
-  - kind: Group
-    name: system:serviceaccounts:<NAMESPACE>
-    apiGroup: rbac.authorization.k8s.io
+- kind: Group
+  name: system:serviceaccounts:<NAMESPACE>
+  apiGroup: rbac.authorization.k8s.io
 ---
 # Define role for OPA/kube-mgmt to update configmaps with policy status.
 apiVersion: rbac.authorization.k8s.io/v1
@@ -485,9 +485,9 @@ metadata:
   namespace: <NAMESPACE>
   name: configmap-modifier
 rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["update", "patch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["update", "patch"]
 ---
 # Grant OPA/kube-mgmt role defined above.
 apiVersion: rbac.authorization.k8s.io/v1
@@ -500,6 +500,6 @@ roleRef:
   name: configmap-modifier
   apiGroup: rbac.authorization.k8s.io
 subjects:
-  - kind: Group
-    name: system:serviceaccounts:<NAMESPACE>
-    apiGroup: rbac.authorization.k8s.io
+- kind: Group
+  name: system:serviceaccounts:<NAMESPACE>
+  apiGroup: rbac.authorization.k8s.io
