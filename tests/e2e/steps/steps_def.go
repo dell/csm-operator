@@ -1033,12 +1033,39 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
+func versionToInt(versionStr string) (int, error) {
+	version := strings.TrimPrefix(versionStr, "v")
+
+	// Split the version string into parts by dot (.)
+	parts := strings.Split(version, ".")
+
+	// Initialize the version integer
+	var versionInt int
+
+	// Calculate the version integer based on major, minor, patch parts
+	for i := 0; i < len(parts); i++ {
+		part, err := strconv.Atoi(parts[i])
+		if err != nil {
+			return 0, fmt.Errorf("invalid version format: %v", err)
+		}
+
+		// Shift the part value by 8 bits for each segment (major, minor, patch)
+		versionInt = versionInt<<8 | part
+	}
+
+	return versionInt, nil
+}
+
 func (step *Step) configureAuthorizationProxyServer(res Resource, driver string, crNumStr string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	crBuff, err1 := os.ReadFile(res.Scenario.Paths[crNum-1])
 
+	if err1 != nil {
+		return fmt.Errorf("failed to read testdata: %v", err1)
+	}
 	var b []byte
 	var err error
 
@@ -1053,7 +1080,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		proxyHost       = ""
 	)
 
-	// by default, use set defined in env file
+	//by default, use set defined in env file
 	endpointvar := "END_POINT"
 	systemIdvar := "SYSTEM_ID"
 	uservar := "STORAGE_USER"
@@ -1120,10 +1147,51 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
+
+	var configVersion1 string
+
+	// Unmarshal the YAML content into the CustomResource struct
+	err = yaml.Unmarshal([]byte(crBuff), &cr)
+	if err != nil {
+		fmt.Println("error unmarshaling YAML: %v", err)
+	}
+
+	// Access and print the configVersion field
+	if len(cr.Spec.Modules) > 0 {
+		configVersion1 = cr.Spec.Modules[0].ConfigVersion
+		fmt.Printf("configVersion: %s\n", configVersion1)
+	} else {
+		fmt.Println("No modules found in the custom resource")
+	}
+
+	minVersionStr := "v1.10.0"
+
+	// Convert the minimum version string to an integer for comparison
+	minVersion, err := versionToInt(minVersionStr)
+	if err != nil {
+		fmt.Printf("Error converting minVersion: %v\n", err)
+	}
+
+	// Convert the config version string to an integer for comparison
+
+	configVersionInt, err := versionToInt(configVersion1)
+	if err != nil {
+		fmt.Printf("Error converting configVersion1: %v\n", err)
+	}
+
+	// Determine the address based on version comparison
+	var address string
+	if configVersionInt < minVersion {
+		address = "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+	} else {
+		address = proxyHost // Assuming proxyHost is defined somewhere in your code
+	}
+
+	fmt.Printf("Address: %s\n", address)
 
 	fmt.Println("=== Creating Storage ===\n ")
 	cmd := exec.Command("karavictl",
@@ -1135,10 +1203,11 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		"--user", user,
 		"--password", password,
 		"--array-insecure",
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
+
 	if err != nil {
 		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
 	}
@@ -1148,7 +1217,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"tenant", "create",
-		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
@@ -1167,7 +1236,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		"role", "create",
 		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
 			roleName, storageType, sysID, pool, quotaLimit),
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 	)
 
 	fmt.Println("=== Role === \n", cmd.String())
@@ -1185,10 +1254,11 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		"rolebinding", "create",
 		"--tenant", tenantName,
 		"--role", roleName,
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 	)
 	fmt.Println("=== Binding Role ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
+
 	if err != nil {
 		return fmt.Errorf("failed to create rolebinding %s: %v\nErrMessage:\n%s", roleName, err, string(b))
 	}
@@ -1199,11 +1269,12 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		"--admin-token", "/tmp/adminToken.yaml",
 		"generate", "token",
 		"--tenant", tenantName,
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 		"--access-token-expiration", fmt.Sprint(10*time.Minute),
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
+
 	if err != nil {
 		return fmt.Errorf("failed to generate token for %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
@@ -1211,7 +1282,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/token.yaml", b, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
