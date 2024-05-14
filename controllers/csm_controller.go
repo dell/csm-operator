@@ -1012,7 +1012,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobilityCRDS(ctx context.
 func (r *ContainerStorageModuleReconciler) reconcileAuthorizationCRDS(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
-	// AppMobility installs Application Mobility CRDS
+	// Install Authorization CRDs
 	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile Authorization CRDS")
 		if err := modules.AuthCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
