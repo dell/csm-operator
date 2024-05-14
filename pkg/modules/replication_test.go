@@ -156,7 +156,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret, driverSecret1, driverSecret2).Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret1, driverSecret2).Build()
 				return clusterClient, nil
 			}
@@ -182,7 +182,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret, driverSecret1, driverSecret2).Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret1, driverSecret2).Build()
 				return clusterClient, nil
 			}
@@ -206,7 +206,7 @@ func TestReplicationPreCheck(t *testing.T) {
 			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret, driverSecret1, driverSecret2).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret1, driverSecret2).Build()
 				return clusterClient, nil
 			}
@@ -229,7 +229,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret).Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				driverSecret1 := getSecret(customResource.Namespace, customResource.Name+"-creds")
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret1).Build()
 				return clusterClient, nil
@@ -260,7 +260,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
@@ -279,7 +279,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
@@ -298,7 +298,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
@@ -317,7 +317,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
@@ -336,7 +336,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			success, replica, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
 			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			utils.NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
+			utils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 

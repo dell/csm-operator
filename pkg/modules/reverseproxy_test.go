@@ -44,7 +44,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 			reverseProxy := tmpCR.Spec.Modules[0]
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
 				return clusterClient, nil
 			}
@@ -69,7 +69,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 			auth.Enabled = true
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap, karaviAuthconfig, proxyAuthzTokens).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
 				return clusterClient, nil
 			}
@@ -91,7 +91,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 			reverseProxy.ConfigVersion = "v100000.0.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build(), nil
 			}
 
@@ -113,7 +113,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
@@ -133,7 +133,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxyConfigMap).Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
@@ -153,7 +153,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret).Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
@@ -174,7 +174,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 			reverseProxy.Components = nil
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
@@ -192,7 +192,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 
 			success, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
 			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			utils.NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
+			utils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 
