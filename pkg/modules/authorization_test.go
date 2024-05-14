@@ -20,6 +20,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -973,6 +974,90 @@ func TestAuthorizationCertificates(t *testing.T) {
 
 			os.Remove("foo")
 			os.Remove("bar")
+		})
+	}
+}
+
+func TestAuthorizationCrdDeploy(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "CustomResourceDefinition",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "csmroles.csm-authorization.storage.dell.com",
+				},
+			}
+			apiextv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+			return true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			apiextv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - auth deployment file bad yaml": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "./testdata/badYaml"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, tmpCR, sourceClient, badOperatorConfig
+		},
+		"fail - auth config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, tmpCR, sourceClient, badOperatorConfig
+		},
+		"fail - auth module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			tmpCR := customResource
+
+			return false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, cr, sourceClient, op := tc(t)
+
+			err := AuthCrdDeploy(ctx, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }

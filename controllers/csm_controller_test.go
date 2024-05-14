@@ -1536,6 +1536,9 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 	err := reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 
+	err = reconciler.reconcileAuthorizationCRDS(ctx, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
 	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
 	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
