@@ -31,6 +31,11 @@ type DriverType string
 // ModuleType - type representing the type of the modules. e.g. - authorization, podmon
 type ModuleType string
 
+// CSMComponentType - type constraint for DriverType and ModuleType
+type CSMComponentType interface {
+	ModuleType | DriverType
+}
+
 // ObservabilityComponentType - type representing the type of components inside observability module. e.g. - topology
 type ObservabilityComponentType string
 
