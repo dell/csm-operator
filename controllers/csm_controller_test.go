@@ -1258,7 +1258,7 @@ func getAuthModule() []csmv1.Module {
 		{
 			Name:          csmv1.Authorization,
 			Enabled:       true,
-			ConfigVersion: "v1.10.0",
+			ConfigVersion: "v2.0.0-alpha",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: "karavi-authorization-proxy",
@@ -1317,7 +1317,7 @@ func getAuthProxyServerOCP() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v1.10.0",
+			ConfigVersion:     "v2.0.0-alpha",
 			ForceRemoveModule: true,
 			OpenShift:         true,
 			Components: []csmv1.ContainerTemplate{
