@@ -1149,7 +1149,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
-	if err != nil {
+	if err != nil && !strings.Contains(string(b), "is already registered") {
 		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
 	}
 
