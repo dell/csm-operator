@@ -192,6 +192,13 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.runFakeAuthCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
+	suite.makeFakeAuthServerCSMWithoutPreRequisite(csmName, suite.namespace)
+	suite.runFakeAuthCSMManager("failed authorization proxy server validation", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeAuthCSMManager("", true)
+}
+
 func (suite *CSMControllerTestSuite) TestAppMobReconcile() {
 	suite.makeFakeAppMobCSM(csmName, suite.namespace, getAppMob())
 	suite.runFakeAuthCSMManager("", false)
@@ -416,9 +423,11 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
 		annotations = make(map[string]string)
 	}
 	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = jumpUpgradeConfigVersion
+		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
+
+	csm.Spec.Driver.ConfigVersion = jumpUpgradeConfigVersion
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
@@ -1693,27 +1702,37 @@ func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, _ []csmv
 
 func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, _ []csmv1.Module) {
 	// this secret required by authorization module
-	sec := shared.MakeSecret("karavi-config-secret", ns, configVersion)
+	sec := shared.MakeSecret("karavi-config-secret", ns, shared.AuthServerConfigVersion)
 	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
 	// this secret required by authorization module
-	sec = shared.MakeSecret("proxy-storage-secret", ns, configVersion)
+	sec = shared.MakeSecret("karavi-storage-secret", ns, shared.AuthServerConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
 	// this secret required by authorization module
-	sec = shared.MakeSecret("karavi-auth-tls", ns, configVersion)
+	sec = shared.MakeSecret("karavi-auth-tls", ns, shared.AuthServerConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	csm := shared.MakeModuleCSM(name, ns, configVersion)
+	csm := shared.MakeModuleCSM(name, ns, shared.AuthServerConfigVersion)
 
 	csm.Spec.Modules = getAuthProxyServer()
 	csm.Spec.Modules[0].ForceRemoveModule = true
-	csm.Annotations[configVersionKey] = configVersion
 
 	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) makeFakeAuthServerCSMWithoutPreRequisite(name, ns string) {
+	csm := shared.MakeModuleCSM(name, ns, shared.AuthServerConfigVersion)
+
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ForceRemoveModule = true
+	csm.Annotations[configVersionKey] = shared.AuthServerConfigVersion
+
+	err := suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
 }
 

@@ -15,6 +15,7 @@ package utils
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -744,7 +745,8 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	k8sObj := obj.DeepCopyObject().(crclient.Object)
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, k8sObj)
 
 	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
@@ -758,8 +760,16 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 		return err
 	} else {
 		log.Infow("Updating a new Object", "Name:", name, "Kind:", kind)
+		// Copy data/changes from obj to k8s object that already exists on the cluster
+		if jsonBytes, err := json.Marshal(obj); err == nil {
+			if err := json.Unmarshal(jsonBytes, &k8sObj); err == nil {
+				obj = k8sObj
+			}
+		}
 		err = ctrlClient.Update(ctx, obj)
-		if err != nil {
+		if err != nil && k8serror.IsForbidden(err) || k8serror.IsInvalid(err) {
+			log.Warnw("Object update failed", "Warning", err.Error())
+		} else if err != nil {
 			return err
 		}
 	}
@@ -1104,4 +1114,64 @@ func DetermineUnitTestRun(ctx context.Context) bool {
 		unitTestRun = false
 	}
 	return unitTestRun
+}
+
+// IsValidUpgrade will check if upgrade of module/driver is allowed
+func IsValidUpgrade[T csmv1.CSMComponentType](ctx context.Context, oldVersion, newVersion string, csmComponentType T, operatorConfig OperatorConfig) (bool, error) {
+	log := logger.GetLogger(ctx)
+
+	// if versions are equal, it is a modification
+	if oldVersion == newVersion {
+		log.Infow("proceeding with modification of driver/module install")
+		return true, nil
+	}
+
+	// if not equal, it is an upgrade/downgrade
+	// get minimum required version for upgrade
+	minUpgradePath, err := getUpgradeInfo(ctx, operatorConfig, csmComponentType, newVersion)
+	if err != nil {
+		log.Infow("getUpgradeInfo not successful")
+		return false, err
+	}
+
+	isUpgradeValid, _ := MinVersionCheck(minUpgradePath, oldVersion)
+	if isUpgradeValid {
+		log.Infof("proceeding with valid upgrade of %s from version %s to version %s", csmComponentType, oldVersion, newVersion)
+		return isUpgradeValid, nil
+	}
+
+	log.Infof("not proceeding with invalid driver/module upgrade")
+	return isUpgradeValid, fmt.Errorf("upgrade of %s from version %s to %s not valid", csmComponentType, oldVersion, newVersion)
+}
+
+func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfig OperatorConfig, csmCompType T, oldVersion string) (string, error) {
+	log := logger.GetLogger(ctx)
+
+	csmCompConfigDir := ""
+	switch any(csmCompType).(type) {
+	case csmv1.DriverType:
+		csmCompConfigDir = "driverconfig"
+	case csmv1.ModuleType:
+		csmCompConfigDir = "moduleconfig"
+	}
+
+	upgradeInfoPath := fmt.Sprintf("%s/%s/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmCompConfigDir, csmCompType, oldVersion)
+	log.Debugw("getUpgradeInfo", "upgradeInfoPath", upgradeInfoPath)
+
+	buf, err := os.ReadFile(filepath.Clean(upgradeInfoPath))
+	if err != nil {
+		log.Errorw("getUpgradeInfo failed", "Error", err.Error())
+		return "", err
+	}
+	YamlString := string(buf)
+
+	var upgradePath UpgradePaths
+	err = yaml.Unmarshal([]byte(YamlString), &upgradePath)
+	if err != nil {
+		log.Errorw("getUpgradeInfo yaml marshall failed", "Error", err.Error())
+		return "", err
+	}
+
+	// Example return value: "v2.2.0"
+	return upgradePath.MinUpgradePath, nil
 }
