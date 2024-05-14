@@ -100,12 +100,3 @@ data:
   csm-config-params.yaml: |
     CONCURRENT_POWERFLEX_REQUESTS: 10
     LOG_LEVEL: debug
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: redis-csm-cm
-  namespace: authorization
-
-data:
-  redis.conf: |

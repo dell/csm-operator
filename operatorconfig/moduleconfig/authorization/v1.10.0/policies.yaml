@@ -263,3 +263,12 @@ data:
       claims == {}
       msg := sprintf("missing claims", [])
     }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-csm-cm
+  namespace: authorization
+
+data:
+  redis.conf: |
