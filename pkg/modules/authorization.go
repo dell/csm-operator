@@ -83,6 +83,19 @@ const (
 	// AuthProxyIngressHost -
 	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
 
+	// AuthVaultAddress -
+	AuthVaultAddress = "<AUTHORIZATION_VAULT_ADDRESS>"
+	// AuthRedisName -
+	AuthRedisName = "<AUTHORIZATION_REDIS_NAME>"
+	// AuthRedisCommander -
+	AuthRedisCommander = "<AUTHORIZATION_REDIS_COMMANDER>"
+	// AuthRedisSentinel -
+	AuthRedisSentinel = "<AUTHORIZATION_REDIS_SENTINEL>"
+	// AuthRedisSentinelValues -
+	AuthRedisSentinelValues = "<AUTHORIZATION_REDIS_SENTINEL_VALUES>"
+	// AuthRedisReplicas -
+	AuthRedisReplicas = "<AUTHORIZATION_REDIS_REPLICAS>"
+
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
 	// AuthPrivateKey - for tls secret
@@ -98,6 +111,8 @@ const (
 	AuthCertManagerComponent = "cert-manager"
 	// AuthRedisComponent - redis component
 	AuthRedisComponent = "redis"
+	// AuthVaultComponent - vault component
+	AuthVaultComponent = "vault"
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
@@ -502,12 +517,27 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 		if component.Name == AuthRedisComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisReplicas, strconv.Itoa(component.RedisReplicas))
+
+			var sentinelValues []string
+			for i := 0; i < component.RedisReplicas; i++ {
+				sentinelValues = append(sentinelValues, fmt.Sprintf("sentinel-%d.sentinel.%s.svc.cluster.local:5000", i, authNamespace))
+			}
+			sentinels := strings.Join(sentinelValues, ", ")
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinelValues, sentinels)
 
 			if component.RedisStorageClass == "" {
 				redisStorageClass = AuthLocalStorageClass
 			} else {
 				redisStorageClass = component.RedisStorageClass
 			}
+		}
+
+		if component.Name == AuthVaultComponent {
+			YamlString = strings.ReplaceAll(YamlString, AuthVaultAddress, component.VaultAddress)
 		}
 	}
 

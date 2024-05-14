@@ -356,6 +356,26 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Redis storage class"
 	RedisStorageClass string `json:"storageclass,omitempty" yaml:"storageclass,omitempty"`
 
+	// VaultAddress is the address of the vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Vault Address"
+	VaultAddress string `json:"vaultAddress,omitempty" yaml:"vaultAddress,omitempty"`
+
+	// RedisName is the name of the redis statefulset
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis StatefulSet Name"
+	RedisName string `json:"redisName,omitempty" yaml:"redisName,omitempty"`
+
+	// RedisCommander is the name of the redis deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Deployment Name"
+	RedisCommander string `json:"redisCommander,omitempty" yaml:"redisCommander,omitempty"`
+
+	// RedisReplicas is the number of replicas for the redis deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Deployment Replicas"
+	RedisReplicas int `json:"redisReplicas,omitempty" yaml:"redisReplicas,omitempty"`
+
+	// Sentinel is the name of the sentinel statefulSet
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Sentinel StatefulSet Name"
+	Sentinel string `json:"sentinel,omitempty" yaml:"sentinel,omitempty"`
+
 	// ReplicaCount is the replica count for app mobility
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Replica Count"
 	ReplicaCount string `json:"replicaCount,omitempty" yaml:"replicaCount,omitempty"`
