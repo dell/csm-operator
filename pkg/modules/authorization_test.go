@@ -310,7 +310,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.10.0"
+			auth.ConfigVersion = "v2.0.0-alpha"
 
 			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
@@ -453,7 +453,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.10.0"
+			auth.ConfigVersion = "v2.0.0-alpha"
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
 			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
@@ -682,7 +682,7 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating v1.10.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating v2.0.0-alpha": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
