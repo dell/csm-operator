@@ -1125,12 +1125,10 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	address := proxyHost // Assuming proxyHost is defined somewhere in your code
+	address := proxyHost
+	// For v1.9.1 and earlier, use the old address
 	configVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-	v191 := "v1.9.1"
-
-	// Determine the address based on version. For v1.9.1 and earlier, use the old address
-	isOldVersion, _ := utils.MinVersionCheck(configVersion, v191)
+	isOldVersion, _ := utils.MinVersionCheck(configVersion, "v1.9.1")
 	if isOldVersion {
 		address = "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
 	}
