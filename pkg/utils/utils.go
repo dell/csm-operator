@@ -1105,3 +1105,115 @@ func DetermineUnitTestRun(ctx context.Context) bool {
 	}
 	return unitTestRun
 }
+
+func BrownfieldDeployment(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+	//Get the namespaces
+	namespace, err := GetNamespaces()
+	if err != nil {
+		return fmt.Errorf("error getting the namespaces %s", err)
+	}
+
+	buf, err := os.ReadFile(filepath.Clean(path))
+	if err != nil {
+		return err
+	}
+
+	yamlFile := string(buf)
+
+	for _, ns := range namespace {
+		yamlStr := strings.ReplaceAll(yamlFile, "<EXISTING_NAMESPACE>", ns)
+		yamlStr = strings.ReplaceAll(yamlFile, "<CLIENT_NAMESPACE>", cr.Namespace)
+
+		err := AddRole(ctx, ns, yamlStr, cr, ctrlClient)
+		if err != nil {
+			return err
+		}
+
+		err = AddRoleBinding(ctx, ns, yamlStr, cr, ctrlClient)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Get the namespaces of csm-objects in the cluster
+func GetNamespaces() ([]string, error) {
+	// Get K8s config
+	kubeconfig := os.Getenv("KUBECONFIG") // Use the KUBECONFIG environment variable if set
+
+	// Create the config object from kubeconfig. If the environment variable is not set, it will fall back to the default location (~/.kube/config).
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("error creating clientset: %v", err)
+		//os.Exit(1)
+	}
+
+	// Create a Kubernetes clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating clientset: %v", err)
+		//os.Exit(1)
+	}
+
+	// Define label selector
+	labelSelector := "csm"
+
+	// Get all pods in the cluster
+	pods, err := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting pods: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Set to store unique namespaces
+	namespaceSet := make(map[string]struct{})
+
+	// Using map so that duplicate namespace entries are not added
+	for _, pod := range pods.Items {
+		namespaceSet[pod.Namespace] = struct{}{}
+	}
+
+	// Convert set to slice
+	var namespaces []string
+	for namespace := range namespaceSet {
+		namespaces = append(namespaces, namespace)
+	}
+
+	return namespaces, nil
+}
+
+func AddRole(ctx context.Context, namespace string, yamlFile string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+
+	deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range deployObjects {
+		if err := ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func AddRoleBinding(ctx context.Context, namespace string, yamlFile string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+
+	deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range deployObjects {
+		if err := ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

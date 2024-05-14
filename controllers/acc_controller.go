@@ -465,6 +465,13 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 		}
 	}
 
+	BrownfieldCR := "brownfield-deployment.yaml"
+	brownfieldDeploymentPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
+	err = utils.BrownfieldDeployment(ctx, brownfieldDeploymentPath, cr, ctrlClient)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
