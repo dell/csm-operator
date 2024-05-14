@@ -439,7 +439,7 @@ metadata:
   namespace: <NAMESPACE>
 spec:
   serviceName: <AUTHORIZATION_REDIS_NAME>
-  replicas: 5
+  replicas: <AUTHORIZATION_REDIS_REPLICAS>
   selector:
     matchLabels:
       app: <AUTHORIZATION_REDIS_NAME>
@@ -593,7 +593,7 @@ metadata:
   namespace: <NAMESPACE>
 spec:
   serviceName: <AUTHORIZATION_REDIS_SENTINEL>
-  replicas: 5
+  replicas: <AUTHORIZATION_REDIS_REPLICAS>
   selector:
     matchLabels:
       app: <AUTHORIZATION_REDIS_SENTINEL>
@@ -615,10 +615,10 @@ spec:
                 key: password
         args:
           - |
-            replicas=$( expr 5 - 1)          
+            replicas=$( expr $((<AUTHORIZATION_REDIS_REPLICAS>)) - 1)
             for i in $(seq 0 $replicas)
             do               
-                node=$( echo "redis-csm-$i.redis-csm" )
+                node=$( echo "<AUTHORIZATION_REDIS_NAME>-$i.<AUTHORIZATION_REDIS_NAME>" )
                 nodes=$( echo "$nodes*$node" )
             done            
             loop=$(echo $nodes | sed -e "s/"*"/\n/g")
