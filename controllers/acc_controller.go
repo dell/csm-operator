@@ -465,9 +465,11 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 		}
 	}
 
-	BrownfieldCR := "brownfield-onboard.yaml"
-	brownfieldDeploymentPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
-	err = utils.BrownfieldDeployment(brownfieldDeploymentPath)
+	BrownfieldRoles := "brownfield-role.yaml"
+	BrownfieldRoleBindings := "brownfield-rolebindings.yaml"
+	brownfieldRolesPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldRoles)
+	brownfieldRoleBindingsPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldRoleBindings)
+	err = utils.BrownfieldDeployment(brownfieldRolesPath, brownfieldRoleBindingsPath)
 	if err != nil {
 		return err
 	}

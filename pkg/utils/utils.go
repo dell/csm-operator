@@ -1158,26 +1158,31 @@ func GetNamespaces() ([]string, error) {
 	return namespaces, nil
 }
 
-func BrownfieldDeployment(path string) error {
+func BrownfieldDeployment(path1 string, path2 string) error {
 	//Get the namespaces
 	namespace, err := GetNamespaces()
 	if err != nil {
 		return fmt.Errorf("error getting the namespaces %s", err)
 	}
 
-	buf, err := os.ReadFile(filepath.Clean(path))
+	buf1, err := os.ReadFile(filepath.Clean(path1))
+	if err != nil {
+		return err
+	}
+
+	buf2, err := os.ReadFile(filepath.Clean(path2))
 	if err != nil {
 		return err
 	}
 
 	//
 	for _, ns := range namespace {
-		err := AddRole(ns, string(buf))
+		err := AddRole(ns, string(buf1))
 		if err != nil {
 			return err
 		}
 
-		err = AddRoleBinding(ns, string(buf))
+		err = AddRoleBinding(ns, string(buf2))
 		if err != nil {
 			return err
 		}
@@ -1255,7 +1260,7 @@ func AddRoleBinding(namespace string, yamlFile string) error {
 		return err
 	}
 
-	// Create the Role in the namespace
+	// Create the RoleBinding in the namespace
 	_, err = dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    "rbac.authorization.k8s.io",
 		Version:  "v1",
