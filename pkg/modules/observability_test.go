@@ -47,7 +47,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 			observability := tmpCR.Spec.Modules[0]
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
 				return clusterClient, nil
 			}
@@ -68,7 +68,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 			observability := tmpCR.Spec.Modules[0]
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
 				return clusterClient, nil
 			}
@@ -89,7 +89,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 			observability := tmpCR.Spec.Modules[0]
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds).Build()
 				return clusterClient, nil
 			}
@@ -110,7 +110,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 			observability := tmpCR.Spec.Modules[0]
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
 				return clusterClient, nil
 			}
@@ -131,7 +131,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 			observability.ConfigVersion = "v1.6.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
 				return clusterClient, nil
 			}
@@ -156,7 +156,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 			auth.Enabled = true
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds, karaviAuthconfig, proxyAuthzTokens).Build()
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
 				return clusterClient, nil
 			}
@@ -178,7 +178,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build(), nil
 			}
 
@@ -199,7 +199,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
 
-			fakeControllerRuntimeClient := func(clusterConfigData []byte) (ctrlClient.Client, error) {
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
@@ -217,7 +217,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 
 			success, observability, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
 			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			utils.NewK8sClientWrapper = func(clusterConfigData []byte) (*kubernetes.Clientset, error) {
+			utils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 
