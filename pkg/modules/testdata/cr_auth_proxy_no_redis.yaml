@@ -76,7 +76,7 @@ spec:
               annotations: {}
 
         - name: redis
-          redis: redis:6.0.8-alpine
+          redis: redis:7.2.4-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: redicommander
