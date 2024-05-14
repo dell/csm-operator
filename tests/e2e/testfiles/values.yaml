@@ -16,7 +16,7 @@
 # List of E2E Tests Scenarios
 - scenario: "Install Authorization Proxy Server and upgrade"
   paths:
-    - "testfiles/authorization-templates/csm_auth_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
   modules:
     - "authorizationproxyserver"
@@ -875,7 +875,7 @@
     run:
       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerFlex Driver (With Authorization), Upgrade Authorization module"
+- scenario: "Install PowerFlex Driver (With Authorization), Upgrade Authorization module and driver"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
