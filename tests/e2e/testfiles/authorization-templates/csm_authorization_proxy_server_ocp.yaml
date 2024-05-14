@@ -18,7 +18,7 @@ spec:
       #   true: enable use of OpenShift Ingress Controller
       #   false: disable use of OpenShift Ingress Controller only if you have your own ingress controller. Set the appropriate annotations for the ingresses in the proxy-server section
       # Default value: false
-      openshift: false
+      openshift: true
 
       components:
         # For Kubernetes Container Platform only
@@ -28,7 +28,7 @@ spec:
         #   false: disable deployment of NGINX Ingress Controller only if you have your own ingress controller. Set the appropriate annotations for the ingresses in the proxy-server section
         # Default value: true
         - name: nginx
-          enabled: true
+          enabled: false
 
         # enabled: Enable/Disable cert-manager
         # Allowed values:
@@ -81,7 +81,7 @@ spec:
           # to use a different storage class for redis, specify the name of the storage class
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
-          storageclass: ""
+          storageclass: "local-storage"
 
 ---
 apiVersion: v1

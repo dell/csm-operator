@@ -1,4 +1,4 @@
-//  Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -992,14 +992,6 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create local storage for redis: %v\nErrMessage:\n%s", err, string(b))
-	}
-
-	cmd = exec.Command("kubectl", "create", "-n", cr.Namespace,
-		"-f", "testfiles/authorization-templates/csm_authorization_certificate.yaml",
-	)
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to create self-signed cert: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	return nil

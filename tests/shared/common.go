@@ -160,24 +160,7 @@ func MakeModule(configVersion string) csmv1.Module {
 	moduleObj := csmv1.Module{
 		ConfigVersion:     configVersion,
 		ForceRemoveModule: true,
-		Components: []csmv1.ContainerTemplate{
-			{
-				Envs: []corev1.EnvVar{
-					{
-						Name:  "PROXY_HOST",
-						Value: "csm-auth.com",
-					},
-					{
-						Name:  "AUTHORIZATION_LOG_LEVEL",
-						Value: "debug",
-					},
-					{
-						Name:  "AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS",
-						Value: "10",
-					},
-				},
-			},
-		},
+		Components:        []csmv1.ContainerTemplate{{}},
 	}
 
 	return moduleObj
