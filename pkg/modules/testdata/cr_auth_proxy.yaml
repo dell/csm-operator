@@ -45,7 +45,6 @@ spec:
           tenantService: dellemc/csm-authorization-tenant:v2.0.0-alpha
           roleService: dellemc/csm-authorization-role:v2.0.0-alpha
           storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
-          vaultAddress: https://10.0.0.1:8400
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
 
@@ -87,6 +86,9 @@ spec:
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
           storageclass: "local-storage"
+
+        - name: vault
+          vaultAddress: https://10.0.0.1:8400
 
 ---
 apiVersion: v1

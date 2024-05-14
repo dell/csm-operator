@@ -111,6 +111,8 @@ const (
 	AuthCertManagerComponent = "cert-manager"
 	// AuthRedisComponent - redis component
 	AuthRedisComponent = "redis"
+	// AuthVaultComponent - vault component
+	AuthVaultComponent = "vault"
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
@@ -505,7 +507,6 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, component.TenantService)
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
-			YamlString = strings.ReplaceAll(YamlString, AuthVaultAddress, component.VaultAddress)
 			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 		}
 
@@ -530,6 +531,10 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			} else {
 				redisStorageClass = component.RedisStorageClass
 			}
+		}
+
+		if component.Name == AuthVaultComponent {
+			YamlString = strings.ReplaceAll(YamlString, AuthVaultAddress, component.VaultAddress)
 		}
 	}
 
