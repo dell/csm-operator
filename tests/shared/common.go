@@ -29,7 +29,7 @@ import (
 const (
 	PFlexConfigVersion       string = "v2.10.1"
 	ConfigVersion            string = "v2.8.0"
-	UpgradeConfigVersion     string = "v2.10.0"
+	UpgradeConfigVersion     string = "v2.9.0"
 	JumpUpgradeConfigVersion string = "v2.10.1"
 	OldConfigVersion         string = "v2.2.0"
 	BadConfigVersion         string = "v0"
