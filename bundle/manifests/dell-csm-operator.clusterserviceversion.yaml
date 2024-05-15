@@ -217,7 +217,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.10.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.10.1",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
@@ -609,7 +609,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.10.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.10.1",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
@@ -1203,7 +1203,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "dellemc/csm-authorization-sidecar:v1.10.0",
+                    "image": "dellemc/csm-authorization-sidecar:v1.10.1",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
@@ -3745,7 +3745,7 @@ spec:
     name: csi-vxflexos
   - image: docker.io/dellemc/sdc:4.5.1
     name: sdc
-  - image: docker.io/dellemc/csm-authorization-sidecar:v1.10.0
+  - image: docker.io/dellemc/csm-authorization-sidecar:v1.10.1
     name: karavi-authorization-proxy
   - image: docker.io/dellemc/dell-csi-replicator:v1.8.1
     name: dell-csi-replicator
