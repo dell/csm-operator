@@ -219,7 +219,7 @@
     run:
       - echo "no current test implemented for replication"
 
-- scenario: "Install PowerScale Driver(Standalone), Enable Replication"
+- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Replication"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
     - "testfiles/storage_csm_powerscale_replica.yaml"
@@ -238,6 +238,9 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [replication] module from CR [2] is installed"
     - "Run custom test"
+    - "Disable [replication] module from CR [1]"
+    - "Validate [replication] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is not installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
@@ -301,25 +304,6 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
-
-- scenario: "Install PowerScale Driver(With Replication), Disable Replication module"
-  paths:
-    - "testfiles/storage_csm_powerscale_replica.yaml"
-  tags:
-    - "powerscale"
-    - "replication"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerscale] driver from CR [1] is installed"
-    - "Validate [replication] module from CR [1] is installed"
-    - "Disable [replication] module from CR [1]"
-    - "Validate [replication] driver from CR [1] is installed"
-    - "Validate [replication] module from CR [1] is not installed"
-    # cleanup
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
 
 - scenario: "Install PowerScale Driver(With Observability)"
   paths:
@@ -835,9 +819,9 @@
   paths:
     - "testfiles/storage_csm_powerflex_replica.yaml"
   tags:
-    - "powerflex"
+    #- "powerflex"
     - "replication"
-    - "sanity"
+    #- "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
@@ -860,7 +844,7 @@
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
-    - "powerflex"
+    #- "powerflex"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
