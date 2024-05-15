@@ -43,7 +43,7 @@ spec:
           # Specify storage class for redis. Otherwise, default storage class is used.
           # Default value: None
           - name: "REDIS_STORAGE_CLASS"
-            value: "csm-authorization-local-storage"
+            value: "local-storage"
 
       # enabled: Enable/Disable nginx ingress
       # Allowed values:
