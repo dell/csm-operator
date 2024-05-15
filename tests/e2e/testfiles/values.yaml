@@ -792,8 +792,8 @@
 - scenario: "Install PowerFlex Driver(Standalone), Enable/Disable Observability"
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
-    - "powerflex"
   tags:
+    - "powerflex"
     - "observability"
     - "sanity"
   steps:
