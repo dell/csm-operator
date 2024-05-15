@@ -221,7 +221,7 @@ metadata:
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.10.0",
+                "configVersion": "v1.10.1",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -591,7 +591,7 @@ metadata:
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
-                "configVersion": "v2.9.0",
+                "configVersion": "v2.9.1",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "csireverseproxy"
@@ -613,7 +613,7 @@ metadata:
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.10.0",
+                "configVersion": "v1.10.1",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -1207,7 +1207,7 @@ metadata:
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.10.0",
+                "configVersion": "v1.10.1",
                 "enabled": false,
                 "name": "authorization"
               },
