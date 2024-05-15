@@ -11,13 +11,13 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.10.0
+    configVersion: v2.10.1
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.10.0"
+      image: "dellemc/csi-vxflexos:v2.10.1"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
