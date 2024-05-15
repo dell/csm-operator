@@ -29,6 +29,7 @@ export CERT_CSI="/root/cert-csi"
 # export AUTHORIZATIONPROXYSERVER=true
 # export RESILIENCY=true
 # export APPLICATIONMOBILITY=true
+export SANITY=true
 
 # [Optional] namespace of operator if you deployed it to a namespace diffrent form the one below.
 # export OPERATOR_NAMESPACE="dell-csm-operator"
