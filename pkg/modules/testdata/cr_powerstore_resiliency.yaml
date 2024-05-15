@@ -15,7 +15,7 @@ spec:
 
   modules:
     - name: resiliency
-      configVersion: "v1.7.0"
+      configVersion: "v1.9.1"
       enabled: true
       components:
         - name: podmon-controller
