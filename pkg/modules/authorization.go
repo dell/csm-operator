@@ -823,8 +823,7 @@ func getAuthCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 		return yamlString, err
 	}
 
-	authCrdPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthCrds)
-	buf, err := os.ReadFile(filepath.Clean(authCrdPath))
+	buf, err := readConfigFile(auth, cr, op, AuthCrds)
 	if err != nil {
 		return yamlString, err
 	}
@@ -843,15 +842,9 @@ func AuthCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.Contai
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	err = applyDeleteObjects(ctx, ctrlClient, yamlString, false)
 	if err != nil {
 		return err
-	}
-
-	for _, ctrlObj := range ctrlObjects {
-		if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-			return err
-		}
 	}
 
 	return nil

@@ -1250,7 +1250,7 @@ spec:
       labels:
         control-plane: controller-manager
       annotations:
-        storage.dell.com/CSMVersion: v2.0.0-alpha
+        storage.dell.com/CSMVersion: v1.10.0
     spec:
       containers:
       - args:
