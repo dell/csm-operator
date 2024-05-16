@@ -116,6 +116,9 @@ const (
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
+
+	// AuthCrds - name of authorization crd manifest yaml
+	AuthCrds = "authorization-crds.yaml"
 )
 
 var (
@@ -804,6 +807,42 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 	}
 
 	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// getAuthCrdDeploy - apply and deploy authorization crd manifest
+func getAuthCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	buf, err := readConfigFile(auth, cr, op, AuthCrds)
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+
+	yamlString = strings.ReplaceAll(yamlString, AuthNamespace, cr.Namespace)
+
+	return yamlString, nil
+}
+
+// AuthCrdDeploy - apply and delete Auth crds deployment
+func AuthCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	yamlString, err := getAuthCrdDeploy(op, cr)
+	if err != nil {
+		return err
+	}
+
+	err = applyDeleteObjects(ctx, ctrlClient, yamlString, false)
 	if err != nil {
 		return err
 	}

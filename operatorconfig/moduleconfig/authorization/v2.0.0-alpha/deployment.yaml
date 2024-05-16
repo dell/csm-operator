@@ -57,7 +57,7 @@ spec:
         csm: <NAME>
         app: proxy-server
     spec:
-      serviceAccount: proxy-server
+      serviceAccountName: proxy-server
       containers:
       - name: proxy-server
         image: <AUTHORIZATION_PROXY_SERVER_IMAGE>
@@ -777,4 +777,35 @@ roleRef:
 subjects:
 - kind: Group
   name: system:serviceaccounts:<NAMESPACE>
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: proxy-server
+  namespace: <NAMESPACE>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: proxy-server
+rules:
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["watch"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["storages", "csmtenants"]
+    verbs: ["get", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: proxy-server
+subjects:
+  - kind: ServiceAccount
+    name: proxy-server
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: proxy-server
   apiGroup: rbac.authorization.k8s.io

@@ -697,6 +697,9 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer)
 	if authorizationEnabled {
 		log.Infow("Create/Update authorization")
+		if err := r.reconcileAuthorizationCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
+			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
+		}
 		if err := r.reconcileAuthorization(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
 		}
@@ -999,6 +1002,21 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobilityCRDS(ctx context.
 		}
 		if err := modules.VeleroCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Velero CRDS : %v", err)
+		}
+	}
+
+	return nil
+}
+
+// reconcileAuthorizationCRDS - reconcile Authorization CRDs
+func (r *ContainerStorageModuleReconciler) reconcileAuthorizationCRDS(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+
+	// Install Authorization CRDs
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+		log.Infow("Reconcile Authorization CRDS")
+		if err := modules.AuthCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile Authorization CRDs: %v", err)
 		}
 	}
 

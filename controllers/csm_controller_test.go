@@ -1258,7 +1258,7 @@ func getAuthModule() []csmv1.Module {
 		{
 			Name:          csmv1.Authorization,
 			Enabled:       true,
-			ConfigVersion: "v1.10.0",
+			ConfigVersion: "v2.0.0-alpha",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: "karavi-authorization-proxy",
@@ -1279,7 +1279,7 @@ func getAuthProxyServer() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v1.10.0",
+			ConfigVersion:     "v2.0.0-alpha",
 			ForceRemoveModule: true,
 			OpenShift:         false,
 			Components: []csmv1.ContainerTemplate{
@@ -1317,7 +1317,7 @@ func getAuthProxyServerOCP() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v1.10.0",
+			ConfigVersion:     "v2.0.0-alpha",
 			ForceRemoveModule: true,
 			OpenShift:         true,
 			Components: []csmv1.ContainerTemplate{
@@ -1534,6 +1534,9 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 		ConfigDirectory: "../in-valid-path",
 	}
 	err := reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	err = reconciler.reconcileAuthorizationCRDS(ctx, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
