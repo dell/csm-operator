@@ -1,0 +1,24 @@
+name: dell-csi-replicator
+image: dellemc/dell-csi-replicator:v1.8.1
+imagePullPolicy: IfNotPresent
+args:
+  - "--csi-address=$(ADDRESS)"
+  - "--leader-election=true"
+  - "--worker-threads=2"
+  - "--retry-interval-start=1s"
+  - "--retry-interval-max=300s"
+  - "--timeout=300s"
+  - "--context-prefix=<ReplicationContextPrefix>"
+  - "--prefix=<ReplicationPrefix>"
+env:
+  - name: ADDRESS
+    value: /var/run/csi/csi.sock
+  - name: X_CSI_REPLICATION_CONFIG_DIR
+    value: /<DriverConfigParamsVolumeMount>
+  - name: X_CSI_REPLICATION_CONFIG_FILE_NAME
+    value: driver-config-params.yaml
+volumeMounts:
+  - name: socket-dir
+    mountPath: /var/run/csi
+  - name: <DriverConfigParamsVolumeMount>
+    mountPath: /<DriverConfigParamsVolumeMount>
