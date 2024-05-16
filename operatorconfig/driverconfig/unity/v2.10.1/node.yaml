@@ -1,0 +1,189 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["create", "delete", "get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["security.openshift.io"]
+    resourceNames: ["privileged"]
+    resources: ["securitycontextconstraints"]
+    verbs: ["use"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+subjects:
+  - kind: ServiceAccount
+    name: <DriverDefaultReleaseName>-node
+    namespace: <DriverDefaultReleaseNamespace>
+roleRef:
+  kind: ClusterRole
+  name: <DriverDefaultReleaseName>-node
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: <DriverDefaultReleaseName>-node
+  template:
+    metadata:
+      labels:
+        app: <DriverDefaultReleaseName>-node
+    spec:
+      serviceAccountName: <DriverDefaultReleaseName>-node
+      hostIPC: true
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: driver
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          image: dellemc/csi-unity:v2.10.1
+          imagePullPolicy:  IfNotPresent
+          args:
+            - "--driver-name=csi-unity.dellemc.com"
+            - "--driver-config=/unity-config/driver-config-params.yaml"
+            - "--driver-secret=/unity-secret/config"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///var/lib/kubelet/plugins/unity.emc.dell.com/csi_sock
+            - name: X_CSI_MODE
+              value: node
+            - name: X_CSI_UNITY_AUTOPROBE
+              value: "true"
+            - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
+              value: "false"
+            - name: X_CSI_PRIVATE_MOUNT_DIR
+              value: "/var/lib/kubelet/plugins/unity.emc.dell.com/disks"
+            - name: X_CSI_EPHEMERAL_STAGING_PATH
+              value: "/var/lib/kubelet/plugins/kubernetes.io/csi/pv/"
+            - name: X_CSI_ISCSI_CHROOT
+              value: "/noderoot"
+            - name: X_CSI_UNITY_NODENAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: SSL_CERT_DIR
+              value: /certs
+            - name: X_CSI_UNITY_SYNC_NODEINFO_INTERVAL
+              value: "15"
+            - name: X_CSI_HEALTH_MONITOR_ENABLED
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
+              value: "true"
+          volumeMounts:
+            - name: driver-path
+              mountPath: /var/lib/kubelet/plugins/unity.emc.dell.com
+            - name: volumedevices-path
+              mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi
+              mountPropagation: "Bidirectional"
+            - name: pods-path
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: "Bidirectional"
+            - name: dev
+              mountPath: /dev
+            - name: noderoot
+              mountPath: /noderoot
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            - name: unity-config
+              mountPath: /unity-config
+            - name: unity-secret
+              mountPath: /unity-secret
+        - name: registrar
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/unity.emc.dell.com/csi_sock
+          env:
+            - name: ADDRESS
+              value: /csi/csi_sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: registration-dir
+              mountPath: /registration
+            - name: driver-path
+              mountPath: /csi
+      volumes:
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry/
+            type: DirectoryOrCreate
+        - name: driver-path
+          hostPath:
+            path: /var/lib/kubelet/plugins/unity.emc.dell.com
+            type: DirectoryOrCreate
+        - name: volumedevices-path
+          hostPath:
+            path: /var/lib/kubelet/plugins/kubernetes.io/csi
+            type: DirectoryOrCreate
+        - name: pods-path
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: noderoot
+          hostPath:
+            path: /
+            type: Directory
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: <DriverDefaultReleaseName>-certs-0
+                  items:
+                    - key: cert-0
+                      path: cert-0
+        - name: unity-config
+          configMap:
+              name: <DriverDefaultReleaseName>-config-params
+        - name: unity-secret
+          secret:
+              secretName: <DriverDefaultReleaseName>-creds

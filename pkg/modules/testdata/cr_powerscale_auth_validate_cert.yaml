@@ -6,11 +6,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.9.0
+    configVersion: v2.10.1
     authSecret: isilon-creds-custom 
     replicas: 1
     common:
-      image: "dellemc/csi-isilon:v2.9.0"
+      image: "dellemc/csi-isilon:v2.10.1"
       imagePullPolicy: IfNotPresent
 
   modules:
@@ -19,7 +19,7 @@ spec:
       enabled: true
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.10.0
+        image: dellemc/csm-authorization-sidecar:v1.10.1
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
