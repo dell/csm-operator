@@ -85,6 +85,8 @@ const (
 
 	// AuthVaultAddress -
 	AuthVaultAddress = "<AUTHORIZATION_VAULT_ADDRESS>"
+	// AuthVaultRole -
+	AuthVaultRole = "<AUTHORIZATION_VAULT_ROLE>"
 	// AuthRedisName -
 	AuthRedisName = "<AUTHORIZATION_REDIS_NAME>"
 	// AuthRedisCommander -
@@ -535,6 +537,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 
 		if component.Name == AuthVaultComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthVaultAddress, component.VaultAddress)
+			YamlString = strings.ReplaceAll(YamlString, AuthVaultRole, component.VaultRole)
 		}
 	}
 

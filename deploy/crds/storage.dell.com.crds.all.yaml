@@ -337,6 +337,9 @@ spec:
                       vaultAddress:
                         description: VaultAddress is the address of the vault
                         type: string
+                      vaultRole:
+                        description: VaultRole is the role for the vault
+                        type: string
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
                         type: string
@@ -633,6 +636,9 @@ spec:
                         vaultAddress:
                           description: VaultAddress is the address of the vault
                           type: string
+                        vaultRole:
+                          description: VaultRole is the role for the vault
+                          type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
                           type: string
@@ -917,6 +923,9 @@ spec:
                           type: boolean
                         vaultAddress:
                           description: VaultAddress is the address of the vault
+                          type: string
+                        vaultRole:
+                          description: VaultRole is the role for the vault
                           type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
@@ -1293,6 +1302,9 @@ spec:
                       vaultAddress:
                         description: VaultAddress is the address of the vault
                         type: string
+                      vaultRole:
+                        description: VaultRole is the role for the vault
+                        type: string
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
                         type: string
@@ -1577,6 +1589,9 @@ spec:
                         type: boolean
                       vaultAddress:
                         description: VaultAddress is the address of the vault
+                        type: string
+                      vaultRole:
+                        description: VaultRole is the role for the vault
                         type: string
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
@@ -1882,6 +1897,9 @@ spec:
                         vaultAddress:
                           description: VaultAddress is the address of the vault
                           type: string
+                        vaultRole:
+                          description: VaultRole is the role for the vault
+                          type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
                           type: string
@@ -2164,6 +2182,9 @@ spec:
                         type: boolean
                       vaultAddress:
                         description: VaultAddress is the address of the vault
+                        type: string
+                      vaultRole:
+                        description: VaultRole is the role for the vault
                         type: string
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero is installed in
@@ -2452,6 +2473,9 @@ spec:
                           type: boolean
                         vaultAddress:
                           description: VaultAddress is the address of the vault
+                          type: string
+                        vaultRole:
+                          description: VaultRole is the role for the vault
                           type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero is installed in
@@ -2762,6 +2786,9 @@ spec:
                           vaultAddress:
                             description: VaultAddress is the address of the vault
                             type: string
+                          vaultRole:
+                            description: VaultRole is the role for the vault
+                            type: string
                           veleroNamespace:
                             description: VeleroNamespace is the namespace that Velero is installed in
                             type: string
@@ -3055,6 +3082,9 @@ spec:
                             type: boolean
                           vaultAddress:
                             description: VaultAddress is the address of the vault
+                            type: string
+                          vaultRole:
+                            description: VaultRole is the role for the vault
                             type: string
                           veleroNamespace:
                             description: VeleroNamespace is the namespace that Velero is installed in

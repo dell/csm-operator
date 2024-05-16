@@ -342,6 +342,7 @@ spec:
           - "--vault-address=<AUTHORIZATION_VAULT_ADDRESS>"
           - "--vault-kv-engine-path=secret"
           - "--vault-skip-certificate-validation=true"
+          - "--vault-role=<AUTHORIZATION_VAULT_ROLE>"
         ports:
         - containerPort: 50051
           name: grpc

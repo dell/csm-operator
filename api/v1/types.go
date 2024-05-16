@@ -360,6 +360,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Vault Address"
 	VaultAddress string `json:"vaultAddress,omitempty" yaml:"vaultAddress,omitempty"`
 
+	// VaultRole is the role for the vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Vault Role"
+	VaultRole string `json:"vaultRole,omitempty" yaml:"vaultRole,omitempty"`
+
 	// RedisName is the name of the redis statefulset
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis StatefulSet Name"
 	RedisName string `json:"redisName,omitempty" yaml:"redisName,omitempty"`
