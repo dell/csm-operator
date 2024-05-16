@@ -18,11 +18,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.10.0
+    configVersion: v2.10.1
     authSecret: test-powermax-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powermax:v2.10.0"
+      image: "dellemc/csi-powermax:v2.10.1"
       imagePullPolicy: IfNotPresent
 
   modules:
@@ -30,7 +30,7 @@ spec:
       enabled: true
       components:
         - name: dell-csi-replicator
-          image: dellemc/dell-csi-replicator:v1.8.0
+          image: dellemc/dell-csi-replicator:v1.8.1
           envs:
             - name: "X_CSI_REPLICATION_PREFIX"
               value: "replication.storage.dell.com/"
@@ -39,7 +39,7 @@ spec:
 
 
         - name: dell-replication-controller-manager
-          image: dellemc/dell-replication-controller:v1.8.0
+          image: dellemc/dell-replication-controller:v1.8.1
           envs:
             - name: "TARGET_CLUSTERS_IDS"
               value: "test-target-cluster-1,test-target-cluster-2"
