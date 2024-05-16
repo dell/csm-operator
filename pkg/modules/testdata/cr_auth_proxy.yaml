@@ -90,6 +90,8 @@ spec:
         - name: vault
           vaultAddress: https://10.0.0.1:8400
           vaultRole: csm-authorization
+          skipCertificateValidation: true
+          kvEnginePath: secret
 
 ---
 apiVersion: v1

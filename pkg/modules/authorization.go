@@ -87,6 +87,10 @@ const (
 	AuthVaultAddress = "<AUTHORIZATION_VAULT_ADDRESS>"
 	// AuthVaultRole -
 	AuthVaultRole = "<AUTHORIZATION_VAULT_ROLE>"
+	// AuthSkipCertificateValidation -
+	AuthSkipCertificateValidation = "<AUTHORIZATION_SKIP_CERTIFICATE_VALIDATION>"
+	// AuthKvEnginePath -
+	AuthKvEnginePath = "<AUTHORIZATION_KV_ENGINE_PATH>"
 	// AuthRedisName -
 	AuthRedisName = "<AUTHORIZATION_REDIS_NAME>"
 	// AuthRedisCommander -
@@ -538,6 +542,8 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 		if component.Name == AuthVaultComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthVaultAddress, component.VaultAddress)
 			YamlString = strings.ReplaceAll(YamlString, AuthVaultRole, component.VaultRole)
+			YamlString = strings.ReplaceAll(YamlString, AuthSkipCertificateValidation, strconv.FormatBool(component.SkipCertificateValidation))
+			YamlString = strings.ReplaceAll(YamlString, AuthKvEnginePath, component.KvEnginePath)
 		}
 	}
 

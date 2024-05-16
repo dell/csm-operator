@@ -340,8 +340,8 @@ spec:
         imagePullPolicy: Always
         args:
           - "--vault-address=<AUTHORIZATION_VAULT_ADDRESS>"
-          - "--vault-kv-engine-path=secret"
-          - "--vault-skip-certificate-validation=true"
+          - "--vault-kv-engine-path=<AUTHORIZATION_KV_ENGINE_PATH>"
+          - "--vault-skip-certificate-validation=<AUTHORIZATION_SKIP_CERTIFICATE_VALIDATION>"
           - "--vault-role=<AUTHORIZATION_VAULT_ROLE>"
         ports:
         - containerPort: 50051

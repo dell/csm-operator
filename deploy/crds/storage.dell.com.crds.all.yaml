@@ -214,6 +214,9 @@ spec:
                       imagePullPolicy:
                         description: ImagePullPolicy is the image pull policy for the image
                         type: string
+                      kvEnginePath:
+                        description: kvEnginePath is the Authorization vault secret path
+                        type: string
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -283,6 +286,9 @@ spec:
                       sentinel:
                         description: Sentinel is the name of the sentinel statefulSet
                         type: string
+                      skipCertificateValidation:
+                        description: skipCertificateValidation is the flag to skip certificate validation
+                        type: boolean
                       storageService:
                         description: StorageService is the image tag for the Container
                         type: string
@@ -513,6 +519,9 @@ spec:
                         imagePullPolicy:
                           description: ImagePullPolicy is the image pull policy for the image
                           type: string
+                        kvEnginePath:
+                          description: kvEnginePath is the Authorization vault secret path
+                          type: string
                         licenseName:
                           description: LicenseName is the name of the license for app-mobility
                           type: string
@@ -582,6 +591,9 @@ spec:
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
+                        skipCertificateValidation:
+                          description: skipCertificateValidation is the flag to skip certificate validation
+                          type: boolean
                         storageService:
                           description: StorageService is the image tag for the Container
                           type: string
@@ -801,6 +813,9 @@ spec:
                         imagePullPolicy:
                           description: ImagePullPolicy is the image pull policy for the image
                           type: string
+                        kvEnginePath:
+                          description: kvEnginePath is the Authorization vault secret path
+                          type: string
                         licenseName:
                           description: LicenseName is the name of the license for app-mobility
                           type: string
@@ -870,6 +885,9 @@ spec:
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
+                        skipCertificateValidation:
+                          description: skipCertificateValidation is the flag to skip certificate validation
+                          type: boolean
                         storageService:
                           description: StorageService is the image tag for the Container
                           type: string
@@ -1179,6 +1197,9 @@ spec:
                       imagePullPolicy:
                         description: ImagePullPolicy is the image pull policy for the image
                         type: string
+                      kvEnginePath:
+                        description: kvEnginePath is the Authorization vault secret path
+                        type: string
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -1248,6 +1269,9 @@ spec:
                       sentinel:
                         description: Sentinel is the name of the sentinel statefulSet
                         type: string
+                      skipCertificateValidation:
+                        description: skipCertificateValidation is the flag to skip certificate validation
+                        type: boolean
                       storageService:
                         description: StorageService is the image tag for the Container
                         type: string
@@ -1467,6 +1491,9 @@ spec:
                       imagePullPolicy:
                         description: ImagePullPolicy is the image pull policy for the image
                         type: string
+                      kvEnginePath:
+                        description: kvEnginePath is the Authorization vault secret path
+                        type: string
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -1536,6 +1563,9 @@ spec:
                       sentinel:
                         description: Sentinel is the name of the sentinel statefulSet
                         type: string
+                      skipCertificateValidation:
+                        description: skipCertificateValidation is the flag to skip certificate validation
+                        type: boolean
                       storageService:
                         description: StorageService is the image tag for the Container
                         type: string
@@ -1774,6 +1804,9 @@ spec:
                         imagePullPolicy:
                           description: ImagePullPolicy is the image pull policy for the image
                           type: string
+                        kvEnginePath:
+                          description: kvEnginePath is the Authorization vault secret path
+                          type: string
                         licenseName:
                           description: LicenseName is the name of the license for app-mobility
                           type: string
@@ -1843,6 +1876,9 @@ spec:
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
+                        skipCertificateValidation:
+                          description: skipCertificateValidation is the flag to skip certificate validation
+                          type: boolean
                         storageService:
                           description: StorageService is the image tag for the Container
                           type: string
@@ -2060,6 +2096,9 @@ spec:
                       imagePullPolicy:
                         description: ImagePullPolicy is the image pull policy for the image
                         type: string
+                      kvEnginePath:
+                        description: kvEnginePath is the Authorization vault secret path
+                        type: string
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -2129,6 +2168,9 @@ spec:
                       sentinel:
                         description: Sentinel is the name of the sentinel statefulSet
                         type: string
+                      skipCertificateValidation:
+                        description: skipCertificateValidation is the flag to skip certificate validation
+                        type: boolean
                       storageService:
                         description: StorageService is the image tag for the Container
                         type: string
@@ -2351,6 +2393,9 @@ spec:
                         imagePullPolicy:
                           description: ImagePullPolicy is the image pull policy for the image
                           type: string
+                        kvEnginePath:
+                          description: kvEnginePath is the Authorization vault secret path
+                          type: string
                         licenseName:
                           description: LicenseName is the name of the license for app-mobility
                           type: string
@@ -2420,6 +2465,9 @@ spec:
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
+                        skipCertificateValidation:
+                          description: skipCertificateValidation is the flag to skip certificate validation
+                          type: boolean
                         storageService:
                           description: StorageService is the image tag for the Container
                           type: string
@@ -2663,6 +2711,9 @@ spec:
                           imagePullPolicy:
                             description: ImagePullPolicy is the image pull policy for the image
                             type: string
+                          kvEnginePath:
+                            description: kvEnginePath is the Authorization vault secret path
+                            type: string
                           licenseName:
                             description: LicenseName is the name of the license for app-mobility
                             type: string
@@ -2732,6 +2783,9 @@ spec:
                           sentinel:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
+                          skipCertificateValidation:
+                            description: skipCertificateValidation is the flag to skip certificate validation
+                            type: boolean
                           storageService:
                             description: StorageService is the image tag for the Container
                             type: string
@@ -2960,6 +3014,9 @@ spec:
                           imagePullPolicy:
                             description: ImagePullPolicy is the image pull policy for the image
                             type: string
+                          kvEnginePath:
+                            description: kvEnginePath is the Authorization vault secret path
+                            type: string
                           licenseName:
                             description: LicenseName is the name of the license for app-mobility
                             type: string
@@ -3029,6 +3086,9 @@ spec:
                           sentinel:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
+                          skipCertificateValidation:
+                            description: skipCertificateValidation is the flag to skip certificate validation
+                            type: boolean
                           storageService:
                             description: StorageService is the image tag for the Container
                             type: string
