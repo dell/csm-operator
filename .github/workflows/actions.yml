@@ -89,13 +89,15 @@ jobs:
           directories: .
           options: -ri
   yaml_lint_scan:
-    name: Yaml Lint
+    name: Run Yaml Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout the code
+        uses: actions/checkout@v4
       - name: yaml-lint
         uses: ibiqlik/action-yamllint@v3
         with:
+          file_or_dir: .
           config_file: .yamllint.yml
   image_security_scan:
     name: Image Scanner
