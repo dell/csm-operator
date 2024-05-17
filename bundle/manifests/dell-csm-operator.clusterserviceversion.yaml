@@ -3665,7 +3665,7 @@ spec:
           template:
             metadata:
               annotations:
-                storage.dell.com/CSMVersion: v1.10.0
+                storage.dell.com/CSMVersion: v1.10.2
               labels:
                 control-plane: controller-manager
             spec:

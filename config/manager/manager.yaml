@@ -15,7 +15,7 @@ spec:
       labels:
         control-plane: controller-manager
       annotations:
-        storage.dell.com/CSMVersion: v1.10.0
+        storage.dell.com/CSMVersion: v1.10.2
     spec:
       serviceAccountName: manager-service-account
       securityContext:
