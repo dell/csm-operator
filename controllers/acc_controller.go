@@ -245,6 +245,14 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 	// Failed deployment
 	r.EventRecorder.Eventf(acc, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", err.Error())
 
+	BrownfieldCR := "brownfield-deployment.yaml"
+	brownfieldDeploymentPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", op.ConfigDirectory, csmv1.DreadnoughtClient, acc.Spec.Client.ConfigVersion, BrownfieldCR)
+	if err = utils.BrownfieldDeployment(ctx, brownfieldDeploymentPath, *acc, crc); err == nil {
+		r.EventRecorder.Eventf(acc, corev1.EventTypeNormal, csmv1.EventCompleted, "Brownfield- Objects created: %s completed OK", acc.Name)
+		fmt.Println(("******Checkpoint 1- call to brownfield deployment success"))
+		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
+	}
+
 	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
 }
 
@@ -463,13 +471,6 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 				return err
 			}
 		}
-	}
-
-	BrownfieldCR := "brownfield-deployment.yaml"
-	brownfieldDeploymentPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
-	err = utils.BrownfieldDeployment(ctx, brownfieldDeploymentPath, cr, ctrlClient)
-	if err != nil {
-		return err
 	}
 
 	return nil
