@@ -22,7 +22,7 @@ export VALUES_FILE="testfiles/values.yaml"
 # USER MODIFICATION REQUIRED: must supply path to your cert-csi binary
 export CERT_CSI="/root/cert-csi"
 
-# [Optional] uncomment any modules you want to test
+# Uncomment to specify tagged groups of tests to run (need at least one tag specified)
 # export AUTHORIZATION=true
 # export REPLICATION=true
 # export OBSERVABILITY=true
