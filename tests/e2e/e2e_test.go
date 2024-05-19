@@ -76,10 +76,7 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	tagEnvVars := []string{
-		"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY",
-		"POWERFLEX", "POWERSCALE", POWERMAX", "POWERSTORE", "UNITY", "SANITY"
-	}
+	tagEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must be set.")
@@ -123,7 +120,7 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 		for _, test := range testResources {
 			By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
 			if ContainsTag(test.Scenario.Tags, tagsSpecified) == false {
-				By(fmt.Sprintf("Not tagged for this test run, skipping", test.Scenario.Tags))
+				By(fmt.Sprintf("Not tagged for this test run, skipping"))
 				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 				continue
 			}
