@@ -1,4 +1,4 @@
-# Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2022-2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -10,36 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# [Optional] ginko options for custom runs
-export GINKGO_OPTS="-v"
-
-# [Optional] Path to .kube configuration if it is not in the default location
-# export KUBECONFIG=""
-
-# Must supply path to values file if different from testfiles/values.yaml
-export VALUES_FILE="testfiles/values.yaml"
-
-# USER MODIFICATION REQUIRED: must supply path to your cert-csi binary
-export CERT_CSI="/root/cert-csi"
-
-# Uncomment to specify tagged groups of tests to run (need at least one tag specified)
-# export AUTHORIZATION=true
-# export REPLICATION=true
-# export OBSERVABILITY=true
-# export AUTHORIZATIONPROXYSERVER=true
-# export RESILIENCY=true
-# export APPLICATIONMOBILITY=true
-export SANITY=true
-
-# [Optional] namespace of operator if you deployed it to a namespace diffrent form the one below.
-# export OPERATOR_NAMESPACE="dell-csm-operator"
-
-# USER MODIFICATION REQUIRED: must supply path to your karavictl binary
-# export KARAVICTL="/root/karavictl"
-
 # USER MODIFICATION REQUIRED: must supply address of Authorization Proxy Server
 # Since this e2e exposes the Proxy Server via NodePort, you can use a cluster node IP
-# export PROXY_HOST="10.0.0.1"
+export PROXY_HOST="csm-authorization.com"
 
 # The following are Authorization Proxy Server specific:
 # Must supply storage array details
