@@ -64,7 +64,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver with first alternate sample file"
   paths:
@@ -159,7 +159,7 @@
   customTest:
     name: Cert CSI and check_parameters.sh
     run:
-      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_health_monitor_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver(With Authorization)"
@@ -194,7 +194,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(With Replication)"
   paths:
@@ -326,7 +326,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable/Disable Observability"
   paths:
@@ -407,7 +407,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization, Enable Observability"
   paths:
@@ -494,7 +494,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver(Standalone)"
   paths:
@@ -518,7 +518,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver with first set of alternate values"
   paths:
@@ -635,7 +635,7 @@
   customTest:
     name: Cert CSI and check_parameters.sh
     run:
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_5_values.csv dell powerflex
 
 - scenario: "Uninstall PowerFlex Driver"
@@ -688,7 +688,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: Install PowerFlex Driver(With Authorization), Enable/Disable Authorization module"
   paths:
@@ -751,7 +751,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver(With Observability and Custom Certs)"
   paths:
@@ -942,7 +942,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
   paths:
@@ -1118,7 +1118,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc powerstore --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc powerstore --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerStore Driver(With Resiliency)"
   paths:
@@ -1180,7 +1180,7 @@
   customTest:
     name: Cert CSI
     run:
-      - ./cert-csi test vio --sc unity --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc unity --chainNumber 2 --chainLength 2
 
 - scenario: "Install App Mobility (Standalone)"
   paths:
@@ -1362,7 +1362,7 @@
   customTest:
     name: Cert CSI
     run: 
-      - ./cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerMax Driver(With Observability)"
   paths:
@@ -1387,7 +1387,7 @@
   customTest:
     name: Cert CSI
     run: 
-      - ./cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerMax Driver(Standalone), Enable/Disable Observability"
   paths:
