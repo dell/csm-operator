@@ -15,7 +15,7 @@ This directory contains the testing infrastructure and E2E test implementation f
 
 # Unit Tests
 
-To run unit test, go to the root directory of this project and run `make <package>-unit-test`. Components include controller (controllers package), module (modules package), and driver (drivers package).
+To run unit tests, go to the root directory of this project and run `make <component>-unit-test`. Components include `controller` (controllers package), `module` (modules package), and `driver` (drivers package).
 
 # E2E Tests
 
