@@ -34,12 +34,12 @@ import (
 const (
 	timeout          = time.Minute * 10
 	interval         = time.Second * 10
-	valuesFileEnvVar = "E2E_VALUES_FILE"
+	valuesFileEnvVar = "E2E_SCENARIOS_FILE"
 )
 
 var (
 	testResources    []step.Resource
-	tagsSpecified []string
+	tagsSpecified    []string
 	stepRunner       *step.Runner
 	beautify         string
 )
@@ -79,7 +79,7 @@ var _ = BeforeSuite(func() {
 	tagEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
-	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must be set.")
+	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_SCENARIOS_FILE must be set.")
 
 	for _, tagEnvVar := range tagEnvVars {
 		enabled := os.Getenv(tagEnvVar)
