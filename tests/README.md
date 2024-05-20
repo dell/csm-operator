@@ -65,7 +65,7 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Set your array information in the `array-info.sh` file.
 - If you do not have `cert-csi`, `karavictl`, and (for app-mobility) `dellctl` accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl`, and they will be added to `/usr/local/bin`
 - Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
-- Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Two examples are provided:
+- Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:
 
 You have made changes to `controllers/csm_controller.go` and `pkg/drivers/powerflex.go`, and need run sanity and powerflex test suites. Additionally, you do not have cert-csi or karavictl executables in your PATH:
 ```bash
