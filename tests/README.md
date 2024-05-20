@@ -63,19 +63,22 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
 - Set your array information in the `array-info.sh` file.
-- If you do not have `cert-csi`, `karavictl`, and (for app-mobility) `dellctl` in your `PATH` variable, pass the path to each executable to the script, like so: `run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl`,
-- Select the test suites you want to run. Available test suites can be seen by running `run-e2e-test.sh -j` If multiple suites are specified, the union of those two suites will be run.
-- Run the e2e test by executing the `run-e2e-test.sh` script with desired options. Two examples are provided:
+- If you do not have `cert-csi`, `karavictl`, and (for app-mobility) `dellctl` accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl`, and they will be added to `/usr/local/bin`
+- Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
+- Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Two examples are provided:
 
-To run sanity and powerflex test suites, with cert-csi and karavictl not in PATH:
+You have made changes to `controllers/csm_controller.go` and `pkg/drivers/powerflex.go`, and need run sanity and powerflex test suites. Additionally, you do not have cert-csi or karavictl executables in your PATH:
 ```bash
 run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl --sanity --powerflex
 ```
-To run just the sanity suite, with cert-csi and karavictl already in PATH
+You made some changes to `controllers/csm_controller.go`, and need to run sanity tests. cert-csi and karavictl are already in your PATH:
 ```bash
 run-e2e-test.sh --sanity
 ```
-
+You made some changes to `pkg/modules/observability.go`, and need to run observability tests. cert-csi and karavictl are already in your path, but you need to update the karavictl binary with a newer one:
+```bash
+run-e2e-test.sh --obs --karavictl=/path/to/karavictl
+```
 ### Scenarios File
 
 An e2e test scenarios file is a yaml file that defines all e2e test scenarios to be run. An excerpt of the file is shown below:
