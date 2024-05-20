@@ -47,6 +47,7 @@ spec:
           storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
+          controller: dellemc/csm-authorization-controller:v2.0.0-alpha
 
           # certificate: path to certificate file -- add cert here to use custom certificates
           # for self-signed certs, leave empty string

@@ -328,6 +328,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Storage Service Container Image"
 	StorageService string `json:"storageService,omitempty" yaml:"storageService,omitempty"`
 
+	// Controller is the image tag for the container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Controller Container Image"
+	Controller string `json:"controller,omitempty" yaml:"controller,omitempty"`
+
 	// Redis is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Redis Container Image"
 	Redis string `json:"redis,omitempty" yaml:"redis,omitempty"`

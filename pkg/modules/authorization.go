@@ -77,6 +77,8 @@ const (
 	AuthRedisCommanderImage = "<AUTHORIZATION_REDIS_COMMANDER_IMAGE>"
 	// AuthRedisStorageClass -
 	AuthRedisStorageClass = "<REDIS_STORAGE_CLASS>"
+	// AuthControllerImage -
+	AuthControllerImage = "<AUTHORIZATION_CONTROLLER_IMAGE>"
 
 	// AuthProxyHost -
 	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
@@ -516,6 +518,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, component.TenantService)
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
+			YamlString = strings.ReplaceAll(YamlString, AuthControllerImage, component.Controller)
 			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 		}
 

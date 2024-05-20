@@ -449,7 +449,7 @@ rules:
   - apiGroups: ["csm-authorization.storage.dell.com"]
     resources: ["csmtenants/finalizers"]
     verbs: ["update"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
+  - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]
   - apiGroups: ["csm-authorization.storage.dell.com"]
