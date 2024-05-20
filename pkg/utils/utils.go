@@ -140,6 +140,9 @@ const (
 	PodmonNodeComponent = "podmon-node"
 	// ApplicationMobilityNamespace - application-mobility
 	ApplicationMobilityNamespace = "application-mobility"
+	//BrownfieldNamespace
+	ExistingNamespace = "<ExistingNameSpace>"
+	ClientNamespace   = "<ClientNameSpace>"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -1112,9 +1115,9 @@ func BrownfieldDeployment(ctx context.Context, path string, cr csmv1.ApexConnect
 	//Get the namespaces
 	log := logger.GetLogger(ctx)
 
-	namespace, err := GetNamespaces()
+	namespace, err := GetNamespaces(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting the namespaces %s", err)
+		log.Error(err, "Failed to get namespaces")
 	}
 
 	buf, err := os.ReadFile(filepath.Clean(path))
@@ -1125,12 +1128,15 @@ func BrownfieldDeployment(ctx context.Context, path string, cr csmv1.ApexConnect
 	yamlFile := string(buf)
 
 	for _, ns := range namespace {
-		yamlStr := strings.ReplaceAll(yamlFile, "<EXISTING_NAMESPACE>", ns)
-		yamlStr = strings.ReplaceAll(yamlFile, "<CLIENT_NAMESPACE>", cr.Namespace)
+		fmt.Printf("ns is %s\n", ns)
+		fmt.Printf("cr.Namespace is %s\n", cr.Namespace)
+
+		yamlStr := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
+		yamlStr = strings.ReplaceAll(yamlFile, ClientNamespace, cr.Namespace)
 
 		err := CreateObjects(ctx, yamlStr, ctrlClient)
 		if err != nil {
-			fmt.Println(("*****Checkpoint 2- call to Create Object failed"))
+			log.Infoln("*****Checkpoint 2- call to Create Objects failed")
 			return err
 		}
 
@@ -1144,13 +1150,13 @@ func BrownfieldDeployment(ctx context.Context, path string, cr csmv1.ApexConnect
 		//	return err
 		//}
 	}
-	fmt.Println(("*****Checkpoint 3"))
+	fmt.Println("*****Checkpoint 3")
 	log.Infoln("Brownfield deploymet success")
 	return nil
 }
 
 // Get the namespaces of csm-objects in the cluster
-func GetNamespaces() ([]string, error) {
+func GetNamespaces(ctx context.Context) ([]string, error) {
 	// Get K8s config
 	//kubeconfig := os.Getenv("KUBECONFIG") // Use the KUBECONFIG environment variable if set
 	//
@@ -1160,17 +1166,18 @@ func GetNamespaces() ([]string, error) {
 	//	return nil, fmt.Errorf("error creating clientset: %v", err)
 	//	//os.Exit(1)
 	//}
+	log := logger.GetLogger(ctx)
+
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		fmt.Println(("*****Checkpoint 4- call to rest.InClusterConfig failed"))
+		log.Infoln("*****Checkpoint 4- call to rest.InClusterConfig failed")
 		panic(err.Error())
 	}
 
 	// Create a Kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("error creating clientset: %v", err)
-		//os.Exit(1)
+		return nil, err
 	}
 
 	// Define label selector
@@ -1181,7 +1188,8 @@ func GetNamespaces() ([]string, error) {
 		LabelSelector: labelSelector,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting pods: %v\n", err)
+		log.Error(err, "Failed to get pods in the cluster")
+
 		os.Exit(1)
 	}
 
@@ -1199,6 +1207,9 @@ func GetNamespaces() ([]string, error) {
 		namespaces = append(namespaces, namespace)
 	}
 	fmt.Println(("*****Checkpoint 5"))
+	for _, str := range namespaces {
+		log.Infoln(str)
+	}
 	return namespaces, nil
 }
 

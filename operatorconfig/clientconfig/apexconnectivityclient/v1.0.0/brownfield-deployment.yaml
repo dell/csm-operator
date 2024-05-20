@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: connectivity-client-docker-k8s
-  namespace: <EXISTING_NAMESPACE>
+  namespace: <ExistingNameSpace>
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -21,11 +21,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: connectivity-client-docker-k8s
-  namespace: <EXISTING_NAMESPACE>
+  namespace: <ExistingNameSpace>
 subjects:
   - kind: ServiceAccount
     name: connectivity-client-docker-k8s
-    namespace: <CLIENT_NAMESPACE>
+    namespace: <ClientNameSpace>
 roleRef:
   kind: Role
   name: connectivity-client-docker-k8s
