@@ -51,14 +51,16 @@ To run e2e test, go through the following steps:
 ./run-e2e-test.sh
 ```
 
-#### Values File
+#### Scenarios File
 
-An e2e test values file is a yaml file that defines all e2e tests to be ran. An excerpt of the file is shown below:
+An e2e test scenarios file is a yaml file that defines all e2e test scenarios to be run. An excerpt of the file is shown below:
 
 ```yaml
 - scenario: "Install PowerScale Driver(Standalone)"
   path: "testfiles/storage_csm_powerscale.yaml"
-  modules:
+  tags:
+    - powerscale
+    - sanity
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Apply custom resources"
@@ -76,17 +78,19 @@ An e2e test values file is a yaml file that defines all e2e tests to be ran. An 
     # Example:
     #   ./hello_world.sh
     #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run: ./cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
+    run:
+      - cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 ```
 
 Each test has:
 
 - `scenario`: The name of the test to run
 - `path`: The path to the custom resources yaml file that has the specific configuration you want to test.
+- `tags`: Each test can belong to one or more groups of tests, specified by tags. To see a list of currently available tags, run `./run-e2e-test.sh -h`.
 - `steps`: Steps to take for the specific scenearios. Please note that all steps above and the ones in this sample file `tests/e2e/testfiles/values.yaml` already have a backend implementation. If you desire to use a different step, see [Develop](#develop) for how to add new E2E Test
 - `customTest`: An entrypoint for users to run custom test against their environment. You must have `"Run custom test"` as part of your `steps` above for this custom test to run. This object has the following parameter.
   - `name`: Name of your custom test
-  - `run`: A command line argument that will be run by the e2e test. To ensure the command is accessible from e2e test repo, use absolute paths if you are running a script.
+  - `run`: A list of command line arguments that will be run by the e2e test.
 
 ### Develop
 
