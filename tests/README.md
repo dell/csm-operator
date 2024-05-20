@@ -1,22 +1,27 @@
-# Test for CSM Operator
+# Testing for the CSM Operator
 
-This is the test directory for CSM operator.
+This directory contains the testing infrastructure and E2E test implementation for the csm-operator. There are two kinds of tests for the operator: unit tests and end-to-end (E2E) tests.
 
-`config` directory includes yaml files consumed by test cases. For example `driverconfig/powerscale/v2.x.y/node.yaml` is consumed by `pkg/drivers/commonconfig_test.go`.
+## Table of Contents
 
-`shared/clientgoclient` implements kubernetes client from client-go package. It has a getter function for each API version like `AppsV1Interface` or `CoreV1Interface`. `AppsV1Interface` is the one that we need as it has getter function for `daemonsetInterface`. The `daemonsetInterface` has all `Create`, `Apply`, `Delete` etc. methods that we will be using to manipulate Kubernetes runtime objects.
+* [Unit Tests](#unit-tests)
+* [E2E Tests](#e2e-tests)
+  * [Prerequisites](#prerequisites)
+    * [Application Mobility Prerequisites](#application-mobility-prerequisites)
+  * [Run](#run)
+    * [Scenarios File](#scenarios-file)
+  * [Developing E2E Tests](#developing-e2e-tests)
+* [Directory Layout](#directory-layout)
 
-`shared/crclient` implements kubernetes client from controller runtime. It has very similar functionalities as the one above except that it can't do apply. These two clients share the same memory to store runtime objects.
+# Unit Tests
 
-## Unit Test
+To run unit test, go to the root directory of this project and run `make <package>-unit-test`. Components include controller (controllers package), module (modules package), and driver (drivers package).
 
-To run unit test, go to the root directory of this project and run `make unit-test`. It will output a report of tests being run.
-
-## E2E Test
+# E2E Tests
 
 The E2E tests test the installation of Dell CSM Drivers and Modules.
 
-### Prerequisites
+## Prerequisites
 
 - A supported environment where the Dell Container Storage Modules Operator is running and a storageclass is installed.
 - All prerequisites for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
@@ -30,14 +35,14 @@ The E2E tests test the installation of Dell CSM Drivers and Modules.
 go install github.com/onsi/ginkgo/v2/ginkgo
 go get github.com/onsi/gomega/...
 ```    
-#### Application Mobility Prerequisites
+### Application Mobility Prerequisites
 If running the Application Mobility e2e tests, further setup must be done, you must:
 - have a MinIO object storage setup, with default credentials 
    - At least 2 buckets setup, if instance only has one bucket, set ALT_BUCKET_NAME = BUCKET_NAME
 - have all required licenses installed in your testing environment
 - have the latest Application Mobility controller and plugin images 
 
-### Run
+## Run
 
 To run e2e test, go through the following steps:
 
@@ -51,7 +56,7 @@ To run e2e test, go through the following steps:
 ./run-e2e-test.sh
 ```
 
-#### Scenarios File
+### Scenarios File
 
 An e2e test scenarios file is a yaml file that defines all e2e test scenarios to be run. An excerpt of the file is shown below:
 
@@ -92,7 +97,7 @@ Each test has:
   - `name`: Name of your custom test
   - `run`: A list of command line arguments that will be run by the e2e test.
 
-### Develop
+## Developing E2E Tests
 
 Most steps to cover common use cases already have their respective backend implementations. Sometimes we run into a situation where we may need to add a new step. For the sake of illustration, please follow the constraints and steps below to add a new test scenario called `"Install PowerHello Driver(With a module called World)"` to excerpt of yaml file shown above.
 
@@ -193,3 +198,11 @@ Most steps to cover common use cases already have their respective backend imple
             ```
 
         3. [Run your E2E](#run). If you get this error `no method for step: <you step>`, it means you either haven't implemented it or there's a problem with your regex.
+
+# Directory Layout
+
+`config` directory includes yaml files consumed by test cases. For example `driverconfig/powerscale/v2.x.y/node.yaml` is consumed by `pkg/drivers/commonconfig_test.go`.
+
+`shared/clientgoclient` implements kubernetes client from client-go package. It has a getter function for each API version like `AppsV1Interface` or `CoreV1Interface`. `AppsV1Interface` is the one that we need as it has getter function for `daemonsetInterface`. The `daemonsetInterface` has all `Create`, `Apply`, `Delete` etc. methods that we will be using to manipulate Kubernetes runtime objects.
+
+`shared/crclient` implements kubernetes client from controller runtime. It has very similar functionalities as the one above except that it can't do apply. These two clients share the same memory to store runtime objects.
