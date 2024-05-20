@@ -73,6 +73,8 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+      annotations:
+        kubectl.kubernetes.io/default-container: driver       
     spec:
       serviceAccount: <DriverDefaultReleaseName>-node
       #nodeSelector:

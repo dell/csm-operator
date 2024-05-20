@@ -77,6 +77,8 @@ spec:
       labels:
         app: <DriverDefaultReleaseName>-node
         driver.dellemc.com: dell-storage
+      annotations:
+        kubectl.kubernetes.io/default-container: driver        
     spec:
       #nodeSelector:
       #tolerations:
