@@ -1110,6 +1110,8 @@ func DetermineUnitTestRun(ctx context.Context) bool {
 
 func BrownfieldDeployment(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
 	//Get the namespaces
+	log := logger.GetLogger(ctx)
+
 	namespace, err := GetNamespaces()
 	if err != nil {
 		return fmt.Errorf("error getting the namespaces %s", err)
@@ -1143,6 +1145,7 @@ func BrownfieldDeployment(ctx context.Context, path string, cr csmv1.ApexConnect
 		//}
 	}
 	fmt.Println(("*****Checkpoint 3"))
+	log.Infoln("Brownfield deploymet success")
 	return nil
 }
 
