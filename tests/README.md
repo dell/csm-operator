@@ -19,19 +19,19 @@ To run unit tests, go to the root directory of this project and run `make <compo
 
 # E2E Tests
 
-The E2E tests test the installation of Dell CSM Drivers and Modules.
+The end-to-end tests test the functionality of the operator as a whole by installing different combinations of drivers and modules, enabling and disabling components, and verifying the installed functionality (using e.g. cert-csi). All test scenarios are specified in `tests/e2e/testfiles/scenarios.yaml` and are tagged by which test suite(s) they are a part of -- test suites include a test suite for each driver and module, as well as a `sanity` suite, which is designed to be run anytime changes made to the operator are being checked into the main branch. 
 
 ## Prerequisites
 
 - A supported environment where the Dell Container Storage Modules Operator is running and a storageclass is installed.
 - All prerequisites for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
-- For tests that configure secret/storageclasses; The following namespaces need to be created beforehand:
+- The following namespaces need to be created beforehand:
   - `dell`
   - `karavi`
   - `authorization`
   - `proxy-ns`
+- In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand.
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
-
 ```bash
 go install github.com/onsi/ginkgo/v2/ginkgo
 go get github.com/onsi/gomega/...
@@ -45,16 +45,22 @@ If running the Application Mobility e2e tests, further setup must be done, you m
 
 ## Run
 
-To run e2e test, go through the following steps:
+The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 
 - Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
-- Set your environment variables in the file `env-e2e-test.sh`. You MUST set `CERT-CSI` to point to a cert-csi executable.
-- If you want to test any modules, uncomment their environment variables in `env-e2e-test.sh`.
-- Run the e2e test by executing the commands below:
+- Set your array information in the `array-info.sh` file.
+- If you do not have `cert-csi`, `karavictl`, and (for app-mobility) `dellctl` in your `PATH` variable, pass the path to each executable to the script, like so: `run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl`,
+- Select the test suites you want to run. Available test suites can be seen by running `run-e2e-test.sh -j` If multiple suites are specified, the union of those two suites will be run.
+- Run the e2e test by executing the `run-e2e-test.sh` script with desired options. Two examples are provided:
 
-```bash
-./run-e2e-test.sh
+To run e2e test sanity and powerflex suites, with cert-csi and karavictl not in PATH:
+```
+run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl --sanity --powerflex
+```
+To run just the sanity suite, with cert-csi and karavictl already in PATH
+```
+run-e2e-test.sh --sanity
 ```
 
 ### Scenarios File
