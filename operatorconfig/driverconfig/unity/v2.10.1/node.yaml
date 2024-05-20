@@ -63,6 +63,8 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+      annotations:
+        kubectl.kubernetes.io/default-container: driver        
     spec:
       serviceAccountName: <DriverDefaultReleaseName>-node
       hostIPC: true
