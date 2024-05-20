@@ -38,10 +38,10 @@ const (
 )
 
 var (
-	testResources    []step.Resource
-	tagsSpecified    []string
-	stepRunner       *step.Runner
-	beautify         string
+	testResources []step.Resource
+	tagsSpecified []string
+	stepRunner    *step.Runner
+	beautify      string
 )
 
 func Contains(slice []string, str string) bool {
