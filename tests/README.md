@@ -32,7 +32,7 @@ The end-to-end tests test the functionality of the operator as a whole by instal
   - `proxy-ns`
   - (if running sanity, powerflex, or modules suites) `test-vxflexos`
   - (if running sanity, powerscale, or modules suites) `isilon`
-- AUTH AUTH AUTH
+- For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
 ```bash
