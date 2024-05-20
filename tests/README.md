@@ -15,7 +15,7 @@ This directory contains the testing infrastructure and E2E test implementation f
 
 # Unit Tests
 
-The unit tests are quick, easy-to-run tests that verify the functinality of the methods in different packages. The only major requirement for unit tests is that Go is installed.
+The unit tests are quick, easy-to-run tests that verify the functinality of the methods in different packages. The only major requirement for unit tests is that Go is installed. The unit tests are automatically run by GitHub actions as part of any PR targeting the main branch, and must pass with sufficient coverage for the PR to be merged.
 
 To run unit tests, go to the root directory of this project and run `make <component>-unit-test`. Components include `controller` (controllers package), `module` (modules package), and `driver` (drivers package).
 
