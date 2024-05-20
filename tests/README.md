@@ -1,6 +1,6 @@
 # Testing for the CSM Operator
 
-This directory contains the testing infrastructure and E2E test implementation for the csm-operator. There are two kinds of tests for the operator: unit tests and end-to-end (E2E) tests.
+This directory contains the testing infrastructure and E2E test implementation for the csm-operator. There are two kinds of tests for the operator: [unit tests](#unit-tests) and [end-to-end (E2E)](#e2e-tests) tests.
 
 ## Table of Contents
 
@@ -26,10 +26,11 @@ The E2E tests test the installation of Dell CSM Drivers and Modules.
 - A supported environment where the Dell Container Storage Modules Operator is running and a storageclass is installed.
 - All prerequisites for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
 - For tests that configure secret/storageclasses; The following namespaces need to be created beforehand:
-  - isilon
-  - dell
-  - test-vxflexos
-- Ginkgo v1.16.5 is installed. To install, go to `tests/e2e` and run the following commands:
+  - `dell`
+  - `karavi`
+  - `authorization`
+  - `proxy-ns`
+- Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
 
 ```bash
 go install github.com/onsi/ginkgo/v2/ginkgo
