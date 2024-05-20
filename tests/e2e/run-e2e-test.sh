@@ -19,6 +19,7 @@ export E2E_SCENARIOS_FILE=testfiles/scenarios.yaml
 export ARRAY_INFO_FILE=array-info.sh
 export GO111MODULE=on
 export ACK_GINKGO_RC=true
+export PROG="${0}"
 
 set -o errexit
 set -o nounset
@@ -39,8 +40,7 @@ function checkForScenariosFile() {
   fi
 
   stat $E2E_SCENARIOS_FILE >&/dev/null || {
-    log error "$E2E_SCENARIOS_FILE is not a valid scenario file - exiting"
-    log Failed
+    echo "error: $E2E_SCENARIOS_FILE is not a valid scenario file - exiting"
     exit 1
   }
 }
@@ -48,16 +48,14 @@ function checkForScenariosFile() {
 function checkForCertCsi() {
   if [ -v CERT_CSI ]; then
     stat $CERT_CSI >&/dev/null || {
-      log error "$CERT_CSI is not a valid cert-csi binary - exiting"
-      log Failed
+      echo "error: $CERT_CSI is not a valid cert-csi binary - exiting"
       exit 1
     }
     cp $CERT_CSI /usr/local/bin/
   fi
 
   cert-csi --help >&/dev/null || {
-    log error "cert-csi required but not available - exiting"
-    log Failed
+    echo "error: cert-csi required but not available - exiting"
     exit 1
   }
 }
@@ -65,16 +63,14 @@ function checkForCertCsi() {
 function checkForKaravictl() {
   if [ -v KARAVICTL ]; then
     stat $KARAVICTL >&/dev/null || {
-      log error "$KARAVICTL is not a valid karavictl binary - exiting"
-      log Failed
+      echo "$KARAVICTL is not a valid karavictl binary - exiting"
       exit 1
     }
     cp $KARAVICTL /usr/local/bin/
   fi
 
   karavictl --help >&/dev/null || {
-    log error "karavictl required but not available - exiting"
-    log Failed
+    echo "error:karavictl required but not available - exiting"
     exit 1
   }
 }
@@ -82,16 +78,14 @@ function checkForKaravictl() {
 function checkForDellctl() {
   if [ -v DELLCTL ]; then
     stat $DELLCTL >&/dev/null || {
-      log error "$DELLCTL is not a valid path for dellctl - exiting"
-      log Failed
+      echo "error: $DELLCTL is not a valid path for dellctl - exiting"
       exit 1
     }
     cp $DELLCTL /usr/local/bin/
   fi
 
   dellctl --help >&/dev/null || {
-    log error "dellctl required but not available - exiting"
-    log Failed
+    echo "error: dellctl required but not available - exiting"
     exit 1
   }
 }
@@ -117,7 +111,7 @@ function usage() {
   echo
   echo "Help for $PROG"
   echo
-  echo "This script runs the E2E tests for the csm-operator. You can specify different test suites with CL flags such as \'--sanity\' or \'--powerflex\'. Please see readme for more information"
+  echo "This script runs the E2E tests for the csm-operator. You can specify different test suites with flags such as '--sanity' or '--powerflex'. Please see readme for more information"
   echo
   echo "Usage: $PROG options..."
   echo "Options:"
