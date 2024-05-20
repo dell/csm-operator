@@ -19,29 +19,38 @@ To run unit tests, go to the root directory of this project and run `make <compo
 
 # E2E Tests
 
-The end-to-end tests test the functionality of the operator as a whole by installing different combinations of drivers and modules, enabling and disabling components, and verifying the installed functionality (using e.g. cert-csi). All test scenarios are specified in `tests/e2e/testfiles/scenarios.yaml` and are tagged by which test suite(s) they are a part of -- test suites include a test suite for each driver and module, as well as a `sanity` suite, which is designed to be run anytime changes made to the operator are being checked into the main branch. 
+The end-to-end tests test the functionality of the operator as a whole by installing different combinations of drivers and modules, enabling and disabling components, and verifying the installed functionality (using e.g. cert-csi). All test scenarios are specified in `tests/e2e/testfiles/scenarios.yaml` and are tagged by which test suite(s) they are a part of -- test suites include a test suite for each driver and module, as well as a `sanity` suite, which is designed to be run anytime changes made to the operator are being checked into the main branch. In addition, if you have made any driver- or module-specific changes, (any changes in `pkg/drivers`, `pkg/modules`, `operatorconfig/driverconfig`, `operatorconfig/moduleconfig`, etc), please run the E2E tests specific to these components as well.
 
 ## Prerequisites
 
 - A supported environment where the Dell Container Storage Modules Operator is running and a storageclass is installed.
-- All prerequisites for a specific driver and modules to test. For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/)
+- Fill in the `array-info.sh` environment variables (more info below).
 - The following namespaces need to be created beforehand:
   - `dell`
   - `karavi`
   - `authorization`
   - `proxy-ns`
-- In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand.
+  - (if running sanity, powerflex, or modules suites) `test-vxflexos`
+  - (if running sanity, powerscale, or modules suites) `isilon`
+- AUTH AUTH AUTH
+- In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
 ```bash
 go install github.com/onsi/ginkgo/v2/ginkgo
 go get github.com/onsi/gomega/...
-```    
+```
+### Array Information
+For PowerFlex, PowerScale, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites. 
+
+Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
+
 ### Application Mobility Prerequisites
-If running the Application Mobility e2e tests, further setup must be done, you must:
-- have a MinIO object storage setup, with default credentials 
-   - At least 2 buckets setup, if instance only has one bucket, set ALT_BUCKET_NAME = BUCKET_NAME
+If running the Application Mobility e2e tests, (the sanity suite includes a few simple app-mobility tests), further setup must be done:
+- have a MinIO object storage setup, with default credentials
+   - At least 2 buckets set up, if instance only has one bucket, set ALT_BUCKET_NAME = BUCKET_NAME
 - have all required licenses installed in your testing environment
-- have the latest Application Mobility controller and plugin images 
+- have the latest Application Mobility controller and plugin images
+The application-mobility repo has information on all of these pre-requisites up, including a script to install minio.
 
 ## Run
 
@@ -54,12 +63,12 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Select the test suites you want to run. Available test suites can be seen by running `run-e2e-test.sh -j` If multiple suites are specified, the union of those two suites will be run.
 - Run the e2e test by executing the `run-e2e-test.sh` script with desired options. Two examples are provided:
 
-To run e2e test sanity and powerflex suites, with cert-csi and karavictl not in PATH:
-```
+To run sanity and powerflex test suites, with cert-csi and karavictl not in PATH:
+```bash
 run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl --sanity --powerflex
 ```
 To run just the sanity suite, with cert-csi and karavictl already in PATH
-```
+```bash
 run-e2e-test.sh --sanity
 ```
 
