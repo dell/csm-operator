@@ -128,6 +128,26 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	return nil
 }
 
+func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr string) error {
+	oldCrNum, _ := strconv.Atoi(oldCrNumStr)
+	oldCr := res.CustomResource[oldCrNum-1]
+
+	newCrNum, _ := strconv.Atoi(newCrNumStr)
+	newCr := res.CustomResource[newCrNum-1]
+
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: oldCr.Namespace,
+		Name:      oldCr.Name,
+	}, found); err != nil {
+		return err
+	}
+
+	// Update old CR with the spec of new CR
+	found.Spec = newCr.Spec
+	return step.ctrlClient.Update(context.TODO(), found)
+}
+
 func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string) error {
 	if thirdPartyModule == "cert-manager" {
 		cmd := exec.Command("kubectl", "apply", "-f", "testfiles/cert-manager-crds.yaml")
@@ -166,7 +186,7 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			return err
 		}
 
-		//give wp time to setup before we create backup/restores
+		// give wp time to setup before we create backup/restores
 		fmt.Println("Sleeping 60 seconds to allow WP time to create")
 		time.Sleep(60 * time.Second)
 
@@ -205,7 +225,8 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found,
+		Name:      cr.Name,
+	}, found,
 	)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -222,7 +243,8 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found)
+		Name:      cr.Name,
+	}, found)
 	if err != nil {
 		return err
 	}
@@ -269,7 +291,8 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found,
+		Name:      cr.Name,
+	}, found,
 	); err != nil {
 		return err
 	}
@@ -312,7 +335,8 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found,
+		Name:      cr.Name,
+	}, found,
 	); err != nil {
 		return err
 	}
@@ -350,7 +374,8 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 	instance := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, instance,
+		Name:      cr.Name,
+	}, instance,
 	); err != nil {
 		return err
 	}
@@ -426,7 +451,8 @@ func (step *Step) validateReplicationInstalled(cr csmv1.ContainerStorageModule) 
 	// cluster role
 	clusterRole := &rbacv1.ClusterRole{}
 	err = step.ctrlClient.Get(context.TODO(), types.NamespacedName{
-		Name: fmt.Sprintf("%s-controller", cr.Name)}, clusterRole)
+		Name: fmt.Sprintf("%s-controller", cr.Name),
+	}, clusterRole)
 	if err != nil {
 		return err
 	}
@@ -478,7 +504,6 @@ func (step *Step) validateReplicationNotInstalled(cr csmv1.ContainerStorageModul
 
 		// check no driver is not installed in target clusters
 		if cluster.ClusterID != utils.DefaultSourceClusterID {
-
 			if err := checkNoRunningPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
 				return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
 			}
@@ -523,14 +548,12 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 		if *cnt.Name == authString {
 			return fmt.Errorf("found authorization in deployment: %v", err)
 		}
-
 	}
 
 	for _, cnt := range dsApply.Spec.Template.Spec.Containers {
 		if *cnt.Name == authString {
 			return fmt.Errorf("found authorization in daemonset: %v", err)
 		}
-
 	}
 
 	return nil
@@ -581,7 +604,6 @@ func (step *Step) setupSecretFromFile(res Resource, file, namespace string) erro
 }
 
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
-
 	// find which map to use for secret values
 	mapValues, err := determineMap(crType)
 	if err != nil {
@@ -595,7 +617,7 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 		}
 	}
 
-	//if secret exists- delete it
+	// if secret exists- delete it
 	if secretExists(namespace, name) {
 		cmd := exec.Command("kubectl", "delete", "secret", "-n", namespace, name)
 		err := cmd.Run()
@@ -672,7 +694,6 @@ func replaceInFile(old, new, templateFile string) error {
 		return fmt.Errorf("failed to substitute %s with %s in file %s: %s", old, new, templateFile, err.Error())
 	}
 	return nil
-
 }
 
 func (step *Step) runCustomTest(res Resource) error {
@@ -704,7 +725,8 @@ func (step *Step) enableModule(res Resource, module string, crNumStr string) err
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found,
+		Name:      cr.Name,
+	}, found,
 	); err != nil {
 		return err
 	}
@@ -712,7 +734,7 @@ func (step *Step) enableModule(res Resource, module string, crNumStr string) err
 	for i, m := range found.Spec.Modules {
 		if !m.Enabled && m.Name == csmv1.ModuleType(module) {
 			found.Spec.Modules[i].Enabled = true
-			//for observability, enable all components
+			// for observability, enable all components
 			if m.Name == csmv1.Observability {
 				for j := range m.Components {
 					found.Spec.Modules[i].Components[j].Enabled = pointer.Bool(true)
@@ -730,7 +752,8 @@ func (step *Step) setDriverSecret(res Resource, crNumStr string, driverSecretNam
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found,
+		Name:      cr.Name,
+	}, found,
 	); err != nil {
 		return err
 	}
@@ -744,7 +767,8 @@ func (step *Step) disableModule(res Resource, module string, crNumStr string) er
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found,
+		Name:      cr.Name,
+	}, found,
 	); err != nil {
 		return err
 	}
@@ -770,7 +794,8 @@ func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found,
+		Name:      cr.Name,
+	}, found,
 	); err != nil {
 		return err
 	}
@@ -785,7 +810,8 @@ func (step *Step) enableForceRemoveModule(res Resource, crNumStr string) error {
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found,
+		Name:      cr.Name,
+	}, found,
 	); err != nil {
 		return err
 	}
@@ -847,7 +873,8 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 	instance := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, instance,
+		Name:      cr.Name,
+	}, instance,
 	); err != nil {
 		return err
 	}
@@ -896,12 +923,13 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 }
 
 func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error {
-	//providing additional time to get appmob pods up to running
+	// providing additional time to get appmob pods up to running
 	time.Sleep(10 * time.Second)
 	instance := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, instance,
+		Name:      cr.Name,
+	}, instance,
 	); err != nil {
 		return err
 	}
@@ -1025,7 +1053,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		proxyHost       = ""
 	)
 
-	//by default, use set defined in env file
+	// by default, use set defined in env file
 	endpointvar := "END_POINT"
 	systemIdvar := "SYSTEM_ID"
 	uservar := "STORAGE_USER"
@@ -1092,10 +1120,20 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0644)
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
+
+	address := proxyHost
+	// For v1.9.1 and earlier, use the old address
+	configVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
+	isOldVersion, _ := utils.MinVersionCheck(configVersion, "v1.9.1")
+	if isOldVersion {
+		address = "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+	}
+
+	fmt.Printf("Address: %s\n", address)
 
 	fmt.Println("=== Creating Storage ===\n ")
 	cmd := exec.Command("karavictl",
@@ -1107,12 +1145,11 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		"--user", user,
 		"--password", password,
 		"--array-insecure",
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
-
-	if err != nil {
+	if err != nil && !strings.Contains(string(b), "is already registered") {
 		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
 	}
 
@@ -1121,7 +1158,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"tenant", "create",
-		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
@@ -1140,7 +1177,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		"role", "create",
 		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
 			roleName, storageType, sysID, pool, quotaLimit),
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 	)
 
 	fmt.Println("=== Role === \n", cmd.String())
@@ -1158,11 +1195,10 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		"rolebinding", "create",
 		"--tenant", tenantName,
 		"--role", roleName,
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 	)
 	fmt.Println("=== Binding Role ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
-
 	if err != nil {
 		return fmt.Errorf("failed to create rolebinding %s: %v\nErrMessage:\n%s", roleName, err, string(b))
 	}
@@ -1173,12 +1209,11 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		"--admin-token", "/tmp/adminToken.yaml",
 		"generate", "token",
 		"--tenant", tenantName,
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", address, port),
 		"--access-token-expiration", fmt.Sprint(10*time.Minute),
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
-
 	if err != nil {
 		return fmt.Errorf("failed to generate token for %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
@@ -1186,7 +1221,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0644)
+	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1247,7 +1282,6 @@ func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) e
 }
 
 func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule) error {
-
 	// check that resiliency sidecar(podmon) is not in cluster: for controller
 	dp, err := getDriverDeployment(cr, step.ctrlClient)
 	if err != nil {
@@ -1301,7 +1335,8 @@ func (step *Step) validateConnectivityClientInstalled(res Resource, crNumStr str
 
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found); err != nil {
+		Name:      cr.Name,
+	}, found); err != nil {
 		return err
 	}
 
@@ -1314,7 +1349,8 @@ func (step *Step) validateConnectivityClientNotInstalled(res Resource, crNumStr 
 	found := new(csmv1.ApexConnectivityClient)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found); err == nil {
+		Name:      cr.Name,
+	}, found); err == nil {
 		return fmt.Errorf("Found traces of client installation in namespace %s: %v", cr.Namespace, found)
 	}
 
@@ -1329,7 +1365,8 @@ func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) err
 	found := new(csmv1.ApexConnectivityClient)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      cr.Name}, found,
+		Name:      cr.Name,
+	}, found,
 	)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -1351,7 +1388,6 @@ func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) err
 }
 
 func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStorageModule) error {
-
 	fakeReconcile := utils.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
