@@ -332,6 +332,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Controller Container Image"
 	Controller string `json:"controller,omitempty" yaml:"controller,omitempty"`
 
+	// LeaderElection is boolean flag to enable leader election
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Leader Election"
+	LeaderElection bool `json:"leaderElection,omitempty" yaml:"leaderElection,omitempty"`
+
 	// Redis is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Redis Container Image"
 	Redis string `json:"redis,omitempty" yaml:"redis,omitempty"`

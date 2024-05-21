@@ -338,17 +338,27 @@ spec:
       - name: storage-service
         image: <AUTHORIZATION_STORAGE_SERVICE_IMAGE>
         imagePullPolicy: Always
+        env:
+          - name: NAMESPACE
+            value: <NAMESPACE>
+          - name: SENTINELS
+            value: <AUTHORIZATION_REDIS_SENTINEL_VALUES>
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-csm-secret
+                key: password
         args:
+          - "--redis-sentinel=$(SENTINELS)"
+          - "--redis-password=$(REDIS_PASSWORD)"
           - "--vault-address=<AUTHORIZATION_VAULT_ADDRESS>"
           - "--vault-kv-engine-path=<AUTHORIZATION_KV_ENGINE_PATH>"
           - "--vault-skip-certificate-validation=<AUTHORIZATION_SKIP_CERTIFICATE_VALIDATION>"
           - "--vault-role=<AUTHORIZATION_VAULT_ROLE>"
+          - "--leader-election=<AUTHORIZATION_LEADER_ELECTION_ENABLED>"
         ports:
         - containerPort: 50051
           name: grpc
-        env:
-          - name: NAMESPACE
-            value: <NAMESPACE>
         volumeMounts:
         - name: config-volume
           mountPath: /etc/karavi-authorization/config
@@ -420,13 +430,13 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: controller
+  name: authorization-controller
   namespace: <NAMESPACE>
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: controller
+  name: authorization-controller
 rules:
   - apiGroups: ["csm-authorization.storage.dell.com"]
     resources: ["csmroles"]
@@ -465,44 +475,43 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: controller
+  name: authorization-controller
 subjects:
   - kind: ServiceAccount
-    name: controller
+    name: authorization-controller
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole
-  name: controller
+  name: authorization-controller
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller
+  name: authorization-controller
   namespace: <NAMESPACE>
   labels:
-    app: controller
+    app: authorization-controller
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: controller
+      app: authorization-controller
   template:
     metadata:
       labels:
         csm: <NAME>
-        app: controller
+        app: authorization-controller
     spec:
-      serviceAccountName: controller
+      serviceAccountName: authorization-controller
       containers:
-      - name: controller
+      - name: authorization-controller
         image: <AUTHORIZATION_CONTROLLER_IMAGE>
         imagePullPolicy: Always
         args:
           - "--authorization-namespace=<NAMESPACE>"
-          - "--metrics-bind-address=127.0.0.1:8080"
           - "--health-probe-bind-address=:8081"
-          - "--leader-elect=false"
+          - "--leader-elect=<AUTHORIZATION_LEADER_ELECTION_ENABLED>"
           - "--tenant-service-address=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
           - "--storage-service-address=storage-service.<NAMESPACE>.svc.cluster.local:50051"
           - "--role-service-address=role-service.<NAMESPACE>.svc.cluster.local:50051"
@@ -510,21 +519,21 @@ spec:
           - name: NAMESPACE
             value: <NAMESPACE>
         ports:
-        - containerPort: 5052
-          name: http
+        - containerPort: 50052
+          name: grpc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: controller
+  name: authorization-controller
   namespace: <NAMESPACE>
 spec:
   selector:
-    app: controller
+    app: authorization-controller
   ports:
-  - port: 5052
-    targetPort: 5052
-    name: http
+  - port: 50052
+    targetPort: 50052
+    name: grpc
 ---
 # Redis
 apiVersion: v1

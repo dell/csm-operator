@@ -73,6 +73,9 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      controller:
+                        description: Controller is the image tag for the container
+                        type: string
                       credentials:
                         description: ComponentCred is to store the velero credential contents
                         items:
@@ -217,6 +220,9 @@ spec:
                       kvEnginePath:
                         description: kvEnginePath is the Authorization vault secret path
                         type: string
+                      leaderElection:
+                        description: LeaderElection is boolean flag to enable leader election
+                        type: boolean
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -378,6 +384,9 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        controller:
+                          description: Controller is the image tag for the container
+                          type: string
                         credentials:
                           description: ComponentCred is to store the velero credential contents
                           items:
@@ -522,6 +531,9 @@ spec:
                         kvEnginePath:
                           description: kvEnginePath is the Authorization vault secret path
                           type: string
+                        leaderElection:
+                          description: LeaderElection is boolean flag to enable leader election
+                          type: boolean
                         licenseName:
                           description: LicenseName is the name of the license for app-mobility
                           type: string
@@ -672,6 +684,9 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        controller:
+                          description: Controller is the image tag for the container
+                          type: string
                         credentials:
                           description: ComponentCred is to store the velero credential contents
                           items:
@@ -816,6 +831,9 @@ spec:
                         kvEnginePath:
                           description: kvEnginePath is the Authorization vault secret path
                           type: string
+                        leaderElection:
+                          description: LeaderElection is boolean flag to enable leader election
+                          type: boolean
                         licenseName:
                           description: LicenseName is the name of the license for app-mobility
                           type: string
@@ -1056,6 +1074,9 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      controller:
+                        description: Controller is the image tag for the container
+                        type: string
                       credentials:
                         description: ComponentCred is to store the velero credential contents
                         items:
@@ -1200,6 +1221,9 @@ spec:
                       kvEnginePath:
                         description: kvEnginePath is the Authorization vault secret path
                         type: string
+                      leaderElection:
+                        description: LeaderElection is boolean flag to enable leader election
+                        type: boolean
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -1350,6 +1374,9 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      controller:
+                        description: Controller is the image tag for the container
+                        type: string
                       credentials:
                         description: ComponentCred is to store the velero credential contents
                         items:
@@ -1494,6 +1521,9 @@ spec:
                       kvEnginePath:
                         description: kvEnginePath is the Authorization vault secret path
                         type: string
+                      leaderElection:
+                        description: LeaderElection is boolean flag to enable leader election
+                        type: boolean
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -1663,6 +1693,9 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        controller:
+                          description: Controller is the image tag for the container
+                          type: string
                         credentials:
                           description: ComponentCred is to store the velero credential contents
                           items:
@@ -1807,6 +1840,9 @@ spec:
                         kvEnginePath:
                           description: kvEnginePath is the Authorization vault secret path
                           type: string
+                        leaderElection:
+                          description: LeaderElection is boolean flag to enable leader election
+                          type: boolean
                         licenseName:
                           description: LicenseName is the name of the license for app-mobility
                           type: string
@@ -1955,6 +1991,9 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      controller:
+                        description: Controller is the image tag for the container
+                        type: string
                       credentials:
                         description: ComponentCred is to store the velero credential contents
                         items:
@@ -2099,6 +2138,9 @@ spec:
                       kvEnginePath:
                         description: kvEnginePath is the Authorization vault secret path
                         type: string
+                      leaderElection:
+                        description: LeaderElection is boolean flag to enable leader election
+                        type: boolean
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -2252,6 +2294,9 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        controller:
+                          description: Controller is the image tag for the container
+                          type: string
                         credentials:
                           description: ComponentCred is to store the velero credential contents
                           items:
@@ -2396,6 +2441,9 @@ spec:
                         kvEnginePath:
                           description: kvEnginePath is the Authorization vault secret path
                           type: string
+                        leaderElection:
+                          description: LeaderElection is boolean flag to enable leader election
+                          type: boolean
                         licenseName:
                           description: LicenseName is the name of the license for app-mobility
                           type: string
@@ -2570,6 +2618,9 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          controller:
+                            description: Controller is the image tag for the container
+                            type: string
                           credentials:
                             description: ComponentCred is to store the velero credential contents
                             items:
@@ -2714,6 +2765,9 @@ spec:
                           kvEnginePath:
                             description: kvEnginePath is the Authorization vault secret path
                             type: string
+                          leaderElection:
+                            description: LeaderElection is boolean flag to enable leader election
+                            type: boolean
                           licenseName:
                             description: LicenseName is the name of the license for app-mobility
                             type: string
@@ -2873,6 +2927,9 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          controller:
+                            description: Controller is the image tag for the container
+                            type: string
                           credentials:
                             description: ComponentCred is to store the velero credential contents
                             items:
@@ -3017,6 +3074,9 @@ spec:
                           kvEnginePath:
                             description: kvEnginePath is the Authorization vault secret path
                             type: string
+                          leaderElection:
+                            description: LeaderElection is boolean flag to enable leader election
+                            type: boolean
                           licenseName:
                             description: LicenseName is the name of the license for app-mobility
                             type: string
