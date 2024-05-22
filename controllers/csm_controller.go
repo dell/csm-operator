@@ -1374,14 +1374,18 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 // updateVersionsAndImages -- update driver image and module versions and images for upgrade
 func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModule, op utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
+	var err error
 
 	// Update driver image tag
-	var err error
-	cr.Spec.Driver.Common.Image, err = updateImageTag(cr.Spec.Driver.Common.Image, cr.Spec.Driver.ConfigVersion)
-	if err != nil {
-		return err
+	if !isCustomTag(cr.Spec.Driver.Common.Image) {
+		cr.Spec.Driver.Common.Image, err = updateImageTag(cr.Spec.Driver.Common.Image, cr.Spec.Driver.ConfigVersion)
+		if err != nil {
+			return err
+		}
+		log.Infow("updated %s driver to image %s", cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.Common.Image)
+	} else {
+		log.Infow("%s driver using custom image tag (%s) not updating image", cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.Common.Image)
 	}
-	log.Infow("updated %s driver to image %s", cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.Common.Image)
 
 	// Loop through list of modules, update all versions and images to match driver version
 	for idx, module := range cr.Spec.Modules {
@@ -1400,9 +1404,14 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 			if err != nil {
 				return err
 			}
-			cr.Spec.Modules[idx].Components[compIdx].Image, err = updateImageTag(cr.Spec.Modules[idx].Components[compIdx].Image, componentVersion)
-			if err != nil {
-				return err
+			if !isCustomTag(cr.Spec.Modules[idx].Components[compIdx].Image) {
+				cr.Spec.Modules[idx].Components[compIdx].Image, err = updateImageTag(cr.Spec.Modules[idx].Components[compIdx].Image, componentVersion)
+				if err != nil {
+					return err
+				}
+				log.Infow("%s module component %s updated to image %s", module.Name, component.Name, cr.Spec.Modules[idx].Components[compIdx].Image)
+			} else {
+				log.Infow("%s module component %s using custom image tag (%s) not updating image", module.Name, component.Name, cr.Spec.Modules[idx].Components[compIdx].Image)
 			}
 		}
 	}
@@ -1415,20 +1424,46 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 
 // updateImageTag -- update image tagged version (split on last ':' and replace everything after it with the version passed in)
 func updateImageTag(image csmv1.ImageType, configVersion string) (csmv1.ImageType, error) {
-	var newImage csmv1.ImageType
-	var splitFunc = func(r rune) bool {
-    		return r == ':' || r == '.'
-	}
-
-	imageComponents := strings.FieldsFunc(string(image), splitFunc)
-	if len(imageComponents) < 2 {
+	tagIdx := strings.LastIndex(string(image), ":")
+	if tagIdx == -1 {
 		return image, errors.New(fmt.Sprintf("image and tag %s are not in a valid format (<image>:<tag>)", image))
 	}
 
-	imageNoTag := strings.Join(imageComponents[:len(imageComponents)-1], ":")
-	newImage = imageNoTag + configVersion
+	//imageNoTag := string(image[:tagIdx])
 
-	return newImage, nil
+	//return csmv1.ImageType(imageNoTag + configVersion), nil
+	return csmv1.ImageType(string(image[:tagIdx]) + configVersion), nil
+}
+
+// return false if image tag is in "vx.y.z" format, where x, y, and z are positive integers; otherwise, return true
+func isCustomTag(image csmv1.ImageType) bool {
+	// Get image tag
+	tagIdx := strings.LastIndex(string(image), ":")
+	// TODO JJL: HANDLE ERROR BETTER
+	if tagIdx == -1 {
+		return true
+	}
+	imageTag := string(image[tagIdx+1:])
+
+        // strip v off of version string
+        imageTagNoV := strings.TrimLeft(imageTag, "v")
+
+        // split by .
+        imageTagNums := strings.Split(imageTagNoV, ".")
+
+        if len(imageTagNums) != 3 {
+                return true
+        }
+
+        if _, err := strconv.Atoi(imageTagNums[0]); err == nil {
+        	if _, err := strconv.Atoi(imageTagNums[1]); err == nil {
+        		if _, err := strconv.Atoi(imageTagNums[1]); err == nil {
+				return false
+			}
+		}
+	}
+
+        return true
 }
 
 // Check for upgrade/if upgrade is appropriate
