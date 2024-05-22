@@ -843,6 +843,7 @@ func GetComponentVersion(moduleName csmv1.ModuleType, moduleConfigVersion string
 	}
 
 	support := map[csmv1.ModuleType]map[string]map[string]string{}
+	fmt.Printf("support: %+v\n", support)
 	err = yaml.Unmarshal(buf, &support)
 	if err != nil {
 		return "", err
