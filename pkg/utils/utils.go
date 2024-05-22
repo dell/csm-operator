@@ -836,7 +836,7 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 }
 
 func GetComponentVersion(moduleName csmv1.ModuleType, moduleConfigVersion string, componentName string, configDirPath string) (string, error) {
-	configMapPath := fmt.Sprintf("%s/moduleconfig/common/version-values.yaml", configDirPath)
+	configMapPath := fmt.Sprintf("%s/moduleconfig/common/module-components.yaml", configDirPath)
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return "", err
