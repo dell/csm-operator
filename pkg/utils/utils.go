@@ -1118,59 +1118,37 @@ func BrownfieldDeployment(ctx context.Context, path string, cr csmv1.ApexConnect
 	namespace, err := GetNamespaces(ctx)
 	if err != nil {
 		log.Error(err, "Failed to get namespaces")
+		return err
 	}
 
 	buf, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
+		log.Error(err, "Failed to read manifest file")
 		return err
 	}
 
 	yamlFile := string(buf)
 
 	for _, ns := range namespace {
-		fmt.Printf("ns is %s\n", ns)
-		fmt.Printf("cr.Namespace is %s\n", cr.Namespace)
 
-		yamlStr := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
-		yamlStr = strings.ReplaceAll(yamlFile, ClientNamespace, cr.Namespace)
+		yamlFile := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
+		yamlFile = strings.ReplaceAll(yamlFile, ClientNamespace, cr.Namespace)
 
-		err := CreateObjects(ctx, yamlStr, ctrlClient)
+		err := CreateObjects(ctx, yamlFile, ctrlClient)
 		if err != nil {
-			log.Infoln("*****Checkpoint 2- call to Create Objects failed")
 			return err
 		}
-
-		//err := AddRole(ctx, ns, yamlStr, cr)
-		//if err != nil {
-		//	return err
-		//}
-		//
-		//err = AddRoleBinding(ctx, ns, yamlStr, cr)
-		//if err != nil {
-		//	return err
-		//}
 	}
-	fmt.Println("*****Checkpoint 3")
 	log.Infoln("Brownfield deploymet success")
 	return nil
 }
 
 // Get the namespaces of csm-objects in the cluster
 func GetNamespaces(ctx context.Context) ([]string, error) {
-	// Get K8s config
-	//kubeconfig := os.Getenv("KUBECONFIG") // Use the KUBECONFIG environment variable if set
-	//
-	//// Create the config object from kubeconfig. If the environment variable is not set, it will fall back to the default location (~/.kube/config).
-	//config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	//if err != nil {
-	//	return nil, fmt.Errorf("error creating clientset: %v", err)
-	//	//os.Exit(1)
-	//}
 	log := logger.GetLogger(ctx)
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		log.Infoln("*****Checkpoint 4- call to rest.InClusterConfig failed")
 		panic(err.Error())
 	}
 
@@ -1206,21 +1184,19 @@ func GetNamespaces(ctx context.Context) ([]string, error) {
 	for namespace := range namespaceSet {
 		namespaces = append(namespaces, namespace)
 	}
-	fmt.Println(("*****Checkpoint 5"))
-	for _, str := range namespaces {
-		log.Infoln(str)
-	}
+
 	return namespaces, nil
 }
 
 func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Client) error {
 	deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
 	if err != nil {
-		fmt.Println(("*****Checkpoint 6- call to GetModuleComponentObj failed"))
 		return err
 	}
 
 	for _, obj := range deployObjects {
+		log.FromContext(ctx).Info("namespace of parsed object is", "object", obj.GetNamespace())
+
 		if err := ctrlClient.Create(ctx, obj); err != nil {
 			if k8serror.IsAlreadyExists(err) {
 				log.FromContext(ctx).Info("Object already exists", "object", obj.GetObjectKind().GroupVersionKind().String())
@@ -1230,88 +1206,5 @@ func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Cli
 		}
 		log.FromContext(ctx).Info("Object created", "object", obj.GetObjectKind().GroupVersionKind().String())
 	}
-	fmt.Println(("*****Checkpoint 7"))
 	return nil
 }
-
-//func AddRole(namespace string, yamlFile string) error {
-//	// Replace the namespace in the YAML file
-//	yamlStr := strings.ReplaceAll(yamlFile, "<NAMESPACE>", namespace)
-//
-//	// Parse the YAML into an unstructured object
-//	decUnstructured := k8syaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-//	obj := &unstructured.Unstructured{}
-//	_, _, err := decUnstructured.Decode([]byte(yamlStr), nil, obj)
-//	if err != nil {
-//		return err
-//	}
-//
-//	// Create the Kubernetes dynamic client
-//	// Get K8s config
-//	kubeconfig := os.Getenv("KUBECONFIG") // Use the KUBECONFIG environment variable if set
-//
-//	// Create the config object from kubeconfig. If the environment variable is not set, it will fall back to the default location (~/.kube/config).
-//	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-//	if err != nil {
-//		return fmt.Errorf("error creating clientset: %v", err)
-//		//os.Exit(1)
-//	}
-//
-//	dynamicClient, err := dynamic.NewForConfig(config)
-//	if err != nil {
-//		return err
-//	}
-//
-//	// Create the Role in the namespace
-//	_, err = dynamicClient.Resource(schema.GroupVersionResource{
-//		Group:    "rbac.authorization.k8s.io",
-//		Version:  "v1",
-//		Resource: "roles",
-//	}).Namespace(namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
-//	if err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
-//
-//func AddRoleBinding(namespace string, yamlFile string) error {
-//	// Replace the namespace in the YAML file
-//	yamlStr := strings.ReplaceAll(yamlFile, "<NAMESPACE>", namespace)
-//
-//	// Parse the YAML into an unstructured object
-//	decUnstructured := k8syaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-//	obj := &unstructured.Unstructured{}
-//	_, _, err := decUnstructured.Decode([]byte(yamlStr), nil, obj)
-//	if err != nil {
-//		return err
-//	}
-//
-//	// Create the Kubernetes dynamic client
-//	// Get K8s config
-//	kubeconfig := os.Getenv("KUBECONFIG") // Use the KUBECONFIG environment variable if set
-//
-//	// Create the config object from kubeconfig. If the environment variable is not set, it will fall back to the default location (~/.kube/config).
-//	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-//	if err != nil {
-//		return fmt.Errorf("error creating clientset: %v", err)
-//		//os.Exit(1)
-//	}
-//
-//	dynamicClient, err := dynamic.NewForConfig(config)
-//	if err != nil {
-//		return err
-//	}
-//
-//	// Create the RoleBinding in the namespace
-//	_, err = dynamicClient.Resource(schema.GroupVersionResource{
-//		Group:    "rbac.authorization.k8s.io",
-//		Version:  "v1",
-//		Resource: "rolebindings",
-//	}).Namespace(namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
-//	if err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}

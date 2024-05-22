@@ -466,8 +466,8 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 	}
 
 	//brownfield scenario
-	fmt.Println(("*****Checkpoint 0 - Brownfield deployment"))
 	log := logger.GetLogger(ctx)
+	log.Info("Starting the brownfield cluster onboarding")
 	BrownfieldCR := "brownfield-deployment.yaml"
 	brownfieldDeploymentPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
 	if err = utils.BrownfieldDeployment(ctx, brownfieldDeploymentPath, cr, ctrlClient); err != nil {
