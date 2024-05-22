@@ -1432,7 +1432,7 @@ func updateImageTag(image csmv1.ImageType, configVersion string) (csmv1.ImageTyp
 	//imageNoTag := string(image[:tagIdx])
 
 	//return csmv1.ImageType(imageNoTag + configVersion), nil
-	return csmv1.ImageType(string(image[:tagIdx]) + configVersion), nil
+	return csmv1.ImageType(string(image[:tagIdx]) + ":" + configVersion), nil
 }
 
 // return false if image tag is in "vx.y.z" format, where x, y, and z are positive integers; otherwise, return true
