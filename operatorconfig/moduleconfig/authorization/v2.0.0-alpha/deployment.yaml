@@ -47,7 +47,7 @@ metadata:
   labels:
     app: proxy-server
 spec:
-  replicas: 1
+  replicas: <AUTHORIZATION_PROXY_SERVICE_REPLICAS>
   selector:
     matchLabels:
       app: proxy-server
@@ -136,7 +136,7 @@ metadata:
   labels:
     app: tenant-service
 spec:
-  replicas: 1
+  replicas: <AUTHORIZATION_TENANT_SERVICE_REPLICAS>
   selector:
     matchLabels:
       app: tenant-service
@@ -230,7 +230,7 @@ metadata:
   labels:
     app: role-service
 spec:
-  replicas: 1
+  replicas: <AUTHORIZATION_ROLE_SERVICE_REPLICAS>
   selector:
     matchLabels:
       app: role-service
@@ -323,7 +323,7 @@ metadata:
   labels:
     app: storage-service
 spec:
-  replicas: 1
+  replicas: <AUTHORIZATION_STORAGE_SERVICE_REPLICAS>
   selector:
     matchLabels:
       app: storage-service
@@ -493,7 +493,7 @@ metadata:
   labels:
     app: authorization-controller
 spec:
-  replicas: 1
+  replicas: <AUTHORIZATION_CONTROLLER_REPLICAS>
   selector:
     matchLabels:
       app: authorization-controller

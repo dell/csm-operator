@@ -42,12 +42,17 @@ spec:
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
           proxyService: dellemc/csm-authorization-proxy:v2.0.0-alpha
+          proxyServiceReplicas: 1
           tenantService: dellemc/csm-authorization-tenant:v2.0.0-alpha
+          tenantServiceReplicas: 1
           roleService: dellemc/csm-authorization-role:v2.0.0-alpha
+          roleServiceReplicas: 1
           storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
+          storageServiceReplicas: 1
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
-          controller: dellemc/csm-authorization-controller:v2.0.0-alpha
+          authorizationController: dellemc/csm-authorization-controller:v2.0.0-alpha
+          authorizationControllerReplicas: 1
           leaderElection: false
 
           # certificate: path to certificate file -- add cert here to use custom certificates
