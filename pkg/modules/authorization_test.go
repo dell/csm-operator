@@ -10,6 +10,7 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -427,8 +428,8 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
-		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+		"success v1": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -444,6 +445,27 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return true, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"success v2": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
 				return clusterClient, nil
 			}
 
@@ -488,7 +510,45 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
-		"fail - empty proxy host": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"fail v1 - karavi-config-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			if err != nil {
+				panic(err)
+			}
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviStorage, karaviTLS).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviStorage, karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"fail v1 - karavi-storage-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			if err != nil {
+				panic(err)
+			}
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"fail v2 - karavi-config-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -496,15 +556,11 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 
-			for i, env := range auth.Components[0].Envs {
-				if env.Name == "PROXY_HOST" {
-					auth.Components[0].Envs[i].Value = ""
-				}
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviTLS).Build()
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
-				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviTLS).Build()
 				return clusterClient, nil
 			}
 
@@ -535,6 +591,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			if success {
 				assert.NoError(t, err)
 			} else {
+				fmt.Println(err)
 				assert.Error(t, err)
 			}
 		})
