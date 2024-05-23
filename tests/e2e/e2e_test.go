@@ -34,14 +34,14 @@ import (
 const (
 	timeout          = time.Minute * 10
 	interval         = time.Second * 10
-	valuesFileEnvVar = "E2E_VALUES_FILE"
+	valuesFileEnvVar = "E2E_SCENARIOS_FILE"
 )
 
 var (
-	testResources    []step.Resource
-	installedModules []string
-	stepRunner       *step.Runner
-	beautify         string
+	testResources []step.Resource
+	tagsSpecified []string
+	stepRunner    *step.Runner
+	beautify      string
 )
 
 func Contains(slice []string, str string) bool {
@@ -53,19 +53,15 @@ func Contains(slice []string, str string) bool {
 	return false
 }
 
-func ContainsModules(modulesRequired []string, modulesInstalled []string) bool {
-	if len(modulesRequired) == 0 && len(modulesInstalled) == 0 {
-		return true
-	}
-
-	for _, moduleName := range modulesRequired {
-		// check to see if we have modules required
-		if Contains(modulesInstalled, moduleName) == false {
-			By(fmt.Sprintf("Required module not installed: %s ", moduleName))
-			return false
+func ContainsTag(scenarioTags []string, tagsSpecified []string) bool {
+	for _, tag := range tagsSpecified {
+		// Check to see if scenario has required tag
+		if Contains(scenarioTags, tag) {
+			return true
 		}
 	}
-	return true
+	By(fmt.Sprintf("No matching tags for scenario"))
+	return false
 }
 
 // TestE2E -
@@ -80,19 +76,19 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	moduleEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY"}
+	tagEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
-	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_VALUES_FILE must be set.")
+	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_SCENARIOS_FILE must be set.")
 
-	for _, moduleEnvVar := range moduleEnvVars {
-		enabled := os.Getenv(moduleEnvVar)
+	for _, tagEnvVar := range tagEnvVars {
+		enabled := os.Getenv(tagEnvVar)
 		if enabled == "true" {
-			installedModules = append(installedModules, strings.ToLower(moduleEnvVar))
+			tagsSpecified = append(tagsSpecified, strings.ToLower(tagEnvVar))
 		}
 	}
 
-	By(fmt.Sprint(installedModules))
+	By(fmt.Sprint(tagsSpecified))
 	By("Reading values file")
 	res, err := step.GetTestResources(valuesFile)
 	if err != nil {
@@ -123,8 +119,8 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 	It("Running all test Given Test Scenarios", func() {
 		for _, test := range testResources {
 			By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
-			if ContainsModules(test.Scenario.Modules, installedModules) == false {
-				By(fmt.Sprintf("Required module %s not installed, skipping", test.Scenario.Modules))
+			if ContainsTag(test.Scenario.Tags, tagsSpecified) == false {
+				By(fmt.Sprintf("Not tagged for this test run, skipping"))
 				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 				continue
 			}

@@ -328,6 +328,8 @@ func GetUpgradeInfo(ctx context.Context, operatorConfig utils.OperatorConfig, dr
 // GetConfigMap get configmap
 func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
 	log := logger.GetLogger(ctx)
+	var podmanLogFormat string
+	var podmanLogLevel string
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	log.Debugw("GetConfigMap", "configMapPath", configMapPath)
 
@@ -339,6 +341,8 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
 	var configMap corev1.ConfigMap
+	cmValue := ""
+	var configMapData map[string]string
 	err = yaml.Unmarshal([]byte(YamlString), &configMap)
 	if err != nil {
 		log.Errorw("GetConfigMap yaml marshall failed", "Error", err.Error())
@@ -347,12 +351,31 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "CSI_LOG_LEVEL" {
-			configMap.Data = map[string]string{
-				"driver-config-params.yaml": fmt.Sprintf("%s: %s", env.Name, env.Value),
-			}
-			break
+			cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
+			podmanLogLevel = env.Value
+		}
+		if env.Name == "CSI_LOG_FORMAT" {
+			cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
+			podmanLogFormat = env.Value
 		}
 	}
+
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Resiliency {
+			if m.Enabled {
+				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_CONTROLLER_LOG_LEVEL", podmanLogLevel)
+				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_CONTROLLER_LOG_FORMAT", podmanLogFormat)
+				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_NODE_LOG_LEVEL", podmanLogLevel)
+				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_NODE_LOG_FORMAT", podmanLogFormat)
+			}
+		}
+	}
+
+	configMapData = map[string]string{
+		"driver-config-params.yaml": cmValue,
+	}
+	configMap.Data = configMapData
+
 	if cr.Spec.Driver.CSIDriverType == "unity" {
 		configMap.Data = ModifyUnityConfigMap(ctx, cr)
 	}

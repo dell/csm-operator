@@ -73,6 +73,8 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+      annotations:
+        kubectl.kubernetes.io/default-container: driver
     spec:
       serviceAccount: <DriverDefaultReleaseName>-node
       #nodeSelector:
@@ -174,6 +176,7 @@ spec:
               mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
+              mountPropagation: "Bidirectional"
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"

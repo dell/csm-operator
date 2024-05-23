@@ -32,9 +32,7 @@ type Runner struct {
 	Definitions []StepDefinition
 }
 
-var (
-	errorInterface = reflect.TypeOf((*error)(nil)).Elem()
-)
+var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
 
 // StepRunnerInit -
 func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kubernetes.Clientset) {
@@ -46,6 +44,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Install \[([^"]*)\]$`, step.installThirdPartyModule)
 	runner.addStep(`^Uninstall \[([^"]*)\]$`, step.uninstallThirdPartyModule)
 	runner.addStep(`^Apply custom resource \[(\d+)\]$`, step.applyCustomResource)
+	runner.addStep(`^Upgrade from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResource)
 	runner.addStep(`^Validate custom resource \[(\d+)\]$`, step.validateCustomResourceStatus)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is not installed$`, step.validateDriverNotInstalled)
@@ -110,7 +109,6 @@ func (runner *Runner) addStep(expr string, stepFunc interface{}) {
 		Handler: v,
 		Expr:    re,
 	})
-
 }
 
 // RunStep - runs a step

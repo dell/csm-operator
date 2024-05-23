@@ -369,7 +369,6 @@ func (r *ApexConnectivityClientReconciler) ClientContentWatch() error {
 	_, err = podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: r.handlePodsUpdate,
 	})
-
 	if err != nil {
 		return fmt.Errorf("ClientContentWatch failed adding event handler to podsInformer: %v", err)
 	}

@@ -40,6 +40,16 @@ spec:
           value: "0"
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
+        # CSI driver log level
+        # Allowed values: "error", "warn"/"warning", "info", "debug"
+        # Default value: "debug"
+        - name: "CSI_LOG_LEVEL"
+          value: "info"
+        # CSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: "CSI_LOG_FORMAT"
+          value: "TEXT"
 
     sideCars:
     # 'k8s' represents a string prepended to each volume created by the CSI driver
@@ -183,6 +193,25 @@ spec:
       #   effect: "NoSchedule"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled 
+      #  - key: "offline.vxflexos.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
+      #  - key: "vxflexos.podmon.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
+      #  - key: "offline.unity.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
+      # - key: "unity.podmon.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # - key: "offline.isilon.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # - key: "isilon.podmon.storage.dell.com"
       #   operator: "Exists"
       #   effect: "NoSchedule"
 

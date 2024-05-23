@@ -6,6 +6,7 @@ metadata:
 data:
   driver-config-params.yaml: |
     CSI_LOG_LEVEL: "info"
+    CSI_LOG_FORMAT: "JSON"
     ALLOW_RWO_MULTIPOD_ACCESS: "false"
     MAX_UNITY_VOLUMES_PER_NODE: 0
     SYNC_NODE_INFO_TIME_INTERVAL: 15

@@ -1056,3 +1056,5 @@ rules:
   - list
   - update
   - watch
+  - get
+  - patch

@@ -329,10 +329,8 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	newStatus := csm.GetCSMStatus()
-	requeue, err := utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
-	if err != nil {
-		log.Error(err, "Failed to update CR status")
-	}
+	requeue := utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
+
 	// Update the driver
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig, r.Client)
 	if syncErr == nil && !requeue.Requeue {
@@ -1249,7 +1247,6 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 // PreChecks - validate input values
 func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
-	var am bool
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
 	case csmv1.PowerScale:
@@ -1279,17 +1276,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			return fmt.Errorf("failed powermax validation: %v", err)
 		}
 	default:
-		for _, m := range cr.Spec.Modules {
-			if m.Name == csmv1.AuthorizationServer {
-				return nil
-			}
-			if m.Name == csmv1.ApplicationMobility {
-				am = true
-			}
-		}
-		if am {
+		// Go to checkUpgrade if it is standalone module i.e. app mobility or authorizatio proxy server
+		if cr.HasModule(csmv1.ApplicationMobility) || cr.HasModule(csmv1.AuthorizationServer) {
 			break
 		}
+
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
 
@@ -1490,41 +1481,25 @@ func isCustomTag(image csmv1.ImageType) bool {
 // return values: <is upgrade>, <is valid upgrade>, <error>
 func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (bool, bool, error) {
 	log := logger.GetLogger(ctx)
-	driverType := cr.Spec.Driver.CSIDriverType
-	if driverType == csmv1.PowerScale {
-		// use powerscale instead of isilon as the folder name is powerscale
-		driverType = csmv1.PowerScaleName
-	}
 
 	// If it is an upgrade/downgrade, check to see if we meet the minimum version using GetUpgradeInfo, which returns the minimum version required
 	// for the desired upgrade. If the upgrade path is not valid fail
 	// Existing version
 	annotations := cr.GetAnnotations()
 	oldVersion, configVersionExists := annotations[configVersionKey]
-
 	// If annotation exists, we are doing an upgrade or modify
 	if configVersionExists {
-		// if versions are equal, it is a modification
-		if oldVersion == cr.Spec.Driver.ConfigVersion {
-			log.Infow("proceeding with modification of driver install")
-			return false, false, nil
+		if cr.HasModule(csmv1.AuthorizationServer) {
+			newVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
+			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
 		}
-		// if not equal, it is an upgrade/downgrade
-		// get minimum required version for upgrade
-		minUpgradePath, err := drivers.GetUpgradeInfo(ctx, operatorConfig, driverType, oldVersion)
-		if err != nil {
-			log.Infow("GetUpgradeInfo not successful")
-			return true, false, err
+		driverType := cr.Spec.Driver.CSIDriverType
+		if driverType == csmv1.PowerScale {
+			// use powerscale instead of isilon as the folder name is powerscale
+			driverType = csmv1.PowerScaleName
 		}
-		//
-		installValid, _ := utils.MinVersionCheck(minUpgradePath, cr.Spec.Driver.ConfigVersion)
-		if installValid {
-			log.Infow("proceeding with valid driver upgrade from version %s to version %s", oldVersion, cr.Spec.Driver.ConfigVersion)
-			// Update module versions to match the driver version specified
-			return true, installValid, nil
-		}
-		log.Infow("not proceeding with invalid driver upgrade")
-		return true, installValid, fmt.Errorf("failed upgrade check: upgrade from version %s to %s not valid", oldVersion, cr.Spec.Driver.ConfigVersion)
+		newVersion := cr.Spec.Driver.ConfigVersion
+		return utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
 	}
 	log.Infow("proceeding with fresh driver install")
 	return false, false, nil
@@ -1534,7 +1509,7 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.ContainerStorageModule) bool {
 	log := logger.GetLogger(ctx)
 
-	// If driver has not been initialized yet, we first annotate the driver with the config version annotation
+	// If driver/module has not been initialized yet, we first annotate the component with the config version annotation
 
 	annotations := instance.GetAnnotations()
 	isUpdated := false
@@ -1542,15 +1517,20 @@ func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.Containe
 		annotations = make(map[string]string)
 	}
 	annotations[CSMVersionKey] = CSMVersion
-	instance.SetAnnotations(annotations)
 
 	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = instance.Spec.Driver.ConfigVersion
+		configVersion := ""
+		if instance.HasModule(csmv1.AuthorizationServer) {
+			configVersion = instance.GetModule(csmv1.AuthorizationServer).ConfigVersion
+		} else {
+			configVersion = instance.Spec.Driver.ConfigVersion
+		}
+		annotations[configVersionKey] = configVersion
 		isUpdated = true
-		instance.SetAnnotations(annotations)
-		log.Infof("Installing storage component %s with config Version %s. Updating Annotations with Config Version",
-			instance.GetName(), instance.Spec.Driver.ConfigVersion)
+		log.Infof("Installing csm component %s with config Version %s. Updating Annotations with Config Version",
+			instance.GetName(), configVersion)
 	}
+	instance.SetAnnotations(annotations)
 	return isUpdated
 }
 
