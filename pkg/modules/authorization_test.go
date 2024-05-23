@@ -438,7 +438,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
 
@@ -459,7 +459,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			auth := tmpCR.Spec.Modules[0]
 
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
 
@@ -481,7 +481,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			auth.ConfigVersion = "v2.0.0-alpha"
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
@@ -518,7 +518,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			auth := tmpCR.Spec.Modules[0]
 
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviStorage, karaviTLS).Build()
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
@@ -537,7 +537,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			auth := tmpCR.Spec.Modules[0]
 
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
@@ -555,7 +555,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 
-			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviTLS).Build()
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
