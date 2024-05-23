@@ -285,8 +285,14 @@ metadata:
   name: storage-service
 rules:
   - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "patch", "post"]
+    resources: ["secrets", "events"]
+    verbs: ["get", "patch","post", create]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["storages", "csmtenants", "csmroles"]
+    verbs: ["get", "list"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create", "update", "get", "list"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
