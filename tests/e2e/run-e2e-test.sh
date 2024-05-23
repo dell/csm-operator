@@ -226,6 +226,7 @@ done
 ###############################################################################
 # Check pre-requisites and run tests
 ###############################################################################
+echo "Setting up test pre-requisites"
 getArrayInfo
 checkForScenariosFile
 checkForCertCsi
@@ -234,5 +235,6 @@ if [ -v APPLICATIONMOBILITY ]; then
   checkForDellctl
 fi
 checkForGinkgo
+echo "Running tests"
 runTests
 
