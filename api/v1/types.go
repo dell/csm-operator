@@ -375,6 +375,10 @@ type ContainerTemplate struct {
 	// PrivateKey is a private key used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Private key for certificate/private-key pair"
 	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
+
+	// NoAutoUpdate keeps the container from being updated when the CSM is updated
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Blocks component from being auto-updated"
+	NoAutoUpdate bool `json:"noAutoUpdate,omitempty" yaml:"noAutoUpdate,omitempty"`
 }
 
 // SnapshotClass struct
