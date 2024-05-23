@@ -10,7 +10,6 @@ package modules
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
@@ -591,7 +590,6 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			if success {
 				assert.NoError(t, err)
 			} else {
-				fmt.Println(err)
 				assert.Error(t, err)
 			}
 		})
