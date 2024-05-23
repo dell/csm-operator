@@ -1421,7 +1421,11 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
                 if !initContainer.NoAutoUpdate {
 			// update image
 			if !isCustomTag(initContainer.Image) {
-				cr.Spec.Driver.InitContainers[idx].Image, err = updateImageTag(initContainer.Image, componentVersion)
+				initContainerVersion, err := utils.GetInitContainerVersion(cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.ConfigVersion, initContainer.Name, op.ConfigDirectory)
+				if err != nil {
+					return err
+				}
+				cr.Spec.Driver.InitContainers[idx].Image, err = updateImageTag(initContainer.Image, initContainerVersion)
 				if err != nil {
 					return err
 				}
@@ -1432,7 +1436,7 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 		} else {
 			log.Infow("%s initcontainer set to noAutoUpdate, not updating image", initContainer.Name)
 		}
-			
+	}
 
 	// If we don't hit errors, return nil
 	return nil

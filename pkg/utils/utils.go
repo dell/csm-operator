@@ -844,7 +844,6 @@ func GetComponentVersion(moduleName csmv1.ModuleType, moduleConfigVersion string
 
 	support := map[csmv1.ModuleType]map[string]map[string]string{}
 	err = yaml.Unmarshal(buf, &support)
-	fmt.Printf("support: %+v\n", support)
 	if err != nil {
 		return "", err
 	}
@@ -861,6 +860,34 @@ func GetComponentVersion(moduleName csmv1.ModuleType, moduleConfigVersion string
 	}
 
 	return "", fmt.Errorf("%s module does not exist in file %s", moduleName, configMapPath)
+}
+
+func GetInitContainerVersion(driverName csmv1.DriverType, driverVersion string, initContainerName string, configDirPath string) (string, error) {
+	configMapPath := fmt.Sprintf("%s/driverconfig/common/initcontainer-versions.yaml", configDirPath)
+	buf, err := os.ReadFile(filepath.Clean(configMapPath))
+	if err != nil {
+		return "", err
+	}
+
+	drvToInitCVersion := map[csmv1.DriverType]map[string]map[string]string{}
+	err = yaml.Unmarshal(buf, &drvToInitCVersion)
+	fmt.Printf("drvToInitCVersion: %+v\n", drvToInitCVersion)
+	if err != nil {
+		return "", err
+	}
+
+	if driver, ok := drvToInitCVersion[driverName]; ok {
+		if initContainers, ok := driver[driverVersion]; ok {
+			if initContainerVersion, ok := initContainers[initContainerName]; ok {
+				return initContainerVersion, nil
+			}
+			return "", fmt.Errorf("%s initcontainer for %s driver does not exist in file %s", initContainerName, driverName, configMapPath)
+		}
+		return "", fmt.Errorf("version %s of %s driver does not exist in file %s", driverVersion, driverName, configMapPath)
+
+	}
+
+	return "", fmt.Errorf("%s driver does not exist in file %s", driverName, configMapPath)
 }
 
 func versionParser(version string) (int, int, error) {
