@@ -1,0 +1,17 @@
+Install Authorization Proxy Server
+Install PowerScale Driver(Standalone)
+Install PowerScale Driver with health monitor
+Uninstall PowerScale Driver
+Install PowerScale Driver(With Authorization), Enable/Disable Authorization module
+Install PowerScale Driver(With Authorization and Observability)
+Install PowerFlex Driver(Standalone)
+Install PowerFlex Driver(Standalone), Enable Authorization
+Install PowerFlex Driver(Standalone), Enable/Disable Observability
+Install Powerflex Driver(With Replication)
+Install PowerFlex Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module
+Install PowerFlex Driver(With Resiliency)
+Install PowerScale Driver(Standalone), Enable/Disable Resiliency module
+Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver
+Install App Mobility (Standalone)
+Install powerflex driver, enable and disable application-mobility
+
