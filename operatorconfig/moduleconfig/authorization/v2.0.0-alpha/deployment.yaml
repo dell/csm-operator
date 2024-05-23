@@ -81,8 +81,6 @@ spec:
         volumeMounts:
         - name: config-volume
           mountPath: /etc/karavi-authorization/config
-        - name: storage-volume
-          mountPath: /etc/karavi-authorization/storage
         - name: csm-config-params
           mountPath: /etc/karavi-authorization/csm-config-params
       - name: opa
@@ -106,9 +104,6 @@ spec:
       - name: config-volume
         secret:
           secretName: karavi-config-secret
-      - name: storage-volume
-        secret:
-          secretName: karavi-storage-secret
       - name: csm-config-params
         configMap:
           name: csm-config-params

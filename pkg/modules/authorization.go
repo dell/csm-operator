@@ -30,6 +30,7 @@ import (
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -490,7 +491,15 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 	}
 
 	// Check for secrets
-	proxyServerSecrets := []string{"karavi-config-secret", "karavi-storage-secret"}
+	var proxyServerSecrets []string
+	switch semver.Major(auth.ConfigVersion) {
+	case "v2":
+		proxyServerSecrets = []string{"karavi-config-secret"}
+	case "v1":
+		proxyServerSecrets = []string{"karavi-config-secret", "karavi-storage-secret"}
+	default:
+		return fmt.Errorf("authorization major version %s not supported", semver.Major(auth.ConfigVersion))
+	}
 	for _, name := range proxyServerSecrets {
 		found := &corev1.Secret{}
 		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
