@@ -268,7 +268,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-csm-cm
-  namespace: authorization
+  namespace: <NAMESPACE>
 
 data:
   redis.conf: |

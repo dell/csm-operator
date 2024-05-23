@@ -47,7 +47,7 @@ metadata:
   labels:
     app: proxy-server
 spec:
-  replicas: 1
+  replicas: <AUTHORIZATION_PROXY_SERVICE_REPLICAS>
   selector:
     matchLabels:
       app: proxy-server
@@ -136,7 +136,7 @@ metadata:
   labels:
     app: tenant-service
 spec:
-  replicas: 1
+  replicas: <AUTHORIZATION_TENANT_SERVICE_REPLICAS>
   selector:
     matchLabels:
       app: tenant-service
@@ -230,7 +230,7 @@ metadata:
   labels:
     app: role-service
 spec:
-  replicas: 1
+  replicas: <AUTHORIZATION_ROLE_SERVICE_REPLICAS>
   selector:
     matchLabels:
       app: role-service
@@ -323,7 +323,7 @@ metadata:
   labels:
     app: storage-service
 spec:
-  replicas: 1
+  replicas: <AUTHORIZATION_STORAGE_SERVICE_REPLICAS>
   selector:
     matchLabels:
       app: storage-service
@@ -338,17 +338,27 @@ spec:
       - name: storage-service
         image: <AUTHORIZATION_STORAGE_SERVICE_IMAGE>
         imagePullPolicy: Always
+        env:
+          - name: NAMESPACE
+            value: <NAMESPACE>
+          - name: SENTINELS
+            value: <AUTHORIZATION_REDIS_SENTINEL_VALUES>
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-csm-secret
+                key: password
         args:
+          - "--redis-sentinel=$(SENTINELS)"
+          - "--redis-password=$(REDIS_PASSWORD)"
           - "--vault-address=<AUTHORIZATION_VAULT_ADDRESS>"
           - "--vault-kv-engine-path=<AUTHORIZATION_KV_ENGINE_PATH>"
           - "--vault-skip-certificate-validation=<AUTHORIZATION_SKIP_CERTIFICATE_VALIDATION>"
           - "--vault-role=<AUTHORIZATION_VAULT_ROLE>"
+          - "--leader-election=<AUTHORIZATION_LEADER_ELECTION_ENABLED>"
         ports:
         - containerPort: 50051
           name: grpc
-        env:
-          - name: NAMESPACE
-            value: <NAMESPACE>
         volumeMounts:
         - name: config-volume
           mountPath: /etc/karavi-authorization/config
@@ -415,6 +425,115 @@ spec:
     name: storage-service-selfsigned
     kind: Issuer
     group: cert-manager.io
+---
+# Controller
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: authorization-controller
+rules:
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["csmroles"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["csmroles/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["csmroles/finalizers"]
+    verbs: ["update"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["csmtenants"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["csmtenants/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["csmtenants/finalizers"]
+    verbs: ["update"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["storages"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["storages/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["storages/finalizers"]
+    verbs: ["update"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: authorization-controller
+subjects:
+  - kind: ServiceAccount
+    name: authorization-controller
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: authorization-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+  labels:
+    app: authorization-controller
+spec:
+  replicas: <AUTHORIZATION_CONTROLLER_REPLICAS>
+  selector:
+    matchLabels:
+      app: authorization-controller
+  template:
+    metadata:
+      labels:
+        csm: <NAME>
+        app: authorization-controller
+    spec:
+      serviceAccountName: authorization-controller
+      containers:
+      - name: authorization-controller
+        image: <AUTHORIZATION_CONTROLLER_IMAGE>
+        imagePullPolicy: Always
+        args:
+          - "--authorization-namespace=<NAMESPACE>"
+          - "--health-probe-bind-address=:8081"
+          - "--leader-elect=<AUTHORIZATION_LEADER_ELECTION_ENABLED>"
+          - "--tenant-service-address=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
+          - "--storage-service-address=storage-service.<NAMESPACE>.svc.cluster.local:50051"
+          - "--role-service-address=role-service.<NAMESPACE>.svc.cluster.local:50051"
+        env:
+          - name: NAMESPACE
+            value: <NAMESPACE>
+        ports:
+        - containerPort: 50052
+          name: grpc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: authorization-controller
+  ports:
+  - port: 50052
+    targetPort: 50052
+    name: grpc
 ---
 # Redis
 apiVersion: v1
