@@ -32,9 +32,9 @@ type DriverType string
 type ModuleType string
 
 // CSMComponentType - type constraint for DriverType and ModuleType
-type CSMComponentType interface {
-	ModuleType | DriverType
-}
+//type CSMComponentType interface {
+	//ModuleType | DriverType
+//}
 
 // ObservabilityComponentType - type representing the type of components inside observability module. e.g. - topology
 type ObservabilityComponentType string

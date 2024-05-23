@@ -1491,7 +1491,11 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 	if configVersionExists {
 		if cr.HasModule(csmv1.AuthorizationServer) {
 			newVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
+			validUpgrade, err := utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
+			if err != nil {
+				return true, false, err
+			}
+			return true, validUpgrade, nil
 		}
 		driverType := cr.Spec.Driver.CSIDriverType
 		if driverType == csmv1.PowerScale {
@@ -1499,7 +1503,11 @@ func checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 			driverType = csmv1.PowerScaleName
 		}
 		newVersion := cr.Spec.Driver.ConfigVersion
-		return utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
+		validUpgrade, err := utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
+		if err != nil {
+			return true, false, err
+		}
+		return true, validUpgrade, nil
 	}
 	log.Infow("proceeding with fresh driver install")
 	return false, false, nil
