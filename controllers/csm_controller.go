@@ -1405,7 +1405,7 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 				return err
 			}
 			if !isCustomTag(cr.Spec.Modules[idx].Components[compIdx].Image) {
-				cr.Spec.Modules[idx].Components[compIdx].Image, err = updateImageTag(cr.Spec.Modules[idx].Components[compIdx].Image, componentVersion)
+				cr.Spec.Modules[idx].Components[compIdx].Image, err = updateImageTag(component.Image, componentVersion)
 				if err != nil {
 					return err
 				}
@@ -1416,7 +1416,23 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 		}
 	}
 
-	// Loop through initContainers, update images as needed
+        // Loop through initContainers, update images as needed
+        for idx, initContainer := range cr.Spec.Driver.InitContainers {
+                if !initContainer.NoAutoUpdate {
+			// update image
+			if !isCustomTag(initContainer.Image) {
+				cr.Spec.Driver.InitContainers[idx].Image, err = updateImageTag(initContainer.Image, componentVersion)
+				if err != nil {
+					return err
+				}
+				log.Infow("%s initcontainer updated to image %s", initContainer.Name, cr.Spec.Driver.InitContainers[idx].Image)
+			} else {
+				log.Infow("%s initcontainer using custom image tag (%s) not updating image", initContainer.Name, cr.Spec.Driver.InitContainers[idx].Image)
+			}
+		} else {
+			log.Infow("%s initcontainer set to noAutoUpdate, not updating image", initContainer.Name)
+		}
+			
 
 	// If we don't hit errors, return nil
 	return nil

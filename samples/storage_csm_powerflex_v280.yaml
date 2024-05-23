@@ -161,9 +161,10 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:3.6.1
+      - image: dellemc/sdc:3.6.0.6
         imagePullPolicy: IfNotPresent
         name: sdc
+        NoAutoUpdate: "true"
         envs:
           - name: MDM
             value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
