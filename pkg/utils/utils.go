@@ -18,12 +18,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"k8s.io/client-go/rest"
 	"os"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strconv"
 	"strings"
+
+	"k8s.io/client-go/rest"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -141,7 +143,7 @@ const (
 	PodmonNodeComponent = "podmon-node"
 	// ApplicationMobilityNamespace - application-mobility
 	ApplicationMobilityNamespace = "application-mobility"
-	//BrownfieldNamespace
+	// BrownfieldNamespace
 	ExistingNamespace = "<ExistingNameSpace>"
 	ClientNamespace   = "<ClientNameSpace>"
 )
@@ -1121,8 +1123,7 @@ func DetermineUnitTestRun(ctx context.Context) bool {
 	return unitTestRun
 }
 
-func BrownfieldDeployment(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
-	//Get the namespaces
+func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 
 	namespace, err := GetNamespaces(ctx)
@@ -1207,14 +1208,24 @@ func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Cli
 	for _, obj := range deployObjects {
 		log.FromContext(ctx).Info("namespace of parsed object is", "object", obj.GetNamespace())
 
-		if err := ctrlClient.Create(ctx, obj); err != nil {
-			if k8serror.IsAlreadyExists(err) {
-				log.FromContext(ctx).Info("Object already exists", "object", obj.GetObjectKind().GroupVersionKind().String())
-				continue
+		found := obj.DeepCopyObject().(crclient.Object)
+		err := ctrlClient.Get(ctx, crclient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}, found)
+		if err != nil && k8serror.IsNotFound(err) {
+			log.FromContext(ctx).Info("Creating a new object", "object", obj.GetObjectKind().GroupVersionKind().String())
+			err := ctrlClient.Create(ctx, obj)
+			if err != nil {
+				return err
 			}
-			return fmt.Errorf("failed to create object: %w", err)
+		} else if err != nil {
+			log.FromContext(ctx).Info("Unknown error.", "Error", err.Error())
+			return err
+		} else {
+			log.FromContext(ctx).Info("Updating Object", "object", obj.GetObjectKind().GroupVersionKind().String())
+			err = ctrlClient.Update(ctx, obj)
+			if err != nil {
+				return err
+			}
 		}
-		log.FromContext(ctx).Info("Object created", "object", obj.GetObjectKind().GroupVersionKind().String())
 	}
 	return nil
 }

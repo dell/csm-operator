@@ -237,6 +237,14 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 		log.Error(err, "Failed to update CR status")
 	}
 
+	// brownfield scenario
+	log.Info("Starting the brownfield cluster onboarding")
+	BrownfieldCR := "brownfield-deployment.yaml"
+	brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", op.ConfigDirectory, csmv1.DreadnoughtClient, acc.Spec.Client.ConfigVersion, BrownfieldCR)
+	if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, *acc, crc); err != nil {
+		log.Error(err, "brownfield deployment failed")
+	}
+
 	if err = DeployApexConnectivityClient(ctx, false, *op, *acc, crc); err == nil {
 		r.EventRecorder.Eventf(acc, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", acc.Name)
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
@@ -465,14 +473,14 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 		}
 	}
 
-	//brownfield scenario
-	log := logger.GetLogger(ctx)
-	log.Info("Starting the brownfield cluster onboarding")
-	BrownfieldCR := "brownfield-deployment.yaml"
-	brownfieldDeploymentPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
-	if err = utils.BrownfieldDeployment(ctx, brownfieldDeploymentPath, cr, ctrlClient); err != nil {
-		log.Error(err, "brownfield deployment failed")
-	}
+	////brownfield scenario
+	//log := logger.GetLogger(ctx)
+	//log.Info("Starting the brownfield cluster onboarding")
+	//BrownfieldCR := "brownfield-deployment.yaml"
+	//brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
+	//if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
+	//	log.Error(err, "brownfield deployment failed")
+	//}
 	return nil
 }
 
