@@ -159,10 +159,10 @@ rm -rf $$TMP_DIR ;\
 endef
 
 .PHONY: bundle
-bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and metadata, then validate generated files.
+bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and metadata, then validate generated files. Set --use-image-digests=true to use SHA ID of image instead of image tag.
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS) --use-image-digests=false
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build
