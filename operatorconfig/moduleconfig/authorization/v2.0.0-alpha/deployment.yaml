@@ -6,6 +6,7 @@ metadata:
 type: kubernetes.io/basic-auth
 stringData:
   password: K@ravi123!
+  commander_user: dev
 ---
 # Proxy service
 apiVersion: v1
@@ -666,6 +667,16 @@ spec:
             secretKeyRef:
               name: redis-csm-secret
               key: password
+        - name: HTTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-csm-secret
+              key: password          
+        - name: HTTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: redis-csm-secret
+              key: commander_user
         ports:
         - name: <AUTHORIZATION_REDIS_COMMANDER>
           containerPort: 8081
