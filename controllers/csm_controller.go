@@ -941,6 +941,14 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 // reconcileAuthorization - deploy authorization proxy server
 func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
+
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
+		log.Infow("Reconcile authorization cert-manager")
+		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
+		}
+	}
+
 	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization proxy-server")
 		if err := modules.AuthorizationServerDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
@@ -949,13 +957,6 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 
 		if err := modules.InstallPolicies(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to install policies: %v", err)
-		}
-	}
-
-	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
-		log.Infow("Reconcile authorization cert-manager")
-		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
 		}
 	}
 
