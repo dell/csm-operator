@@ -70,6 +70,14 @@ spec:
                         items:
                           type: string
                         type: array
+                      authorizationController:
+                        description: AuthorizationController is the image tag for
+                          the container
+                        type: string
+                      authorizationControllerReplicas:
+                        description: AuthorizationControllerReplicas is the number
+                          of replicas for the authorization controller deployment
+                        type: integer
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key
                           pair
@@ -243,6 +251,10 @@ spec:
                         description: kvEnginePath is the Authorization vault secret
                           path
                         type: string
+                      leaderElection:
+                        description: LeaderElection is boolean flag to enable leader
+                          election
+                        type: boolean
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -296,6 +308,10 @@ spec:
                       proxyService:
                         description: ProxyService is the image tag for the Container
                         type: string
+                      proxyServiceReplicas:
+                        description: ProxyServiceReplicas is the number of replicas
+                          for the proxy service deployment
+                        type: integer
                       redis:
                         description: Redis is the image tag for the Container
                         type: string
@@ -315,6 +331,10 @@ spec:
                       roleService:
                         description: RoleService is the image tag for the Container
                         type: string
+                      roleServiceReplicas:
+                        description: RoleServiceReplicas is the number of replicas
+                          for the role service deployment
+                        type: integer
                       sentinel:
                         description: Sentinel is the name of the sentinel statefulSet
                         type: string
@@ -325,6 +345,10 @@ spec:
                       storageService:
                         description: StorageService is the image tag for the Container
                         type: string
+                      storageServiceReplicas:
+                        description: StorageServiceReplicas is the number of replicas
+                          for storage service deployment
+                        type: integer
                       storageclass:
                         description: RedisStorageClass is the authorization proxy
                           server redis storage class for persistence
@@ -332,6 +356,10 @@ spec:
                       tenantService:
                         description: TenantService is the image tag for the Container
                         type: string
+                      tenantServiceReplicas:
+                        description: TenantServiceReplicas is the number of replicas
+                          for the tenant service deployment
+                        type: integer
                       tolerations:
                         description: Tolerations is the list of tolerations for the
                           driver pods
@@ -413,6 +441,14 @@ spec:
                           items:
                             type: string
                           type: array
+                        authorizationController:
+                          description: AuthorizationController is the image tag for
+                            the container
+                          type: string
+                        authorizationControllerReplicas:
+                          description: AuthorizationControllerReplicas is the number
+                            of replicas for the authorization controller deployment
+                          type: integer
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
@@ -587,6 +623,10 @@ spec:
                           description: kvEnginePath is the Authorization vault secret
                             path
                           type: string
+                        leaderElection:
+                          description: LeaderElection is boolean flag to enable leader
+                            election
+                          type: boolean
                         licenseName:
                           description: LicenseName is the name of the license for
                             app-mobility
@@ -641,6 +681,10 @@ spec:
                         proxyService:
                           description: ProxyService is the image tag for the Container
                           type: string
+                        proxyServiceReplicas:
+                          description: ProxyServiceReplicas is the number of replicas
+                            for the proxy service deployment
+                          type: integer
                         redis:
                           description: Redis is the image tag for the Container
                           type: string
@@ -660,6 +704,10 @@ spec:
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
+                        roleServiceReplicas:
+                          description: RoleServiceReplicas is the number of replicas
+                            for the role service deployment
+                          type: integer
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -670,6 +718,10 @@ spec:
                         storageService:
                           description: StorageService is the image tag for the Container
                           type: string
+                        storageServiceReplicas:
+                          description: StorageServiceReplicas is the number of replicas
+                            for storage service deployment
+                          type: integer
                         storageclass:
                           description: RedisStorageClass is the authorization proxy
                             server redis storage class for persistence
@@ -677,6 +729,10 @@ spec:
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
+                        tenantServiceReplicas:
+                          description: TenantServiceReplicas is the number of replicas
+                            for the tenant service deployment
+                          type: integer
                         tolerations:
                           description: Tolerations is the list of tolerations for
                             the driver pods
@@ -743,6 +799,14 @@ spec:
                           items:
                             type: string
                           type: array
+                        authorizationController:
+                          description: AuthorizationController is the image tag for
+                            the container
+                          type: string
+                        authorizationControllerReplicas:
+                          description: AuthorizationControllerReplicas is the number
+                            of replicas for the authorization controller deployment
+                          type: integer
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
@@ -917,6 +981,10 @@ spec:
                           description: kvEnginePath is the Authorization vault secret
                             path
                           type: string
+                        leaderElection:
+                          description: LeaderElection is boolean flag to enable leader
+                            election
+                          type: boolean
                         licenseName:
                           description: LicenseName is the name of the license for
                             app-mobility
@@ -971,6 +1039,10 @@ spec:
                         proxyService:
                           description: ProxyService is the image tag for the Container
                           type: string
+                        proxyServiceReplicas:
+                          description: ProxyServiceReplicas is the number of replicas
+                            for the proxy service deployment
+                          type: integer
                         redis:
                           description: Redis is the image tag for the Container
                           type: string
@@ -990,6 +1062,10 @@ spec:
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
+                        roleServiceReplicas:
+                          description: RoleServiceReplicas is the number of replicas
+                            for the role service deployment
+                          type: integer
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -1000,6 +1076,10 @@ spec:
                         storageService:
                           description: StorageService is the image tag for the Container
                           type: string
+                        storageServiceReplicas:
+                          description: StorageServiceReplicas is the number of replicas
+                            for storage service deployment
+                          type: integer
                         storageclass:
                           description: RedisStorageClass is the authorization proxy
                             server redis storage class for persistence
@@ -1007,6 +1087,10 @@ spec:
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
+                        tenantServiceReplicas:
+                          description: TenantServiceReplicas is the number of replicas
+                            for the tenant service deployment
+                          type: integer
                         tolerations:
                           description: Tolerations is the list of tolerations for
                             the driver pods

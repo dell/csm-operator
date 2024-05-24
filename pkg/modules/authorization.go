@@ -30,6 +30,7 @@ import (
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -61,22 +62,36 @@ const (
 	AuthNamespace = "<NAMESPACE>"
 	// AuthServerImage -
 	AuthServerImage = "<AUTHORIZATION_PROXY_SERVER_IMAGE>"
+	// AuthProxyServiceReplicas -
+	AuthProxyServiceReplicas = "<AUTHORIZATION_PROXY_SERVICE_REPLICAS>"
 	// AuthOpaImage -
 	AuthOpaImage = "<AUTHORIZATION_OPA_IMAGE>"
 	// AuthOpaKubeMgmtImage -
 	AuthOpaKubeMgmtImage = "<AUTHORIZATION_OPA_KUBEMGMT_IMAGE>"
 	// AuthTenantServiceImage -
 	AuthTenantServiceImage = "<AUTHORIZATION_TENANT_SERVICE_IMAGE>"
+	// AuthTenantServiceReplicas -
+	AuthTenantServiceReplicas = "<AUTHORIZATION_TENANT_SERVICE_REPLICAS>"
 	// AuthRoleServiceImage -
 	AuthRoleServiceImage = "<AUTHORIZATION_ROLE_SERVICE_IMAGE>"
+	// AuthRoleServiceReplicas -
+	AuthRoleServiceReplicas = "<AUTHORIZATION_ROLE_SERVICE_REPLICAS>"
 	// AuthStorageServiceImage -
 	AuthStorageServiceImage = "<AUTHORIZATION_STORAGE_SERVICE_IMAGE>"
+	// AuthStorageServiceReplicas -
+	AuthStorageServiceReplicas = "<AUTHORIZATION_STORAGE_SERVICE_REPLICAS>"
 	// AuthRedisImage -
 	AuthRedisImage = "<AUTHORIZATION_REDIS_IMAGE>"
 	// AuthRedisCommanderImage -
 	AuthRedisCommanderImage = "<AUTHORIZATION_REDIS_COMMANDER_IMAGE>"
 	// AuthRedisStorageClass -
 	AuthRedisStorageClass = "<REDIS_STORAGE_CLASS>"
+	// AuthControllerImage -
+	AuthControllerImage = "<AUTHORIZATION_CONTROLLER_IMAGE>"
+	// AuthControllerReplicas -
+	AuthControllerReplicas = "<AUTHORIZATION_CONTROLLER_REPLICAS>"
+	// AuthLeaderElectionEnabled -
+	AuthLeaderElectionEnabled = "<AUTHORIZATION_LEADER_ELECTION_ENABLED>"
 
 	// AuthProxyHost -
 	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
@@ -476,7 +491,15 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 	}
 
 	// Check for secrets
-	proxyServerSecrets := []string{"karavi-config-secret", "karavi-storage-secret"}
+	var proxyServerSecrets []string
+	switch semver.Major(auth.ConfigVersion) {
+	case "v2":
+		proxyServerSecrets = []string{"karavi-config-secret"}
+	case "v1":
+		proxyServerSecrets = []string{"karavi-config-secret", "karavi-storage-secret"}
+	default:
+		return fmt.Errorf("authorization major version %s not supported", semver.Major(auth.ConfigVersion))
+	}
 	for _, name := range proxyServerSecrets {
 		found := &corev1.Secret{}
 		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
@@ -511,11 +534,18 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, component.ProxyService)
+			YamlString = strings.ReplaceAll(YamlString, AuthProxyServiceReplicas, strconv.Itoa(component.ProxyServiceReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, component.Opa)
 			YamlString = strings.ReplaceAll(YamlString, AuthOpaKubeMgmtImage, component.OpaKubeMgmt)
 			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, component.TenantService)
+			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceReplicas, strconv.Itoa(component.TenantServiceReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
+			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceReplicas, strconv.Itoa(component.RoleServiceReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
+			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceReplicas, strconv.Itoa(component.StorageServiceReplicas))
+			YamlString = strings.ReplaceAll(YamlString, AuthControllerImage, component.AuthorizationController)
+			YamlString = strings.ReplaceAll(YamlString, AuthControllerReplicas, strconv.Itoa(component.AuthorizationControllerReplicas))
+			YamlString = strings.ReplaceAll(YamlString, AuthLeaderElectionEnabled, strconv.FormatBool(component.LeaderElection))
 			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 		}
 

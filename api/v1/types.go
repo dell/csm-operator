@@ -316,17 +316,45 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Service Container Image"
 	ProxyService string `json:"proxyService,omitempty" yaml:"proxyService,omitempty"`
 
+	// ProxyServiceReplicas is the number of replicas for the proxy service deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Proxy Service Replicas"
+	ProxyServiceReplicas int `json:"proxyServiceReplicas,omitempty" yaml:"proxyServiceReplicas,omitempty"`
+
 	// TenantService is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Tenant Service Container Image"
 	TenantService string `json:"tenantService,omitempty" yaml:"tenantService,omitempty"`
+
+	// TenantServiceReplicas is the number of replicas for the tenant service deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Tenant Service Replicas"
+	TenantServiceReplicas int `json:"tenantServiceReplicas,omitempty" yaml:"tenantServiceReplicas,omitempty"`
 
 	// RoleService is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Role Service Container Image"
 	RoleService string `json:"roleService,omitempty" yaml:"roleService,omitempty"`
 
+	// RoleServiceReplicas is the number of replicas for the role service deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Role Service Replicas"
+	RoleServiceReplicas int `json:"roleServiceReplicas,omitempty" yaml:"roleServiceReplicas,omitempty"`
+
 	// StorageService is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Storage Service Container Image"
 	StorageService string `json:"storageService,omitempty" yaml:"storageService,omitempty"`
+
+	// StorageServiceReplicas is the number of replicas for storage service deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Storage Service Replicas"
+	StorageServiceReplicas int `json:"storageServiceReplicas,omitempty" yaml:"storageServiceReplicas,omitempty"`
+
+	// AuthorizationController is the image tag for the container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Controller Container Image"
+	AuthorizationController string `json:"authorizationController,omitempty" yaml:"authorizationController,omitempty"`
+
+	// AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Controller Replicas"
+	AuthorizationControllerReplicas int `json:"authorizationControllerReplicas,omitempty" yaml:"authorizationControllerReplicas,omitempty"`
+
+	// LeaderElection is boolean flag to enable leader election
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Leader Election"
+	LeaderElection bool `json:"leaderElection,omitempty" yaml:"leaderElection,omitempty"`
 
 	// Redis is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Redis Container Image"
