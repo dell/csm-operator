@@ -235,7 +235,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: csi-metadata-retriever
-          image: dellemc/csi-metadata-retriever:v1.7.2
+          image: dellemc/csi-metadata-retriever:v1.7.3
           imagePullPolicy: Always
           args:
             - "--csi-address=$(ADDRESS)"
