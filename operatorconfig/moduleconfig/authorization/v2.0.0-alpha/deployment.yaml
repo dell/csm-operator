@@ -378,8 +378,12 @@ spec:
       - name: vault-client-certificate
         projected:
           sources:
-            - secret:
-                name: storage-service-selfsigned-tls
+          - secret:
+              name: vault-client-certificate
+          - secret:
+              name: storage-service-selfsigned-tls
+          - secret:
+              name: vault-certificate-authority
 ---
 apiVersion: v1
 kind: Service

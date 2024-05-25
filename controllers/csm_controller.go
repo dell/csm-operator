@@ -965,6 +965,8 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 			return fmt.Errorf("unable to reconcile authorization proxy server: %v", err)
 		}
 
+		// reconcile storage service
+
 		if err := modules.InstallPolicies(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to install policies: %v", err)
 		}
