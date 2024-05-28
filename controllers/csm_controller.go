@@ -1360,8 +1360,6 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 
-	//var driverType csmv1.DriverType
-	//newVersion := ""
 	// If it is an upgrade/downgrade, check to see if we meet the minimum version using GetUpgradeInfo, which returns the minimum version required
 	// for the desired upgrade. If the upgrade path is not valid fail
 	// Existing version
@@ -1372,15 +1370,15 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 		if cr.HasModule(csmv1.AuthorizationServer) {
 			newVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
 			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
-		} else {
-			driverType := cr.Spec.Driver.CSIDriverType
-			if driverType == csmv1.PowerScale {
-				// use powerscale instead of isilon as the folder name is powerscale
-				driverType = csmv1.PowerScaleName
-			}
-			newVersion := cr.Spec.Driver.ConfigVersion
-			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
 		}
+		driverType := cr.Spec.Driver.CSIDriverType
+		if driverType == csmv1.PowerScale {
+			// use powerscale instead of isilon as the folder name is powerscale
+			driverType = csmv1.PowerScaleName
+		}
+		newVersion := cr.Spec.Driver.ConfigVersion
+		return utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
+
 	}
 	log.Infow("proceeding with fresh driver install")
 	return true, nil
