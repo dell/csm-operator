@@ -14,7 +14,6 @@ package modules
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -764,30 +763,18 @@ func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerSt
 	if authCertificate != "" || authPrivateKey != "" {
 		// use custom tls secret
 		if authCertificate != "" && authPrivateKey != "" {
-			log.Infof("Provided Certificate %s, Key %s", authCertificate, authPrivateKey)
+			log.Infof("using user provided certificate and key for authorization")
 			buf, err := readConfigFile(authModule, cr, op, AuthCustomCert)
 			if err != nil {
 				return false, YamlString, err
 			}
 
-			certFile, err := os.ReadFile(filepath.Clean(authCertificate))
-			if err != nil {
-				return false, "", fmt.Errorf("reading cert file: %v", err)
-			}
-			encodedAuthCert := base64.StdEncoding.EncodeToString(certFile)
-
-			privateKeyFile, err := os.ReadFile(filepath.Clean(authPrivateKey))
-			if err != nil {
-				return false, "", fmt.Errorf("reading private key file: %v", err)
-			}
-			encodedAuthPrivateKey := base64.StdEncoding.EncodeToString(privateKeyFile)
-
 			YamlString = string(buf)
 			YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-			YamlString = strings.ReplaceAll(YamlString, AuthCert, encodedAuthCert)
-			YamlString = strings.ReplaceAll(YamlString, AuthPrivateKey, encodedAuthPrivateKey)
+			YamlString = strings.ReplaceAll(YamlString, AuthCert, authCertificate)
+			YamlString = strings.ReplaceAll(YamlString, AuthPrivateKey, authPrivateKey)
 		} else {
-			return false, YamlString, fmt.Errorf("authorization install failed -- either cert or privatekey missing for custom cert")
+			return false, YamlString, fmt.Errorf("authorization install failed -- either certificate or private key missing for custom cert")
 		}
 	} else {
 		// use self-signed cert

@@ -55,12 +55,12 @@ spec:
           authorizationControllerReplicas: 1
           leaderElection: true
 
-          # certificate: path to certificate file -- add cert here to use custom certificates
+          # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           certificate: ""
 
-          # privateKey: path to private key file -- add private key here to use custom certificates
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: ""

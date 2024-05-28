@@ -10,7 +10,6 @@ package modules
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -988,9 +987,6 @@ func TestAuthorizationCertificates(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 		"success - using custom tls secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			os.WriteFile("foo", []byte("foo"), 0o400)
-			os.WriteFile("bar", []byte("bar"), 0o400)
-
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_certs.yaml")
 			if err != nil {
 				panic(err)
@@ -1026,9 +1022,6 @@ func TestAuthorizationCertificates(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
-			os.Remove("foo")
-			os.Remove("bar")
 		})
 	}
 }
