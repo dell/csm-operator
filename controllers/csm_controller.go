@@ -1360,6 +1360,8 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 
+	var driverType csmv1.DriverType
+	newVersion := ""
 	// If it is an upgrade/downgrade, check to see if we meet the minimum version using GetUpgradeInfo, which returns the minimum version required
 	// for the desired upgrade. If the upgrade path is not valid fail
 	// Existing version
@@ -1368,15 +1370,16 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 	// If annotation exists, we are doing an upgrade or modify
 	if configVersionExists {
 		if cr.HasModule(csmv1.AuthorizationServer) {
-			newVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
+			newVersion = cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
+			//return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
+		} else {
+			driverType = cr.Spec.Driver.CSIDriverType
+			if driverType == csmv1.PowerScale {
+				// use powerscale instead of isilon as the folder name is powerscale
+				driverType = csmv1.PowerScaleName
+			}
+			newVersion = cr.Spec.Driver.ConfigVersion
 		}
-		driverType := cr.Spec.Driver.CSIDriverType
-		if driverType == csmv1.PowerScale {
-			// use powerscale instead of isilon as the folder name is powerscale
-			driverType = csmv1.PowerScaleName
-		}
-		newVersion := cr.Spec.Driver.ConfigVersion
 		isValidUpgrade, err := utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
 		if err != nil {
 			return false, err
@@ -1425,7 +1428,12 @@ func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.Containe
 		log.Infof("Installing csm component %s with config Version %s. Updating Annotations with Config Version",
 			instance.GetName(), configVersion)
 	} else {
-		configVersion = instance.Spec.Driver.ConfigVersion
+		if instance.HasModule(csmv1.AuthorizationServer) {
+			configVersion = instance.GetModule(csmv1.AuthorizationServer).ConfigVersion
+		} else {
+			configVersion = instance.Spec.Driver.ConfigVersion
+		}
+		//configVersion = instance.Spec.Driver.ConfigVersion
 		annotations[configVersionKey] = configVersion
 		isUpdated = true
 		log.Infof("Installing csm component %s with config Version %s. Updating Annotations with Config Version",
