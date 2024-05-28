@@ -1363,3 +1363,35 @@ func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStor
 	fmt.Println("All AM pods removed ")
 	return nil
 }
+
+func (step *Step) createCustomResourceDefinition(res Resource, crdNumStr string) error {
+	crdNum, _ := strconv.Atoi(crdNumStr)
+	cmd := exec.Command("kubectl", "apply", "-f", res.Scenario.Paths[crdNum-1])
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("csm authorization crds install failed: %v", err)
+	}
+
+	return nil
+}
+
+func (step *Step) validateCustomResourceDefinition(res Resource, crdName string) error {
+	cmd := exec.Command("kubectl", "get", "crd", fmt.Sprintf("%s.csm-authorization.storage.dell.com", crdName))
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to validate csm authorization crd [%s]: %v", crdName, err)
+	}
+
+	return nil
+}
+
+func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string) error {
+	crdNum, _ := strconv.Atoi(crdNumStr)
+	cmd := exec.Command("kubectl", "delete", "-f", res.Scenario.Paths[crdNum-1])
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("csm authorization crds uninstall failed: %v", err)
+	}
+
+	return nil
+}
