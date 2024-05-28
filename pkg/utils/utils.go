@@ -900,6 +900,33 @@ func GetInitContainerVersion(driverName csmv1.DriverType, driverVersion string, 
 	return "", fmt.Errorf("%s driver does not exist in file %s", driverName, configMapPath)
 }
 
+func GetSideCarVersion(driverName csmv1.DriverType, driverVersion string, sideCarName string, configDirPath string) (string, error) {
+	configMapPath := fmt.Sprintf("%s/driverconfig/common/sidecar-versions.yaml", configDirPath)
+	buf, err := os.ReadFile(filepath.Clean(configMapPath))
+	if err != nil {
+		return "", err
+	}
+
+	drvToSideCarVersion := map[csmv1.DriverType]map[string]map[string]string{}
+	err = yaml.Unmarshal(buf, &drvToSideCarVersion)
+	if err != nil {
+		return "", err
+	}
+
+	if driver, ok := drvToSideCarVersion[driverName]; ok {
+		if sideCars, ok := driver[driverVersion]; ok {
+			if sideCarVersion, ok := sideCars[sideCarName]; ok {
+				return sideCarVersion, nil
+			}
+			return "", fmt.Errorf("%s sidecar for %s driver does not exist in file %s", sideCarName, driverName, configMapPath)
+		}
+		return "", fmt.Errorf("version %s of %s driver does not exist in file %s", driverVersion, driverName, configMapPath)
+
+	}
+
+	return "", fmt.Errorf("%s driver does not exist in file %s", driverName, configMapPath)
+}
+
 func versionParser(version string) (int, int, error) {
 	// strip v off of version string
 	versionNoV := strings.TrimLeft(version, "v")

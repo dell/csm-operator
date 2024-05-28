@@ -1429,6 +1429,30 @@ func updateVersionsAndImages(ctx context.Context, cr *csmv1.ContainerStorageModu
 		}
 	}
 
+        // If this is PFlex, update sdc-monitor sidecar image (not specified in the operatorconfig)
+	if cr.Spec.Driver.CSIDriverType == csmv1.PowerFlex {
+        	for idx, sideCar := range cr.Spec.Driver.SideCars {
+                	if sideCar.Name == csmv1.Sdcmonitor && !sideCar.NoAutoUpdate {
+				// update image
+				if !isCustomTag(sideCar.Image) {
+					sideCarVersion, err := utils.GetSideCarVersion(cr.Spec.Driver.CSIDriverType, cr.Spec.Driver.ConfigVersion, sideCar.Name, op.ConfigDirectory)
+					if err != nil {
+						return err
+					}
+					cr.Spec.Driver.SideCars[idx].Image, err = updateImageTag(sideCar.Image, sideCarVersion)
+					if err != nil {
+						return err
+					}
+					log.Infow("%s sidecar updated to image %s", sideCar.Name, cr.Spec.Driver.SideCars[idx].Image)
+				} else {
+					log.Infow("%s sidecar using custom image tag (%s) not updating image", sideCar.Name, sideCar.Image)
+				}
+			} else {
+				log.Infow("%s sidecar set to noAutoUpdate, not updating image", sideCar.Name)
+			}
+		}
+	}
+
 	// If we don't hit errors, return nil
 	return nil
 }
