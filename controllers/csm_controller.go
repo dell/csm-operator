@@ -1394,7 +1394,6 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 			}
 		}
 		return true, nil
-		//return utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
 	}
 	log.Infow("proceeding with fresh driver install")
 	return true, nil
