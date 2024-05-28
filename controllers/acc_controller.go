@@ -242,7 +242,7 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 	BrownfieldCR := "brownfield-deployment.yaml"
 	brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", op.ConfigDirectory, csmv1.DreadnoughtClient, acc.Spec.Client.ConfigVersion, BrownfieldCR)
 	if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, *acc, crc); err != nil {
-		log.Error(err, "brownfield deployment failed")
+		log.Error(err, "brownfield cluster onboarding failed")
 	}
 
 	if err = DeployApexConnectivityClient(ctx, false, *op, *acc, crc); err == nil {
@@ -472,15 +472,6 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 			}
 		}
 	}
-
-	////brownfield scenario
-	//log := logger.GetLogger(ctx)
-	//log.Info("Starting the brownfield cluster onboarding")
-	//BrownfieldCR := "brownfield-deployment.yaml"
-	//brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
-	//if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
-	//	log.Error(err, "brownfield deployment failed")
-	//}
 	return nil
 }
 

@@ -18,12 +18,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"k8s.io/client-go/rest"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"k8s.io/client-go/rest"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -1150,7 +1149,6 @@ func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivi
 			return err
 		}
 	}
-	log.Infoln("Brownfield deploymet success")
 	return nil
 }
 
