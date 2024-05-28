@@ -633,11 +633,16 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 		return err
 	}
 
+	err = authorizationStorageService(ctx, isDeleting, cr, ctrlClient)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // AuthorizationStorageService - apply/delete storage service deployment and volume objects
-func AuthorizationStorageService(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func authorizationStorageService(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
@@ -645,7 +650,6 @@ func AuthorizationStorageService(ctx context.Context, isDeleting bool, cr csmv1.
 
 	switch semver.Major(authModule.ConfigVersion) {
 	case "v2":
-		//todo: write vault secrets
 		return authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient)
 	case "v1":
 		return authorizationStorageServiceV1(ctx, isDeleting, cr, ctrlClient)
@@ -780,6 +784,11 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		return err
 	}
 
+	err = applyDeleteVaultCertificates(ctx, isDeleting, cr, ctrlClient)
+	if err != nil {
+		return fmt.Errorf("applying vault certificates: %w", err)
+	}
+
 	// get component variables
 	replicas := new(int32)
 	sentinels := ""
@@ -813,6 +822,8 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			vaultCertificate = component.Certificate
 			vaultPrivateKey = component.PrivateKey
 			vaultCertificateAuthority = component.CertificateAuthority
+		default:
+			continue
 		}
 	}
 
@@ -974,6 +985,199 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	}
 
 	return applyDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
+}
+
+func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	// get vault certificate data from CR
+	vaultCertificate := ""
+	vaultPrivateKey := ""
+	vaultCertificateAuthority := ""
+	for _, component := range authModule.Components {
+		switch component.Name {
+		case AuthVaultComponent:
+			vaultCertificate = component.Certificate
+			vaultPrivateKey = component.PrivateKey
+			vaultCertificateAuthority = component.CertificateAuthority
+		default:
+			continue
+		}
+	}
+
+	// apply/delete vault-certificate-authority secret if it was provided
+	if vaultCertificateAuthority != "" {
+		vaultCABytes, err := base64.StdEncoding.DecodeString(vaultCertificateAuthority)
+		if err != nil {
+			return fmt.Errorf("decoding vault certificate authority: %w", err)
+		}
+
+		secret := corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vault-certificate-authority",
+				Namespace: cr.Namespace,
+			},
+			Type: corev1.SecretTypeOpaque,
+			Data: map[string][]byte{
+				"ca.crt": vaultCABytes,
+			},
+		}
+
+		secretBytes, err := json.Marshal(&secret)
+		if err != nil {
+			return fmt.Errorf("marshalling vault certificate authority secret: %w", err)
+		}
+
+		yamlString, err := yaml.JSONToYAML(secretBytes)
+		if err != nil {
+			return fmt.Errorf("converting vault certificate authority json to yaml: %w", err)
+		}
+
+		err = applyDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
+		if err != nil {
+			return fmt.Errorf("applying vault certificate authority secret: %w", err)
+		}
+	}
+
+	// apply/delete vault-client-certificate secret if it was provided
+	if vaultCertificate != "" && vaultPrivateKey != "" {
+		vaultCertBytes, err := base64.StdEncoding.DecodeString(vaultCertificate)
+		if err != nil {
+			return fmt.Errorf("decoding vault certificate: %w", err)
+		}
+
+		vaultKeyBytes, err := base64.StdEncoding.DecodeString(vaultPrivateKey)
+		if err != nil {
+			return fmt.Errorf("decoding vault private key: %w", err)
+		}
+
+		secret := corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vault-client-certificate",
+				Namespace: cr.Namespace,
+			},
+			Type: corev1.SecretTypeTLS,
+			Data: map[string][]byte{
+				"tls.crt": vaultCertBytes,
+				"tls.key": vaultKeyBytes,
+			},
+		}
+
+		secretBytes, err := json.Marshal(&secret)
+		if err != nil {
+			return fmt.Errorf("marshalling vault certificate secret: %w", err)
+		}
+
+		yamlString, err := yaml.JSONToYAML(secretBytes)
+		if err != nil {
+			return fmt.Errorf("converting vault certificate json to yaml: %w", err)
+		}
+
+		err = applyDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
+		if err != nil {
+			return fmt.Errorf("applying vault certificate secret: %w", err)
+		}
+		return nil
+	} else {
+		// apply/delete storage-service-selfsigned issuer and certificate
+		issuer := &certificate.Issuer{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "Issuer",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "storage-service-selfsigned",
+				Namespace: cr.Namespace,
+			},
+			Spec: certificate.IssuerSpec{
+				IssuerConfig: certificate.IssuerConfig{
+					SelfSigned: &certificate.SelfSignedIssuer{
+						CRLDistributionPoints: []string{},
+					},
+				},
+			},
+		}
+
+		issuerByes, err := json.Marshal(issuer)
+		if err != nil {
+			return fmt.Errorf("marshaling storage-service-selfsigned issuer: %v", err)
+		}
+
+		issuerYaml, err := yaml.JSONToYAML(issuerByes)
+		if err != nil {
+			return fmt.Errorf("converting storage-service-selfsigned issuer json to yaml: %v", err)
+		}
+
+		// create/delete issuer
+		err = applyDeleteObjects(ctx, ctrlClient, string(issuerYaml), isDeleting)
+		if err != nil {
+			return err
+		}
+
+		certificate := &certificate.Certificate{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "Certificate",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "storage-service-selfsigned",
+				Namespace: cr.Namespace,
+			},
+			Spec: certificate.CertificateSpec{
+				SecretName: "storage-service-selfsigned-tls",
+				Duration: &metav1.Duration{
+					Duration: duration, // 90d
+				},
+				RenewBefore: &metav1.Duration{
+					Duration: renewBefore, // 15d
+				},
+				Subject: &certificate.X509Subject{
+					Organizations: []string{"dellemc"},
+				},
+				IsCA: false,
+				PrivateKey: &certificate.CertificatePrivateKey{
+					Algorithm: "RSA",
+					Encoding:  "PKCS1",
+					Size:      2048,
+				},
+				Usages: []certificate.KeyUsage{
+					"client auth",
+				},
+				DNSNames: []string{"csm-authorization-storage-service"},
+				IssuerRef: cmmetav1.ObjectReference{
+					Name:  "selfsigned",
+					Kind:  "Issuer",
+					Group: "cert-manager.io",
+				},
+			},
+		}
+
+		certBytes, err := json.Marshal(certificate)
+		if err != nil {
+			return fmt.Errorf("marshaling storage-service-selfsigned certificate: %v", err)
+		}
+
+		certYaml, err := yaml.JSONToYAML(certBytes)
+		if err != nil {
+			return fmt.Errorf("converting storage-service-selfsigned certificate json to yaml: %v", err)
+		}
+
+		// create/delete certificate
+		err = applyDeleteObjects(ctx, ctrlClient, string(certYaml), isDeleting)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 // AuthorizationIngress - apply/delete ingress objects
