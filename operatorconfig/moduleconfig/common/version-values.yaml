@@ -27,7 +27,7 @@ powerflex:
       authorization: "v1.7.0"
       observability: "v1.6.0"
       replication: "v1.6.0"
-      resiliency: "v1.6.0"
+      resiliency: "v1.7.0"
   v2.9.0:
       application-mobility: "v1.0.0"
       authorization: "v1.9.0"
