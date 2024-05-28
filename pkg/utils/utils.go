@@ -863,7 +863,7 @@ func versionParser(version string) (int, int, error) {
 
 // MinVersionCheck takes a driver name and a version of the form "vA.B.C" and checks it against the minimum version for the specified driver
 func MinVersionCheck(minVersion string, version string) (bool, error) {
-	minMajorversion, minMinorversion, err := versionParser(minVersion)
+	minMajorVersion, minMinorVersion, err := versionParser(minVersion)
 	if err != nil {
 		return false, err
 	}
@@ -874,7 +874,7 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	}
 
 	// compare each part according to minimum driver version
-	if majorVersion >= minMajorversion && minorVersion >= minMinorversion {
+	if majorVersion >= minMajorVersion && minorVersion >= minMinorVersion {
 		return true, nil
 	}
 	return false, nil
