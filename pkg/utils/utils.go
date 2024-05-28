@@ -868,13 +868,13 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 		return false, err
 	}
 
-	majorVersion, minorVersion , err := versionParser(version)
+	majorVersion, minorVersion, err := versionParser(version)
 	if err != nil {
 		return false, err
 	}
 
 	// compare each part according to minimum driver version
-	if majorVersion >= minMajorVersion && minorVersion  >= minMinorVersion {
+	if majorVersion >= minMajorVersion && minorVersion >= minMinorVersion {
 		return true, nil
 	}
 	return false, nil
