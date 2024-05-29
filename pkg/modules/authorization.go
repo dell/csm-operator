@@ -833,7 +833,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			Name: "config-volume",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: "karavi-authorization-config",
+					SecretName: "karavi-config-secret",
 				},
 			},
 		},
@@ -888,6 +888,10 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// set deployment
 	deployment := appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: "apps/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "storage-service",
 			Namespace: cr.Namespace,
@@ -938,8 +942,8 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 								},
 							},
 							Args: []string{
-								"--redis-sentinel=${SENTINELS}",
-								"--redis-password=${REDIS_PASSWORD}",
+								"--redis-sentinel=$(SENTINELS)",
+								"--redis-password=$(REDIS_PASSWORD)",
 								fmt.Sprintf("--vault-address=%s", vaultAddress),
 								fmt.Sprintf("--vault-role=%s", vaultRole),
 								fmt.Sprintf("--vault-kv-engine-path=%s", vaultKVEnginePath),
@@ -984,7 +988,11 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		return fmt.Errorf("converting storage-service json to yaml: %w", err)
 	}
 
-	return applyDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
+	err = applyDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
+	if err != nil {
+		return fmt.Errorf("applying storage-service deployment: %w", err)
+	}
+	return nil
 }
 
 func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
