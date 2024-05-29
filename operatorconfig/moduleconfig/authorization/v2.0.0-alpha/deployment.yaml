@@ -754,27 +754,41 @@ spec:
                 nodes=$( echo "$nodes*$node" )
             done            
             loop=$(echo $nodes | sed -e "s/"*"/\n/g")
-            
-            for i in $loop
-            do
-                echo "Finding master at $i"
-                ROLE=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep role | cut -d ":" -f2)
-                if [ "$ROLE" = "master" ]; then
-                    MASTER=$i.authorization.svc.cluster.local
-                    echo "Master found at $MASTER..."
-                    break
-                else
-                  MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
-                  if [ "$MASTER" = "" ]; then
-                      echo "Master not found..."
-                      echo "Sleeping 5 seconds for pods to come up..."
-                      sleep 5
-                      MASTER=
-                  else
+
+            foundMaster=$false
+
+            while [ $foundMaster == $false ] 
+            do  
+              for i in $loop
+              do
+                  echo "Finding master at $i"
+                  ROLE=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep role | cut -d ":" -f2)
+                  if [ "$ROLE" = "master" ]; then
+                      MASTER=$i.authorization.svc.cluster.local
                       echo "Master found at $MASTER..."
+                      foundMaster=$true
                       break
+                  else
+                    MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
+                    if [ "$MASTER" = "" ]; then
+                        echo "Master not found..."
+                        echo "Sleeping 5 seconds for redis pods to come up..."
+                        sleep 5
+                        MASTER=
+                    else
+                        echo "Master found at $MASTER..."
+                        foundMaster=$true
+                        break
+                    fi
                   fi
-                fi
+              done
+
+              if [ $foundMaster == $true ]; then
+                break
+              else   
+                 echo "Master not found, sleep for 30s before attempting again"
+                 sleep 30
+              fi
             done
             
             echo "sentinel monitor mymaster $MASTER 6379 2" >> /tmp/master
