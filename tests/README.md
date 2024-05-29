@@ -36,7 +36,11 @@ Any time changes made to the operator are being checked into the main branch, sa
   - `proxy-ns`
   - (if running sanity, powerflex, or modules suites) `test-vxflexos`
   - (if running sanity, powerscale, or modules suites) `isilon`
-- For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
+- For auth: edit your `/etc/hosts` file to include the following lines:
+  ```
+  <master node IP> csm-authorization.com
+  <master node IP> authorization-ingress-nginx-controller.authorization.svc.cluster.local
+  ```
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
 ```bash
