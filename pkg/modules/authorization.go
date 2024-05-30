@@ -1408,7 +1408,7 @@ func AuthCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.Contai
 	}
 
 	// v1 does not have custom resources, so treat it like a no-op
-	if semver.Compare(auth.ConfigVersion, "v2.0.0") < 0 {
+	if semver.Compare(auth.ConfigVersion, "v2.0.0-alpha") < 0 {
 		return nil
 	}
 
