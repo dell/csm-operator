@@ -1384,44 +1384,33 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 	return true, nil
 }
 
-// TODO: refactor this
+// applyConfigVersionAnnotations - applies the config version annotation to the instance.
 func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.ContainerStorageModule) bool {
 	log := logger.GetLogger(ctx)
 
-	// If driver/module has not been initialized yet, we first annotate the component with the config version annotation
-
 	annotations := instance.GetAnnotations()
-	var configVersion string
-	isUpdated := false
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
+
 	annotations[CSMVersionKey] = CSMVersion
 
-	if _, ok := annotations[configVersionKey]; !ok {
-		configVersion := ""
-		if instance.HasModule(csmv1.AuthorizationServer) {
-			configVersion = instance.GetModule(csmv1.AuthorizationServer).ConfigVersion
-		} else {
-			configVersion = instance.Spec.Driver.ConfigVersion
-		}
-		annotations[configVersionKey] = configVersion
-		isUpdated = true
-		log.Infof("Installing csm component %s with config Version %s. Updating Annotations with Config Version",
-			instance.GetName(), configVersion)
+	var configVersion string
+	if instance.HasModule(csmv1.AuthorizationServer) {
+		configVersion = instance.GetModule(csmv1.AuthorizationServer).ConfigVersion
 	} else {
-		if instance.HasModule(csmv1.AuthorizationServer) {
-			configVersion = instance.GetModule(csmv1.AuthorizationServer).ConfigVersion
-		} else {
-			configVersion = instance.Spec.Driver.ConfigVersion
-		}
+		configVersion = instance.Spec.Driver.ConfigVersion
+	}
+
+	if annotations[configVersionKey] != configVersion {
 		annotations[configVersionKey] = configVersion
-		isUpdated = true
 		log.Infof("Installing csm component %s with config Version %s. Updating Annotations with Config Version",
 			instance.GetName(), configVersion)
+		instance.SetAnnotations(annotations)
+		return true
 	}
-	instance.SetAnnotations(annotations)
-	return isUpdated
+
+	return false
 }
 
 // GetClient - returns the split client
