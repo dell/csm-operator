@@ -635,8 +635,8 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 }
 
 // AuthorizationIngress - apply/delete ingress objects
-func AuthorizationIngress(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
-	ingress, err := createIngress(cr)
+func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
+	ingress, err := createIngress(isOpenShift, cr)
 	if err != nil {
 		return fmt.Errorf("creating ingress: %v", err)
 	}
@@ -651,13 +651,11 @@ func AuthorizationIngress(ctx context.Context, isDeleting bool, cr csmv1.Contain
 		return fmt.Errorf("marshaling ingress: %v", err)
 	}
 
-	for _, m := range cr.Spec.Modules {
-		// Wait for NGINX ingress controller to be ready before creating Ingresses
-		// Needed for Kubernetes only
-		if !isDeleting && !m.OpenShift {
-			if err := utils.WaitForNginxController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
-				return fmt.Errorf("NGINX ingress controller is not ready: %v", err)
-			}
+	// Wait for NGINX ingress controller to be ready before creating Ingresses
+	// Needed for Kubernetes only
+	if !isDeleting && !isOpenShift {
+		if err := utils.WaitForNginxController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
+			return fmt.Errorf("NGINX ingress controller is not ready: %v", err)
 		}
 	}
 
@@ -944,18 +942,18 @@ func createSelfSignedCertificate(cr csmv1.ContainerStorageModule) (*certificate.
 	return certificate, nil
 }
 
-func createIngress(cr csmv1.ContainerStorageModule) (*networking.Ingress, error) {
+func createIngress(isOpenShift bool, cr csmv1.ContainerStorageModule) (*networking.Ingress, error) {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return nil, err
 	}
 
-	className, err := getClassName(cr)
+	className, err := getClassName(isOpenShift, cr)
 	if err != nil {
 		return nil, fmt.Errorf("getting ingress class name: %v", err)
 	}
 
-	annotations, err := getAnnotations(cr)
+	annotations, err := getAnnotations(isOpenShift, cr)
 	if err != nil {
 		return nil, fmt.Errorf("getting annotations: %v", err)
 	}
@@ -1004,17 +1002,16 @@ func createIngress(cr csmv1.ContainerStorageModule) (*networking.Ingress, error)
 	return &ingress, nil
 }
 
-func getAnnotations(cr csmv1.ContainerStorageModule) (map[string]string, error) {
+func getAnnotations(isOpenShift bool, cr csmv1.ContainerStorageModule) (map[string]string, error) {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return nil, err
 	}
 
 	annotations := make(map[string]string)
-	for _, m := range cr.Spec.Modules {
-		if m.OpenShift {
-			annotations["route.openshift.io/termination"] = "edge"
-		}
+
+	if isOpenShift {
+		annotations["route.openshift.io/termination"] = "edge"
 	}
 
 	for _, component := range authModule.Components {
@@ -1052,7 +1049,7 @@ func getHosts(cr csmv1.ContainerStorageModule) ([]string, error) {
 	return hosts, nil
 }
 
-func getClassName(cr csmv1.ContainerStorageModule) (string, error) {
+func getClassName(isOpenShift bool, cr csmv1.ContainerStorageModule) (string, error) {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return "", err
@@ -1061,12 +1058,10 @@ func getClassName(cr csmv1.ContainerStorageModule) (string, error) {
 	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
 			for _, proxyServerIngress := range component.ProxyServerIngress {
-				for _, m := range cr.Spec.Modules {
-					if !m.OpenShift {
-						proxyIngressClassName = proxyServerIngress.IngressClassName
-					} else {
-						proxyIngressClassName = "openshift-default"
-					}
+				if !isOpenShift {
+					proxyIngressClassName = proxyServerIngress.IngressClassName
+				} else {
+					proxyIngressClassName = "openshift-default"
 				}
 			}
 		}
