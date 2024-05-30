@@ -614,6 +614,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 				},
 			}
 
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
@@ -625,7 +626,19 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_vault_cert.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -637,7 +650,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -649,7 +662,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -661,7 +674,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
