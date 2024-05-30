@@ -14,6 +14,7 @@ package modules
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -633,7 +634,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 		return err
 	}
 
-	err = authorizationStorageService(ctx, isDeleting, cr, ctrlClient)
+	err = applyDeleteAuthorizationStorageService(ctx, isDeleting, cr, ctrlClient)
 	if err != nil {
 		return err
 	}
@@ -642,7 +643,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 }
 
 // AuthorizationStorageService - apply/delete storage service deployment and volume objects
-func authorizationStorageService(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func applyDeleteAuthorizationStorageService(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
@@ -1099,22 +1100,7 @@ func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1
 		return nil
 	} else {
 		// apply/delete storage-service-selfsigned issuer and certificate
-		issuer := &certificate.Issuer{
-			TypeMeta: metav1.TypeMeta{
-				Kind: "Issuer",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "storage-service-selfsigned",
-				Namespace: cr.Namespace,
-			},
-			Spec: certificate.IssuerSpec{
-				IssuerConfig: certificate.IssuerConfig{
-					SelfSigned: &certificate.SelfSignedIssuer{
-						CRLDistributionPoints: []string{},
-					},
-				},
-			},
-		}
+		issuer := createSelfSignedIssuer(cr, "storage-service-selfsigned")
 
 		issuerByes, err := json.Marshal(issuer)
 		if err != nil {
@@ -1162,7 +1148,7 @@ func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1
 				},
 				DNSNames: []string{"csm-authorization-storage-service"},
 				IssuerRef: cmmetav1.ObjectReference{
-					Name:  "selfsigned",
+					Name:  "storage-service-selfsigned",
 					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
@@ -1347,7 +1333,7 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 	}
 
 	if useSelfSignedCert {
-		issuer := createSelfSignedIssuer(cr)
+		issuer := createSelfSignedIssuer(cr, "selfsigned")
 		issuerByes, err := json.Marshal(issuer)
 		if err != nil {
 			return fmt.Errorf("marshaling ingress: %v", err)
@@ -1417,6 +1403,16 @@ func getAuthCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 
 // AuthCrdDeploy - apply and delete Auth crds deployment
 func AuthCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	// v1 does not have custom resources, so treat it like a no-op
+	if semver.Compare(auth.ConfigVersion, "v2.0.0") < 0 {
+		return nil
+	}
+
 	yamlString, err := getAuthCrdDeploy(op, cr)
 	if err != nil {
 		return err
@@ -1430,13 +1426,13 @@ func AuthCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.Contai
 	return nil
 }
 
-func createSelfSignedIssuer(cr csmv1.ContainerStorageModule) *certificate.Issuer {
+func createSelfSignedIssuer(cr csmv1.ContainerStorageModule, name string) *certificate.Issuer {
 	issuer := &certificate.Issuer{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Issuer",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "selfsigned",
+			Name:      name,
 			Namespace: cr.Namespace,
 		},
 		Spec: certificate.IssuerSpec{
