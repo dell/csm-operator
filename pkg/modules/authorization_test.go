@@ -679,6 +679,18 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
+		"fail - not supported major version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v10000.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
