@@ -559,7 +559,6 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisReplicas, strconv.Itoa(component.RedisReplicas))
 
-			//todo: put in func
 			var sentinelValues []string
 			for i := 0; i < component.RedisReplicas; i++ {
 				sentinelValues = append(sentinelValues, fmt.Sprintf("sentinel-%d.sentinel.%s.svc.cluster.local:5000", i, authNamespace))
