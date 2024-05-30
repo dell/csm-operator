@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"k8s.io/client-go/rest"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -1125,7 +1124,7 @@ func DetermineUnitTestRun(ctx context.Context) bool {
 func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 
-	namespace, err := GetNamespaces(ctx)
+	namespace, err := GetNamespaces(ctx, ctrlClient)
 	if err != nil {
 		log.Error(err, "Failed to get namespaces")
 		return err
@@ -1153,44 +1152,23 @@ func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivi
 }
 
 // Get the namespaces of csm-objects in the cluster
-func GetNamespaces(ctx context.Context) ([]string, error) {
-	log := logger.GetLogger(ctx)
-
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
-	}
-
-	// Create a Kubernetes clientset
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	// Define label selector
-	labelSelector := "csm"
-
-	// Get all pods in the cluster
-	pods, err := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
-		LabelSelector: labelSelector,
-	})
-	if err != nil {
-		log.Error(err, "Failed to get pods in the cluster")
-
-		os.Exit(1)
-	}
-
+func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
 	// Set to store unique namespaces
-	namespaceSet := make(map[string]struct{})
+	namespaceMap := make(map[string]struct{})
 
-	// Using map so that duplicate namespace entries are not added
-	for _, pod := range pods.Items {
-		namespaceSet[pod.Namespace] = struct{}{}
+	list := &csmv1.ContainerStorageModuleList{}
+
+	if err := ctrlClient.List(ctx, list); err != nil {
+		return nil, fmt.Errorf("list csm resources: %w", err)
+	}
+	for _, csmResource := range list.Items {
+		namespaceMap[csmResource.Namespace] = struct{}{}
+		fmt.Printf("namespace is %s\n", csmResource.Namespace)
 	}
 
 	// Convert set to slice
 	var namespaces []string
-	for namespace := range namespaceSet {
+	for namespace := range namespaceMap {
 		namespaces = append(namespaces, namespace)
 	}
 

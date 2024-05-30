@@ -237,14 +237,6 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 		log.Error(err, "Failed to update CR status")
 	}
 
-	// brownfield scenario
-	log.Info("Starting the brownfield cluster onboarding")
-	BrownfieldCR := "brownfield-deployment.yaml"
-	brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", op.ConfigDirectory, csmv1.DreadnoughtClient, acc.Spec.Client.ConfigVersion, BrownfieldCR)
-	if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, *acc, crc); err != nil {
-		log.Error(err, "brownfield cluster onboarding failed")
-	}
-
 	if err = DeployApexConnectivityClient(ctx, false, *op, *acc, crc); err == nil {
 		r.EventRecorder.Eventf(acc, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", acc.Name)
 		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
@@ -446,6 +438,8 @@ func applyAccConfigVersionAnnotations(ctx context.Context, instance *csmv1.ApexC
 
 // DeployApexConnectivityClient - perform deployment
 func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operatorConfig utils.OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
+
 	YamlString := ""
 	ModifiedYamlString := ""
 	deploymentPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, AccManifest)
@@ -471,6 +465,14 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 				return err
 			}
 		}
+	}
+
+	// brownfield scenario
+	log.Info("Starting the brownfield cluster onboarding")
+	BrownfieldCR := "brownfield-deployment.yaml"
+	brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
+	if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
+		log.Error(err, "brownfield cluster onboarding failed")
 	}
 	return nil
 }
