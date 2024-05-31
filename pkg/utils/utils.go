@@ -1176,7 +1176,7 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 	return upgradePath.MinUpgradePath, nil
 }
 
-func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
+func getNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
 	// Set to store unique namespaces
 	namespaceMap := make(map[string]struct{})
 
