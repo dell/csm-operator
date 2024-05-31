@@ -676,6 +676,10 @@ func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv
 	replicas := int32(1)
 	// set deployment
 	deployment := appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: "apps/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "storage-service",
 			Namespace: cr.Namespace,
