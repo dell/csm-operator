@@ -1156,7 +1156,7 @@ func IsValidUpgrade[T csmv1.CSMComponentType](ctx context.Context, oldVersion, n
 	}
 	if isUpgradeValid || isDowngradeValid {
 		log.Infof("proceeding with valid upgrade/downgrade of %s from version %s to version %s", csmComponentType, oldVersion, newVersion)
-		return isUpgradeValid, nil
+		return isUpgradeValid || isDowngradeValid, nil
 	}
 
 	log.Infof("not proceeding with invalid driver/module upgrade")
