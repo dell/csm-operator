@@ -1175,3 +1175,26 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 	// Example return value: "v2.2.0"
 	return upgradePath.MinUpgradePath, nil
 }
+
+func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
+	// Set to store unique namespaces
+	namespaceMap := make(map[string]struct{})
+
+	list := &csmv1.ContainerStorageModuleList{}
+
+	if err := ctrlClient.List(ctx, list); err != nil {
+		return nil, fmt.Errorf("list csm resources: %w", err)
+	}
+	for _, csmResource := range list.Items {
+		namespaceMap[csmResource.Namespace] = struct{}{}
+		fmt.Printf("namespace is %s\n", csmResource.Namespace)
+	}
+
+	// Convert set to slice
+	var namespaces []string
+	for namespace := range namespaceMap {
+		namespaces = append(namespaces, namespace)
+	}
+
+	return namespaces, nil
+}
