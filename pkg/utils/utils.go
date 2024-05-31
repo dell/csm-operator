@@ -1160,7 +1160,7 @@ func IsValidUpgrade[T csmv1.CSMComponentType](ctx context.Context, oldVersion, n
 	}
 
 	log.Infof("not proceeding with invalid driver/module upgrade")
-	return isUpgradeValid, fmt.Errorf("upgrade/downgrade of %s from version %s to %s not valid", csmComponentType, oldVersion, newVersion)
+	return isUpgradeValid || isDowngradeValid, fmt.Errorf("upgrade/downgrade of %s from version %s to %s not valid", csmComponentType, oldVersion, newVersion)
 }
 
 func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfig OperatorConfig, csmCompType T, oldVersion string) (string, error) {
