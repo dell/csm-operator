@@ -879,6 +879,44 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 	}
+
+	// brownfield scenario where cluster is already onboarded to ANK8s and later csm is deployed directly on cluster. During reconcilation, operator should
+	// detect this and create the role/rolebindings to the namespaces where csm is deployed
+	// statefulset := &appsv1.StatefulSet{}
+	// var obj client.Object = statefulset
+
+	// err = ctrlClient.Get(ctx, client.ObjectKey{Name: "dell-connectivity-client", Namespace: "dell-connectivity-client"}, obj)
+	// if err == nil {
+	// 	//found dell connectivity client in the cluster
+	// 	log.Info("Starting the brownfield cluster onboarding")
+	// 	BrownfieldCR := "brownfield-deployment.yaml"
+	// 	acc := new(csmv1.ApexConnectivityClient)
+
+	// 	brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, csmv1.ApexConnectivityClient.Spec.Client.ConfigVersion, BrownfieldCR)
+	// 	if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
+	// 		log.Error(err, "brownfield cluster onboarding failed")
+	// 	}
+	// } else if err != nil {
+	// 	if !k8serror.IsNotFound(err) {
+	// 		log.Errorw("apex connectivity client not found", "log", err)
+	// 	}
+	// }
+	statefulSetMap := make(map[string]struct{})
+	list := &csmv1.ApexConnectivityClientList{}
+
+	if err := ctrlClient.List(ctx, list); err != nil {
+		if k8serror.IsNotFound(err) {
+			fmt.Println("^^^^^^^apex connectivity client not found")
+			return nil
+		}
+	} else if err == nil {
+		fmt.Println("^^^^^^^apex connectivity client found")
+	}
+
+	for _, accClient := range list.Items {
+		statefulSetMap[accClient.Name] = struct{}{}
+		fmt.Printf("namespace is %s\n", accClient.Name)
+	}
 	return nil
 }
 

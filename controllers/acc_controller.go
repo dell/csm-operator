@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
@@ -40,7 +41,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/ratelimiter"
@@ -468,11 +468,15 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 	}
 
 	// brownfield scenario
-	log.Info("Starting the brownfield cluster onboarding")
-	BrownfieldCR := "brownfield-deployment.yaml"
-	brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
-	if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
-		log.Error(err, "brownfield cluster onboarding failed")
+	//log.Info("Starting the brownfield cluster onboarding")
+	// BrownfieldCR := "brownfield-deployment.yaml"
+	// brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
+	// if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
+	// 	log.Error(err, "brownfield cluster onboarding failed")
+	// }
+	_, err = utils.GetNamespaces(ctx, ctrlClient)
+	if err != nil {
+		log.Error(err, "Failed to get existing namespaces with csm-objects")
 	}
 	return nil
 }
