@@ -10,6 +10,7 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -679,8 +680,8 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - not supported major version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v10000.yaml")
+		"fail - corrupt vault ca": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_ca.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -700,6 +701,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			if success {
 				assert.NoError(t, err)
 			} else {
+				fmt.Println(err)
 				assert.Error(t, err)
 			}
 		})
