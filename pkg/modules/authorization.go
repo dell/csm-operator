@@ -673,100 +673,25 @@ func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
-	replicas := int32(1)
-	// set deployment
-	deployment := appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "apps/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "storage-service",
-			Namespace: cr.Namespace,
-			Labels: map[string]string{
-				"app": "storage-service",
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1)
+
+	// set karavi-storage-secret volume
+	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
+		Name: "storage-volume",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "karavi-storage-secret",
 			},
 		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": "storage-service",
-				},
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"csm": cr.Name,
-						"app": "storage-service",
-					},
-				},
-				Spec: corev1.PodSpec{
-					ServiceAccountName: "storage-service",
-					Containers: []corev1.Container{
-						{
-							Name:            "storage-service",
-							Image:           image,
-							ImagePullPolicy: "Always",
-							Env: []corev1.EnvVar{
-								{
-									Name:  "NAMESPACE",
-									Value: cr.Namespace,
-								},
-							},
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 50051,
-									Name:          "grpc",
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "storage-volume",
-									MountPath: "/etc/karavi-authorization/storage",
-								},
-								{
-									Name:      "config-volume",
-									MountPath: "/etc/karavi-authorization/config",
-								},
-								{
-									Name:      "csm-config-params",
-									MountPath: "/etc/karavi-authorization/csm-config-params",
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "storage-volume",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: "karavi-storage-secret",
-								},
-							},
-						},
-						{
-							Name: "config-volume",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: "karavi-authorization-config",
-								},
-							},
-						},
-						{
-							Name: "csm-config-params",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "csm-config-params",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+	})
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+				Name:      "storage-volume",
+				MountPath: "/etc/karavi-authorization/storage",
+			})
+			break
+		}
 	}
 
 	deploymentBytes, err := json.Marshal(&deployment)
@@ -790,11 +715,10 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	err = applyDeleteVaultCertificates(ctx, isDeleting, cr, ctrlClient)
 	if err != nil {
-		return fmt.Errorf("applying vault certificates: %w", err)
+		return fmt.Errorf("applying/deleting vault certificates: %w", err)
 	}
 
-	// get component variables
-	replicas := new(int32)
+	replicas := 0
 	sentinels := ""
 	image := ""
 	vaultAddress := ""
@@ -808,8 +732,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
-			tmp := int32(component.StorageServiceReplicas)
-			replicas = &tmp
+			replicas = component.StorageServiceReplicas
 			image = component.StorageService
 			leaderElection = component.LeaderElection
 		case AuthRedisComponent:
@@ -831,39 +754,20 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
-	// define volumes
-	volumes := []corev1.Volume{
-		{
-			Name: "config-volume",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: "karavi-config-secret",
-				},
-			},
-		},
-		{
-			Name: "csm-config-params",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "csm-config-params",
-					},
-				},
-			},
-		},
-		{
-			Name: "vault-client-certificate",
-			VolumeSource: corev1.VolumeSource{
-				Projected: &corev1.ProjectedVolumeSource{
-					Sources: []corev1.VolumeProjection{{}},
-				},
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas))
+
+	// set vault volumes
+	volume := corev1.Volume{
+		Name: "vault-client-certificate",
+		VolumeSource: corev1.VolumeSource{
+			Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{}},
 			},
 		},
 	}
 
-	// set vault volumes
 	if vaultCertificateAuthority != "" {
-		volumes[2].VolumeSource.Projected.Sources = append(volumes[2].VolumeSource.Projected.Sources, corev1.VolumeProjection{
+		volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
 			Secret: &corev1.SecretProjection{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: "vault-certificate-authority",
@@ -873,7 +777,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	}
 
 	if vaultCertificate != "" && vaultPrivateKey != "" {
-		volumes[2].VolumeSource.Projected.Sources = append(volumes[2].VolumeSource.Projected.Sources, corev1.VolumeProjection{
+		volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
 			Secret: &corev1.SecretProjection{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: "vault-client-certificate",
@@ -881,7 +785,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			},
 		})
 	} else {
-		volumes[2].VolumeSource.Projected.Sources = append(volumes[2].VolumeSource.Projected.Sources, corev1.VolumeProjection{
+		volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
 			Secret: &corev1.SecretProjection{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: "storage-service-selfsigned-tls",
@@ -889,97 +793,57 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			},
 		})
 	}
+	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+				Name:      "vault-client-certificate",
+				MountPath: "/etc/vault",
+			})
+			break
+		}
+	}
 
-	// set deployment
-	deployment := appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "apps/v1",
+	// set redis envs
+	redis := []corev1.EnvVar{
+		{
+			Name:  "SENTINELS",
+			Value: sentinels,
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "storage-service",
-			Namespace: cr.Namespace,
-			Labels: map[string]string{
-				"app": "storage-service",
-			},
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": "storage-service",
-				},
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"csm": cr.Name,
-						"app": "storage-service",
+		{
+			Name: "REDIS_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "redis-csm-secret",
 					},
-				},
-				Spec: corev1.PodSpec{
-					ServiceAccountName: "storage-service",
-					Containers: []corev1.Container{
-						{
-							Name:            "storage-service",
-							Image:           image,
-							ImagePullPolicy: "Always",
-							Env: []corev1.EnvVar{
-								{
-									Name:  "NAMESPACE",
-									Value: cr.Namespace,
-								},
-								{
-									Name:  "SENTINELS",
-									Value: sentinels,
-								},
-								{
-									Name: "REDIS_PASSWORD",
-									ValueFrom: &corev1.EnvVarSource{
-										SecretKeyRef: &corev1.SecretKeySelector{
-											LocalObjectReference: corev1.LocalObjectReference{
-												Name: "redis-csm-secret",
-											},
-											Key: "password",
-										},
-									},
-								},
-							},
-							Args: []string{
-								"--redis-sentinel=$(SENTINELS)",
-								"--redis-password=$(REDIS_PASSWORD)",
-								fmt.Sprintf("--vault-address=%s", vaultAddress),
-								fmt.Sprintf("--vault-role=%s", vaultRole),
-								fmt.Sprintf("--vault-kv-engine-path=%s", vaultKVEnginePath),
-								fmt.Sprintf("--vault-skip-certificate-validation=%t", vaultSkipCertificateValidation),
-								fmt.Sprintf("--leader-election=%t", leaderElection),
-							},
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 50051,
-									Name:          "grpc",
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "config-volume",
-									MountPath: "/etc/karavi-authorization/config",
-								},
-								{
-									Name:      "csm-config-params",
-									MountPath: "/etc/karavi-authorization/csm-config-params",
-								},
-								{
-									Name:      "vault-client-certificate",
-									MountPath: "/etc/vault",
-								},
-							},
-						},
-					},
-					Volumes: volumes,
+					Key: "password",
 				},
 			},
 		},
+	}
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].Env = append(deployment.Spec.Template.Spec.Containers[i].Env, redis...)
+			break
+		}
+	}
+
+	// set arguments
+	args := []string{
+		"--redis-sentinel=$(SENTINELS)",
+		"--redis-password=$(REDIS_PASSWORD)",
+		fmt.Sprintf("--vault-address=%s", vaultAddress),
+		fmt.Sprintf("--vault-role=%s", vaultRole),
+		fmt.Sprintf("--vault-kv-engine-path=%s", vaultKVEnginePath),
+		fmt.Sprintf("--vault-skip-certificate-validation=%t", vaultSkipCertificateValidation),
+		fmt.Sprintf("--leader-election=%t", leaderElection),
+	}
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].Args = append(deployment.Spec.Template.Spec.Containers[i].Args, args...)
+			break
+		}
 	}
 
 	deploymentBytes, err := json.Marshal(&deployment)
@@ -997,6 +861,92 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		return fmt.Errorf("applying storage-service deployment: %w", err)
 	}
 	return nil
+}
+
+// getStorageServiceScaffold returns the storage-service deployment with the common elements between v1 and v2
+// callers must ensure that other elements specific for the version get set in the returned deployment
+func getStorageServiceScaffold(name string, namespace string, image string, replicas int32) appsv1.Deployment {
+	return appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "storage-service",
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app": "storage-service",
+			},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "storage-service",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"csm": name,
+						"app": "storage-service",
+					},
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "storage-service",
+					Containers: []corev1.Container{
+						{
+							Name:            "storage-service",
+							Image:           image,
+							ImagePullPolicy: "Always",
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: 50051,
+									Name:          "grpc",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "NAMESPACE",
+									Value: namespace,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "config-volume",
+									MountPath: "/etc/karavi-authorization/config",
+								},
+								{
+									Name:      "csm-config-params",
+									MountPath: "/etc/karavi-authorization/csm-config-params",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "config-volume",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "karavi-config-secret",
+								},
+							},
+						},
+						{
+							Name: "csm-config-params",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "csm-config-params",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
