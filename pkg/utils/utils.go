@@ -1129,30 +1129,32 @@ func IsValidUpgrade[T csmv1.CSMComponentType](ctx context.Context, oldVersion, n
 	}
 
 	var minUpgradePath string
+	var minDowngradePath string
 	var err error
 	var isUpgradeValid bool
+	var isDowngradeValid bool
 
 	log.Info("####oldVersion: ", oldVersion, " ###newVersion: ", newVersion)
 
-	isVersionCheck, _ := MinVersionCheck(oldVersion, newVersion)
+	isUpgrade, _ := MinVersionCheck(oldVersion, newVersion)
 
 	// if it is an upgrade
-	if isVersionCheck {
+	if isUpgrade {
 		log.Info("proceeding with valid upgrade of driver/module")
 		minUpgradePath, err = getUpgradeInfo(ctx, operatorConfig, csmComponentType, newVersion)
 		isUpgradeValid, _ = MinVersionCheck(minUpgradePath, oldVersion)
 	} else {
 		// if it is a downgrade
 		log.Info("proceeding with valid downgrade of driver/module")
-		minUpgradePath, err = getUpgradeInfo(ctx, operatorConfig, csmComponentType, oldVersion)
-		isUpgradeValid, _ = MinVersionCheck(minUpgradePath, newVersion)
+		minDowngradePath, err = getUpgradeInfo(ctx, operatorConfig, csmComponentType, oldVersion)
+		isDowngradeValid, _ = MinVersionCheck(minDowngradePath, newVersion)
 	}
 
 	if err != nil {
 		log.Infow("getUpgradeInfo not successful")
 		return false, err
 	}
-	if isUpgradeValid {
+	if isUpgradeValid || isDowngradeValid {
 		log.Infof("proceeding with valid upgrade/downgrade of %s from version %s to version %s", csmComponentType, oldVersion, newVersion)
 		return isUpgradeValid, nil
 	}
