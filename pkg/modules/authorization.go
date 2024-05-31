@@ -1072,42 +1072,7 @@ func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1
 		return err
 	}
 
-	certificate := &certificate.Certificate{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Certificate",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "storage-service-selfsigned",
-			Namespace: cr.Namespace,
-		},
-		Spec: certificate.CertificateSpec{
-			SecretName: "storage-service-selfsigned-tls",
-			Duration: &metav1.Duration{
-				Duration: duration, // 90d
-			},
-			RenewBefore: &metav1.Duration{
-				Duration: renewBefore, // 15d
-			},
-			Subject: &certificate.X509Subject{
-				Organizations: []string{"dellemc"},
-			},
-			IsCA: false,
-			PrivateKey: &certificate.CertificatePrivateKey{
-				Algorithm: "RSA",
-				Encoding:  "PKCS1",
-				Size:      2048,
-			},
-			Usages: []certificate.KeyUsage{
-				"client auth",
-			},
-			DNSNames: []string{"csm-authorization-storage-service"},
-			IssuerRef: cmmetav1.ObjectReference{
-				Name:  "storage-service-selfsigned",
-				Kind:  "Issuer",
-				Group: "cert-manager.io",
-			},
-		},
-	}
+	certificate := createSelfSignedCertificate(cr, []string{fmt.Sprintf("storage-service.%s.svc.cluster.local", cr.Namespace)}, "storage-service-selfsigned", "storage-service-selfsigned-tls", "storage-service-selfsigned")
 
 	certBytes, err := json.Marshal(certificate)
 	if err != nil {
@@ -1303,10 +1268,12 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 			return err
 		}
 
-		cert, err := createSelfSignedCertificate(cr)
+		hosts, err := getHosts(cr)
 		if err != nil {
 			return err
 		}
+
+		cert := createSelfSignedCertificate(cr, hosts, "karavi-auth", "karavi-selfsigned-tls", "selfsigned")
 
 		certBytes, err := json.Marshal(cert)
 		if err != nil {
@@ -1400,22 +1367,17 @@ func createSelfSignedIssuer(cr csmv1.ContainerStorageModule, name string) *certi
 	return issuer
 }
 
-func createSelfSignedCertificate(cr csmv1.ContainerStorageModule) (*certificate.Certificate, error) {
-	hosts, err := getHosts(cr)
-	if err != nil {
-		return nil, fmt.Errorf("getting hosts: %v", err)
-	}
-
+func createSelfSignedCertificate(cr csmv1.ContainerStorageModule, hosts []string, name string, secretName string, issuerName string) *certificate.Certificate {
 	certificate := &certificate.Certificate{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Certificate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "karavi-auth",
+			Name:      name,
 			Namespace: cr.Namespace,
 		},
 		Spec: certificate.CertificateSpec{
-			SecretName: "karavi-selfsigned-tls",
+			SecretName: secretName,
 			Duration: &metav1.Duration{
 				Duration: duration, // 90d
 			},
@@ -1437,14 +1399,14 @@ func createSelfSignedCertificate(cr csmv1.ContainerStorageModule) (*certificate.
 			},
 			DNSNames: hosts,
 			IssuerRef: cmmetav1.ObjectReference{
-				Name:  "selfsigned",
+				Name:  issuerName,
 				Kind:  "Issuer",
 				Group: "cert-manager.io",
 			},
 		},
 	}
 
-	return certificate, nil
+	return certificate
 }
 
 func createIngress(cr csmv1.ContainerStorageModule) (*networking.Ingress, error) {
