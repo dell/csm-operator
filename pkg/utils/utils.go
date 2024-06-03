@@ -1183,7 +1183,7 @@ func getNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	csmList := &csmv1.ContainerStorageModuleList{}
 
 	if err := ctrlClient.List(ctx, csmList); err != nil {
-		return nil, fmt.Errorf("list csm resources: %w", err)
+		return nil, fmt.Errorf("error listing csm resources: %w", err)
 	}
 	for _, csmResource := range csmList.Items {
 		namespaceMap[csmResource.Namespace] = struct{}{}
