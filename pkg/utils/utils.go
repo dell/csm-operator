@@ -615,7 +615,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &ct)
 
 		case "StatefulSet":
-
 			var ss appsv1.StatefulSet
 			if err := yaml.Unmarshal(raw, &ss); err != nil {
 				return ctrlObjects, err
@@ -638,6 +637,14 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &pv)
+
+		case "Namespace":
+			var ss corev1.Namespace
+			if err := yaml.Unmarshal(raw, &ss); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ss)
 		}
 
 	}
