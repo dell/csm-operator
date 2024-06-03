@@ -447,6 +447,10 @@ type ContainerTemplate struct {
 	// PrivateKey is a private key used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Private key for certificate/private-key pair"
 	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
+
+	// CertificateAuthority is a certificate authority used to validate a certificate
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Certificate authority for validating a certificate"
+	CertificateAuthority string `json:"certificateAuthority,omitempty" yaml:"certificateAuthority,omitempty"`
 }
 
 // SnapshotClass struct

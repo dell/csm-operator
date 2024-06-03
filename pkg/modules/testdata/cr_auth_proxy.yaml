@@ -92,6 +92,18 @@ spec:
           vaultRole: csm-authorization
           skipCertificateValidation: true
           kvEnginePath: secret
+          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
+          # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificateAuthority: ""
 
 ---
 apiVersion: v1

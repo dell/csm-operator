@@ -317,70 +317,6 @@ subjects:
     name: storage-service
     namespace: <NAMESPACE>
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: storage-service
-  namespace: <NAMESPACE>
-  labels:
-    app: storage-service
-spec:
-  replicas: <AUTHORIZATION_STORAGE_SERVICE_REPLICAS>
-  selector:
-    matchLabels:
-      app: storage-service
-  template:
-    metadata:
-      labels:
-        csm: <NAME>
-        app: storage-service
-    spec:
-      serviceAccountName: storage-service
-      containers:
-      - name: storage-service
-        image: <AUTHORIZATION_STORAGE_SERVICE_IMAGE>
-        imagePullPolicy: Always
-        env:
-          - name: NAMESPACE
-            value: <NAMESPACE>
-          - name: SENTINELS
-            value: <AUTHORIZATION_REDIS_SENTINEL_VALUES>
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: redis-csm-secret
-                key: password
-        args:
-          - "--redis-sentinel=$(SENTINELS)"
-          - "--redis-password=$(REDIS_PASSWORD)"
-          - "--vault-address=<AUTHORIZATION_VAULT_ADDRESS>"
-          - "--vault-kv-engine-path=<AUTHORIZATION_KV_ENGINE_PATH>"
-          - "--vault-skip-certificate-validation=<AUTHORIZATION_SKIP_CERTIFICATE_VALIDATION>"
-          - "--vault-role=<AUTHORIZATION_VAULT_ROLE>"
-          - "--leader-election=<AUTHORIZATION_LEADER_ELECTION_ENABLED>"
-        ports:
-        - containerPort: 50051
-          name: grpc
-        volumeMounts:
-        - name: config-volume
-          mountPath: /etc/karavi-authorization/config
-        - name: csm-config-params
-          mountPath: /etc/karavi-authorization/csm-config-params
-        - name: vault-client-certificate
-          mountPath: /etc/vault
-      volumes:
-      - name: config-volume
-        secret:
-          secretName: karavi-config-secret
-      - name: csm-config-params
-        configMap:
-          name: csm-config-params
-      - name: vault-client-certificate
-        projected:
-          sources:
-            - secret:
-                name: storage-service-selfsigned-tls
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -473,6 +409,9 @@ rules:
   - apiGroups: ["csm-authorization.storage.dell.com"]
     resources: ["storages/finalizers"]
     verbs: ["update"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create", "update", "get", "delete", "list"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
