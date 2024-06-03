@@ -615,7 +615,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &ct)
 
 		case "StatefulSet":
-
 			var ss appsv1.StatefulSet
 			if err := yaml.Unmarshal(raw, &ss); err != nil {
 				return ctrlObjects, err
@@ -638,6 +637,14 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &pv)
+
+		case "Namespace":
+			var ss corev1.Namespace
+			if err := yaml.Unmarshal(raw, &ss); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ss)
 		}
 
 	}
@@ -1193,4 +1200,26 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 
 	// Example return value: "v2.2.0"
 	return upgradePath.MinUpgradePath, nil
+}
+
+func getNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
+	// Set to store unique namespaces
+	namespaceMap := make(map[string]struct{})
+
+	csmList := &csmv1.ContainerStorageModuleList{}
+
+	if err := ctrlClient.List(ctx, csmList); err != nil {
+		return nil, fmt.Errorf("error listing csm resources: %w", err)
+	}
+	for _, csmResource := range csmList.Items {
+		namespaceMap[csmResource.Namespace] = struct{}{}
+	}
+
+	// Convert set to slice
+	var namespaces []string
+	for namespace := range namespaceMap {
+		namespaces = append(namespaces, namespace)
+	}
+
+	return namespaces, nil
 }
