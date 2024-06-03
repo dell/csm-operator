@@ -1180,14 +1180,13 @@ func getNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	// Set to store unique namespaces
 	namespaceMap := make(map[string]struct{})
 
-	list := &csmv1.ContainerStorageModuleList{}
+	csmList := &csmv1.ContainerStorageModuleList{}
 
-	if err := ctrlClient.List(ctx, list); err != nil {
+	if err := ctrlClient.List(ctx, csmList); err != nil {
 		return nil, fmt.Errorf("list csm resources: %w", err)
 	}
-	for _, csmResource := range list.Items {
+	for _, csmResource := range csmList.Items {
 		namespaceMap[csmResource.Namespace] = struct{}{}
-		fmt.Printf("namespace is %s\n", csmResource.Namespace)
 	}
 
 	// Convert set to slice
