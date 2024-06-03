@@ -14,6 +14,7 @@ package modules
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,6 +31,7 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"golang.org/x/mod/semver"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -631,6 +633,462 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op util
 		return err
 	}
 
+	err = applyDeleteAuthorizationStorageService(ctx, isDeleting, cr, ctrlClient)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// AuthorizationStorageService - apply/delete storage service deployment and volume objects
+func applyDeleteAuthorizationStorageService(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	switch semver.Major(authModule.ConfigVersion) {
+	case "v2":
+		return authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient)
+	case "v1":
+		return authorizationStorageServiceV1(ctx, isDeleting, cr, ctrlClient)
+	default:
+		return fmt.Errorf("authorization major version %s not supported", semver.Major(authModule.ConfigVersion))
+	}
+}
+
+func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	// get component variables
+	image := ""
+	for _, component := range authModule.Components {
+		switch component.Name {
+		case AuthProxyServerComponent:
+			image = component.StorageService
+		}
+	}
+
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1)
+
+	// set karavi-storage-secret volume
+	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
+		Name: "storage-volume",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "karavi-storage-secret",
+			},
+		},
+	})
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+				Name:      "storage-volume",
+				MountPath: "/etc/karavi-authorization/storage",
+			})
+			break
+		}
+	}
+
+	deploymentBytes, err := json.Marshal(&deployment)
+	if err != nil {
+		return fmt.Errorf("marshalling storage-service deployment: %w", err)
+	}
+
+	deploymentYaml, err := yaml.JSONToYAML(deploymentBytes)
+	if err != nil {
+		return fmt.Errorf("converting storage-service json to yaml: %w", err)
+	}
+
+	return applyDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
+}
+
+func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	err = applyDeleteVaultCertificates(ctx, isDeleting, cr, ctrlClient)
+	if err != nil {
+		return fmt.Errorf("applying/deleting vault certificates: %w", err)
+	}
+
+	replicas := 0
+	sentinels := ""
+	image := ""
+	vaultAddress := ""
+	vaultRole := ""
+	vaultKVEnginePath := ""
+	vaultSkipCertificateValidation := false
+	vaultCertificate := ""
+	vaultPrivateKey := ""
+	vaultCertificateAuthority := ""
+	leaderElection := true
+	for _, component := range authModule.Components {
+		switch component.Name {
+		case AuthProxyServerComponent:
+			replicas = component.StorageServiceReplicas
+			image = component.StorageService
+			leaderElection = component.LeaderElection
+		case AuthRedisComponent:
+			var sentinelValues []string
+			for i := 0; i < component.RedisReplicas; i++ {
+				sentinelValues = append(sentinelValues, fmt.Sprintf("sentinel-%d.sentinel.%s.svc.cluster.local:5000", i, cr.Namespace))
+			}
+			sentinels = strings.Join(sentinelValues, ", ")
+		case AuthVaultComponent:
+			vaultAddress = component.VaultAddress
+			vaultRole = component.VaultRole
+			vaultKVEnginePath = component.KvEnginePath
+			vaultSkipCertificateValidation = component.SkipCertificateValidation
+			vaultCertificate = component.Certificate
+			vaultPrivateKey = component.PrivateKey
+			vaultCertificateAuthority = component.CertificateAuthority
+		default:
+			continue
+		}
+	}
+
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas))
+
+	// set vault volumes
+	volume := corev1.Volume{
+		Name: "vault-client-certificate",
+		VolumeSource: corev1.VolumeSource{
+			Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{}},
+			},
+		},
+	}
+
+	if vaultCertificateAuthority != "" {
+		volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+			Secret: &corev1.SecretProjection{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "vault-certificate-authority",
+				},
+			},
+		})
+	}
+
+	if vaultCertificate != "" && vaultPrivateKey != "" {
+		volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+			Secret: &corev1.SecretProjection{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "vault-client-certificate",
+				},
+			},
+		})
+	} else {
+		volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+			Secret: &corev1.SecretProjection{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "storage-service-selfsigned-tls",
+				},
+			},
+		})
+	}
+	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+				Name:      "vault-client-certificate",
+				MountPath: "/etc/vault",
+			})
+			break
+		}
+	}
+
+	// set redis envs
+	redis := []corev1.EnvVar{
+		{
+			Name:  "SENTINELS",
+			Value: sentinels,
+		},
+		{
+			Name: "REDIS_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "redis-csm-secret",
+					},
+					Key: "password",
+				},
+			},
+		},
+	}
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].Env = append(deployment.Spec.Template.Spec.Containers[i].Env, redis...)
+			break
+		}
+	}
+
+	// set arguments
+	args := []string{
+		"--redis-sentinel=$(SENTINELS)",
+		"--redis-password=$(REDIS_PASSWORD)",
+		fmt.Sprintf("--vault-address=%s", vaultAddress),
+		fmt.Sprintf("--vault-role=%s", vaultRole),
+		fmt.Sprintf("--vault-kv-engine-path=%s", vaultKVEnginePath),
+		fmt.Sprintf("--vault-skip-certificate-validation=%t", vaultSkipCertificateValidation),
+		fmt.Sprintf("--leader-election=%t", leaderElection),
+	}
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].Args = append(deployment.Spec.Template.Spec.Containers[i].Args, args...)
+			break
+		}
+	}
+
+	deploymentBytes, err := json.Marshal(&deployment)
+	if err != nil {
+		return fmt.Errorf("marshalling storage-service deployment: %w", err)
+	}
+
+	deploymentYaml, err := yaml.JSONToYAML(deploymentBytes)
+	if err != nil {
+		return fmt.Errorf("converting storage-service json to yaml: %w", err)
+	}
+
+	err = applyDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
+	if err != nil {
+		return fmt.Errorf("applying storage-service deployment: %w", err)
+	}
+	return nil
+}
+
+// getStorageServiceScaffold returns the storage-service deployment with the common elements between v1 and v2
+// callers must ensure that other elements specific for the version get set in the returned deployment
+func getStorageServiceScaffold(name string, namespace string, image string, replicas int32) appsv1.Deployment {
+	return appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "storage-service",
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app": "storage-service",
+			},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "storage-service",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"csm": name,
+						"app": "storage-service",
+					},
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "storage-service",
+					Containers: []corev1.Container{
+						{
+							Name:            "storage-service",
+							Image:           image,
+							ImagePullPolicy: "Always",
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: 50051,
+									Name:          "grpc",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "NAMESPACE",
+									Value: namespace,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "config-volume",
+									MountPath: "/etc/karavi-authorization/config",
+								},
+								{
+									Name:      "csm-config-params",
+									MountPath: "/etc/karavi-authorization/csm-config-params",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "config-volume",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "karavi-config-secret",
+								},
+							},
+						},
+						{
+							Name: "csm-config-params",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "csm-config-params",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	// get vault certificate data from CR
+	vaultCertificate := ""
+	vaultPrivateKey := ""
+	vaultCertificateAuthority := ""
+	for _, component := range authModule.Components {
+		switch component.Name {
+		case AuthVaultComponent:
+			vaultCertificate = component.Certificate
+			vaultPrivateKey = component.PrivateKey
+			vaultCertificateAuthority = component.CertificateAuthority
+		default:
+			continue
+		}
+	}
+
+	// apply/delete vault-certificate-authority secret if it was provided
+	if vaultCertificateAuthority != "" {
+		vaultCABytes, err := base64.StdEncoding.DecodeString(vaultCertificateAuthority)
+		if err != nil {
+			return fmt.Errorf("decoding vault certificate authority: %w", err)
+		}
+
+		secret := corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vault-certificate-authority",
+				Namespace: cr.Namespace,
+			},
+			Type: corev1.SecretTypeOpaque,
+			Data: map[string][]byte{
+				"ca.crt": vaultCABytes,
+			},
+		}
+
+		secretBytes, err := json.Marshal(&secret)
+		if err != nil {
+			return fmt.Errorf("marshalling vault certificate authority secret: %w", err)
+		}
+
+		yamlString, err := yaml.JSONToYAML(secretBytes)
+		if err != nil {
+			return fmt.Errorf("converting vault certificate authority json to yaml: %w", err)
+		}
+
+		err = applyDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
+		if err != nil {
+			return fmt.Errorf("applying vault certificate authority secret: %w", err)
+		}
+	}
+
+	// apply/delete vault-client-certificate secret if it was provided
+	if vaultCertificate != "" && vaultPrivateKey != "" {
+		vaultCertBytes, err := base64.StdEncoding.DecodeString(vaultCertificate)
+		if err != nil {
+			return fmt.Errorf("decoding vault certificate: %w", err)
+		}
+
+		vaultKeyBytes, err := base64.StdEncoding.DecodeString(vaultPrivateKey)
+		if err != nil {
+			return fmt.Errorf("decoding vault private key: %w", err)
+		}
+
+		secret := corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vault-client-certificate",
+				Namespace: cr.Namespace,
+			},
+			Type: corev1.SecretTypeTLS,
+			Data: map[string][]byte{
+				"tls.crt": vaultCertBytes,
+				"tls.key": vaultKeyBytes,
+			},
+		}
+
+		secretBytes, err := json.Marshal(&secret)
+		if err != nil {
+			return fmt.Errorf("marshalling vault certificate secret: %w", err)
+		}
+
+		yamlString, err := yaml.JSONToYAML(secretBytes)
+		if err != nil {
+			return fmt.Errorf("converting vault certificate json to yaml: %w", err)
+		}
+
+		err = applyDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
+		if err != nil {
+			return fmt.Errorf("applying vault certificate secret: %w", err)
+		}
+		return nil
+	}
+
+	// apply/delete storage-service-selfsigned issuer and certificate
+	issuer := createSelfSignedIssuer(cr, "storage-service-selfsigned")
+
+	issuerByes, err := json.Marshal(issuer)
+	if err != nil {
+		return fmt.Errorf("marshaling storage-service-selfsigned issuer: %v", err)
+	}
+
+	issuerYaml, err := yaml.JSONToYAML(issuerByes)
+	if err != nil {
+		return fmt.Errorf("converting storage-service-selfsigned issuer json to yaml: %v", err)
+	}
+
+	// create/delete issuer
+	err = applyDeleteObjects(ctx, ctrlClient, string(issuerYaml), isDeleting)
+	if err != nil {
+		return err
+	}
+
+	certificate := createSelfSignedCertificate(cr, []string{fmt.Sprintf("storage-service.%s.svc.cluster.local", cr.Namespace)}, "storage-service-selfsigned", "storage-service-selfsigned-tls", "storage-service-selfsigned")
+
+	certBytes, err := json.Marshal(certificate)
+	if err != nil {
+		return fmt.Errorf("marshaling storage-service-selfsigned certificate: %v", err)
+	}
+
+	certYaml, err := yaml.JSONToYAML(certBytes)
+	if err != nil {
+		return fmt.Errorf("converting storage-service-selfsigned certificate json to yaml: %v", err)
+	}
+
+	// create/delete certificate
+	err = applyDeleteObjects(ctx, ctrlClient, string(certYaml), isDeleting)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -793,7 +1251,7 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 	}
 
 	if useSelfSignedCert {
-		issuer := createSelfSignedIssuer(cr)
+		issuer := createSelfSignedIssuer(cr, "selfsigned")
 		issuerByes, err := json.Marshal(issuer)
 		if err != nil {
 			return fmt.Errorf("marshaling ingress: %v", err)
@@ -810,10 +1268,12 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 			return err
 		}
 
-		cert, err := createSelfSignedCertificate(cr)
+		hosts, err := getHosts(cr)
 		if err != nil {
 			return err
 		}
+
+		cert := createSelfSignedCertificate(cr, hosts, "karavi-auth", "karavi-selfsigned-tls", "selfsigned")
 
 		certBytes, err := json.Marshal(cert)
 		if err != nil {
@@ -863,6 +1323,16 @@ func getAuthCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 
 // AuthCrdDeploy - apply and delete Auth crds deployment
 func AuthCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	// v1 does not have custom resources, so treat it like a no-op
+	if semver.Compare(auth.ConfigVersion, "v2.0.0-alpha") < 0 {
+		return nil
+	}
+
 	yamlString, err := getAuthCrdDeploy(op, cr)
 	if err != nil {
 		return err
@@ -876,13 +1346,13 @@ func AuthCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.Contai
 	return nil
 }
 
-func createSelfSignedIssuer(cr csmv1.ContainerStorageModule) *certificate.Issuer {
+func createSelfSignedIssuer(cr csmv1.ContainerStorageModule, name string) *certificate.Issuer {
 	issuer := &certificate.Issuer{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Issuer",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "selfsigned",
+			Name:      name,
 			Namespace: cr.Namespace,
 		},
 		Spec: certificate.IssuerSpec{
@@ -897,22 +1367,17 @@ func createSelfSignedIssuer(cr csmv1.ContainerStorageModule) *certificate.Issuer
 	return issuer
 }
 
-func createSelfSignedCertificate(cr csmv1.ContainerStorageModule) (*certificate.Certificate, error) {
-	hosts, err := getHosts(cr)
-	if err != nil {
-		return nil, fmt.Errorf("getting hosts: %v", err)
-	}
-
+func createSelfSignedCertificate(cr csmv1.ContainerStorageModule, hosts []string, name string, secretName string, issuerName string) *certificate.Certificate {
 	certificate := &certificate.Certificate{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Certificate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "karavi-auth",
+			Name:      name,
 			Namespace: cr.Namespace,
 		},
 		Spec: certificate.CertificateSpec{
-			SecretName: "karavi-selfsigned-tls",
+			SecretName: secretName,
 			Duration: &metav1.Duration{
 				Duration: duration, // 90d
 			},
@@ -934,14 +1399,14 @@ func createSelfSignedCertificate(cr csmv1.ContainerStorageModule) (*certificate.
 			},
 			DNSNames: hosts,
 			IssuerRef: cmmetav1.ObjectReference{
-				Name:  "selfsigned",
+				Name:  issuerName,
 				Kind:  "Issuer",
 				Group: "cert-manager.io",
 			},
 		},
 	}
 
-	return certificate, nil
+	return certificate
 }
 
 func createIngress(cr csmv1.ContainerStorageModule) (*networking.Ingress, error) {
