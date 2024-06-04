@@ -1007,31 +1007,14 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	var err error
 
 	var (
-		endpoint        = ""
-		sysID           = ""
-		user            = ""
-		password        = ""
 		storageType     = ""
-		pool            = ""
 		driverNamespace = ""
 		proxyHost       = ""
 	)
 
-	//by default, use set defined in env file
-	endpointvar := "END_POINT"
-	systemIdvar := "SYSTEM_ID"
-	uservar := "STORAGE_USER"
-	passvar := "STORAGE_PASSWORD"
-	poolvar := "STORAGE_POOL"
-
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
 	if driver == "powerflex" {
-		endpointvar = "PFLEX_ENDPOINT"
-		systemIdvar = "PFLEX_SYSTEMID"
-		uservar = "PFLEX_USER"
-		passvar = "PFLEX_PASS"
-		poolvar = "PFLEX_POOL"
 		os.Setenv("STORAGE_TYPE", "powerflex")
 		os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
 	}
@@ -1041,21 +1024,6 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		os.Setenv("DRIVER_NAMESPACE", "isilon")
 	}
 	// get env variables
-	if os.Getenv(endpointvar) != "" {
-		endpoint = os.Getenv(endpointvar)
-	}
-	if os.Getenv(systemIdvar) != "" {
-		sysID = os.Getenv(systemIdvar)
-	}
-	if os.Getenv(uservar) != "" {
-		user = os.Getenv(uservar)
-	}
-	if os.Getenv(passvar) != "" {
-		password = os.Getenv(passvar)
-	}
-	if os.Getenv(poolvar) != "" {
-		pool = os.Getenv(poolvar)
-	}
 	if os.Getenv("STORAGE_TYPE") != "" {
 		storageType = os.Getenv("STORAGE_TYPE")
 	}
@@ -1090,16 +1058,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	fmt.Println("=== Creating Storage ===\n ")
-	cmd := exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
-		"storage", "create",
-		"--type", storageType,
-		"--endpoint", fmt.Sprintf("https://%s", endpoint),
-		"--system-id", sysID,
-		"--user", user,
-		"--password", password,
-		"--array-insecure",
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+	cmd := exec.Command("kubectl", "apply",
+		"-f", "testfiles/authorization-templates/csm-authorization_v1_storage.yaml",
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -1110,10 +1070,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	// Create Tenant
 	fmt.Println("=== Creating Tenant ===\n ")
-	cmd = exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
-		"tenant", "create",
-		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+	cmd = exec.Command("kubectl", "apply",
+		"-f", "testfiles/authorization-templates/csm-authorization_v1_csmtenant.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
@@ -1127,12 +1085,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	if storageType == "powerscale" {
 		quotaLimit = "0"
 	}
-	cmd = exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
-		"role", "create",
-		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
-			roleName, storageType, sysID, pool, quotaLimit),
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+	cmd = exec.Command("kubectl", "apply",
+		"-f", "testfiles/authorization-templates/csm-authorization_v1_csmrole.yaml",
 	)
 
 	fmt.Println("=== Role === \n", cmd.String())
@@ -1144,29 +1098,15 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	// role creation take few seconds
 	time.Sleep(5 * time.Second)
 
-	// Bind role
-	cmd = exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
-		"rolebinding", "create",
-		"--tenant", tenantName,
-		"--role", roleName,
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	)
-	fmt.Println("=== Binding Role ===\n", cmd.String())
-	b, err = cmd.CombinedOutput()
-
-	if err != nil {
-		return fmt.Errorf("failed to create rolebinding %s: %v\nErrMessage:\n%s", roleName, err, string(b))
-	}
-
 	// Generate token
 	fmt.Println("=== Generating token ===\n ")
-	cmd = exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
+	cmd = exec.Command("dellctl",
 		"generate", "token",
-		"--tenant", tenantName,
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--admin-token", "/tmp/adminToken.yaml",
 		"--access-token-expiration", fmt.Sprint(10*time.Minute),
+		"--refresh-token-expiration", "48h",
+		"--tenant", "csmtenant-sample",
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()

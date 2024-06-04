@@ -1,0 +1,12 @@
+apiVersion: csm-authorization.storage.dell.com/v1alpha1
+kind: Storage
+metadata:
+  name: powerscale
+spec:
+  type: powerscale
+  endpoint: https://10.230.24.241:8080
+  systemID: PIE-IsilonS-24241-Cluster
+  credentialStore: vault
+  credentialPath: storage/powerscale
+  skipCertificateValidation: true
+  pollInterval: 30s
