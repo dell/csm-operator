@@ -135,7 +135,7 @@ var (
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotcontents/status,verbs=get;list;watch;patch;update
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots,verbs=get;list;watch;update;patch;create;delete
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots/status,verbs=get;list;watch;update;patch
-// +kubebuilder:rbac:groups="volumegroup.storage.dell.com",resources=dellcsivolumegroupsnapshots;dellcsivolumegroupsnapshots/status,verbs=create;list;watch;delete;update
+// +kubebuilder:rbac:groups="volumegroup.storage.dell.com",resources=dellcsivolumegroupsnapshots;dellcsivolumegroupsnapshots/status,verbs=create;list;watch;delete;update;get;patch
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=*
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions/status,verbs=get;list;patch;watch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments/status,verbs=patch
@@ -218,6 +218,16 @@ var (
 // +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core;cert-manager-controller,verbs=get;update;patch
 // +kubebuilder:rbac:groups="batch",resources=jobs,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csistoragecapacities,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages;csmtenants;csmroles,verbs=get;list
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmroles,verbs=watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmroles/finalizers,verbs=update
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmroles/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmtenants,verbs=watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmtenants/finalizers,verbs=update
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmtenants/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages,verbs=watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages/finalizers,verbs=update
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages/status,verbs=get;update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

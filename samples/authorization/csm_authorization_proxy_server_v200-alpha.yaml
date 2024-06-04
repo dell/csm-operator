@@ -55,12 +55,12 @@ spec:
           authorizationControllerReplicas: 1
           leaderElection: true
 
-          # certificate: path to certificate file -- add cert here to use custom certificates
+          # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           certificate: ""
 
-          # privateKey: path to private key file -- add private key here to use custom certificates
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: ""
@@ -88,17 +88,24 @@ spec:
           redisCommander: redicommander
           sentinel: sentinel
           redisReplicas: 5
-          # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
-          # to use a different storage class for redis, specify the name of the storage class
-          # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
-          # Default value: None
-          storageclass: ""
 
         - name: vault
           vaultAddress: https://10.0.0.1:8400
           vaultRole: csm-authorization
           skipCertificateValidation: true
           kvEnginePath: secret
+          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
+          # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificateAuthority: ""
 
 ---
 apiVersion: v1

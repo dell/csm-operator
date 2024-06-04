@@ -472,6 +472,87 @@ rules:
   - list
   - watch
 - apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - csmroles
+  verbs:
+  - create
+  - delete
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - csmroles
+  - csmtenants
+  - storages
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - csmroles/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - csmroles/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - csmtenants
+  verbs:
+  - create
+  - delete
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - csmtenants/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - csmtenants/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - storages
+  verbs:
+  - create
+  - delete
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - storages/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - csm-authorization.storage.dell.com
+  resources:
+  - storages/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - discovery.k8s.io
   resources:
   - endpointslices
@@ -1053,6 +1134,8 @@ rules:
   verbs:
   - create
   - delete
+  - get
   - list
+  - patch
   - update
   - watch
