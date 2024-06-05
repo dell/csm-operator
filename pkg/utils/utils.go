@@ -42,6 +42,7 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
@@ -139,6 +140,9 @@ const (
 	PodmonNodeComponent = "podmon-node"
 	// ApplicationMobilityNamespace - application-mobility
 	ApplicationMobilityNamespace = "application-mobility"
+	// BrownfieldNamespace
+	ExistingNamespace = "<ExistingNameSpace>"
+	ClientNamespace   = "<ClientNameSpace>"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -1202,7 +1206,37 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 	return upgradePath.MinUpgradePath, nil
 }
 
-func getNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
+func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
+
+	namespace, err := GetNamespaces(ctx, ctrlClient)
+	if err != nil {
+		log.Error(err, "Failed to get namespaces")
+		return err
+	}
+
+	buf, err := os.ReadFile(filepath.Clean(path))
+	if err != nil {
+		log.Error(err, "Failed to read manifest file")
+		return err
+	}
+
+	yamlFile := string(buf)
+
+	for _, ns := range namespace {
+
+		yamlFile := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
+		yamlFile = strings.ReplaceAll(yamlFile, ClientNamespace, cr.Namespace)
+
+		err := CreateObjects(ctx, yamlFile, ctrlClient)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
 	// Set to store unique namespaces
 	namespaceMap := make(map[string]struct{})
 
@@ -1222,4 +1256,35 @@ func getNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	}
 
 	return namespaces, nil
+}
+
+func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Client) error {
+	deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
+	if err != nil {
+		return err
+	}
+
+	for _, obj := range deployObjects {
+		log.FromContext(ctx).Info("namespace of parsed object is", "object", obj.GetNamespace())
+
+		found := obj.DeepCopyObject().(crclient.Object)
+		err := ctrlClient.Get(ctx, crclient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}, found)
+		if err != nil && k8serror.IsNotFound(err) {
+			log.FromContext(ctx).Info("Creating a new object", "object", obj.GetObjectKind().GroupVersionKind().String())
+			err := ctrlClient.Create(ctx, obj)
+			if err != nil {
+				return err
+			}
+		} else if err != nil {
+			log.FromContext(ctx).Info("Unknown error trying to retrieve the object.", "Error", err.Error())
+			return err
+		} else {
+			log.FromContext(ctx).Info("Updating Object", "object", obj.GetObjectKind().GroupVersionKind().String())
+			err = ctrlClient.Update(ctx, obj)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
