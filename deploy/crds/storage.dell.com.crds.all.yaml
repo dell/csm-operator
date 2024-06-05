@@ -3394,9 +3394,6 @@ spec:
                     name:
                       description: Name is name of ContainerStorageModule modules
                       type: string
-                    openshift:
-                      description: OpenShift is used to indicate if the Container Platform is OpenShift
-                      type: boolean
                   type: object
                 type: array
             type: object
