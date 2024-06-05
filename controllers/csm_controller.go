@@ -973,7 +973,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 	if r.Config.IsOpenShift {
 		log.Infow("Using OpenShift default ingress controller")
 		if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
-			return fmt.Errorf("openshift enabled, skipping deployment of nginx ingress controller")
+			log.Warnw("openshift environment, skipping deployment of nginx ingress controller")
 		}
 	} else {
 		if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
