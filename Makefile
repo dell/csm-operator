@@ -219,7 +219,7 @@ lint: build
 build-base-image: download-csm-common
 	$(eval include csm-common.mk)
 	sh ./scripts/build-ubi-micro.sh $(DEFAULT_BASEIMAGE)
-	$(eval BASEIMAGE=localhost/csm-operator-ubimicro:latest)
+	$(eval BASEIMAGE=csm-operator-ubimicro:latest)
 
 # Download common CSM configuration file used for builds
 .PHONY: download-csm-common
