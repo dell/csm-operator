@@ -951,7 +951,7 @@ func TestAuthorizationIngress(t *testing.T) {
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
-			err := AuthorizationIngress(context.TODO(), isDeleting, cr, &fakeReconcile, sourceClient)
+			err := AuthorizationIngress(context.TODO(), isDeleting, true, cr, &fakeReconcile, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {

@@ -187,23 +187,23 @@ func (suite *CSMControllerTestSuite) TestReconcile() {
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.makeFakeAuthServerCSM(csmName, suite.namespace, getAuthProxyServer())
-	suite.runFakeAuthCSMManager("timed out waiting for the condition", false)
+	suite.runFakeAuthCSMManager("timed out waiting for the condition", false, false)
 	suite.deleteCSM(csmName)
-	suite.runFakeAuthCSMManager("", true)
+	suite.runFakeAuthCSMManager("", true, false)
 }
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcileOCP() {
 	suite.makeFakeAuthServerCSMOCP(csmName, suite.namespace, getAuthProxyServerOCP())
-	suite.runFakeAuthCSMManager("", false)
+	suite.runFakeAuthCSMManager("", false, true)
 	suite.deleteCSM(csmName)
-	suite.runFakeAuthCSMManager("", true)
+	suite.runFakeAuthCSMManager("", true, true)
 }
 
 func (suite *CSMControllerTestSuite) TestAppMobReconcile() {
 	suite.makeFakeAppMobCSM(csmName, suite.namespace, getAppMob())
-	suite.runFakeAuthCSMManager("", false)
+	suite.runFakeAuthCSMManager("", false, false)
 	suite.deleteCSM(csmName)
-	suite.runFakeAuthCSMManager("", true)
+	suite.runFakeAuthCSMManager("", true, false)
 }
 
 func (suite *CSMControllerTestSuite) TestResiliencyReconcile() {
@@ -937,8 +937,11 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, recon
 	}
 }
 
-func (suite *CSMControllerTestSuite) runFakeAuthCSMManager(expectedErr string, reconcileDelete bool) {
+func (suite *CSMControllerTestSuite) runFakeAuthCSMManager(expectedErr string, reconcileDelete, isOpenShift bool) {
 	reconciler := suite.createReconciler()
+	if isOpenShift {
+		reconciler.Config.IsOpenShift = true
+	}
 
 	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
 	res, err := reconciler.Reconcile(ctx, req)
@@ -1281,7 +1284,6 @@ func getAuthProxyServer() []csmv1.Module {
 			Enabled:           true,
 			ConfigVersion:     "v2.0.0-alpha",
 			ForceRemoveModule: true,
-			OpenShift:         false,
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:     "proxy-server",
@@ -1319,7 +1321,6 @@ func getAuthProxyServerOCP() []csmv1.Module {
 			Enabled:           true,
 			ConfigVersion:     "v2.0.0-alpha",
 			ForceRemoveModule: true,
-			OpenShift:         true,
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:     "proxy-server",

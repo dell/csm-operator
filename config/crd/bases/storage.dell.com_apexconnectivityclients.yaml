@@ -82,6 +82,10 @@ spec:
                         description: Certificate is a certificate used for a certificate/private-key
                           pair
                         type: string
+                      certificateAuthority:
+                        description: CertificateAuthority is a certificate authority
+                          used to validate a certificate
+                        type: string
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -453,6 +457,10 @@ spec:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
                           type: string
+                        certificateAuthority:
+                          description: CertificateAuthority is a certificate authority
+                            used to validate a certificate
+                          type: string
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -810,6 +818,10 @@ spec:
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
+                          type: string
+                        certificateAuthority:
+                          description: CertificateAuthority is a certificate authority
+                            used to validate a certificate
                           type: string
                         commander:
                           description: Commander is the image tag for the Container
