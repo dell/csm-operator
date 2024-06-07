@@ -121,13 +121,14 @@ var (
 
 	csmName = "csm"
 
-	configVersion            = shared.ConfigVersion
-	pFlexConfigVersion       = shared.PFlexConfigVersion
-	oldConfigVersion         = shared.OldConfigVersion
-	upgradeConfigVersion     = shared.UpgradeConfigVersion
-	downgradeConfigVersion   = shared.DowngradeConfigVersion
-	jumpUpgradeConfigVersion = shared.JumpUpgradeConfigVersion
-	invalidConfigVersion     = shared.BadConfigVersion
+	configVersion              = shared.ConfigVersion
+	pFlexConfigVersion         = shared.PFlexConfigVersion
+	oldConfigVersion           = shared.OldConfigVersion
+	upgradeConfigVersion       = shared.UpgradeConfigVersion
+	downgradeConfigVersion     = shared.DowngradeConfigVersion
+	jumpUpgradeConfigVersion   = shared.JumpUpgradeConfigVersion
+	jumpDowngradeConfigVersion = shared.JumpDowngradeConfigVersion
+	invalidConfigVersion       = shared.BadConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -485,6 +486,7 @@ func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
+
 	if annotations[configVersionKey] != pFlexConfigVersion {
 		annotations[configVersionKey] = pFlexConfigVersion
 		csm.SetAnnotations(annotations)
@@ -495,6 +497,90 @@ func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
 	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngradeVersionTooOld() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = oldConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngradeSkipVersion() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = jumpDowngradeConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngradePathInvalid() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = invalidConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
 }
 
 func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
