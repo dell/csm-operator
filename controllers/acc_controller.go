@@ -438,6 +438,7 @@ func applyAccConfigVersionAnnotations(ctx context.Context, instance *csmv1.ApexC
 
 // DeployApexConnectivityClient - perform deployment
 func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operatorConfig utils.OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
 	YamlString := ""
 	ModifiedYamlString := ""
 	deploymentPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, AccManifest)
@@ -465,6 +466,26 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 		}
 	}
 
+	//If existing csm-installations are found, proceed to get those namespaces and create roles/rolebindings
+	csmList := &csmv1.ContainerStorageModuleList{}
+	err = ctrlClient.List(ctx, csmList)
+	if err == nil && len(csmList.Items) > 0 {
+		log.Info("Found existing csm installations. Proceeding to onboard them to Apex Navigator for Kubernetes")
+		BrownfieldCR := "brownfield-onboard.yaml"
+
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
+		if isDeleting {
+			if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient, true); err != nil {
+				log.Error(err, "brownfield cluster onboarding failed")
+			}
+		} else {
+			if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient, false); err != nil {
+				log.Error(err, "brownfield cluster onboarding failed")
+			}
+		}
+	}
+
+	log.Info("No existing csm installations found")
 	return nil
 }
 
