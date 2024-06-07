@@ -272,6 +272,14 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	if csm.IsBeingDeleted() {
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
 
+		//remove role/rolebinding from the csm object namespace
+		err := r.SyncRbac(ctx, *csm, *operatorConfig, r.Client)
+		if err != nil {
+			r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to sync rbac: %s", err))
+			log.Errorw("sync rbac", "error", err.Error())
+			return ctrl.Result{}, fmt.Errorf("error when syncing rbac: %v", err)
+		}
+
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resources deployed from CR by operator
@@ -879,6 +887,26 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 	}
+	//If dell connectivity client is deployed, create role/rolebindings in the csm namespaces
+	list := &csmv1.ApexConnectivityClientList{}
+	if err := ctrlClient.List(ctx, list); err != nil {
+		log.Info("dell connectivity client not found")
+		return nil
+	} else if len(list.Items) <= 0 {
+		log.Info("dell connectivity client not found")
+		return nil
+	} else {
+		log.Info("dell connectivity client found")
+		cr := new(csmv1.ApexConnectivityClient)
+		BrownfieldCR := "brownfield-onboard.yaml"
+		configVersion1 := list.Items[0].Spec.Client.ConfigVersion
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, configVersion1, BrownfieldCR)
+
+		if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient, false); err != nil {
+			log.Error(err, "error creating role/rolebindings to newly discovered csm namespace")
+			return err
+		}
+	}
 	return nil
 }
 
@@ -1417,6 +1445,31 @@ func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.Containe
 	}
 
 	return false
+}
+
+func (r *ContainerStorageModuleReconciler) SyncRbac(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+	//If dell connectivity client is deployed, create role/rolebindings in the csm namespaces
+	list := &csmv1.ApexConnectivityClientList{}
+	if err := ctrlClient.List(ctx, list); err != nil {
+		log.Info("dell connectivity client not found")
+		return nil
+	} else if len(list.Items) <= 0 {
+		log.Info("dell connectivity client not found")
+		return nil
+	} else {
+		log.Info("dell connectivity client found")
+		cr := new(csmv1.ApexConnectivityClient)
+		BrownfieldCR := "brownfield-onboard.yaml"
+		configVersion1 := list.Items[0].Spec.Client.ConfigVersion
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, configVersion1, BrownfieldCR)
+
+		if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient, true); err != nil {
+			log.Error(err, "error deleting role/rolebindings to newly discovered csm namespace")
+			return err
+		}
+	}
+	return nil
 }
 
 // GetClient - returns the split client
