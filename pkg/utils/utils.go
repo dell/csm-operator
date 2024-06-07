@@ -140,9 +140,10 @@ const (
 	PodmonNodeComponent = "podmon-node"
 	// ApplicationMobilityNamespace - application-mobility
 	ApplicationMobilityNamespace = "application-mobility"
-	// BrownfieldNamespace
+	// ExistingNamespace - BrownfieldNamespace
 	ExistingNamespace = "<ExistingNameSpace>"
-	ClientNamespace   = "<ClientNameSpace>"
+	// ClientNamespace - acc-client-namespace
+	ClientNamespace = "<ClientNameSpace>"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -1206,6 +1207,7 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 	return upgradePath.MinUpgradePath, nil
 }
 
+// GetNamespaces - get all namespaces
 func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
 	// Set to store unique namespaces
 	namespaceMap := make(map[string]struct{})
@@ -1228,6 +1230,7 @@ func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	return namespaces, nil
 }
 
+// BrownfieldOnboard - brownfield onboarding
 func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client, isDeleting bool) error {
 	log := logger.GetLogger(ctx)
 
@@ -1272,6 +1275,7 @@ func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivi
 	return nil
 }
 
+// CreateObjects - create objects
 func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Client) error {
 	deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
 	if err != nil {

@@ -1447,6 +1447,7 @@ func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.Containe
 	return false
 }
 
+// SyncRbac - Delete the role/rolebindings in the csm namespaces
 func (r *ContainerStorageModuleReconciler) SyncRbac(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 	//If dell connectivity client is deployed, create role/rolebindings in the csm namespaces
