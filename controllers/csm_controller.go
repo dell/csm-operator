@@ -1396,6 +1396,10 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 			newVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
 			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
 		}
+		if cr.HasModule(csmv1.ApplicationMobility) {
+			newVersion := cr.GetModule(csmv1.ApplicationMobility).ConfigVersion
+			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.ApplicationMobility, operatorConfig)
+		}
 		driverType := cr.Spec.Driver.CSIDriverType
 		if driverType == csmv1.PowerScale {
 			// use powerscale instead of isilon as the folder name is powerscale
@@ -1423,6 +1427,8 @@ func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.Containe
 	var configVersion string
 	if instance.HasModule(csmv1.AuthorizationServer) {
 		configVersion = instance.GetModule(csmv1.AuthorizationServer).ConfigVersion
+	} else if instance.HasModule(csmv1.ApplicationMobility) {
+		configVersion = instance.GetModule(csmv1.ApplicationMobility).ConfigVersion
 	} else {
 		configVersion = instance.Spec.Driver.ConfigVersion
 	}
