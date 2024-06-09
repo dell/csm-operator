@@ -98,6 +98,9 @@ const (
 
 	// AccInitContainerImage - tag for init container image
 	AccInitContainerImage string = "<ACC_INIT_CONTAINER_IMAGE>"
+
+	// BrownfieldManifest - manifest for brownfield role/rolebinding creation
+	BrownfieldManifest string = "brownfield-onboard.yaml"
 )
 
 // ApexConnectivityClientReconciler reconciles a ApexConnectivityClient object
@@ -473,10 +476,9 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 	err = ctrlClient.List(ctx, csmList)
 	if err == nil && len(csmList.Items) > 0 {
 		log.Info("Found existing csm installations. Proceeding to onboard them to Apex Navigator for Kubernetes")
-		BrownfieldCR := "brownfield-onboard.yaml"
-		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldCR)
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
 		if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
-			log.Error(err, "brownfield cluster onboarding failed")
+			log.Error(err, "error creating role/rolebindings")
 		}
 	}
 	log.Info("No existing csm installations found")

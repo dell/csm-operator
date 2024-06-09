@@ -143,6 +143,8 @@ const (
 	// BrownfieldNamespace
 	ExistingNamespace = "<ExistingNameSpace>"
 	ClientNamespace   = "<ClientNameSpace>"
+	// BrownfieldManifest - manifest for brownfield role/rolebinding creation
+	BrownfieldManifest string = "brownfield-onboard.yaml"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -1284,6 +1286,29 @@ func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Cli
 			if err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+func CheckAccAndCreateRbac(ctx context.Context, operatorConfig OperatorConfig, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
+	list := &csmv1.ApexConnectivityClientList{}
+	if err := ctrlClient.List(ctx, list); err != nil {
+		log.Info("dell connectivity client not found")
+		return nil
+	} else if len(list.Items) <= 0 {
+		log.Info("dell connectivity client not found")
+		return nil
+	} else {
+		log.Info("dell connectivity client found")
+		cr := new(csmv1.ApexConnectivityClient)
+		configVersion1 := list.Items[0].Spec.Client.ConfigVersion
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, configVersion1, BrownfieldManifest)
+
+		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient); err != nil {
+			log.Error(err, "error creating role/rolebindings")
+			return err
 		}
 	}
 	return nil
