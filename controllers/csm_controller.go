@@ -885,25 +885,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
-	// list := &csmv1.ApexConnectivityClientList{}
-	// if err := ctrlClient.List(ctx, list); err != nil {
-	// 	log.Info("dell connectivity client not found")
-	// 	return nil
-	// } else if len(list.Items) <= 0 {
-	// 	log.Info("dell connectivity client not found")
-	// 	return nil
-	// } else {
-	// 	log.Info("dell connectivity client found")
-	// 	cr := new(csmv1.ApexConnectivityClient)
-	// 	BrownfieldCR := "brownfield-onboard.yaml"
-	// 	configVersion1 := list.Items[0].Spec.Client.ConfigVersion
-	// 	brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, configVersion1, BrownfieldCR)
-
-	// 	if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient); err != nil {
-	// 		log.Error(err, "error creating role/rolebindings to newly discovered csm namespace")
-	// 		return err
-	// 	}
-	// }
 	return nil
 }
 

@@ -475,13 +475,12 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 	csmList := &csmv1.ContainerStorageModuleList{}
 	err = ctrlClient.List(ctx, csmList)
 	if err == nil && len(csmList.Items) > 0 {
-		log.Info("Found existing csm installations. Proceeding to onboard them to Apex Navigator for Kubernetes")
+		log.Info("Found existing csm installations. Proceeding to create role/rolebindings")
 		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
 		if err = utils.BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
 			log.Error(err, "error creating role/rolebindings")
 		}
 	}
-	log.Info("No existing csm installations found")
 
 	return nil
 }
