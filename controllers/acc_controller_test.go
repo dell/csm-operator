@@ -723,17 +723,12 @@ func (suite *AccControllerTestSuite) debugAccFakeObjects() {
 
 func (suite *AccControllerTestSuite) TestDeployApexConnectivityClient() {
 	mockClient := suite.fakeClient
-	fmt.Printf("1")
-
 	csm := shared.MakeCSM("csm", suite.namespace, shared.PmaxConfigVersion)
 	csmList := &csmv1.ContainerStorageModuleList{
 		Items: []csmv1.ContainerStorageModule{csm},
 	}
-
 	acc := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
-	fmt.Printf("2")
 	suite.fakeClient.List(accCtx, csmList)
-	fmt.Printf("3")
 	// mockClient.On("List", mock.Anything, mock.Anything, mock.Anything).Return(nil, csmList)
 	err := DeployApexConnectivityClient(accCtx, false, accOperatorConfig, acc, mockClient)
 	fmt.Printf("4")
