@@ -42,11 +42,18 @@ spec:
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
           proxyService: dellemc/csm-authorization-proxy:v2.0.0-alpha
+          proxyServiceReplicas: 1
           tenantService: dellemc/csm-authorization-tenant:v2.0.0-alpha
+          tenantServiceReplicas: 1
           roleService: dellemc/csm-authorization-role:v2.0.0-alpha
+          roleServiceReplicas: 1
           storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
+          storageServiceReplicas: 1
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
+          authorizationController: dellemc/csm-authorization-controller:v2.0.0-alpha
+          authorizationControllerReplicas: 1
+          leaderElection: true
 
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
@@ -92,6 +99,18 @@ spec:
           vaultRole: csm-authorization
           skipCertificateValidation: true
           kvEnginePath: secret
+          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
+          # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificateAuthority: ""
 
 ---
 apiVersion: v1

@@ -1039,7 +1039,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	fmt.Printf("=== Generating Admin Token ===\n")
-	adminTkn := exec.Command("karavictl",
+	adminTkn := exec.Command("dellctl",
 		"admin", "token",
 		"--name", "Admin",
 		"--jwt-signing-secret", "secret",
