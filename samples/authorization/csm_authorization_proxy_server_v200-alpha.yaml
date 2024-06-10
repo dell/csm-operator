@@ -85,7 +85,7 @@ spec:
           redis: redis:7.2.4-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
-          redisCommander: redicommander
+          redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
 
@@ -117,3 +117,4 @@ data:
   csm-config-params.yaml: |
     CONCURRENT_POWERFLEX_REQUESTS: 10
     LOG_LEVEL: debug
+    STORAGE_CAPACITY_POLL_INTERVAL: 5m

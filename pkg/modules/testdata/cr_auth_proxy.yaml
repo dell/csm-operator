@@ -78,7 +78,7 @@ spec:
           redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
-          redisCommander: redicommander
+          redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
           # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
@@ -115,3 +115,4 @@ data:
   csm-config-params.yaml: |
     CONCURRENT_POWERFLEX_REQUESTS: 10
     LOG_LEVEL: debug
+    STORAGE_CAPACITY_POLL_INTERVAL: 5m

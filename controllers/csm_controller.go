@@ -970,18 +970,16 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		}
 	}
 
-	for _, m := range cr.Spec.Modules {
-		if m.OpenShift {
-			log.Infow("Using OpenShift default ingress controller")
-			if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
-				return fmt.Errorf("openshift enabled, skipping deployment of nginx ingress controller")
-			}
-		} else {
-			if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
-				log.Infow("Reconcile authorization NGINX Ingress Controller")
-				if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-					return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
-				}
+	if r.Config.IsOpenShift {
+		log.Infow("Using OpenShift default ingress controller")
+		if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+			log.Warnw("openshift environment, skipping deployment of nginx ingress controller")
+		}
+	} else {
+		if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+			log.Infow("Reconcile authorization NGINX Ingress Controller")
+			if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
 			}
 		}
 	}
@@ -989,7 +987,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 	// Authorization Ingress rules
 	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization Ingresses")
-		if err := modules.AuthorizationIngress(ctx, isDeleting, cr, r, ctrlClient); err != nil {
+		if err := modules.AuthorizationIngress(ctx, isDeleting, r.Config.IsOpenShift, cr, r, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
 		}
 	}

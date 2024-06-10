@@ -694,9 +694,9 @@ spec:
             done            
             loop=$(echo $nodes | sed -e "s/"*"/\n/g")
 
-            foundMaster=$false
+            foundMaster=false
 
-            while [ $foundMaster == $false ] 
+            while [ "$foundMaster" == "false" ] 
             do  
               for i in $loop
               do
@@ -705,27 +705,27 @@ spec:
                   if [ "$ROLE" = "master" ]; then
                       MASTER=$i.authorization.svc.cluster.local
                       echo "Master found at $MASTER..."
-                      foundMaster=$true
+                      foundMaster=true
                       break
                   else
                     MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
                     if [ "$MASTER" = "" ]; then
                         echo "Master not found..."
-                        echo "Sleeping 5 seconds for redis pods to come up..."
+                        echo "Waiting 5 seconds for redis pods to come up..."
                         sleep 5
                         MASTER=
                     else
                         echo "Master found at $MASTER..."
-                        foundMaster=$true
+                        foundMaster=true
                         break
                     fi
                   fi
               done
 
-              if [ $foundMaster == $true ]; then
+              if [ "$foundMaster" == "true" ]; then
                 break
               else   
-                 echo "Master not found, sleep for 30s before attempting again"
+                 echo "Master not found, wait for 30s before attempting again"
                  sleep 30
               fi
             done

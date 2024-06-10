@@ -162,10 +162,6 @@ type Module struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="InitContainer"
 	InitContainer []ContainerTemplate `json:"initContainer,omitempty" yaml:"initContainer"`
-
-	// OpenShift is used to indicate if the Container Platform is OpenShift
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="OpenShift"
-	OpenShift bool `json:"openshift,omitempty" yaml:"openshift,omitempty"`
 }
 
 // PodStatus - Represents PodStatus in a daemonset or deployment

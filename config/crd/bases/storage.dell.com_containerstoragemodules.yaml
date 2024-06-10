@@ -86,6 +86,10 @@ spec:
                         description: Certificate is a certificate used for a certificate/private-key
                           pair
                         type: string
+                      certificateAuthority:
+                        description: CertificateAuthority is a certificate authority
+                          used to validate a certificate
+                        type: string
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
@@ -443,6 +447,10 @@ spec:
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key
                           pair
+                        type: string
+                      certificateAuthority:
+                        description: CertificateAuthority is a certificate authority
+                          used to validate a certificate
                         type: string
                       commander:
                         description: Commander is the image tag for the Container
@@ -823,6 +831,10 @@ spec:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
                           type: string
+                        certificateAuthority:
+                          description: CertificateAuthority is a certificate authority
+                            used to validate a certificate
+                          type: string
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
@@ -1178,6 +1190,10 @@ spec:
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key
                           pair
+                        type: string
+                      certificateAuthority:
+                        description: CertificateAuthority is a certificate authority
+                          used to validate a certificate
                         type: string
                       commander:
                         description: Commander is the image tag for the Container
@@ -1538,6 +1554,10 @@ spec:
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
+                          type: string
+                        certificateAuthority:
+                          description: CertificateAuthority is a certificate authority
+                            used to validate a certificate
                           type: string
                         commander:
                           description: Commander is the image tag for the Container
@@ -1924,6 +1944,10 @@ spec:
                             description: Certificate is a certificate used for a certificate/private-key
                               pair
                             type: string
+                          certificateAuthority:
+                            description: CertificateAuthority is a certificate authority
+                              used to validate a certificate
+                            type: string
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
@@ -2297,6 +2321,10 @@ spec:
                             description: Certificate is a certificate used for a certificate/private-key
                               pair
                             type: string
+                          certificateAuthority:
+                            description: CertificateAuthority is a certificate authority
+                              used to validate a certificate
+                            type: string
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
@@ -2639,10 +2667,6 @@ spec:
                     name:
                       description: Name is name of ContainerStorageModule modules
                       type: string
-                    openshift:
-                      description: OpenShift is used to indicate if the Container
-                        Platform is OpenShift
-                      type: boolean
                   type: object
                 type: array
             type: object
