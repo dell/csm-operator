@@ -1269,7 +1269,6 @@ func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Cli
 	if err != nil {
 		return err
 	}
-
 	for _, obj := range deployObjects {
 		log.FromContext(ctx).Info("namespace of parsed object is", "object", obj.GetNamespace())
 
@@ -1303,14 +1302,12 @@ func CheckAccAndCreateRbac(ctx context.Context, operatorConfig OperatorConfig, c
 		logInstance.Info("dell connectivity client not found")
 	} else if len(list.Items) <= 0 {
 		logInstance.Info("dell connectivity client not found")
-
 	} else {
 		logInstance.Info("dell connectivity client found")
 		cr := new(csmv1.ApexConnectivityClient)
 		configVersion1 := list.Items[0].Spec.Client.ConfigVersion
 		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory,
 			csmv1.DreadnoughtClient, configVersion1, BrownfieldManifest)
-
 		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient); err != nil {
 			logInstance.Error(err, "error creating role/rolebindings")
 			return err
