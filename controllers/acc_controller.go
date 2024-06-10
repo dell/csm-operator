@@ -484,8 +484,6 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 			}
 		}
 	}
-
-	log.Info("No existing csm installations found")
 	return nil
 }
 

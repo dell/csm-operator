@@ -1258,49 +1258,17 @@ func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivi
 			return err
 		}
 
-		if isDeleting {
-			for _, ctrlObj := range deployObjects {
+		for _, ctrlObj := range deployObjects {
+			if isDeleting {
 				err := DeleteObject(ctx, ctrlObj, ctrlClient)
 				if err != nil {
 					return err
 				}
-			}
-		} else {
-			err := CreateObjects(ctx, yamlFile, ctrlClient)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// CreateObjects - create objects
-func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Client) error {
-	deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
-	if err != nil {
-		return err
-	}
-
-	for _, obj := range deployObjects {
-		log.FromContext(ctx).Info("namespace of parsed object is", "object", obj.GetNamespace())
-
-		found := obj.DeepCopyObject().(crclient.Object)
-		err := ctrlClient.Get(ctx, crclient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}, found)
-		if err != nil && k8serror.IsNotFound(err) {
-			log.FromContext(ctx).Info("Creating a new object", "object", obj.GetObjectKind().GroupVersionKind().String())
-			err := ctrlClient.Create(ctx, obj)
-			if err != nil {
-				return err
-			}
-		} else if err != nil {
-			log.FromContext(ctx).Info("Unknown error trying to retrieve the object.", "Error", err.Error())
-			return err
-		} else {
-			log.FromContext(ctx).Info("Creating a new Object", "object", obj.GetObjectKind().GroupVersionKind().String())
-			err = ctrlClient.Update(ctx, obj)
-			if err != nil {
-				return err
+			} else {
+				err := ApplyObject(ctx, ctrlObj, ctrlClient)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
