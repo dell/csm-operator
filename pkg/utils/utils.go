@@ -1315,3 +1315,18 @@ func CheckAccAndCreateRbac(ctx context.Context, operatorConfig OperatorConfig, c
 	}
 	return nil
 }
+
+func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+	logInstance := logger.GetLogger(ctx)
+	csmList := &csmv1.ContainerStorageModuleList{}
+	err := ctrlClient.List(ctx, csmList)
+	if err == nil && len(csmList.Items) > 0 {
+		logInstance.Info("Found existing csm installations. Proceeding to create role/rolebindings")
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
+		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
+			logInstance.Error(err, "error creating role/rolebindings")
+			return err
+		}
+	}
+	return nil
+}
