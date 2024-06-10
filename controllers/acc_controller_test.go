@@ -163,6 +163,19 @@ func (suite *AccControllerTestSuite) TestReconcileAcc() {
 	suite.runFakeAccManager("", true)
 }
 
+// test a happy path scenerio without deletion
+func (suite *AccControllerTestSuite) TestReconcileAccNoDelete() {
+	suite.makeFakeAcc(accName, suite.namespace, true)
+	suite.runFakeAccManager("", false)
+	suite.runFakeAccManager("", true)
+}
+
+func (suite *AccControllerTestSuite) TestAccConnectivityClient() {
+	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
+	csm.Spec.Client.Common.Image = "image"
+}
+
 func (suite *AccControllerTestSuite) TestAccConnectivityClientConnectionTarget() {
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
 	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
