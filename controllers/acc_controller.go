@@ -77,6 +77,7 @@ type ApexConnectivityClientReconciler struct {
 	EventRecorder record.EventRecorder
 }
 
+// AccConfig - Apex Connectivity Client Config
 type AccConfig struct {
 	Controller *utils.StatefulControllerYAML
 }
@@ -88,7 +89,7 @@ const (
 	// AccFinalizerName - the name of the finalizer
 	AccFinalizerName = "finalizer.dell.com"
 
-	// AccVersion
+	// AccVersion - the version of the connectivity client
 	AccVersion = "v1.0.0"
 )
 
@@ -96,7 +97,7 @@ var (
 	accdMutex           sync.RWMutex
 	accConfigVersionKey = fmt.Sprintf("%s/%s", AccMetadataPrefix, "ApexConnectivityClientConfigVersion")
 
-	// AccVersionKey
+	// AccVersionKey - the version of the connectivity client
 	AccVersionKey = fmt.Sprintf("%s/%s", AccMetadataPrefix, "AccVersion")
 
 	// AccStopWatch - watcher stop handle
@@ -488,6 +489,7 @@ func getAccConfig(ctx context.Context, cr csmv1.ApexConnectivityClient, operator
 	}, nil
 }
 
+// SyncACC - sync apex connectivity client
 func (r *ApexConnectivityClientReconciler) SyncACC(ctx context.Context, cr csmv1.ApexConnectivityClient, operatorConfig utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 

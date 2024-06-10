@@ -218,6 +218,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	return &controllerYAML, nil
 }
 
+// GetAccController get acc StatefulSet yaml
 func GetAccController(ctx context.Context, cr csmv1.ApexConnectivityClient, operatorConfig utils.OperatorConfig, clientName csmv1.ClientType) (*utils.StatefulControllerYAML, error) {
 	log := logger.GetLogger(ctx)
 
