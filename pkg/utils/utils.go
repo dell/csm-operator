@@ -144,8 +144,8 @@ const (
 	ExistingNamespace = "<ExistingNameSpace>"
 	// ClientNamespace - client namespace
 	ClientNamespace = "<ClientNameSpace>"
-	// BrownfieldManifest - manifest for brownfield role/rolebinding creation
-	BrownfieldManifest string = "brownfield-onboard.yaml"
+	// BrownfieldManifest - brownfield-onboard.yaml
+	BrownfieldManifest = "brownfield-onboard.yaml"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -1209,6 +1209,7 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 	return upgradePath.MinUpgradePath, nil
 }
 
+// BrownfieldOnboard will onboard the brownfield cluster
 func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 
@@ -1239,6 +1240,7 @@ func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivi
 	return nil
 }
 
+// GetNamespaces returns the list of namespaces in the cluster
 func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
 	// Set to store unique namespaces
 	namespaceMap := make(map[string]struct{})
@@ -1261,6 +1263,7 @@ func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	return namespaces, nil
 }
 
+// CreateObjects creates the objects in the cluster
 func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Client) error {
 	deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
 	if err != nil {
@@ -1292,6 +1295,7 @@ func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Cli
 	return nil
 }
 
+// CheckAccAndCreateRbac checks if the dell connectivity client exists and creates the role and rolebindings
 func CheckAccAndCreateRbac(ctx context.Context, operatorConfig OperatorConfig, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 	list := &csmv1.ApexConnectivityClientList{}
