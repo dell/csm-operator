@@ -1211,17 +1211,17 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 
 // BrownfieldOnboard will onboard the brownfield cluster
 func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
-	log := logger.GetLogger(ctx)
+	logInstance := logger.GetLogger(ctx)
 
 	namespace, err := GetNamespaces(ctx, ctrlClient)
 	if err != nil {
-		log.Error(err, "Failed to get namespaces")
+		logInstance.Error(err, "Failed to get namespaces")
 		return err
 	}
 
 	buf, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
-		log.Error(err, "Failed to read manifest file")
+		logInstance.Error(err, "Failed to read manifest file")
 		return err
 	}
 
@@ -1297,22 +1297,22 @@ func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Cli
 
 // CheckAccAndCreateRbac checks if the dell connectivity client exists and creates the role and rolebindings
 func CheckAccAndCreateRbac(ctx context.Context, operatorConfig OperatorConfig, ctrlClient crclient.Client) error {
-	log := logger.GetLogger(ctx)
+	logInstance := logger.GetLogger(ctx)
 	list := &csmv1.ApexConnectivityClientList{}
 	if err := ctrlClient.List(ctx, list); err != nil {
-		log.Info("dell connectivity client not found")
-		return nil
+		logInstance.Info("dell connectivity client not found")
 	} else if len(list.Items) <= 0 {
-		log.Info("dell connectivity client not found")
-		return nil
+		logInstance.Info("dell connectivity client not found")
+
 	} else {
-		log.Info("dell connectivity client found")
+		logInstance.Info("dell connectivity client found")
 		cr := new(csmv1.ApexConnectivityClient)
 		configVersion1 := list.Items[0].Spec.Client.ConfigVersion
-		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, configVersion1, BrownfieldManifest)
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory,
+			csmv1.DreadnoughtClient, configVersion1, BrownfieldManifest)
 
 		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient); err != nil {
-			log.Error(err, "error creating role/rolebindings")
+			logInstance.Error(err, "error creating role/rolebindings")
 			return err
 		}
 	}
