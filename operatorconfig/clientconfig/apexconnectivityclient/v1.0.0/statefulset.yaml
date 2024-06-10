@@ -63,6 +63,9 @@ rules:
   - apiGroups: ["mobility.storage.dell.com"]
     resources: ["backups"]
     verbs: ["list", "get"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["list", "get", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
