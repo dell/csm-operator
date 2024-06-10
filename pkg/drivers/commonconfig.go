@@ -247,8 +247,6 @@ func GetAccController(ctx context.Context, cr csmv1.ApexConnectivityClient, oper
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if string(*c.Name) == "client" {
-			//containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Client.Common.Envs, cr.Spec.Client.)
-			//c.Env = containers[i].Env
 			if string(cr.Spec.Client.Common.Image) != "" {
 				image := string(cr.Spec.Client.Common.Image)
 				c.Image = &image
