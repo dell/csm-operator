@@ -711,3 +711,32 @@ func (suite *AccControllerTestSuite) debugAccFakeObjects() {
 		accUnittestLogger.Info("found fake object ", "object", fmt.Sprintf("%#v", o))
 	}
 }
+
+// type MockClient struct {
+// 	mock.Mock
+// }
+
+// func (m *MockClient) List(ctx context.Context, obj client.Object, list client.List) error {
+// 	args := m.Called(ctx, obj, list)
+// 	return args.Error(0) // Return nil error
+// }
+
+func (suite *AccControllerTestSuite) TestDeployApexConnectivityClient() {
+	mockClient := suite.fakeClient
+	fmt.Printf("1")
+
+	csm := shared.MakeCSM("csm", suite.namespace, shared.PmaxConfigVersion)
+	csmList := &csmv1.ContainerStorageModuleList{
+		Items: []csmv1.ContainerStorageModule{csm},
+	}
+
+	acc := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	fmt.Printf("2")
+	suite.fakeClient.List(accCtx, csmList)
+	fmt.Printf("3")
+	// mockClient.On("List", mock.Anything, mock.Anything, mock.Anything).Return(nil, csmList)
+	err := DeployApexConnectivityClient(accCtx, false, accOperatorConfig, acc, mockClient)
+	fmt.Printf("4")
+	assert.Nil(suite.T(), err)
+	assert.NotEmpty(suite.T(), csmList.Items)
+}
