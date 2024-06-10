@@ -1316,6 +1316,7 @@ func CheckAccAndCreateRbac(ctx context.Context, operatorConfig OperatorConfig, c
 	return nil
 }
 
+// CreateBrownfieldRbac creates the role and rolebindings
 func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
 	logInstance := logger.GetLogger(ctx)
 	csmList := &csmv1.ContainerStorageModuleList{}
