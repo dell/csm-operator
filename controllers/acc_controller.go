@@ -87,11 +87,17 @@ const (
 
 	// AccFinalizerName - the name of the finalizer
 	AccFinalizerName = "finalizer.dell.com"
+
+	// AccVersion
+	AccVersion = "v1.0.0"
 )
 
 var (
 	accdMutex           sync.RWMutex
 	accConfigVersionKey = fmt.Sprintf("%s/%s", AccMetadataPrefix, "ApexConnectivityClientConfigVersion")
+
+	// AccVersionKey
+	AccVersionKey = fmt.Sprintf("%s/%s", AccMetadataPrefix, "AccVersion")
 
 	// AccStopWatch - watcher stop handle
 	AccStopWatch = make(chan struct{})
@@ -207,7 +213,6 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 		syncErr := r.SyncACC(ctx, *acc, *op)
 		if syncErr == nil && !requeue.Requeue {
 			log.Infof("ACC --> SyncACC  nil")
-			//if err = DeployApexConnectivityClient(ctx, false, *op, *acc, crc); err != nil {
 			if err = utils.UpdateAccStatus(ctx, acc, r, newStatus); err != nil {
 				log.Error(err, "Failed to update CR status")
 				return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
@@ -403,12 +408,15 @@ func applyAccConfigVersionAnnotations(ctx context.Context, instance *csmv1.ApexC
 	log := logger.GetLogger(ctx)
 
 	// If client has not been initialized yet, we first annotate the client with the config version annotation
-
 	annotations := instance.GetAnnotations()
 	isUpdated := false
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
+
+	annotations[AccVersionKey] = AccVersion
+	instance.SetAnnotations(annotations)
+
 	if _, ok := annotations[accConfigVersionKey]; !ok {
 		annotations[accConfigVersionKey] = instance.Spec.Client.ConfigVersion
 		isUpdated = true
@@ -517,8 +525,7 @@ func (r *ApexConnectivityClientReconciler) SyncACC(ctx context.Context, cr csmv1
 		}
 
 		apexName := "ApexConnectivityClient"
-
-		// sync statefulset
+		// sync StatefulSet
 		if err = statefulset.SyncStatefulSet(ctx, controller.StatefulSet, cluster.ClusterK8sClient, apexName); err != nil {
 			return err
 		}

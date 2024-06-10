@@ -31,9 +31,6 @@ import (
 )
 
 const (
-	// AccManifest - deployment resources for Apex Connectivity Client
-	AccManifest string = "statefulset.yaml"
-
 	// AccNamespace - deployment namespace
 	AccNamespace string = "<NAMESPACE>"
 
@@ -560,7 +557,6 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 
 // ModifyApexConnectivityClientCR - update the custom resource
 func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivityClient) string {
-	fmt.Println("ACC --> Inside ModifyApexConnectivityClientCR")
 	namespace := ""
 	aggregatorURL := AggregatorURLDefault
 	connectivityClientImage := ""
