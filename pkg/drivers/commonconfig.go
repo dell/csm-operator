@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -27,6 +28,56 @@ import (
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	metacv1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"sigs.k8s.io/yaml"
+)
+
+const (
+	// AccManifest - deployment resources for Apex Connectivity Client
+	AccManifest string = "statefulset.yaml"
+
+	// AccNamespace - deployment namespace
+	AccNamespace string = "<NAMESPACE>"
+
+	// AggregatorURLDefault - default aggregator location
+	AggregatorURLDefault string = "connect-into.dell.com"
+
+	// AggregatorURL - tag for specifying aggregator endpoint
+	AggregatorURL string = "<AGGREGATOR_URL>"
+
+	// CaCertOption - tag for specifying if cacert option is used
+	CaCertOption string = "<CACERT_OPTION>"
+
+	// CaCertFlag - cacert option
+	CaCertFlag string = "--cacert"
+
+	// CaCerts - tag for specifying --cacert value
+	CaCerts string = "<CACERTS>"
+
+	// CaCertsList - cert locations for aggregator and loadbalancer
+	CaCertsList string = "/opt/dellemc/certs/loadbalancer_root_ca_cert.crt,/opt/dellemc/certs/aggregator_internal_root_ca_cert.crt"
+
+	// ConnectivityClientContainerName - name of the DCM client container
+	ConnectivityClientContainerName string = "connectivity-client-docker-k8s"
+
+	// ConnectivityClientContainerImage - tag for DCM client image
+	ConnectivityClientContainerImage string = "<CONNECTIVITY_CLIENT_IMAGE>"
+
+	// KubernetesProxySidecarName - name of proxy sidecar container
+	KubernetesProxySidecarName string = "kubernetes-proxy"
+
+	// KubernetesProxySidecarImage - tag for proxy image
+	KubernetesProxySidecarImage string = "<KUBERNETES_PROXY_IMAGE>"
+
+	// CertPersisterSidecarName - name of cert persister image
+	CertPersisterSidecarName string = "cert-persister"
+
+	// CertPersisterSidecarImage - name of cert persister image
+	CertPersisterSidecarImage string = "<CERT_PERSISTER_IMAGE>"
+
+	// AccInitContainerName - name of init container image
+	AccInitContainerName string = "connectivity-client-init"
+
+	// AccInitContainerImage - tag for init container image
+	AccInitContainerImage string = "<ACC_INIT_CONTAINER_IMAGE>"
 )
 
 var defaultVolumeConfigName = map[csmv1.DriverType]string{
@@ -168,6 +219,85 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	}
 
 	return &controllerYAML, nil
+}
+
+func GetAccController(ctx context.Context, cr csmv1.ApexConnectivityClient, operatorConfig utils.OperatorConfig, clientName csmv1.ClientType) (*utils.StatefulControllerYAML, error) {
+	log := logger.GetLogger(ctx)
+
+	clientNameLower := strings.ToLower(string(clientName))
+	configMapPath := fmt.Sprintf("%s/clientconfig/%s/%s/statefulset.yaml", operatorConfig.ConfigDirectory, clientNameLower, cr.Spec.Client.ConfigVersion)
+	log.Debugw("GetAccController", "configMapPath", configMapPath)
+	buf, err := os.ReadFile(filepath.Clean(configMapPath))
+	if err != nil {
+		return nil, err
+	}
+
+	YamlString := utils.ModifyCommonCRs(string(buf), cr)
+	if cr.Spec.Client.CSMClientType == "apexConnectivityClient" {
+		YamlString = ModifyApexConnectivityClientCR(YamlString, cr)
+	}
+
+	AccYAML, err := utils.GetDriverYaml(YamlString, "StatefulSet")
+	if err != nil {
+		log.Errorw("GetAccController", "Error getting driver yaml", "error", err)
+		return nil, err
+	}
+
+	statefulsetYAML := AccYAML.(utils.StatefulControllerYAML)
+
+	containers := statefulsetYAML.StatefulSet.Spec.Template.Spec.Containers
+	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
+	for i, c := range containers {
+		if string(*c.Name) == "client" {
+			//containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Client.Common.Envs, cr.Spec.Client.)
+			//c.Env = containers[i].Env
+			if string(cr.Spec.Client.Common.Image) != "" {
+				image := string(cr.Spec.Client.Common.Image)
+				c.Image = &image
+			}
+		}
+
+		removeContainer := false
+		for _, s := range cr.Spec.Client.SideCars {
+			if s.Name == *c.Name {
+				if s.Enabled == nil {
+					log.Infow("Container to be enabled", "name", *c.Name)
+					break
+				} else if !*s.Enabled {
+					removeContainer = true
+					log.Infow("Container to be removed", "name", *c.Name)
+				} else {
+					log.Infow("Container to be enabled", "name", *c.Name)
+				}
+				break
+			}
+		}
+		if !removeContainer {
+			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
+			utils.UpdateSideCarApply(cr.Spec.Client.SideCars, &containers[i])
+			newcontainers = append(newcontainers, c)
+		}
+
+	}
+
+	statefulsetYAML.StatefulSet.Spec.Template.Spec.Containers = newcontainers
+
+	crUID := cr.GetUID()
+	bController := true
+	bOwnerDeletion := !cr.Spec.Client.ForceRemoveClient
+	kind := cr.Kind
+	v1 := "apps/v1"
+	statefulsetYAML.StatefulSet.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
+		{
+			APIVersion:         &v1,
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               &kind,
+			Name:               &cr.Name,
+			UID:                &crUID,
+		},
+	}
+	return &statefulsetYAML, nil
 }
 
 // GetNode get node yaml
@@ -426,4 +556,65 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	}
 
 	return &csidriver, nil
+}
+
+// ModifyApexConnectivityClientCR - update the custom resource
+func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivityClient) string {
+	fmt.Println("ACC --> Inside ModifyApexConnectivityClientCR")
+	namespace := ""
+	aggregatorURL := AggregatorURLDefault
+	connectivityClientImage := ""
+	kubeProxyImage := ""
+	certPersisterImage := ""
+	accInitContainerImage := ""
+	caCertFlag := ""
+	caCertsList := ""
+
+	namespace = cr.Namespace
+
+	if cr.Spec.Client.ConnectionTarget != "" {
+		aggregatorURL = string(cr.Spec.Client.ConnectionTarget)
+	}
+
+	if cr.Spec.Client.UsePrivateCaCerts {
+		caCertFlag = CaCertFlag
+		caCertsList = CaCertsList
+	}
+
+	if cr.Spec.Client.Common.Name == ConnectivityClientContainerName {
+		if cr.Spec.Client.Common.Image != "" {
+			connectivityClientImage = string(cr.Spec.Client.Common.Image)
+		}
+	}
+
+	for _, initContainer := range cr.Spec.Client.InitContainers {
+		if initContainer.Name == AccInitContainerName {
+			if initContainer.Image != "" {
+				accInitContainerImage = string(initContainer.Image)
+			}
+		}
+	}
+
+	for _, sidecar := range cr.Spec.Client.SideCars {
+		if sidecar.Name == KubernetesProxySidecarName {
+			if sidecar.Image != "" {
+				kubeProxyImage = string(sidecar.Image)
+			}
+		}
+		if sidecar.Name == CertPersisterSidecarName {
+			if sidecar.Image != "" {
+				certPersisterImage = string(sidecar.Image)
+			}
+		}
+	}
+
+	yamlString = strings.ReplaceAll(yamlString, AccNamespace, namespace)
+	yamlString = strings.ReplaceAll(yamlString, AggregatorURL, aggregatorURL)
+	yamlString = strings.ReplaceAll(yamlString, CaCertOption, caCertFlag)
+	yamlString = strings.ReplaceAll(yamlString, CaCerts, caCertsList)
+	yamlString = strings.ReplaceAll(yamlString, ConnectivityClientContainerImage, connectivityClientImage)
+	yamlString = strings.ReplaceAll(yamlString, AccInitContainerImage, accInitContainerImage)
+	yamlString = strings.ReplaceAll(yamlString, KubernetesProxySidecarImage, kubeProxyImage)
+	yamlString = strings.ReplaceAll(yamlString, CertPersisterSidecarImage, certPersisterImage)
+	return yamlString
 }
