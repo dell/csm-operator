@@ -140,9 +140,10 @@ const (
 	PodmonNodeComponent = "podmon-node"
 	// ApplicationMobilityNamespace - application-mobility
 	ApplicationMobilityNamespace = "application-mobility"
-	// BrownfieldNamespace
+	// ExistingNamespace - existing namespace
 	ExistingNamespace = "<ExistingNameSpace>"
-	ClientNamespace   = "<ClientNameSpace>"
+	// ClientNamespace - client namespace
+	ClientNamespace = "<ClientNameSpace>"
 	// BrownfieldManifest - manifest for brownfield role/rolebinding creation
 	BrownfieldManifest string = "brownfield-onboard.yaml"
 )
