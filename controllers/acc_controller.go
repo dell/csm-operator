@@ -16,16 +16,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/dell/csm-operator/pkg/drivers"
-	"github.com/dell/csm-operator/pkg/resources/rbac"
-	"github.com/dell/csm-operator/pkg/resources/serviceaccount"
-	"github.com/dell/csm-operator/pkg/resources/statefulset"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/dell/csm-operator/pkg/drivers"
+	"github.com/dell/csm-operator/pkg/resources/rbac"
+	"github.com/dell/csm-operator/pkg/resources/serviceaccount"
+	"github.com/dell/csm-operator/pkg/resources/statefulset"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -521,7 +522,7 @@ func (r *ApexConnectivityClientReconciler) SyncACC(ctx context.Context, cr csmv1
 			return err
 		}
 
-		//create/update ClusterRoleBinding
+		// create update ClusterRoleBinding
 		if err = rbac.SyncClusterRoleBindings(ctx, controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
