@@ -470,8 +470,6 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 		}
 	}
 
-	//brownfield scenario
-	//If existing csm-installations are found, proceed to get those namespaces and create roles/rolebindings
 	csmList := &csmv1.ContainerStorageModuleList{}
 	err = ctrlClient.List(ctx, csmList)
 	if err == nil && len(csmList.Items) > 0 {
