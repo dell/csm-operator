@@ -738,8 +738,8 @@ func TestSyncDeployment(t *testing.T) {
 		}},
 	}
 	k8sClient := fake.NewSimpleClientset()
-	csmName := "csm"
-	var containers = make([]corev1.Container, 0)
+	csmName = "csm"
+	containers := make([]corev1.Container, 0)
 	containers = append(containers, corev1.Container{Name: "fake-container", Image: "fake-image"})
 	create, err := k8sClient.AppsV1().Deployments("default").Create(context.Background(), &appsv1.Deployment{
 		ObjectMeta: apiv1.ObjectMeta{
@@ -755,7 +755,6 @@ func TestSyncDeployment(t *testing.T) {
 	}, apiv1.CreateOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, create)
-	//simulate an error in Apply
 	k8sClient.PrependReactor("patch", "deployments", func(_ clienttesting.Action) (bool, runtime.Object, error) {
 		return true, nil, fmt.Errorf("fake error")
 	})
