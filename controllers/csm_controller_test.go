@@ -121,11 +121,14 @@ var (
 
 	csmName = "csm"
 
-	configVersion            = shared.ConfigVersion
-	oldConfigVersion         = shared.OldConfigVersion
-	upgradeConfigVersion     = shared.UpgradeConfigVersion
-	jumpUpgradeConfigVersion = shared.JumpUpgradeConfigVersion
-	invalidConfigVersion     = shared.BadConfigVersion
+	configVersion              = shared.ConfigVersion
+	pFlexConfigVersion         = shared.PFlexConfigVersion
+	oldConfigVersion           = shared.OldConfigVersion
+	upgradeConfigVersion       = shared.UpgradeConfigVersion
+	downgradeConfigVersion     = shared.DowngradeConfigVersion
+	jumpUpgradeConfigVersion   = shared.JumpUpgradeConfigVersion
+	jumpDowngradeConfigVersion = shared.JumpDowngradeConfigVersion
+	invalidConfigVersion       = shared.BadConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -372,10 +375,13 @@ func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = upgradeConfigVersion
+
+	if annotations[configVersionKey] != configVersion {
+		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
+
+	csm.Spec.Driver.ConfigVersion = upgradeConfigVersion
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
@@ -397,10 +403,13 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeVersionTooOld() {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = oldConfigVersion
+
+	if annotations[configVersionKey] != configVersion {
+		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
+
+	csm.Spec.Driver.ConfigVersion = oldConfigVersion
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
@@ -422,16 +431,16 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	if _, ok := annotations[configVersionKey]; !ok {
+
+	if annotations[configVersionKey] != configVersion {
 		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
-
 	csm.Spec.Driver.ConfigVersion = jumpUpgradeConfigVersion
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
-	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), err)
 }
 
 func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
@@ -449,10 +458,125 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = invalidConfigVersion
+
+	if annotations[configVersionKey] != configVersion {
+		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
+
+	csm.Spec.Driver.ConfigVersion = invalidConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = downgradeConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngradeVersionTooOld() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = oldConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngradeSkipVersion() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = jumpDowngradeConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngradePathInvalid() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = invalidConfigVersion
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
