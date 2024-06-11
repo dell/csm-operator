@@ -155,6 +155,14 @@ func (suite *AccControllerTestSuite) SetupTest() {
 	suite.namespace = "test"
 }
 
+// test a happy path scenerio with deletion
+func (suite *AccControllerTestSuite) TestReconcileAcc() {
+	suite.makeFakeAcc(accName, suite.namespace, true)
+	suite.runFakeAccManager("", false)
+	suite.deleteAcc(accName)
+	suite.runFakeAccManager("", true)
+}
+
 func (suite *AccControllerTestSuite) TestAccConnectivityClient() {
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
 	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient

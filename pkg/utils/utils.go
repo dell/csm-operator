@@ -1213,21 +1213,21 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
 	logInstance := logger.GetLogger(ctx)
 
-	namespace, err := GetNamespaces(ctx, ctrlClient)
+	namespaces, err := GetNamespaces(ctx, ctrlClient)
 	if err != nil {
 		logInstance.Error(err, "Failed to get namespaces")
 		return err
 	}
 
-	buf, err := os.ReadFile(filepath.Clean(path))
+	manifestFile, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		logInstance.Error(err, "Failed to read manifest file")
 		return err
 	}
 
-	yamlFile := string(buf)
+	yamlFile := string(manifestFile)
 
-	for _, ns := range namespace {
+	for _, ns := range namespaces {
 
 		yamlFile := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
 		yamlFile = strings.ReplaceAll(yamlFile, ClientNamespace, cr.Namespace)
@@ -1305,9 +1305,9 @@ func CheckAccAndCreateRbac(ctx context.Context, operatorConfig OperatorConfig, c
 	} else {
 		logInstance.Info("dell connectivity client found")
 		cr := new(csmv1.ApexConnectivityClient)
-		configVersion1 := list.Items[0].Spec.Client.ConfigVersion
+		accConfigVersion := list.Items[0].Spec.Client.ConfigVersion
 		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory,
-			csmv1.DreadnoughtClient, configVersion1, BrownfieldManifest)
+			csmv1.DreadnoughtClient, accConfigVersion, BrownfieldManifest)
 		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient); err != nil {
 			logInstance.Error(err, "error creating role/rolebindings")
 			return err
