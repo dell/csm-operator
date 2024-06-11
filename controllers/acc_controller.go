@@ -98,6 +98,9 @@ const (
 
 	// AccInitContainerImage - tag for init container image
 	AccInitContainerImage string = "<ACC_INIT_CONTAINER_IMAGE>"
+
+	// BrownfieldManifest - manifest for brownfield role/rolebinding creation
+	BrownfieldManifest string = "brownfield-onboard.yaml"
 )
 
 // ApexConnectivityClientReconciler reconciles a ApexConnectivityClient object
@@ -438,6 +441,8 @@ func applyAccConfigVersionAnnotations(ctx context.Context, instance *csmv1.ApexC
 
 // DeployApexConnectivityClient - perform deployment
 func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operatorConfig utils.OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
+
 	YamlString := ""
 	ModifiedYamlString := ""
 	deploymentPath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, AccManifest)
@@ -463,6 +468,10 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 				return err
 			}
 		}
+	}
+
+	if err = utils.CreateBrownfieldRbac(ctx, operatorConfig, cr, ctrlClient); err != nil {
+		log.Error(err, "error creating role/rolebindings")
 	}
 
 	return nil
