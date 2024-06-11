@@ -36,7 +36,7 @@ fi
 cp $CERT_CSI .
 
 # Uncomment for authorization proxy server
-#cp $KARAVICTL /usr/local/bin/
+# cp $DELLCTL /usr/local/bin/
 
 PATH=$PATH:$(go env GOPATH)/bin
 
@@ -54,7 +54,7 @@ ginkgo -mod=mod "${OPTS[@]}"
 rm -f cert-csi
 
 # Uncomment for authorization proxy server
-#rm -f /usr/local/bin/karavictl
+# rm -f /usr/local/bin/dellctl
 
 # Checking for test status
 TEST_PASS=$?

@@ -2,16 +2,19 @@
 - scenario: "Install Authorization Proxy Server"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [2]"
 
 - scenario: "Install Authorization CRDs"
   paths:
@@ -29,44 +32,53 @@
 - scenario: "Install Authorization Proxy Server With Default Redis Storage Class"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_default_redis.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerscale]"
-    - "Configure authorization-proxy-server for [powerflex]"
+    - "Configure authorization-proxy-server for [powerscale] for CR [1]"
+    - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [2]"
 
 - scenario: "Install Authorization Proxy Server with alternate namespace"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_alt_ns.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [2]"
 
 - scenario: "Install Authorization Proxy Server with OpenShift default ingress controller"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_ocp.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [2]"
 
 - scenario: "Install PowerScale Driver(Standalone)"
   paths:
@@ -188,11 +200,13 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -210,6 +224,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
   customTest:
@@ -221,11 +236,13 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -247,6 +264,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
   customTest:
@@ -321,11 +339,13 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -347,6 +367,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
@@ -454,12 +475,14 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -478,6 +501,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
@@ -491,12 +515,14 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "observability"
     - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -523,6 +549,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
 
@@ -530,12 +557,14 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -563,6 +592,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
@@ -576,12 +606,14 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -609,6 +641,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
@@ -776,11 +809,13 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorization"
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -799,6 +834,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
@@ -811,11 +847,13 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -837,6 +875,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [1]"
     - "Delete custom resource [2]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
@@ -849,11 +888,13 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorization"
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -876,6 +917,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [1]"
     - "Delete custom resource [2]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
@@ -1057,12 +1099,14 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -1090,6 +1134,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [1]"
     - "Delete custom resource [2]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
@@ -1098,12 +1143,14 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -1122,6 +1169,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
@@ -1134,12 +1182,14 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -1167,6 +1217,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
@@ -1179,12 +1230,14 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   modules:
     - "authorizationproxyserver"
     - "authorization"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -1212,6 +1265,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
