@@ -42,7 +42,6 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
@@ -1276,7 +1275,7 @@ func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	return namespaces, nil
 }
 
-// CheckAccAndCreateRbac checks if the dell connectivity client exists and creates the role and rolebindings
+// CheckAccAndCreateOrDeleteRbac checks if the dell connectivity client exists and creates/deletes the role and rolebindings
 func CheckAccAndCreateOrDeleteRbac(ctx context.Context, operatorConfig OperatorConfig, ctrlClient crclient.Client, isDeleting bool) error {
 	logInstance := logger.GetLogger(ctx)
 	accList := &csmv1.ApexConnectivityClientList{}
