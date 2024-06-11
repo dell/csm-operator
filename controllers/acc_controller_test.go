@@ -755,7 +755,7 @@ func TestSyncDeployment(t *testing.T) {
 	}, apiv1.CreateOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, create)
-	// Simulate an error in Apply
+	//simulate an error in Apply
 	k8sClient.PrependReactor("patch", "deployments", func(_ clienttesting.Action) (bool, runtime.Object, error) {
 		return true, nil, fmt.Errorf("fake error")
 	})
