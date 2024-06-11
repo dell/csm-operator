@@ -1,12 +1,12 @@
 apiVersion: csm-authorization.storage.dell.com/v1alpha1
 kind: Storage
 metadata:
-  name: powerscale
+  name: powerflex
 spec:
-  type: powerscale
-  endpoint: https://10.230.24.241:8080
-  systemID: PIE-IsilonS-24241-Cluster
+  type: powerflex
+  endpoint: https://127.0.0.1
+  systemID: 1a99aa999999aa9a
   credentialStore: vault
-  credentialPath: storage/powerscale
+  credentialPath: storage/powerflex
   skipCertificateValidation: true
   pollInterval: 30s

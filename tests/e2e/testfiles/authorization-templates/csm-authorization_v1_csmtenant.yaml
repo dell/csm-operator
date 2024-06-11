@@ -10,7 +10,7 @@ metadata:
   name: csmtenant-sample
 spec:
   # TODO(user): Add fields here
-  roles: csmrole-sample
+  roles: role1,role2
   approveSdc: false
   revoke: false
   # This prefix is added for each new volume provisioned by the tenant. 

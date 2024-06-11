@@ -10,6 +10,6 @@ metadata:
   name: csmrole-sample
 spec:
   quota: 0GB
-  systemID: PIE-IsilonS-24241-Cluster
+  systemID: pscale-xyz
   systemType: powerscale
   pool: /ifs/data/csi
