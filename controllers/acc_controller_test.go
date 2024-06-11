@@ -20,10 +20,12 @@ import (
 	"testing"
 	"time"
 
+	clienttesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/util/workqueue"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
+	deploymentpkg "github.com/dell/csm-operator/pkg/resources/deployment"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/dell/csm-operator/tests/shared/clientgoclient"
@@ -37,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 
@@ -45,6 +48,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	apiv1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	configv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	corev12 "k8s.io/client-go/applyconfigurations/core/v1"
+	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
 var (
@@ -161,6 +169,12 @@ func (suite *AccControllerTestSuite) TestReconcileAcc() {
 	suite.runFakeAccManager("", false)
 	suite.deleteAcc(accName)
 	suite.runFakeAccManager("", true)
+}
+
+func (suite *AccControllerTestSuite) TestAccConnectivityClient() {
+	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
+	csm.Spec.Client.Common.Image = "image"
 }
 
 func (suite *AccControllerTestSuite) TestAccConnectivityClientConnectionTarget() {
@@ -712,4 +726,38 @@ func (suite *AccControllerTestSuite) debugAccFakeObjects() {
 		accUnittestLogger.Info("found fake object ", "name", key.Name)
 		accUnittestLogger.Info("found fake object ", "object", fmt.Sprintf("%#v", o))
 	}
+}
+
+func TestSyncDeployment(t *testing.T) {
+	labels := make(map[string]string, 1)
+	labels["*-8-csm"] = "/*-csm"
+	deployment := configv1.DeploymentApplyConfiguration{
+		ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{Name: &[]string{"csm"}[0], Namespace: &[]string{"default"}[0]},
+		Spec: &configv1.DeploymentSpecApplyConfiguration{Template: &corev12.PodTemplateSpecApplyConfiguration{
+			ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{Labels: labels},
+		}},
+	}
+	k8sClient := fake.NewSimpleClientset()
+	csmName = "csm"
+	containers := make([]corev1.Container, 0)
+	containers = append(containers, corev1.Container{Name: "fake-container", Image: "fake-image"})
+	create, err := k8sClient.AppsV1().Deployments("default").Create(context.Background(), &appsv1.Deployment{
+		ObjectMeta: apiv1.ObjectMeta{
+			Name:      csmName,
+			Namespace: "default",
+		},
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: apiv1.ObjectMeta{},
+				Spec:       corev1.PodSpec{Containers: containers},
+			},
+		},
+	}, apiv1.CreateOptions{})
+	assert.NoError(t, err)
+	assert.NotNil(t, create)
+	k8sClient.PrependReactor("patch", "deployments", func(_ clienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, fmt.Errorf("fake error")
+	})
+	err = deploymentpkg.SyncDeployment(context.Background(), deployment, k8sClient, csmName)
+	assert.Error(t, err)
 }
