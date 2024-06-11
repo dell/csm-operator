@@ -42,6 +42,7 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
@@ -139,6 +140,12 @@ const (
 	PodmonNodeComponent = "podmon-node"
 	// ApplicationMobilityNamespace - application-mobility
 	ApplicationMobilityNamespace = "application-mobility"
+	// ExistingNamespace - existing namespace
+	ExistingNamespace = "<ExistingNameSpace>"
+	// ClientNamespace - client namespace
+	ClientNamespace = "<ClientNameSpace>"
+	// BrownfieldManifest - brownfield-onboard.yaml
+	BrownfieldManifest = "brownfield-onboard.yaml"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -1202,7 +1209,39 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 	return upgradePath.MinUpgradePath, nil
 }
 
-func getNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
+// BrownfieldOnboard will onboard the brownfield cluster
+func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+	logInstance := logger.GetLogger(ctx)
+
+	namespaces, err := GetNamespaces(ctx, ctrlClient)
+	if err != nil {
+		logInstance.Error(err, "Failed to get namespaces")
+		return err
+	}
+
+	manifestFile, err := os.ReadFile(filepath.Clean(path))
+	if err != nil {
+		logInstance.Error(err, "Failed to read manifest file")
+		return err
+	}
+
+	yamlFile := string(manifestFile)
+
+	for _, ns := range namespaces {
+
+		yamlFile := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
+		yamlFile = strings.ReplaceAll(yamlFile, ClientNamespace, cr.Namespace)
+
+		err := CreateObjects(ctx, yamlFile, ctrlClient)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetNamespaces returns the list of namespaces in the cluster
+func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
 	// Set to store unique namespaces
 	namespaceMap := make(map[string]struct{})
 
@@ -1222,4 +1261,73 @@ func getNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	}
 
 	return namespaces, nil
+}
+
+// CreateObjects creates the objects in the cluster
+func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Client) error {
+	deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
+	if err != nil {
+		return err
+	}
+	for _, obj := range deployObjects {
+		log.FromContext(ctx).Info("namespace of parsed object is", "object", obj.GetNamespace())
+
+		found := obj.DeepCopyObject().(crclient.Object)
+		err := ctrlClient.Get(ctx, crclient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}, found)
+		if err != nil && k8serror.IsNotFound(err) {
+			log.FromContext(ctx).Info("Creating a new object", "object", obj.GetObjectKind().GroupVersionKind().String())
+			err := ctrlClient.Create(ctx, obj)
+			if err != nil {
+				return err
+			}
+		} else if err != nil {
+			log.FromContext(ctx).Info("Unknown error trying to retrieve the object.", "Error", err.Error())
+			return err
+		} else {
+			log.FromContext(ctx).Info("Updating Object", "object", obj.GetObjectKind().GroupVersionKind().String())
+			err = ctrlClient.Update(ctx, obj)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// CheckAccAndCreateRbac checks if the dell connectivity client exists and creates the role and rolebindings
+func CheckAccAndCreateRbac(ctx context.Context, operatorConfig OperatorConfig, ctrlClient crclient.Client) error {
+	logInstance := logger.GetLogger(ctx)
+	accList := &csmv1.ApexConnectivityClientList{}
+	if err := ctrlClient.List(ctx, accList); err != nil {
+		logInstance.Info("dell connectivity client not found")
+	} else if len(accList.Items) <= 0 {
+		logInstance.Info("dell connectivity client not found")
+	} else {
+		logInstance.Info("dell connectivity client found")
+		cr := new(csmv1.ApexConnectivityClient)
+		accConfigVersion := accList.Items[0].Spec.Client.ConfigVersion
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory,
+			csmv1.DreadnoughtClient, accConfigVersion, BrownfieldManifest)
+		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient); err != nil {
+			logInstance.Error(err, "error creating role/rolebindings")
+			return err
+		}
+	}
+	return nil
+}
+
+// CreateBrownfieldRbac creates the role and rolebindings
+func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client) error {
+	logInstance := logger.GetLogger(ctx)
+	csmList := &csmv1.ContainerStorageModuleList{}
+	err := ctrlClient.List(ctx, csmList)
+	if err == nil && len(csmList.Items) > 0 {
+		logInstance.Info("Found existing csm installations. Proceeding to create role/rolebindings")
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
+		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient); err != nil {
+			logInstance.Error(err, "error creating role/rolebindings")
+			return err
+		}
+	}
+	return nil
 }
