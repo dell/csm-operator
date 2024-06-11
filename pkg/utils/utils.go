@@ -1297,15 +1297,15 @@ func CreateObjects(ctx context.Context, yamlFile string, ctrlClient crclient.Cli
 // CheckAccAndCreateRbac checks if the dell connectivity client exists and creates the role and rolebindings
 func CheckAccAndCreateRbac(ctx context.Context, operatorConfig OperatorConfig, ctrlClient crclient.Client) error {
 	logInstance := logger.GetLogger(ctx)
-	list := &csmv1.ApexConnectivityClientList{}
-	if err := ctrlClient.List(ctx, list); err != nil {
+	accList := &csmv1.ApexConnectivityClientList{}
+	if err := ctrlClient.List(ctx, accList); err != nil {
 		logInstance.Info("dell connectivity client not found")
-	} else if len(list.Items) <= 0 {
+	} else if len(accList.Items) <= 0 {
 		logInstance.Info("dell connectivity client not found")
 	} else {
 		logInstance.Info("dell connectivity client found")
 		cr := new(csmv1.ApexConnectivityClient)
-		accConfigVersion := list.Items[0].Spec.Client.ConfigVersion
+		accConfigVersion := accList.Items[0].Spec.Client.ConfigVersion
 		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory,
 			csmv1.DreadnoughtClient, accConfigVersion, BrownfieldManifest)
 		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient); err != nil {
