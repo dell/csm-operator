@@ -99,7 +99,7 @@ podman-build: gen-semver download-csm-common ## Build podman image with the mana
 
 docker-build: gen-semver download-csm-common ## Build docker image with the manager.
 	$(eval include csm-common.mk)
-	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+	docker build . -t 10.247.98.98:5000/bharath-csm-operator:latest --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}

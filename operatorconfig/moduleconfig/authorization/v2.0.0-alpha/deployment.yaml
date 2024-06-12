@@ -696,7 +696,7 @@ spec:
 
             foundMaster=false
 
-            while [ "$foundMaster" -eq "false" ] 
+            while [ "$foundMaster" = "false" ] 
             do  
               for i in $loop
               do
@@ -722,7 +722,7 @@ spec:
                   fi
               done
 
-              if [ "$foundMaster" -eq "true" ]; then
+              if [ "$foundMaster" = "true" ]; then
                 break
               else   
                  echo "Master not found, wait for 30s before attempting again"
