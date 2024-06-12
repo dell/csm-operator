@@ -696,7 +696,7 @@ spec:
 
             foundMaster=false
 
-            while [ "$foundMaster" == "false" ] 
+            while [ "$foundMaster" -eq "false" ] 
             do  
               for i in $loop
               do
@@ -722,7 +722,7 @@ spec:
                   fi
               done
 
-              if [ "$foundMaster" == "true" ]; then
+              if [ "$foundMaster" -eq "true" ]; then
                 break
               else   
                  echo "Master not found, wait for 30s before attempting again"
@@ -787,7 +787,6 @@ spec:
   ports:
   - port: 5000
     targetPort: 5000
-    nodePort: 32003
     name: <AUTHORIZATION_REDIS_SENTINEL>-svc
   selector:
     app: <AUTHORIZATION_REDIS_SENTINEL>
