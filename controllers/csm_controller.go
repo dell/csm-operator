@@ -272,7 +272,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	if csm.IsBeingDeleted() {
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
 
-		//remove role/rolebinding from the csm object namespace
+		// remove role/rolebinding from the csm object namespace
 		err := r.SyncRbac(ctx, *csm, *operatorConfig, r.Client)
 		if err != nil {
 			r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to sync rbac: %s", err))
@@ -896,12 +896,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 }
 
 // SyncRbac - Sync the current installation - this can lead to a create or update
-func (r *ContainerStorageModuleReconciler) SyncRbac(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) SyncRbac(ctx context.Context, _ csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
 	if err := utils.CheckAccAndCreateOrDeleteRbac(ctx, operatorConfig, ctrlClient, true); err != nil {
 		return err
 	}
 	return nil
 }
+
 // reconcileObservability - Delete/Create/Update observability components
 // isDeleting - true: Delete; false: Create/Update
 func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
