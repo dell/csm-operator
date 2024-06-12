@@ -93,6 +93,8 @@ const (
 	AuthControllerReplicas = "<AUTHORIZATION_CONTROLLER_REPLICAS>"
 	// AuthLeaderElectionEnabled -
 	AuthLeaderElectionEnabled = "<AUTHORIZATION_LEADER_ELECTION_ENABLED>"
+	// AuthControllerReconcileInterval -
+	AuthControllerReconcileInterval = "<AUTHORIZATION_CONTROLLER_RECONCILE_INTERVAL>"
 
 	// AuthProxyHost -
 	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
@@ -547,6 +549,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthControllerImage, component.AuthorizationController)
 			YamlString = strings.ReplaceAll(YamlString, AuthControllerReplicas, strconv.Itoa(component.AuthorizationControllerReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthLeaderElectionEnabled, strconv.FormatBool(component.LeaderElection))
+			YamlString = strings.ReplaceAll(YamlString, AuthControllerReconcileInterval, component.ControllerReconcileInterval)
 			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 		}
 
