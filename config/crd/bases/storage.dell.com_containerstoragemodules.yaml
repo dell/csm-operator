@@ -82,9 +82,6 @@ spec:
                         description: AuthorizationControllerReplicas is the number
                           of replicas for the authorization controller deployment
                         type: integer
-                      controllerReconcileInterval:
-                        description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
-                        type: string
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key
                           pair
@@ -95,6 +92,10 @@ spec:
                         type: string
                       commander:
                         description: Commander is the image tag for the Container
+                        type: string
+                      controllerReconcileInterval:
+                        description: The interval which the reconcile of each controller
+                          is run
                         type: string
                       credentials:
                         description: ComponentCred is to store the velero credential
@@ -447,9 +448,6 @@ spec:
                         description: AuthorizationControllerReplicas is the number
                           of replicas for the authorization controller deployment
                         type: integer
-                      controllerReconcileInterval:
-                        description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
-                        type: string
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key
                           pair
@@ -460,6 +458,10 @@ spec:
                         type: string
                       commander:
                         description: Commander is the image tag for the Container
+                        type: string
+                      controllerReconcileInterval:
+                        description: The interval which the reconcile of each controller
+                          is run
                         type: string
                       credentials:
                         description: ComponentCred is to store the velero credential
@@ -833,9 +835,6 @@ spec:
                           description: AuthorizationControllerReplicas is the number
                             of replicas for the authorization controller deployment
                           type: integer
-                        controllerReconcileInterval:
-                          description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
-                          type: string
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
@@ -846,6 +845,10 @@ spec:
                           type: string
                         commander:
                           description: Commander is the image tag for the Container
+                          type: string
+                        controllerReconcileInterval:
+                          description: The interval which the reconcile of each controller
+                            is run
                           type: string
                         credentials:
                           description: ComponentCred is to store the velero credential
@@ -1196,9 +1199,6 @@ spec:
                         description: AuthorizationControllerReplicas is the number
                           of replicas for the authorization controller deployment
                         type: integer
-                      controllerReconcileInterval:
-                        description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
-                        type: string
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key
                           pair
@@ -1209,6 +1209,10 @@ spec:
                         type: string
                       commander:
                         description: Commander is the image tag for the Container
+                        type: string
+                      controllerReconcileInterval:
+                        description: The interval which the reconcile of each controller
+                          is run
                         type: string
                       credentials:
                         description: ComponentCred is to store the velero credential
@@ -1563,9 +1567,6 @@ spec:
                           description: AuthorizationControllerReplicas is the number
                             of replicas for the authorization controller deployment
                           type: integer
-                        controllerReconcileInterval:
-                          description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
-                          type: string
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
@@ -1576,6 +1577,10 @@ spec:
                           type: string
                         commander:
                           description: Commander is the image tag for the Container
+                          type: string
+                        controllerReconcileInterval:
+                          description: The interval which the reconcile of each controller
+                            is run
                           type: string
                         credentials:
                           description: ComponentCred is to store the velero credential
@@ -1955,9 +1960,6 @@ spec:
                             description: AuthorizationControllerReplicas is the number
                               of replicas for the authorization controller deployment
                             type: integer
-                          controllerReconcileInterval:
-                            description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
-                            type: string
                           certificate:
                             description: Certificate is a certificate used for a certificate/private-key
                               pair
@@ -1968,6 +1970,10 @@ spec:
                             type: string
                           commander:
                             description: Commander is the image tag for the Container
+                            type: string
+                          controllerReconcileInterval:
+                            description: The interval which the reconcile of each
+                              controller is run
                             type: string
                           credentials:
                             description: ComponentCred is to store the velero credential
@@ -2335,9 +2341,6 @@ spec:
                             description: AuthorizationControllerReplicas is the number
                               of replicas for the authorization controller deployment
                             type: integer
-                          controllerReconcileInterval:
-                            description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
-                            type: string
                           certificate:
                             description: Certificate is a certificate used for a certificate/private-key
                               pair
@@ -2348,6 +2351,10 @@ spec:
                             type: string
                           commander:
                             description: Commander is the image tag for the Container
+                            type: string
+                          controllerReconcileInterval:
+                            description: The interval which the reconcile of each
+                              controller is run
                             type: string
                           credentials:
                             description: ComponentCred is to store the velero credential

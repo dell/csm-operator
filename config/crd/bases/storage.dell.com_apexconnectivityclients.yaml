@@ -89,6 +89,10 @@ spec:
                       commander:
                         description: Commander is the image tag for the Container
                         type: string
+                      controllerReconcileInterval:
+                        description: The interval which the reconcile of each controller
+                          is run
+                        type: string
                       credentials:
                         description: ComponentCred is to store the velero credential
                           contents
@@ -464,6 +468,10 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        controllerReconcileInterval:
+                          description: The interval which the reconcile of each controller
+                            is run
+                          type: string
                         credentials:
                           description: ComponentCred is to store the velero credential
                             contents
@@ -825,6 +833,10 @@ spec:
                           type: string
                         commander:
                           description: Commander is the image tag for the Container
+                          type: string
+                        controllerReconcileInterval:
+                          description: The interval which the reconcile of each controller
+                            is run
                           type: string
                         credentials:
                           description: ComponentCred is to store the velero credential
