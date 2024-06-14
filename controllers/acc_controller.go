@@ -90,6 +90,9 @@ const (
 	// AccFinalizerName - the name of the finalizer
 	AccFinalizerName = "finalizer.dell.com"
 
+	// AccClient name
+	ApexName = "ApexConnectivityClient"
+
 	// AccVersion - the version of the connectivity client
 	AccVersion = "v1.0.0"
 )
@@ -214,7 +217,6 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 	if err = DeployApexConnectivityClient(ctx, false, *op, *acc, crc); err == nil {
 		syncErr := r.SyncACC(ctx, *acc, *op)
 		if syncErr == nil && !requeue.Requeue {
-			log.Infof("ACC --> SyncACC  nil")
 			if err = utils.UpdateAccStatus(ctx, acc, r, newStatus); err != nil {
 				log.Error(err, "Failed to update CR status")
 				return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
@@ -228,12 +230,8 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 			syncErr = errors.New("ACC state is failed")
 		}
 	}
-	if err != nil {
-		// Failed deployment
-		r.EventRecorder.Eventf(acc, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", err.Error())
-	} else {
-		r.EventRecorder.Eventf(acc, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: unknown error")
-	}
+	// Failed deployment
+	r.EventRecorder.Eventf(acc, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", err.Error())
 
 	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
 }
@@ -527,9 +525,8 @@ func (r *ApexConnectivityClientReconciler) SyncACC(ctx context.Context, cr csmv1
 			return err
 		}
 
-		apexName := "ApexConnectivityClient"
 		// sync StatefulSet
-		if err = statefulset.SyncStatefulSet(ctx, controller.StatefulSet, cluster.ClusterK8sClient, apexName); err != nil {
+		if err = statefulset.SyncStatefulSet(ctx, controller.StatefulSet, cluster.ClusterK8sClient, ApexName); err != nil {
 			return err
 		}
 	}

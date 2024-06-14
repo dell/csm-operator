@@ -134,6 +134,9 @@ var (
 	accOperatorConfig = utils.OperatorConfig{
 		ConfigDirectory: "../operatorconfig",
 	}
+	badAccOperatorConfig = utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
 )
 
 // AccContrllerTestSuite implements testify suite
@@ -529,6 +532,7 @@ func (suite *AccControllerTestSuite) reconcileAccWithErrorInjection(_, expectedE
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), deleteAccSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	deleteAccSAError = false
+
 }
 
 func (suite *AccControllerTestSuite) handleStatefulSetUpdateTest(r *ApexConnectivityClientReconciler, name string) {
@@ -732,7 +736,7 @@ func TestSyncStatefulSet(t *testing.T) {
 	labels := make(map[string]string, 1)
 	labels["*-8-acc"] = "/*-acc"
 	statefulset := configv1.StatefulSetApplyConfiguration{
-		ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{Name: &[]string{"csm"}[0], Namespace: &[]string{"default"}[0]},
+		ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{Name: &[]string{"acc"}[0], Namespace: &[]string{"default"}[0]},
 		Spec: &configv1.StatefulSetSpecApplyConfiguration{Template: &corev12.PodTemplateSpecApplyConfiguration{
 			ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{Labels: labels},
 		}},
@@ -760,4 +764,34 @@ func TestSyncStatefulSet(t *testing.T) {
 	})
 	err = statefulsetpkg.SyncStatefulSet(context.Background(), statefulset, k8sClient, csmName)
 	assert.Error(t, err)
+}
+
+// Test all edge cases in SyncCSM
+func (suite *AccControllerTestSuite) TestSyncACC() {
+	r := suite.createAccReconciler()
+	acc := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	accBadType := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	accBadType.Spec.Client.CSMClientType = "wrongclient"
+
+	syncACCTests := []struct {
+		name        string
+		acc         csmv1.ApexConnectivityClient
+		op          utils.OperatorConfig
+		expectedErr string
+	}{
+		{"getClientConfig bad op config", acc, badAccOperatorConfig, ""},
+		{"getClientConfig error", accBadType, badAccOperatorConfig, "no such file or directory"},
+	}
+
+	for _, tt := range syncACCTests {
+		suite.T().Run(tt.name, func(t *testing.T) {
+			err := r.SyncACC(ctx, tt.acc, tt.op)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
+	}
 }
