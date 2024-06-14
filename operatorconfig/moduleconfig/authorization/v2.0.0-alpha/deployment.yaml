@@ -456,6 +456,7 @@ spec:
           - "--tenant-service-address=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
           - "--storage-service-address=storage-service.<NAMESPACE>.svc.cluster.local:50051"
           - "--role-service-address=role-service.<NAMESPACE>.svc.cluster.local:50051"
+          - "--controller-reconcile-interval=<AUTHORIZATION_CONTROLLER_RECONCILE_INTERVAL>"
         env:
           - name: NAMESPACE
             value: <NAMESPACE>

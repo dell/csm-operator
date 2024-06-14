@@ -352,6 +352,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Leader Election"
 	LeaderElection bool `json:"leaderElection,omitempty" yaml:"leaderElection,omitempty"`
 
+	// The interval which the reconcile of each controller is run
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Controller Reconcile Interval"
+	ControllerReconcileInterval string `json:"controllerReconcileInterval,omitempty" yaml:"controllerReconcileInterval,omitempty"`
+
 	// Redis is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Redis Container Image"
 	Redis string `json:"redis,omitempty" yaml:"redis,omitempty"`

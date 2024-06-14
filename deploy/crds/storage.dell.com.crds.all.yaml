@@ -73,6 +73,9 @@ spec:
                       authorizationControllerReplicas:
                         description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                         type: integer
+                      controllerReconcileInterval:
+                        description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                        type: string
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key pair
                         type: string
@@ -402,6 +405,9 @@ spec:
                         authorizationControllerReplicas:
                           description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                           type: integer
+                        controllerReconcileInterval:
+                          description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                          type: string
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key pair
                           type: string
@@ -720,6 +726,9 @@ spec:
                         authorizationControllerReplicas:
                           description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                           type: integer
+                        controllerReconcileInterval:
+                          description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                          type: string
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key pair
                           type: string
@@ -1128,6 +1137,9 @@ spec:
                       authorizationControllerReplicas:
                         description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                         type: integer
+                      controllerReconcileInterval:
+                        description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                        type: string
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key pair
                         type: string
@@ -1446,6 +1458,9 @@ spec:
                       authorizationControllerReplicas:
                         description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                         type: integer
+                      controllerReconcileInterval:
+                        description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                        type: string
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key pair
                         type: string
@@ -1783,6 +1798,9 @@ spec:
                         authorizationControllerReplicas:
                           description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                           type: integer
+                        controllerReconcileInterval:
+                          description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                          type: string
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key pair
                           type: string
@@ -2099,6 +2117,9 @@ spec:
                       authorizationControllerReplicas:
                         description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                         type: integer
+                      controllerReconcileInterval:
+                        description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                        type: string
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key pair
                         type: string
@@ -2420,6 +2441,9 @@ spec:
                         authorizationControllerReplicas:
                           description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                           type: integer
+                        controllerReconcileInterval:
+                          description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                          type: string
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key pair
                           type: string
@@ -2762,6 +2786,9 @@ spec:
                           authorizationControllerReplicas:
                             description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                             type: integer
+                          controllerReconcileInterval:
+                            description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                            type: string
                           certificate:
                             description: Certificate is a certificate used for a certificate/private-key pair
                             type: string
@@ -3089,6 +3116,9 @@ spec:
                           authorizationControllerReplicas:
                             description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
                             type: integer
+                          controllerReconcileInterval:
+                            description: ControllerReconcileInterval is the interval which the reconcile of each controller is run.
+                            type: string
                           certificate:
                             description: Certificate is a certificate used for a certificate/private-key pair
                             type: string

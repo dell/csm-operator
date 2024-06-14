@@ -47,6 +47,9 @@ spec:
           authorizationControllerReplicas: 1
           leaderElection: true
 
+          # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
+          controllerReconcileInterval: 5m
+
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
