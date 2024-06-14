@@ -25,7 +25,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
-	deploymentpkg "github.com/dell/csm-operator/pkg/resources/deployment"
+	statefulsetpkg "github.com/dell/csm-operator/pkg/resources/statefulset"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/dell/csm-operator/tests/shared/clientgoclient"
@@ -728,25 +728,25 @@ func (suite *AccControllerTestSuite) debugAccFakeObjects() {
 	}
 }
 
-func TestSyncDeployment(t *testing.T) {
+func TestSyncStatefulSet(t *testing.T) {
 	labels := make(map[string]string, 1)
-	labels["*-8-csm"] = "/*-csm"
-	deployment := configv1.DeploymentApplyConfiguration{
+	labels["*-8-acc"] = "/*-acc"
+	statefulset := configv1.StatefulSetApplyConfiguration{
 		ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{Name: &[]string{"csm"}[0], Namespace: &[]string{"default"}[0]},
-		Spec: &configv1.DeploymentSpecApplyConfiguration{Template: &corev12.PodTemplateSpecApplyConfiguration{
+		Spec: &configv1.StatefulSetSpecApplyConfiguration{Template: &corev12.PodTemplateSpecApplyConfiguration{
 			ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{Labels: labels},
 		}},
 	}
 	k8sClient := fake.NewSimpleClientset()
-	csmName = "csm"
+	accName = "acc"
 	containers := make([]corev1.Container, 0)
 	containers = append(containers, corev1.Container{Name: "fake-container", Image: "fake-image"})
-	create, err := k8sClient.AppsV1().Deployments("default").Create(context.Background(), &appsv1.Deployment{
+	create, err := k8sClient.AppsV1().StatefulSets("default").Create(context.Background(), &appsv1.StatefulSet{
 		ObjectMeta: apiv1.ObjectMeta{
-			Name:      csmName,
+			Name:      accName,
 			Namespace: "default",
 		},
-		Spec: appsv1.DeploymentSpec{
+		Spec: appsv1.StatefulSetSpec{
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: apiv1.ObjectMeta{},
 				Spec:       corev1.PodSpec{Containers: containers},
@@ -755,9 +755,9 @@ func TestSyncDeployment(t *testing.T) {
 	}, apiv1.CreateOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, create)
-	k8sClient.PrependReactor("patch", "deployments", func(_ clienttesting.Action) (bool, runtime.Object, error) {
+	k8sClient.PrependReactor("patch", "statefulsets", func(_ clienttesting.Action) (bool, runtime.Object, error) {
 		return true, nil, fmt.Errorf("fake error")
 	})
-	err = deploymentpkg.SyncDeployment(context.Background(), deployment, k8sClient, csmName)
+	err = statefulsetpkg.SyncStatefulSet(context.Background(), statefulset, k8sClient, csmName)
 	assert.Error(t, err)
 }
