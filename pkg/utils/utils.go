@@ -1209,7 +1209,7 @@ func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfi
 }
 
 // BrownfieldOnboard will onboard the brownfield cluster
-func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client, isDeleting bool) error {
+func BrownfieldOnboard(ctx context.Context, path string, clientNameSpace string, ctrlClient crclient.Client, isDeleting bool) error {
 	logInstance := logger.GetLogger(ctx)
 
 	namespaces, err := GetNamespaces(ctx, ctrlClient)
@@ -1229,7 +1229,7 @@ func BrownfieldOnboard(ctx context.Context, path string, cr csmv1.ApexConnectivi
 	for _, ns := range namespaces {
 
 		yamlFile := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
-		yamlFile = strings.ReplaceAll(yamlFile, ClientNamespace, cr.Namespace)
+		yamlFile = strings.ReplaceAll(yamlFile, ClientNamespace, clientNameSpace)
 
 		deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
 		if err != nil {
@@ -1285,11 +1285,11 @@ func CheckAccAndCreateOrDeleteRbac(ctx context.Context, operatorConfig OperatorC
 		logInstance.Info("dell connectivity client not found")
 	} else {
 		logInstance.Info("dell connectivity client found")
-		cr := new(csmv1.ApexConnectivityClient)
+		clientNamespace := accList.Items[0].Namespace
 		accConfigVersion := accList.Items[0].Spec.Client.ConfigVersion
 		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory,
 			csmv1.DreadnoughtClient, accConfigVersion, BrownfieldManifest)
-		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, *cr, ctrlClient, isDeleting); err != nil {
+		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNamespace, ctrlClient, isDeleting); err != nil {
 			logInstance.Error(err, "error creating role/rolebindings")
 			return err
 		}
@@ -1304,8 +1304,9 @@ func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr
 	err := ctrlClient.List(ctx, csmList)
 	if err == nil && len(csmList.Items) > 0 {
 		logInstance.Info("Found existing csm installations. Proceeding to create role/rolebindings")
+		clientNameSpace := cr.Namespace
 		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
-		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, cr, ctrlClient, isDeleting); err != nil {
+		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNameSpace, ctrlClient, isDeleting); err != nil {
 			logInstance.Error(err, "error creating role/rolebindings")
 			return err
 		}
