@@ -90,7 +90,7 @@ const (
 	// AccFinalizerName - the name of the finalizer
 	AccFinalizerName = "finalizer.dell.com"
 
-	// AccClient name
+	// ApexName AccClient name
 	ApexName = "ApexConnectivityClient"
 
 	// AccVersion - the version of the connectivity client
