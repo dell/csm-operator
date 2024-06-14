@@ -275,8 +275,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		// remove role/rolebinding from the csm object namespace
 		err := r.SyncRbac(ctx, *csm, *operatorConfig, r.Client)
 		if err != nil {
-			r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to sync rbac: %s", err))
-			log.Errorw("sync rbac", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when syncing rbac: %v", err)
 		}
 
@@ -296,7 +294,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 				// remove all resources deployed from CR by operator
 				if err := r.removeModule(ctx, *csm, *operatorConfig, r.Client); err != nil {
 					r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove module: %s", err))
-					log.Errorw("remove module", "error", err.Error())
 					return ctrl.Result{}, fmt.Errorf("error when deleting module: %v", err)
 				}
 			}
