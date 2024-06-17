@@ -16,15 +16,15 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI Unity v2.10.0 driver
-    configVersion: v2.10.0
+    # Config version for CSI Unity v2.10.1 driver
+    configVersion: v2.10.1
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Nightly Image for CSI Unity driver v2.10.0
+      # Nightly Image for CSI Unity driver v2.10.1
       image: "dellemc/csi-unity:nightly"
       imagePullPolicy: IfNotPresent
       envs:
