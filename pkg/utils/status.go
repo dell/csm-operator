@@ -441,10 +441,6 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		log.Error(err, " Failed to update CR status")
 		return err
 	}
-	if err != nil {
-		log.Error(err, " Failed to update CR status")
-		return err
-	}
 	log.Info("Update done")
 	return merr
 }

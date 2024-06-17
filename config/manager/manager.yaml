@@ -77,7 +77,7 @@ spec:
           name: RELATED_IMAGE_resizer
         - value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
           name: RELATED_IMAGE_externalhealthmonitorcontroller
-        - value: dellemc/csi-metadata-retriever:v1.7.2
+        - value: dellemc/csi-metadata-retriever:v1.7.3
           name: RELATED_IMAGE_metadataretriever
         - value: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
           name: RELATED_IMAGE_dell-connectivity-client

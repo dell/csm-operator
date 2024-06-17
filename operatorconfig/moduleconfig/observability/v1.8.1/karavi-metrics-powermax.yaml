@@ -1,0 +1,161 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: karavi-metrics-powermax-controller
+  namespace: karavi
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: karavi-metrics-powermax-controller
+rules:
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes", "storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes", "nodes"]
+    verbs: ["list"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["list", "watch", "get"]
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: karavi-metrics-powermax-controller
+subjects:
+  - kind: ServiceAccount
+    name: karavi-metrics-powermax-controller
+    namespace: karavi
+roleRef:
+  kind: ClusterRole
+  name: karavi-metrics-powermax-controller
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: karavi-metrics-powermax
+    app.kubernetes.io/instance: karavi
+  name: karavi-metrics-powermax
+  namespace: karavi
+spec:
+  type: ClusterIP
+  ports:
+    - name: karavi-metrics-powermax
+      port: 8081
+      targetPort: 8081
+  selector:
+    app.kubernetes.io/name: karavi-metrics-powermax
+    app.kubernetes.io/instance: karavi
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karavi-metrics-powermax-configmap
+  namespace: karavi
+data:
+  karavi-metrics-powermax.yaml : |
+    COLLECTOR_ADDR: <COLLECTOR_ADDRESS>
+    PROVISIONER_NAMES: csi-powermax.dellemc.com
+    POWERMAX_CAPACITY_METRICS_ENABLED: <POWERMAX_CAPACITY_METRICS_ENABLED>
+    POWERMAX_CAPACITY_POLL_FREQUENCY: <POWERMAX_CAPACITY_POLL_FREQUENCY>
+    POWERMAX_PERFORMANCE_METRICS_ENABLED: <POWERMAX_PERFORMANCE_METRICS_ENABLED>
+    POWERMAX_PERFORMANCE_POLL_FREQUENCY: <POWERMAX_PERFORMANCE_POLL_FREQUENCY>
+    POWERMAX_MAX_CONCURRENT_QUERIES: <POWERMAX_MAX_CONCURRENT_QUERIES>
+    LOG_LEVEL: <POWERMAX_LOG_LEVEL>
+    LOG_FORMAT: <POWERMAX_LOG_FORMAT>
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: karavi
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: debug
+    CSI_LOG_FORMAT: TEXT
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-metrics-powermax
+  namespace: karavi
+  labels:
+    app.kubernetes.io/name: karavi-metrics-powermax
+    app.kubernetes.io/instance: karavi
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: karavi-metrics-powermax
+      app.kubernetes.io/instance: karavi
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: karavi-metrics-powermax
+        app.kubernetes.io/instance: karavi
+        csm: <NAME>
+        csmNamespace: <CSM_NAMESPACE>
+    spec:
+      serviceAccountName: karavi-metrics-powermax-controller
+      containers:
+        - name: karavi-metrics-powermax
+          image: <POWERMAX_OBS_IMAGE>
+          resources: {}
+          env:
+            - name: POWERMAX_METRICS_ENDPOINT
+              value: "karavi-metrics-powermax"
+            - name: POWERMAX_METRICS_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TLS_ENABLED
+              value: "true"
+            - name: SSL_CERT_DIR
+              value: /certs
+          volumeMounts:
+            - name: <X_CSI_CONFIG_MAP_NAME>
+              mountPath: /etc/reverseproxy
+            - name: tls-secret
+              mountPath: /etc/ssl/certs
+              readOnly: true
+            - name: karavi-metrics-powermax-configmap
+              mountPath: /etc/config
+            - name: certs
+              mountPath: /certs
+      volumes:
+        - name: certs
+          emptyDir: { }
+        - name: <X_CSI_CONFIG_MAP_NAME>
+          configMap:
+            name: <X_CSI_CONFIG_MAP_NAME>
+        - name: tls-secret
+          secret:
+            secretName: otel-collector-tls
+            items:
+              - key: tls.crt
+                path: cert.crt
+        - name: karavi-metrics-powermax-configmap
+          configMap:
+            name: karavi-metrics-powermax-configmap
+        - name: powermax-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
+      restartPolicy: Always
+status: {}

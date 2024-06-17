@@ -6,11 +6,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.10.0
+    configVersion: v2.10.1
     authSecret: isilon-creds-custom 
     replicas: 1
     common:
-      image: "dellemc/csi-isilon:v2.10.0"
+      image: "dellemc/csi-isilon:v2.10.1"
       imagePullPolicy: IfNotPresent
 
   modules:
@@ -21,10 +21,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.9.0
+      configVersion: v1.9.1
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.9.0
+          image: dellemc/podmon:v1.9.1
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-isilon"
@@ -39,7 +39,7 @@ spec:
             - "--driverPath=csi-isilon.dellemc.com"
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
         - name: podmon-node
-          image: dellemc/podmon:v1.9.0
+          image: dellemc/podmon:v1.9.1
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
