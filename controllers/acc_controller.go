@@ -470,7 +470,7 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 		}
 	}
 
-	if err = utils.CreateBrownfieldRbac(ctx, operatorConfig, cr, ctrlClient); err != nil {
+	if err = utils.CreateBrownfieldRbac(ctx, operatorConfig, cr, ctrlClient, isDeleting); err != nil {
 		log.Error(err, "error creating role/rolebindings")
 	}
 
