@@ -6,13 +6,12 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.10.1
-    authSecret: isilon-creds-custom 
+    configVersion: v2.11.0
+    authSecret: isilon-creds-custom
     replicas: 1
     common:
-      image: "dellemc/csi-isilon:v2.10.1"
+      image: "dellemc/csi-isilon:v2.11.0"
       imagePullPolicy: IfNotPresent
-
   modules:
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature

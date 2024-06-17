@@ -31,8 +31,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI PowerMax v2.10.1 driver
-    configVersion: v2.10.1
+    configVersion: v2.11.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
@@ -44,8 +43,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerMax driver v2.10.1
-      image: dellemc/csi-powermax:v2.10.1
+      image: dellemc/csi-powermax:v2.11.0
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -172,8 +170,7 @@ spec:
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
-        args: [ "--monitor-interval=60s" ]
-
+        args: ["--monitor-interval=60s"]
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy

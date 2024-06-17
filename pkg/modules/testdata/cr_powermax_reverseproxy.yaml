@@ -18,13 +18,12 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.10.1
+    configVersion: v2.11.0
     authSecret: powermax-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powermax:v2.10.1"
+      image: "dellemc/csi-powermax:v2.11.0"
       imagePullPolicy: IfNotPresent
-
   modules:
     # CSI Powermax Reverseproxy is a mandatory module
     - name: "csireverseproxy"

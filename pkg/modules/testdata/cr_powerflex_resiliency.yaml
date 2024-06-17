@@ -11,12 +11,11 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.10.1
+    configVersion: v2.11.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
-      
   modules:
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
@@ -60,4 +59,3 @@ spec:
             - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
             - "--mode=node"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
-

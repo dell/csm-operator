@@ -6,13 +6,12 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.10.1
+    configVersion: v2.11.0
     authSecret: isilon-creds
     replicas: 1
     common:
-      image: "dellemc/csi-isilon:v2.10.1"
+      image: "dellemc/csi-isilon:v2.11.0"
       imagePullPolicy: IfNotPresent
-
   modules:
     # observability: allows to configure observability
     - name: observability
@@ -32,7 +31,6 @@ spec:
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
               value: "INFO"
-
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: false
@@ -45,7 +43,6 @@ spec:
             # Default value: "nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
-
         - name: metrics-powerscale
           # enabled: Enable/Disable PowerScale metrics
           enabled: true
@@ -59,12 +56,12 @@ spec:
             - name: "POWERSCALE_MAX_CONCURRENT_QUERIES"
               value: "10"
             # POWERSCALE_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
-            # Allowed values: ture, false
+            # Allowed values: true, false
             # Default value: true
             - name: "POWERSCALE_CAPACITY_METRICS_ENABLED"
               value: "true"
             # POWERSCALE_PERFORMANCE_METRICS_ENABLED: enable/disable collection of performance metrics
-            # Allowed values: ture, false
+            # Allowed values: true, false
             # Default value: true
             - name: "POWERSCALE_PERFORMANCE_METRICS_ENABLED"
               value: "true"
@@ -80,16 +77,15 @@ spec:
               value: "20"
             # POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY: set polling frequency to get Quota capacity metrics data
             # Allowed values: int
-            # Default value: 20
             - name: "POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY"
               value: "30"
             # ISICLIENT_INSECURE: set true/false to skip/verify OneFS API server's certificates
-            # Allowed values: ture, false
+            # Allowed values: true, false
             # Default value: true
             - name: "ISICLIENT_INSECURE"
               value: "true"
             # ISICLIENT_AUTH_TYPE: set 0/1 to enables session-based/basic Authentication
-            # Allowed values: ture, false
+            # Allowed values: true, false
             # Default value: true
             - name: "ISICLIENT_AUTH_TYPE"
               value: "1"
@@ -117,13 +113,12 @@ spec:
       # enable: Enable/Disable csm-authorization
       enabled: false
       components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.10.1
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "testing-proxy-host"
-
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:v1.10.1
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "testing-proxy-host"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"

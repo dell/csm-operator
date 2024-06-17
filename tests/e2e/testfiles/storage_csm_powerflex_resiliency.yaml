@@ -27,7 +27,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.10.1
+    configVersion: v2.11.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -51,25 +51,21 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
-
-
     sideCars:
-    # sdc-monitor is disabled by default, due to high CPU usage
+      # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:4.5.1
         envs:
-        - name: HOST_PID
-          value: "1"
-        - name: MDM
-          value: "10.x.x.x,10.x.x.x" #provide MDM value
-
-    # health monitor is disabled by default, refer to driver documentation before enabling it
-    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+          - name: HOST_PID
+            value: "1"
+          - name: MDM
+            value: "10.x.x.x,10.x.x.x" #provide MDM value
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
-
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
@@ -80,7 +76,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
       #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -99,7 +94,6 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     node:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
@@ -116,7 +110,6 @@ spec:
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
         #   true: enable renaming
@@ -124,14 +117,12 @@ spec:
         # Default value: false
         - name: X_CSI_RENAME_SDC_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
         # "prefix" + "worker_node_hostname" should not exceed 31 chars.
         # Default value: none
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
-
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -173,15 +164,13 @@ spec:
       # - key: "isilon.podmon.storage.dell.com"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     initContainers:
       - image: dellemc/sdc:4.5.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
           - name: MDM
-            value: "10.x.x.x,10.x.x.x"  #provide MDM value
-
+            value: "10.x.x.x,10.x.x.x" #provide MDM value
   modules:
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
@@ -220,7 +209,6 @@ spec:
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
-
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -235,3 +223,6 @@ data:
     PODMON_CONTROLLER_LOG_FORMAT: "TEXT"
     PODMON_NODE_LOG_LEVEL: "debug"
     PODMON_NODE_LOG_FORMAT: "TEXT"
+spec:
+  driver:
+    configVersion: v2.11.0
