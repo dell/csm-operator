@@ -59,7 +59,7 @@ rules:
     verbs: ["list", "watch", "get"]
   - apiGroups: ["storage.dell.com"]
     resources: ["containerstoragemodules"]
-    verbs: ["list", "get", "watch"]
+    verbs: ["list", "get", "watch", "update"]
   - apiGroups: ["mobility.storage.dell.com"]
     resources: ["backups"]
     verbs: ["list", "get"]
@@ -86,7 +86,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["list","get", "create", "update", "delete", "watch"]
+    verbs: ["list", "get", "create", "update", "delete", "watch"]
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["get", "create", "delete", "update"]
@@ -137,7 +137,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["list","get", "create", "update", "delete", "watch"]
+    verbs: ["list", "get", "create", "update", "delete", "watch"]
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["get", "create", "delete", "update"]
@@ -164,7 +164,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["list","get", "create", "update", "delete","watch"]
+    verbs: ["list", "get", "create", "update", "delete", "watch"]
   - apiGroups: ["storage.dell.com"]
     resources: ["containerstoragemodules"]
     verbs: ["create", "delete"]
@@ -307,7 +307,7 @@ spec:
         - name: kubernetes-proxy
           image: "<KUBERNETES_PROXY_IMAGE>"
           imagePullPolicy: IfNotPresent
-          command: [ "kubectl" ]
+          command: ["kubectl"]
           args:
             - "proxy"
             - "--port=8001"
@@ -352,7 +352,7 @@ spec:
                 configMapKeyRef:
                   name: connectivity-client-docker-k8s-configmap
                   key: DCM_IDENTITY_LOCATION
-          command: ['sh', '-x', '-c', "if [ -s /dcm-client-secret-data/cert.pem ]; then cp -v /dcm-client-secret-data/cert.pem $DCM_IDENTITY_LOCATION/cert.pem; fi"]
+          command: ["sh", "-x", "-c", "if [ -s /dcm-client-secret-data/cert.pem ]; then cp -v /dcm-client-secret-data/cert.pem $DCM_IDENTITY_LOCATION/cert.pem; fi"]
           volumeMounts:
             - name: certs-store-tmpdir
               mountPath: "/home/connectivity-client/.certs"
