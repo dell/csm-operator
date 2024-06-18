@@ -217,7 +217,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.10.1
+      configVersion: v1.11.0
       components:
         - name: karavi-authorization-proxy
           image: dellemc/csm-authorization-sidecar:nightly
@@ -232,14 +232,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.8.1
+      configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.8.1
+          image: dellemc/csm-topology:v1.9.0
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -286,7 +286,7 @@ spec:
           enabled: true
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-metrics-powerscale:v1.5.1
+          image: dellemc/csm-metrics-powerscale:v1.6.0
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int

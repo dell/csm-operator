@@ -129,7 +129,7 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.8.1
+      configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology

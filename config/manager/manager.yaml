@@ -35,7 +35,7 @@ spec:
           name: RELATED_IMAGE_csi-isilon
         - value: docker.io/dellemc/csi-powermax:v2.10.0
           name: RELATED_IMAGE_csi-powermax
-        - value: docker.io/dellemc/csipowermax-reverseproxy:v2.9.0
+        - value: docker.io/dellemc/csipowermax-reverseproxy:v2.10.0
           name: RELATED_IMAGE_csipowermax-reverseproxy
         - value: docker.io/dellemc/csi-powerstore:v2.10.0
           name: RELATED_IMAGE_csi-powerstore
@@ -45,23 +45,23 @@ spec:
           name: RELATED_IMAGE_csi-vxflexos
         - value: docker.io/dellemc/sdc:4.5.1
           name: RELATED_IMAGE_sdc
-        - value: docker.io/dellemc/csm-authorization-sidecar:v1.10.0
+        - value: docker.io/dellemc/csm-authorization-sidecar:v1.11.0
           name: RELATED_IMAGE_karavi-authorization-proxy
-        - value: docker.io/dellemc/dell-csi-replicator:v1.8.0
+        - value: docker.io/dellemc/dell-csi-replicator:v1.9.0
           name: RELATED_IMAGE_dell-csi-replicator
-        - value: docker.io/dellemc/dell-replication-controller:v1.8.0
+        - value: docker.io/dellemc/dell-replication-controller:v1.9.0
           name: RELATED_IMAGE_dell-replication-controller-manager
-        - value: docker.io/dellemc/csm-topology:v1.8.0
+        - value: docker.io/dellemc/csm-topology:v1.9.0
           name: RELATED_IMAGE_topology
         - value: docker.io/otel/opentelemetry-collector:0.42.0
           name: RELATED_IMAGE_otel-collector
-        - value: docker.io/dellemc/csm-metrics-powerscale:v1.5.0
+        - value: docker.io/dellemc/csm-metrics-powerscale:v1.6.0
           name: RELATED_IMAGE_metrics-powerscale
-        - value: docker.io/dellemc/csm-metrics-powermax:v1.3.0
+        - value: docker.io/dellemc/csm-metrics-powermax:v1.4.0
           name: RELATED_IMAGE_metrics-powermax
-        - value: docker.io/dellemc/csm-metrics-powerflex:v1.8.0
+        - value: docker.io/dellemc/csm-metrics-powerflex:v1.9.0
           name: RELATED_IMAGE_metrics-powerflex
-        - value: docker.io/dellemc/podmon:v1.9.0
+        - value: docker.io/dellemc/podmon:v1.10.0
           name: RELATED_IMAGE_podmon-node
         - value: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
           name: RELATED_IMAGE_kube-rbac-proxy

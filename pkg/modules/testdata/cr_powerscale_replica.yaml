@@ -17,14 +17,14 @@ spec:
       enabled: true
       components:
         - name: dell-csi-replicator
-          image: dellemc/dell-csi-replicator:v1.8.1
+          image: dellemc/dell-csi-replicator:v1.9.0
           envs:
             - name: "X_CSI_REPLICATION_PREFIX"
               value: "replication.storage.dell.com"
             - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
               value: "powerscale"
         - name: dell-replication-controller-manager
-          image: dellemc/dell-replication-controller:v1.8.1
+          image: dellemc/dell-replication-controller:v1.9.0
           envs:
             - name: "TARGET_CLUSTERS_IDS"
               value: "test-target-cluster-1,test-target-cluster-2"

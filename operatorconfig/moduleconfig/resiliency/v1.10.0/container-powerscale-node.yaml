@@ -14,7 +14,7 @@
 #
 #
 name: podmon
-image: dellemc/podmon:v1.7.0
+image: dellemc/podmon:v1.10.0
 imagePullPolicy: IfNotPresent
 securityContext:
   privileged: true
@@ -46,7 +46,10 @@ volumeMounts:
     mountPath: <KUBELET_CONFIG_DIR>/pods
     mountPropagation: "Bidirectional"
   - name: driver-path
-    mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
+    mountPropagation: "Bidirectional"
+  - name: csi-path
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
     mountPropagation: "Bidirectional"
   - name: dev
     mountPath: /dev
@@ -54,5 +57,5 @@ volumeMounts:
     mountPath: /usr-bin
   - name: var-run
     mountPath: /var/run
-  - name: vxflexos-config-params
-    mountPath: /vxflexos-config-params 
+  - name: csi-isilon-config-params
+    mountPath: /csi-isilon-config-params 

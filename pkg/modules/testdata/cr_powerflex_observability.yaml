@@ -127,14 +127,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.8.1
+      configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.8.1
+          image: dellemc/csm-topology:v1.9.0
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
           certificate: ""
@@ -176,7 +176,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:v1.8.1
+          image: dellemc/csm-metrics-powerflex:v1.9.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -233,7 +233,7 @@ spec:
       enabled: false
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:v1.7.0
+          image: dellemc/csm-authorization-sidecar:v1.11.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

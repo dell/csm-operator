@@ -39,7 +39,7 @@ const (
 	UnityConfigVersion         string = "v2.11.0"
 	PScaleConfigVersion        string = "v2.11.0"
 	PmaxConfigVersion          string = "v2.11.0"
-	AuthServerConfigVersion    string = "v1.10.0"
+	AuthServerConfigVersion    string = "v1.11.0"
 	AccConfigVersion           string = "v1.0.0"
 )
 
