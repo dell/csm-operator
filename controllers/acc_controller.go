@@ -263,9 +263,6 @@ func (r *ApexConnectivityClientReconciler) handleStatefulSetUpdate(oldObj interf
 	name := d.Spec.Template.Labels[constants.AccLabel]
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
-	if name == "" {
-		return
-	}
 
 	log.Debugw("statefulSet modified generation", d.Generation, old.Generation)
 
@@ -309,9 +306,7 @@ func (r *ApexConnectivityClientReconciler) handlePodsUpdate(_ interface{}, obj i
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.AccLabel]
 	ns := p.Namespace
-	if name == "" {
-		return
-	}
+
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
