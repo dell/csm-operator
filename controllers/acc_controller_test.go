@@ -579,7 +579,6 @@ func (suite *AccControllerTestSuite) reconcileAccWithErrorInjection(_, expectedE
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), deleteAccSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	deleteAccSAError = false
-
 }
 
 func (suite *AccControllerTestSuite) handleStatefulSetUpdateTest(r *ApexConnectivityClientReconciler, name string) {
