@@ -13,6 +13,7 @@
 package steps
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -1405,5 +1406,26 @@ func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStor
 
 	}
 	fmt.Println("All AM pods removed ")
+	return nil
+}
+
+func (step *Step) validateRbacCreated(_ Resource, namespace string) error {
+	fmt.Println("=== validating Rbac created ===")
+
+	cmd := exec.Command("kubectl", "get", "rolebindings", "-n", "namespacename")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run command")
+	}
+
+	roles := strings.Split(out.String(), "\n")
+	for _, role := range roles {
+		if strings.Contains(role, "Role/connectivity-client-docker-k8s") {
+			return nil
+		}
+	}
+
 	return nil
 }
