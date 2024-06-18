@@ -1499,7 +1499,7 @@ func getReverseProxyModule() []csmv1.Module {
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.9.0",
+			ConfigVersion: "2.10.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    string(csmv1.ReverseProxyServer),
