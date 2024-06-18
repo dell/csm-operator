@@ -71,7 +71,7 @@ var (
 	getAccCMErrorStr = "unable to get ConfigMap"
 
 	updateAccCSMError    bool
-	updateAccCSMErrorStr = "unable to get CSM"
+	updateAccCSMErrorStr = "unable to get ACC"
 
 	updateAccCMError    bool
 	updateAccCMErrorStr = "unable to update ConfigMap"
@@ -172,6 +172,21 @@ func (suite *AccControllerTestSuite) TestReconcileAcc() {
 	suite.runFakeAccManager("", false)
 	suite.deleteAcc(accName)
 	suite.runFakeAccManager("", true)
+}
+
+func (suite *AccControllerTestSuite) TestReconcileAccError() {
+	suite.makeFakeAcc(accName, suite.namespace, true)
+	suite.runFakeAccManagerError("", false)
+	suite.deleteAcc(accName)
+}
+
+// test error injection. Client get should fail
+func (suite *AccControllerTestSuite) TestErrorInjection() {
+	// test csm not found. err should be nil
+	suite.runFakeAccManager("", true)
+	// make a csm without finalizer
+	suite.makeFakeAcc(csmName, suite.namespace, false)
+	suite.reconcileAccWithErrorInjection(accName, "")
 }
 
 func (suite *AccControllerTestSuite) TestAccConnectivityClient() {
@@ -434,6 +449,38 @@ func (suite *AccControllerTestSuite) runFakeAccManager(expectedErr string, recon
 	}
 }
 
+func (suite *AccControllerTestSuite) runFakeAccManagerError(expectedErr string, reconcileDelete bool) {
+	reconciler := suite.createAccReconciler()
+
+	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
+	res, err := reconciler.Reconcile(accCtx, accReq)
+
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+
+	if expectedErr == "" {
+		assert.NoError(suite.T(), err)
+	} else {
+		assert.NotNil(suite.T(), err)
+	}
+
+	if err != nil {
+		ctrl.Log.Error(err, "Error returned")
+		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
+	}
+
+	// after reconcile being run, we update deployment and daemonset
+	// then call handleDeployment/DaemonsetUpdate explicitly because
+	// in unit test listener does not get triggered
+	// If delete, we shouldn't call these methods since reconcile
+	// would return before this
+	if !reconcileDelete {
+		suite.handleStatefulSetUpdateTestFake(reconciler, "dell-connectivity-client")
+		suite.handleAccPodTest(reconciler, "")
+		_, err = reconciler.Reconcile(accCtx, accReq)
+		assert.Nil(suite.T(), err)
+	}
+}
+
 // call reconcile with different injection errors in k8s client
 func (suite *AccControllerTestSuite) reconcileAccWithErrorInjection(_, expectedErr string) {
 	reconciler := suite.createAccReconciler()
@@ -532,12 +579,41 @@ func (suite *AccControllerTestSuite) reconcileAccWithErrorInjection(_, expectedE
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), deleteAccSAErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	deleteAccSAError = false
+
 }
 
 func (suite *AccControllerTestSuite) handleStatefulSetUpdateTest(r *ApexConnectivityClientReconciler, name string) {
 	statefulSet := &appsv1.StatefulSet{}
 	err := suite.fakeClient.Get(accCtx, client.ObjectKey{Namespace: suite.namespace, Name: name}, statefulSet)
 	assert.Nil(suite.T(), err)
+	statefulSet.Spec.Template.Labels = map[string]string{"acc": "acc"}
+
+	r.handleStatefulSetUpdate(statefulSet, statefulSet)
+
+	// Make Pod and set pod status
+	pod := shared.MakePod(name, suite.namespace)
+	pod.Labels["acc"] = accName
+	pod.Status.Phase = corev1.PodPending
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{
+					Reason: "test",
+				},
+			},
+		},
+	}
+	err = suite.fakeClient.Create(accCtx, &pod)
+	assert.Nil(suite.T(), err)
+	podList := &corev1.PodList{}
+	err = suite.fakeClient.List(accCtx, podList, nil)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *AccControllerTestSuite) handleStatefulSetUpdateTestFake(r *ApexConnectivityClientReconciler, name string) {
+	statefulSet := &appsv1.StatefulSet{}
+	err := suite.fakeClient.Get(accCtx, client.ObjectKey{Namespace: suite.namespace, Name: name}, statefulSet)
+	assert.Error(suite.T(), err)
 	statefulSet.Spec.Template.Labels = map[string]string{"acc": "acc"}
 
 	r.handleStatefulSetUpdate(statefulSet, statefulSet)
@@ -653,7 +729,7 @@ func (suite *AccControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		csm := obj.(*csmv1.ApexConnectivityClient)
 		if method == "Update" && updateAccError {
 			fmt.Printf("[ShouldFail] force Updatecsm error for obj of type %+v\n", csm)
-			return errors.New(updateAccErrorStr)
+			return errors.New(updateAccCSMErrorStr)
 		}
 
 	case *corev1.ConfigMap:

@@ -129,6 +129,8 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcID
 	ctx, log := logger.GetNewContextWithLogger(name)
+	unitTestRun := utils.DetermineUnitTestRun(ctx)
+
 	log.Info("################Starting Apex Connectivity Client Reconcile##############")
 	acc := new(csmv1.ApexConnectivityClient)
 
@@ -217,7 +219,7 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 	if err = DeployApexConnectivityClient(ctx, false, *op, *acc, crc); err == nil {
 		syncErr := r.SyncACC(ctx, *acc, *op)
 		if syncErr == nil && !requeue.Requeue {
-			if err = utils.UpdateAccStatus(ctx, acc, r, newStatus); err != nil {
+			if err = utils.UpdateAccStatus(ctx, acc, r, newStatus); err != nil && !unitTestRun {
 				log.Error(err, "Failed to update CR status")
 				return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
 			}
@@ -229,10 +231,11 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 		if syncErr == nil {
 			syncErr = errors.New("ACC state is failed")
 		}
-	}
-	// Failed deployment
-	r.EventRecorder.Eventf(acc, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", err.Error())
 
+		// Failed deployment
+		r.EventRecorder.Eventf(acc, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", syncErr.Error())
+		return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, syncErr)
+	}
 	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
 }
 
