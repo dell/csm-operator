@@ -79,6 +79,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is installed$`, step.validateConnectivityClientInstalled)
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is not installed$`, step.validateConnectivityClientNotInstalled)
 	runner.addStep(`^Uninstall connectivity client from CR \[(\d+)\]`, step.uninstallConnectivityClient)
+	runner.addStep(`^Validate rbac created in namespace \[([^"]*)\]$`, step.validateRbacCreated)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
