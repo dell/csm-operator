@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.10.1
+    configVersion: v2.11.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -37,25 +37,21 @@ spec:
           value: "0"
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
-
-
     sideCars:
-    # sdc-monitor is disabled by default, due to high CPU usage
+      # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:4.5.1
         envs:
-        - name: HOST_PID
-          value: "1"
-        - name: MDM
-          value: "10.x.x.x,10.x.x.x" #provide MDM value
-
-    # health monitor is disabled by default, refer to driver documentation before enabling it
-    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+          - name: HOST_PID
+            value: "1"
+          - name: MDM
+            value: "10.x.x.x,10.x.x.x" #provide MDM value
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
-
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
@@ -66,7 +62,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
       #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -91,7 +86,6 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     node:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
@@ -101,7 +95,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "true"
-
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
         #    true: enable SDC approval
@@ -109,7 +102,6 @@ spec:
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
         #   true: enable renaming
@@ -117,20 +109,17 @@ spec:
         # Default value: false
         - name: X_CSI_RENAME_SDC_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
         # "prefix" + "worker_node_hostname" should not exceed 31 chars.
         # Default value: none
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
-
         # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
         # Allowed values: Any value greater than or equal to 0
         # Default value: "0"
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "1"
-
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -138,69 +127,63 @@ spec:
       # Examples:
       #  node-role.kubernetes.io/control-plane: ""
       nodeSelector:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      #  node-role.kubernetes.io/master: ""
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+        # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+        #  node-role.kubernetes.io/master: ""
+        # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
         node-role.kubernetes.io/control-plane: ""
-
       # "node.tolerations" defines tolerations that would be applied to node daemonset
       # Leave as blank to install node driver only on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
-      # - key: "node-role.kubernetes.io/master"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      - key: "node-role.kubernetes.io/control-plane"
-        operator: "Exists"
-        effect: "NoSchedule"
-
+        # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+        # - key: "node-role.kubernetes.io/master"
+        #   operator: "Exists"
+        #   effect: "NoSchedule"
+        # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
     initContainers:
       - image: dellemc/sdc:4.5.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
           - name: MDM
-            value: "10.x.x.x,10.x.x.x"  #provide MDM value
-
+            value: "10.x.x.x,10.x.x.x" #provide MDM value
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.10.1
+      configVersion: v1.11.0
       components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.10.1
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: ""
-
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
-
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:v1.11.0
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: ""
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.8.1
+      configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.8.1
+          image: dellemc/csm-topology:v1.9.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
               value: "INFO"
-
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: false
@@ -213,12 +196,11 @@ spec:
             # Default value: "nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
-
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:v1.8.1
+          image: dellemc/csm-metrics-powerflex:v1.9.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int

@@ -11,42 +11,34 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.10.1
+    configVersion: v2.11.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
-      
   modules:
     - name: replication
       enabled: true
       components:
-      - name: dell-csi-replicator
-        image: dellemc/dell-csi-replicator:v1.8.1
-        envs:
-          - name: "X_CSI_REPLICATION_PREFIX"
-            value: "replication.storage.dell.com"
-          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-            value: "powerflex"
-      
-      
-      - name: dell-replication-controller-manager
-        image: dellemc/dell-replication-controller:v1.8.1
-        envs:
-          - name: "TARGET_CLUSTERS_IDS"
-            value: "test-target-cluster-1,test-target-cluster-2"
-
-          - name: "REPLICATION_CTRL_LOG_LEVEL"
-            value: "debug"
-          
-          - name: "REPLICATION_CTRL_REPLICAS"
-            value: "1"
-
-          - name: "LEADER_ELECTION"
-            value: "true"
-
-          - name: "RETRY_INTERVAL_MIN"
-            value: "1s"
-
-          - name: "RETRY_INTERVAL_MAX"
-            value: "5m"
+        - name: dell-csi-replicator
+          image: dellemc/dell-csi-replicator:v1.9.0
+          envs:
+            - name: "X_CSI_REPLICATION_PREFIX"
+              value: "replication.storage.dell.com"
+            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+              value: "powerflex"
+        - name: dell-replication-controller-manager
+          image: dellemc/dell-replication-controller:v1.9.0
+          envs:
+            - name: "TARGET_CLUSTERS_IDS"
+              value: "test-target-cluster-1,test-target-cluster-2"
+            - name: "REPLICATION_CTRL_LOG_LEVEL"
+              value: "debug"
+            - name: "REPLICATION_CTRL_REPLICAS"
+              value: "1"
+            - name: "LEADER_ELECTION"
+              value: "true"
+            - name: "RETRY_INTERVAL_MIN"
+              value: "1s"
+            - name: "RETRY_INTERVAL_MAX"
+              value: "5m"
