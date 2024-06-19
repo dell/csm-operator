@@ -1003,7 +1003,7 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
 	close(StopWatch)
-	version, err := utils.GetModuleDefaultVersion("v2.10.1", "csi-isilon", csmv1.Authorization, "../operatorconfig")
+	version, err := utils.GetModuleDefaultVersion("v2.11.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
 	assert.NotNil(suite.T(), err)
 	assert.NotNil(suite.T(), version)
 }
@@ -1293,7 +1293,7 @@ func getObservabilityModule() []csmv1.Module {
 		{
 			Name:          csmv1.Observability,
 			Enabled:       true,
-			ConfigVersion: "v1.8.0",
+			ConfigVersion: "v1.9.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "topology",
@@ -1345,7 +1345,7 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.6.0",
+			ConfigVersion: "v1.9.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ReplicationSideCarName,
@@ -1369,7 +1369,7 @@ func getResiliencyModule() []csmv1.Module {
 		{
 			Name:          csmv1.Resiliency,
 			Enabled:       true,
-			ConfigVersion: "v1.9.0",
+			ConfigVersion: "v1.10.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ResiliencySideCarName,
@@ -1384,7 +1384,7 @@ func getAuthModule() []csmv1.Module {
 		{
 			Name:          csmv1.Authorization,
 			Enabled:       true,
-			ConfigVersion: "v1.8.0",
+			ConfigVersion: "v1.11.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: "karavi-authorization-proxy",
@@ -1405,7 +1405,7 @@ func getAuthProxyServer() []csmv1.Module {
 		{
 			Name:          csmv1.AuthorizationServer,
 			Enabled:       true,
-			ConfigVersion: "v1.10.0",
+			ConfigVersion: "v1.11.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "karavi-authorization-proxy-server",
@@ -1499,7 +1499,7 @@ func getReverseProxyModule() []csmv1.Module {
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.9.0",
+			ConfigVersion: "v2.10.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    string(csmv1.ReverseProxyServer),
