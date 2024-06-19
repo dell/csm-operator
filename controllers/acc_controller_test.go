@@ -605,7 +605,6 @@ func (suite *AccControllerTestSuite) handleStatefulSetUpdateTest(r *ApexConnecti
 func (suite *AccControllerTestSuite) handleStatefulSetUpdateTestFake(r *ApexConnectivityClientReconciler, name string) {
 	statefulSet := &appsv1.StatefulSet{}
 	err := suite.fakeClient.Get(accCtx, client.ObjectKey{Namespace: suite.namespace, Name: name}, statefulSet)
-	//assert.Error(suite.T(), err)
 	statefulSet.Spec.Template.Labels = map[string]string{"acc": "acc"}
 
 	r.handleStatefulSetUpdate(statefulSet, statefulSet)
