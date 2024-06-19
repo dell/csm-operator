@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.10.1
+      configVersion: v1.11.0
       forceRemoveModule: true
       components:
       - name: karavi-authorization-proxy-server

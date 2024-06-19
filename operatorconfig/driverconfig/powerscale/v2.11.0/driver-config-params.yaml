@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: <DriverDefaultReleaseNamespace>
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: "debug"
+    CSI_LOG_FORMAT: "TEXT"
+    PODMON_CONTROLLER_LOG_LEVEL: "debug"
+    PODMON_CONTROLLER_LOG_FORMAT: "TEXT"
+    PODMON_NODE_LOG_LEVEL: "debug"
+    PODMON_NODE_LOG_FORMAT: "TEXT"
+
