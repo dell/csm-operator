@@ -179,19 +179,8 @@ func (suite *AccControllerTestSuite) TestReconcileAcc() {
 
 // test error scenario
 func (suite *AccControllerTestSuite) TestReconcileAccError() {
-	//suite.makeFakeAcc(accName, suite.namespace, true)
 	suite.runFakeAccManagerError("", false)
-	//suite.deleteAcc(accName)
 }
-
-// test error injection. Client get should fail
-//func (suite *AccControllerTestSuite) TestErrorInjection() {
-//	// test csm not found. err should be nil
-//	suite.runFakeAccManager("", true)
-//	// make a csm without finalizer
-//	suite.makeFakeAcc(csmName, suite.namespace, false)
-//	suite.reconcileAccWithErrorInjection(accName, "")
-//}
 
 func (suite *AccControllerTestSuite) TestAccConnectivityClient() {
 	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
