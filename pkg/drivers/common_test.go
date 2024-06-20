@@ -204,15 +204,23 @@ func csmWithPowermax(driver csmv1.DriverType, version string) csmv1.ContainerSto
 	// Add image name
 	res.Spec.Driver.Common.Image = "thisIsAnImage"
 
-	// Add pstore driver version
+	// Add pmax driver version
 	res.Spec.Driver.ConfigVersion = version
 
-	// Add pstore driver type
+	// Add pmax driver type
 	res.Spec.Driver.CSIDriverType = driver
 
 	// Add NodeSelector to node and controller
 	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+
+	//envVar := corev1.EnvVar{Name: "CSI_LOG_LEVEL", Value: "debug"}
+	//
+	//res.Spec.Driver.Node.Envs = []corev1.EnvVar{csiLogLevel}
+	//
+	//// Add common envs
+	//envVar := corev1.EnvVar{Name: "CSI_LOG_FORMAT"}
+	//res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar}
 
 	// Add common envs
 	commonEnvs := getPmaxCommonEnvs()
@@ -289,6 +297,10 @@ func getPmaxCommonEnvs() []corev1.EnvVar {
 		{
 			Name:  "X_CSI_IG_NODENAME_TEMPLATE",
 			Value: "",
+		},
+		{
+			Name:  "CSI_LOG_FORMAT",
+			Value: "TEXT",
 		},
 	}
 }
@@ -400,5 +412,55 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
 	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
 
+	return res
+}
+
+func accForApexConnecityClient(client csmv1.ClientType, version string) csmv1.ApexConnectivityClient {
+	res := shared.MakeAcc("acc", "client-test", shared.AccConfigVersion)
+
+	// Add ForceRemoveClient
+	res.Spec.Client.ForceRemoveClient = true
+
+	// Add image name
+	res.Spec.Client.Common.Image = "thisIsAnImage"
+
+	// add connection target
+	res.Spec.Client.ConnectionTarget = "thisIsConnectionTarget"
+
+	// add private cacert
+	res.Spec.Client.UsePrivateCaCerts = true
+
+	// add common name
+	res.Spec.Client.Common.Name = "connectivity-client-docker-k8s"
+
+	// Add client version
+	res.Spec.Client.ConfigVersion = version
+
+	// Add client type
+	res.Spec.Client.CSMClientType = client
+
+	res.Spec.Client.InitContainers = []csmv1.ContainerTemplate{{
+		Name:            "connectivity-client-init",
+		Image:           "image",
+		ImagePullPolicy: "IfNotPresent",
+		Args:            []string{},
+		Envs:            []corev1.EnvVar{{Name: "DCM_IDENTITY_LOCATION"}},
+		Tolerations:     []corev1.Toleration{},
+	}}
+
+	// Add  Sidecar
+	res.Spec.Client.SideCars = []csmv1.ContainerTemplate{{
+		Name:            "cert-persister",
+		Image:           "image",
+		ImagePullPolicy: "Always",
+		Args:            []string{},
+	},
+		{
+			Name:            "kubernetes-proxy",
+			Image:           "image",
+			ImagePullPolicy: "Always",
+			Args:            []string{},
+		},
+	}
 	return res
 }

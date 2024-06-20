@@ -246,7 +246,7 @@ func GetAccController(ctx context.Context, cr csmv1.ApexConnectivityClient, oper
 	containers := statefulsetYAML.StatefulSet.Spec.Template.Spec.Containers
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
-		if string(*c.Name) == "client" {
+		if string(*c.Name) == "connectivity-client-docker-k8s" {
 			if string(cr.Spec.Client.Common.Image) != "" {
 				image := string(cr.Spec.Client.Common.Image)
 				c.Image = &image
