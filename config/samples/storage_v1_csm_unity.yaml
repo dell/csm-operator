@@ -140,11 +140,11 @@ spec:
           value: "false"
         # X_CSI_ALLOWED_NETWORKS: Custom networks for Unity export
         # Specify list of networks which can be used for NFS I/O traffic; CIDR format should be used.
-        # Allowed values: list of one or more networks
-        # Default value: None
-        # Provide them in the following format: "net1 net2"
+        # Allowed values: list of one or more networks (comma separated)
+        # Default value: ""
+        # Provide them in the following format: "net1, net2"
         # CIDR format should be used
-        # eg: "192.168.1.0/24 192.168.100.0/22"
+        # eg: "192.168.1.0/24, 192.168.100.0/22"
         - name: X_CSI_ALLOWED_NETWORKS
           value: ""
       # nodeSelector: Define node selection constraints for node pods.
