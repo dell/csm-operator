@@ -111,6 +111,8 @@ spec:
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
             - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
               value: "true"
+            - name: X_CSI_ALLOWED_NETWORKS
+              value: "<X_CSI_ALLOWED_NETWORKS>"
           volumeMounts:
             - name: driver-path
               mountPath: /var/lib/kubelet/plugins/unity.emc.dell.com
