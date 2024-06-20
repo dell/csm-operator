@@ -180,12 +180,16 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	os.Setenv("UNIT_TEST", "true")
 }
 
-// test a happy path scenerio with deletion
+// test a happy path scenario with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
 	suite.makeFakeCSM(csmName, suite.namespace, true, append(getReplicaModule(), getObservabilityModule()...))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
+}
+
+func (suite *CSMControllerTestSuite) TestReconcileError() {
+	suite.runFakeCSMManagerError("", false)
 }
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
@@ -1063,6 +1067,40 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, recon
 	}
 }
 
+func (suite *CSMControllerTestSuite) runFakeCSMManagerError(expectedErr string, reconcileDelete bool) {
+	reconciler := suite.createReconciler()
+
+	// invoke controller Reconcile to test. Typically, k8s would call this when resource is changed
+	res, err := reconciler.Reconcile(ctx, req)
+
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+
+	if expectedErr == "" {
+		assert.NoError(suite.T(), err)
+	} else {
+		assert.NotNil(suite.T(), err)
+	}
+
+	if err != nil {
+		ctrl.Log.Error(err, "Error returned")
+		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
+	}
+
+	// after reconcile being run, we update deployment and daemonset
+	// then call handleDeployment/DaemonsetUpdate explicitly because
+	// in unit test listener does not get triggered
+	// If delete, we shouldn't call these methods since reconcile
+	// would return before this
+	if !reconcileDelete {
+		suite.handleDaemonsetTestFake(reconciler, "csm-node")
+		suite.handleDeploymentTestFake(reconciler, "csm-controller")
+		suite.handlePodTest(reconciler, "")
+		_, err = reconciler.Reconcile(ctx, req)
+		assert.Nil(suite.T(), err)
+
+	}
+}
+
 func (suite *CSMControllerTestSuite) runFakeAuthCSMManager(expectedErr string, reconcileDelete bool) {
 	reconciler := suite.createReconciler()
 
@@ -1241,6 +1279,62 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	deployment := &appsv1.Deployment{}
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployment)
 	assert.Nil(suite.T(), err)
+	deployment.Spec.Template.Labels = map[string]string{"csm": "csm"}
+
+	r.handleDeploymentUpdate(deployment, deployment)
+
+	// Make Pod and set pod status
+	pod := shared.MakePod(name, suite.namespace)
+	pod.Labels["csm"] = csmName
+	pod.Status.Phase = corev1.PodPending
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{
+					Reason: "test",
+				},
+			},
+		},
+	}
+	err = suite.fakeClient.Create(ctx, &pod)
+	assert.Nil(suite.T(), err)
+	podList := &corev1.PodList{}
+	err = suite.fakeClient.List(ctx, podList, nil)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) handleDaemonsetTestFake(r *ContainerStorageModuleReconciler, name string) {
+	daemonset := &appsv1.DaemonSet{}
+	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, daemonset)
+	assert.Error(suite.T(), err)
+	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm"}
+
+	r.handleDaemonsetUpdate(daemonset, daemonset)
+
+	// Make Pod and set status
+	pod := shared.MakePod(name, suite.namespace)
+	pod.Labels["csm"] = csmName
+	pod.Status.Phase = corev1.PodPending
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{
+					Reason: "test",
+				},
+			},
+		},
+	}
+	err = suite.fakeClient.Create(ctx, &pod)
+	assert.Nil(suite.T(), err)
+	podList := &corev1.PodList{}
+	err = suite.fakeClient.List(ctx, podList, nil)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) handleDeploymentTestFake(r *ContainerStorageModuleReconciler, name string) {
+	deployment := &appsv1.Deployment{}
+	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployment)
+	assert.Error(suite.T(), err)
 	deployment.Spec.Template.Labels = map[string]string{"csm": "csm"}
 
 	r.handleDeploymentUpdate(deployment, deployment)

@@ -42,6 +42,9 @@ type ObservabilityComponentType string
 // ClientType - the type of the client
 type ClientType string
 
+// AccType - the type of the client
+type AccType string
+
 const (
 	// Replication - placeholder for replication constant
 	Replication ModuleType = "replication"
