@@ -381,9 +381,6 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	name := d.Spec.Template.Labels[constants.CsmLabel]
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
-	if name == "" {
-		return
-	}
 
 	log.Debugw("deployment modified generation", d.Name, d.Generation, old.Generation)
 
@@ -442,9 +439,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 	if ns == "" {
 		ns = p.Namespace
 	}
-	if name == "" {
-		return
-	}
+
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
@@ -484,9 +479,6 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	old, _ := oldObj.(*appsv1.DaemonSet)
 	d, _ := obj.(*appsv1.DaemonSet)
 	name := d.Spec.Template.Labels[constants.CsmLabel]
-	if name == "" {
-		return
-	}
 
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
