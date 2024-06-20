@@ -23,8 +23,7 @@ import (
 )
 
 var (
-	csm = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion)
-	//acc                  = accForApexConnecityClient(csmv1.DreadnoughtClient, shared.AccConfigVersion)
+	csm                  = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion)
 	pFlexCSM             = csmForPowerFlex(pflexCSMName)
 	pStoreCSM            = csmWithPowerstore(csmv1.PowerStore, shared.PStoreConfigVersion)
 	pScaleCSM            = csmWithPowerScale(csmv1.PowerScale, shared.PScaleConfigVersion)
@@ -40,10 +39,6 @@ var (
 		name string
 		// csm object
 		csm csmv1.ContainerStorageModule
-		// acc object
-		//acc csmv1.ApexConnectivityClient
-		// acc client
-		//accClient csmv1.ClientType
 		// driver name
 		driverName csmv1.DriverType
 		// yaml file name to read
@@ -60,7 +55,6 @@ var (
 		{"file does not exist", csm, fakeDriver, "NonExist.yaml", "no such file or directory"},
 		{"pmax happy path", pmaxCSM, csmv1.PowerMax, "node.yaml", ""},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
-		//{"Acc happy path", acc, csmv1.DriverType(csmv1.DreadnoughtClient), "statefulset.yaml", ""},
 	}
 )
 

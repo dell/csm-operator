@@ -214,14 +214,6 @@ func csmWithPowermax(driver csmv1.DriverType, version string) csmv1.ContainerSto
 	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 
-	//envVar := corev1.EnvVar{Name: "CSI_LOG_LEVEL", Value: "debug"}
-	//
-	//res.Spec.Driver.Node.Envs = []corev1.EnvVar{csiLogLevel}
-	//
-	//// Add common envs
-	//envVar := corev1.EnvVar{Name: "CSI_LOG_FORMAT"}
-	//res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar}
-
 	// Add common envs
 	commonEnvs := getPmaxCommonEnvs()
 	res.Spec.Driver.Common.Envs = commonEnvs
@@ -449,12 +441,13 @@ func accForApexConnecityClient(client csmv1.ClientType, version string) csmv1.Ap
 	}}
 
 	// Add  Sidecar
-	res.Spec.Client.SideCars = []csmv1.ContainerTemplate{{
-		Name:            "cert-persister",
-		Image:           "image",
-		ImagePullPolicy: "Always",
-		Args:            []string{},
-	},
+	res.Spec.Client.SideCars = []csmv1.ContainerTemplate{
+		{
+			Name:            "cert-persister",
+			Image:           "image",
+			ImagePullPolicy: "Always",
+			Args:            []string{},
+		},
 		{
 			Name:            "kubernetes-proxy",
 			Image:           "image",
