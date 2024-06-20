@@ -14,14 +14,19 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/dell/csm-operator/pkg/drivers"
+	"github.com/dell/csm-operator/pkg/resources/rbac"
+	"github.com/dell/csm-operator/pkg/resources/serviceaccount"
+	"github.com/dell/csm-operator/pkg/resources/statefulset"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -54,51 +59,6 @@ const (
 	// AccManifest - deployment resources for Apex Connectivity Client
 	AccManifest string = "statefulset.yaml"
 
-	// AccNamespace - deployment namespace
-	AccNamespace string = "<NAMESPACE>"
-
-	// AggregatorURLDefault - default aggregator location
-	AggregatorURLDefault string = "connect-into.dell.com"
-
-	// AggregatorURL - tag for specifying aggregator endpoint
-	AggregatorURL string = "<AGGREGATOR_URL>"
-
-	// CaCertOption - tag for specifying if cacert option is used
-	CaCertOption string = "<CACERT_OPTION>"
-
-	// CaCertFlag - cacert option
-	CaCertFlag string = "--cacert"
-
-	// CaCerts - tag for specifying --cacert value
-	CaCerts string = "<CACERTS>"
-
-	// CaCertsList - cert locations for aggregator and loadbalancer
-	CaCertsList string = "/opt/dellemc/certs/loadbalancer_root_ca_cert.crt,/opt/dellemc/certs/aggregator_internal_root_ca_cert.crt"
-
-	// ConnectivityClientContainerName - name of the DCM client container
-	ConnectivityClientContainerName string = "connectivity-client-docker-k8s"
-
-	// ConnectivityClientContainerImage - tag for DCM client image
-	ConnectivityClientContainerImage string = "<CONNECTIVITY_CLIENT_IMAGE>"
-
-	// KubernetesProxySidecarName - name of proxy sidecar container
-	KubernetesProxySidecarName string = "kubernetes-proxy"
-
-	// KubernetesProxySidecarImage - tag for proxy image
-	KubernetesProxySidecarImage string = "<KUBERNETES_PROXY_IMAGE>"
-
-	// CertPersisterSidecarName - name of cert persister image
-	CertPersisterSidecarName string = "cert-persister"
-
-	// CertPersisterSidecarImage - name of cert persister image
-	CertPersisterSidecarImage string = "<CERT_PERSISTER_IMAGE>"
-
-	// AccInitContainerName - name of init container image
-	AccInitContainerName string = "connectivity-client-init"
-
-	// AccInitContainerImage - tag for init container image
-	AccInitContainerImage string = "<ACC_INIT_CONTAINER_IMAGE>"
-
 	// BrownfieldManifest - manifest for brownfield role/rolebinding creation
 	BrownfieldManifest string = "brownfield-onboard.yaml"
 )
@@ -118,17 +78,31 @@ type ApexConnectivityClientReconciler struct {
 	EventRecorder record.EventRecorder
 }
 
+// AccConfig - Apex Connectivity Client Config
+type AccConfig struct {
+	Controller *utils.StatefulControllerYAML
+}
+
 const (
 	// AccMetadataPrefix - prefix for all labels & annotations
 	AccMetadataPrefix = "storage.dell.com"
 
 	// AccFinalizerName - the name of the finalizer
 	AccFinalizerName = "finalizer.dell.com"
+
+	// ApexName AccClient name
+	ApexName = "ApexConnectivityClient"
+
+	// AccVersion - the version of the connectivity client
+	AccVersion = "v1.0.0"
 )
 
 var (
 	accdMutex           sync.RWMutex
 	accConfigVersionKey = fmt.Sprintf("%s/%s", AccMetadataPrefix, "ApexConnectivityClientConfigVersion")
+
+	// AccVersionKey - the version of the connectivity client
+	AccVersionKey = fmt.Sprintf("%s/%s", AccMetadataPrefix, "AccVersion")
 
 	// AccStopWatch - watcher stop handle
 	AccStopWatch = make(chan struct{})
@@ -155,6 +129,8 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcID
 	ctx, log := logger.GetNewContextWithLogger(name)
+	unitTestRun := utils.DetermineUnitTestRun(ctx)
+
 	log.Info("################Starting Apex Connectivity Client Reconcile##############")
 	acc := new(csmv1.ApexConnectivityClient)
 
@@ -235,19 +211,31 @@ func (r *ApexConnectivityClientReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	newStatus := acc.GetApexConnectivityClientStatus()
-	_, err = utils.HandleAccSuccess(ctx, acc, r, newStatus, oldStatus)
+	requeue, err := utils.HandleAccSuccess(ctx, acc, r, newStatus, oldStatus)
 	if err != nil {
 		log.Error(err, "Failed to update CR status")
 	}
 
 	if err = DeployApexConnectivityClient(ctx, false, *op, *acc, crc); err == nil {
-		r.EventRecorder.Eventf(acc, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", acc.Name)
-		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
+		syncErr := r.SyncACC(ctx, *acc, *op)
+		if syncErr == nil && !requeue.Requeue {
+			if err = utils.UpdateAccStatus(ctx, acc, r, newStatus); err != nil && !unitTestRun {
+				log.Error(err, "Failed to update CR status")
+				return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
+			}
+			r.EventRecorder.Eventf(acc, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", acc.Name)
+			return utils.LogBannerAndReturn(reconcile.Result{}, nil)
+		}
+
+		// syncErr can be nil, even if ACC state = failed
+		if syncErr == nil {
+			syncErr = errors.New("ACC state is failed")
+		}
+
+		// Failed deployment
+		r.EventRecorder.Eventf(acc, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", syncErr.Error())
+		return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, syncErr)
 	}
-
-	// Failed deployment
-	r.EventRecorder.Eventf(acc, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", err.Error())
-
 	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
 }
 
@@ -275,9 +263,6 @@ func (r *ApexConnectivityClientReconciler) handleStatefulSetUpdate(oldObj interf
 	name := d.Spec.Template.Labels[constants.AccLabel]
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
-	if name == "" {
-		return
-	}
 
 	log.Debugw("statefulSet modified generation", d.Generation, old.Generation)
 
@@ -321,9 +306,7 @@ func (r *ApexConnectivityClientReconciler) handlePodsUpdate(_ interface{}, obj i
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.AccLabel]
 	ns := p.Namespace
-	if name == "" {
-		return
-	}
+
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
@@ -423,12 +406,15 @@ func applyAccConfigVersionAnnotations(ctx context.Context, instance *csmv1.ApexC
 	log := logger.GetLogger(ctx)
 
 	// If client has not been initialized yet, we first annotate the client with the config version annotation
-
 	annotations := instance.GetAnnotations()
 	isUpdated := false
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
+
+	annotations[AccVersionKey] = AccVersion
+	instance.SetAnnotations(annotations)
+
 	if _, ok := annotations[accConfigVersionKey]; !ok {
 		annotations[accConfigVersionKey] = instance.Spec.Client.ConfigVersion
 		isUpdated = true
@@ -452,7 +438,7 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 	}
 
 	YamlString = utils.ModifyCommonCRs(string(buf), cr)
-	ModifiedYamlString = ModifyApexConnectivityClientCR(YamlString, cr)
+	ModifiedYamlString = drivers.ModifyApexConnectivityClientCR(YamlString, cr)
 	deployObjects, err := utils.GetModuleComponentObj([]byte(ModifiedYamlString))
 	if err != nil {
 		return err
@@ -477,64 +463,72 @@ func DeployApexConnectivityClient(ctx context.Context, isDeleting bool, operator
 	return nil
 }
 
-// ModifyApexConnectivityClientCR - update the custom resource
-func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivityClient) string {
-	namespace := ""
-	aggregatorURL := AggregatorURLDefault
-	connectivityClientImage := ""
-	kubeProxyImage := ""
-	certPersisterImage := ""
-	accInitContainerImage := ""
-	caCertFlag := ""
-	caCertsList := ""
+func getAccConfig(ctx context.Context, cr csmv1.ApexConnectivityClient, operatorConfig utils.OperatorConfig) (*AccConfig, error) {
+	var (
+		err        error
+		controller *utils.StatefulControllerYAML
+		log        = logger.GetLogger(ctx)
+	)
 
-	namespace = cr.Namespace
-
-	if cr.Spec.Client.ConnectionTarget != "" {
-		aggregatorURL = string(cr.Spec.Client.ConnectionTarget)
+	// if no ACC client is specified, return nil
+	if cr.Spec.Client.CSMClientType == "" {
+		log.Infof("No CSMClientType specified in manifest")
+		return nil, nil
 	}
 
-	if cr.Spec.Client.UsePrivateCaCerts {
-		caCertFlag = CaCertFlag
-		caCertsList = CaCertsList
+	controller, err = drivers.GetAccController(ctx, cr, operatorConfig, cr.Spec.Client.CSMClientType)
+	if err != nil {
+		return nil, fmt.Errorf("getting Apex connectivity client controller: %v", err)
 	}
 
-	if cr.Spec.Client.Common.Name == ConnectivityClientContainerName {
-		if cr.Spec.Client.Common.Image != "" {
-			connectivityClientImage = string(cr.Spec.Client.Common.Image)
+	return &AccConfig{
+		Controller: controller,
+	}, nil
+}
+
+// SyncACC - sync apex connectivity client
+func (r *ApexConnectivityClientReconciler) SyncACC(ctx context.Context, cr csmv1.ApexConnectivityClient, operatorConfig utils.OperatorConfig) error {
+	log := logger.GetLogger(ctx)
+
+	// get acc resource
+	accconfig, err := getAccConfig(ctx, cr, operatorConfig)
+	if err != nil {
+		return err
+	}
+
+	if accconfig == nil {
+		return nil
+	}
+
+	controller := accconfig.Controller
+
+	_, clusterClients, err := utils.GetAccDefaultClusters(ctx, cr, r)
+	if err != nil {
+		return err
+	}
+
+	for _, cluster := range clusterClients {
+		log.Infof("Starting SYNC for %s cluster", cluster.ClusterID)
+
+		if err = serviceaccount.SyncServiceAccount(ctx, controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+			return err
+		}
+
+		if err = rbac.SyncClusterRole(ctx, controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
+			return err
+		}
+
+		// create update ClusterRoleBinding
+		if err = rbac.SyncClusterRoleBindings(ctx, controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+			return err
+		}
+
+		// sync StatefulSet
+		if err = statefulset.SyncStatefulSet(ctx, controller.StatefulSet, cluster.ClusterK8sClient, ApexName); err != nil {
+			return err
 		}
 	}
-
-	for _, initContainer := range cr.Spec.Client.InitContainers {
-		if initContainer.Name == AccInitContainerName {
-			if initContainer.Image != "" {
-				accInitContainerImage = string(initContainer.Image)
-			}
-		}
-	}
-
-	for _, sidecar := range cr.Spec.Client.SideCars {
-		if sidecar.Name == KubernetesProxySidecarName {
-			if sidecar.Image != "" {
-				kubeProxyImage = string(sidecar.Image)
-			}
-		}
-		if sidecar.Name == CertPersisterSidecarName {
-			if sidecar.Image != "" {
-				certPersisterImage = string(sidecar.Image)
-			}
-		}
-	}
-
-	yamlString = strings.ReplaceAll(yamlString, AccNamespace, namespace)
-	yamlString = strings.ReplaceAll(yamlString, AggregatorURL, aggregatorURL)
-	yamlString = strings.ReplaceAll(yamlString, CaCertOption, caCertFlag)
-	yamlString = strings.ReplaceAll(yamlString, CaCerts, caCertsList)
-	yamlString = strings.ReplaceAll(yamlString, ConnectivityClientContainerImage, connectivityClientImage)
-	yamlString = strings.ReplaceAll(yamlString, AccInitContainerImage, accInitContainerImage)
-	yamlString = strings.ReplaceAll(yamlString, KubernetesProxySidecarImage, kubeProxyImage)
-	yamlString = strings.ReplaceAll(yamlString, CertPersisterSidecarImage, certPersisterImage)
-	return yamlString
+	return nil
 }
 
 // GetClient - returns the split client

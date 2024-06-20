@@ -23,7 +23,7 @@ type FakeAppsV1 struct {
 	FakeClient client.Client
 }
 
-// DaemonSets takea a namespace and returns an DaemonSetInterface
+// DaemonSets takes a namespace and returns a DaemonSetInterface
 func (c *FakeAppsV1) DaemonSets(namespace string) v1.DaemonSetInterface {
 	return &FakeDaemonSets{
 		FakeClient: c.FakeClient,
@@ -31,9 +31,17 @@ func (c *FakeAppsV1) DaemonSets(namespace string) v1.DaemonSetInterface {
 	}
 }
 
-// Deployments takea a namespace and returns an DeploymentInterface
+// Deployments takes a namespace and returns a DeploymentInterface
 func (c *FakeAppsV1) Deployments(namespace string) v1.DeploymentInterface {
 	return &FakeDeployments{
+		FakeClient: c.FakeClient,
+		Namespace:  namespace,
+	}
+}
+
+// StatefulSets takes a namespace and returns a StatefulSetInterface
+func (c *FakeAppsV1) StatefulSets(namespace string) v1.StatefulSetInterface {
+	return &FakeStatefulsets{
 		FakeClient: c.FakeClient,
 		Namespace:  namespace,
 	}
@@ -53,10 +61,5 @@ func (c *FakeAppsV1) ControllerRevisions(_ string) v1.ControllerRevisionInterfac
 
 // ReplicaSets takes a namespace and returns an ReplicaSetInterface
 func (c *FakeAppsV1) ReplicaSets(_ string) v1.ReplicaSetInterface {
-	panic("implement me")
-}
-
-// StatefulSets takes a namespace and returns an StatefulSetInterface
-func (c *FakeAppsV1) StatefulSets(_ string) v1.StatefulSetInterface {
 	panic("implement me")
 }
