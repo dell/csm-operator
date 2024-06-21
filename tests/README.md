@@ -13,13 +13,13 @@ This directory contains the testing infrastructure and E2E test implementation f
   * [Developing E2E Tests](#developing-e2e-tests)
 * [Directory Layout](#directory-layout)
 
-# Unit Tests
+## Unit Tests
 
 The unit tests are quick, easy-to-run tests that verify the functinality of the methods in different packages. The only major requirement for unit tests is that Go is installed. The unit tests are automatically run by GitHub actions as part of any PR targeting the main branch, and must pass with sufficient coverage for the PR to be merged.
 
 To run unit tests, go to the root directory of this project and run `make <component>-unit-test`. Components include `controller` (controllers package), `module` (modules package), and `driver` (drivers package).
 
-# E2E Tests
+## E2E Tests
 
 The end-to-end tests test the functionality of the operator as a whole by installing different combinations of drivers and modules, enabling and disabling components, and verifying the installed functionality (using e.g. cert-csi). The E2E tests need to be run from the master node of a Kubernetes cluster. All test scenarios are specified in `tests/e2e/testfiles/scenarios.yaml` and are tagged by which test suite(s) they are a part of -- test suites include a test suite for each driver and module, as well as a `sanity` suite.
 
@@ -39,17 +39,22 @@ Any time changes made to the operator are being checked into the main branch, sa
 - For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
+
 ```bash
 go install github.com/onsi/ginkgo/v2/ginkgo
 go get github.com/onsi/gomega/...
 ```
+
 ### Array Information
-For PowerFlex, PowerScale, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites. 
+
+For PowerFlex, PowerScale, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
 
 Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
 
 ### Application Mobility Prerequisites
+
 If running the Application Mobility e2e tests, (the sanity suite includes a few simple app-mobility tests), further setup must be done:
+
 - have a MinIO object storage setup, with default credentials
    - At least 2 buckets set up, if instance only has one bucket, set ALT_BUCKET_NAME = BUCKET_NAME
 - have all required licenses installed in your testing environment
@@ -68,17 +73,23 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:
 
 You have made changes to `controllers/csm_controller.go` and `pkg/drivers/powerflex.go`, and need run sanity and powerflex test suites. Additionally, you do not have cert-csi or karavictl executables in your PATH:
+
 ```bash
 run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl --sanity --powerflex
 ```
+
 You made some changes to `controllers/csm_controller.go`, and need to run sanity tests. cert-csi and karavictl are already in your PATH:
+
 ```bash
 run-e2e-test.sh --sanity
 ```
+
 You made some changes to `pkg/modules/observability.go`, and need to run observability tests. cert-csi and karavictl are already in your path, but you need to update the karavictl binary with a newer one:
+
 ```bash
 run-e2e-test.sh --obs --karavictl=/path/to/karavictl
 ```
+
 ### Scenarios File
 
 An e2e test scenarios file is a yaml file that defines all e2e test scenarios to be run. An excerpt of the file is shown below:
@@ -222,7 +233,7 @@ Most steps to cover common use cases already have their respective backend imple
 
         3. [Run your E2E](#run). If you get this error `no method for step: <you step>`, it means you either haven't implemented it or there's a problem with your regex.
 
-# Directory Layout
+## Directory Layout
 
 `config` directory includes yaml files consumed by test cases. For example `driverconfig/powerscale/v2.x.y/node.yaml` is consumed by `pkg/drivers/commonconfig_test.go`.
 
