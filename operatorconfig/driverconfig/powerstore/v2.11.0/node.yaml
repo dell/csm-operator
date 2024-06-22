@@ -131,6 +131,10 @@ spec:
               value: /powerstore-config/config
             - name: X_CSI_POWERSTORE_CONFIG_PARAMS_PATH
               value: /powerstore-config-params/driver-config-params.yaml
+            - name: X_CSI_POWERSTORE_TOPOLOGY_CONFIG_PATH
+              value: /node-topology-config/topologyConfig.yaml
+            - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
+              value: "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
             - name: GOPOWERSTORE_DEBUG
               value: "true"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
@@ -162,6 +166,8 @@ spec:
               mountPath: /powerstore-config
             - name: powerstore-config-params
               mountPath: /powerstore-config-params
+            - name: node-topology-config
+              mountPath: /node-topology-config
         - name: registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
           imagePullPolicy: IfNotPresent
@@ -244,3 +250,7 @@ spec:
           hostPath:
             path: /var/run
             type: Directory
+        - name: node-topology-config
+          configMap:
+            name: node-topology-config
+            optional: true
