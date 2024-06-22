@@ -164,10 +164,18 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # Uncomment if the nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
+      # X_CSI_TOPOLOGY_CONTROL_ENABLED provides a way to filter topology keys on a node based on array and transport protocol
+      # if enabled, user can create custom topology keys by editing node-topology-config configmap.
+      # Allowed values:
+      #   true: enable the filtration based on config map
+      #   false: disable the filtration based on config map
+      # Default value: false
+        - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
+          value: "false"
   modules:
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
