@@ -49,6 +49,9 @@ const (
 	// CsiHealthMonitorEnabled - health monitor flag
 	CsiHealthMonitorEnabled = "<X_CSI_HEALTH_MONITOR_ENABLED>"
 
+	// CSIPstoreTopology - Enable custom topology
+        CSIPstoreTopology        = "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
+
 	// CsiPowerstoreEnableChap -  CHAP flag
 	CsiPowerstoreEnableChap = "<X_CSI_POWERSTORE_ENABLE_CHAP>"
 
@@ -103,6 +106,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	powerstoreExternalAccess := ""
 	storageCapacity := "false"
 	maxVolumesPerNode := ""
+	nodeTopology := "false"
 
 	switch fileType {
 	case "Node":
@@ -121,6 +125,9 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorNode = env.Value
 			}
+			if env.Name == "X_CSI_TOPOLOGY_CONTROL_ENABLED" {
+				nodeTopology = env.Value
+			}
 			if env.Name == "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE" {
 				maxVolumesPerNode = env.Value
 			}
@@ -128,7 +135,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreNodeNamePrefix, nodePrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiFcPortFilterFilePath, fcPortFilter)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreEnableChap, chap)
-		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)		
+		yamlString = strings.ReplaceAll(yamlString, CSIPstoreTopology, nodeTopology)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreMaxVolumesPerNode, maxVolumesPerNode)
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Controller.Envs {
