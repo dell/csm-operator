@@ -117,6 +117,14 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
+        # X_CSI_TOPOLOGY_CONTROL_ENABLED provides a way to filter topology keys on a node based on array and transport protocol
+        # if enabled, user can create custom topology keys by editing node-topology-config configmap.
+        # Allowed values:
+        #   true: enable the filtration based on config map
+        #   false: disable the filtration based on config map
+        # Default value: false
+        - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
+          value: "false"
         # X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE: Defines the maximum PowerStore volumes that can be created per node
         # Allowed values: Any value greater than or equal to 0
         # Default value: "0"
