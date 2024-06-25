@@ -94,7 +94,7 @@ const (
 	ApexName = "ApexConnectivityClient"
 
 	// AccVersion - the version of the connectivity client
-	AccVersion = "v1.0.0"
+	AccVersion = "v1.1.0"
 )
 
 var (

@@ -121,7 +121,7 @@ var (
 
 	accName = "acc"
 
-	accConfigVersion = "v1.0.0"
+	accConfigVersion = "v1.1.0"
 
 	accContainerName = "connectivity-client-docker-k8s"
 

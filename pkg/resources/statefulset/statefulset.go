@@ -41,6 +41,7 @@ func SyncStatefulSet(ctx context.Context, StatefulSet appsv1.StatefulSetApplyCon
 		log.Errorw("get SyncStatefulSet error", "Error", err.Error())
 	}
 	opts := metav1.ApplyOptions{Force: true, FieldManager: "application/apply-patch"}
+
 	if found == nil || found.Name == "" {
 		log.Infow("No existing StatefulSet", "Name:", StatefulSet.Name)
 	} else {
