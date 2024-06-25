@@ -1309,7 +1309,7 @@ spec:
         - name: RELATED_IMAGE_metadataretriever
           value: dellemc/csi-metadata-retriever:v1.8.0
         - name: RELATED_IMAGE_dell-connectivity-client
-          value: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
+          value: docker.io/dellemc/connectivity-client-docker-k8s:1.19.0
         - name: RELATED_IMAGE_cert-persister
           value: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
         image: docker.io/dellemc/dell-csm-operator:v1.6.0
