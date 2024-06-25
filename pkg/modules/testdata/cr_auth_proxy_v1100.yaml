@@ -12,14 +12,6 @@ spec:
       configVersion: v1.10.0
       forceRemoveModule: true
 
-      # For OpenShift Container Platform only
-      # enabled: Enable/Disable OpenShift Ingress Controller
-      # Allowed values:
-      #   true: enable use of OpenShift Ingress Controller
-      #   false: disable use of OpenShift Ingress Controller only if you have your own ingress controller. Set the appropriate annotations for the ingresses in the proxy-server section
-      # Default value: false
-      openshift: false
-
       components:
         # For Kubernetes Container Platform only
         # enabled: Enable/Disable NGINX Ingress Controller
