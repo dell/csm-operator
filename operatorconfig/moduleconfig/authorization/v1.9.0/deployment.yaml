@@ -242,53 +242,6 @@ roleRef:
   name: storage-service
   apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: storage-service
-  namespace: <NAMESPACE>
-  labels:
-    app: storage-service
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: storage-service
-  template:
-    metadata:
-      labels:
-        csm: <NAME>
-        app: storage-service
-    spec:
-      serviceAccountName: storage-service
-      containers:
-      - name: storage-service
-        image: <AUTHORIZATION_STORAGE_SERVICE_IMAGE>
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 50051
-          name: grpc
-        env:
-          - name: NAMESPACE
-            value: <NAMESPACE>
-        volumeMounts:
-        - name: storage-volume
-          mountPath: /etc/karavi-authorization/storage
-        - name: config-volume
-          mountPath: /etc/karavi-authorization/config
-        - name: csm-config-params
-          mountPath: /etc/karavi-authorization/csm-config-params
-      volumes:
-      - name: storage-volume
-        secret:
-          secretName: karavi-storage-secret
-      - name: config-volume
-        secret:
-          secretName: karavi-config-secret
-      - name: csm-config-params
-        configMap:
-          name: csm-config-params
----
 apiVersion: v1
 kind: Service
 metadata:

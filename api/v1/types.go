@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -30,11 +30,6 @@ type DriverType string
 
 // ModuleType - type representing the type of the modules. e.g. - authorization, podmon
 type ModuleType string
-
-// CSMComponentType - type constraint for DriverType and ModuleType
-type CSMComponentType interface {
-	ModuleType | DriverType
-}
 
 // ObservabilityComponentType - type representing the type of components inside observability module. e.g. - topology
 type ObservabilityComponentType string
@@ -320,17 +315,49 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Service Container Image"
 	ProxyService string `json:"proxyService,omitempty" yaml:"proxyService,omitempty"`
 
+	// ProxyServiceReplicas is the number of replicas for the proxy service deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Proxy Service Replicas"
+	ProxyServiceReplicas int `json:"proxyServiceReplicas,omitempty" yaml:"proxyServiceReplicas,omitempty"`
+
 	// TenantService is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Tenant Service Container Image"
 	TenantService string `json:"tenantService,omitempty" yaml:"tenantService,omitempty"`
+
+	// TenantServiceReplicas is the number of replicas for the tenant service deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Tenant Service Replicas"
+	TenantServiceReplicas int `json:"tenantServiceReplicas,omitempty" yaml:"tenantServiceReplicas,omitempty"`
 
 	// RoleService is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Role Service Container Image"
 	RoleService string `json:"roleService,omitempty" yaml:"roleService,omitempty"`
 
+	// RoleServiceReplicas is the number of replicas for the role service deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Role Service Replicas"
+	RoleServiceReplicas int `json:"roleServiceReplicas,omitempty" yaml:"roleServiceReplicas,omitempty"`
+
 	// StorageService is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Storage Service Container Image"
 	StorageService string `json:"storageService,omitempty" yaml:"storageService,omitempty"`
+
+	// StorageServiceReplicas is the number of replicas for storage service deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Storage Service Replicas"
+	StorageServiceReplicas int `json:"storageServiceReplicas,omitempty" yaml:"storageServiceReplicas,omitempty"`
+
+	// AuthorizationController is the image tag for the container
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Controller Container Image"
+	AuthorizationController string `json:"authorizationController,omitempty" yaml:"authorizationController,omitempty"`
+
+	// AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Controller Replicas"
+	AuthorizationControllerReplicas int `json:"authorizationControllerReplicas,omitempty" yaml:"authorizationControllerReplicas,omitempty"`
+
+	// LeaderElection is boolean flag to enable leader election
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Leader Election"
+	LeaderElection bool `json:"leaderElection,omitempty" yaml:"leaderElection,omitempty"`
+
+	// The interval which the reconcile of each controller is run
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Controller Reconcile Interval"
+	ControllerReconcileInterval string `json:"controllerReconcileInterval,omitempty" yaml:"controllerReconcileInterval,omitempty"`
 
 	// Redis is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Redis Container Image"
@@ -347,6 +374,50 @@ type ContainerTemplate struct {
 	// OpaKubeMgmt is the image tag for the Container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Opa Kube Management Container Image"
 	OpaKubeMgmt string `json:"opaKubeMgmt,omitempty" yaml:"opaKubeMgmt,omitempty"`
+
+	// Hostname is the authorization proxy server hostname
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Hostname"
+	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
+
+	// ProxyServerIngress is the authorization proxy server ingress configuration
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server ingress configuration"
+	ProxyServerIngress []ProxyServerIngress `json:"proxyServerIngress,omitempty" yaml:"proxyServerIngress,omitempty"`
+
+	// RedisStorageClass is the authorization proxy server redis storage class for persistence
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Redis storage class"
+	RedisStorageClass string `json:"storageclass,omitempty" yaml:"storageclass,omitempty"`
+
+	// VaultAddress is the address of the vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Vault Address"
+	VaultAddress string `json:"vaultAddress,omitempty" yaml:"vaultAddress,omitempty"`
+
+	// VaultRole is the role for the vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Vault Role"
+	VaultRole string `json:"vaultRole,omitempty" yaml:"vaultRole,omitempty"`
+
+	// skipCertificateValidation is the flag to skip certificate validation
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Skip Certificate Validation"
+	SkipCertificateValidation bool `json:"skipCertificateValidation,omitempty" yaml:"skipCertificateValidation,omitempty"`
+
+	// kvEnginePath is the Authorization vault secret path
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization KV Engine Path"
+	KvEnginePath string `json:"kvEnginePath,omitempty" yaml:"kvEnginePath,omitempty"`
+
+	// RedisName is the name of the redis statefulset
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis StatefulSet Name"
+	RedisName string `json:"redisName,omitempty" yaml:"redisName,omitempty"`
+
+	// RedisCommander is the name of the redis deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Deployment Name"
+	RedisCommander string `json:"redisCommander,omitempty" yaml:"redisCommander,omitempty"`
+
+	// RedisReplicas is the number of replicas for the redis deployment
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Deployment Replicas"
+	RedisReplicas int `json:"redisReplicas,omitempty" yaml:"redisReplicas,omitempty"`
+
+	// Sentinel is the name of the sentinel statefulSet
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Sentinel StatefulSet Name"
+	Sentinel string `json:"sentinel,omitempty" yaml:"sentinel,omitempty"`
 
 	// ReplicaCount is the replica count for app mobility
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Replica Count"
@@ -383,6 +454,10 @@ type ContainerTemplate struct {
 	// PrivateKey is a private key used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Private key for certificate/private-key pair"
 	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
+
+	// CertificateAuthority is a certificate authority used to validate a certificate
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Certificate authority for validating a certificate"
+	CertificateAuthority string `json:"certificateAuthority,omitempty" yaml:"certificateAuthority,omitempty"`
 }
 
 // SnapshotClass struct
@@ -394,6 +469,21 @@ type SnapshotClass struct {
 	// Parameters is a map of driver specific parameters for snapshot class
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Class Parameters"
 	Parameters map[string]string `json:"parameters,omitempty" yaml:"parameters"`
+}
+
+// ProxyServerIngress is the authorization ingress configuration struct
+type ProxyServerIngress struct {
+	// IngressClassName is the ingressClassName
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Ingress Class Name"
+	IngressClassName string `json:"ingressClassName,omitempty" yaml:"ingressClassName,omitempty"`
+
+	// Hosts is the hosts rules for the ingress
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Hosts"
+	Hosts []string `json:"hosts,omitempty" yaml:"hosts,omitempty"`
+
+	// Annotations is an unstructured key value map that stores additional annotations for the ingress
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Annotations"
+	Annotations map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 }
 
 // CSIDriverSpec struct

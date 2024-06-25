@@ -12,45 +12,14 @@ spec:
       configVersion: v1.9.0
       forceRemoveModule: true
       components:
-      - name: karavi-authorization-proxy-server
-        # enable: Enable/Disable csm-authorization proxy server
-        enabled: true
-        proxyService: dellemc/csm-authorization-proxy:v1.9.0
-        tenantService: dellemc/csm-authorization-tenant:v1.9.0
-        roleService: dellemc/csm-authorization-role:v1.9.0
-        storageService: dellemc/csm-authorization-storage:v1.9.0
-        redis: redis:6.0.8-alpine
-        commander: rediscommander/redis-commander:latest
-        opa: openpolicyagent/opa
-        opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
-        envs:
-          # base hostname for the ingress rules that expose the services
-          # the proxy-server ingress will use this hostname
-          # Allowed values: string
-          # Default value: csm-authorization.com
-          - name: "PROXY_HOST"
-            value: "csm-authorization.com"
 
-          # Proxy-service ingress configuration
-          # Default value: nginx
-          - name: "PROXY_INGRESS_CLASSNAME"
-            value: "nginx"
-          # An additional host rule for the proxy-server ingress
-          # Default value: authorization-ingress-nginx-controller.namespace.svc.cluster.local
-          - name: "PROXY_INGRESS_HOST"
-            value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-
-          # Specify storage class for redis. Otherwise, default storage class is used.
-          # Default value: None
-          - name: "REDIS_STORAGE_CLASS"
-            value: ""
-
-      # enabled: Enable/Disable nginx ingress
+      # For Kubernetes Container Platform only
+      # enabled: Enable/Disable NGINX Ingress Controller
       # Allowed values:
-      #   true: enable deployment of nginx ingress controller
-      #   false: disable deployment of nginx ingress only if you have your own ingress controller
+      #   true: enable deployment of NGINX Ingress Controller
+      #   false: disable deployment of NGINX Ingress Controller only if you have your own ingress controller. Set the appropriate annotations for the ingresses in the proxy-server section
       # Default value: true
-      - name: ingress-nginx
+      - name: nginx
         enabled: true
 
       # enabled: Enable/Disable cert-manager
@@ -60,6 +29,52 @@ spec:
       # Default value: true
       - name: cert-manager
         enabled: true
+
+      - name: proxy-server
+        # enable: Enable/Disable csm-authorization proxy server
+        enabled: true
+        proxyService: dellemc/csm-authorization-proxy:v1.9.0
+        tenantService: dellemc/csm-authorization-tenant:v1.9.0
+        roleService: dellemc/csm-authorization-role:v1.9.0
+        storageService: dellemc/csm-authorization-storage:v1.9.0
+        opa: openpolicyagent/opa
+        opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
+
+        # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
+        # for self-signed certs, leave empty string
+        # Allowed values: string
+        certificate: ""
+
+        # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+        # for self-signed certs, leave empty string
+        # Allowed values: string
+        privateKey: ""
+
+        # base hostname for the ingress rules that expose the services
+        # the proxy-server ingress will use this hostname
+        # Allowed values: string
+        # Default value: csm-authorization.com
+        hostname: "csm-authorization.com"
+        
+        # proxy-server ingress configuration
+        proxyServerIngress:
+          - ingressClassName: nginx
+
+            # additional host rules for the proxy-server ingress
+            hosts: []
+              # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
+
+            # additional annotations for the proxy-server ingress
+            annotations: {}
+
+      - name: redis
+        redis: redis:6.0.8-alpine
+        commander: rediscommander/redis-commander:latest
+        # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
+        # to use a different storage class for redis, specify the name of the storage class
+        # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
+        # Default value: None
+        storageclass: ""
 
 ---
 apiVersion: v1
