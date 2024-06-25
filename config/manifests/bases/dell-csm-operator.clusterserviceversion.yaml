@@ -1289,7 +1289,7 @@ spec:
     name: externalhealthmonitorcontroller
   - image: dellemc/csi-metadata-retriever:v1.8.0
     name: metadataretriever
-  - image: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
+  - image: docker.io/dellemc/connectivity-client-docker-k8s:1.19.0
     name: dell-connectivity-client
   - image: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
     name: cert-persister
