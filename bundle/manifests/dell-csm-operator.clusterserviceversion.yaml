@@ -18,7 +18,7 @@ metadata:
                 "imagePullPolicy": "IfNotPresent",
                 "name": "connectivity-client-docker-k8s"
               },
-              "configVersion": "v1.0.0",
+              "configVersion": "v1.1.0",
               "connectionTarget": "connect-into.dell.com",
               "csmClientType": "apexConnectivityClient",
               "forceRemoveClient": true,
