@@ -23,6 +23,6 @@ spec:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
               value: "testing-proxy-host"
-            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "false"
