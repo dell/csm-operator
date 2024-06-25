@@ -16,6 +16,7 @@ spec:
         # For Kubernetes Container Platform only
         # enabled: Enable/Disable NGINX Ingress Controller
         # Allowed values:
+        #   true: enable deployment of NGINX Ingress Controller
         #   false: disable deployment of NGINX Ingress Controller only if you have your own ingress controller. Set the appropriate annotations for the ingresses in the proxy-server section
         # Default value: true
         - name: nginx
