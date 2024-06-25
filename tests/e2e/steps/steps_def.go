@@ -57,6 +57,9 @@ var (
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
+	storageCrMap           = map[string]string{"REPLACE_STORAGE_NAME": "STORAGE_TYPE", "REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_ENDPOINT": "END_POINT", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_VAULT_STORAGE_PATH": "VAULT_STORAGE_PATH"}
+	roleCrMap              = map[string]string{"REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_QUOTA": "QUOTA", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_STORAGE_POOL_PATH": "STORAGE_POOL_PATH"}
+	tenantCrMap            = map[string]string{"REPLACE_TENANT_ROLES": "TENANT_ROLES", "REPLACE_TENANT_PREFIX": "TENANT_PREFIX"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -648,6 +651,12 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
 		mapValues = amConfigMap
+	} else if crType == "storage" {
+		mapValues = storageCrMap
+	} else if crType == "csmrole" {
+		mapValues = roleCrMap
+	} else if crType == "csmtenant" {
+		mapValues = tenantCrMap
 	} else {
 		return mapValues, fmt.Errorf("type: %s is not supported", crType)
 	}
@@ -1058,6 +1067,17 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	fmt.Println("=== Creating Storage ===\n ")
+	mapValues, err := determineMap("storage")
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(os.Getenv(mapValues[key]), key, "testfiles/authorization-templates/csm-authorization_storage.yaml")
+		if err != nil {
+			return err
+		}
+	}
 	cmd := exec.Command("kubectl", "apply",
 		"-f", "testfiles/authorization-templates/csm-authorization_v1_storage.yaml",
 	)
@@ -1070,6 +1090,17 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	// Create Tenant
 	fmt.Println("=== Creating Tenant ===\n ")
+	mapValues, err = determineMap("csmtenant")
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(os.Getenv(mapValues[key]), key, "testfiles/authorization-templates/csm-authorization_csmtenant.yaml")
+		if err != nil {
+			return err
+		}
+	}
 	cmd = exec.Command("kubectl", "apply",
 		"-f", "testfiles/authorization-templates/csm-authorization_v1_csmtenant.yaml",
 	)
@@ -1082,8 +1113,16 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	fmt.Println("=== Creating Role ===\n", cmd.String())
 	// Create Role
-	if storageType == "powerscale" {
-		quotaLimit = "0"
+	mapValues, err = determineMap("csmrole")
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(os.Getenv(mapValues[key]), key, "testfiles/authorization-templates/csm-authorization_csmrole.yaml")
+		if err != nil {
+			return err
+		}
 	}
 	cmd = exec.Command("kubectl", "apply",
 		"-f", "testfiles/authorization-templates/csm-authorization_v1_csmrole.yaml",

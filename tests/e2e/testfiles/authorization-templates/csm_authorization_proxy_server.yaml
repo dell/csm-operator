@@ -12,14 +12,6 @@ spec:
       configVersion: v2.0.0-alpha
       forceRemoveModule: true
 
-      # For OpenShift Container Platform only
-      # enabled: Enable/Disable OpenShift Ingress Controller
-      # Allowed values:
-      #   true: enable use of OpenShift Ingress Controller
-      #   false: disable use of OpenShift Ingress Controller only if you have your own ingress controller. Set the appropriate annotations for the ingresses in the proxy-server section
-      # Default value: false
-      openshift: false
-
       components:
         # For Kubernetes Container Platform only
         # enabled: Enable/Disable NGINX Ingress Controller
@@ -41,17 +33,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: dellemc/csm-authorization-proxy:v2.0.0-alpha
+          proxyService: amaas-eos-mw1.cec.lab.emc.com:5046/proxy-server:evgeny-test
           proxyServiceReplicas: 1
-          tenantService: dellemc/csm-authorization-tenant:v2.0.0-alpha
+          tenantService: amaas-eos-mw1.cec.lab.emc.com:5046/tenant-service:evgeny-test
           tenantServiceReplicas: 1
-          roleService: dellemc/csm-authorization-role:v2.0.0-alpha
+          roleService: amaas-eos-mw1.cec.lab.emc.com:5046/role-service:evgeny-test
           roleServiceReplicas: 1
-          storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
+          storageService: amaas-eos-mw1.cec.lab.emc.com:5046/storage-service:evgeny-test
           storageServiceReplicas: 1
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
-          authorizationController: dellemc/csm-authorization-controller:v2.0.0-alpha
+          authorizationController: amaas-eos-mw1.cec.lab.emc.com:5046/csm-authorization-controller:evgeny-test
           authorizationControllerReplicas: 1
           leaderElection: true
 
@@ -98,7 +90,7 @@ spec:
           storageclass: "local-storage"
 
         - name: vault
-          vaultAddress: https://10.0.0.1:8400
+          vaultAddress: https://10.247.100.22:8400
           vaultRole: csm-authorization
           skipCertificateValidation: true
           kvEnginePath: secret

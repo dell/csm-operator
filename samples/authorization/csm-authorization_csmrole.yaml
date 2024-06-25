@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/created-by: csm-authorization
   name: csmrole-sample
 spec:
-  quota: "REPLACE_QUOTA"
-  systemID: "REPLACE_SYSTEM_ID"
-  systemType: "REPLACE_STORAGE_TYPE"
-  pool: "REPLACE_STORAGE_POOL_PATH"
+  quota: 0GB
+  systemID: pscale-xyz
+  systemType: powerscale
+  pool: /ifs/data/csi
