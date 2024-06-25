@@ -12,9 +12,18 @@
 
 #!/bin/bash
 
+if [[ $# -ne 1 ]]; then
+  echo "Incorrect input parameters provided to script $0."
+  echo "Script Usage:"
+  echo "$0 <connectivityclient-version>"
+  echo "Example:- connectivityclient-version => v100 , v110"
+  exit 1
+fi
+
 SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 ROOTDIR="$(dirname "$SCRIPTDIR")"
 CMD=""
+connectivity_ver=$1
 
 out=$(command -v oc)
 if [ $? -eq 0 ]; then
@@ -44,6 +53,14 @@ for ns in dell-csm karavi dell-connectivity-client; do
     fi
 done
 
-$CMD apply -f $ROOTDIR/samples/connectivity_client_v100.yaml
-
-echo "Dell Connectivity Client installed."
+secret_check=$($CMD get secret -n dell-connectivity-client --no-headers)
+if [[ $(echo "$secret_check" | wc -l) -gt 1 ]]; then
+    echo "Secrets are already present"
+    $CMD apply -f $ROOTDIR/samples/connectivity_client_${connectivity_ver}.yaml
+    echo "Dell Connectivity Client ${connectivity_ver} installed."
+else
+    echo "No secrets found"
+    $CMD apply -f $ROOTDIR/samples/connectivity_client_${connectivity_ver}.yaml
+    $CMD apply -f $ROOTDIR/samples/conn_secret_test.yaml
+    echo "Dell Connectivity Client ${connectivity_ver} installed."
+fi
