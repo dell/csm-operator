@@ -33,17 +33,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: amaas-eos-mw1.cec.lab.emc.com:5046/proxy-server:evgeny-test
+          proxyService: dellemc/csm-authorization-proxy:v2.0.0-alpha
           proxyServiceReplicas: 1
-          tenantService: amaas-eos-mw1.cec.lab.emc.com:5046/tenant-service:evgeny-test
+          tenantService: dellemc/csm-authorization-tenant:v2.0.0-alpha
           tenantServiceReplicas: 1
-          roleService: amaas-eos-mw1.cec.lab.emc.com:5046/role-service:evgeny-test
+          roleService: dellemc/csm-authorization-role:v2.0.0-alpha
           roleServiceReplicas: 1
-          storageService: amaas-eos-mw1.cec.lab.emc.com:5046/storage-service:evgeny-test
+          storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
           storageServiceReplicas: 1
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
-          authorizationController: amaas-eos-mw1.cec.lab.emc.com:5046/csm-authorization-controller:evgeny-test
+          authorizationController: dellemc/csm-authorization-controller:v2.0.0-alpha
           authorizationControllerReplicas: 1
           leaderElection: true
 
@@ -90,7 +90,7 @@ spec:
           storageclass: "local-storage"
 
         - name: vault
-          vaultAddress: https://10.247.100.22:8400
+          vaultAddress: https://10.0.0.1:8400
           vaultRole: csm-authorization
           skipCertificateValidation: true
           kvEnginePath: secret
