@@ -24,12 +24,3 @@ spec:
       - name: cert-persister
         image: dellemc/connectivity-cert-persister-k8s:0.11.0
         imagePullPolicy: IfNotPresent
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: connectivity-client-docker-k8s-cert
-  namespace: dell-connectivity-client
-type: Opaque
-data:
-  cert.pem: ""
