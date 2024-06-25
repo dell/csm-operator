@@ -83,8 +83,8 @@ spec:
               name: cloud-creds
               # Specify the object store access credentials to be stored in a secret with key "cloud".
               secretContents:
-                aws_access_key_id: #Provide the access key id here
-                aws_secret_access_key: #provide the access key here
+                aws_access_key_id:  # Provide the access key id here
+                aws_secret_access_key:  # provide the access key here
 
     # Init containers to be added to the Velero deployment's pod spec.
     # If the value is a string then it is evaluated as a template.
