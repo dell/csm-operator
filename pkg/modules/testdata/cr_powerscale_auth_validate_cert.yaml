@@ -6,25 +6,23 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.9.0
-    authSecret: isilon-creds-custom 
+    configVersion: v2.11.0
+    authSecret: isilon-creds-custom
     replicas: 1
     common:
-      image: "dellemc/csi-isilon:v2.9.0"
+      image: "dellemc/csi-isilon:v2.11.0"
       imagePullPolicy: IfNotPresent
-
   modules:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
       components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.10.0
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "testing-proxy-host"
-        
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "false"
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:v1.11.0
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "testing-proxy-host"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "false"

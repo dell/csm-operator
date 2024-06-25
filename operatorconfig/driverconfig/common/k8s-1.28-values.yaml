@@ -2,22 +2,22 @@
 images:
   # "images.attacher" defines the container images used for the csi attacher
   # container.
-  attacher: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+  attacher: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
 
   # "images.provisioner" defines the container images used for the csi provisioner
   # container.
-  provisioner: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
+  provisioner: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
 
   # "images.snapshotter" defines the container image used for the csi snapshotter
-  snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+  snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
 
   # "images.registrar" defines the container images used for the csi registrar
   # container.
-  registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
-  
+  registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+
   # "images.resizer" defines the container images used for the csi resizer
   # container.
-  resizer: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+  resizer: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
 
   # "images.externalhealthmonitorcontroller" defines the container images used for the csi external health monitor controller
   # container.
@@ -27,4 +27,4 @@ images:
   sdcmonitor: dellemc/sdc:4.5.1
 
   #"images.metadataretriever" defines the container images used for csi metadata retriever
-  metadataretriever: dellemc/csi-metadata-retriever:v1.7.2
+  metadataretriever: dellemc/csi-metadata-retriever:v1.8.0

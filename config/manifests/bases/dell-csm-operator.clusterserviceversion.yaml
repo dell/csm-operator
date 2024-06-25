@@ -5,7 +5,7 @@ metadata:
     alm-examples: '[]'
     capabilities: Seamless Upgrades
     categories: Storage
-    containerImage: docker.io/dellemc/dell-csm-operator:v1.5.0
+    containerImage: docker.io/dellemc/dell-csm-operator:v1.6.0
     createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     features.operators.openshift.io/disconnected: "true"
@@ -17,7 +17,7 @@ metadata:
     features.operators.openshift.io/token-auth-gcp: "false"
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.5.0
+  name: dell-csm-operator.v1.6.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -354,11 +354,6 @@ spec:
         displayName: Use Private CA Certs
         path: client.usePrivateCaCerts
       statusDescriptors:
-      - description: ClientStatus is the status of Client pods
-        displayName: ClientStatus
-        path: clientStatus
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
       - description: State is the state of the client installation
         displayName: State
         path: state
@@ -1141,16 +1136,36 @@ spec:
         displayName: Name
         path: modules[0].name
       statusDescriptors:
-      - description: ControllerStatus is the status of Controller pods
-        displayName: ControllerStatus
-        path: controllerStatus
+      - description: Number of Available Controller pods
+        displayName: Available
+        path: controllerStatus.available
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
-      - description: NodeStatus is the status of Controller pods
-        displayName: NodeStatus
-        path: nodeStatus
+        - urn:alm:descriptor:text
+      - description: Number of Desired Controller pods
+        displayName: Desired
+        path: controllerStatus.desired
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
+        - urn:alm:descriptor:text
+      - description: Number of Failed Controller pods
+        displayName: Failed
+        path: controllerStatus.failed
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Number of Available Node pods
+        displayName: Available
+        path: nodeStatus.available
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Number of Desired Node pods
+        displayName: Desired
+        path: nodeStatus.desired
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Number of Failed Node pods
+        displayName: Failed
+        path: nodeStatus.failed
+        x-descriptors:
+        - urn:alm:descriptor:text
       - description: State is the state of the driver installation
         displayName: State
         path: state
@@ -1219,47 +1234,65 @@ spec:
   - email: container.storage.modules@dell.com
     name: Dell Container Storage Modules
   maturity: stable
-  minKubeVersion: 1.27.0
+  minKubeVersion: 1.24.0
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
   relatedImages:
-  - image: docker.io/dellemc/dell-csm-operator:v1.5.0
+  - image: docker.io/dellemc/dell-csm-operator:v1.6.0
     name: dell-csm-operator
-  - image: docker.io/dellemc/csi-isilon:v2.10.0
+  - image: docker.io/dellemc/csi-isilon:v2.11.0
     name: csi-isilon
-  - image: docker.io/dellemc/csi-powermax:v2.10.0
+  - image: docker.io/dellemc/csi-powermax:v2.11.0
     name: csi-powermax
-  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.9.0
+  - image: docker.io/dellemc/csipowermax-reverseproxy:v2.10.0
     name: csipowermax-reverseproxy
-  - image: docker.io/dellemc/csi-powerstore:v2.10.0
+  - image: docker.io/dellemc/csi-powerstore:v2.11.0
     name: csi-powerstore
-  - image: docker.io/dellemc/csi-unity:v2.10.0
+  - image: docker.io/dellemc/csi-unity:v2.11.0
     name: csi-unity
-  - image: docker.io/dellemc/csi-vxflexos:v2.10.0
+  - image: docker.io/dellemc/csi-vxflexos:v2.11.0
     name: csi-vxflexos
   - image: docker.io/dellemc/sdc:4.5.1
     name: sdc
-  - image: docker.io/dellemc/csm-authorization-sidecar:v1.10.0
+  - image: docker.io/dellemc/csm-authorization-sidecar:v1.11.0
     name: karavi-authorization-proxy
-  - image: docker.io/dellemc/dell-csi-replicator:v1.8.0
+  - image: docker.io/dellemc/dell-csi-replicator:v1.9.0
     name: dell-csi-replicator
-  - image: docker.io/dellemc/dell-replication-controller:v1.8.0
+  - image: docker.io/dellemc/dell-replication-controller:v1.9.0
     name: dell-replication-controller-manager
-  - image: docker.io/dellemc/csm-topology:v1.8.0
+  - image: docker.io/dellemc/csm-topology:v1.9.0
     name: topology
   - image: docker.io/otel/opentelemetry-collector:0.42.0
     name: otel-collector
-  - image: docker.io/dellemc/csm-metrics-powerscale:v1.5.0
+  - image: docker.io/dellemc/csm-metrics-powerscale:v1.6.0
     name: metrics-powerscale
-  - image: docker.io/dellemc/csm-metrics-powermax:v1.3.0
+  - image: docker.io/dellemc/csm-metrics-powermax:v1.4.0
     name: metrics-powermax
-  - image: docker.io/dellemc/csm-metrics-powerflex:v1.8.0
+  - image: docker.io/dellemc/csm-metrics-powerflex:v1.9.0
     name: metrics-powerflex
-  - image: docker.io/dellemc/podmon:v1.9.0
+  - image: docker.io/dellemc/podmon:v1.10.0
     name: podmon-node
   - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
     name: kube-rbac-proxy
+  - image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
+    name: attacher
+  - image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+    name: provisioner
+  - image: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
+    name: snapshotter
+  - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+    name: registrar
+  - image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
+    name: resizer
+  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+    name: externalhealthmonitorcontroller
+  - image: dellemc/csi-metadata-retriever:v1.8.0
+    name: metadataretriever
+  - image: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
+    name: dell-connectivity-client
+  - image: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
+    name: cert-persister
   skips:
-  - dell-csm-operator.v1.4.3
-  version: 1.5.0
+  - dell-csm-operator.v1.5.1
+  version: 1.6.0

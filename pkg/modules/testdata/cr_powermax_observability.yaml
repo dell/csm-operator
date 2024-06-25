@@ -6,106 +6,102 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.10.0
+    configVersion: v2.11.0
     authSecret: test-powermax-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powermax:v2.10.0"
+      image: "dellemc/csi-powermax:v2.11.0"
       imagePullPolicy: IfNotPresent
-
   modules:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.8.0
+      configVersion: v1.9.0
       components:
-      - name: topology
-        # enabled: Enable/Disable topology
-        enabled: true
-        # image: Defines karavi-topology image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/csm-topology:v1.8.0
-        envs:
-          # topology log level
-          # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-          # Default value: "INFO"
-          - name: "TOPOLOGY_LOG_LEVEL"
-            value: "INFO"
-
-      - name: otel-collector
-        # enabled: Enable/Disable OpenTelemetry Collector
-        enabled: true
-        # image: Defines otel-collector image. This shouldn't be changed
-        # Allowed values: string
-        image: otel/opentelemetry-collector:0.42.0
-        envs:
-          # image of nginx proxy image
+        - name: topology
+          # enabled: Enable/Disable topology
+          enabled: true
+          # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          # Default value: "nginxinc/nginx-unprivileged:1.20"
-          - name: "NGINX_PROXY_IMAGE"
-            value: "nginxinc/nginx-unprivileged:1.20"
-
-      - name: metrics-powermax
-        # enabled: Enable/Disable PowerMax metrics
-        enabled: true
-        # image: Defines PowerMax metrics image. This shouldn't be changed
-        image: dellemc/csm-metrics-powermax:v1.3.0
-        envs:
-          # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
-          # Allowed values: int
-          # Default value: 10
-          - name: "POWERMAX_MAX_CONCURRENT_QUERIES"
-            value: "10"
-          # POWERMAX_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
-          # Allowed values: ture, false
-          # Default value: true
-          - name: "POWERMAX_CAPACITY_METRICS_ENABLED"
-            value: "true"
-          # POWERMAX_PERFORMANCE_METRICS_ENABLED: enable/disable collection of volume performance metrics
-          # Allowed values: ture, false
-          # Default value: true
-          - name: "POWERMAX_PERFORMANCE_METRICS_ENABLED"
-            value: "true"
-          # POWERMAX_CAPACITY_POLL_FREQUENCY: set polling frequency to get capacity metrics data
-          # Allowed values: int
-          # Default value: 10
-          - name: "POWERMAX_CAPACITY_POLL_FREQUENCY"
-            value: "10"
-          # POWERMAX_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get volume performance data
-          # Allowed values: int
-          # Default value: 10
-          - name: "POWERMAX_PERFORMANCE_POLL_FREQUENCY"
-            value: "10"
-          # PowerMax metrics log level
-          # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-          # Default value: "INFO"
-          - name: "POWERMAX_LOG_LEVEL"
-            value: "INFO"
-          # PowerMax Metrics Output logs in the specified format
-          # Valid values: TEXT, JSON
-          # Default value: "TEXT"
-          - name: "POWERMAX_LOG_FORMAT"
-            value: "TEXT"
-          # otel collector address
-          # Allowed values: String
-          # Default value: "otel-collector:55680"
-          - name: "COLLECTOR_ADDRESS"
-            value: "otel-collector:55680"
-          # configMap name which has all array/endpoint related info
-          - name: "X_CSI_CONFIG_MAP_NAME"
-            value: "powermax-reverseproxy-config"
+          image: dellemc/csm-topology:v1.9.0
+          envs:
+            # topology log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "TOPOLOGY_LOG_LEVEL"
+              value: "INFO"
+        - name: otel-collector
+          # enabled: Enable/Disable OpenTelemetry Collector
+          enabled: true
+          # image: Defines otel-collector image. This shouldn't be changed
+          # Allowed values: string
+          image: otel/opentelemetry-collector:0.42.0
+          envs:
+            # image of nginx proxy image
+            # Allowed values: string
+            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            - name: "NGINX_PROXY_IMAGE"
+              value: "nginxinc/nginx-unprivileged:1.20"
+        - name: metrics-powermax
+          # enabled: Enable/Disable PowerMax metrics
+          enabled: true
+          # image: Defines PowerMax metrics image. This shouldn't be changed
+          image: dellemc/csm-metrics-powermax:v1.4.0
+          envs:
+            # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERMAX_MAX_CONCURRENT_QUERIES"
+              value: "10"
+            # POWERMAX_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERMAX_CAPACITY_METRICS_ENABLED"
+              value: "true"
+            # POWERMAX_PERFORMANCE_METRICS_ENABLED: enable/disable collection of volume performance metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERMAX_PERFORMANCE_METRICS_ENABLED"
+              value: "true"
+            # POWERMAX_CAPACITY_POLL_FREQUENCY: set polling frequency to get capacity metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERMAX_CAPACITY_POLL_FREQUENCY"
+              value: "10"
+            # POWERMAX_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get volume performance data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERMAX_PERFORMANCE_POLL_FREQUENCY"
+              value: "10"
+            # PowerMax metrics log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "POWERMAX_LOG_LEVEL"
+              value: "INFO"
+            # PowerMax Metrics Output logs in the specified format
+            # Valid values: TEXT, JSON
+            # Default value: "TEXT"
+            - name: "POWERMAX_LOG_FORMAT"
+              value: "TEXT"
+            # otel collector address
+            # Allowed values: String
+            # Default value: "otel-collector:55680"
+            - name: "COLLECTOR_ADDRESS"
+              value: "otel-collector:55680"
+            # configMap name which has all array/endpoint related info
+            - name: "X_CSI_CONFIG_MAP_NAME"
+              value: "powermax-reverseproxy-config"
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
       components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.10.0
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "testing-proxy-host"
-        
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:v1.11.0
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "testing-proxy-host"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server       
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"

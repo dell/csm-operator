@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         control-plane: controller-manager
+      annotations:
+        storage.dell.com/CSMVersion: v1.11.0
     spec:
       serviceAccountName: manager-service-account
       securityContext:
@@ -26,6 +28,61 @@ spec:
         image: controller:latest
         imagePullPolicy:  Always
         name: manager
+        env:
+        - value: docker.io/dellemc/dell-csm-operator:v1.6.0
+          name: RELATED_IMAGE_dell-csm-operator
+        - value: docker.io/dellemc/csi-isilon:v2.10.0
+          name: RELATED_IMAGE_csi-isilon
+        - value: docker.io/dellemc/csi-powermax:v2.10.0
+          name: RELATED_IMAGE_csi-powermax
+        - value: docker.io/dellemc/csipowermax-reverseproxy:v2.10.0
+          name: RELATED_IMAGE_csipowermax-reverseproxy
+        - value: docker.io/dellemc/csi-powerstore:v2.10.0
+          name: RELATED_IMAGE_csi-powerstore
+        - value: docker.io/dellemc/csi-unity:v2.10.0
+          name: RELATED_IMAGE_csi-unity
+        - value: docker.io/dellemc/csi-vxflexos:v2.10.0
+          name: RELATED_IMAGE_csi-vxflexos
+        - value: docker.io/dellemc/sdc:4.5.1
+          name: RELATED_IMAGE_sdc
+        - value: docker.io/dellemc/csm-authorization-sidecar:v1.11.0
+          name: RELATED_IMAGE_karavi-authorization-proxy
+        - value: docker.io/dellemc/dell-csi-replicator:v1.9.0
+          name: RELATED_IMAGE_dell-csi-replicator
+        - value: docker.io/dellemc/dell-replication-controller:v1.9.0
+          name: RELATED_IMAGE_dell-replication-controller-manager
+        - value: docker.io/dellemc/csm-topology:v1.9.0
+          name: RELATED_IMAGE_topology
+        - value: docker.io/otel/opentelemetry-collector:0.42.0
+          name: RELATED_IMAGE_otel-collector
+        - value: docker.io/dellemc/csm-metrics-powerscale:v1.6.0
+          name: RELATED_IMAGE_metrics-powerscale
+        - value: docker.io/dellemc/csm-metrics-powermax:v1.4.0
+          name: RELATED_IMAGE_metrics-powermax
+        - value: docker.io/dellemc/csm-metrics-powerflex:v1.9.0
+          name: RELATED_IMAGE_metrics-powerflex
+        - value: docker.io/dellemc/podmon:v1.10.0
+          name: RELATED_IMAGE_podmon-node
+        - value: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+          name: RELATED_IMAGE_kube-rbac-proxy
+        - value: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
+          name: RELATED_IMAGE_attacher
+        - value: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+          name: RELATED_IMAGE_provisioner
+        - value: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
+          name: RELATED_IMAGE_snapshotter
+        - value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+          name: RELATED_IMAGE_registrar
+        - value: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
+          name: RELATED_IMAGE_resizer
+        - value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+          name: RELATED_IMAGE_externalhealthmonitorcontroller
+        - value: dellemc/csi-metadata-retriever:v1.8.0
+          name: RELATED_IMAGE_metadataretriever
+        - value: docker.io/dellemc/connectivity-client-docker-k8s:1.2.3
+          name: RELATED_IMAGE_dell-connectivity-client
+        - value: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
+          name: RELATED_IMAGE_cert-persister
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:

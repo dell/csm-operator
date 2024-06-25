@@ -16,14 +16,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
+	clienttesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/util/workqueue"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
+	statefulsetpkg "github.com/dell/csm-operator/pkg/resources/statefulset"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/dell/csm-operator/tests/shared/clientgoclient"
@@ -37,6 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 
@@ -45,6 +49,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	apiv1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	configv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	corev12 "k8s.io/client-go/applyconfigurations/core/v1"
+	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
 var (
@@ -63,7 +72,7 @@ var (
 	getAccCMErrorStr = "unable to get ConfigMap"
 
 	updateAccCSMError    bool
-	updateAccCSMErrorStr = "unable to get CSM"
+	updateAccCSMErrorStr = "unable to get ACC"
 
 	updateAccCMError    bool
 	updateAccCMErrorStr = "unable to update ConfigMap"
@@ -126,6 +135,9 @@ var (
 	accOperatorConfig = utils.OperatorConfig{
 		ConfigDirectory: "../operatorconfig",
 	}
+	badAccOperatorConfig = utils.OperatorConfig{
+		ConfigDirectory: "../in-valid-path",
+	}
 )
 
 // AccContrllerTestSuite implements testify suite
@@ -153,14 +165,27 @@ func (suite *AccControllerTestSuite) SetupTest() {
 	suite.k8sClient = clientgoclient.NewFakeClient(suite.fakeClient)
 
 	suite.namespace = "test"
+
+	os.Setenv("UNIT_TEST", "true")
 }
 
-// test a happy path scenerio with deletion
+// test a happy path scenario with deletion
 func (suite *AccControllerTestSuite) TestReconcileAcc() {
 	suite.makeFakeAcc(accName, suite.namespace, true)
 	suite.runFakeAccManager("", false)
 	suite.deleteAcc(accName)
 	suite.runFakeAccManager("", true)
+}
+
+// test error scenario
+func (suite *AccControllerTestSuite) TestReconcileAccError() {
+	suite.runFakeAccManagerError("", false)
+}
+
+func (suite *AccControllerTestSuite) TestAccConnectivityClient() {
+	csm := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	csm.Spec.Client.CSMClientType = csmv1.DreadnoughtClient
+	csm.Spec.Client.Common.Image = "image"
 }
 
 func (suite *AccControllerTestSuite) TestAccConnectivityClientConnectionTarget() {
@@ -417,6 +442,38 @@ func (suite *AccControllerTestSuite) runFakeAccManager(expectedErr string, recon
 	}
 }
 
+func (suite *AccControllerTestSuite) runFakeAccManagerError(expectedErr string, reconcileDelete bool) {
+	reconciler := suite.createAccReconciler()
+
+	// invoke controller Reconcile to test. Typically k8s would call this when resource is changed
+	res, err := reconciler.Reconcile(accCtx, accReq)
+
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+
+	if expectedErr == "" {
+		assert.NoError(suite.T(), err)
+	} else {
+		assert.NotNil(suite.T(), err)
+	}
+
+	if err != nil {
+		ctrl.Log.Error(err, "Error returned")
+		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
+	}
+
+	// after reconcile being run, we update deployment and daemonset
+	// then call handleDeployment/DaemonsetUpdate explicitly because
+	// in unit test listener does not get triggered
+	// If delete, we shouldn't call these methods since reconcile
+	// would return before this
+	if !reconcileDelete {
+		suite.handleStatefulSetUpdateTestFake(reconciler, "dell-connectivity-client")
+		suite.handleAccPodTest(reconciler, "")
+		_, err = reconciler.Reconcile(accCtx, accReq)
+		assert.Nil(suite.T(), err)
+	}
+}
+
 // call reconcile with different injection errors in k8s client
 func (suite *AccControllerTestSuite) reconcileAccWithErrorInjection(_, expectedErr string) {
 	reconciler := suite.createAccReconciler()
@@ -545,6 +602,33 @@ func (suite *AccControllerTestSuite) handleStatefulSetUpdateTest(r *ApexConnecti
 	assert.Nil(suite.T(), err)
 }
 
+func (suite *AccControllerTestSuite) handleStatefulSetUpdateTestFake(r *ApexConnectivityClientReconciler, name string) {
+	statefulSet := &appsv1.StatefulSet{}
+	err := suite.fakeClient.Get(accCtx, client.ObjectKey{Namespace: suite.namespace, Name: name}, statefulSet)
+	statefulSet.Spec.Template.Labels = map[string]string{"acc": "acc"}
+
+	r.handleStatefulSetUpdate(statefulSet, statefulSet)
+
+	// Make Pod and set pod status
+	pod := shared.MakePod(name, suite.namespace)
+	pod.Labels["acc"] = accName
+	pod.Status.Phase = corev1.PodPending
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{
+					Reason: "test",
+				},
+			},
+		},
+	}
+	err = suite.fakeClient.Create(accCtx, &pod)
+	assert.Nil(suite.T(), err)
+	podList := &corev1.PodList{}
+	err = suite.fakeClient.List(accCtx, podList, nil)
+	assert.Nil(suite.T(), err)
+}
+
 func (suite *AccControllerTestSuite) handleAccPodTest(r *ApexConnectivityClientReconciler, name string) {
 	suite.makeAccFakePod(name, suite.namespace)
 	pod := &corev1.Pod{}
@@ -636,7 +720,7 @@ func (suite *AccControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		csm := obj.(*csmv1.ApexConnectivityClient)
 		if method == "Update" && updateAccError {
 			fmt.Printf("[ShouldFail] force Updatecsm error for obj of type %+v\n", csm)
-			return errors.New(updateAccErrorStr)
+			return errors.New(updateAccCSMErrorStr)
 		}
 
 	case *corev1.ConfigMap:
@@ -711,5 +795,69 @@ func (suite *AccControllerTestSuite) debugAccFakeObjects() {
 	for key, o := range objects {
 		accUnittestLogger.Info("found fake object ", "name", key.Name)
 		accUnittestLogger.Info("found fake object ", "object", fmt.Sprintf("%#v", o))
+	}
+}
+
+func TestSyncStatefulSet(t *testing.T) {
+	labels := make(map[string]string, 1)
+	labels["*-8-acc"] = "/*-acc"
+	statefulset := configv1.StatefulSetApplyConfiguration{
+		ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{Name: &[]string{"acc"}[0], Namespace: &[]string{"default"}[0]},
+		Spec: &configv1.StatefulSetSpecApplyConfiguration{Template: &corev12.PodTemplateSpecApplyConfiguration{
+			ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{Labels: labels},
+		}},
+	}
+	k8sClient := fake.NewSimpleClientset()
+	accName = "acc"
+	containers := make([]corev1.Container, 0)
+	containers = append(containers, corev1.Container{Name: "fake-container", Image: "fake-image"})
+	create, err := k8sClient.AppsV1().StatefulSets("default").Create(context.Background(), &appsv1.StatefulSet{
+		ObjectMeta: apiv1.ObjectMeta{
+			Name:      accName,
+			Namespace: "default",
+		},
+		Spec: appsv1.StatefulSetSpec{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: apiv1.ObjectMeta{},
+				Spec:       corev1.PodSpec{Containers: containers},
+			},
+		},
+	}, apiv1.CreateOptions{})
+	assert.NoError(t, err)
+	assert.NotNil(t, create)
+	k8sClient.PrependReactor("patch", "statefulsets", func(_ clienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, fmt.Errorf("fake error")
+	})
+	err = statefulsetpkg.SyncStatefulSet(context.Background(), statefulset, k8sClient, csmName)
+	assert.Error(t, err)
+}
+
+// Test all edge cases in SyncCSM
+func (suite *AccControllerTestSuite) TestSyncACC() {
+	r := suite.createAccReconciler()
+	acc := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	accBadType := shared.MakeAcc(accName, suite.namespace, accConfigVersion)
+	accBadType.Spec.Client.CSMClientType = "wrongclient"
+
+	syncACCTests := []struct {
+		name        string
+		acc         csmv1.ApexConnectivityClient
+		op          utils.OperatorConfig
+		expectedErr string
+	}{
+		{"getClientConfig bad op config", acc, badAccOperatorConfig, ""},
+		{"getClientConfig error", accBadType, badAccOperatorConfig, "no such file or directory"},
+	}
+
+	for _, tt := range syncACCTests {
+		suite.T().Run(tt.name, func(t *testing.T) {
+			err := r.SyncACC(ctx, tt.acc, tt.op)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
 	}
 }

@@ -63,6 +63,8 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+      annotations:
+        kubectl.kubernetes.io/default-container: driver
     spec:
       serviceAccountName: <DriverDefaultReleaseName>-node
       hostIPC: true
@@ -76,7 +78,7 @@ spec:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
           image: dellemc/csi-unity:v2.11.0
-          imagePullPolicy:  IfNotPresent
+          imagePullPolicy: IfNotPresent
           args:
             - "--driver-name=csi-unity.dellemc.com"
             - "--driver-config=/unity-config/driver-config-params.yaml"
@@ -132,7 +134,7 @@ spec:
             - name: unity-secret
               mountPath: /unity-secret
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
@@ -185,7 +187,7 @@ spec:
                       path: cert-0
         - name: unity-config
           configMap:
-              name: <DriverDefaultReleaseName>-config-params
+            name: <DriverDefaultReleaseName>-config-params
         - name: unity-secret
           secret:
-              secretName: <DriverDefaultReleaseName>-creds
+            secretName: <DriverDefaultReleaseName>-creds

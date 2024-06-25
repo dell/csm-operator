@@ -9,7 +9,11 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
+<<<<<<< HEAD
       configVersion: v2.0.0-alpha
+=======
+      configVersion: v1.11.0
+>>>>>>> main
       forceRemoveModule: true
 
       # For OpenShift Container Platform only
@@ -21,6 +25,7 @@ spec:
       openshift: false
 
       components:
+<<<<<<< HEAD
         # For Kubernetes Container Platform only
         # enabled: Enable/Disable NGINX Ingress Controller
         # Allowed values:
@@ -53,6 +58,22 @@ spec:
 
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
+=======
+      - name: karavi-authorization-proxy-server
+        # enable: Enable/Disable csm-authorization proxy server
+        enabled: true
+        proxyService: dellemc/csm-authorization-proxy:v1.11.0
+        tenantService: dellemc/csm-authorization-tenant:v1.11.0
+        roleService: dellemc/csm-authorization-role:v1.11.0
+        storageService: dellemc/csm-authorization-storage:v1.11.0
+        redis: redis:6.0.8-alpine
+        commander: rediscommander/redis-commander:latest
+        opa: openpolicyagent/opa
+        opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
+        envs:
+          # base hostname for the ingress rules that expose the services
+          # the proxy-server ingress will use this hostname
+>>>>>>> main
           # Allowed values: string
           certificate: ""
 
