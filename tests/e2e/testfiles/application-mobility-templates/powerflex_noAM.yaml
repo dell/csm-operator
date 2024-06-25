@@ -16,7 +16,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.8.0
+    configVersion: v2.11.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -169,7 +169,7 @@ spec:
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: false
-      configVersion: v1.0.2
+      configVersion: v1.1.0
       forceRemoveModule: true
       components:
       - name: application-mobility-controller-manager

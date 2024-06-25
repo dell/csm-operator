@@ -16,15 +16,13 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI Unity v2.10.0 driver
-    configVersion: v2.10.0
+    configVersion: v2.11.0
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Nightly Image for CSI Unity driver v2.10.0
       image: "dellemc/csi-unity:nightly"
       imagePullPolicy: IfNotPresent
       envs:
@@ -42,21 +40,19 @@ spec:
           value: debug
         - name: TENANT_NAME
           value: ""
-
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         args: ["--volume-name-prefix=csivol"]
-    
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
-      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
-      # Configure when the storageCapacity is set as "true"
-      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-      #- name: provisioner
-      #  args: ["--capacity-poll-interval=5m"]
+        # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+        # Configure when the storageCapacity is set as "true"
+        # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+        #- name: provisioner
+        #  args: ["--capacity-poll-interval=5m"]
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
@@ -88,7 +84,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
       # nodeSelector: Define node selection constraints for node pods.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -103,7 +98,7 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      # - key: "node-role.kubernetes.io/control-plane"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
+# Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+# - key: "node-role.kubernetes.io/control-plane"
+#   operator: "Exists"
+#   effect: "NoSchedule"

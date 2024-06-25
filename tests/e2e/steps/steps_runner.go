@@ -32,9 +32,7 @@ type Runner struct {
 	Definitions []StepDefinition
 }
 
-var (
-	errorInterface = reflect.TypeOf((*error)(nil)).Elem()
-)
+var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
 
 // StepRunnerInit -
 func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kubernetes.Clientset) {
@@ -46,6 +44,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Install \[([^"]*)\]$`, step.installThirdPartyModule)
 	runner.addStep(`^Uninstall \[([^"]*)\]$`, step.uninstallThirdPartyModule)
 	runner.addStep(`^Apply custom resource \[(\d+)\]$`, step.applyCustomResource)
+	runner.addStep(`^Upgrade from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResource)
 	runner.addStep(`^Validate custom resource \[(\d+)\]$`, step.validateCustomResourceStatus)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is not installed$`, step.validateDriverNotInstalled)
@@ -80,10 +79,10 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is installed$`, step.validateConnectivityClientInstalled)
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is not installed$`, step.validateConnectivityClientNotInstalled)
 	runner.addStep(`^Uninstall connectivity client from CR \[(\d+)\]`, step.uninstallConnectivityClient)
-
 	runner.addStep(`^Install Authorization CRDs \[(\d+)\]$`, step.createCustomResourceDefinition)
 	runner.addStep(`^Validate \[([^"]*)\] CRD for Authorization is installed$`, step.validateCustomResourceDefinition)
 	runner.addStep(`^Delete Authorization CRDs \[(\d+)\]$`, step.deleteCustomResourceDefinition)
+	runner.addStep(`^Validate rbac created in namespace \[([^"]*)\]$`, step.validateRbacCreated)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
@@ -114,7 +113,6 @@ func (runner *Runner) addStep(expr string, stepFunc interface{}) {
 		Handler: v,
 		Expr:    re,
 	})
-
 }
 
 // RunStep - runs a step

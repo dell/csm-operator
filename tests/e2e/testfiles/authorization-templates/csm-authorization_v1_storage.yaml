@@ -1,12 +1,12 @@
 apiVersion: csm-authorization.storage.dell.com/v1alpha1
 kind: Storage
 metadata:
-  name: powerflex
+  name: "REPLACE_STORAGE_NAME"
 spec:
-  type: powerflex
-  endpoint: https://127.0.0.1
-  systemID: 1a99aa999999aa9a
+  type: "REPLACE_STORAGE_TYPE"
+  endpoint: "REPLACE_ENDPOINT"
+  systemID: "REPLACE_SYSTEM_ID"
   credentialStore: vault
-  credentialPath: storage/powerflex
+  credentialPath: "REPLACE_VAULT_STORAGE_PATH"
   skipCertificateValidation: true
   pollInterval: 30s

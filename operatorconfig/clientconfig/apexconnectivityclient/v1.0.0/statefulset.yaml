@@ -26,20 +26,19 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: connectivity-client-docker-k8s
-  namespace: <NAMESPACE>
 rules:
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["list", "watch"]
   - apiGroups: [""]
     resources: ["namespaces"]
-    verbs: ["get", "list", "watch", "create"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
-    verbs: ["list", "watch"]
+    verbs: ["list", "watch", "update"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
-    verbs: ["list", "watch"]
+    verbs: ["list", "watch", "create", "update", "delete"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["storageclasses"]
     verbs: ["list", "watch", "create", "delete"]
@@ -48,7 +47,7 @@ rules:
     verbs: ["list", "watch"]
   - apiGroups: ["apps"]
     resources: ["statefulsets"]
-    verbs: ["list", "watch"]
+    verbs: ["list", "watch", "update", "patch"]
   - apiGroups: ["apps"]
     resources: ["daemonsets"]
     verbs: ["list", "watch"]
@@ -58,24 +57,12 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["csidrivers"]
     verbs: ["list", "watch", "get"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["list","get", "create", "update", "delete"]
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "create", "delete", "update"]
   - apiGroups: ["storage.dell.com"]
     resources: ["containerstoragemodules"]
-    verbs: ["list", "create", "get", "delete", "watch"]
+    verbs: ["list", "get", "watch", "update"]
   - apiGroups: ["mobility.storage.dell.com"]
     resources: ["backups"]
-    verbs: ["list", "create", "get"]
-  - apiGroups: ["cert-manager.io"]
-    resources: ["issuers"]
-    verbs: ["list", "get", "create", "delete"]
-  - apiGroups: ["cert-manager.io"]
-    resources: ["certificates"]
-    verbs: ["list", "get", "create", "delete"]
+    verbs: ["list", "get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -88,6 +75,117 @@ subjects:
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole
+  name: connectivity-client-docker-k8s
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: <NAMESPACE>
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["list", "get", "create", "update", "delete", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "create", "delete", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: <NAMESPACE>
+subjects:
+  - kind: ServiceAccount
+    name: connectivity-client-docker-k8s
+    namespace: <NAMESPACE>
+roleRef:
+  kind: Role
+  name: connectivity-client-docker-k8s
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "update", "delete", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: connectivity-client-docker-k8s
+    namespace: <NAMESPACE>
+roleRef:
+  kind: Role
+  name: connectivity-client-docker-k8s
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: "karavi"
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["list", "get", "create", "update", "delete", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "create", "delete", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: "karavi"
+subjects:
+  - kind: ServiceAccount
+    name: connectivity-client-docker-k8s
+    namespace: <NAMESPACE>
+roleRef:
+  kind: Role
+  name: connectivity-client-docker-k8s
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: "dell-csm"
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["list", "get", "create", "update", "delete", "watch"]
+  - apiGroups: ["storage.dell.com"]
+    resources: ["containerstoragemodules"]
+    verbs: ["create", "delete"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "create", "delete", "update"]
+  - apiGroups: ["mobility.storage.dell.com"]
+    resources: ["backups"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: connectivity-client-docker-k8s
+  namespace: "dell-csm"
+subjects:
+  - kind: ServiceAccount
+    name: connectivity-client-docker-k8s
+    namespace: <NAMESPACE>
+roleRef:
+  kind: Role
   name: connectivity-client-docker-k8s
   apiGroup: rbac.authorization.k8s.io
 ---
@@ -209,7 +307,7 @@ spec:
         - name: kubernetes-proxy
           image: "<KUBERNETES_PROXY_IMAGE>"
           imagePullPolicy: IfNotPresent
-          command: [ "kubectl" ]
+          command: ["kubectl"]
           args:
             - "proxy"
             - "--port=8001"
@@ -254,7 +352,7 @@ spec:
                 configMapKeyRef:
                   name: connectivity-client-docker-k8s-configmap
                   key: DCM_IDENTITY_LOCATION
-          command: ['sh', '-x', '-c', "if [ -s /dcm-client-secret-data/cert.pem ]; then cp -v /dcm-client-secret-data/cert.pem $DCM_IDENTITY_LOCATION/cert.pem; fi"]
+          command: ["sh", "-x", "-c", "if [ -s /dcm-client-secret-data/cert.pem ]; then cp -v /dcm-client-secret-data/cert.pem $DCM_IDENTITY_LOCATION/cert.pem; fi"]
           volumeMounts:
             - name: certs-store-tmpdir
               mountPath: "/home/connectivity-client/.certs"

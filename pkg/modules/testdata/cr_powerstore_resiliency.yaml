@@ -6,16 +6,15 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerstore"
-    configVersion: v2.8.0
+    configVersion: v2.11.0
     authSecret: powerstore-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powerstore:v2.8.0"
+      image: "dellemc/csi-powerstore:v2.11.0"
       imagePullPolicy: IfNotPresent
-
   modules:
     - name: resiliency
-      configVersion: "v1.7.0"
+      configVersion: "v1.10.0"
       enabled: true
       components:
         - name: podmon-controller

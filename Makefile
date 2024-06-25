@@ -77,8 +77,7 @@ test: manifests gen-semver fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
 controller-unit-test:
-	go clean -cache && go test -v -coverpkg=github.com/dell/csm-operator/pkg/logger,github.com/dell/csm-operator/pkg/resources/daemonset,github.com/dell/csm-operator/pkg/resources/deployment,github.com/dell/csm-operator/pkg/resources/configmap,github.com/dell/csm-operator/pkg/resources/serviceaccount,github.com/dell/csm-operator/pkg/resources/rbac,github.com/dell/csm-operator/pkg/resources/csidriver,github.com/dell/csm-operator/pkg/constants,github.com/dell/csm-operator/controllers -coverprofile=c.out github.com/dell/csm-operator/controllers
-
+	go clean -cache && go test -v -coverpkg=github.com/dell/csm-operator/pkg/logger,github.com/dell/csm-operator/pkg/resources/daemonset,github.com/dell/csm-operator/pkg/resources/deployment,github.com/dell/csm-operator/pkg/resources/statefulset,github.com/dell/csm-operator/pkg/resources/configmap,github.com/dell/csm-operator/pkg/resources/serviceaccount,github.com/dell/csm-operator/pkg/resources/rbac,github.com/dell/csm-operator/pkg/resources/csidriver,github.com/dell/csm-operator/pkg/constants,github.com/dell/csm-operator/controllers -coverprofile=c.out github.com/dell/csm-operator/controllers
 driver-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/drivers
 
@@ -93,13 +92,11 @@ build: gen-semver fmt vet ## Build manager binary.
 run: generate gen-semver fmt vet static-manifests ## Run a controller from your host.
 	go run ./main.go
 
-podman-build: gen-semver download-csm-common ## Build podman image with the manager.
-	$(eval include csm-common.mk)
-	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+podman-build: gen-semver build-base-image ## Build podman image with the manager.
+	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
-docker-build: gen-semver download-csm-common ## Build docker image with the manager.
-	$(eval include csm-common.mk)
-	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+docker-build: gen-semver build-base-image ## Build docker image with the manager.
+	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}
@@ -139,7 +136,7 @@ $(LOCALBIN):
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 
 ## Tool Versions
-CONTROLLER_TOOLS_VERSION ?= v0.14.0
+CONTROLLER_TOOLS_VERSION ?= v0.15.0
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
@@ -171,16 +168,16 @@ rm -rf $$TMP_DIR ;\
 endef
 
 .PHONY: bundle
-bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and metadata, then validate generated files.
+bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and metadata, then validate generated files. Set --use-image-digests=true to use SHA ID of image instead of image tag.
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS) --use-image-digests=false
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build
-bundle-build: gen-semver download-csm-common ## Build the bundle image.
-	$(eval include csm-common.mk)
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) .
+bundle-build: gen-semver build-base-image ## Build the bundle image.
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(BASEIMAGE) .
+
 
 .PHONY: bundle-push
 bundle-push: gen-semver ## Push the bundle image.
@@ -203,7 +200,7 @@ OPM = $(shell which opm)
 endif
 endif
 
-# A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v1.5.0).
+# A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v1.6.0).
 # These images MUST exist in a registry and be pull-able.
 BUNDLE_IMGS ?= $(BUNDLE_IMG)
 
@@ -228,6 +225,12 @@ catalog-push: gen-semver ## Push a catalog image.
 .PHONY: lint
 lint: build
 	golangci-lint run --fix
+
+.PHONY: build-base-image
+build-base-image: download-csm-common
+	$(eval include csm-common.mk)
+	sh ./scripts/build-ubi-micro.sh $(DEFAULT_BASEIMAGE)
+	$(eval BASEIMAGE=csm-operator-ubimicro:latest)
 
 # Download common CSM configuration file used for builds
 .PHONY: download-csm-common

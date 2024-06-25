@@ -16,13 +16,13 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.10.0
+    configVersion: v2.11.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.9.1"
+      image: "dellemc/csi-vxflexos:v2.11.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -40,31 +40,28 @@ spec:
           value: "0"
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
-
     sideCars:
-    # 'k8s' represents a string prepended to each volume created by the CSI driver
+      # 'k8s' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         args: ["--volume-name-prefix=k8s"]
-
-    # sdc-monitor is disabled by default, due to high CPU usage
+        # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:4.5
         envs:
-        - name: HOST_PID
-          value: "1"
-        - name: MDM
-          value: "10.xx.xx.xx,10.xx.xx.xx" #do not add mdm value here if it is present in secret
-
-    # health monitor is disabled by default, refer to driver documentation before enabling it
-    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+          - name: HOST_PID
+            value: "1"
+          - name: MDM
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # do not add mdm value here if it is present in secret
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-    #- name: provisioner
+    # - name: provisioner
     #  args: ["--capacity-poll-interval=5m"]
 
     controller:
@@ -77,14 +74,12 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
         # X_CSI_POWERFLEX_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
         # Allowed Values: x.x.x.x/xx or x.x.x.x
         # Default Value: None
         - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
           value:
-
-      #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
+      # "controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
       # Default value: None
@@ -106,10 +101,8 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     node:
       envs:
-
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
         #    true: enable SDC approval
@@ -117,7 +110,6 @@ spec:
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
           value: "false"
-        
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
         # Allowed values:
         #   true: enable checking of health condition of CSI volumes
@@ -125,7 +117,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-          
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
         #   true: enable renaming
@@ -133,14 +124,12 @@ spec:
         # Default value: false
         - name: X_CSI_RENAME_SDC_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
         # "prefix" + "worker_node_hostname" should not exceed 31 chars.
         # Default value: none
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
-
         # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
         # Allowed values: Any value greater than or equal to 0
         # If value is zero Container Orchestrator shall decide how many volumes of this type can be published by the controller to the node.
@@ -148,9 +137,6 @@ spec:
         # Default value: "0"
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "0"
-
-
-
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -173,28 +159,26 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     initContainers:
       - image: dellemc/sdc:4.5
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
-
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
   modules:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.7.0
+      configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.7.0
+          image: dellemc/csm-topology:v1.9.0
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
           certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCVENDQXUyZ0F3SUJBZ0lVVThsYncza09ITk5QSXppRitJb3NUT3pSZVZNd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2daRXhDekFKQmdOVkJBWVRBbFZUTVJFd0R3WURWUVFJREFoT1pYY2dXVzl5YXpFUk1BOEdBMVVFQnd3SQpUbVYzSUZsdmNtc3hEVEFMQmdOVkJBb01CRVJsYkd3eEREQUtCZ05WQkFzTUEwbFRSekVZTUJZR0ExVUVBd3dQClNtOXZjMlZ3Y0drSUNBZ0lDQWdJTVNVd0l3WUpLb1pJaHZjTkFRa0JGaFpxYjI5elpYQndhVjlzZFc1aFFHUmwKYkd3dVkyOXRNQjRYRFRJME1ESXlNVEU0TWpRME1sb1hEVEkwTURVeU1URTRNalEwTWxvd2daRXhDekFKQmdOVgpCQVlUQWxWVE1SRXdEd1lEVlFRSURBaE9aWGNnV1c5eWF6RVJNQThHQTFVRUJ3d0lUbVYzSUZsdmNtc3hEVEFMCkJnTlZCQW9NQkVSbGJHd3hEREFLQmdOVkJBc01BMGxUUnpFWU1CWUdBMVVFQXd3UFNtOXZjMlZ3Y0drSUNBZ0kKQ0FnSU1TVXdJd1lKS29aSWh2Y05BUWtCRmhacWIyOXpaWEJ3YVY5c2RXNWhRR1JsYkd3dVkyOXRNSUlCSWpBTgpCZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5SXhkZ04wNDdnZk41T0h3SHFhMjlHNWd3dDkzCmVidnEwZVdnZE5RWXUvUU91YktoQ3JWYUN6QXBzTGhRcnlhOEM4OWtTM3VmRHNLM3o3aHJIRXhnblc4ZzdGL1cKTjVpaXYzcU9GcDk2ZVc4VFR5UHJhVktKV3psay9xSWhWdkhGVGxTbk5jcmJTZW45RkhxZmR4RnA3ejNVSXdtVQprZk8vTTQ1RHkrcDU2cmdqOW4vSTYvVmtpMWVxalBIN1dZTnZJQXJNa0pvZTBhSFlVSTdqa3dEZ1N6ZE1jMnM3ClI5NWxQTFY1MDgxdFNCWTJtNno0VGt1dktQdG1RZ1pML3JKL2lHUTBLVTkyYmRFUC9USDVSeEkyRHZ2U3BQSzUKUkhzTEhPVDdUZWV5NGJXU1VQemJTRzBRQUE0b1JyNTV2M1VYbmlmMExwNEQ0OU5xcHRSK0VzZkx2d0lEQVFBQgpvMU13VVRBZEJnTlZIUTRFRmdRVVlZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dId1lEVlIwakJCZ3dGb0FVCllZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dEd1lEVlIwVEFRSC9CQVV3QXdFQi96QU5CZ2txaGtpRzl3MEIKQVFzRkFBT0NBUUVBS2dWUjRvQjhlb0hNWTZ2Tm9WUERJd29NU3d2eGUyWnVDN0N0bkRvRUJjUzlrQU12TURqRwpzeFN2b0o2TXlXckpNaUt4aDJmekdGcS9FVWxDcHdKUEwvNTlTYmR3cG54UUxGWjdyZkVjMS9WQ3dOUHcxM0pEClBnZmsvZnd6QVNEcS9mWm5pTmVldHpCa2dQdEdMWDFsU051OHFNSUZHczR0QlpZZS8xNnJ4VFFpMzRsUk56QVUKMlA2YTM3YjhWVU9yRUNhTTlOdUFaY3FWSjRiODhvNXBQSkRldm5Hb3JPOHRMQWhvT3kyclB5QnJKaVhNQ0ZKMAo4TzVQS1NrSlJyQ2x1enBPeEtxUURONTlmVDdYNEp6VzI3MVhqQlIzWVdJTUdha08rSnRUdEwyUDNBWXdtd2E1CnNibUV0UU5rSjNraDhneVNVL2p4WnQrVWVUVWRJYWxDV0E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t"
@@ -207,7 +191,6 @@ spec:
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
               value: "INFO"
-
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: true
@@ -226,7 +209,6 @@ spec:
             # Default value: "nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
-
         # enabled: Enable/Disable cert-manager
         # Allowed values:
         #   true: enable deployment of cert-manager
@@ -234,12 +216,11 @@ spec:
         # Default value: false
         - name: cert-manager
           enabled: true
-
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:v1.7.0
+          image: dellemc/csm-metrics-powerflex:v1.9.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int

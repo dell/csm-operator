@@ -121,11 +121,14 @@ var (
 
 	csmName = "csm"
 
-	configVersion            = shared.ConfigVersion
-	oldConfigVersion         = shared.OldConfigVersion
-	upgradeConfigVersion     = shared.UpgradeConfigVersion
-	jumpUpgradeConfigVersion = shared.JumpUpgradeConfigVersion
-	invalidConfigVersion     = shared.BadConfigVersion
+	configVersion              = shared.ConfigVersion
+	pFlexConfigVersion         = shared.PFlexConfigVersion
+	oldConfigVersion           = shared.OldConfigVersion
+	upgradeConfigVersion       = shared.UpgradeConfigVersion
+	downgradeConfigVersion     = shared.DowngradeConfigVersion
+	jumpUpgradeConfigVersion   = shared.JumpUpgradeConfigVersion
+	jumpDowngradeConfigVersion = shared.JumpDowngradeConfigVersion
+	invalidConfigVersion       = shared.BadConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -177,12 +180,16 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	os.Setenv("UNIT_TEST", "true")
 }
 
-// test a happy path scenerio with deletion
+// test a happy path scenario with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
 	suite.makeFakeCSM(csmName, suite.namespace, true, append(getReplicaModule(), getObservabilityModule()...))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
+}
+
+func (suite *CSMControllerTestSuite) TestReconcileError() {
+	suite.runFakeCSMManagerError("", false, false)
 }
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
@@ -197,6 +204,13 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcileOCP() {
 	suite.runFakeAuthCSMManager("", false, true)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true, true)
+}
+
+func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
+	suite.makeFakeAuthServerCSMWithoutPreRequisite(csmName, suite.namespace)
+	suite.runFakeAuthCSMManager("failed authorization proxy server validation", false, false)
+	suite.deleteCSM(csmName)
+	suite.runFakeAuthCSMManager("", true, false)
 }
 
 func (suite *CSMControllerTestSuite) TestAppMobReconcile() {
@@ -372,10 +386,13 @@ func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = upgradeConfigVersion
+
+	if annotations[configVersionKey] != configVersion {
+		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
+
+	csm.Spec.Driver.ConfigVersion = upgradeConfigVersion
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
@@ -397,10 +414,13 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeVersionTooOld() {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = oldConfigVersion
+
+	if annotations[configVersionKey] != configVersion {
+		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
+
+	csm.Spec.Driver.ConfigVersion = oldConfigVersion
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
@@ -422,14 +442,16 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = jumpUpgradeConfigVersion
+
+	if annotations[configVersionKey] != configVersion {
+		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
+	csm.Spec.Driver.ConfigVersion = jumpUpgradeConfigVersion
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
-	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), err)
 }
 
 func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
@@ -447,10 +469,125 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	if _, ok := annotations[configVersionKey]; !ok {
-		annotations[configVersionKey] = invalidConfigVersion
+
+	if annotations[configVersionKey] != configVersion {
+		annotations[configVersionKey] = configVersion
 		csm.SetAnnotations(annotations)
 	}
+
+	csm.Spec.Driver.ConfigVersion = invalidConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = downgradeConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngradeVersionTooOld() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = oldConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngradeSkipVersion() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = jumpDowngradeConfigVersion
+
+	reconciler := suite.createReconciler()
+	_, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestCsmDowngradePathInvalid() {
+	csm := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	suite.fakeClient.Create(ctx, &csm)
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	suite.fakeClient.Create(ctx, sec)
+
+	annotations := csm.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if annotations[configVersionKey] != pFlexConfigVersion {
+		annotations[configVersionKey] = pFlexConfigVersion
+		csm.SetAnnotations(annotations)
+	}
+
+	csm.Spec.Driver.ConfigVersion = invalidConfigVersion
 
 	reconciler := suite.createReconciler()
 	_, err := reconciler.Reconcile(ctx, req)
@@ -877,7 +1014,7 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
 	suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
 	close(StopWatch)
-	version, err := utils.GetModuleDefaultVersion("v2.4.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
+	version, err := utils.GetModuleDefaultVersion("v2.11.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
 	assert.NotNil(suite.T(), err)
 	assert.NotNil(suite.T(), version)
 }
@@ -934,6 +1071,43 @@ func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, recon
 		} else {
 			assert.NotNil(suite.T(), err)
 		}
+	}
+}
+
+func (suite *CSMControllerTestSuite) runFakeCSMManagerError(expectedErr string, reconcileDelete, isOpenShift bool) {
+	reconciler := suite.createReconciler()
+	if isOpenShift {
+		reconciler.Config.IsOpenShift = true
+	}
+
+	// invoke controller Reconcile to test. Typically, k8s would call this when resource is changed
+	res, err := reconciler.Reconcile(ctx, req)
+
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+
+	if expectedErr == "" {
+		assert.NoError(suite.T(), err)
+	} else {
+		assert.NotNil(suite.T(), err)
+	}
+
+	if err != nil {
+		ctrl.Log.Error(err, "Error returned")
+		assert.True(suite.T(), strings.Contains(err.Error(), expectedErr))
+	}
+
+	// after reconcile being run, we update deployment and daemonset
+	// then call handleDeployment/DaemonsetUpdate explicitly because
+	// in unit test listener does not get triggered
+	// If delete, we shouldn't call these methods since reconcile
+	// would return before this
+	if !reconcileDelete {
+		suite.handleDaemonsetTestFake(reconciler, "csm-node")
+		suite.handleDeploymentTestFake(reconciler, "csm-controller")
+		suite.handlePodTest(reconciler, "")
+		_, err = reconciler.Reconcile(ctx, req)
+		assert.Nil(suite.T(), err)
+
 	}
 }
 
@@ -1142,6 +1316,62 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	assert.Nil(suite.T(), err)
 }
 
+func (suite *CSMControllerTestSuite) handleDaemonsetTestFake(r *ContainerStorageModuleReconciler, name string) {
+	daemonset := &appsv1.DaemonSet{}
+	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, daemonset)
+	assert.Error(suite.T(), err)
+	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm"}
+
+	r.handleDaemonsetUpdate(daemonset, daemonset)
+
+	// Make Pod and set status
+	pod := shared.MakePod(name, suite.namespace)
+	pod.Labels["csm"] = csmName
+	pod.Status.Phase = corev1.PodPending
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{
+					Reason: "test",
+				},
+			},
+		},
+	}
+	err = suite.fakeClient.Create(ctx, &pod)
+	assert.Nil(suite.T(), err)
+	podList := &corev1.PodList{}
+	err = suite.fakeClient.List(ctx, podList, nil)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) handleDeploymentTestFake(r *ContainerStorageModuleReconciler, name string) {
+	deployment := &appsv1.Deployment{}
+	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployment)
+	assert.Error(suite.T(), err)
+	deployment.Spec.Template.Labels = map[string]string{"csm": "csm"}
+
+	r.handleDeploymentUpdate(deployment, deployment)
+
+	// Make Pod and set pod status
+	pod := shared.MakePod(name, suite.namespace)
+	pod.Labels["csm"] = csmName
+	pod.Status.Phase = corev1.PodPending
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{
+					Reason: "test",
+				},
+			},
+		},
+	}
+	err = suite.fakeClient.Create(ctx, &pod)
+	assert.Nil(suite.T(), err)
+	podList := &corev1.PodList{}
+	err = suite.fakeClient.List(ctx, podList, nil)
+	assert.Nil(suite.T(), err)
+}
+
 func (suite *CSMControllerTestSuite) handlePodTest(r *ContainerStorageModuleReconciler, name string) {
 	suite.makeFakePod(name, suite.namespace)
 	pod := &corev1.Pod{}
@@ -1170,7 +1400,7 @@ func getObservabilityModule() []csmv1.Module {
 		{
 			Name:          csmv1.Observability,
 			Enabled:       true,
-			ConfigVersion: "v1.8.0",
+			ConfigVersion: "v1.9.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "topology",
@@ -1222,7 +1452,7 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.6.0",
+			ConfigVersion: "v1.9.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ReplicationSideCarName,
@@ -1246,7 +1476,7 @@ func getResiliencyModule() []csmv1.Module {
 		{
 			Name:          csmv1.Resiliency,
 			Enabled:       true,
-			ConfigVersion: "v1.9.0",
+			ConfigVersion: "v1.10.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ResiliencySideCarName,
@@ -1356,7 +1586,7 @@ func getAppMob() []csmv1.Module {
 		{
 			Name:          csmv1.ApplicationMobility,
 			Enabled:       true,
-			ConfigVersion: "v1.0.2",
+			ConfigVersion: "v1.1.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "application-mobility-controller-manager",
@@ -1409,7 +1639,7 @@ func getReverseProxyModule() []csmv1.Module {
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.9.0",
+			ConfigVersion: "v2.10.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    string(csmv1.ReverseProxyServer),
@@ -1528,7 +1758,7 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadCert() {
 }
 
 func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
-	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm := shared.MakeCSM(csmName, suite.namespace, shared.AuthServerConfigVersion)
 	csm.Spec.Modules = getAuthProxyServer()
 	reconciler := suite.createReconciler()
 	badOperatorConfig := utils.OperatorConfig{
@@ -1758,12 +1988,12 @@ func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, _ []csmv
 
 func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, _ []csmv1.Module) {
 	// this secret is required by authorization module
-	sec := shared.MakeSecret("karavi-config-secret", ns, configVersion)
+	sec := shared.MakeSecret("karavi-config-secret", ns, shared.AuthServerConfigVersion)
 	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
 	// this secret is required by authorization module
-	sec = shared.MakeSecret("karavi-storage-secret", ns, configVersion)
+	sec = shared.MakeSecret("karavi-storage-secret", ns, shared.AuthServerConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
@@ -1771,7 +2001,6 @@ func (suite *CSMControllerTestSuite) makeFakeAuthServerCSM(name, ns string, _ []
 
 	csm.Spec.Modules = getAuthProxyServer()
 	csm.Spec.Modules[0].ForceRemoveModule = true
-	csm.Annotations[configVersionKey] = configVersion
 
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
@@ -1788,13 +2017,23 @@ func (suite *CSMControllerTestSuite) makeFakeAuthServerCSMOCP(name, ns string, _
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	csm := shared.MakeModuleCSM(name, ns, configVersion)
+	csm := shared.MakeModuleCSM(name, ns, shared.AuthServerConfigVersion)
 
 	csm.Spec.Modules = getAuthProxyServerOCP()
 	csm.Spec.Modules[0].ForceRemoveModule = true
-	csm.Annotations[configVersionKey] = configVersion
 
 	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) makeFakeAuthServerCSMWithoutPreRequisite(name, ns string) {
+	csm := shared.MakeModuleCSM(name, ns, shared.AuthServerConfigVersion)
+
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ForceRemoveModule = true
+	csm.Annotations[configVersionKey] = shared.AuthServerConfigVersion
+
+	err := suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
 }
 

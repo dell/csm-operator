@@ -15,6 +15,7 @@ package utils
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -92,6 +93,12 @@ type ControllerYAML struct {
 	Rbac       RbacYAML
 }
 
+// StatefulControllerYAML -
+type StatefulControllerYAML struct {
+	StatefulSet confv1.StatefulSetApplyConfiguration
+	Rbac        RbacYAML
+}
+
 // NodeYAML -
 type NodeYAML struct {
 	DaemonSetApplyConfig confv1.DaemonSetApplyConfiguration
@@ -103,6 +110,11 @@ type ReplicaCluster struct {
 	ClusterID         string
 	ClusterCTRLClient crclient.Client
 	ClusterK8sClient  kubernetes.Interface
+}
+
+// CSMComponentType - type constraint for DriverType and ModuleType
+type CSMComponentType interface {
+	csmv1.ModuleType | csmv1.DriverType
 }
 
 const (
@@ -136,6 +148,12 @@ const (
 	PodmonNodeComponent = "podmon-node"
 	// ApplicationMobilityNamespace - application-mobility
 	ApplicationMobilityNamespace = "application-mobility"
+	// ExistingNamespace - existing namespace
+	ExistingNamespace = "<ExistingNameSpace>"
+	// ClientNamespace - client namespace
+	ClientNamespace = "<ClientNameSpace>"
+	// BrownfieldManifest - brownfield-onboard.yaml
+	BrownfieldManifest = "brownfield-onboard.yaml"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -612,7 +630,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			ctrlObjects = append(ctrlObjects, &ct)
 
 		case "StatefulSet":
-
 			var ss appsv1.StatefulSet
 			if err := yaml.Unmarshal(raw, &ss); err != nil {
 				return ctrlObjects, err
@@ -635,6 +652,14 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &pv)
+
+		case "Namespace":
+			var ss corev1.Namespace
+			if err := yaml.Unmarshal(raw, &ss); err != nil {
+				return ctrlObjects, err
+			}
+
+			ctrlObjects = append(ctrlObjects, &ss)
 		}
 
 	}
@@ -682,6 +707,18 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 			}
 			rbac.ClusterRoleBinding = crb
 		}
+	}
+
+	if kind == "StatefulSet" {
+		var ss confv1.StatefulSetApplyConfiguration
+		err := yaml.Unmarshal(podBuf, &ss)
+		if err != nil {
+			return nil, err
+		}
+		return StatefulControllerYAML{
+			StatefulSet: ss,
+			Rbac:        rbac,
+		}, nil
 	}
 
 	if kind == "Deployment" {
@@ -742,7 +779,8 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	name := obj.GetName()
 
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, obj)
+	k8sObj := obj.DeepCopyObject().(crclient.Object)
+	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: obj.GetNamespace()}, k8sObj)
 
 	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
@@ -756,8 +794,16 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 		return err
 	} else {
 		log.Infow("Updating a new Object", "Name:", name, "Kind:", kind)
+		// Copy data/changes from obj to k8s object that already exists on the cluster
+		if jsonBytes, err := json.Marshal(obj); err == nil {
+			if err := json.Unmarshal(jsonBytes, &k8sObj); err == nil {
+				obj = k8sObj
+			}
+		}
 		err = ctrlClient.Update(ctx, obj)
-		if err != nil {
+		if err != nil && k8serror.IsForbidden(err) || k8serror.IsInvalid(err) {
+			log.Warnw("Object update failed", "Warning", err.Error())
+		} else if err != nil {
 			return err
 		}
 	}
@@ -851,18 +897,20 @@ func versionParser(version string) (int, int, error) {
 
 // MinVersionCheck takes a driver name and a version of the form "vA.B.C" and checks it against the minimum version for the specified driver
 func MinVersionCheck(minVersion string, version string) (bool, error) {
-	minVersionA, minVersionB, err := versionParser(minVersion)
+	minMajorVersion, minMinorVersion, err := versionParser(minVersion)
 	if err != nil {
 		return false, err
 	}
 
-	versionA, versionB, err := versionParser(version)
+	majorVersion, minorVersion, err := versionParser(version)
 	if err != nil {
 		return false, err
 	}
 
 	// compare each part according to minimum driver version
-	if versionA >= minVersionA && versionB >= minVersionB {
+	if majorVersion > minMajorVersion {
+		return true, nil
+	} else if majorVersion == minMajorVersion && minorVersion >= minMinorVersion {
 		return true, nil
 	}
 	return false, nil
@@ -1102,4 +1150,187 @@ func DetermineUnitTestRun(ctx context.Context) bool {
 		unitTestRun = false
 	}
 	return unitTestRun
+}
+
+// IsValidUpgrade will check if upgrade of module/driver is allowed
+func IsValidUpgrade[T CSMComponentType](ctx context.Context, oldVersion, newVersion string, csmComponentType T, operatorConfig OperatorConfig) (bool, error) {
+	log := logger.GetLogger(ctx)
+
+	// if versions are equal, it is a modification
+	if oldVersion == newVersion {
+		log.Infow("proceeding with modification of driver/module install")
+		return true, nil
+	}
+
+	var minUpgradePath string
+	var minDowngradePath string
+	var err error
+	var isUpgradeValid bool
+	var isDowngradeValid bool
+
+	log.Info("####oldVersion: ", oldVersion, " ###newVersion: ", newVersion)
+
+	isUpgrade, _ := MinVersionCheck(oldVersion, newVersion)
+
+	// if it is an upgrade
+	if isUpgrade {
+		log.Info("proceeding with valid upgrade of driver/module")
+		minUpgradePath, err = getUpgradeInfo(ctx, operatorConfig, csmComponentType, newVersion)
+		isUpgradeValid, _ = MinVersionCheck(minUpgradePath, oldVersion)
+	} else {
+		// if it is a downgrade
+		log.Info("proceeding with valid downgrade of driver/module")
+		minDowngradePath, err = getUpgradeInfo(ctx, operatorConfig, csmComponentType, oldVersion)
+		isDowngradeValid, _ = MinVersionCheck(minDowngradePath, newVersion)
+	}
+
+	if err != nil {
+		log.Infow("getUpgradeInfo not successful")
+		return false, err
+	}
+	if isUpgradeValid || isDowngradeValid {
+		log.Infof("proceeding with valid upgrade/downgrade of %s from version %s to version %s", csmComponentType, oldVersion, newVersion)
+		return isUpgradeValid || isDowngradeValid, nil
+	}
+
+	log.Infof("not proceeding with invalid driver/module upgrade")
+	return isUpgradeValid || isDowngradeValid, fmt.Errorf("upgrade/downgrade of %s from version %s to %s not valid", csmComponentType, oldVersion, newVersion)
+}
+
+func getUpgradeInfo[T CSMComponentType](ctx context.Context, operatorConfig OperatorConfig, csmCompType T, oldVersion string) (string, error) {
+	log := logger.GetLogger(ctx)
+
+	csmCompConfigDir := ""
+	switch any(csmCompType).(type) {
+	case csmv1.DriverType:
+		csmCompConfigDir = "driverconfig"
+	case csmv1.ModuleType:
+		csmCompConfigDir = "moduleconfig"
+	}
+
+	upgradeInfoPath := fmt.Sprintf("%s/%s/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmCompConfigDir, csmCompType, oldVersion)
+	log.Debugw("getUpgradeInfo", "upgradeInfoPath", upgradeInfoPath)
+
+	buf, err := os.ReadFile(filepath.Clean(upgradeInfoPath))
+	if err != nil {
+		log.Errorw("getUpgradeInfo failed", "Error", err.Error())
+		return "", err
+	}
+	YamlString := string(buf)
+
+	var upgradePath UpgradePaths
+	err = yaml.Unmarshal([]byte(YamlString), &upgradePath)
+	if err != nil {
+		log.Errorw("getUpgradeInfo yaml marshall failed", "Error", err.Error())
+		return "", err
+	}
+
+	// Example return value: "v2.2.0"
+	return upgradePath.MinUpgradePath, nil
+}
+
+// BrownfieldOnboard will onboard the brownfield cluster
+func BrownfieldOnboard(ctx context.Context, path string, clientNameSpace string, ctrlClient crclient.Client, isDeleting bool) error {
+	logInstance := logger.GetLogger(ctx)
+
+	namespaces, err := GetNamespaces(ctx, ctrlClient)
+	if err != nil {
+		logInstance.Error(err, "Failed to get namespaces")
+		return err
+	}
+
+	manifestFile, err := os.ReadFile(filepath.Clean(path))
+	if err != nil {
+		logInstance.Error(err, "Failed to read manifest file")
+		return err
+	}
+
+	yamlFile := string(manifestFile)
+
+	for _, ns := range namespaces {
+
+		yamlFile := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
+		yamlFile = strings.ReplaceAll(yamlFile, ClientNamespace, clientNameSpace)
+
+		deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
+		if err != nil {
+			return err
+		}
+		for _, ctrlObj := range deployObjects {
+			if isDeleting {
+				err := DeleteObject(ctx, ctrlObj, ctrlClient)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := ApplyObject(ctx, ctrlObj, ctrlClient)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// GetNamespaces returns the list of namespaces in the cluster
+func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
+	// Set to store unique namespaces
+	namespaceMap := make(map[string]struct{})
+
+	csmList := &csmv1.ContainerStorageModuleList{}
+
+	if err := ctrlClient.List(ctx, csmList); err != nil {
+		return nil, fmt.Errorf("error listing csm resources: %w", err)
+	}
+	for _, csmResource := range csmList.Items {
+		namespaceMap[csmResource.Namespace] = struct{}{}
+	}
+
+	// Convert set to slice
+	var namespaces []string
+	for namespace := range namespaceMap {
+		namespaces = append(namespaces, namespace)
+	}
+
+	return namespaces, nil
+}
+
+// CheckAccAndCreateOrDeleteRbac checks if the dell connectivity client exists and creates/deletes the role and rolebindings
+func CheckAccAndCreateOrDeleteRbac(ctx context.Context, operatorConfig OperatorConfig, ctrlClient crclient.Client, isDeleting bool) error {
+	logInstance := logger.GetLogger(ctx)
+	accList := &csmv1.ApexConnectivityClientList{}
+	if err := ctrlClient.List(ctx, accList); err != nil {
+		logInstance.Info("dell connectivity client not found")
+	} else if len(accList.Items) <= 0 {
+		logInstance.Info("dell connectivity client not found")
+	} else {
+		logInstance.Info("dell connectivity client found")
+		clientNamespace := accList.Items[0].Namespace
+		accConfigVersion := accList.Items[0].Spec.Client.ConfigVersion
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory,
+			csmv1.DreadnoughtClient, accConfigVersion, BrownfieldManifest)
+		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNamespace, ctrlClient, isDeleting); err != nil {
+			logInstance.Error(err, "error creating role/rolebindings")
+			return err
+		}
+	}
+	return nil
+}
+
+// CreateBrownfieldRbac creates the role and rolebindings
+func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client, isDeleting bool) error {
+	logInstance := logger.GetLogger(ctx)
+	csmList := &csmv1.ContainerStorageModuleList{}
+	err := ctrlClient.List(ctx, csmList)
+	if err == nil && len(csmList.Items) > 0 {
+		logInstance.Info("Found existing csm installations. Proceeding to create role/rolebindings")
+		clientNameSpace := cr.Namespace
+		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
+		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNameSpace, ctrlClient, isDeleting); err != nil {
+			logInstance.Error(err, "error creating role/rolebindings")
+			return err
+		}
+	}
+	return nil
 }

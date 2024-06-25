@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.10.0
+    configVersion: v2.11.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -35,8 +35,6 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
-
-
     sideCars:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
@@ -47,13 +45,11 @@ spec:
             value: "1"
           - name: MDM
             value: "10.x.x.x,10.x.x.x" #provide MDM value
-
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
-
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
@@ -64,7 +60,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
       #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -89,7 +84,6 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     node:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
@@ -99,7 +93,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -124,21 +117,19 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     initContainers:
       - image: dellemc/sdc:4.5.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
           - name: MDM
-            value: "10.x.x.x,10.x.x.x"  #provide MDM value
-
+            value: "10.x.x.x,10.x.x.x" #provide MDM value
   modules:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.8.0
+      configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
@@ -160,7 +151,6 @@ spec:
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
               value: "INFO"
-
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: true
@@ -181,7 +171,6 @@ spec:
             # Default value: "nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
-
         - name: cert-manager
           # enabled: Enable/Disable cert-manager
           # Allowed values:
@@ -189,7 +178,6 @@ spec:
           #   false: disable deployment of cert-manager only if it's already deployed
           # Default value: true
           enabled: true
-
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
