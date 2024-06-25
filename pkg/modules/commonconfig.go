@@ -75,6 +75,11 @@ func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op uti
 		}
 	}
 
+	if module.Name == csmv1.AuthorizationServer {
+		configPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.Authorization, moduleConfigVersion, filename)
+		return os.ReadFile(filepath.Clean(configPath))
+	}
+
 	configMapPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, module.Name, moduleConfigVersion, filename)
 	return os.ReadFile(filepath.Clean(configMapPath))
 }

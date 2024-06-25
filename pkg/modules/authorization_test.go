@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2022-2024 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -10,6 +10,7 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -19,12 +20,15 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/kubernetes/scheme"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -310,7 +314,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.11.0"
+			auth.ConfigVersion = "v2.0.0-alpha"
 
 			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
@@ -423,8 +427,8 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
-		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+		"success v1": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -434,12 +438,33 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return true, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"success v2": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
 				return clusterClient, nil
 			}
 
@@ -453,10 +478,10 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v1.11.0"
+			auth.ConfigVersion = "v2.0.0-alpha"
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-auth-tls")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
@@ -484,7 +509,45 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
-		"fail - empty proxy host": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"fail v1 - karavi-config-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			if err != nil {
+				panic(err)
+			}
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviStorage, karaviTLS).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviStorage, karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"fail v1 - karavi-storage-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			if err != nil {
+				panic(err)
+			}
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"fail v2 - karavi-config-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -492,15 +555,11 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 
-			for i, env := range auth.Components[0].Envs {
-				if env.Name == "PROXY_HOST" {
-					auth.Components[0].Envs[i].Value = ""
-				}
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviTLS).Build()
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
-				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviTLS).Build()
 				return clusterClient, nil
 			}
 
@@ -556,6 +615,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 				},
 			}
 
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
@@ -567,7 +627,31 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_vault_cert.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating v1": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -579,7 +663,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -591,7 +675,43 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - corrupt vault ca": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_ca.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - corrupt vault client cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_cert.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - corrupt vault client key": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_key.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
@@ -605,6 +725,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			if success {
 				assert.NoError(t, err)
 			} else {
+				fmt.Println(err)
 				assert.Error(t, err)
 			}
 		})
@@ -612,8 +733,8 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 }
 
 func TestAuthorizationIngress(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -641,9 +762,9 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(i1, i2).Build()
 
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -680,10 +801,10 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(dp, pod).Build()
 
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient
 		},
-		"success - creating v1.11.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+		"success - creating with certs": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_certs.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -719,9 +840,59 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(dp, pod).Build()
 
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient
 		},
-		"success - creating v1.9.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with openshift and other annotations": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_openshift.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, true, tmpCR, sourceClient
+		},
+		"success - creating v1.10.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			namespace := customResource.Namespace
+			name := namespace + "-ingress-nginx-controller"
+
+			dp := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Spec: appsv1.DeploymentSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"app.kubernetes.io/name": "ingress-nginx"},
+					},
+				},
+			}
+
+			pod := &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Pod",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(dp, pod).Build()
+
+			return true, true, tmpCR, sourceClient
+		},
+		"success - creating v1.9.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v190.yaml")
 			if err != nil {
 				panic(err)
@@ -758,9 +929,9 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(dp, pod).Build()
 
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient
 		},
-		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -770,17 +941,17 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, isDeleting, cr, sourceClient, op := tc(t)
+			success, isDeleting, cr, sourceClient := tc(t)
 			fakeReconcile := utils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
-			err := AuthorizationIngress(context.TODO(), isDeleting, op, cr, &fakeReconcile, sourceClient)
+			err := AuthorizationIngress(context.TODO(), isDeleting, true, cr, &fakeReconcile, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -905,6 +1076,156 @@ func TestNginxIngressController(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := NginxIngressController(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestAuthorizationCertificates(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - using self-signed certificate": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - using custom tls secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_certs.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+
+		"fail - using partial custom cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_certs_missing_key.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			err := InstallWithCerts(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestAuthorizationCrdDeploy(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "CustomResourceDefinition",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "csmroles.csm-authorization.storage.dell.com",
+				},
+			}
+			apiextv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+			return true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			apiextv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating v1": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			apiextv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - auth deployment file bad yaml": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "./testdata/badYaml"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, tmpCR, sourceClient, badOperatorConfig
+		},
+		"fail - auth config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, tmpCR, sourceClient, badOperatorConfig
+		},
+		"fail - auth module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			tmpCR := customResource
+
+			return false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, cr, sourceClient, op := tc(t)
+
+			err := AuthCrdDeploy(ctx, op, cr, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {

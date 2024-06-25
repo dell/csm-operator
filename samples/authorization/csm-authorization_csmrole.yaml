@@ -1,0 +1,15 @@
+apiVersion: csm-authorization.storage.dell.com/v1alpha1
+kind: CSMRole
+metadata:
+  labels:
+    app.kubernetes.io/name: role
+    app.kubernetes.io/instance: role-sample
+    app.kubernetes.io/part-of: csm-authorization
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: csm-authorization
+  name: csmrole-sample
+spec:
+  quota: 0GB
+  systemID: pscale-xyz
+  systemType: powerscale
+  pool: /ifs/data/csi

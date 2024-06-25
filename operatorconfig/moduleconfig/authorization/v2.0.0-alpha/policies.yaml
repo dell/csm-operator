@@ -1,0 +1,365 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: common
+  namespace: <NAMESPACE>
+data:
+  common.rego: |
+    package karavi.common
+    default roles = {}
+    roles = {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: volumes-create
+  namespace: <NAMESPACE>
+data:
+  volumes-create.rego: |
+    package karavi.volumes.create
+
+    import data.karavi.common
+    default allow = false
+
+    allow {
+      count(permitted_roles) != 0
+      count(deny) == 0
+    }
+
+    deny[msg] {
+      common.roles == {}
+      msg := sprintf("no configured roles", [])
+    }
+
+    deny[msg] {
+      count(permitted_roles) == 0
+      msg := sprintf("no roles in [%s] allow the %s Kb request on %s/%s/%s",
+              [input.claims.roles,
+              input.request.volumeSizeInKb,
+              input.systemtype,
+              input.storagesystemid,
+              input.storagepool])
+    }
+
+    permitted_roles[v] = y {
+      claimed_roles := split(input.claims.roles, ",")
+
+      some i
+      a := claimed_roles[i]
+      common.roles[a]
+
+      v := claimed_roles[i]
+      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] >= to_number(input.request.volumeSizeInKb)
+      y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
+    }
+
+    permitted_roles[v] = y {
+      claimed_roles := split(input.claims.roles, ",")
+
+      some i
+      a := claimed_roles[i]
+      common.roles[a]
+
+      v := claimed_roles[i]
+      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] == 0
+      y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: volumes-delete
+  namespace: <NAMESPACE>
+data:
+  volumes-delete.rego: |
+    package karavi.volumes.delete
+
+    import data.karavi.common
+
+    default response = {
+      "allowed": true
+    }
+    response = {
+      "allowed": false,
+      "status": {
+      "reason": reason,
+      },
+    } {
+      reason = concat(", ", deny)
+      reason != ""
+    }
+
+    deny[msg] {
+      common.roles == {}
+      msg := sprintf("no role data found", [])
+    }
+
+    default claims = {}
+    claims = input.claims
+    deny[msg] {                                                                                       
+      claims == {}
+      msg := sprintf("missing claims", [])
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: volumes-map
+  namespace: <NAMESPACE>
+data:
+  volumes-map.rego: |
+    package karavi.volumes.map
+
+    import data.karavi.common
+
+    default response = {
+      "allowed": true
+    }
+    response = {
+        "allowed": false,
+        "status": {
+            "reason": reason,
+        },
+    } {
+        reason = concat(", ", deny)
+        reason != ""
+    }
+
+    deny[msg] {
+      common.roles == {}
+      msg := sprintf("no role data found", [])
+    }
+
+    default claims = {}
+    claims = input.claims
+    deny[msg] {
+      claims == {}
+      msg := sprintf("missing claims", [])
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: powermax-volumes-create
+  namespace: <NAMESPACE>
+data:
+  volumes-powermax-create.rego: |
+    package karavi.volumes.powermax.create
+
+    import data.karavi.common
+
+    default allow = false
+
+    allow {
+      count(permitted_roles) != 0
+      count(deny) == 0
+    }
+
+    deny[msg] {
+      common.roles == {}
+      msg := sprintf("no configured roles", [])
+    }
+
+    deny[msg] {
+      count(permitted_roles) == 0
+      msg := sprintf("no roles in [%s] allow the %v Kb request on %s/%s/%s",
+              [input.claims.roles,
+              input.request.volumeSizeInKb,
+              input.systemtype,
+              input.storagesystemid,
+              input.storagepool])
+    }
+
+    permitted_roles[v] = y {
+      claimed_roles := split(input.claims.roles, ",")
+
+      some i
+      a := claimed_roles[i]
+      common.roles[a]
+
+      v := claimed_roles[i]
+      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] >= to_number(input.request.volumeSizeInKb)
+      y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
+    }
+
+    permitted_roles[v] = y {
+      claimed_roles := split(input.claims.roles, ",")
+
+      some i
+      a := claimed_roles[i]
+      common.roles[a]
+
+      v := claimed_roles[i]
+      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool] == 0
+      y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagepool])
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: volumes-unmap
+  namespace: <NAMESPACE>
+data:
+  volumes-unmap.rego: |
+    package karavi.volumes.unmap
+
+    import data.karavi.common
+
+    default response = {
+      "allowed": true
+    }
+    response = {
+        "allowed": false,
+        "status": {
+            "reason": reason,
+        },
+    } {
+        reason = concat(", ", deny)
+        reason != ""
+    }
+
+    deny[msg] {
+      common.roles == {}
+      msg := sprintf("no role data found", [])
+    }
+
+    default claims = {}
+    claims = input.claims
+    deny[msg] {
+      claims == {}
+      msg := sprintf("missing claims", [])
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sdc-approve
+  namespace: <NAMESPACE>
+data:
+  sdc-approve.rego: |
+    package karavi.sdc.approve
+
+    import data.karavi.common
+
+    # Allow requests by default.
+    default allow = true
+
+    default response = {
+      "allowed": true
+    }
+    response = {
+       "allowed": false,
+       "status": {
+          "reason": reason,
+       },
+    } {
+        reason = concat(", ", deny)
+        reason != ""
+    }
+
+    default claims = {}
+    claims = input.claims
+    deny[msg] {
+      claims == {}
+      msg := sprintf("missing claims", [])
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-csm-cm
+  namespace: <NAMESPACE>
+
+data:
+  redis.conf: |
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: snapshot-create
+  namespace: <NAMESPACE>
+data:
+  snapshot-create.rego: |
+    package karavi.snapshot.create
+
+    import data.karavi.common
+
+    default allow := false
+
+    allow {
+      count(permitted_roles) == count(input.request)
+      count(deny) == 0
+    }
+
+    # Deny if there are no roles found.
+    deny[msg] {
+      common.roles == {}
+      msg := sprintf("no configured roles", [])
+    }
+
+    # Deny if claimed roles has no match for the request.
+    deny[msg] {
+      count(permitted_roles) != count(input.request)
+
+      unpermitted_requests := [req |
+        element := input.request[_]
+
+        not permitted_roles[element.name]
+
+        req := element
+      ]
+
+      msg := sprintf(
+        "no roles in [%s] allow the %s Kb request on %s/%s/%s for %s",
+        [
+          input.claims.roles,
+          unpermitted_requests[_].volumeSizeInKb,
+          input.systemtype,
+          input.storagesystemid,
+          unpermitted_requests[_].storagepool,
+          unpermitted_requests[_].name,
+        ],
+      )
+    }
+
+    # No OR in OPA, multiple rules are needed.
+    size_is_valid(a, b) {
+      to_number(a) >= to_number(b)
+    }
+
+    # No OR in OPA, multiple rules are needed.
+    size_is_valid(a, _) {
+      to_number(a) == 0
+    }
+
+    # Create a list of permitted roles.
+    permitted_roles[snapshot] := roles {
+      # Split the claimed roles by comma into an array.
+      claimed_roles := split(input.claims.roles, ",")
+
+      # Iterate through the requests.
+      req := input.request[_]
+
+      roles := [role |
+        sp := req.storagepool
+        size := req.volumeSizeInKb
+
+        # Iterate through the roles in the request.
+        c_role := claimed_roles[_]
+        common.roles[c_role]
+
+        system_ids := common.roles[c_role].system_types[input.systemtype].system_ids[input.storagesystemid]
+        pool_quota := system_ids.pool_quotas[sp]
+
+        # Validate that the pool quota is valid.
+        size_is_valid(pool_quota, size)
+
+        role := {"size": to_number(pool_quota), "storagepool": sp, "role": c_role}
+      ]
+
+      # Ensure that the role list is not empty.
+      count(roles) != 0
+
+      # Set the snapshot name which creates an entry in the list.
+      snapshot := req.name
+    }
