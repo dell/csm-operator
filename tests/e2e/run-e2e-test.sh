@@ -94,11 +94,31 @@ function checkForGinkgo() {
   if ! (go mod vendor && go get github.com/onsi/ginkgo/v2); then
     echo "go mod vendor or go get ginkgo error"
     exit 1
-  fi
-}
+fi
 
-function runTests() {
-  ginkgo -mod=mod -v
+# copy cert-csi binary into local folder
+cp $CERT_CSI .
+
+# Uncomment for authorization proxy server
+# cp $DELLCTL /usr/local/bin/
+
+PATH=$PATH:$(go env GOPATH)/bin
+
+OPTS=()
+
+if [ -z "${GINKGO_OPTS-}" ]; then
+    OPTS=(-v)
+else
+    read -ra OPTS <<<"-v $GINKGO_OPTS"
+fi
+
+pwd
+ginkgo -mod=mod "${OPTS[@]}"
+
+rm -f cert-csi
+
+# Uncomment for authorization proxy server
+# rm -f /usr/local/bin/dellctl
 
   # Checking for test status
   TEST_PASS=$?

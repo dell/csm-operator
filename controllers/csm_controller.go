@@ -135,7 +135,7 @@ var (
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotcontents/status,verbs=get;list;watch;patch;update
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots,verbs=get;list;watch;update;patch;create;delete
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots/status,verbs=get;list;watch;update;patch
-// +kubebuilder:rbac:groups="volumegroup.storage.dell.com",resources=dellcsivolumegroupsnapshots;dellcsivolumegroupsnapshots/status,verbs=create;list;watch;delete;update
+// +kubebuilder:rbac:groups="volumegroup.storage.dell.com",resources=dellcsivolumegroupsnapshots;dellcsivolumegroupsnapshots/status,verbs=create;list;watch;delete;update;get;patch
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=*
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions/status,verbs=get;list;patch;watch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments/status,verbs=patch
@@ -218,6 +218,16 @@ var (
 // +kubebuilder:rbac:groups="",resources=configmaps,resourceNames=cert-manager-cainjector-leader-election;cert-manager-cainjector-leader-election-core;cert-manager-controller,verbs=get;update;patch
 // +kubebuilder:rbac:groups="batch",resources=jobs,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csistoragecapacities,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages;csmtenants;csmroles,verbs=get;list
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmroles,verbs=watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmroles/finalizers,verbs=update
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmroles/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmtenants,verbs=watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmtenants/finalizers,verbs=update
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=csmtenants/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages,verbs=watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages/finalizers,verbs=update
+// +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages/status,verbs=get;update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -692,6 +702,9 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer)
 	if authorizationEnabled {
 		log.Infow("Create/Update authorization")
+		if err := r.reconcileAuthorizationCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
+			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
+		}
 		if err := r.reconcileAuthorization(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
 		}
@@ -946,6 +959,14 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 // reconcileAuthorization - deploy authorization proxy server
 func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
+
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
+		log.Infow("Reconcile authorization cert-manager")
+		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
+		}
+	}
+
 	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization proxy-server")
 		if err := modules.AuthorizationServerDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
@@ -957,26 +978,31 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		}
 	}
 
-	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
-		log.Infow("Reconcile authorization cert-manager")
-		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
+	if r.Config.IsOpenShift {
+		log.Infow("Using OpenShift default ingress controller")
+		if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+			log.Warnw("openshift environment, skipping deployment of nginx ingress controller")
+		}
+	} else {
+		if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+			log.Infow("Reconcile authorization NGINX Ingress Controller")
+			if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
+			}
 		}
 	}
 
-	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
-		log.Infow("Reconcile authorization nginx ingress controller")
-		if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-			return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
-		}
-	}
-
-	// Authorization Ingress rules are applied after NGINX ingress controller is installed
+	// Authorization Ingress rules
 	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization Ingresses")
-		if err := modules.AuthorizationIngress(ctx, isDeleting, op, cr, r, ctrlClient); err != nil {
+		if err := modules.AuthorizationIngress(ctx, isDeleting, r.Config.IsOpenShift, cr, r, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
 		}
+	}
+
+	log.Infow("Reconcile authorization certificates")
+	if err := modules.InstallWithCerts(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		return fmt.Errorf("unable to install certificates for Authorization: %v", err)
 	}
 
 	return nil
@@ -993,6 +1019,21 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobilityCRDS(ctx context.
 		}
 		if err := modules.VeleroCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Velero CRDS : %v", err)
+		}
+	}
+
+	return nil
+}
+
+// reconcileAuthorizationCRDS - reconcile Authorization CRDs
+func (r *ContainerStorageModuleReconciler) reconcileAuthorizationCRDS(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+
+	// Install Authorization CRDs
+	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+		log.Infow("Reconcile Authorization CRDS")
+		if err := modules.AuthCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile Authorization CRDs: %v", err)
 		}
 	}
 

@@ -1,0 +1,18 @@
+apiVersion: csm-authorization.storage.dell.com/v1alpha1
+kind: CSMTenant
+metadata:
+  labels:
+    app.kubernetes.io/name: csmtenant
+    app.kubernetes.io/instance: csmtenant-sample
+    app.kubernetes.io/part-of: csm-authorization
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: csm-authorization
+  name: csmtenant-sample
+spec:
+  # TODO(user): Add fields here
+  roles: "REPLACE_TENANT_ROLES"
+  approveSdc: false
+  revoke: false
+  # This prefix is added for each new volume provisioned by the tenant. 
+  # It should not exceed 3 characters. Example: tn1
+  volumePrefix: "REPLACE_TENANT_VOLUME_PREFIX"

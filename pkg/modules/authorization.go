@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@ package modules
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -22,12 +24,18 @@ import (
 	"strings"
 	"time"
 
+	certificate "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
+	"golang.org/x/mod/semver"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networking "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -48,70 +56,109 @@ const (
 	AuthPolicyManifest = "policies.yaml"
 	// AuthLocalProvisionerManifest -
 	AuthLocalProvisionerManifest = "local-provisioner.yaml"
+	// AuthCustomCert - custom certificate file
+	AuthCustomCert = "custom-cert.yaml"
 
 	// AuthNamespace -
 	AuthNamespace = "<NAMESPACE>"
-	// AuthLogLevel -
-	AuthLogLevel = "<AUTHORIZATION_LOG_LEVEL>"
-	// AuthConcurrentPowerFlexRequests -
-	AuthConcurrentPowerFlexRequests = "<AUTHORIZATION_CONCURRENT_POWERFLEX_REQUESTS>"
-	// AuthZipkinCollectorURI -
-	AuthZipkinCollectorURI = "<AUTHORIZATION_ZIPKIN_COLLECTORURI>"
-	// AuthZipkinProbability -
-	AuthZipkinProbability = "<AUTHORIZATION_ZIPKIN_PROBABILITY>"
 	// AuthServerImage -
 	AuthServerImage = "<AUTHORIZATION_PROXY_SERVER_IMAGE>"
+	// AuthProxyServiceReplicas -
+	AuthProxyServiceReplicas = "<AUTHORIZATION_PROXY_SERVICE_REPLICAS>"
 	// AuthOpaImage -
 	AuthOpaImage = "<AUTHORIZATION_OPA_IMAGE>"
 	// AuthOpaKubeMgmtImage -
 	AuthOpaKubeMgmtImage = "<AUTHORIZATION_OPA_KUBEMGMT_IMAGE>"
 	// AuthTenantServiceImage -
 	AuthTenantServiceImage = "<AUTHORIZATION_TENANT_SERVICE_IMAGE>"
+	// AuthTenantServiceReplicas -
+	AuthTenantServiceReplicas = "<AUTHORIZATION_TENANT_SERVICE_REPLICAS>"
 	// AuthRoleServiceImage -
 	AuthRoleServiceImage = "<AUTHORIZATION_ROLE_SERVICE_IMAGE>"
+	// AuthRoleServiceReplicas -
+	AuthRoleServiceReplicas = "<AUTHORIZATION_ROLE_SERVICE_REPLICAS>"
 	// AuthStorageServiceImage -
 	AuthStorageServiceImage = "<AUTHORIZATION_STORAGE_SERVICE_IMAGE>"
+	// AuthStorageServiceReplicas -
+	AuthStorageServiceReplicas = "<AUTHORIZATION_STORAGE_SERVICE_REPLICAS>"
 	// AuthRedisImage -
 	AuthRedisImage = "<AUTHORIZATION_REDIS_IMAGE>"
 	// AuthRedisCommanderImage -
 	AuthRedisCommanderImage = "<AUTHORIZATION_REDIS_COMMANDER_IMAGE>"
 	// AuthRedisStorageClass -
 	AuthRedisStorageClass = "<REDIS_STORAGE_CLASS>"
+	// AuthControllerImage -
+	AuthControllerImage = "<AUTHORIZATION_CONTROLLER_IMAGE>"
+	// AuthControllerReplicas -
+	AuthControllerReplicas = "<AUTHORIZATION_CONTROLLER_REPLICAS>"
+	// AuthLeaderElectionEnabled -
+	AuthLeaderElectionEnabled = "<AUTHORIZATION_LEADER_ELECTION_ENABLED>"
+	// AuthControllerReconcileInterval -
+	AuthControllerReconcileInterval = "<AUTHORIZATION_CONTROLLER_RECONCILE_INTERVAL>"
 
 	// AuthProxyHost -
 	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
 	// AuthProxyIngressHost -
 	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
-	// AuthProxyIngressClassName -
-	AuthProxyIngressClassName = "<PROXY_INGRESS_CLASSNAME>"
-	// AuthTenantIngressClassName -
-	AuthTenantIngressClassName = "<TENANT_INGRESS_CLASSNAME>"
-	// AuthRoleIngressClassName -
-	AuthRoleIngressClassName = "<ROLE_INGRESS_CLASSNAME>"
-	// AuthStorageIngressClassName -
-	AuthStorageIngressClassName = "<STORAGE_INGRESS_CLASSNAME>"
 
-	// AuthProxyServerComponent - karavi-authorization-proxy-server component
-	AuthProxyServerComponent = "karavi-authorization-proxy-server"
+	// AuthVaultAddress -
+	AuthVaultAddress = "<AUTHORIZATION_VAULT_ADDRESS>"
+	// AuthVaultRole -
+	AuthVaultRole = "<AUTHORIZATION_VAULT_ROLE>"
+	// AuthSkipCertificateValidation -
+	AuthSkipCertificateValidation = "<AUTHORIZATION_SKIP_CERTIFICATE_VALIDATION>"
+	// AuthKvEnginePath -
+	AuthKvEnginePath = "<AUTHORIZATION_KV_ENGINE_PATH>"
+	// AuthRedisName -
+	AuthRedisName = "<AUTHORIZATION_REDIS_NAME>"
+	// AuthRedisCommander -
+	AuthRedisCommander = "<AUTHORIZATION_REDIS_COMMANDER>"
+	// AuthRedisSentinel -
+	AuthRedisSentinel = "<AUTHORIZATION_REDIS_SENTINEL>"
+	// AuthRedisSentinelValues -
+	AuthRedisSentinelValues = "<AUTHORIZATION_REDIS_SENTINEL_VALUES>"
+	// AuthRedisReplicas -
+	AuthRedisReplicas = "<AUTHORIZATION_REDIS_REPLICAS>"
+
+	// AuthCert - for tls secret
+	AuthCert = "<BASE64_CERTIFICATE>"
+	// AuthPrivateKey - for tls secret
+	AuthPrivateKey = "<BASE64_PRIVATE_KEY>"
+
+	// AuthProxyServerComponent - proxy-server component
+	AuthProxyServerComponent = "proxy-server"
 	// AuthSidecarComponent - karavi-authorization-proxy component
 	AuthSidecarComponent = "karavi-authorization-proxy"
-	// AuthNginxIngressComponent - ingress-nginx component
-	AuthNginxIngressComponent = "ingress-nginx"
+	// AuthNginxIngressComponent - nginx component
+	AuthNginxIngressComponent = "nginx"
 	// AuthCertManagerComponent - cert-manager component
 	AuthCertManagerComponent = "cert-manager"
+	// AuthRedisComponent - redis component
+	AuthRedisComponent = "redis"
+	// AuthVaultComponent - vault component
+	AuthVaultComponent = "vault"
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
+
+	// AuthCrds - name of authorization crd manifest yaml
+	AuthCrds = "authorization-crds.yaml"
 )
 
 var (
 	redisStorageClass     string
 	authHostname          string
-	proxyIngressHost      string
 	proxyIngressClassName string
+	authCertificate       string
+	authPrivateKey        string
+	secretName            string
+
+	pathType    = networking.PathTypePrefix
+	duration    = 2160 * time.Hour // 90d
+	renewBefore = 360 * time.Hour  // 15d
 )
 
-// AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
+// AuthorizationSupportedDrivers ... is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
 var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
@@ -447,7 +494,15 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 	}
 
 	// Check for secrets
-	proxyServerSecrets := []string{"karavi-config-secret", "karavi-storage-secret"}
+	var proxyServerSecrets []string
+	switch semver.Major(auth.ConfigVersion) {
+	case "v2":
+		proxyServerSecrets = []string{"karavi-config-secret"}
+	case "v1":
+		proxyServerSecrets = []string{"karavi-config-secret", "karavi-storage-secret"}
+	default:
+		return fmt.Errorf("authorization major version %s not supported", semver.Major(auth.ConfigVersion))
+	}
 	for _, name := range proxyServerSecrets {
 		found := &corev1.Secret{}
 		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
@@ -463,15 +518,14 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 }
 
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
-func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (string, error) {
+func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return YamlString, err
 	}
 
-	deploymentPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthDeploymentManifest)
-	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
+	buf, err := readConfigFile(auth, cr, op, AuthDeploymentManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -480,26 +534,53 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	authNamespace := cr.Namespace
 
 	for _, component := range auth.Components {
+		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, component.ProxyService)
+			YamlString = strings.ReplaceAll(YamlString, AuthProxyServiceReplicas, strconv.Itoa(component.ProxyServiceReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, component.Opa)
 			YamlString = strings.ReplaceAll(YamlString, AuthOpaKubeMgmtImage, component.OpaKubeMgmt)
 			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, component.TenantService)
+			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceReplicas, strconv.Itoa(component.TenantServiceReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
+			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceReplicas, strconv.Itoa(component.RoleServiceReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
+			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceReplicas, strconv.Itoa(component.StorageServiceReplicas))
+			YamlString = strings.ReplaceAll(YamlString, AuthControllerImage, component.AuthorizationController)
+			YamlString = strings.ReplaceAll(YamlString, AuthControllerReplicas, strconv.Itoa(component.AuthorizationControllerReplicas))
+			YamlString = strings.ReplaceAll(YamlString, AuthLeaderElectionEnabled, strconv.FormatBool(component.LeaderElection))
+			YamlString = strings.ReplaceAll(YamlString, AuthControllerReconcileInterval, component.ControllerReconcileInterval)
+			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+		}
+
+		// redis component
+		if component.Name == AuthRedisComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
-			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisReplicas, strconv.Itoa(component.RedisReplicas))
 
-			for _, env := range component.Envs {
-				if env.Name == "REDIS_STORAGE_CLASS" {
-					if env.Value == "" {
-						redisStorageClass = AuthLocalStorageClass
-					} else {
-						redisStorageClass = env.Value
-					}
-				}
+			var sentinelValues []string
+			for i := 0; i < component.RedisReplicas; i++ {
+				sentinelValues = append(sentinelValues, fmt.Sprintf("sentinel-%d.sentinel.%s.svc.cluster.local:5000", i, authNamespace))
 			}
+			sentinels := strings.Join(sentinelValues, ", ")
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinelValues, sentinels)
+
+			if component.RedisStorageClass == "" {
+				redisStorageClass = AuthLocalStorageClass
+			} else {
+				redisStorageClass = component.RedisStorageClass
+			}
+		}
+
+		if component.Name == AuthVaultComponent {
+			YamlString = strings.ReplaceAll(YamlString, AuthVaultAddress, component.VaultAddress)
+			YamlString = strings.ReplaceAll(YamlString, AuthVaultRole, component.VaultRole)
+			YamlString = strings.ReplaceAll(YamlString, AuthSkipCertificateValidation, strconv.FormatBool(component.SkipCertificateValidation))
+			YamlString = strings.ReplaceAll(YamlString, AuthKvEnginePath, component.KvEnginePath)
 		}
 	}
 
@@ -510,25 +591,21 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	return YamlString, nil
 }
 
-func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (bool, string, error) {
+// getAuthorizationLocalProvisioner for redis
+func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return false, "", err
 	}
 
 	for _, component := range auth.Components {
-		if component.Name == AuthProxyServerComponent {
-			for _, env := range component.Envs {
-				if env.Name == "REDIS_STORAGE_CLASS" {
-					if env.Value == "" {
-						path := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthLocalProvisionerManifest)
-						buf, err := os.ReadFile(filepath.Clean(path))
-						if err != nil {
-							return false, "", err
-						}
-						return true, string(buf), nil
-					}
+		if component.Name == AuthRedisComponent {
+			if component.RedisStorageClass == "" {
+				buf, err := readConfigFile(auth, cr, op, AuthLocalProvisionerManifest)
+				if err != nil {
+					return false, "", err
 				}
+				return true, string(buf), nil
 			}
 		}
 	}
@@ -537,123 +614,515 @@ func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.Containe
 
 // AuthorizationServerDeployment - apply/delete deployment objects
 func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(op, cr, csmv1.Module{})
+	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(op, cr)
 	if err != nil {
 		return err
 	}
 
 	if useLocalStorage {
-		deployObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+		err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
 		if err != nil {
 			return err
 		}
-
-		for _, ctrlObj := range deployObjects {
-			if isDeleting {
-				if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			} else {
-				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-					return err
-				}
-			}
-		}
 	}
 
-	YamlString, err := getAuthorizationServerDeployment(op, cr, csmv1.Module{})
-	if err != nil {
-		return err
-	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	YamlString, err := getAuthorizationServerDeployment(op, cr)
 	if err != nil {
 		return err
 	}
 
-	for _, ctrlObj := range deployObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
+	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+	if err != nil {
+		return err
+	}
+
+	err = applyDeleteAuthorizationStorageService(ctx, isDeleting, cr, ctrlClient)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// getAuthorizationIngressRules - apply dynamic values to the Ingress manifest before installation
-func getAuthorizationIngressRules(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
-
-	auth, err := getAuthorizationModule(cr)
+// AuthorizationStorageService - apply/delete storage service deployment and volume objects
+func applyDeleteAuthorizationStorageService(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
-		return YamlString, err
+		return err
 	}
 
-	deploymentPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthIngressManifest)
-	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
+	switch semver.Major(authModule.ConfigVersion) {
+	case "v2":
+		return authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient)
+	case "v1":
+		return authorizationStorageServiceV1(ctx, isDeleting, cr, ctrlClient)
+	default:
+		return fmt.Errorf("authorization major version %s not supported", semver.Major(authModule.ConfigVersion))
+	}
+}
+
+func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
-		return YamlString, err
+		return err
 	}
 
-	YamlString = string(buf)
-	authNamespace := cr.Namespace
-
-	for _, component := range auth.Components {
-		if component.Name == AuthProxyServerComponent {
-			for _, env := range component.Envs {
-				if env.Name == "PROXY_HOST" {
-					authHostname = env.Value
-				} else if env.Name == "PROXY_INGRESS_HOST" {
-					proxyIngressHost = env.Value
-				} else if env.Name == "PROXY_INGRESS_CLASSNAME" {
-					proxyIngressClassName = env.Value
-				}
-			}
+	// get component variables
+	image := ""
+	for _, component := range authModule.Components {
+		switch component.Name {
+		case AuthProxyServerComponent:
+			image = component.StorageService
 		}
 	}
 
-	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-	YamlString = strings.ReplaceAll(YamlString, AuthProxyHost, authHostname)
-	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressHost, proxyIngressHost)
-	YamlString = strings.ReplaceAll(YamlString, AuthProxyIngressClassName, proxyIngressClassName)
-	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1)
 
-	return YamlString, nil
+	// set karavi-storage-secret volume
+	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
+		Name: "storage-volume",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "karavi-storage-secret",
+			},
+		},
+	})
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+				Name:      "storage-volume",
+				MountPath: "/etc/karavi-authorization/storage",
+			})
+			break
+		}
+	}
+
+	deploymentBytes, err := json.Marshal(&deployment)
+	if err != nil {
+		return fmt.Errorf("marshalling storage-service deployment: %w", err)
+	}
+
+	deploymentYaml, err := yaml.JSONToYAML(deploymentBytes)
+	if err != nil {
+		return fmt.Errorf("converting storage-service json to yaml: %w", err)
+	}
+
+	return applyDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
+}
+
+func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	err = applyDeleteVaultCertificates(ctx, isDeleting, cr, ctrlClient)
+	if err != nil {
+		return fmt.Errorf("applying/deleting vault certificates: %w", err)
+	}
+
+	replicas := 0
+	sentinels := ""
+	image := ""
+	vaultAddress := ""
+	vaultRole := ""
+	vaultKVEnginePath := ""
+	vaultSkipCertificateValidation := false
+	vaultCertificate := ""
+	vaultPrivateKey := ""
+	vaultCertificateAuthority := ""
+	leaderElection := true
+	for _, component := range authModule.Components {
+		switch component.Name {
+		case AuthProxyServerComponent:
+			replicas = component.StorageServiceReplicas
+			image = component.StorageService
+			leaderElection = component.LeaderElection
+		case AuthRedisComponent:
+			var sentinelValues []string
+			for i := 0; i < component.RedisReplicas; i++ {
+				sentinelValues = append(sentinelValues, fmt.Sprintf("sentinel-%d.sentinel.%s.svc.cluster.local:5000", i, cr.Namespace))
+			}
+			sentinels = strings.Join(sentinelValues, ", ")
+		case AuthVaultComponent:
+			vaultAddress = component.VaultAddress
+			vaultRole = component.VaultRole
+			vaultKVEnginePath = component.KvEnginePath
+			vaultSkipCertificateValidation = component.SkipCertificateValidation
+			vaultCertificate = component.Certificate
+			vaultPrivateKey = component.PrivateKey
+			vaultCertificateAuthority = component.CertificateAuthority
+		default:
+			continue
+		}
+	}
+
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas))
+
+	// set vault volumes
+	volume := corev1.Volume{
+		Name: "vault-client-certificate",
+		VolumeSource: corev1.VolumeSource{
+			Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{}},
+			},
+		},
+	}
+
+	if vaultCertificateAuthority != "" {
+		volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+			Secret: &corev1.SecretProjection{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "vault-certificate-authority",
+				},
+			},
+		})
+	}
+
+	if vaultCertificate != "" && vaultPrivateKey != "" {
+		volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+			Secret: &corev1.SecretProjection{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "vault-client-certificate",
+				},
+			},
+		})
+	} else {
+		volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+			Secret: &corev1.SecretProjection{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "storage-service-selfsigned-tls",
+				},
+			},
+		})
+	}
+	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+				Name:      "vault-client-certificate",
+				MountPath: "/etc/vault",
+			})
+			break
+		}
+	}
+
+	// set redis envs
+	redis := []corev1.EnvVar{
+		{
+			Name:  "SENTINELS",
+			Value: sentinels,
+		},
+		{
+			Name: "REDIS_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "redis-csm-secret",
+					},
+					Key: "password",
+				},
+			},
+		},
+	}
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].Env = append(deployment.Spec.Template.Spec.Containers[i].Env, redis...)
+			break
+		}
+	}
+
+	// set arguments
+	args := []string{
+		"--redis-sentinel=$(SENTINELS)",
+		"--redis-password=$(REDIS_PASSWORD)",
+		fmt.Sprintf("--vault-address=%s", vaultAddress),
+		fmt.Sprintf("--vault-role=%s", vaultRole),
+		fmt.Sprintf("--vault-kv-engine-path=%s", vaultKVEnginePath),
+		fmt.Sprintf("--vault-skip-certificate-validation=%t", vaultSkipCertificateValidation),
+		fmt.Sprintf("--leader-election=%t", leaderElection),
+	}
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].Args = append(deployment.Spec.Template.Spec.Containers[i].Args, args...)
+			break
+		}
+	}
+
+	deploymentBytes, err := json.Marshal(&deployment)
+	if err != nil {
+		return fmt.Errorf("marshalling storage-service deployment: %w", err)
+	}
+
+	deploymentYaml, err := yaml.JSONToYAML(deploymentBytes)
+	if err != nil {
+		return fmt.Errorf("converting storage-service json to yaml: %w", err)
+	}
+
+	err = applyDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
+	if err != nil {
+		return fmt.Errorf("applying storage-service deployment: %w", err)
+	}
+	return nil
+}
+
+// getStorageServiceScaffold returns the storage-service deployment with the common elements between v1 and v2
+// callers must ensure that other elements specific for the version get set in the returned deployment
+func getStorageServiceScaffold(name string, namespace string, image string, replicas int32) appsv1.Deployment {
+	return appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "storage-service",
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app": "storage-service",
+			},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "storage-service",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"csm": name,
+						"app": "storage-service",
+					},
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "storage-service",
+					Containers: []corev1.Container{
+						{
+							Name:            "storage-service",
+							Image:           image,
+							ImagePullPolicy: "Always",
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: 50051,
+									Name:          "grpc",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "NAMESPACE",
+									Value: namespace,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "config-volume",
+									MountPath: "/etc/karavi-authorization/config",
+								},
+								{
+									Name:      "csm-config-params",
+									MountPath: "/etc/karavi-authorization/csm-config-params",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "config-volume",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "karavi-config-secret",
+								},
+							},
+						},
+						{
+							Name: "csm-config-params",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "csm-config-params",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	// get vault certificate data from CR
+	vaultCertificate := ""
+	vaultPrivateKey := ""
+	vaultCertificateAuthority := ""
+	for _, component := range authModule.Components {
+		switch component.Name {
+		case AuthVaultComponent:
+			vaultCertificate = component.Certificate
+			vaultPrivateKey = component.PrivateKey
+			vaultCertificateAuthority = component.CertificateAuthority
+		default:
+			continue
+		}
+	}
+
+	// apply/delete vault-certificate-authority secret if it was provided
+	if vaultCertificateAuthority != "" {
+		vaultCABytes, err := base64.StdEncoding.DecodeString(vaultCertificateAuthority)
+		if err != nil {
+			return fmt.Errorf("decoding vault certificate authority: %w", err)
+		}
+
+		secret := corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vault-certificate-authority",
+				Namespace: cr.Namespace,
+			},
+			Type: corev1.SecretTypeOpaque,
+			Data: map[string][]byte{
+				"ca.crt": vaultCABytes,
+			},
+		}
+
+		secretBytes, err := json.Marshal(&secret)
+		if err != nil {
+			return fmt.Errorf("marshalling vault certificate authority secret: %w", err)
+		}
+
+		yamlString, err := yaml.JSONToYAML(secretBytes)
+		if err != nil {
+			return fmt.Errorf("converting vault certificate authority json to yaml: %w", err)
+		}
+
+		err = applyDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
+		if err != nil {
+			return fmt.Errorf("applying vault certificate authority secret: %w", err)
+		}
+	}
+
+	// apply/delete vault-client-certificate secret if it was provided
+	if vaultCertificate != "" && vaultPrivateKey != "" {
+		vaultCertBytes, err := base64.StdEncoding.DecodeString(vaultCertificate)
+		if err != nil {
+			return fmt.Errorf("decoding vault certificate: %w", err)
+		}
+
+		vaultKeyBytes, err := base64.StdEncoding.DecodeString(vaultPrivateKey)
+		if err != nil {
+			return fmt.Errorf("decoding vault private key: %w", err)
+		}
+
+		secret := corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vault-client-certificate",
+				Namespace: cr.Namespace,
+			},
+			Type: corev1.SecretTypeTLS,
+			Data: map[string][]byte{
+				"tls.crt": vaultCertBytes,
+				"tls.key": vaultKeyBytes,
+			},
+		}
+
+		secretBytes, err := json.Marshal(&secret)
+		if err != nil {
+			return fmt.Errorf("marshalling vault certificate secret: %w", err)
+		}
+
+		yamlString, err := yaml.JSONToYAML(secretBytes)
+		if err != nil {
+			return fmt.Errorf("converting vault certificate json to yaml: %w", err)
+		}
+
+		err = applyDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
+		if err != nil {
+			return fmt.Errorf("applying vault certificate secret: %w", err)
+		}
+		return nil
+	}
+
+	// apply/delete storage-service-selfsigned issuer and certificate
+	issuer := createSelfSignedIssuer(cr, "storage-service-selfsigned")
+
+	issuerByes, err := json.Marshal(issuer)
+	if err != nil {
+		return fmt.Errorf("marshaling storage-service-selfsigned issuer: %v", err)
+	}
+
+	issuerYaml, err := yaml.JSONToYAML(issuerByes)
+	if err != nil {
+		return fmt.Errorf("converting storage-service-selfsigned issuer json to yaml: %v", err)
+	}
+
+	// create/delete issuer
+	err = applyDeleteObjects(ctx, ctrlClient, string(issuerYaml), isDeleting)
+	if err != nil {
+		return err
+	}
+
+	certificate := createSelfSignedCertificate(cr, []string{fmt.Sprintf("storage-service.%s.svc.cluster.local", cr.Namespace)}, "storage-service-selfsigned", "storage-service-selfsigned-tls", "storage-service-selfsigned")
+
+	certBytes, err := json.Marshal(certificate)
+	if err != nil {
+		return fmt.Errorf("marshaling storage-service-selfsigned certificate: %v", err)
+	}
+
+	certYaml, err := yaml.JSONToYAML(certBytes)
+	if err != nil {
+		return fmt.Errorf("converting storage-service-selfsigned certificate json to yaml: %v", err)
+	}
+
+	// create/delete certificate
+	err = applyDeleteObjects(ctx, ctrlClient, string(certYaml), isDeleting)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // AuthorizationIngress - apply/delete ingress objects
-func AuthorizationIngress(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
-	YamlString, err := getAuthorizationIngressRules(op, cr)
+func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
+	ingress, err := createIngress(isOpenShift, cr)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating ingress: %v", err)
 	}
-	ingressObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+
+	ingressBytes, err := json.Marshal(ingress)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshaling ingress: %v", err)
+	}
+
+	ingressYaml, err := yaml.JSONToYAML(ingressBytes)
+	if err != nil {
+		return fmt.Errorf("marshaling ingress: %v", err)
 	}
 
 	// Wait for NGINX ingress controller to be ready before creating Ingresses
-	if !isDeleting {
+	// Needed for Kubernetes only
+	if !isDeleting && !isOpenShift {
 		if err := utils.WaitForNginxController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
 			return fmt.Errorf("NGINX ingress controller is not ready: %v", err)
 		}
 	}
 
-	for _, ctrlObj := range ingressObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
+	err = applyDeleteObjects(ctx, ctrlClient, string(ingressYaml), isDeleting)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -668,8 +1137,7 @@ func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorag
 		return YamlString, err
 	}
 
-	nginxIngressPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthNginxIngressManifest)
-	buf, err := os.ReadFile(filepath.Clean(nginxIngressPath))
+	buf, err := readConfigFile(auth, cr, op, AuthNginxIngressManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -689,21 +1157,9 @@ func NginxIngressController(ctx context.Context, isDeleting bool, op utils.Opera
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
-	}
-
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
@@ -718,8 +1174,7 @@ func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 		return YamlString, err
 	}
 
-	policyPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/%s", op.ConfigDirectory, auth.ConfigVersion, AuthPolicyManifest)
-	buf, err := os.ReadFile(filepath.Clean(policyPath))
+	buf, err := readConfigFile(auth, cr, op, AuthPolicyManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -738,22 +1193,411 @@ func InstallPolicies(ctx context.Context, isDeleting bool, op utils.OperatorConf
 		return err
 	}
 
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
 	}
 
-	for _, ctrlObj := range deployObjects {
-		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
+	return nil
+}
+
+func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
+	log := logger.GetLogger(ctx)
+	YamlString := ""
+	authNamespace := cr.Namespace
+
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return false, YamlString, err
+	}
+
+	for _, component := range authModule.Components {
+		if component.Name == AuthProxyServerComponent {
+			authHostname = component.Hostname
+			authCertificate = component.Certificate
+			authPrivateKey = component.PrivateKey
+		}
+	}
+
+	if authCertificate != "" || authPrivateKey != "" {
+		// use custom tls secret
+		if authCertificate != "" && authPrivateKey != "" {
+			log.Infof("using user provided certificate and key for authorization")
+			buf, err := readConfigFile(authModule, cr, op, AuthCustomCert)
+			if err != nil {
+				return false, YamlString, err
 			}
+
+			YamlString = string(buf)
+			YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
+			YamlString = strings.ReplaceAll(YamlString, AuthCert, authCertificate)
+			YamlString = strings.ReplaceAll(YamlString, AuthPrivateKey, authPrivateKey)
 		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
+			return false, YamlString, fmt.Errorf("authorization install failed -- either certificate or private key missing for custom cert")
+		}
+	} else {
+		// use self-signed cert
+		log.Info("using self-signed certificate for authorization")
+		return true, "", nil
+	}
+
+	return false, YamlString, nil
+}
+
+// InstallWithCerts - apply/delete certificate related objects
+func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	useSelfSignedCert, YamlString, err := getCerts(ctx, op, cr)
+	if err != nil {
+		return err
+	}
+
+	if useSelfSignedCert {
+		issuer := createSelfSignedIssuer(cr, "selfsigned")
+		issuerByes, err := json.Marshal(issuer)
+		if err != nil {
+			return fmt.Errorf("marshaling ingress: %v", err)
+		}
+
+		issuerYaml, err := yaml.JSONToYAML(issuerByes)
+		if err != nil {
+			return fmt.Errorf("marshaling ingress: %v", err)
+		}
+
+		// create/delete issuer
+		err = applyDeleteObjects(ctx, ctrlClient, string(issuerYaml), isDeleting)
+		if err != nil {
+			return err
+		}
+
+		hosts, err := getHosts(cr)
+		if err != nil {
+			return err
+		}
+
+		cert := createSelfSignedCertificate(cr, hosts, "karavi-auth", "karavi-selfsigned-tls", "selfsigned")
+
+		certBytes, err := json.Marshal(cert)
+		if err != nil {
+			return fmt.Errorf("marshaling ingress: %v", err)
+		}
+
+		certYaml, err := yaml.JSONToYAML(certBytes)
+		if err != nil {
+			return fmt.Errorf("marshaling ingress: %v", err)
+		}
+
+		// create/delete certificate
+		err = applyDeleteObjects(ctx, ctrlClient, string(certYaml), isDeleting)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// getAuthCrdDeploy - apply and deploy authorization crd manifest
+func getAuthCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	buf, err := readConfigFile(auth, cr, op, AuthCrds)
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+
+	yamlString = strings.ReplaceAll(yamlString, AuthNamespace, cr.Namespace)
+
+	return yamlString, nil
+}
+
+// AuthCrdDeploy - apply and delete Auth crds deployment
+func AuthCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	// v1 does not have custom resources, so treat it like a no-op
+	if semver.Compare(auth.ConfigVersion, "v2.0.0-alpha") < 0 {
+		return nil
+	}
+
+	yamlString, err := getAuthCrdDeploy(op, cr)
+	if err != nil {
+		return err
+	}
+
+	err = applyDeleteObjects(ctx, ctrlClient, yamlString, false)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createSelfSignedIssuer(cr csmv1.ContainerStorageModule, name string) *certificate.Issuer {
+	issuer := &certificate.Issuer{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Issuer",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: cr.Namespace,
+		},
+		Spec: certificate.IssuerSpec{
+			IssuerConfig: certificate.IssuerConfig{
+				SelfSigned: &certificate.SelfSignedIssuer{
+					CRLDistributionPoints: []string{},
+				},
+			},
+		},
+	}
+
+	return issuer
+}
+
+func createSelfSignedCertificate(cr csmv1.ContainerStorageModule, hosts []string, name string, secretName string, issuerName string) *certificate.Certificate {
+	certificate := &certificate.Certificate{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Certificate",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: cr.Namespace,
+		},
+		Spec: certificate.CertificateSpec{
+			SecretName: secretName,
+			Duration: &metav1.Duration{
+				Duration: duration, // 90d
+			},
+			RenewBefore: &metav1.Duration{
+				Duration: renewBefore, // 15d
+			},
+			Subject: &certificate.X509Subject{
+				Organizations: []string{"dellemc"},
+			},
+			IsCA: false,
+			PrivateKey: &certificate.CertificatePrivateKey{
+				Algorithm: "RSA",
+				Encoding:  "PKCS1",
+				Size:      2048,
+			},
+			Usages: []certificate.KeyUsage{
+				"client auth",
+				"server auth",
+			},
+			DNSNames: hosts,
+			IssuerRef: cmmetav1.ObjectReference{
+				Name:  issuerName,
+				Kind:  "Issuer",
+				Group: "cert-manager.io",
+			},
+		},
+	}
+
+	return certificate
+}
+
+func createIngress(isOpenShift bool, cr csmv1.ContainerStorageModule) (*networking.Ingress, error) {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	className, err := getClassName(isOpenShift, cr)
+	if err != nil {
+		return nil, fmt.Errorf("getting ingress class name: %v", err)
+	}
+
+	annotations, err := getAnnotations(isOpenShift, cr)
+	if err != nil {
+		return nil, fmt.Errorf("getting annotations: %v", err)
+	}
+
+	hosts, err := getHosts(cr)
+	if err != nil {
+		return nil, fmt.Errorf("getting hosts: %v", err)
+	}
+
+	rules, err := setIngressRules(cr)
+	if err != nil {
+		return nil, fmt.Errorf("setting ingress rules: %v", err)
+	}
+
+	for _, component := range authModule.Components {
+		if component.Name == AuthProxyServerComponent {
+			if component.Certificate != "" && component.PrivateKey != "" {
+				secretName = "user-provided-tls"
+			} else {
+				secretName = "karavi-selfsigned-tls"
 			}
 		}
 	}
 
-	return nil
+	ingress := networking.Ingress{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Ingress",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "proxy-server",
+			Namespace:   cr.Namespace,
+			Annotations: annotations,
+		},
+		Spec: networking.IngressSpec{
+			IngressClassName: &className,
+			TLS: []networking.IngressTLS{
+				{
+					Hosts:      hosts,
+					SecretName: secretName,
+				},
+			},
+			Rules: rules,
+		},
+	}
+
+	return &ingress, nil
+}
+
+func getAnnotations(isOpenShift bool, cr csmv1.ContainerStorageModule) (map[string]string, error) {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	annotations := make(map[string]string)
+
+	if isOpenShift {
+		annotations["route.openshift.io/termination"] = "edge"
+	}
+
+	for _, component := range authModule.Components {
+		if component.Name == AuthProxyServerComponent {
+			for _, ingress := range component.ProxyServerIngress {
+				for annotation, value := range ingress.Annotations {
+					annotations[annotation] = value
+				}
+			}
+		}
+	}
+
+	return annotations, nil
+}
+
+func getHosts(cr csmv1.ContainerStorageModule) ([]string, error) {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	var hosts []string
+	for _, component := range authModule.Components {
+		if component.Name == AuthProxyServerComponent {
+			// hostname
+			hosts = append(hosts, component.Hostname)
+
+			for _, proxyServerIngress := range component.ProxyServerIngress {
+				// proxyServerIngress.hosts
+				hosts = append(hosts, proxyServerIngress.Hosts...)
+			}
+		}
+	}
+
+	return hosts, nil
+}
+
+func getClassName(isOpenShift bool, cr csmv1.ContainerStorageModule) (string, error) {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return "", err
+	}
+
+	for _, component := range authModule.Components {
+		if component.Name == AuthProxyServerComponent {
+			for _, proxyServerIngress := range component.ProxyServerIngress {
+				if !isOpenShift {
+					proxyIngressClassName = proxyServerIngress.IngressClassName
+				} else {
+					proxyIngressClassName = "openshift-default"
+				}
+			}
+		}
+	}
+
+	return proxyIngressClassName, nil
+}
+
+func setIngressRules(cr csmv1.ContainerStorageModule) ([]networking.IngressRule, error) {
+	var rules []networking.IngressRule
+	hosts, err := getHosts(cr)
+	if err != nil {
+		return nil, fmt.Errorf("getting hosts: %v", err)
+	}
+
+	for _, host := range hosts {
+		rule := []networking.IngressRule{
+			{
+				Host: host,
+				IngressRuleValue: networking.IngressRuleValue{
+					HTTP: &networking.HTTPIngressRuleValue{
+						Paths: []networking.HTTPIngressPath{
+							{
+								Backend: networking.IngressBackend{
+									Service: &networking.IngressServiceBackend{
+										Name: "proxy-server",
+										Port: networking.ServiceBackendPort{
+											Number: 8080,
+										},
+									},
+								},
+								Path:     "/",
+								PathType: &pathType,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		rules = append(rules, rule...)
+	}
+
+	noHostRule := []networking.IngressRule{
+		{
+			// no host specified, uses cluster node IP address
+			IngressRuleValue: networking.IngressRuleValue{
+				HTTP: &networking.HTTPIngressRuleValue{
+					Paths: []networking.HTTPIngressPath{
+						{
+							Backend: networking.IngressBackend{
+								Service: &networking.IngressServiceBackend{
+									Name: "proxy-server",
+									Port: networking.ServiceBackendPort{
+										Number: 8080,
+									},
+								},
+							},
+							Path:     "/",
+							PathType: &pathType,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rules = append(rules, noHostRule...)
+
+	return rules, nil
 }

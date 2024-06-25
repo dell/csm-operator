@@ -112,6 +112,11 @@ type ReplicaCluster struct {
 	ClusterK8sClient  kubernetes.Interface
 }
 
+// CSMComponentType - type constraint for DriverType and ModuleType
+type CSMComponentType interface {
+	csmv1.ModuleType | csmv1.DriverType
+}
+
 const (
 	// DefaultReleaseName constant
 	DefaultReleaseName = "<DriverDefaultReleaseName>"
@@ -137,8 +142,6 @@ const (
 	ObservabilityNamespace = "karavi"
 	// AuthorizationNamespace - authorization
 	AuthorizationNamespace = "authorization"
-	// AuthProxyServerComponent - karavi-authorization-proxy-server component
-	AuthProxyServerComponent = "karavi-authorization-proxy-server"
 	// PodmonControllerComponent - podmon-controller
 	PodmonControllerComponent = "podmon-controller"
 	// PodmonNodeComponent - podmon-node
@@ -1150,7 +1153,7 @@ func DetermineUnitTestRun(ctx context.Context) bool {
 }
 
 // IsValidUpgrade will check if upgrade of module/driver is allowed
-func IsValidUpgrade[T csmv1.CSMComponentType](ctx context.Context, oldVersion, newVersion string, csmComponentType T, operatorConfig OperatorConfig) (bool, error) {
+func IsValidUpgrade[T CSMComponentType](ctx context.Context, oldVersion, newVersion string, csmComponentType T, operatorConfig OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 
 	// if versions are equal, it is a modification
@@ -1194,7 +1197,7 @@ func IsValidUpgrade[T csmv1.CSMComponentType](ctx context.Context, oldVersion, n
 	return isUpgradeValid || isDowngradeValid, fmt.Errorf("upgrade/downgrade of %s from version %s to %s not valid", csmComponentType, oldVersion, newVersion)
 }
 
-func getUpgradeInfo[T csmv1.CSMComponentType](ctx context.Context, operatorConfig OperatorConfig, csmCompType T, oldVersion string) (string, error) {
+func getUpgradeInfo[T CSMComponentType](ctx context.Context, operatorConfig OperatorConfig, csmCompType T, oldVersion string) (string, error) {
 	log := logger.GetLogger(ctx)
 
 	csmCompConfigDir := ""
