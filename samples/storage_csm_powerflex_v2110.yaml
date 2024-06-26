@@ -183,10 +183,13 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
+      # For PowerFlex Tech-Preview v2.0.0-alpha use v1.11.0 as configVersion DO NOT change the configVersion to v2.0.0-alpha
       configVersion: v1.11.0
       components:
         - name: karavi-authorization-proxy
+          # Use image: dellemc/csm-authorization-sidecar:v2.0.0-alpha for PowerFlex Tech-Preview v2.0.0-alpha
           image: dellemc/csm-authorization-sidecar:v1.11.0
+          # image: dellemc/csm-authorization-sidecar:v2.0.0-alpha
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
