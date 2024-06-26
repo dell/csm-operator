@@ -189,7 +189,6 @@ spec:
         - name: karavi-authorization-proxy
           # Use image: dellemc/csm-authorization-sidecar:v2.0.0-alpha for PowerFlex Tech-Preview v2.0.0-alpha
           image: dellemc/csm-authorization-sidecar:v1.11.0
-          # image: dellemc/csm-authorization-sidecar:v2.0.0-alpha
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
