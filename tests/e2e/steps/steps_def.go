@@ -1050,13 +1050,6 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		proxyHost       = ""
 	)
 
-	// by default, use set defined in env file
-	endpointvar := "END_POINT"
-	systemIdvar := "SYSTEM_ID"
-	uservar := "STORAGE_USER"
-	passvar := "STORAGE_PASSWORD"
-	poolvar := "STORAGE_POOL"
-
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
 	if driver == "powerflex" {
@@ -1419,25 +1412,6 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 	return nil
 }
 
-func (step *Step) validateRbacCreated(_ Resource, namespace string) error {
-	fmt.Println("=== validating Rbac created ===")
-
-	cmd := exec.Command("kubectl", "get", "rolebindings", "-n", "namespacename")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to run command")
-	}
-
-	roles := strings.Split(out.String(), "\n")
-	for _, role := range roles {
-		if strings.Contains(role, "Role/connectivity-client-docker-k8s") {
-			return nil
-		}
-	}
-
-}
 func (step *Step) validateRbacCreated(_ Resource, namespace string) error {
 	fmt.Println("=== validating Rbac created ===")
 
