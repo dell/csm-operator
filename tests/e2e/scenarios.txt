@@ -67,7 +67,9 @@
  53. Install App Mobility with powerflex driver- default
  54. Install PowerMax Driver(Standalone)
 	cert-csi
- 55. Install PowerMax Driver(With Observability)
+ 55. Install PowerMax Driver(Sidecar)
+    cert-csi
+ 56. Install PowerMax Driver(With Observability)
 	cert-csi
- 56. Install PowerMax Driver(Standalone), Enable/Disable Observability
+ 57. Install PowerMax Driver(Standalone), Enable/Disable Observability
 

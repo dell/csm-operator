@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dell/csm-operator/pkg/modules"
+
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	v1 "github.com/dell/csm-operator/api/v1"
@@ -258,6 +260,19 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyError() {
 	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
 	csm.Spec.Modules = getReverseProxyModule()
 	reconciler := suite.createReconciler()
+	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestReconcileReverseProxyServiceError() {
+	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
+	revProxy := getReverseProxyModule()
+	deploAsSidecar := corev1.EnvVar{Name: "DeployAsSidecar", Value: "true"}
+	revProxy[0].Components[0].Envs = append(revProxy[0].Components[0].Envs, deploAsSidecar)
+	csm.Spec.Driver.CSIDriverType = "powermax"
+	reconciler := suite.createReconciler()
+	_ = modules.ReverseProxyPrecheck(ctx, operatorConfig, revProxy[0], csm, reconciler)
+	revProxy[0].ConfigVersion = ""
 	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 }

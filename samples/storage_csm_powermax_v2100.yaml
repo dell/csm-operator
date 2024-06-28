@@ -96,11 +96,6 @@ spec:
         # Default value: "" <empty>
         - name: X_CSI_TRANSPORT_PROTOCOL
           value: ""
-        # X_CSI_POWERMAX_PROXY_SERVICE_NAME: Refers to the name of the proxy service in kubernetes
-        # Allowed values: "csipowermax-reverseproxy"
-        # default values: "csipowermax-reverseproxy"
-        - name: X_CSI_POWERMAX_PROXY_SERVICE_NAME
-          value: "csipowermax-reverseproxy"
         # VMware/vSphere virtualization support
         # set X_CSI_VSPHERE_ENABLED to true, if you to enable VMware virtualized environment support via RDM
         # Allowed values:
@@ -273,7 +268,11 @@ spec:
             value: "2222"
           - name: X_CSI_CONFIG_MAP_NAME
             value: "powermax-reverseproxy-config"
-
+          # deployAsSidecar defines the way reversproxy is installed with the driver
+          # set it true, if csm-auth is enabled / you want it as a sidecar container
+          # set it false, if you want it as a deployment
+          - name: "DeployAsSidecar"
+            value: "true"
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enabled: Enable/Disable csm-authorization

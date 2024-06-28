@@ -727,7 +727,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		if err := r.reconcileReverseProxy(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy reverseproxy proxy server: %v", err)
 		}
-		log.Infow("Create/Update reverseproxy successful...")
 	}
 
 	// Get Driver resources
@@ -818,6 +817,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
+			case csmv1.ReverseProxy:
+				log.Info("Injecting CSI ReverseProxy")
+				dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
+				if err != nil {
+					return fmt.Errorf("injecting replication into deployment: %v", err)
+				}
+				controller.Deployment = *dp
 			}
 		}
 	}
@@ -1140,7 +1146,10 @@ func (r *ContainerStorageModuleReconciler) reconcileReverseProxy(ctx context.Con
 	log := logger.GetLogger(ctx)
 	log.Infow("Reconcile reverseproxy proxy")
 	if err := modules.ReverseProxyServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-		return fmt.Errorf("unable to reconcile reverse-proxy proxy server: %v", err)
+		return fmt.Errorf("unable to reconcile reverse-proxy server: %v", err)
+	}
+	if err := modules.ReverseProxyStartService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
 	}
 	return nil
 }

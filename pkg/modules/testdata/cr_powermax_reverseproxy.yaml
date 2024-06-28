@@ -46,6 +46,8 @@ spec:
               value: "2222"
             - name: X_CSI_CONFIG_MAP_NAME
               value: "powermax-reverseproxy-config"
+            - name: "DeployAsSidecar"
+              value: "false"
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
