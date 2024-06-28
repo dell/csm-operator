@@ -233,7 +233,8 @@ func getDriverDeployment(cr csmv1.ContainerStorageModule, ctrlClient client.Clie
 	dp := &appsv1.Deployment{}
 	if err := ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      fmt.Sprintf("%s-controller", cr.Name)}, dp); err != nil {
+		Name:      fmt.Sprintf("%s-controller", cr.Name),
+	}, dp); err != nil {
 		return nil, err
 	}
 
@@ -244,7 +245,8 @@ func getDriverDaemonset(cr csmv1.ContainerStorageModule, ctrlClient client.Clien
 	ds := &appsv1.DaemonSet{}
 	if err := ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      fmt.Sprintf("%s-node", cr.Name)}, ds); err != nil {
+		Name:      fmt.Sprintf("%s-node", cr.Name),
+	}, ds); err != nil {
 		return nil, err
 	}
 
@@ -257,7 +259,8 @@ func getObservabilityDeployment(namespace string, driverType csmv1.DriverType, c
 
 	if err := ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: namespace,
-		Name:      dpName}, dp); err != nil {
+		Name:      dpName,
+	}, dp); err != nil {
 		return nil, err
 	}
 

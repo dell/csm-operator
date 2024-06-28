@@ -94,11 +94,6 @@ spec:
         # Default value: "" <empty>
         - name: X_CSI_TRANSPORT_PROTOCOL
           value: ""
-        # X_CSI_POWERMAX_PROXY_SERVICE_NAME: Refers to the name of the proxy service in kubernetes
-        # Allowed values: "csipowermax-reverseproxy"
-        # default values: "csipowermax-reverseproxy"
-        - name: X_CSI_POWERMAX_PROXY_SERVICE_NAME
-          value: "csipowermax-reverseproxy"
         # VMware/vSphere virtualization support
         # set X_CSI_VSPHERE_ENABLED to true, if you to enable VMware virtualized environment support via RDM
         # Allowed values:

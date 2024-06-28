@@ -54,7 +54,7 @@ rules:
 # below for snapshotter
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
     verbs: ["get", "list", "watch"]
@@ -324,3 +324,5 @@ spec:
         - name: powermax-config-params
           configMap:
              name: <DriverDefaultReleaseName>-config-params
+        - name: cert-dir
+          emptyDir:
