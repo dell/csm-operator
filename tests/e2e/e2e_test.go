@@ -112,7 +112,6 @@ var _ = BeforeSuite(func() {
 	step.StepRunnerInit(stepRunner, ctrlClient, clientSet)
 
 	beautify = "    "
-
 })
 
 var _ = Describe("[run-e2e-test] E2E Testing", func() {
