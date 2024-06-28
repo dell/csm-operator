@@ -16,6 +16,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/dell/csm-operator/pkg/drivers"
+	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
@@ -226,7 +229,7 @@ func TestReverseProxyServer(t *testing.T) {
 					Name: "csm-config-params",
 				},
 			}
-
+			deployAsSidecar = false
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
@@ -236,15 +239,25 @@ func TestReverseProxyServer(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-
+			deployAsSidecar = false
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating as Sidecar": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - reverseproxy module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
 			if err != nil {
 				panic(err)
 			}
+			deployAsSidecar = false
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
@@ -253,6 +266,88 @@ func TestReverseProxyServer(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			err := ReverseProxyServer(context.TODO(), isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestReverseProxyInjectDeployment(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - no deployAsSidecar": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			if err != nil {
+				panic(err)
+			}
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+		"success - deployAsSidecar": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, dp, op, cr := tc(t)
+			_, err := ReverseProxyInjectDeployment(dp, cr, op)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestReverseProxyStartService(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
+		"success - no service": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = false
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creates service": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - deletes service": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, isDeleting, cr, client, op := tc(t)
+			err := ReverseProxyStartService(ctx, isDeleting, op, cr, client)
 			if success {
 				assert.NoError(t, err)
 			} else {

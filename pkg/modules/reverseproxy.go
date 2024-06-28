@@ -17,7 +17,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+
+	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+
+	"sigs.k8s.io/yaml"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/drivers"
@@ -32,17 +38,24 @@ import (
 // Constants to be used in reverse proxy config files
 const (
 	ReverseProxyServerComponent = "csipowermax-reverseproxy" // #nosec G101
-	ReverseProxyDeployement     = "controller.yaml"
+	ReverseProxyDeployment      = "controller.yaml"
+	ReverseProxySidecar         = "container.yaml"
+	ReverseProxyService         = "service.yaml"
 	ReverseProxyImage           = "<REVERSEPROXY_PROXY_SERVER_IMAGE>"
 	ReverseProxyTLSSecret       = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
 	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
 	ReverseProxyPort            = "<X_CSI_REVPROXY_PORT>"
 )
 
+// var used in deploying reverseproxy
 var (
-	proxyPort      string
-	proxyTLSSecret string
-	proxyConfig    string
+	deployAsSidecar            bool
+	CSIPmaxRevProxyServiceName = "X_CSI_POWERMAX_PROXY_SERVICE_NAME"
+	CSIPmaxRevProxyPort        = "X_CSI_POWERMAX_SIDECAR_PROXY_PORT"
+	RevProxyDefaultPort        = "2222"
+	RevProxyServiceName        = "csipowermax-reverseproxy"
+	RevProxyConfigMapVolName   = "configmap-volume"
+	RevProxyTLSSecretVolName   = "tls-secret"
 )
 
 // ReverseproxySupportedDrivers is a map containing the CSI Drivers supported by CSM Reverseproxy. The key is driver name and the value is the driver plugin identifier
@@ -81,6 +94,9 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 		if env.Name == "X_CSI_CONFIG_MAP_NAME" {
 			proxyConfigMap = env.Value
 		}
+		if env.Name == "DeployAsSidecar" {
+			deployAsSidecar, _ = strconv.ParseBool(env.Value)
+		}
 	}
 
 	err := r.GetClient().Get(ctx, types.NamespacedName{Name: proxyServerSecret, Namespace: cr.GetNamespace()}, &corev1.Secret{})
@@ -103,6 +119,12 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 // ReverseProxyServer - apply/delete deployment objects
 func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
+	log.Infof("Checking if DeployAsSidar is false...\n")
+	if deployAsSidecar {
+		log.Infof("DeployAsSidar is true...csi-reverseproxy will be installed as sidecar\n")
+		log.Infof("exiting ReverseProxyServer...\n")
+		return nil
+	}
 	YamlString, err := getReverseProxyDeployment(op, cr, csmv1.Module{})
 	if err != nil {
 		return err
@@ -124,7 +146,39 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 			}
 		}
 	}
+	log.Info("Create/Update reverseproxy successful...")
+	return nil
+}
 
+// ReverseProxyStartService starts reverseproxy service for node to connect to revserseproxy sidecar
+func ReverseProxyStartService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
+	if !deployAsSidecar {
+		log.Infof("DeployAsSidar is false...csi-reverseproxy service is part of deployement already\n")
+		return nil
+	}
+	YamlString, err := getReverseProxyService(op, cr)
+	if err != nil {
+		return err
+	}
+	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range deployObjects {
+		log.Infof("Object: %v -----\n", ctrlObj)
+		if isDeleting {
+			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+	log.Info("Create/Update reverseproxy serivce successful...")
 	return nil
 }
 
@@ -137,6 +191,37 @@ func getReverseProxyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error
 	return csmv1.Module{}, fmt.Errorf("reverseproxy module not found")
 }
 
+// getReverseProxyService - gets the reverseproxy service manifest
+func getReverseProxyService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+	revProxy, err := getReverseProxyModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	buf, err := readConfigFile(revProxy, cr, op, ReverseProxyService)
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+	var proxyPort string
+
+	for _, component := range revProxy.Components {
+		if component.Name == ReverseProxyServerComponent {
+			for _, env := range component.Envs {
+				if env.Name == "X_CSI_REVPROXY_PORT" {
+					proxyPort = env.Value
+				}
+			}
+		}
+	}
+	yamlString = strings.ReplaceAll(yamlString, utils.DefaultReleaseName, cr.Name)
+	yamlString = strings.ReplaceAll(yamlString, ReverseProxyPort, proxyPort)
+	yamlString = strings.ReplaceAll(yamlString, utils.DefaultReleaseNamespace, cr.Namespace)
+	return yamlString, nil
+}
+
 // getReverseProxyDeployment - updates deployment manifest with reverseproxy CRD values
 func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, revProxy csmv1.Module) (string, error) {
 	YamlString := ""
@@ -145,7 +230,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 		return YamlString, err
 	}
 
-	deploymentPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, revProxy.ConfigVersion, ReverseProxyDeployement)
+	deploymentPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, revProxy.ConfigVersion, ReverseProxyDeployment)
 	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
 	if err != nil {
 		return YamlString, err
@@ -153,6 +238,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 
 	YamlString = string(buf)
 	proxyNamespace := cr.Namespace
+	var proxyTLSSecret, proxyPort, proxyConfig string
 
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
@@ -176,4 +262,120 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, proxyConfig)
 	return YamlString, nil
+}
+
+// ReverseProxyInjectDeployment injects reverseproxy container as sidecar into controller
+func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*v1.DeploymentApplyConfiguration, error) {
+	log := logger.GetLogger(context.Background())
+
+	if !deployAsSidecar {
+		log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployement\n")
+		log.Infof("adding proxy service name...\n")
+		for i, cnt := range dp.Spec.Template.Spec.Containers {
+			if *cnt.Name == "driver" {
+				dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
+					acorev1.EnvVarApplyConfiguration{Name: &CSIPmaxRevProxyServiceName, Value: &RevProxyServiceName},
+				)
+				break
+			}
+		}
+		return &dp, nil
+	}
+
+	revProxyModule, containerPtr, err := getRevproxyApplyCR(cr, op)
+	if err != nil {
+		return nil, err
+	}
+	container := *containerPtr
+	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
+	// inject revProxy ENVs in driver environment
+	revProxyPort := getRevProxyPort(*revProxyModule)
+	for i, cnt := range dp.Spec.Template.Spec.Containers {
+		if *cnt.Name == "driver" {
+			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
+				acorev1.EnvVarApplyConfiguration{Name: &CSIPmaxRevProxyPort, Value: &revProxyPort},
+			)
+			break
+		}
+	}
+
+	// inject revProxy volumes in driver volumes
+	revProxyVolume := getRevProxyVolumeComp(*revProxyModule)
+	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, revProxyVolume...)
+
+	return &dp, nil
+}
+
+func getRevProxyPort(revProxyModule csmv1.Module) string {
+	revProxyPort := RevProxyDefaultPort
+	for _, component := range revProxyModule.Components {
+		if component.Name == ReverseProxyServerComponent {
+			for _, env := range component.Envs {
+				if env.Name == "X_CSI_REVPROXY_PORT" {
+					revProxyPort = env.Value
+				}
+			}
+		}
+	}
+	return revProxyPort
+}
+
+func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyConfiguration {
+	var revProxyConfigMap, revProxyTLSSecret string
+	for _, component := range revProxyModule.Components {
+		if component.Name == ReverseProxyServerComponent {
+			for _, env := range component.Envs {
+				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
+					revProxyConfigMap = env.Value
+				}
+				if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
+					revProxyTLSSecret = env.Value
+				}
+			}
+		}
+	}
+	optional := true
+	revProxyVolumes := []acorev1.VolumeApplyConfiguration{
+		{
+			Name: &RevProxyConfigMapVolName,
+			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+				ConfigMap: &acorev1.ConfigMapVolumeSourceApplyConfiguration{
+					LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{Name: &revProxyConfigMap},
+					Optional:                               &optional,
+				},
+			},
+		},
+		{
+			Name: &RevProxyTLSSecretVolName,
+			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+				Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+					SecretName: &revProxyTLSSecret,
+				},
+			},
+		},
+	}
+
+	return revProxyVolumes
+}
+
+// returns revproxy module and container
+func getRevproxyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+	var err error
+	revProxyModule, err := getReverseProxyModule(cr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	buf, err := readConfigFile(revProxyModule, cr, op, ReverseProxySidecar)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	var container acorev1.ContainerApplyConfiguration
+	err = yaml.Unmarshal([]byte(YamlString), &container)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &revProxyModule, &container, nil
 }

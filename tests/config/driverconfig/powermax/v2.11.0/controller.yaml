@@ -54,7 +54,7 @@ rules:
 # below for snapshotter
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
     verbs: ["get", "list", "watch"]
@@ -274,8 +274,6 @@ spec:
               value: "<X_CSI_IG_NODENAME_TEMPLATE>"
             - name: X_CSI_IG_MODIFY_HOSTNAME
               value: "<X_CSI_IG_MODIFY_HOSTNAME>"
-            - name: X_CSI_POWERMAX_PROXY_SERVICE_NAME
-              value: "powermax-reverseproxy"
             - name: X_CSI_REPLICATION_CONTEXT_PREFIX
               value: powermax/
             - name: X_CSI_REPLICATION_PREFIX
@@ -324,3 +322,5 @@ spec:
         - name: powermax-config-params
           configMap:
              name: <DriverDefaultReleaseName>-config-params
+        - name: cert-dir
+          emptyDir:
