@@ -30,7 +30,7 @@ const (
 	PFlexConfigVersion         string = "v2.11.0"
 	DowngradeConfigVersion     string = "v2.10.0"
 	ConfigVersion              string = "v2.10.0"
-	UpgradeConfigVersion       string = "v2.10.0"
+	UpgradeConfigVersion       string = "v2.9.0"
 	JumpUpgradeConfigVersion   string = "v2.11.0"
 	JumpDowngradeConfigVersion string = "v2.10.0"
 	OldConfigVersion           string = "v2.2.0"

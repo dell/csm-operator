@@ -31,17 +31,17 @@ spec:
         env:
         - value: docker.io/dellemc/dell-csm-operator:v1.6.0
           name: RELATED_IMAGE_dell-csm-operator
-        - value: docker.io/dellemc/csi-isilon:v2.10.0
+        - value: docker.io/dellemc/csi-isilon:v2.11.0
           name: RELATED_IMAGE_csi-isilon
-        - value: docker.io/dellemc/csi-powermax:v2.10.0
+        - value: docker.io/dellemc/csi-powermax:v2.11.0
           name: RELATED_IMAGE_csi-powermax
         - value: docker.io/dellemc/csipowermax-reverseproxy:v2.10.0
           name: RELATED_IMAGE_csipowermax-reverseproxy
-        - value: docker.io/dellemc/csi-powerstore:v2.10.0
+        - value: docker.io/dellemc/csi-powerstore:v2.11.0
           name: RELATED_IMAGE_csi-powerstore
-        - value: docker.io/dellemc/csi-unity:v2.10.0
+        - value: docker.io/dellemc/csi-unity:v2.11.0
           name: RELATED_IMAGE_csi-unity
-        - value: docker.io/dellemc/csi-vxflexos:v2.10.0
+        - value: docker.io/dellemc/csi-vxflexos:v2.11.0
           name: RELATED_IMAGE_csi-vxflexos
         - value: docker.io/dellemc/sdc:4.5.1
           name: RELATED_IMAGE_sdc
