@@ -171,6 +171,18 @@ spec:
                   key: password
                   name: vcenter-creds
                   optional: true
+            - name: X_CSI_CSIREVPROXY_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: csirevproxy-tls-secret
+                  optional: true
+            - name: X_CSI_CSIREVPROXY_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: csirevproxy-tls-secret
+                  optional: true
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com
