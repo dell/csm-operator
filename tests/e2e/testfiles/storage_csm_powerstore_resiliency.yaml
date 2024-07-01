@@ -36,7 +36,6 @@ spec:
     forceUpdate: true
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerStore driver
       image: "dellemc/csi-powerstore:nightly"
       imagePullPolicy: IfNotPresent
       envs:
