@@ -301,6 +301,18 @@ spec:
                   key: password
                   name: vcenter-creds
                   optional: true
+            - name: X_CSI_CSIREVPROXY_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: csirevproxy-tls-secret
+                  optional: true
+            - name: X_CSI_CSIREVPROXY_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: csirevproxy-tls-secret
+                  optional: true
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
