@@ -199,7 +199,7 @@ spec:
       configVersion: v1.10.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.9.0
+          image: dellemc/podmon:v1.10.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powermax"
@@ -214,7 +214,7 @@ spec:
             - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powermax.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:v1.9.0
+          image: dellemc/podmon:v1.10.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
