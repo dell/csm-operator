@@ -571,6 +571,7 @@ metadata:
             },
             "modules": [
               {
+                "tlsSecret": "csirevproxy-tls-secret",
                 "components": [
                   {
                     "envs": [
