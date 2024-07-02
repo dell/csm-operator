@@ -19,7 +19,7 @@ mode: StandAlone # Mode for the reverseproxy, should not be changed
 port: 2222
 logLevel: debug
 logFormat: text
-tlsSecret: csirevproxy-tls-secret
+tlsCertSecret: csirevproxy-tls-secret
 standAloneConfig:
   storageArrays:
     - storageArrayId: "000000000001" # arrayID
