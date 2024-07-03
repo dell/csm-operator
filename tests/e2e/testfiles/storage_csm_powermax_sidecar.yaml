@@ -173,18 +173,13 @@ spec:
       enabled: true
       configVersion: v2.10.0
       forceRemoveModule: true
+      tlsCertSecret: csirevproxy-tls-secret
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
           image: dellemc/csipowermax-reverseproxy:v2.10.0
           envs:
-            # "tlsSecret" defines the TLS secret that is created with certificate
-            # and its associated key
-            # Default value: None
-            # Example: "tls-secret"
-            - name: X_CSI_REVPROXY_TLS_SECRET
-              value: "csirevproxy-tls-secret"
             - name: X_CSI_REVPROXY_PORT
               value: "2222"
             - name: X_CSI_CONFIG_MAP_NAME
