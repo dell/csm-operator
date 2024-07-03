@@ -71,22 +71,24 @@ spec:
           # Default value: None
           storageclass: "local-storage"
         - name: vault
-          vaultAddress: https://10.0.0.1:8400
-          vaultRole: csm-authorization
-          skipCertificateValidation: true
-          kvEnginePath: secret
-          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
-          #  for self-signed certs, leave empty string
-          # Allowed values: string
-          certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmR1bW15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
-          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
-          #  for self-signed certs, leave empty string
-          # Allowed values: string
-          privateKey: "XXXXXaGVsbG8="
-          # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
-          #  for self-signed certs, leave empty string
-          # Allowed values: string
-          certificateAuthority: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmR1bW15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+          vaultConfigurations:
+            - identifier: vault0
+              address: https://10.0.0.1:8400
+              role: csm-authorization
+              skipCertificateValidation: true
+              # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+              #  for self-signed certs, leave empty string
+              # Allowed values: string
+              clientCertificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmR1bW15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+              # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+              #  for self-signed certs, leave empty string
+              # Allowed values: string
+              clientKey: "XXXXXaGVsbG8="
+              # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
+              #  for self-signed certs, leave empty string
+              # Allowed values: string
+              certificateAuthority: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmR1bW15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+
 ---
 apiVersion: v1
 kind: ConfigMap
