@@ -185,13 +185,8 @@ spec:
           # Default value: None
           # Example: "csipowermax-reverseproxy:v2.9.0"
           image: dellemc/csipowermax-reverseproxy:v2.9.0
+          tlsCertSecret: csirevproxy-tls-secret
           envs:
-            # "tlsSecret" defines the TLS secret that is created with certificate
-            # and its associated key
-            # Default value: None
-            # Example: "tls-secret"
-            - name: X_CSI_REVPROXY_TLS_SECRET
-              value: "csirevproxy-tls-secret"
             - name: X_CSI_REVPROXY_PORT
               value: "2222"
             - name: X_CSI_CONFIG_MAP_NAME
