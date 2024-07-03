@@ -1661,10 +1661,6 @@ func getReverseProxyModule() []csmv1.Module {
 					Enabled: &[]bool{true}[0],
 					Envs: []corev1.EnvVar{
 						{
-							Name:  "X_CSI_REVPROXY_TLS_SECRET",
-							Value: "csirevproxy-tls-secret",
-						},
-						{
 							Name:  "X_CSI_REVPROXY_PORT",
 							Value: "2222",
 						},
