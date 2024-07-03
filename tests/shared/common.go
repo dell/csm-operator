@@ -225,16 +225,12 @@ func MakeReverseProxyModule(_ string) csmv1.Module {
 	revproxy := csmv1.Module{
 		Name:          csmv1.ReverseProxy,
 		Enabled:       true,
-		ConfigVersion: "v2.6.0",
+		ConfigVersion: "v2.6.0",		
 		Components: []csmv1.ContainerTemplate{
 			{
 				Name:  string(csmv1.ReverseProxyServer),
 				Image: "dell/proxy:v2.6.0",
 				Envs: []corev1.EnvVar{
-					{
-						Name:  "X_CSI_REVPROXY_TLS_SECRET",
-						Value: "csirevproxy-tls-secret",
-					},
 					{
 						Name:  "X_CSI_REVPROXY_PORT",
 						Value: "2222",
