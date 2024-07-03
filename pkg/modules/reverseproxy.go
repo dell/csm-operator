@@ -235,15 +235,13 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 
 	YamlString = string(buf)
 	proxyNamespace := cr.Namespace
-	var proxyTLSSecret, proxyPort, proxyConfig string
+	proxyTLSSecret := cr.Spec.Modules.tlsCertSecret
+	var proxyPort, proxyConfig string
 
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
 			YamlString = strings.ReplaceAll(YamlString, ReverseProxyImage, string(component.Image))
 			for _, env := range component.Envs {
-				if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
-					proxyTLSSecret = env.Value
-				}
 				if env.Name == "X_CSI_REVPROXY_PORT" {
 					proxyPort = env.Value
 				}
@@ -324,9 +322,6 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 			for _, env := range component.Envs {
 				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
 					revProxyConfigMap = env.Value
-				}
-				if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
-					revProxyTLSSecret = env.Value
 				}
 			}
 		}
