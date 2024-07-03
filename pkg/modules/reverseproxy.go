@@ -42,7 +42,7 @@ const (
 	ReverseProxySidecar         = "container.yaml"
 	ReverseProxyService         = "service.yaml"
 	ReverseProxyImage           = "<REVERSEPROXY_PROXY_SERVER_IMAGE>"
-	ReverseProxyTLSSecret       = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
+	ReverseProxyTLSSecret       = "csirevproxy-tls-secret" // #nosec G101
 	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
 	ReverseProxyPort            = "<X_CSI_REVPROXY_PORT>"
 )
@@ -88,9 +88,6 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 		return fmt.Errorf("revproxy components can not be nil")
 	}
 	for _, env := range revproxy.Components[0].Envs {
-		if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
-			proxyServerSecret = env.Value
-		}
 		if env.Name == "X_CSI_CONFIG_MAP_NAME" {
 			proxyConfigMap = env.Value
 		}
