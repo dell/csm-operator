@@ -86,6 +86,10 @@ module-unit-test:
 
 ##@ Build
 
+tidy:
+	go mod tidy
+	cd tests/e2e/ && go mod tidy
+
 build: gen-semver fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
