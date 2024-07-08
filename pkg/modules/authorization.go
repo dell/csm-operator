@@ -821,8 +821,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	}
 
 	// set arguments
-
-	vaultArgs := make([]string, len(vaults))
+	var vaultArgs []string
 	for _, vault := range vaults {
 		vaultArgs = append(vaultArgs, fmt.Sprintf("--vault=%s,%s,%s,%t", vault.Identifier, vault.Address, vault.Role, vault.SkipCertificateValidation))
 	}
