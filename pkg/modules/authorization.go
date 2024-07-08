@@ -788,7 +788,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			for _, vault := range vaults {
 				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
 					Name:      fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-					MountPath: "/etc/vault",
+					MountPath: fmt.Sprintf("/etc/vault/%s", vault.Identifier),
 				})
 			}
 			break
