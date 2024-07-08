@@ -255,10 +255,6 @@ spec:
                         description: ImagePullPolicy is the image pull policy for
                           the image
                         type: string
-                      kvEnginePath:
-                        description: kvEnginePath is the Authorization vault secret
-                          path
-                        type: string
                       leaderElection:
                         description: LeaderElection is boolean flag to enable leader
                           election
@@ -412,12 +408,39 @@ spec:
                         description: UseSnapshot is to check whether volume snapshot
                           is enabled under velero component
                         type: boolean
-                      vaultAddress:
-                        description: VaultAddress is the address of the vault
-                        type: string
-                      vaultRole:
-                        description: VaultRole is the role for the vault
-                        type: string
+                      vaultConfigurations:
+                        description: Vaults are the vault configurations
+                        items:
+                          description: ProxyServerIngress is the authorization ingress
+                            configuration struct
+                          properties:
+                            address:
+                              description: Address is the address for this vault
+                              type: string
+                            certificateAuthority:
+                              description: CertificateAuthority is the base64-encoded
+                                certificate authority for validaitng the vault certificate
+                              type: string
+                            clientCertificate:
+                              description: ClientCertificate is the base64-encoded
+                                certificate for connecting to vault
+                              type: string
+                            clientKey:
+                              description: ClientKey validates is the base64-encoded
+                                certificate key for connecting to vault
+                              type: string
+                            identifier:
+                              description: Identifier is the identifier for this vault
+                              type: string
+                            role:
+                              description: Role is the role for this vault
+                              type: string
+                            skipCertificateValidation:
+                              description: SkipCertificateValidation validates the
+                                vault server certificate or not
+                              type: boolean
+                          type: object
+                        type: array
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero
                           is installed in
@@ -635,10 +658,6 @@ spec:
                           description: ImagePullPolicy is the image pull policy for
                             the image
                           type: string
-                        kvEnginePath:
-                          description: kvEnginePath is the Authorization vault secret
-                            path
-                          type: string
                         leaderElection:
                           description: LeaderElection is boolean flag to enable leader
                             election
@@ -793,12 +812,40 @@ spec:
                           description: UseSnapshot is to check whether volume snapshot
                             is enabled under velero component
                           type: boolean
-                        vaultAddress:
-                          description: VaultAddress is the address of the vault
-                          type: string
-                        vaultRole:
-                          description: VaultRole is the role for the vault
-                          type: string
+                        vaultConfigurations:
+                          description: Vaults are the vault configurations
+                          items:
+                            description: ProxyServerIngress is the authorization ingress
+                              configuration struct
+                            properties:
+                              address:
+                                description: Address is the address for this vault
+                                type: string
+                              certificateAuthority:
+                                description: CertificateAuthority is the base64-encoded
+                                  certificate authority for validaitng the vault certificate
+                                type: string
+                              clientCertificate:
+                                description: ClientCertificate is the base64-encoded
+                                  certificate for connecting to vault
+                                type: string
+                              clientKey:
+                                description: ClientKey validates is the base64-encoded
+                                  certificate key for connecting to vault
+                                type: string
+                              identifier:
+                                description: Identifier is the identifier for this
+                                  vault
+                                type: string
+                              role:
+                                description: Role is the role for this vault
+                                type: string
+                              skipCertificateValidation:
+                                description: SkipCertificateValidation validates the
+                                  vault server certificate or not
+                                type: boolean
+                            type: object
+                          type: array
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero
                             is installed in
@@ -1001,10 +1048,6 @@ spec:
                           description: ImagePullPolicy is the image pull policy for
                             the image
                           type: string
-                        kvEnginePath:
-                          description: kvEnginePath is the Authorization vault secret
-                            path
-                          type: string
                         leaderElection:
                           description: LeaderElection is boolean flag to enable leader
                             election
@@ -1159,12 +1202,40 @@ spec:
                           description: UseSnapshot is to check whether volume snapshot
                             is enabled under velero component
                           type: boolean
-                        vaultAddress:
-                          description: VaultAddress is the address of the vault
-                          type: string
-                        vaultRole:
-                          description: VaultRole is the role for the vault
-                          type: string
+                        vaultConfigurations:
+                          description: Vaults are the vault configurations
+                          items:
+                            description: ProxyServerIngress is the authorization ingress
+                              configuration struct
+                            properties:
+                              address:
+                                description: Address is the address for this vault
+                                type: string
+                              certificateAuthority:
+                                description: CertificateAuthority is the base64-encoded
+                                  certificate authority for validaitng the vault certificate
+                                type: string
+                              clientCertificate:
+                                description: ClientCertificate is the base64-encoded
+                                  certificate for connecting to vault
+                                type: string
+                              clientKey:
+                                description: ClientKey validates is the base64-encoded
+                                  certificate key for connecting to vault
+                                type: string
+                              identifier:
+                                description: Identifier is the identifier for this
+                                  vault
+                                type: string
+                              role:
+                                description: Role is the role for this vault
+                                type: string
+                              skipCertificateValidation:
+                                description: SkipCertificateValidation validates the
+                                  vault server certificate or not
+                                type: boolean
+                            type: object
+                          type: array
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero
                             is installed in
