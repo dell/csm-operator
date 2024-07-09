@@ -107,5 +107,6 @@ metadata:
 data:
   csm-config-params.yaml: |-
     CONCURRENT_POWERFLEX_REQUESTS: 10
+    CONCURRENT_POWERSCALE_REQUESTS: 10
     LOG_LEVEL: debug
     STORAGE_CAPACITY_POLL_INTERVAL: 5m
