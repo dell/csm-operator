@@ -39,7 +39,7 @@ spec:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:4.5.1
+        image: dellemc/sdc:4.5.2.1
         envs:
           - name: HOST_PID
             value: "1"
@@ -118,7 +118,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
     initContainers:
-      - image: dellemc/sdc:4.5.1
+      - image: dellemc/sdc:4.5.2.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
