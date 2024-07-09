@@ -1104,7 +1104,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:4.5.1",
+                  "image": "dellemc/sdc:4.5.2.1",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "sdc"
                 }
@@ -1176,7 +1176,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:4.5.1",
+                  "image": "dellemc/sdc:4.5.2.1",
                   "name": "sdc-monitor"
                 },
                 {
@@ -3704,7 +3704,7 @@ spec:
                 - name: RELATED_IMAGE_csi-vxflexos
                   value: docker.io/dellemc/csi-vxflexos:v2.11.0
                 - name: RELATED_IMAGE_sdc
-                  value: docker.io/dellemc/sdc:4.5.1
+                  value: docker.io/dellemc/sdc:4.5.2.1
                 - name: RELATED_IMAGE_karavi-authorization-proxy
                   value: docker.io/dellemc/csm-authorization-sidecar:v1.11.0
                 - name: RELATED_IMAGE_dell-csi-replicator
@@ -3818,7 +3818,7 @@ spec:
     name: csi-unity
   - image: docker.io/dellemc/csi-vxflexos:v2.11.0
     name: csi-vxflexos
-  - image: docker.io/dellemc/sdc:4.5.1
+  - image: docker.io/dellemc/sdc:4.5.2.1
     name: sdc
   - image: docker.io/dellemc/csm-authorization-sidecar:v1.11.0
     name: karavi-authorization-proxy
