@@ -704,7 +704,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 
 	}
 
-	label := "application-mobility-node-agent"
+	label := "node-agent"
 	opts = []client.ListOption{
 		client.InNamespace(instance.GetNamespace()),
 		client.MatchingLabels{"name": label},
