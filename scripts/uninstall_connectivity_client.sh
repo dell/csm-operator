@@ -12,9 +12,18 @@
 
 #!/bin/bash
 
+if [[ $# -ne 1 ]]; then
+  echo "Incorrect input parameters provided to script $0."
+  echo "Script Usage:"
+  echo "$0 <connectivityclient-version>"
+  echo "Example:- connectivityclient-version => v100 , v110"
+  exit 1
+fi
+
 SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 ROOTDIR="$(dirname "$SCRIPTDIR")"
 CMD=""
+connectivity_ver=$1
 
 out=$(command -v oc)
 if [ $? -eq 0 ]; then
@@ -31,7 +40,7 @@ if [ -z "$CMD" ]; then
     exit 1
 fi
 
-$CMD delete -f ${ROOTDIR}/samples/connectivity_client_v100.yaml
-$CMD delete ns dell-connectivity-client
+$CMD apply -f $ROOTDIR/samples/connectivity_client_${connectivity_ver}.yaml
+$CMD apply -f $ROOTDIR/samples/conn_secret_test.yaml
 
-echo "Dell Connectivity Client uninstalled."
+echo "Dell Connectivity Client ${connectivity_ver} uninstalled."
