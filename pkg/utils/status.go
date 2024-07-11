@@ -415,7 +415,7 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	running, merr := calculateState(ctx, instance, r, newStatus)
 
 	if !running {
-		return errors.New("CSM not running")
+		return fmt.Errorf("CSM not running")
 	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
