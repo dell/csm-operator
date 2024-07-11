@@ -717,7 +717,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	}
 
 	for _, pod := range podList.Items {
-		log.Infof("Checking Daemonset pod: %s", pod.Name)
+		log.Infof("Checking Daemonset pod: %s and status: %s", pod.Name, pod.Status.Phase)
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
 		} else {
@@ -730,6 +730,14 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	} else {
 		daemonRunning = true
 	}
+
+	log.Infof("veleroEnabled: %t", veleroEnabled)
+	log.Infof("certEnabled: %t", certEnabled)
+	log.Infof("certManagerRunning: %t", certManagerRunning)
+	log.Infof("certManagerCainInjectorRunning: %t", certManagerCainInjectorRunning)
+	log.Infof("certManagerWebhookRunning: %t", certManagerWebhookRunning)
+	log.Infof("appMobRunning: %t", appMobRunning)
+	log.Infof("veleroRunning: %t", veleroRunning)
 
 	if certEnabled && veleroEnabled {
 		return appMobRunning && certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && veleroRunning && daemonRunning, nil
