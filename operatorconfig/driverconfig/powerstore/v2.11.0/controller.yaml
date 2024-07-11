@@ -251,7 +251,7 @@ spec:
             - name: GOPOWERSTORE_DEBUG
               value: true
             - name: CSI_AUTO_ROUND_OFF_FILESYSTEM_SIZE
-              value: false
+              value: true
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
           volumeMounts:
