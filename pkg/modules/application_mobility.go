@@ -583,6 +583,15 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 			return err
 		}
 
+		newVersion := cr.GetModule(csmv1.ApplicationMobility).ConfigVersion
+		// if upgrading from v1.0.3 to v1.1.0, need to remove old node agent Daemonset due to name change
+		if newVersion == "v1.1.0" {
+			log.Infow("Need to remove old node agent Daemonset")
+			if err := RemoveOldDaemonset(ctx, op, cr, ctrlClient); err != nil {
+				log.Warnf("Failed to remove old node agent Daemonset: %s", err)
+			}
+		}
+
 		er := applyDeleteObjects(ctx, ctrlClient, yamlString4, isDeleting)
 		if er != nil {
 			return er
