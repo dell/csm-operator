@@ -1436,7 +1436,7 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 			// if upgrading from v1.0.3 to v1.1.0, need to remove old node agent Daemonset due to name change
 			if oldVersion == "v1.0.3" && newVersion == "v1.1.0" {
 				log.Infow("Need to remove old node agent Daemonset")
-				if err := modules.RemoveOldDaemonset(operatorConfig, *cr, r.GetClient()); err != nil {
+				if err := modules.RemoveOldDaemonset(ctx, operatorConfig, *cr, r.GetClient()); err != nil {
 					log.Warnf("Failed to remove old node agent Daemonset: %s", err)
 				}
 

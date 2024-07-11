@@ -873,9 +873,12 @@ func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlStr
 }
 
 // this method is only used to remove Daemonset if upgrading to AM v1.1.0
-func RemoveOldDaemonset(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func RemoveOldDaemonset(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
 	//need to delete the old Daemonset, which is found in versions v1.0.3 or lower
+	log.Infof("removing application-mobility-node-agent daemonset from %s namespace", cr.Namespace)
 	oldNodeAgentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/v1.0.3/%s", op.ConfigDirectory, NodeAgentCrdManifest)
+	oldNodeAgentPath = strings.ReplaceAll(oldNodeAgentPath, AppMobNamespace, cr.Namespace)
 	buf, err := os.ReadFile(filepath.Clean(oldNodeAgentPath))
 	if err != nil {
 		return fmt.Errorf("failed to find read old node-agent manifests at path: %s", oldNodeAgentPath)
