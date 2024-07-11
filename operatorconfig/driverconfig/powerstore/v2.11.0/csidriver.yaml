@@ -22,7 +22,6 @@ spec:
   storageCapacity: false
   podInfoOnMount: true
   fsGroupPolicy: ReadWriteOnceWithFSType
-  allowAutoRoundOffFilesystemSize: true
   volumeLifecycleModes:
     - Persistent
     - Ephemeral
