@@ -412,7 +412,11 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	log.Infow("Update State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
-	_, merr := calculateState(ctx, instance, r, newStatus)
+	running, merr := calculateState(ctx, instance, r, newStatus)
+
+	if !running {
+		return errors.New("CSM not running")
+	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)
