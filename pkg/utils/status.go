@@ -412,7 +412,11 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	log.Infow("Update State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
-	_, merr := calculateState(ctx, instance, r, newStatus)
+	running, merr := calculateState(ctx, instance, r, newStatus)
+
+	if !running {
+		return fmt.Errorf("CSM not running\n")
+	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)
@@ -717,7 +721,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	}
 
 	for _, pod := range podList.Items {
-		log.Infof("Checking Daemonset pod: %s", pod.Name)
+		log.Infof("Checking Daemonset pod: %s and status: %s", pod.Name, pod.Status.Phase)
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
 		} else {

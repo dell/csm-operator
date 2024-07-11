@@ -113,6 +113,11 @@ const (
 	AppMobVeleroComponent = "velero"
 )
 
+var (
+	// ApplicationMobilityOldVersion - old version of application-mobility, will be filled in checkUpgrade
+	ApplicationMobilityOldVersion = ""
+)
+
 // getAppMobilityModule - get instance of app mobility module
 func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 	for _, m := range cr.Spec.Modules {
@@ -583,6 +588,16 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 			return err
 		}
 
+		newVersion := cr.GetModule(csmv1.ApplicationMobility).ConfigVersion
+
+		// if moving AM versions, need to remove old node agent Daemonset due to name change
+		if newVersion != ApplicationMobilityOldVersion && ApplicationMobilityOldVersion != "" {
+			log.Infow("Need to remove old node agent Daemonset")
+			if err := RemoveOldDaemonset(ctx, op, ApplicationMobilityOldVersion, cr, ctrlClient); err != nil {
+				log.Warnf("Failed to remove old node agent Daemonset: %s", err)
+			}
+		}
+
 		er := applyDeleteObjects(ctx, ctrlClient, yamlString4, isDeleting)
 		if er != nil {
 			return er
@@ -802,7 +817,7 @@ func UseBackupStorageLoc(ctx context.Context, isDeleting bool, op utils.Operator
 	return nil
 }
 
-// getNodeAgent - gets ndoe-agent services manifests
+// getNodeAgent - gets node-agent services manifests
 func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
@@ -870,4 +885,20 @@ func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlStr
 	}
 
 	return nil
+}
+
+// this method is only used to remove Daemonset if upgrading to AM v1.1.0
+func RemoveOldDaemonset(ctx context.Context, op utils.OperatorConfig, oldVersion string, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
+	//need to delete the old Daemonset, which is found in versions v1.0.3 or lower
+	log.Infof("removing application-mobility-node-agent daemonset from %s namespace", cr.Namespace)
+	oldNodeAgentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/%s/%s", op.ConfigDirectory, oldVersion, NodeAgentCrdManifest)
+
+	buf, err := os.ReadFile(filepath.Clean(oldNodeAgentPath))
+	if err != nil {
+		return fmt.Errorf("failed to find read old node-agent manifests at path: %s", oldNodeAgentPath)
+	}
+	yamlString := string(buf)
+	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
+	return applyDeleteObjects(context.Background(), ctrlClient, yamlString, true)
 }
