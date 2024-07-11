@@ -591,7 +591,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		newVersion := cr.GetModule(csmv1.ApplicationMobility).ConfigVersion
 
 		// if moving AM versions, need to remove old node agent Daemonset due to name change
-		if newVersion != ApplicationMobilityOldVersion {
+		if newVersion != ApplicationMobilityOldVersion && ApplicationMobilityOldVersion != "" {
 			log.Infow("Need to remove old node agent Daemonset")
 			if err := RemoveOldDaemonset(ctx, op, ApplicationMobilityOldVersion, cr, ctrlClient); err != nil {
 				log.Warnf("Failed to remove old node agent Daemonset: %s", err)
