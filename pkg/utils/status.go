@@ -414,6 +414,10 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 
 	running, merr := calculateState(ctx, instance, r, newStatus)
 
+	if !running {
+		return fmt.Errorf("calculateState returned CSM not running\n")
+	}
+
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)
 
