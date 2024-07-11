@@ -802,7 +802,7 @@ func UseBackupStorageLoc(ctx context.Context, isDeleting bool, op utils.Operator
 	return nil
 }
 
-// getNodeAgent - gets ndoe-agent services manifests
+// getNodeAgent - gets node-agent services manifests
 func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
@@ -870,4 +870,15 @@ func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlStr
 	}
 
 	return nil
+}
+
+// this method is only used to remove Daemonset if upgrading to AM v1.1.0
+func RemoveOldDaemonset(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	//need to delete the old Daemonset, which is found in versions v1.0.3 or lower
+	oldNodeAgentPath := fmt.Sprintf("%s/moduleconfig/application-mobility/v1.0.3/%s", op.ConfigDirectory, NodeAgentCrdManifest)
+	buf, err := os.ReadFile(filepath.Clean(oldNodeAgentPath))
+	if err != nil {
+		return fmt.Errorf("failed to find read old node-agent manifests at path: %s", oldNodeAgentPath)
+	}
+	return applyDeleteObjects(context.Background(), ctrlClient, string(buf), true)
 }
