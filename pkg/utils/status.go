@@ -414,10 +414,6 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 
 	running, merr := calculateState(ctx, instance, r, newStatus)
 
-	if !running {
-		return fmt.Errorf("calculateState returned CSM not running")
-	}
-
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)
 
@@ -445,7 +441,13 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		log.Error(err, " Failed to update CR status")
 		return err
 	}
+
 	log.Info("Update done")
+	// if CSM is not running, we want to requeue
+	if !running {
+		return fmt.Errorf("calculateState returned CSM not running")
+	}
+
 	return merr
 }
 
