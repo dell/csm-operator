@@ -16,7 +16,6 @@
 # Set environment variables and options
 ###############################################################################
 export E2E_SCENARIOS_FILE=testfiles/scenarios.yaml
-#export E2E_SCENARIOS_FILE=testfiles/connectivity-values.yaml
 export ARRAY_INFO_FILE=array-info.sh
 export GO111MODULE=on
 export ACK_GINKGO_RC=true
@@ -256,4 +255,3 @@ if [ -v APPLICATIONMOBILITY ]; then
 fi
 checkForGinkgo
 #runTests
-
