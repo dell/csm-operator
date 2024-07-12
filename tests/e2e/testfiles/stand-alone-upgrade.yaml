@@ -1,4 +1,4 @@
-- scenario: "Install Application Mobility v1.03 and upgrade to v1.1.0"
+- scenario: "Install Application Mobility v1.03 and upgrade to v1.1.0, downgrade back to v1.0.3"
   paths:
     - "testfiles/application-mobility-templates/csm_application_mobility_old.yaml"
     - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"
