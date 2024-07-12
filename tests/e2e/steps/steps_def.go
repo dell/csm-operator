@@ -60,7 +60,7 @@ var (
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 	storageCrMap           = map[string]string{"REPLACE_STORAGE_NAME": "STORAGE_TYPE", "REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_ENDPOINT": "END_POINT", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_VAULT_STORAGE_PATH": "VAULT_STORAGE_PATH"}
 	roleCrMap              = map[string]string{"REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_QUOTA": "QUOTA", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_STORAGE_POOL_PATH": "STORAGE_POOL_PATH"}
-	tenantCrMap            = map[string]string{"REPLACE_TENANT_ROLES": "TENANT_ROLES", "REPLACE_TENANT_PREFIX": "TENANT_PREFIX"}
+	tenantCrMap            = map[string]string{"REPLACE_TENANT_ROLES": "TENANT_ROLES", "REPLACE_TENANT_VOLUME_PREFIX": "TENANT_PREFIX"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
