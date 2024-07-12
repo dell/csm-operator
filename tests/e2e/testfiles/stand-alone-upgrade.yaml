@@ -15,7 +15,7 @@
     - "Validate [application-mobility] module from CR [1] is installed"
     - "Validate [powerflex] driver from CR [1] is installed"
     #upgrade
-    - "Apply custom resource [1]"
+    - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [application-mobility] module from CR [2] is installed"
     #clean up
