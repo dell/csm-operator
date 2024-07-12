@@ -3,9 +3,9 @@ kind: Storage
 metadata:
   name: "powerflex"
 spec:
-  type: "powerflex"
-  endpoint: "10.247.13.234"
-  systemID: "PIE-IsilonS-24241-Cluster"
+  type: "REPLACE_STORAGE_TYPE"
+  endpoint: "REPLACE_ENDPOINT"
+  systemID: "REPLACE_SYSTEM_ID"
   credentialStore: vault
   credentialPath: "REPLACE_VAULT_STORAGE_PATH"
   skipCertificateValidation: true
