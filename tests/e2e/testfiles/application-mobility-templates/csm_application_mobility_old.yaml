@@ -175,7 +175,7 @@ spec:
       - name: application-mobility-controller-manager
         # enable: Enable/Disable application mobility controller-manager
         enabled: true
-        image: REPLACE_CONTROLLER_IMAGE
+        image: dellemc/csm-application-mobility-controller:v1.0.3
         imagePullPolicy: IfNotPresent
         envs:
           # Replica count for application mobility
@@ -251,7 +251,7 @@ spec:
     - initContainer:
         #initContainer image for the dell velero plugin
       - name: dell-custom-velero-plugin
-        image: REPLACE_PLUGIN_IMAGE
+        image: dellemc/csm-application-mobility-velero-plugin:v1.0.3
         #initContainer image for the configuration provider aws
         #digest for velero/velero-plugin-for-aws:v1.6.2
       - name: velero-plugin-for-aws
