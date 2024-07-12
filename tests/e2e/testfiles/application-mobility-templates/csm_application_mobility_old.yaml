@@ -1,0 +1,258 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: vxflexos-app-mobility
+  namespace: test-vxflexos
+spec:
+  driver:
+    csiDriverType: "powerflex"
+    csiDriverSpec:
+      # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
+      # Allowed values: ReadWriteOnceWithFSType, File , None
+      # Default value: ReadWriteOnceWithFSType
+      fSGroupPolicy: "File"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: true
+    configVersion: v2.11.0
+    replicas: 1
+    dnsPolicy: ClusterFirstWithHostNet
+    forceUpdate: false
+    forceRemoveDriver: true
+    common:
+      image: "dellemc/csi-vxflexos:nightly"
+      imagePullPolicy: IfNotPresent
+      envs:
+        - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
+          value: "false"
+        - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
+          value: "false"
+        - name: X_CSI_DEBUG
+          value: "true"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: None
+        - name: KUBELET_CONFIG_DIR
+          value: "/var/lib/kubelet"
+        - name: "CERT_SECRET_COUNT"
+          value: "0"
+        - name: X_CSI_NFS_ACLS
+          value: "0777"
+        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+          value: ""
+        - name: X_CSI_QUOTA_ENABLED
+          value: "false"
+    
+    sideCars:
+    # sdc-monitor is disabled by default, due to high CPU usage
+      - name: sdc-monitor
+        enabled: false
+        image: dellemc/sdc:4.5
+        envs:
+        - name: HOST_PID
+          value: "1"
+        - name: MDM
+          value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
+
+    # health monitor is disabled by default, refer to driver documentation before enabling it
+    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+      - name: csi-external-health-monitor-controller
+        enabled: false
+        args: ["--monitor-interval=60s"]
+    # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+    # Configure when the storageCapacity is set as "true"
+    # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+    #- name: provisioner
+    #  args: ["--capacity-poll-interval=5m"]
+
+    controller:
+      envs:
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+
+      #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
+      # Leave as blank to use all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      #  node-role.kubernetes.io/master: ""
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # "controller.tolerations" defines tolerations that would be applied to controller deployment
+      # Leave as blank to install controller on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+
+    node:
+      envs:
+
+        # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
+        # Allowed values:
+        #    true: enable SDC approval
+        #    false: disable SDC approval
+        # Default value: false
+        - name: X_CSI_APPROVE_SDC_ENABLED
+          value: "false"
+
+        # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
+        # Allowed values:
+        #   true: enable renaming
+        #   false: disable renaming
+        # Default value: false
+        - name: X_CSI_RENAME_SDC_ENABLED
+          value: "false"
+
+        # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
+        # "prefix" + "worker_node_hostname" should not exceed 31 chars.
+        # Default value: none
+        # Examples: "rhel-sdc", "sdc-test"
+        - name: X_CSI_RENAME_SDC_PREFIX
+          value: ""
+
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "1"
+
+      # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
+      # Leave as blank to use all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      #  node-role.kubernetes.io/master: ""
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # "node.tolerations" defines tolerations that would be applied to node daemonset
+      # Leave as blank to install node driver only on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+
+    initContainers:
+      - image: dellemc/sdc:4.5
+        imagePullPolicy: IfNotPresent
+        name: sdc
+        envs:
+          - name: MDM
+            value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
+
+  modules:
+    # Application Mobility: enable csm-application-mobility module
+    - name: application-mobility
+      # enable: Enable/Disable app-mobility controller
+      enabled: true
+      configVersion: v1.0.3
+      forceRemoveModule: true
+      components:
+      - name: application-mobility-controller-manager
+        # enable: Enable/Disable application mobility controller-manager
+        enabled: true
+        image: REPLACE_CONTROLLER_IMAGE
+        imagePullPolicy: IfNotPresent
+        envs:
+          # Replica count for application mobility
+          # Allowed values: string
+          # Default value: 1
+          - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
+            value: "1"
+
+      # enabled: Enable/Disable cert-manager
+      # Allowed values:
+      #   true: enable deployment of cert-manager
+      #   false: disable deployment of cert-manager only if it's already deployed
+      # Default value: false
+      - name: cert-manager
+        enabled: true
+      # enabled: Enable/Disable Velero
+      - name: velero
+        image: velero/velero:v1.10.0
+        imagePullPolicy: IfNotPresent
+        enabled: true
+        useVolumeSnapshot: false
+        # enabled: Enable/Disable node-agent service
+        deployNodeAgent: true
+        envs:
+          # Backup storage location name
+          # Allowed values: string
+          # Default value: default
+          - name: "BACKUPSTORAGELOCATION_NAME"
+            value: "default"
+
+          # Velero bucket name
+          # Allowed values: string
+          # Default value: REPLACE_BUCKET_NAME
+          - name: "BUCKET_NAME"
+            value: "REPLACE_BUCKET_NAME"
+
+          # Based on the objectstore being used, the velero plugin and its configuration may need to change!
+          # default value: aws
+          - name: "CONFIGURATION_PROVIDER"
+            value: "aws"
+
+          # Name of the volume snapshot location where snapshots are being taken. Required.
+          # Volume-snapshot-Location Provider will be same as CONFIGURATION_PROVIDER
+          # Default value : default
+          - name: "VOL_SNAPSHOT_LOCATION_NAME"
+            value: "default"
+
+          # Name of the backup storage url
+          # This field HAS to be changed to a functional backup storage url
+          # Default value: localhost:8000
+          - name: "BACKUP_STORAGE_URL"
+            value: "http://REPLACE_S3URL"
+
+          # Name of the secret in velero namespace that has credentials to access object store
+          # We can leave the field empty if there no existing secret in velero installed namespace
+          # Default value: existing-cred
+          - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
+            value: "existing-cred"
+
+        #If velero is not already present in cluster, set enabled to true to create a secret.
+        #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
+        credentials:
+          - createWithInstall: true
+            #Specify the name to be used for secret that will be created to hold object store credentials.
+            name: cloud-creds
+            #Specify the object store access credentials to be stored in a secret with key "cloud".
+            secretContents:
+              aws_access_key_id: console  #Provide the access key id here
+              aws_secret_access_key: console123  #provide the access key here
+
+
+    # Init containers to be added to the Velero and Node-agent deployment's spec.
+    - initContainer:
+        #initContainer image for the dell velero plugin
+      - name: dell-custom-velero-plugin
+        image: REPLACE_PLUGIN_IMAGE
+        #initContainer image for the configuration provider aws
+        #digest for velero/velero-plugin-for-aws:v1.6.2
+      - name: velero-plugin-for-aws
+        image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e
