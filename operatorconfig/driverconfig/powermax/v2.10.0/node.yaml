@@ -127,7 +127,7 @@ spec:
               value: "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
             - name: X_CSI_POWERMAX_PROXY_SERVICE_NAME
               value: "csipowermax-reverseproxy"
-            - name: X_CSI_NODE_CHROOT
+            - name: X_CSI_ISCSI_CHROOT
               value: noderoot
             - name: X_CSI_GRPC_MAX_THREADS
               value: "50"
@@ -180,9 +180,6 @@ spec:
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
-            - name: csi-path
-              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
-              mountPropagation: "Bidirectional"
             - name: dev
               mountPath: /dev
             - name: sys
@@ -231,9 +228,6 @@ spec:
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
             type: DirectoryOrCreate
-        - name: csi-path
-          hostPath:
-            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
         - name: pods-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
@@ -265,16 +259,3 @@ spec:
           configMap:
              name: node-topology-config
              optional: true
-        - name: kubelet-pods
-          hostPath:
-            path: /var/lib/kubelet/pods
-            type: Directory
-        - name: usr-bin
-          hostPath:
-            path: /usr/bin
-            type: Directory
-        - name: var-run
-          hostPath:
-            path: /var/run
-            type: Directory
-
