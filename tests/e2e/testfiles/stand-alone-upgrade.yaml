@@ -18,10 +18,13 @@
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [application-mobility] module from CR [2] is installed"
+    #downgrade
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [application-mobility] module from CR [1] is installed"
     #clean up
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml] for [application-mobility]"
     - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_old.yaml] for [application-mobility]"
-    - "Enable forceRemoveModule on CR [1]"
-    - "Delete custom resource [2]"
+    - "Delete custom resource [1]"
