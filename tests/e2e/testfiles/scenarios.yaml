@@ -761,7 +761,7 @@
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    - "powerflex"
+    # - "powerflex"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -1006,7 +1006,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerflex"
+    # - "powerflex"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1051,7 +1051,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerflex"
+    # - "powerflex"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1091,7 +1091,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerflex"
+    # - "powerflex"
     - "observability"
     # - "sanity"
   steps:
@@ -1366,7 +1366,7 @@
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install powerflex driver, enable and disable application-mobility"
   paths:
@@ -1456,7 +1456,7 @@
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install App Mobility Velero with different env variables than default"
   paths:
@@ -1489,7 +1489,7 @@
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install App Mobility with powerflex driver- default"
   paths:
@@ -1516,7 +1516,7 @@
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install PowerMax Driver(Standalone)"
   paths:
