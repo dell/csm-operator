@@ -177,7 +177,7 @@ func csmForUnityAllowedNetwork() csmv1.ContainerStorageModule {
 	// Add log level to cover some code in GetConfigMap
 	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
 	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ALLOWED_NETWORKS", Value: "THIS IS BAD INPUT NETWORK"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel1}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
 	// Add unitydriver version
 	res.Spec.Driver.ConfigVersion = shared.UnityConfigVersion
