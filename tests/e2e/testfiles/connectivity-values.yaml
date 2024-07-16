@@ -1,17 +1,40 @@
 - scenario: "Install/uninstall APEX Connectivity Client"
   paths:
     - "testfiles/connectivity_client.yaml"
+    - "testfiles/connectivity_client_secret.yaml"
+  tags:
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install connectivity client from CR [1]"
+    - "Install connectivity client from CR [1] and create secret [2]"
     - "Validate connectivity client from CR [1] is installed"
     - "Uninstall connectivity client from CR [1]"
+    - "Uninstall connectivity client secret from CR [2]"
     - "Validate connectivity client from CR [1] is not installed"
+
+- scenario: "Upgrade APEX Connectivity Client"
+  paths:
+    - "testfiles/connectivity_client.yaml"
+    - "testfiles/connectivity_client_1.yaml"
+    - "testfiles/connectivity_client_secret.yaml"
+  tags:
+    - "sanity"
+  steps:
+    - "Given an client environment with k8s or openshift, and CSM operator installed"
+    - "Install connectivity client from CR [1] and create secret [3]"
+    - "Validate connectivity client from CR [1] is installed"
+    - "Upgrade client from custom resource [1] to [2]"
+    - "Validate connectivity client from CR [2] is installed"
+    - "Uninstall connectivity client from CR [2]"
+    - "Uninstall connectivity client secret from CR [3]"
+    - "Validate connectivity client from CR [2] is not installed"
 
 - scenario: "Validate role/rolebindings created for brownfield-onboard scenario"
   paths:
     - "testfiles/connectivity_client.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
+  tags:
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"

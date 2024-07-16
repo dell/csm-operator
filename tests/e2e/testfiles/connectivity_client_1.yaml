@@ -6,17 +6,17 @@ metadata:
 spec:
   client:
     csmClientType: "apexConnectivityClient"
-    configVersion: v1.0.0
+    configVersion: v1.1.0
     forceRemoveClient: true
     connectionTarget: connect-p3.dell.com
     usePrivateCaCerts: true
     common:
       name: connectivity-client-docker-k8s
-      image: amaas-eos-mw1.cec.lab.emc.com:5106/dcm/connectivity-client-docker-k8s:1.2.3
+      image: amaas-eos-mw1.cec.lab.emc.com:5106/dcm/connectivity-client-docker-k8s:1.12.0
       imagePullPolicy: IfNotPresent
     initContainers:
       - name: connectivity-client-init
-        image: amaas-eos-mw1.cec.lab.emc.com:5106/dcm/connectivity-client-docker-k8s:1.2.3
+        image: amaas-eos-mw1.cec.lab.emc.com:5106/dcm/connectivity-client-docker-k8s:1.12.0
         imagePullPolicy: IfNotPresent
     sideCars:
       - name: kubernetes-proxy

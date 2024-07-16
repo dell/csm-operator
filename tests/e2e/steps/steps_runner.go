@@ -75,10 +75,13 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up application mobility CR \[([^"]*)\]$`, step.configureAMInstall)
 
 	// Connectivity Client steps
-	runner.addStep(`^Install connectivity client from CR \[(\d+)\]$`, step.applyCustomResource)
+	runner.addStep(`^Given an client environment with k8s or openshift, and CSM operator installed$`, step.validateClientTestEnvironment)
+	runner.addStep(`^Install connectivity client from CR \[(\d+)\] and create secret \[(\d+)\]$`, step.applyClientCustomResource)
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is installed$`, step.validateConnectivityClientInstalled)
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is not installed$`, step.validateConnectivityClientNotInstalled)
 	runner.addStep(`^Uninstall connectivity client from CR \[(\d+)\]`, step.uninstallConnectivityClient)
+	runner.addStep(`^Upgrade client from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResourceClient)
+	runner.addStep(`^Uninstall connectivity client secret from CR \[(\d+)\]`, step.uninstallConnectivityClientSecret)
 	runner.addStep(`^Install Authorization CRDs \[(\d+)\]$`, step.createCustomResourceDefinition)
 	runner.addStep(`^Validate \[([^"]*)\] CRD for Authorization is installed$`, step.validateCustomResourceDefinition)
 	runner.addStep(`^Delete Authorization CRDs \[(\d+)\]$`, step.deleteCustomResourceDefinition)
@@ -117,6 +120,36 @@ func (runner *Runner) addStep(expr string, stepFunc interface{}) {
 
 // RunStep - runs a step
 func (runner *Runner) RunStep(stepName string, res Resource) error {
+	for _, stepDef := range runner.Definitions {
+		if stepDef.Expr.MatchString(stepName) {
+			var values []reflect.Value
+			groups := stepDef.Expr.FindStringSubmatch(stepName)
+
+			typ := stepDef.Handler.Type()
+			numArgs := typ.NumIn()
+			if numArgs > len(groups) {
+				return fmt.Errorf("expected handler method to take %d but got: %d", numArgs, len(groups))
+			}
+
+			values = append(values, reflect.ValueOf(res))
+			for i := 1; i < len(groups); i++ {
+				values = append(values, reflect.ValueOf(groups[i]))
+			}
+
+			res := stepDef.Handler.Call(values)
+			if err, ok := res[0].Interface().(error); ok {
+				fmt.Printf("\nerr: %+v\n", err)
+				return err
+			}
+			return nil
+		}
+	}
+
+	return fmt.Errorf("no method for step: %s", stepName)
+}
+
+// RunStepClient - runs a step
+func (runner *Runner) RunStepClient(stepName string, res ResourceApex) error {
 	for _, stepDef := range runner.Definitions {
 		if stepDef.Expr.MatchString(stepName) {
 			var values []reflect.Value
