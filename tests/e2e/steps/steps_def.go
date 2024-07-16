@@ -27,6 +27,7 @@ import (
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
+	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -1086,13 +1087,11 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
 
-	var b []byte
 	var err error
-
 	var (
+		proxyHost       = ""
 		storageType     = ""
 		driverNamespace = ""
-		proxyHost       = ""
 	)
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
@@ -1131,11 +1130,20 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	fmt.Printf("Address: %s\n", address)
 
+	switch semver.Major(configVersion) {
+	case "v2":
+		return step.AuthorizationV2Resources(storageType, driverNamespace, proxyHost, port)
+	case "v1":
+		return step.AuthorizationV1Resources(driver, port)
+	default:
+		return fmt.Errorf("authorization major version %s not supported", semver.Major(configVersion))
+	}
+
 	return nil
 }
 
 // AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV1Resources(driver string) error {
+func (step *Step) AuthorizationV1Resources(driver, port string) error {
 
 	var (
 		endpoint        = ""
@@ -1309,7 +1317,7 @@ func (step *Step) AuthorizationV1Resources(driver string) error {
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources() error {
+func (step *Step) AuthorizationV2Resources(storageType, driverNamespace, proxyHost, port string) error {
 
 	// Create Admin Token
 	fmt.Printf("=== Generating Admin Token ===\n")
@@ -1426,7 +1434,7 @@ func (step *Step) AuthorizationV2Resources() error {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-		cmd = exec.Command("kubectl", "apply",
+	cmd = exec.Command("kubectl", "apply",
 		"-f", "/tmp/token.yaml",
 		"-n", driverNamespace,
 	)
