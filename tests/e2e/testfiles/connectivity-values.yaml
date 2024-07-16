@@ -48,5 +48,6 @@
     - "Validate connectivity client from CR [1] is not installed"
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
+    - "Validate rbac deleted from namespace [test-vxflexos]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
