@@ -1543,7 +1543,7 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 func (step *Step) validateRbacCreated(_ Resource, namespace string) error {
 	fmt.Println("=== validating Rbac created ===")
 
-	cmd := exec.Command("kubectl", "get", "rolebindings", "-n", "namespacename")
+	cmd := exec.Command("kubectl", "get", "rolebindings", "-n", namespace)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -1558,5 +1558,26 @@ func (step *Step) validateRbacCreated(_ Resource, namespace string) error {
 		}
 	}
 
+	return nil
+}
+
+func (step *Step) validateRbacDeleted(_ Resource, namespace string) error {
+	fmt.Println("validating Rbac deletion on namespace", namespace)
+
+	cmd := exec.Command("kubectl", "get", "rolebindings", "-n", namespace)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run command")
+	}
+
+	roles := strings.Split(out.String(), "\n")
+	for _, role := range roles {
+		if strings.Contains(role, "Role/connectivity-client-docker-k8s") {
+			return fmt.Errorf("RoleBinding 'connectivity-client-docker-k8s' still exists in namespace '%s'", namespace)
+		}
+	}
+	fmt.Println("RBAC deletion is successful for namespace:", namespace)
 	return nil
 }
