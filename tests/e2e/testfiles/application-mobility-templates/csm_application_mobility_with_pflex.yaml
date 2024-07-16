@@ -193,7 +193,7 @@ spec:
         enabled: true
       # enabled: Enable/Disable Velero
       - name: velero
-        image: velero/velero:v1.10.0
+        image: velero/velero:v1.14.0
         imagePullPolicy: IfNotPresent
         enabled: true
         useVolumeSnapshot: false
@@ -253,9 +253,9 @@ spec:
       - name: dell-custom-velero-plugin
         image: REPLACE_PLUGIN_IMAGE
         #initContainer image for the configuration provider aws
-        #digest for velero/velero-plugin-for-aws:v1.6.2
+        #digest for velero/velero-plugin-for-aws:v1.10.0
       - name: velero-plugin-for-aws
-        image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e
+        image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
 
 
 

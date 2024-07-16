@@ -412,7 +412,7 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	log.Infow("Update State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
-	_, merr := calculateState(ctx, instance, r, newStatus)
+	running, merr := calculateState(ctx, instance, r, newStatus)
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)
@@ -441,7 +441,13 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		log.Error(err, " Failed to update CR status")
 		return err
 	}
+
 	log.Info("Update done")
+	// if CSM is not running, we want to requeue
+	if !running {
+		return fmt.Errorf("calculateState returned CSM not running")
+	}
+
 	return merr
 }
 
@@ -704,7 +710,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 
 	}
 
-	label := "application-mobility-node-agent"
+	label := "node-agent"
 	opts = []client.ListOption{
 		client.InNamespace(instance.GetNamespace()),
 		client.MatchingLabels{"name": label},
@@ -717,7 +723,7 @@ func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModu
 	}
 
 	for _, pod := range podList.Items {
-		log.Infof("Checking Daemonset pod: %s", pod.Name)
+		log.Infof("Checking Daemonset pod: %s and status: %s", pod.Name, pod.Status.Phase)
 		if pod.Status.Phase == corev1.PodRunning {
 			readyPods++
 		} else {

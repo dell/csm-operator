@@ -96,8 +96,8 @@ function checkForGinkgo() {
     exit 1
 fi
 
-# copy cert-csi binary into local folder
-cp $CERT_CSI .
+# Uncomment if cert-csi is not in PATH
+# cp $CERT_CSI .
 
 # Uncomment for authorization proxy server
 # cp $DELLCTL /usr/local/bin/
