@@ -12,16 +12,16 @@ spec:
     usePrivateCaCerts: true
     common:
       name: connectivity-client-docker-k8s
-      image: amaas-eos-mw1.cec.lab.emc.com:5106/dcm/connectivity-client-docker-k8s:1.12.0
+      image: dellemc/connectivity-client-docker-k8s:1.19.0
       imagePullPolicy: IfNotPresent
     initContainers:
       - name: connectivity-client-init
-        image: amaas-eos-mw1.cec.lab.emc.com:5106/dcm/connectivity-client-docker-k8s:1.12.0
+        image: dellemc/connectivity-client-docker-k8s:1.19.0
         imagePullPolicy: IfNotPresent
     sideCars:
       - name: kubernetes-proxy
         image: bitnami/kubectl:latest
         imagePullPolicy: Always
       - name: cert-persister
-        image: amaas-eos-drm2.cec.lab.emc.com:5074/csm/connectivity-cert-persister-k8s:latest
+        image: dellemc/connectivity-cert-persister-k8s:0.11.0
         imagePullPolicy: Always
