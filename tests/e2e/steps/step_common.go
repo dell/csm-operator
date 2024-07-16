@@ -60,6 +60,12 @@ type Resource struct {
 	CustomResource []csmv1.ContainerStorageModule
 }
 
+// ResourceApex -
+type ResourceApex struct {
+	ScenarioApex       Scenario
+	CustomResourceApex []csmv1.ApexConnectivityClient
+}
+
 // Step -
 type Step struct {
 	ctrlClient client.Client
