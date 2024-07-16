@@ -16,7 +16,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.11.0
+    configVersion: v2.10.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -49,7 +49,7 @@ spec:
     # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:4.5.2.1
+        image: dellemc/sdc:4.5
         envs:
         - name: HOST_PID
           value: "1"
@@ -157,7 +157,7 @@ spec:
       #   effect: "NoSchedule"
 
     initContainers:
-      - image: dellemc/sdc:4.5.2.1
+      - image: dellemc/sdc:4.5
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -168,14 +168,14 @@ spec:
     # Application Mobility: enable csm-application-mobility module
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
-      enabled: false
-      configVersion: v1.1.0
+      enabled: true
+      configVersion: v1.0.3
       forceRemoveModule: true
       components:
       - name: application-mobility-controller-manager
         # enable: Enable/Disable application mobility controller-manager
         enabled: true
-        image: REPLACE_CONTROLLER_IMAGE
+        image: dellemc/csm-application-mobility-controller:v1.0.3
         imagePullPolicy: IfNotPresent
         envs:
           # Replica count for application mobility
@@ -193,7 +193,7 @@ spec:
         enabled: true
       # enabled: Enable/Disable Velero
       - name: velero
-        image: velero/velero:v1.14.0
+        image: velero/velero:v1.10.0
         imagePullPolicy: IfNotPresent
         enabled: true
         useVolumeSnapshot: false
@@ -251,11 +251,8 @@ spec:
     - initContainer:
         #initContainer image for the dell velero plugin
       - name: dell-custom-velero-plugin
-        image: REPLACE_PLUGIN_IMAGE
+        image: dellemc/csm-application-mobility-velero-plugin:v1.0.3
         #initContainer image for the configuration provider aws
-        #digest for velero/velero-plugin-for-aws:v1.10.0
+        #digest for velero/velero-plugin-for-aws:v1.6.2
       - name: velero-plugin-for-aws
-        image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
-
-
-
+        image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e
