@@ -60,7 +60,7 @@ var (
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 	storageCrMap           = map[string]string{"REPLACE_STORAGE_NAME": "STORAGE_TYPE", "REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_ENDPOINT": "END_POINT", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_VAULT_STORAGE_PATH": "VAULT_STORAGE_PATH"}
 	roleCrMap              = map[string]string{"REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_QUOTA": "QUOTA", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_STORAGE_POOL_PATH": "STORAGE_POOL_PATH"}
-	tenantCrMap            = map[string]string{"REPLACE_TENANT_ROLES": "TENANT_ROLES", "REPLACE_TENANT_VOLUME_PREFIX": "TENANT_PREFIX"}
+	tenantCrMap            = map[string]string{"REPLACE_TENANT_ROLES": "TENANT_ROLES", "REPLACE_TENANT_PREFIX": "TENANT_PREFIX"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -138,7 +138,7 @@ func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr s
 
 	newCrNum, _ := strconv.Atoi(newCrNumStr)
 	newCr := res.CustomResource[newCrNum-1]
-
+	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: oldCr.Namespace,
@@ -244,6 +244,7 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -261,11 +262,13 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
+	time.Sleep(60 * time.Second)
 	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
+	time.Sleep(60 * time.Second)
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
@@ -292,6 +295,7 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -336,6 +340,7 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -732,6 +737,7 @@ func (step *Step) runCustomTest(res Resource) error {
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -1112,13 +1118,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_storage.yaml")
+		err := replaceInFile(os.Getenv(mapValues[key]), key, "testfiles/authorization-templates/csm-authorization_storage.yaml")
 		if err != nil {
 			return err
 		}
 	}
 	cmd := exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_storage.yaml",
+		"-f", "testfiles/authorization-templates/csm-authorization_v1_storage.yaml",
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -1134,13 +1140,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_csmtenant.yaml")
+		err := replaceInFile(os.Getenv(mapValues[key]), key, "testfiles/authorization-templates/csm-authorization_csmtenant.yaml")
 		if err != nil {
 			return err
 		}
 	}
 	cmd = exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_csmtenant.yaml",
+		"-f", "testfiles/authorization-templates/csm-authorization_v1_csmtenant.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
@@ -1157,13 +1163,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_csmrole.yaml")
+		err := replaceInFile(os.Getenv(mapValues[key]), key, "testfiles/authorization-templates/csm-authorization_csmrole.yaml")
 		if err != nil {
 			return err
 		}
 	}
 	cmd = exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_csmrole.yaml",
+		"-f", "testfiles/authorization-templates/csm-authorization_v1_csmrole.yaml",
 	)
 
 	fmt.Println("=== Role === \n", cmd.String())

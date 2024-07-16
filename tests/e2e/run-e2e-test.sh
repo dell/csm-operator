@@ -15,7 +15,7 @@
 ###############################################################################
 # Set environment variables and options
 ###############################################################################
-export E2E_SCENARIOS_FILE=testfiles/scenarios.yaml
+export E2E_SCENARIOS_FILE=testfiles/scenarios_observability_upgrade_with_powerscale.yaml
 export ARRAY_INFO_FILE=array-info.sh
 export GO111MODULE=on
 export ACK_GINKGO_RC=true
@@ -96,8 +96,8 @@ function checkForGinkgo() {
     exit 1
 fi
 
-# Uncomment if cert-csi is not in PATH
-# cp $CERT_CSI .
+# copy cert-csi binary into local folder
+cp $CERT_CSI .
 
 # Uncomment for authorization proxy server
 # cp $DELLCTL /usr/local/bin/
