@@ -148,6 +148,7 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 	return fmt.Errorf("no method for step: %s", stepName)
 }
 
+// RunStepClient - runs a step
 func (runner *Runner) RunStepClient(stepName string, res ResourceApex) error {
 	for _, stepDef := range runner.Definitions {
 		if stepDef.Expr.MatchString(stepName) {
