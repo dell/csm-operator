@@ -4,7 +4,7 @@ metadata:
   name: "REPLACE_STORAGE_NAME"
 spec:
   type: "REPLACE_STORAGE_TYPE"
-  endpoint: "REPLACE_ENDPOINT"
+  endpoint: "https://REPLACE_ENDPOINT"
   systemID: "REPLACE_SYSTEM_ID"
   credentialStore: vault
   credentialPath: "REPLACE_VAULT_STORAGE_PATH"

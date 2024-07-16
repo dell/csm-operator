@@ -1089,9 +1089,9 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	var err error
 	var (
-		proxyHost       = ""
 		storageType     = ""
 		driverNamespace = ""
+		proxyHost       = ""
 	)
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars

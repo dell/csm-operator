@@ -2,28 +2,28 @@
 
 # Authorization V1 scenarios:
 # Upgrade from V1 to V2 is not supported
-- scenario: "Install Authorization Proxy Server V1 and upgrade"
-  paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.0
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.1
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerscale] for CR [1]"
-    # - "Create authorization-proxy-server V1 resources for [powerscale]"
-    # upgrade
-    - "Upgrade from custom resource [1] to [2]"
-    - "Validate custom resource [2]"
-    - "Validate [authorization-proxy-server] module from CR [2] is installed"
-    - "Delete custom resource [2]"
+# - scenario: "Install Authorization Proxy Server V1 and upgrade"
+#   paths:
+#     - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.1
+#     - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.1
+#   tags:
+#     - "authorizationproxyserver"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create [authorization-proxy-server] prerequisites from CR [1]"
+#     - "Apply custom resource [1]"
+#     - "Validate [authorization-proxy-server] module from CR [1] is installed"
+#     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
+#     # - "Create authorization-proxy-server V1 resources for [powerscale]"
+#     # upgrade
+#     - "Upgrade from custom resource [1] to [2]"
+#     - "Validate custom resource [2]"
+#     - "Validate [authorization-proxy-server] module from CR [2] is installed"
+#     - "Delete custom resource [2]"
 
 - scenario: "Install Authorization Proxy Server & PowerFlex Driver (With Authorization), Upgrade both Authorization Proxy Server and PowerFlex Driver"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.0
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.1
     - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.1
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"

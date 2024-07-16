@@ -23,12 +23,10 @@ export END_POINT="1.1.1.1:8080"
 export SYSTEM_ID="Isilon-System-Name"
 export STORAGE_USER="username"
 export STORAGE_PASSWORD="password"
-export STORAGE_POOL="/ifs/data/csi"
-# provide vault path example "storage\/powerscale" escape / with \
-export VAULT_STORAGE_PATH="vault_path"
-# for powerscale isipath escape "/" in the path example "\/ifs\/data\/csi"
-export STORAGE_POOL_PATH="pool1"
-export QUOTA="10GB"
+export STORAGE_POOL="/ifs/data/csi" # don't escape quotes (this is used in V1)
+export VAULT_STORAGE_PATH="vault_path" # provide vault path example "storage\/powerscale" escape / with \
+export STORAGE_POOL_PATH="/ifs/data/csi" # for powerscale isipath escape "/" in the path example "\/ifs\/data\/csi"
+export QUOTA="0GB"
 export TENANT_ROLES="csmrole-sample"
 export TENANT_PREFIX="tn1"
 
