@@ -14,6 +14,7 @@
 # Since this e2e exposes the Proxy Server via NodePort, you can use a cluster node IP
 export PROXY_HOST="csm-authorization.com"
 export DELLCTL="/usr/local/bin/dellctl"
+
 # The following are Authorization Proxy Server specific:
 # Must supply storage array details
 # Storage type examples - powerscale, powerflex, powermax
@@ -22,14 +23,17 @@ export END_POINT="1.1.1.1:8080"
 export SYSTEM_ID="Isilon-System-Name"
 export STORAGE_USER="username"
 export STORAGE_PASSWORD="password"
+export STORAGE_POOL="/ifs/data/csi"
 # provide vault path example "storage\/powerscale" escape / with \
 export VAULT_STORAGE_PATH="vault_path"
 # for powerscale isipath escape "/" in the path example "\/ifs\/data\/csi"
 export STORAGE_POOL_PATH="pool1"
+export QUOTA="10GB"
+export TENANT_ROLES="csmrole-sample"
+export TENANT_PREFIX="tn1"
+
 # Must specify and manually create driver namespace
 export DRIVER_NAMESPACE="isilon"
-export TENANT_ROLES="role1"
-export TENANT_PREFIX="tn1"
 
 # The following are for creating PFlex secret/storage class
 # do not include "https://" in the endpoint

@@ -72,6 +72,13 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 
 	// Configure authorization-proxy-server for [powerflex]
 	runner.addStep(`^Configure authorization-proxy-server for \[([^"]*)\] for CR \[(\d+)\]$`, step.configureAuthorizationProxyServer)
+	runner.addStep(`^Create authorization-proxy-server V1 resources for \[([^"]*)\]`, step.AuthorizationV1Resources)
+	// Authorization Proxy Server V2 additional steps
+	runner.addStep(`^Create authorization-proxy-server V2 resources for \[([^"]*)\]`, step.AuthorizationV2Resources)
+	runner.addStep(`^Install Authorization CRDs \[(\d+)\]$`, step.createCustomResourceDefinition)
+	runner.addStep(`^Validate \[([^"]*)\] CRD for Authorization is installed$`, step.validateCustomResourceDefinition)
+	runner.addStep(`^Delete Authorization CRDs \[(\d+)\]$`, step.deleteCustomResourceDefinition)
+
 	runner.addStep(`^Set up application mobility CR \[([^"]*)\]$`, step.configureAMInstall)
 
 	// Connectivity Client steps
