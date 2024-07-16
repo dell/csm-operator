@@ -1132,28 +1132,24 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	switch semver.Major(configVersion) {
 	case "v2":
-		return step.AuthorizationV2Resources(storageType, driverNamespace, proxyHost, port)
+		return step.AuthorizationV2Resources(storageType, driverNamespace, address, port)
 	case "v1":
-		return step.AuthorizationV1Resources(driver, port)
+		return step.AuthorizationV1Resources(storageType, driver, port, address, driverNamespace)
 	default:
 		return fmt.Errorf("authorization major version %s not supported", semver.Major(configVersion))
 	}
 
-	return nil
 }
 
 // AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV1Resources(driver, port string) error {
+func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost, driverNamespace string) error {
 
 	var (
 		endpoint        = ""
 		sysID           = ""
 		user            = ""
 		password        = ""
-		storageType     = ""
 		pool            = ""
-		driverNamespace = ""
-		proxyHost       = ""
 	)
 
 	//by default, use set defined in env file
@@ -1203,7 +1199,7 @@ func (step *Step) AuthorizationV1Resources(driver, port string) error {
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0644)
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1298,7 +1294,7 @@ func (step *Step) AuthorizationV1Resources(driver, port string) error {
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0644)
+	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
