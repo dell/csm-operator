@@ -205,7 +205,7 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			return fmt.Errorf("Installation of velero %v failed", err1)
 		}
 
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml", "--version=3.0.0")
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml")
 		err2 := cmd2.Run()
 		if err2 != nil {
 			return fmt.Errorf("Installation of velero %v failed", err2)
@@ -230,8 +230,8 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		}
 
 		// give wp time to setup before we create backup/restores
-		fmt.Println("Sleeping 60 seconds to allow WP time to create")
-		time.Sleep(60 * time.Second)
+		fmt.Println("Sleeping 120 seconds to allow WP time to create")
+		time.Sleep(120 * time.Second)
 
 	}
 

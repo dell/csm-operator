@@ -31,6 +31,8 @@ spec:
           value: "false"
         - name: X_CSI_DEBUG
           value: "true"
+        - name: X_CSI_ALLOW_RWO_MULTI_POD_ACCESS
+          value: "false"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
         # Default value: None
@@ -38,26 +40,20 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
-        - name: X_CSI_NFS_ACLS
-          value: "0777"
-        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
-          value: ""
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
-    
     sideCars:
-    # sdc-monitor is disabled by default, due to high CPU usage
+      # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:4.5
+        image: dellemc/sdc:4.5.2.1
         envs:
-        - name: HOST_PID
-          value: "1"
-        - name: MDM
-          value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
-
-    # health monitor is disabled by default, refer to driver documentation before enabling it
-    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+          - name: HOST_PID
+            value: "1"
+          - name: MDM
+            value: "10.x.x.x,10.x.x.x" #provide MDM value
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -77,11 +73,12 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
       #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
       # Default value: None
+      # Examples:
+      #  node-role.kubernetes.io/control-plane: ""
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
       #  node-role.kubernetes.io/master: ""
@@ -100,10 +97,15 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     node:
       envs:
-
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
         #    true: enable SDC approval
@@ -111,7 +113,6 @@ spec:
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
         #   true: enable renaming
@@ -119,24 +120,23 @@ spec:
         # Default value: false
         - name: X_CSI_RENAME_SDC_ENABLED
           value: "false"
-
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
         # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
         # "prefix" + "worker_node_hostname" should not exceed 31 chars.
         # Default value: none
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
-
-        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
-        # Allowed values: Any value greater than or equal to 0
-        # Default value: "0"
-        - name: X_CSI_MAX_VOLUMES_PER_NODE
-          value: "1"
-
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
       # Default value: None
+      # Examples:
+      #  node-role.kubernetes.io/control-plane: ""
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
       #  node-role.kubernetes.io/master: ""
@@ -155,9 +155,8 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     initContainers:
-      - image: dellemc/sdc:4.5
+      - image: dellemc/sdc:4.5.2.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
