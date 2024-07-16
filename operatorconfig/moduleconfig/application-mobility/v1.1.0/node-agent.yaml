@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: application-mobility-node-agent
+  name: node-agent
   namespace: <NAMESPACE>
   labels:
     app.kubernetes.io/name: application-mobility-velero
@@ -9,11 +9,11 @@ metadata:
 spec:
   selector:
     matchLabels:
-      name: application-mobility-node-agent
+      name: node-agent
   template:
     metadata:
       labels:
-        name: application-mobility-node-agent
+        name: node-agent
         csm: application-mobility
         app.kubernetes.io/name: application-mobility-velero
         app.kubernetes.io/instance: application-mobility

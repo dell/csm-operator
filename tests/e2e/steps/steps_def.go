@@ -60,7 +60,7 @@ var (
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 	storageCrMap           = map[string]string{"REPLACE_STORAGE_NAME": "STORAGE_TYPE", "REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_ENDPOINT": "END_POINT", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_VAULT_STORAGE_PATH": "VAULT_STORAGE_PATH"}
 	roleCrMap              = map[string]string{"REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_QUOTA": "QUOTA", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_STORAGE_POOL_PATH": "STORAGE_POOL_PATH"}
-	tenantCrMap            = map[string]string{"REPLACE_TENANT_ROLES": "TENANT_ROLES", "REPLACE_TENANT_PREFIX": "TENANT_PREFIX"}
+	tenantCrMap            = map[string]string{"REPLACE_TENANT_ROLES": "TENANT_ROLES", "REPLACE_TENANT_VOLUME_PREFIX": "TENANT_PREFIX"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -1112,13 +1112,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(os.Getenv(mapValues[key]), key, "testfiles/authorization-templates/csm-authorization_storage.yaml")
+		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_storage.yaml")
 		if err != nil {
 			return err
 		}
 	}
 	cmd := exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_v1_storage.yaml",
+		"-f", "testfiles/authorization-templates/csm-authorization_storage.yaml",
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -1134,13 +1134,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(os.Getenv(mapValues[key]), key, "testfiles/authorization-templates/csm-authorization_csmtenant.yaml")
+		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_csmtenant.yaml")
 		if err != nil {
 			return err
 		}
 	}
 	cmd = exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_v1_csmtenant.yaml",
+		"-f", "testfiles/authorization-templates/csm-authorization_csmtenant.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
@@ -1157,13 +1157,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(os.Getenv(mapValues[key]), key, "testfiles/authorization-templates/csm-authorization_csmrole.yaml")
+		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_csmrole.yaml")
 		if err != nil {
 			return err
 		}
 	}
 	cmd = exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_v1_csmrole.yaml",
+		"-f", "testfiles/authorization-templates/csm-authorization_csmrole.yaml",
 	)
 
 	fmt.Println("=== Role === \n", cmd.String())

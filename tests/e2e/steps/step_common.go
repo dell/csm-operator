@@ -342,7 +342,7 @@ func checkAuthorizationProxyServerPods(ctx context.Context, namespace string, k8
 func checkApplicationMobilityPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
 	// list all namespaces that we expect to find app-mobility pods in
 	nsToCheck := []string{namespace}
-	// 3 AM pods are needed at least: controller, velero, node-agent
+	// 3 AM pods are needed at least: AM-controller, AM-velero, node-agent
 	minNumPods := 3
 	var allPods []*corev1.Pod
 
@@ -352,7 +352,7 @@ func checkApplicationMobilityPods(ctx context.Context, namespace string, k8sClie
 			return err
 		}
 		for _, pod := range somePods {
-			if strings.Contains(pod.Name, "application-mobility") {
+			if strings.Contains(pod.Name, "application-mobility") || strings.Contains(pod.Name, "node-agent") {
 				allPods = append(allPods, pod)
 			}
 		}
@@ -360,7 +360,7 @@ func checkApplicationMobilityPods(ctx context.Context, namespace string, k8sClie
 
 	// once we have status in csm module objects, update this code
 	if len(allPods) < minNumPods {
-		return fmt.Errorf("expected at least %d application-mobility pods in namespaces %+v but got %d pods", minNumPods, nsToCheck, len(allPods))
+		return fmt.Errorf("expected at least %d application-mobility/node-agent pods in namespaces %+v but got %d pods", minNumPods, nsToCheck, len(allPods))
 	}
 
 	for _, pod := range allPods {

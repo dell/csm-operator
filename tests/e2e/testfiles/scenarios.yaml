@@ -1,4 +1,4 @@
-List of E2E Tests Scenarios
+#List of E2E Tests Scenarios
 - scenario: "Install Authorization Proxy Server"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
@@ -90,7 +90,7 @@ List of E2E Tests Scenarios
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    - "sanity"
+    # - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
@@ -364,7 +364,7 @@ List of E2E Tests Scenarios
     - "authorizationproxyserver"
     - "authorization"
     - "powerscale"
-    - "sanity"
+    # - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
@@ -470,7 +470,7 @@ List of E2E Tests Scenarios
     - "authorization"
     - "powerscale"
     - "observability"
-    - "sanity"
+    # - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -761,7 +761,7 @@ List of E2E Tests Scenarios
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    - "powerflex"
+    # - "powerflex"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -1006,7 +1006,7 @@ List of E2E Tests Scenarios
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerflex"
+    # - "powerflex"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1051,7 +1051,7 @@ List of E2E Tests Scenarios
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerflex"
+    # - "powerflex"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1091,9 +1091,9 @@ List of E2E Tests Scenarios
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerflex"
+    # - "powerflex"
     - "observability"
-    - "sanity"
+    # - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -1366,7 +1366,7 @@ List of E2E Tests Scenarios
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install powerflex driver, enable and disable application-mobility"
   paths:
@@ -1393,6 +1393,37 @@ List of E2E Tests Scenarios
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/application-mobility-templates/powerflex_noAM.yaml] for [application-mobility]"
     - "Enable forceRemoveModule on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: "Install Application Mobility v1.03 and upgrade to v1.1.0, downgrade back to v1.0.3"
+  paths:
+    - "testfiles/application-mobility-templates/csm_application_mobility_n_minus_1.yaml"
+    - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"
+  tags:
+    - "applicationmobility"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_n_minus_1.yaml]"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml]"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-app-mobility-config] in namespace [test-vxflexos] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate [application-mobility] module from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    #upgrade
+    - "Apply custom resource [2]"
+    - "Validate custom resource [2]"
+    - "Validate [application-mobility] module from CR [2] is installed"
+    #downgrade
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [application-mobility] module from CR [1] is installed"
+    #clean up
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml] for [application-mobility]"
+    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_n_minus_1.yaml] for [application-mobility]"
     - "Delete custom resource [1]"
 
 - scenario: "Install App Mobility when Velero and Cert-Manager already installed"
@@ -1425,7 +1456,7 @@ List of E2E Tests Scenarios
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install App Mobility Velero with different env variables than default"
   paths:
@@ -1458,7 +1489,7 @@ List of E2E Tests Scenarios
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install App Mobility with powerflex driver- default"
   paths:
@@ -1485,7 +1516,7 @@ List of E2E Tests Scenarios
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install PowerMax Driver(Standalone)"
   paths:

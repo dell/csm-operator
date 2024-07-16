@@ -516,6 +516,35 @@ func TestAppMobilityVelero(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+
+		"success - upgrading with old node agent with valid old version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			velerov1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			ApplicationMobilityOldVersion = "v1.0.3"
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+
+		"success - upgrade should finish if failed to remove old node agent Daemonset": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			velerov1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			ApplicationMobilityOldVersion = "old-version"
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+
 		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {

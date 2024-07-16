@@ -1433,6 +1433,7 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 		}
 		if cr.HasModule(csmv1.ApplicationMobility) {
 			newVersion := cr.GetModule(csmv1.ApplicationMobility).ConfigVersion
+			modules.ApplicationMobilityOldVersion = oldVersion
 			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.ApplicationMobility, operatorConfig)
 		}
 		driverType := cr.Spec.Driver.CSIDriverType
