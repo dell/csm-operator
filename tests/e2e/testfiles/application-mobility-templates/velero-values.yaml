@@ -8,14 +8,13 @@ cleanUpCRDs: false
 
 deployNodeAgent: true
 
-
 nodeAgent:
   # Set to true if installing on OpenShift
   privileged: false
 
 image:
   repository: velero/velero
-  tag: v1.10.0
+  tag: v1.14.0
   pullPolicy: IfNotPresent
 
 
@@ -31,30 +30,30 @@ credentials:
 
 configuration:
   # Cloud provider being used (e.g. aws, azure, gcp).
-  provider: aws
 
   backupStorageLocation:
-    name: default
-    provider: aws
-    bucket: REPLACE_BUCKET_NAME
-    config: {
-      region: minio,
-      s3ForcePathStyle: true,
-      s3Url: http://REPLACE_S3URL
-    }
+    - name: default
+      provider: aws
+      bucket: REPLACE_BUCKET_NAME
+      default: true
+      config: {
+        region: minio,
+        s3ForcePathStyle: true,
+        s3Url: http://REPLACE_S3URL
+      }
 
-    volumeSnapshotLocation:
-    - name: aws-default
+  volumeSnapshotLocation:
+    - name: default
       provider: aws
 
 initContainers:
-- name: dell-custom-velero-plugin
-  image: REPLACE_PLUGIN_IMAGE
-  volumeMounts:
-  - mountPath: /target
-    name: plugins
-- name: velero-plugin-for-aws
-  image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
-  volumeMounts:
-  - mountPath: /target
-    name: plugins
+  - name: dell-custom-velero-plugin
+    image: REPLACE_PLUGIN_IMAGE
+    volumeMounts:
+    - mountPath: /target
+      name: plugins
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
+    volumeMounts:
+    - mountPath: /target
+      name: plugins

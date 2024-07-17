@@ -202,13 +202,18 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		cmd1 := exec.Command("helm", "repo", "add", "vmware-tanzu", "https://vmware-tanzu.github.io/helm-charts")
 		err1 := cmd1.Run()
 		if err1 != nil {
-			return fmt.Errorf("Installation of velero %v failed", err1)
+			return fmt.Errorf("installation of velero %v failed", err1)
 		}
 
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml")
+		amNamespace := os.Getenv("AM_NS")
+		if amNamespace == "" {
+			amNamespace = "test-vxflexos"
+		}
+
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml")
 		err2 := cmd2.Run()
 		if err2 != nil {
-			return fmt.Errorf("Installation of velero %v failed", err2)
+			return fmt.Errorf("installation of velero %v failed", err2)
 		}
 	} else if thirdPartyModule == "wordpress" {
 
@@ -251,7 +256,12 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 			}
 		}
 	} else if thirdPartyModule == "velero" {
-		cmd := exec.Command("helm", "delete", "velero", "--namespace=velero")
+		amNamespace := os.Getenv("AM_NS")
+		if amNamespace == "" {
+			amNamespace = "test-vxflexos"
+		}
+
+		cmd := exec.Command("helm", "delete", "velero", "--namespace="+amNamespace)
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("uninstallation of velero %v failed", err)
