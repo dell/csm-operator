@@ -50,7 +50,7 @@ spec:
         image: <AUTHORIZATION_OPA_KUBEMGMT_IMAGE>
         imagePullPolicy: IfNotPresent
         args:
-        - "--policies=authorization"
+        - "--policies=<NAMESPACE>"
         - "--enable-data"
       volumes:
       - name: config-volume
@@ -401,10 +401,10 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: system:serviceaccounts:authorization
+  name: system:serviceaccounts:<NAMESPACE>
 subjects:
   - kind: Group
-    name: system:serviceaccounts:authorization
+    name: system:serviceaccounts:<NAMESPACE>
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole
@@ -428,7 +428,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: Group
-  name: system:serviceaccounts:authorization
+  name: system:serviceaccounts:<NAMESPACE>
   apiGroup: rbac.authorization.k8s.io
 ---
 # Define role for OPA/kube-mgmt to update configmaps with policy status.
@@ -454,5 +454,5 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: Group
-  name: system:serviceaccounts:authorization
+  name: system:serviceaccounts:<NAMESPACE>
   apiGroup: rbac.authorization.k8s.io
