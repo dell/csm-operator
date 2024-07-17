@@ -1385,7 +1385,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	// Create Role
-	fmt.Println("=== Creating Role ===\n", cmd.String())
+	fmt.Println("=== Creating Role ===\n ")
 	mapValues, err = determineMap(roleMap)
 	if err != nil {
 		return err

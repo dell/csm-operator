@@ -42,7 +42,7 @@ export PSCALE_ENDPOINT="1.1.1.1"
 export PSCALE_AUTH_ENDPOINT="localhost"
 export PSCALE_AUTH_PORT="9400"
 # The following are Authorization Proxy Server specific for powerscale:
-export PSCALE_POOL="ifs/data/csi"
+export PSCALE_POOL="ifs/data/csi" # escape with / with \
 export PSCALE_STORAGE="powerscale"
 export PSCALE_VAULT_STORAGE_PATH="storage\/powerscale" # escape / with \
 export PSCALE_QUOTA="0GB"
