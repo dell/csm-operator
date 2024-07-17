@@ -66,7 +66,7 @@ var (
 
 	// Auth V2
 	pscaleStorageCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH"}
-	pscaleRoleCrMap    = map[string]string{"REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL"}
+	pscaleRoleCrMap    = map[string]string{"REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2"}
 	pscaleTenantCrMap  = map[string]string{"REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
 )
 
@@ -1155,14 +1155,13 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		user     = ""
 		password = ""
 		pool     = ""
+		// YAML variables
+		endpointvar = ""
+		systemIdvar = ""
+		uservar     = ""
+		passvar     = ""
+		poolvar     = ""
 	)
-
-	// by default, use set defined in env file
-	endpointvar := "END_POINT"
-	systemIdvar := "SYSTEM_ID"
-	uservar := "STORAGE_USER"
-	passvar := "STORAGE_PASSWORD"
-	poolvar := "STORAGE_POOL"
 
 	if driver == "powerflex" {
 		endpointvar = "PFLEX_ENDPOINT"
@@ -1177,7 +1176,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		systemIdvar = "PSCALE_CLUSTER"
 		uservar = "PSCALE_USER"
 		passvar = "PSCALE_PASS"
-		poolvar = "PSCALE_POOL"
+		poolvar = "PSCALE_POOL_V1"
 	}
 
 	// get env variables
@@ -1325,21 +1324,28 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
 func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port string) error {
 	var (
-		storageMap = ""
-		roleMap    = ""
-		tenantMap  = ""
+		storageMap          = ""
+		roleMap             = ""
+		tenantMap           = ""
+		templateStorageFile = ""
+		templateRoleFile    = ""
+		templateTenantFile  = "testfiles/authorization-templates/csm-authorization_csmtenant.yaml"
 	)
 
 	if driver == "powerflex" {
 		storageMap = "pflexStorage"
 		roleMap = "pflexCsmrole"
 		tenantMap = "pflexCsmtenant"
+		templateStorageFile = "testfiles/authorization-templates/csm-authorization_storage_powerflex.yaml"
+		templateRoleFile = "testfiles/authorization-templates/csm-authorization_csmrole_powerflex.yaml"
 	}
 
 	if driver == "powerscale" {
 		storageMap = "pscaleStorage"
 		roleMap = "pscaleCsmrole"
 		tenantMap = "pscaleCsmtenant"
+		templateStorageFile = "testfiles/authorization-templates/csm-authorization_storage_powerscale.yaml"
+		templateRoleFile = "testfiles/authorization-templates/csm-authorization_csmrole_powerscale.yaml"
 	}
 
 	// Create Admin Token
@@ -1370,13 +1376,14 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_storage.yaml")
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateStorageFile)
 		if err != nil {
 			return err
 		}
 	}
 	cmd := exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_storage.yaml",
+		"-f", templateStorageFile,
+		"-n", driverNamespace,
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -1392,13 +1399,14 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_csmrole.yaml")
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateRoleFile)
 		if err != nil {
 			return err
 		}
 	}
 	cmd = exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_csmrole.yaml",
+		"-f", templateRoleFile,
+		"-n", driverNamespace,
 	)
 
 	fmt.Println("=== Role === \n", cmd.String())
@@ -1418,13 +1426,14 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_csmtenant.yaml")
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateTenantFile)
 		if err != nil {
 			return err
 		}
 	}
 	cmd = exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_csmtenant.yaml",
+		"-f", templateTenantFile,
+		"-n", driverNamespace,
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
