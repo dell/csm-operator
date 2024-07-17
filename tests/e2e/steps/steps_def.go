@@ -243,19 +243,24 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 		cmd := exec.Command("kubectl", "delete", "-f", "testfiles/cert-manager-crds.yaml")
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("cert-manager uninstall failed: %v", err)
+			// Some deployments are not found since they are deleted already. Perform ex
+			cmd = exec.Command("kubectl", "get", "pods", "-n", "cert-manager")
+			err = cmd.Run()
+			if err != nil {
+				return fmt.Errorf("cert-manager uninstall failed: %v", err)
+			}
 		}
 	} else if thirdPartyModule == "velero" {
 		cmd := exec.Command("helm", "delete", "velero", "--namespace=velero")
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("Uninstallation of velero %v failed", err)
+			return fmt.Errorf("uninstallation of velero %v failed", err)
 		}
 	} else if thirdPartyModule == "wordpress" {
 		cmd := exec.Command("kubectl", "delete", "-n", "wordpress", "-k", "testfiles/sample-application")
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("Uninstallation of wordpress %v failed", err)
+			return fmt.Errorf("uninstallation of wordpress %v failed", err)
 		}
 
 	}
