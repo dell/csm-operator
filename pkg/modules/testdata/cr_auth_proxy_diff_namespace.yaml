@@ -64,7 +64,7 @@ spec:
 
               # additional host rules for the proxy-server ingress
               hosts:
-                - authorization-ingress-nginx-controller.authorization.svc.cluster.local
+                - dell-ingress-nginx-controller.dell.svc.cluster.local
 
               # additional annotations for the proxy-server ingress
               annotations: {}
@@ -106,7 +106,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: csm-config-params
-  namespace: authorization
+  namespace: dell
 data:
   csm-config-params.yaml: |
     CONCURRENT_POWERFLEX_REQUESTS: 10
