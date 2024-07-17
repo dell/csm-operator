@@ -22,7 +22,7 @@ metadata:
     app.kubernetes.io/part-of: csm-authorization
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: csm-authorization
-  name: csmrole-sample
+  name: "REPLACE_ROLE_NAME"
 spec:
   quota: "REPLACE_QUOTA"
   systemID: "REPLACE_SYSTEM_ID"
@@ -40,7 +40,7 @@ metadata:
     app.kubernetes.io/part-of: csm-authorization
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: csm-authorization
-  name: csmtenant-sample
+  name: "REPLACE_TENANT_NAME"
 spec:
   # TODO(user): Add fields here
   roles: "REPLACE_TENANT_ROLES"

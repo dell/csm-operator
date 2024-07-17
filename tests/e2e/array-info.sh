@@ -30,7 +30,8 @@ export PFLEX_POOL="pool1"
 export PFLEX_STORAGE="powerflex"
 export PFLEX_VAULT_STORAGE_PATH="storage\/powerflex" # escape / with \
 export PFLEX_QUOTA="10GB"
-export PFLEX_ROLE="csmrole-sample"
+export PFLEX_ROLE="csmrole-powerflex"
+export PFLEX_TENANT="csmtenant-powerflex"
 export PFLEX_TENANT_PREFIX="tn1"
 
 # The following are for creating PScale secret/storage class
@@ -47,7 +48,8 @@ export PSCALE_POOL_V2="ifs\/data\/csi" # escape / with \
 export PSCALE_STORAGE="powerscale"
 export PSCALE_VAULT_STORAGE_PATH="storage\/powerscale" # escape / with \
 export PSCALE_QUOTA="0GB"
-export PSCALE_ROLE="csmrole-sample"
+export PSCALE_ROLE="csmrole-powerscale"
+export PSCALE_TENANT="csmtenant-powerscale"
 export PSCALE_TENANT_PREFIX="tn1"
 
 # The following are for testing AM

@@ -95,7 +95,8 @@
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerscale]"
+    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [2]"
 
@@ -126,7 +127,8 @@
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerscale]"
+    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [2]"
 
@@ -144,7 +146,8 @@
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerscale]"
+    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [2]"
 
@@ -297,7 +300,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerscale]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
@@ -411,7 +414,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerscale]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
@@ -513,7 +516,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerscale]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
@@ -563,7 +566,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerscale]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
@@ -608,7 +611,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerscale]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
@@ -807,7 +810,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
@@ -851,7 +854,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [3]"
     - "Delete custom resource [3]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
@@ -1063,7 +1066,7 @@
     - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete custom resource [2]"
     - "Delete Authorization CRDs [3]"
@@ -1101,7 +1104,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
@@ -1151,7 +1154,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs"
+    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
