@@ -210,6 +210,27 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			amNamespace = "test-vxflexos"
 		}
 
+		// Cleanup backupstoragelocations and volumesnapshotlocation before installing velero
+		cmd := exec.Command("kubectl", "get", "backupstoragelocations.velero.io", "default", "-n", amNamespace)
+		err := cmd.Run()
+		if err == nil {
+			cmd1 = exec.Command("kubectl", "delete", "backupstoragelocations.velero.io", "default", "-n", amNamespace)
+			err1 = cmd1.Run()
+			if err1 != nil {
+				return fmt.Errorf("installation of velero %v failed", err1)
+			}
+		}
+
+		cmd = exec.Command("kubectl", "get", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace)
+		err = cmd.Run()
+		if err == nil {
+			cmd1 = exec.Command("kubectl", "delete", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace)
+			err1 = cmd1.Run()
+			if err1 != nil {
+				return fmt.Errorf("installation of velero %v failed", err1)
+			}
+		}
+
 		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml")
 		err2 := cmd2.Run()
 		if err2 != nil {
@@ -248,7 +269,7 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 		cmd := exec.Command("kubectl", "delete", "-f", "testfiles/cert-manager-crds.yaml")
 		err := cmd.Run()
 		if err != nil {
-			// Some deployments are not found since they are deleted already. Perform ex
+			// Some deployments are not found since they are deleted already.
 			cmd = exec.Command("kubectl", "get", "pods", "-n", "cert-manager")
 			err = cmd.Run()
 			if err != nil {

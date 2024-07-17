@@ -1451,6 +1451,7 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml] for [application-mobility]"
     - "Restore template [testfiles/application-mobility-templates/velero-values.yaml] for [application-mobility]"
+    - "Uninstall [cert-manager]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
   customTest:
