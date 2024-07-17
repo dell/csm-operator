@@ -11,6 +11,7 @@ package modules
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -22,6 +23,7 @@ import (
 	networking "k8s.io/api/networking/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -729,6 +731,49 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 				assert.Error(t, err)
 			}
 		})
+	}
+}
+
+func TestAuthorizationKubeMgmtPolicies(t *testing.T) {
+	cr, err := getCustomResource("./testdata/cr_auth_proxy_diff_namespace.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	certmanagerv1.AddToScheme(scheme.Scheme)
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	err = AuthorizationServerDeployment(context.TODO(), false, operatorConfig, cr, sourceClient)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	proxyServer := &appsv1.Deployment{}
+	err = sourceClient.Get(context.Background(), types.NamespacedName{Name: "proxy-server", Namespace: "dell"}, proxyServer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	argFound := false
+	for _, container := range proxyServer.Spec.Template.Spec.Containers {
+		if container.Name == "kube-mgmt" {
+			for _, arg := range container.Args {
+				if strings.Contains(arg, "--policies") {
+					argFound = true
+					if arg != "--policies=dell" {
+						t.Fatalf("expected --policies=dell, got %s", arg)
+					}
+					break
+				}
+			}
+		}
+		if argFound {
+			break
+		}
+	}
+
+	if !argFound {
+		t.Fatalf("expected --policies=dell, got none")
 	}
 }
 
