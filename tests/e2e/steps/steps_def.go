@@ -60,14 +60,10 @@ var (
 	authSidecarRootCertMap = map[string]string{}
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 	// Auth V2
-	pflexStorageCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH"}
-	pflexRoleCrMap    = map[string]string{"REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL"}
-	pflexTenantCrMap  = map[string]string{"REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
+	pflexCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
 
 	// Auth V2
-	pscaleStorageCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH"}
-	pscaleRoleCrMap    = map[string]string{"REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2"}
-	pscaleTenantCrMap  = map[string]string{"REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
+	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -725,18 +721,10 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
 		mapValues = amConfigMap
-	} else if crType == "pflexStorage" {
-		mapValues = pflexStorageCrMap
-	} else if crType == "pflexCsmrole" {
-		mapValues = pflexRoleCrMap
-	} else if crType == "pflexCsmtenant" {
-		mapValues = pflexTenantCrMap
-	} else if crType == "pscaleStorage" {
-		mapValues = pscaleStorageCrMap
-	} else if crType == "pscaleCsmrole" {
-		mapValues = pscaleRoleCrMap
-	} else if crType == "pscaleCsmtenant" {
-		mapValues = pscaleTenantCrMap
+	} else if crType == "pflexAuthCRs" {
+		mapValues = pflexCrMap
+	} else if crType == "pscaleAuthCRs" {
+		mapValues = pscaleCrMap
 	} else {
 		return mapValues, fmt.Errorf("type: %s is not supported", crType)
 	}
@@ -1098,6 +1086,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	authNamespace := cr.Name
 
 	var err error
 	var (
@@ -1121,6 +1110,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	proxyHost = os.Getenv("PROXY_HOST")
+	driverNamespace = os.Getenv("DRIVER_NAMESPACE")
 
 	port, err := getPortContainerizedAuth(cr.Namespace)
 	if err != nil {
@@ -1139,7 +1129,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	switch semver.Major(configVersion) {
 	case "v2":
-		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port)
+		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, authNamespace)
 	case "v1":
 		return step.AuthorizationV1Resources(storageType, driver, port, address, driverNamespace)
 	default:
@@ -1322,30 +1312,23 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, authNamespace string) error {
 	var (
-		storageMap          = ""
-		roleMap             = ""
-		tenantMap           = ""
-		templateStorageFile = ""
-		templateRoleFile    = ""
-		templateTenantFile  = "testfiles/authorization-templates/csm-authorization_csmtenant.yaml"
+		crMap               = ""
+		templateFile        = "testfiles/authorization-templates/csm-authorization-template.yaml"
+		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs.yaml"
 	)
 
 	if driver == "powerflex" {
-		storageMap = "pflexStorage"
-		roleMap = "pflexCsmrole"
-		tenantMap = "pflexCsmtenant"
-		templateStorageFile = "testfiles/authorization-templates/csm-authorization_storage_powerflex.yaml"
-		templateRoleFile = "testfiles/authorization-templates/csm-authorization_csmrole_powerflex.yaml"
+		crMap = "pflexAuthCRs"
+	} else if driver == "powerscale" {
+		crMap = "pscaleAuthCRs"
 	}
 
-	if driver == "powerscale" {
-		storageMap = "pscaleStorage"
-		roleMap = "pscaleCsmrole"
-		tenantMap = "pscaleCsmtenant"
-		templateStorageFile = "testfiles/authorization-templates/csm-authorization_storage_powerscale.yaml"
-		templateRoleFile = "testfiles/authorization-templates/csm-authorization_csmrole_powerscale.yaml"
+	copyFile := exec.Command("cp", templateFile, updatedTemplateFile)
+	b, err := copyFile.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to copy template file: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	// Create Admin Token
@@ -1357,7 +1340,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 		"--refresh-token-expiration", fmt.Sprint(30*24*time.Hour),
 		"--access-token-expiration", fmt.Sprint(2*time.Hour),
 	)
-	b, err := adminTkn.CombinedOutput()
+	b, err = adminTkn.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1368,78 +1351,26 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	// Create Storage
-	fmt.Println("=== Creating Storage ===\n ")
-	mapValues, err := determineMap(storageMap)
+	// Create Resources
+	fmt.Println("=== Creating Storage, Role, and Tenant ===\n ")
+	mapValues, err := determineMap(crMap)
 	if err != nil {
 		return err
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateStorageFile)
+		err := replaceInFile(key, os.Getenv(mapValues[key]), updatedTemplateFile)
 		if err != nil {
 			return err
 		}
 	}
 	cmd := exec.Command("kubectl", "apply",
-		"-f", templateStorageFile,
-		"-n", driverNamespace,
+		"-f", updatedTemplateFile,
 	)
-	fmt.Println("=== Storage === \n", cmd.String())
+	fmt.Println("=== Storage, Role, and Tenant === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
 	if err != nil && !strings.Contains(string(b), "is already registered") {
-		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
-	}
-
-	// Create Role
-	fmt.Println("=== Creating Role ===\n ")
-	mapValues, err = determineMap(roleMap)
-	if err != nil {
-		return err
-	}
-
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateRoleFile)
-		if err != nil {
-			return err
-		}
-	}
-	cmd = exec.Command("kubectl", "apply",
-		"-f", templateRoleFile,
-		"-n", driverNamespace,
-	)
-
-	fmt.Println("=== Role === \n", cmd.String())
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
-	}
-
-	// role creation take few seconds
-	time.Sleep(5 * time.Second)
-
-	// Create Tenant
-	fmt.Println("=== Creating Tenant ===\n ")
-	mapValues, err = determineMap(tenantMap)
-	if err != nil {
-		return err
-	}
-
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateTenantFile)
-		if err != nil {
-			return err
-		}
-	}
-	cmd = exec.Command("kubectl", "apply",
-		"-f", templateTenantFile,
-		"-n", driverNamespace,
-	)
-	b, err = cmd.CombinedOutput()
-	fmt.Println("=== Tenant === \n", cmd.String())
-
-	if err != nil && !strings.Contains(string(b), "tenant already exists") {
-		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
+		return fmt.Errorf("failed to create resources for %s: %v\nErrMessage:\n%s", storageType, err, string(b))
 	}
 
 	// Generate tenant token
@@ -1755,6 +1686,24 @@ func (step *Step) validateCustomResourceDefinition(res Resource, crdName string)
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to validate csm authorization crd [%s]: %v", crdName, err)
+	}
+
+	return nil
+}
+
+// deleteAuthorizationCRs will delete storage, role, and tenant objects
+func (step *Step) deleteAuthorizationCRs(_ Resource) error {
+	updatedTemplateFile := "testfiles/authorization-templates/csm-authorization-crs.yaml"
+
+	cmd := exec.Command("kubectl", "delete", "-f", updatedTemplateFile)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to delete csm authorization CRs: %v", err)
+	}
+
+	err = os.Remove(updatedTemplateFile)
+	if err != nil {
+		return fmt.Errorf("failed to delete %s file: %v", updatedTemplateFile, err)
 	}
 
 	return nil
