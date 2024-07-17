@@ -10,28 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Must specify and manually create driver namespace
+
 # USER MODIFICATION REQUIRED: must supply address of Authorization Proxy Server
 # Since this e2e exposes the Proxy Server via NodePort, you can use a cluster node IP
 export PROXY_HOST="csm-authorization.com"
 export DELLCTL="/usr/local/bin/dellctl"
-
-# The following are Authorization Proxy Server specific:
-# Must supply storage array details
-# Storage type examples - powerscale, powerflex, powermax
-export STORAGE_TYPE="powerscale"
-export END_POINT="1.1.1.1:8080"
-export SYSTEM_ID="Isilon-System-Name"
-export STORAGE_USER="username"
-export STORAGE_PASSWORD="password"
-export STORAGE_POOL="/ifs/data/csi" # don't escape quotes (this is used in V1)
-export VAULT_STORAGE_PATH="vault_path" # provide vault path example "storage\/powerscale" escape / with \
-export STORAGE_POOL_PATH="/ifs/data/csi" # for powerscale isipath escape "/" in the path example "\/ifs\/data\/csi"
-export QUOTA="0GB"
-export TENANT_ROLES="csmrole-sample"
-export TENANT_PREFIX="tn1"
-
-# Must specify and manually create driver namespace
-export DRIVER_NAMESPACE="isilon"
 
 # The following are for creating PFlex secret/storage class
 # do not include "https://" in the endpoint
@@ -41,7 +25,13 @@ export PFLEX_SYSTEMID="00990099ddcc"
 export PFLEX_ENDPOINT="10.1.1.1"
 export PFLEX_MDM="10.0.0.1,10.0.0.2"
 export PFLEX_AUTH_ENDPOINT="localhost:9401"
+# The following are Authorization Proxy Server specific for powerflex:
 export PFLEX_POOL="pool1"
+export PFLEX_STORAGE="powerflex"
+export PFLEX_VAULT_STORAGE_PATH="storage\/powerflex" # escape / with \
+export PFLEX_QUOTA="10GB"
+export PFLEX_ROLE="csmrole-sample"
+export PFLEX_TENANT_PREFIX="tn1"
 
 # The following are for creating PScale secret/storage class
 # do not include "https://" in the endpoint
@@ -51,6 +41,13 @@ export PSCALE_PASS="password"
 export PSCALE_ENDPOINT="1.1.1.1"
 export PSCALE_AUTH_ENDPOINT="localhost"
 export PSCALE_AUTH_PORT="9400"
+# The following are Authorization Proxy Server specific for powerscale:
+export PSCALE_POOL="ifs/data/csi"
+export PSCALE_STORAGE="powerscale"
+export PSCALE_VAULT_STORAGE_PATH="storage\/powerscale" # escape / with \
+export PSCALE_QUOTA="0GB"
+export PSCALE_ROLE="csmrole-sample"
+export PSCALE_TENANT_PREFIX="tn1"
 
 # The following are for testing AM
 export VOL_NS=wordpress

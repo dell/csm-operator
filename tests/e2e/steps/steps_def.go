@@ -59,9 +59,15 @@ var (
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
-	storageCrMap           = map[string]string{"REPLACE_STORAGE_NAME": "STORAGE_TYPE", "REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_ENDPOINT": "END_POINT", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_VAULT_STORAGE_PATH": "VAULT_STORAGE_PATH"}
-	roleCrMap              = map[string]string{"REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_QUOTA": "QUOTA", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_STORAGE_POOL_PATH": "STORAGE_POOL_PATH"}
-	tenantCrMap            = map[string]string{"REPLACE_TENANT_ROLES": "TENANT_ROLES", "REPLACE_TENANT_VOLUME_PREFIX": "TENANT_PREFIX"}
+	// Auth V2
+	pflexStorageCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH"}
+	pflexRoleCrMap    = map[string]string{"REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL"}
+	pflexTenantCrMap  = map[string]string{"REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
+
+	// Auth V2
+	pscaleStorageCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH"}
+	pscaleRoleCrMap    = map[string]string{"REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL"}
+	pscaleTenantCrMap  = map[string]string{"REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -719,12 +725,18 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
 		mapValues = amConfigMap
-	} else if crType == "storage" {
-		mapValues = storageCrMap
-	} else if crType == "csmrole" {
-		mapValues = roleCrMap
-	} else if crType == "csmtenant" {
-		mapValues = tenantCrMap
+	} else if crType == "pflexStorage" {
+		mapValues = pflexStorageCrMap
+	} else if crType == "pflexCsmrole" {
+		mapValues = pflexRoleCrMap
+	} else if crType == "pflexCsmtenant" {
+		mapValues = pflexTenantCrMap
+	} else if crType == "pscaleStorage" {
+		mapValues = pscaleStorageCrMap
+	} else if crType == "pscaleCsmrole" {
+		mapValues = pscaleRoleCrMap
+	} else if crType == "pscaleCsmtenant" {
+		mapValues = pscaleTenantCrMap
 	} else {
 		return mapValues, fmt.Errorf("type: %s is not supported", crType)
 	}
@@ -1097,20 +1109,15 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
 	if driver == "powerflex" {
-		os.Setenv("STORAGE_TYPE", "powerflex")
+		os.Setenv("PFLEX_STORAGE", "powerflex")
 		os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
+		storageType = os.Getenv("PFLEX_STORAGE")
 	}
 
 	if driver == "powerscale" {
-		os.Setenv("STORAGE_TYPE", "powerscale")
+		os.Setenv("PSCALE_STORAGE", "powerscale")
 		os.Setenv("DRIVER_NAMESPACE", "isilon")
-	}
-	// get env variables
-	if os.Getenv("STORAGE_TYPE") != "" {
-		storageType = os.Getenv("STORAGE_TYPE")
-	}
-	if os.Getenv("DRIVER_NAMESPACE") != "" {
-		driverNamespace = os.Getenv("DRIVER_NAMESPACE")
+		storageType = os.Getenv("PSCALE_STORAGE")
 	}
 
 	proxyHost = os.Getenv("PROXY_HOST")
@@ -1132,27 +1139,25 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	switch semver.Major(configVersion) {
 	case "v2":
-		return step.AuthorizationV2Resources(storageType, driverNamespace, address, port)
+		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port)
 	case "v1":
 		return step.AuthorizationV1Resources(storageType, driver, port, address, driverNamespace)
 	default:
 		return fmt.Errorf("authorization major version %s not supported", semver.Major(configVersion))
 	}
-
 }
 
 // AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
 func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost, driverNamespace string) error {
-
 	var (
-		endpoint        = ""
-		sysID           = ""
-		user            = ""
-		password        = ""
-		pool            = ""
+		endpoint = ""
+		sysID    = ""
+		user     = ""
+		password = ""
+		pool     = ""
 	)
 
-	//by default, use set defined in env file
+	// by default, use set defined in env file
 	endpointvar := "END_POINT"
 	systemIdvar := "SYSTEM_ID"
 	uservar := "STORAGE_USER"
@@ -1165,6 +1170,14 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		uservar = "PFLEX_USER"
 		passvar = "PFLEX_PASS"
 		poolvar = "PFLEX_POOL"
+	}
+
+	if driver == "powerscale" {
+		endpointvar = "PSCALE_ENDPOINT"
+		systemIdvar = "PSCALE_CLUSTER"
+		uservar = "PSCALE_USER"
+		passvar = "PSCALE_PASS"
+		poolvar = "PSCALE_POOL"
 	}
 
 	// get env variables
@@ -1219,7 +1232,6 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
-
 	if err != nil {
 		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
 	}
@@ -1270,7 +1282,6 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	)
 	fmt.Println("=== Binding Role ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
-
 	if err != nil {
 		return fmt.Errorf("failed to create rolebinding %s: %v\nErrMessage:\n%s", roleName, err, string(b))
 	}
@@ -1286,7 +1297,6 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
-
 	if err != nil {
 		return fmt.Errorf("failed to generate token for %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
@@ -1313,7 +1323,24 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driverNamespace, proxyHost, port string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port string) error {
+	var (
+		storageMap = ""
+		roleMap    = ""
+		tenantMap  = ""
+	)
+
+	if driver == "powerflex" {
+		storageMap = "pflexStorage"
+		roleMap = "pflexCsmrole"
+		tenantMap = "pflexCsmtenant"
+	}
+
+	if driver == "powerscale" {
+		storageMap = "pscaleStorage"
+		roleMap = "pscaleCsmrole"
+		tenantMap = "pscaleCsmtenant"
+	}
 
 	// Create Admin Token
 	fmt.Printf("=== Generating Admin Token ===\n")
@@ -1337,7 +1364,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driverNamespace, proxyHo
 
 	// Create Storage
 	fmt.Println("=== Creating Storage ===\n ")
-	mapValues, err := determineMap("storage")
+	mapValues, err := determineMap(storageMap)
 	if err != nil {
 		return err
 	}
@@ -1359,7 +1386,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driverNamespace, proxyHo
 
 	// Create Role
 	fmt.Println("=== Creating Role ===\n", cmd.String())
-	mapValues, err = determineMap("csmrole")
+	mapValues, err = determineMap(roleMap)
 	if err != nil {
 		return err
 	}
@@ -1385,7 +1412,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driverNamespace, proxyHo
 
 	// Create Tenant
 	fmt.Println("=== Creating Tenant ===\n ")
-	mapValues, err = determineMap("csmtenant")
+	mapValues, err = determineMap(tenantMap)
 	if err != nil {
 		return err
 	}
