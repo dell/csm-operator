@@ -176,6 +176,8 @@ func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr s
 	newCrNum, _ := strconv.Atoi(newCrNumStr)
 	newCr := res.CustomResource[newCrNum-1]
 
+	time.Sleep(60 * time.Second)
+
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: oldCr.Namespace,
@@ -281,6 +283,7 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -298,11 +301,13 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
+	time.Sleep(60 * time.Second)
 	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
+	time.Sleep(60 * time.Second)
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
@@ -329,6 +334,7 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -373,6 +379,7 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -769,6 +776,7 @@ func (step *Step) runCustomTest(res Resource) error {
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
+	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -1561,9 +1569,27 @@ func (step *Step) validateRbacCreated(_ Resource, namespace string) error {
 	return nil
 }
 
-func (step *Step) validateRbacDeleted(_ Resource, namespace string) error {
-	fmt.Println("validating Rbac deletion on namespace", namespace)
+func (step *Step) validateRbacDeleted(_ Resource) error {
+	fmt.Println("validating RBAC deletion in all namespaces")
+	cmd := exec.Command("kubectl", "get", "rolebindings", "--all-namespaces")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run command")
+	}
+	roles := strings.Split(out.String(), "\n")
+	for _, role := range roles {
+		if strings.Contains(role, "Role/connectivity-client-docker-k8s") {
+			return fmt.Errorf("RoleBinding 'connectivity-client-docker-k8s' still exists")
+		}
+	}
+	fmt.Println("RBAC deletion is successful for all namespaces")
+	return nil
+}
 
+func (step *Step) validateDeleteRbac(_ Resource, namespace string) error {
+	fmt.Println("validating Rbac deletion on namespace", namespace)
 	cmd := exec.Command("kubectl", "get", "rolebindings", "-n", namespace)
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -1571,7 +1597,6 @@ func (step *Step) validateRbacDeleted(_ Resource, namespace string) error {
 	if err != nil {
 		return fmt.Errorf("failed to run command")
 	}
-
 	roles := strings.Split(out.String(), "\n")
 	for _, role := range roles {
 		if strings.Contains(role, "Role/connectivity-client-docker-k8s") {
