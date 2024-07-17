@@ -1587,7 +1587,8 @@ func (step *Step) validateRbacDeleted(_ Resource) error {
 	fmt.Println("RBAC deletion is successful for all namespaces")
 	return nil
 }
-func (step *Step) ValidateDeleteRbac(_ Resource, namespace string) error {
+
+func (step *Step) validateDeleteRbac(_ Resource, namespace string) error {
 	fmt.Println("validating Rbac deletion on namespace", namespace)
 	cmd := exec.Command("kubectl", "get", "rolebindings", "-n", namespace)
 	var out bytes.Buffer

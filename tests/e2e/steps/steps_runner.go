@@ -87,7 +87,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Delete Authorization CRDs \[(\d+)\]$`, step.deleteCustomResourceDefinition)
 	runner.addStep(`^Validate rbac created in namespace \[([^"]*)\]$`, step.validateRbacCreated)
 	runner.addStep(`^Validate connectivity client rbac objects are removed from all namespaces$`, step.validateRbacDeleted)
-	runner.addStep(`^Validate connectivity client rbac objects are removed from namespace \[([^"]*)\]$`, step.ValidateDeleteRbac)
+	runner.addStep(`^Validate connectivity client rbac objects are removed from namespace \[([^"]*)\]$`, step.validateDeleteRbac)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
