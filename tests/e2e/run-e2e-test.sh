@@ -100,7 +100,7 @@ fi
 # cp $CERT_CSI .
 
 # Uncomment for authorization proxy server
-# cp $DELLCTL /usr/local/bin/
+#cp $DELLCTL /usr/local/bin/
 
 PATH=$PATH:$(go env GOPATH)/bin
 
@@ -253,6 +253,8 @@ checkForKaravictl
 if [ -v APPLICATIONMOBILITY ]; then
   checkForDellctl
 fi
+if [ -v AUTHORIZATIONPROXYSERVER ]; then
+  checkForDellctl
+fi
 checkForGinkgo
 # runTests
-

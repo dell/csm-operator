@@ -27,6 +27,7 @@ import (
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
+	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -58,9 +59,11 @@ var (
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
-	storageCrMap           = map[string]string{"REPLACE_STORAGE_NAME": "STORAGE_TYPE", "REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_ENDPOINT": "END_POINT", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_VAULT_STORAGE_PATH": "VAULT_STORAGE_PATH"}
-	roleCrMap              = map[string]string{"REPLACE_STORAGE_TYPE": "STORAGE_TYPE", "REPLACE_QUOTA": "QUOTA", "REPLACE_SYSTEM_ID": "SYSTEM_ID", "REPLACE_STORAGE_POOL_PATH": "STORAGE_POOL_PATH"}
-	tenantCrMap            = map[string]string{"REPLACE_TENANT_ROLES": "TENANT_ROLES", "REPLACE_TENANT_VOLUME_PREFIX": "TENANT_PREFIX"}
+	// Auth V2
+	pflexCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
+
+	// Auth V2
+	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -754,12 +757,10 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
 		mapValues = amConfigMap
-	} else if crType == "storage" {
-		mapValues = storageCrMap
-	} else if crType == "csmrole" {
-		mapValues = roleCrMap
-	} else if crType == "csmtenant" {
-		mapValues = tenantCrMap
+	} else if crType == "pflexAuthCRs" {
+		mapValues = pflexCrMap
+	} else if crType == "pscaleAuthCRs" {
+		mapValues = pscaleCrMap
 	} else {
 		return mapValues, fmt.Errorf("type: %s is not supported", crType)
 	}
@@ -1122,58 +1123,36 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
 
-	var b []byte
 	var err error
-
 	var (
 		storageType     = ""
 		driverNamespace = ""
 		proxyHost       = ""
+		csmTenantName   = ""
 	)
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
 	if driver == "powerflex" {
-		os.Setenv("STORAGE_TYPE", "powerflex")
+		os.Setenv("PFLEX_STORAGE", "powerflex")
 		os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
+		storageType = os.Getenv("PFLEX_STORAGE")
+		csmTenantName = os.Getenv("PFLEX_TENANT")
 	}
 
 	if driver == "powerscale" {
-		os.Setenv("STORAGE_TYPE", "powerscale")
+		os.Setenv("PSCALE_STORAGE", "powerscale")
 		os.Setenv("DRIVER_NAMESPACE", "isilon")
-	}
-	// get env variables
-	if os.Getenv("STORAGE_TYPE") != "" {
-		storageType = os.Getenv("STORAGE_TYPE")
-	}
-	if os.Getenv("DRIVER_NAMESPACE") != "" {
-		driverNamespace = os.Getenv("DRIVER_NAMESPACE")
+		storageType = os.Getenv("PSCALE_STORAGE")
+		csmTenantName = os.Getenv("PSCALE_TENANT")
 	}
 
 	proxyHost = os.Getenv("PROXY_HOST")
+	driverNamespace = os.Getenv("DRIVER_NAMESPACE")
 
 	port, err := getPortContainerizedAuth(cr.Namespace)
 	if err != nil {
 		return err
-	}
-
-	fmt.Printf("=== Generating Admin Token ===\n")
-	adminTkn := exec.Command("dellctl",
-		"admin", "token",
-		"--name", "Admin",
-		"--jwt-signing-secret", "secret",
-		"--refresh-token-expiration", fmt.Sprint(30*24*time.Hour),
-		"--access-token-expiration", fmt.Sprint(2*time.Hour),
-	)
-	b, err = adminTkn.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
-	}
-
-	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
-	if err != nil {
-		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	address := proxyHost
@@ -1186,42 +1165,110 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	fmt.Printf("Address: %s\n", address)
 
-	fmt.Println("=== Creating Storage ===\n ")
-	mapValues, err := determineMap("storage")
-	if err != nil {
-		return err
+	switch semver.Major(configVersion) {
+	case "v2":
+		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName)
+	case "v1":
+		return step.AuthorizationV1Resources(storageType, driver, port, address, driverNamespace)
+	default:
+		return fmt.Errorf("authorization major version %s not supported", semver.Major(configVersion))
+	}
+}
+
+// AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
+func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost, driverNamespace string) error {
+	var (
+		endpoint = ""
+		sysID    = ""
+		user     = ""
+		password = ""
+		pool     = ""
+		// YAML variables
+		endpointvar = ""
+		systemIdvar = ""
+		uservar     = ""
+		passvar     = ""
+		poolvar     = ""
+	)
+
+	if driver == "powerflex" {
+		endpointvar = "PFLEX_ENDPOINT"
+		systemIdvar = "PFLEX_SYSTEMID"
+		uservar = "PFLEX_USER"
+		passvar = "PFLEX_PASS"
+		poolvar = "PFLEX_POOL"
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_storage.yaml")
-		if err != nil {
-			return err
-		}
+	if driver == "powerscale" {
+		endpointvar = "PSCALE_ENDPOINT"
+		systemIdvar = "PSCALE_CLUSTER"
+		uservar = "PSCALE_USER"
+		passvar = "PSCALE_PASS"
+		poolvar = "PSCALE_POOL_V1"
 	}
-	cmd := exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_storage.yaml",
+
+	// get env variables
+	if os.Getenv(endpointvar) != "" {
+		endpoint = os.Getenv(endpointvar)
+	}
+	if os.Getenv(systemIdvar) != "" {
+		sysID = os.Getenv(systemIdvar)
+	}
+	if os.Getenv(uservar) != "" {
+		user = os.Getenv(uservar)
+	}
+	if os.Getenv(passvar) != "" {
+		password = os.Getenv(passvar)
+	}
+	if os.Getenv(poolvar) != "" {
+		pool = os.Getenv(poolvar)
+	}
+
+	// Create Admin Token
+	fmt.Printf("=== Generating Admin Token ===\n")
+	adminTkn := exec.Command("karavictl",
+		"admin", "token",
+		"--name", "Admin",
+		"--jwt-signing-secret", "secret",
+		"--refresh-token-expiration", fmt.Sprint(30*24*time.Hour),
+		"--access-token-expiration", fmt.Sprint(2*time.Hour),
+	)
+	b, err := adminTkn.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
+	if err != nil {
+		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	// Create storage
+	fmt.Println("=== Creating Storage ===\n ")
+	cmd := exec.Command("karavictl",
+		"--admin-token", "/tmp/adminToken.yaml",
+		"storage", "create",
+		"--type", storageType,
+		"--endpoint", fmt.Sprintf("https://%s", endpoint),
+		"--system-id", sysID,
+		"--user", user,
+		"--password", password,
+		"--array-insecure",
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 	fmt.Println("=== Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
-	if err != nil && !strings.Contains(string(b), "is already registered") {
+	if err != nil {
 		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
 	}
 
 	// Create Tenant
 	fmt.Println("=== Creating Tenant ===\n ")
-	mapValues, err = determineMap("csmtenant")
-	if err != nil {
-		return err
-	}
-
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_csmtenant.yaml")
-		if err != nil {
-			return err
-		}
-	}
-	cmd = exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_csmtenant.yaml",
+	cmd = exec.Command("karavictl",
+		"--admin-token", "/tmp/adminToken.yaml",
+		"tenant", "create",
+		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
@@ -1230,21 +1277,17 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
 
-	fmt.Println("=== Creating Role ===\n", cmd.String())
 	// Create Role
-	mapValues, err = determineMap("csmrole")
-	if err != nil {
-		return err
+	fmt.Println("=== Creating Role ===\n", cmd.String())
+	if storageType == "powerscale" {
+		quotaLimit = "0"
 	}
-
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), "testfiles/authorization-templates/csm-authorization_csmrole.yaml")
-		if err != nil {
-			return err
-		}
-	}
-	cmd = exec.Command("kubectl", "apply",
-		"-f", "testfiles/authorization-templates/csm-authorization_csmrole.yaml",
+	cmd = exec.Command("karavictl",
+		"--admin-token", "/tmp/adminToken.yaml",
+		"role", "create",
+		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
+			roleName, storageType, sysID, pool, quotaLimit),
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 
 	fmt.Println("=== Role === \n", cmd.String())
@@ -1256,15 +1299,28 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	// role creation take few seconds
 	time.Sleep(5 * time.Second)
 
+	// Bind role
+	cmd = exec.Command("karavictl",
+		"--admin-token", "/tmp/adminToken.yaml",
+		"rolebinding", "create",
+		"--tenant", tenantName,
+		"--role", roleName,
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+	)
+	fmt.Println("=== Binding Role ===\n", cmd.String())
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create rolebinding %s: %v\nErrMessage:\n%s", roleName, err, string(b))
+	}
+
 	// Generate token
 	fmt.Println("=== Generating token ===\n ")
-	cmd = exec.Command("dellctl",
-		"generate", "token",
+	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
-		"--access-token-expiration", fmt.Sprint(10*time.Minute),
-		"--refresh-token-expiration", "48h",
-		"--tenant", "csmtenant-sample",
+		"generate", "token",
+		"--tenant", tenantName,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--access-token-expiration", fmt.Sprint(10*time.Minute),
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -1290,6 +1346,107 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	fmt.Println("=== Token Applied ===\n ")
+	return nil
+}
+
+// AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName string) error {
+	var (
+		crMap               = ""
+		templateFile        = "testfiles/authorization-templates/csm-authorization-template.yaml"
+		updatedTemplateFile = ""
+	)
+
+	if driver == "powerflex" {
+		crMap = "pflexAuthCRs"
+		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerflex.yaml"
+	} else if driver == "powerscale" {
+		crMap = "pscaleAuthCRs"
+		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerscale.yaml"
+	}
+
+	copyFile := exec.Command("cp", templateFile, updatedTemplateFile)
+	b, err := copyFile.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to copy template file: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	// Create Admin Token
+	fmt.Printf("=== Generating Admin Token ===\n")
+	adminTkn := exec.Command("dellctl",
+		"admin", "token",
+		"--name", "Admin",
+		"--jwt-signing-secret", "secret",
+		"--refresh-token-expiration", fmt.Sprint(30*24*time.Hour),
+		"--access-token-expiration", fmt.Sprint(2*time.Hour),
+	)
+	b, err = adminTkn.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
+	if err != nil {
+		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	// Create Resources
+	fmt.Println("=== Creating Storage, Role, and Tenant ===\n ")
+	mapValues, err := determineMap(crMap)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), updatedTemplateFile)
+		if err != nil {
+			return err
+		}
+	}
+	cmd := exec.Command("kubectl", "apply",
+		"-f", updatedTemplateFile,
+	)
+	fmt.Println("=== Storage, Role, and Tenant === \n", cmd.String())
+	b, err = cmd.CombinedOutput()
+	if err != nil && !strings.Contains(string(b), "is already registered") {
+		return fmt.Errorf("failed to create resources for %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+	}
+
+	// Generate tenant token
+	fmt.Println("=== Generating token ===\n ")
+	cmd = exec.Command("dellctl",
+		"generate", "token",
+		"--admin-token", "/tmp/adminToken.yaml",
+		"--access-token-expiration", fmt.Sprint(10*time.Minute),
+		"--refresh-token-expiration", "48h",
+		"--tenant", csmTenantName,
+		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+	)
+	fmt.Println("=== Token ===\n", cmd.String())
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to generate token for %s: %v\nErrMessage:\n%s", csmTenantName, err, string(b))
+	}
+
+	// Apply token to CSI driver host
+	fmt.Println("=== Applying token ===\n ")
+
+	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
+	if err != nil {
+		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	cmd = exec.Command("kubectl", "apply",
+		"-f", "/tmp/token.yaml",
+		"-n", driverNamespace,
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to apply token: %v\nErrMessage:\n%s", err, string(b))
+	}
+	fmt.Println("=== Token Applied ===\n ")
+
 	return nil
 }
 
@@ -1569,6 +1726,29 @@ func (step *Step) validateCustomResourceDefinition(res Resource, crdName string)
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to validate csm authorization crd [%s]: %v", crdName, err)
+	}
+
+	return nil
+}
+
+// deleteAuthorizationCRs will delete storage, role, and tenant objects
+func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
+	updatedTemplateFile := ""
+	if driver == "powerflex" {
+		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerflex.yaml"
+	} else if driver == "powerscale" {
+		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerscale.yaml"
+	}
+
+	cmd := exec.Command("kubectl", "delete", "-f", updatedTemplateFile)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to delete csm authorization CRs: %v", err)
+	}
+
+	err = os.Remove(updatedTemplateFile)
+	if err != nil {
+		return fmt.Errorf("failed to delete %s file: %v", updatedTemplateFile, err)
 	}
 
 	return nil
