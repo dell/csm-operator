@@ -14,6 +14,7 @@ package csidriver
 
 import (
 	"context"
+	"fmt"
 
 	storagev1 "k8s.io/api/storage/v1"
 
@@ -32,16 +33,18 @@ func SyncCSIDriver(ctx context.Context, csi storagev1.CSIDriver, client client.C
 		log.Infow("Creating a new CSIDriver", "Name:", csi.Name)
 		err = client.Create(ctx, &csi)
 		if err != nil {
-			return err
+			return fmt.Errorf("creating csidriver object: %v", err)
 		}
 	} else if err != nil {
 		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
 	} else {
-		log.Infow("CSIDriver Object exist. Updating", "Name:", csi.Name)
+		log.Infow("Updating existing CSIDriver Object", "Name:", csi.Name)
+
+		csi.ResourceVersion = found.ResourceVersion
 		err = client.Update(ctx, &csi)
 		if err != nil {
-			return err
+			return fmt.Errorf("updating csidriver object: %v", err)
 		}
 	}
 	return nil
