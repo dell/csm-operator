@@ -72,6 +72,11 @@ If running the Authorization proxy server e2e tests, further setup must be done:
 - have a vault server running configured with the authorization namespace and proxy-ns namespace (for the alternative namespace scenario). This is documented in the CSM documentation.
 - update V2 CRs with vault address.
 
+Notes:
+  - Authorization V1 scenarios support PowerFlex and PowerScale
+  - Authorization V2 scenarios only support PowerFlex
+  - Upgrade from Authorization V1 to V2 is not supported. Only V1 to other V1 versions is allowed.
+
 ## Run
 
 The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.

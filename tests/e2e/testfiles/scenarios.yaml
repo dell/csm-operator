@@ -1,6 +1,5 @@
 # List of E2E Tests Scenarios
 
-# Authorization V1 scenarios:
 - scenario: "Install Authorization Proxy Server V1"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
@@ -80,8 +79,7 @@
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-# Authorization V2 scenarios:
-# ONLY SUPPORTS POWERFLEX DRIVER
+# Authorization V2 scenarios only supports powerflex driver
 - scenario: "Install Authorization Proxy Server V2"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
