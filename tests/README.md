@@ -69,7 +69,7 @@ The application-mobility repo has information on all of these pre-requisites up,
 
 If running the Authorization proxy server e2e tests, further setup must be done:
 
-- have a vault server running configured with the authorization namespace and proxy-ns namespace (for the alternative namespace scenario). This is documented in the CSM documentation.
+- have a vault server running configured with the authorization namespace. This is documented in the CSM documentation.
 - update V2 CRs with vault address.
 
 Notes:
