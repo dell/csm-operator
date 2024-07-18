@@ -154,8 +154,6 @@ const (
 	ClientNamespace = "<ClientNameSpace>"
 	// BrownfieldManifest - brownfield-onboard.yaml
 	BrownfieldManifest = "brownfield-onboard.yaml"
-	// DefaultFSGroupPolicy -
-	DefaultFSGroupPolicy = "ReadWriteOnceWithFSType"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -358,11 +356,6 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 		}
 	}
 	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
-
-	if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy != "" {
-		YamlString = strings.ReplaceAll(YamlString, DefaultFSGroupPolicy, string(cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy))
-	}
-
 	return YamlString
 }
 
