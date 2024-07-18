@@ -42,6 +42,7 @@ func SyncCSIDriver(ctx context.Context, csi storagev1.CSIDriver, client client.C
 		log.Infow("Updating existing CSIDriver Object", "Name:", csi.Name)
 
 		csi.ResourceVersion = found.ResourceVersion
+		// in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
 		err = client.Update(ctx, &csi)
 		if err != nil {
 			return fmt.Errorf("updating csidriver object: %v", err)
