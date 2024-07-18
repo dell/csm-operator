@@ -324,7 +324,7 @@ func checkAuthorizationProxyServerPods(ctx context.Context, namespace string, k8
 		} else if strings.Contains(pod.Name, "redis-commander") {
 			errMsg, allReady = arePodsRunning(pod)
 			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "redis-primary") {
+		} else if strings.Contains(pod.Name, "redis") {
 			errMsg, allReady = arePodsRunning(pod)
 			notReadyMessage += errMsg
 		} else if strings.Contains(pod.Name, "role-service") {
@@ -334,6 +334,9 @@ func checkAuthorizationProxyServerPods(ctx context.Context, namespace string, k8
 			errMsg, allReady = arePodsRunning(pod)
 			notReadyMessage += errMsg
 		} else if strings.Contains(pod.Name, "tenant-service") {
+			errMsg, allReady = arePodsRunning(pod)
+			notReadyMessage += errMsg
+		} else if strings.Contains(pod.Name, "sentinel") {
 			errMsg, allReady = arePodsRunning(pod)
 			notReadyMessage += errMsg
 		}
@@ -489,7 +492,7 @@ func checkAuthorizationProxyServerNoRunningPods(ctx context.Context, namespace s
 		} else if strings.Contains(pod.Name, "redis-commander") {
 			podsFound += (pod.Name + ",")
 			n++
-		} else if strings.Contains(pod.Name, "redis-primary") {
+		} else if strings.Contains(pod.Name, "redis") {
 			podsFound += (pod.Name + ",")
 			n++
 		} else if strings.Contains(pod.Name, "role-service") {
@@ -499,6 +502,9 @@ func checkAuthorizationProxyServerNoRunningPods(ctx context.Context, namespace s
 			podsFound += (pod.Name + ",")
 			n++
 		} else if strings.Contains(pod.Name, "tenant-service") {
+			podsFound += (pod.Name + ",")
+			n++
+		} else if strings.Contains(pod.Name, "sentinel") {
 			podsFound += (pod.Name + ",")
 			n++
 		}

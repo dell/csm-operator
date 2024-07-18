@@ -4,14 +4,18 @@ This directory contains the testing infrastructure and E2E test implementation f
 
 ## Table of Contents
 
-* [Unit Tests](#unit-tests)
-* [E2E Tests](#e2e-tests)
-  * [Prerequisites](#prerequisites)
-    * [Application Mobility Prerequisites](#application-mobility-prerequisites)
-  * [Run](#run)
-    * [Scenarios File](#scenarios-file)
-  * [Developing E2E Tests](#developing-e2e-tests)
-* [Directory Layout](#directory-layout)
+- [Testing for the CSM Operator](#testing-for-the-csm-operator)
+  - [Table of Contents](#table-of-contents)
+  - [Unit Tests](#unit-tests)
+  - [E2E Tests](#e2e-tests)
+  - [Prerequisites](#prerequisites)
+    - [Array Information](#array-information)
+    - [Application Mobility Prerequisites](#application-mobility-prerequisites)
+    - [Authorization Proxy Server Prerequisites](#authorization-proxy-server-prerequisites)
+  - [Run](#run)
+    - [Scenarios File](#scenarios-file)
+  - [Developing E2E Tests](#developing-e2e-tests)
+  - [Directory Layout](#directory-layout)
 
 ## Unit Tests
 
@@ -61,6 +65,18 @@ If running the Application Mobility e2e tests, (the sanity suite includes a few 
 - have the latest Application Mobility controller and plugin images
 The application-mobility repo has information on all of these pre-requisites up, including a script to install minio.
 
+### Authorization Proxy Server Prerequisites
+
+If running the Authorization proxy server e2e tests, further setup must be done:
+
+- have a vault server running configured with the authorization namespace. This is documented in the CSM documentation.
+- update V2 CRs with vault address.
+
+Notes:
+  - Authorization V1 scenarios support PowerFlex and PowerScale
+  - Authorization V2 scenarios only support PowerFlex
+  - Upgrade from Authorization V1 to V2 is not supported. Only V1 to other V1 versions is allowed.
+
 ## Run
 
 The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
@@ -68,7 +84,7 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
 - Set your array information in the `array-info.sh` file.
-- If you do not have `cert-csi`, `karavictl`, and (for app-mobility) `dellctl` accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl`, and they will be added to `/usr/local/bin`
+- If you do not have `cert-csi`, `karavictl`, and (for app-mobility and authorization proxy server) `dellctl` accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl`, and they will be added to `/usr/local/bin`
 - Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
 - Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:
 
@@ -135,6 +151,8 @@ Each test has:
 
 Most steps to cover common use cases already have their respective backend implementations. Sometimes we run into a situation where we may need to add a new step. For the sake of illustration, please follow the constraints and steps below to add a new test scenario called `"Install PowerHello Driver(With a module called World)"` to excerpt of yaml file shown above.
 
+Note: Please be mindful when updating upgrade scenarios for Authorization Proxy Server. We do not support upgrade from V1 to V2 versions.
+
 - Add the new test scenario to the existing values file
 
   ```yaml
@@ -153,7 +171,7 @@ Most steps to cover common use cases already have their respective backend imple
       # name of custom test to run
       name: Cert CSI
       # Provide command-line argument to run. Ginkgo will run the command and return output
-      # The command should be accessible from e2e test repo. 
+      # The command should be accessible from e2e test repo.
       # Example:
       #   ./hello_world.sh
       #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
@@ -198,7 +216,7 @@ Most steps to cover common use cases already have their respective backend imple
                 }
 
                 /*
-                    Takes four more arguments for each group as defined here "Validate it is [raining], [snowing], [sunny], and [pay-day]". 
+                    Takes four more arguments for each group as defined here "Validate it is [raining], [snowing], [sunny], and [pay-day]".
                     Thus function wll be  automatically called with:
                             checkWeather(Resource{}, "raining", "snowing", "sunny", "pay-day")
                     Please see "Validate [powerhello] driver is installed" step and the function signature that implemented it
