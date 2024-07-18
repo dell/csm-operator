@@ -1086,13 +1086,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	authNamespace := cr.Name
 
 	var err error
 	var (
 		storageType     = ""
 		driverNamespace = ""
 		proxyHost       = ""
+		csmTenantName   = ""
 	)
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
@@ -1101,12 +1101,14 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		os.Setenv("PFLEX_STORAGE", "powerflex")
 		os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
 		storageType = os.Getenv("PFLEX_STORAGE")
+		csmTenantName = os.Getenv("PFLEX_TENANT")
 	}
 
 	if driver == "powerscale" {
 		os.Setenv("PSCALE_STORAGE", "powerscale")
 		os.Setenv("DRIVER_NAMESPACE", "isilon")
 		storageType = os.Getenv("PSCALE_STORAGE")
+		csmTenantName = os.Getenv("PSCALE_TENANT")
 	}
 
 	proxyHost = os.Getenv("PROXY_HOST")
@@ -1129,7 +1131,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	switch semver.Major(configVersion) {
 	case "v2":
-		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, authNamespace)
+		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName)
 	case "v1":
 		return step.AuthorizationV1Resources(storageType, driver, port, address, driverNamespace)
 	default:
@@ -1312,7 +1314,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, authNamespace string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName string) error {
 	var (
 		crMap               = ""
 		templateFile        = "testfiles/authorization-templates/csm-authorization-template.yaml"
@@ -1382,13 +1384,13 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 		"--admin-token", "/tmp/adminToken.yaml",
 		"--access-token-expiration", fmt.Sprint(10*time.Minute),
 		"--refresh-token-expiration", "48h",
-		"--tenant", "csmtenant-sample",
+		"--tenant", csmTenantName,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to generate token for %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
+		return fmt.Errorf("failed to generate token for %s: %v\nErrMessage:\n%s", csmTenantName, err, string(b))
 	}
 
 	// Apply token to CSI driver host

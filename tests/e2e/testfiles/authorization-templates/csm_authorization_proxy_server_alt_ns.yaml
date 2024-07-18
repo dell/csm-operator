@@ -90,7 +90,7 @@ spec:
           storageclass: ""
 
         - name: vault
-          vaultAddress: https://10.247.100.22:8400
+          vaultAddress: https://10.0.0.1:8400
           vaultRole: csm-authorization
           skipCertificateValidation: true
           kvEnginePath: secret
