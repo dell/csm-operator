@@ -257,4 +257,4 @@ if [ -v AUTHORIZATIONPROXYSERVER ]; then
   checkForDellctl
 fi
 checkForGinkgo
-#runTests
+# runTests

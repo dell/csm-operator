@@ -175,13 +175,13 @@ spec:
         # enable: Enable/Disable application mobility controller-manager
         enabled: true
         image: REPLACE_CONTROLLER_IMAGE
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         envs:
           # Replica count for application mobility
           # Allowed values: string
           # Default value: 1
           - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
-            value: "2"
+            value: "1"
 
       # enabled: Enable/Disable cert-manager
       # Allowed values:
@@ -194,10 +194,10 @@ spec:
       - name: velero
         image: velero/velero:v1.14.0
         imagePullPolicy: IfNotPresent
-        enabled: true
-        useVolumeSnapshot: true
+        enabled: false
+        useVolumeSnapshot: false
         # enabled: Enable/Disable node-agent service
-        deployNodeAgent: true
+        deployNodeAgent: false
         envs:
           # Backup storage location name
           # Allowed values: string
@@ -209,7 +209,7 @@ spec:
           # Allowed values: string
           # Default value: REPLACE_BUCKET_NAME
           - name: "BUCKET_NAME"
-            value: "REPLACE_ALT_BUCKET_NAME"
+            value: "REPLACE_BUCKET_NAME"
 
           # Based on the objectstore being used, the velero plugin and its configuration may need to change!
           # default value: aws
@@ -232,18 +232,18 @@ spec:
           # We can leave the field empty if there no existing secret in velero installed namespace
           # Default value: existing-cred
           - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
-            value: "alt-cloud-creds"
+            value: "existing-cred"
 
         #If velero is not already present in cluster, set enabled to true to create a secret.
         #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
         credentials:
-          - createWithInstall: false
+          - createWithInstall: true
             #Specify the name to be used for secret that will be created to hold object store credentials.
             name: cloud-creds
             #Specify the object store access credentials to be stored in a secret with key "cloud".
             secretContents:
               aws_access_key_id: console  #Provide the access key id here
-              aws_secret_access_key: console123 #provide the access key here
+              aws_secret_access_key: console123  #provide the access key here
 
 
     # Init containers to be added to the Velero and Node-agent deployment's spec.
