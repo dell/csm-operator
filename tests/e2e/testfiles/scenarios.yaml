@@ -1428,7 +1428,7 @@
 
 - scenario: "Install App Mobility when Velero and Cert-Manager already installed"
   paths:
-    - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"
+    - "testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml"
   tags:
     - "applicationmobility"
   steps:
@@ -1436,7 +1436,7 @@
     - "Set up application mobility CR [testfiles/application-mobility-templates/velero-values.yaml]"
     - "Install [velero]"
     - "Install [cert-manager]"
-    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml]"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml]"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-app-mobility-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
@@ -1449,8 +1449,9 @@
     # Last steps perform Clean UP
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml] for [application-mobility]"
+    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml] for [application-mobility]"
     - "Restore template [testfiles/application-mobility-templates/velero-values.yaml] for [application-mobility]"
+    - "Uninstall [cert-manager]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
   customTest:

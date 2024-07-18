@@ -202,13 +202,39 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		cmd1 := exec.Command("helm", "repo", "add", "vmware-tanzu", "https://vmware-tanzu.github.io/helm-charts")
 		err1 := cmd1.Run()
 		if err1 != nil {
-			return fmt.Errorf("Installation of velero %v failed", err1)
+			return fmt.Errorf("installation of velero %v failed", err1)
 		}
 
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace=velero", "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml", "--version=3.0.0")
+		amNamespace := os.Getenv("AM_NS")
+		if amNamespace == "" {
+			amNamespace = "test-vxflexos"
+		}
+
+		// Cleanup backupstoragelocations and volumesnapshotlocation before installing velero
+		cmd := exec.Command("kubectl", "get", "backupstoragelocations.velero.io", "default", "-n", amNamespace)
+		err := cmd.Run()
+		if err == nil {
+			cmd1 = exec.Command("kubectl", "delete", "backupstoragelocations.velero.io", "default", "-n", amNamespace)
+			err1 = cmd1.Run()
+			if err1 != nil {
+				return fmt.Errorf("installation of velero %v failed", err1)
+			}
+		}
+
+		cmd = exec.Command("kubectl", "get", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace)
+		err = cmd.Run()
+		if err == nil {
+			cmd1 = exec.Command("kubectl", "delete", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace)
+			err1 = cmd1.Run()
+			if err1 != nil {
+				return fmt.Errorf("installation of velero %v failed", err1)
+			}
+		}
+
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml")
 		err2 := cmd2.Run()
 		if err2 != nil {
-			return fmt.Errorf("Installation of velero %v failed", err2)
+			return fmt.Errorf("installation of velero %v failed", err2)
 		}
 	} else if thirdPartyModule == "wordpress" {
 
@@ -230,8 +256,8 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		}
 
 		// give wp time to setup before we create backup/restores
-		fmt.Println("Sleeping 60 seconds to allow WP time to create")
-		time.Sleep(60 * time.Second)
+		fmt.Println("Sleeping 120 seconds to allow WP time to create")
+		time.Sleep(120 * time.Second)
 
 	}
 
@@ -243,19 +269,29 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 		cmd := exec.Command("kubectl", "delete", "-f", "testfiles/cert-manager-crds.yaml")
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("cert-manager uninstall failed: %v", err)
+			// Some deployments are not found since they are deleted already.
+			cmd = exec.Command("kubectl", "get", "pods", "-n", "cert-manager")
+			err = cmd.Run()
+			if err != nil {
+				return fmt.Errorf("cert-manager uninstall failed: %v", err)
+			}
 		}
 	} else if thirdPartyModule == "velero" {
-		cmd := exec.Command("helm", "delete", "velero", "--namespace=velero")
+		amNamespace := os.Getenv("AM_NS")
+		if amNamespace == "" {
+			amNamespace = "test-vxflexos"
+		}
+
+		cmd := exec.Command("helm", "delete", "velero", "--namespace="+amNamespace)
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("Uninstallation of velero %v failed", err)
+			return fmt.Errorf("uninstallation of velero %v failed", err)
 		}
 	} else if thirdPartyModule == "wordpress" {
 		cmd := exec.Command("kubectl", "delete", "-n", "wordpress", "-k", "testfiles/sample-application")
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("Uninstallation of wordpress %v failed", err)
+			return fmt.Errorf("uninstallation of wordpress %v failed", err)
 		}
 
 	}
