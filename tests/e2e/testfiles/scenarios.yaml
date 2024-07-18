@@ -384,6 +384,7 @@
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -391,6 +392,7 @@
     # - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -416,6 +418,7 @@
     - "Delete custom resource [2]"
     - "Delete Authorization CRs for [powerscale]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
@@ -789,7 +792,7 @@
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    - "powerflex"
+    # - "powerflex"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -826,11 +829,13 @@
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [4]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -856,6 +861,7 @@
     - "Delete custom resource [3]"
     - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [4]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
@@ -1035,7 +1041,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerflex"
+    # - "powerflex"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1081,7 +1087,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerflex"
+    # - "powerflex"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1122,7 +1128,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerflex"
+    # - "powerflex"
     - "observability"
     # - "sanity"
   steps:
@@ -1398,7 +1404,7 @@
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install powerflex driver, enable and disable application-mobility"
   paths:
@@ -1521,7 +1527,7 @@
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install App Mobility with powerflex driver- default"
   paths:
@@ -1548,7 +1554,7 @@
   customTest:
     name: verify app-mobility
     run:
-      - sh verify-app-mobility.sh
+      - /bin/bash verify-app-mobility.sh
 
 - scenario: "Install PowerMax Driver(Standalone)"
   paths:
