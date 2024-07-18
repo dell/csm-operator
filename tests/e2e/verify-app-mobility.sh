@@ -1,3 +1,17 @@
+# Copyright © 2022-2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#!/bin/bash
+
 BACKUP_NAME_EXT=$(date +%s)
 BACKUP_NAME=b$BACKUP_NAME_EXT
 RESTORE_NAME=r$BACKUP_NAME_EXT
@@ -140,5 +154,11 @@ if [ "${NUM_BACKUP}" != "0" ]; then
   exit 1
 fi
 
+# Get backupstorage locations
+BACKUPSTORAGE_LOCATIONS=$(kubectl get backuprepositories.velero.io -n $AM_NS -o jsonpath='{.items[*].metadata.name}')
+for BACKUPSTORAGE_LOCATION in $BACKUPSTORAGE_LOCATIONS; do
+    echo "Deleting backuprepositories.velero.io $BACKUPSTORAGE_LOCATION -n $AM_NS"
+    kubectl delete backuprepositories.velero.io $BACKUPSTORAGE_LOCATION -n $AM_NS
+done
 
 exit 0
