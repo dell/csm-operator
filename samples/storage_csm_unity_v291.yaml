@@ -7,6 +7,7 @@ spec:
   driver:
     csiDriverType: "unity"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
@@ -28,10 +29,10 @@ spec:
       image: "dellemc/csi-unity:v2.9.1"
       imagePullPolicy: IfNotPresent
       envs:
-          # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
-          # Allowed values: boolean
-          # Default value: "false"
-          # Examples : "true" , "false"
+        # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
+        # Allowed values: boolean
+        # Default value: "false"
+        # Examples : "true" , "false"
         - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
           value: "false"
         - name: X_CSI_EPHEMERAL_STAGING_PATH
@@ -72,15 +73,15 @@ spec:
         # ssl authentication. (unity-cert-0..unity-cert-n)
         # This field is only verified if X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION is set to false
         # Allowed values: n, where n > 0
-        # Default value: None          
+        # Default value: None
         - name: CERT_SECRET_COUNT
           value: "1"
         # X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: Specifies if the driver is going to validate unisphere certs while connecting to the Unisphere REST API interface.
         # If it is set to false, then a secret unity-certs has to be created with an X.509 certificate of CA which signed the Unisphere certificate
         # Allowed values:
         #   true: skip Unisphere API server's certificate verification
-        #   false: verify Unisphere API server's certificates 
-        # Default value: true	
+        #   false: verify Unisphere API server's certificates
+        # Default value: true
         - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
           value: "true"
 
