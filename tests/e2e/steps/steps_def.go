@@ -1059,9 +1059,8 @@ func validateNamespace(namespace string) error {
 
 func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error {
 	fmt.Println("=== Creating Authorization Proxy Server Prerequisites ===")
-	if err := validateNamespace(crNamespace); err != nil {
-		// handle the error appropriately, e.g., log it or return it
-		panic(err)
+	if err := validateNamespace(cr.Namespace); err != nil {
+		return fmt.Errorf("invalid namespace: %v", err)
 	}
 	cmd := exec.Command("kubectl", "get", "ns", cr.Namespace)
 	err := cmd.Run()
