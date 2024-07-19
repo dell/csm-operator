@@ -31,9 +31,9 @@ spec:
     configVersion: v2.11.0
     authSecret: powerstore-config
     # Controller count
-    replicas: 2
+    replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: true
+    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "dellemc/csi-powerstore:nightly"
