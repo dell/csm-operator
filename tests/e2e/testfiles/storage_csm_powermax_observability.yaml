@@ -262,7 +262,7 @@ spec:
           # set it true, if csm-auth is enabled / you want it as a sidecar container
           # set it false, if you want it as a deployment
           - name: "DeployAsSidecar"
-            value: "true"
+            value: "false"
               
     # observability: allows to configure observability
     - name: observability
