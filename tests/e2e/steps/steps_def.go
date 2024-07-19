@@ -1047,9 +1047,22 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 	return nil
 }
 
+func validateNamespace(namespace string) error {
+	// Kubernetes namespaces must consist of lower case alphanumeric characters or '-',
+	// and must start and end with an alphanumeric character
+	match, _ := regexp.MatchString(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`, namespace)
+	if !match {
+		return errors.New("invalid namespace")
+	}
+	return nil
+}
+
 func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error {
 	fmt.Println("=== Creating Authorization Proxy Server Prerequisites ===")
-
+	if err := validateNamespace(crNamespace); err != nil {
+		// handle the error appropriately, e.g., log it or return it
+		panic(err)
+	}
 	cmd := exec.Command("kubectl", "get", "ns", cr.Namespace)
 	err := cmd.Run()
 	if err == nil {
