@@ -654,7 +654,8 @@ func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType s
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		key = "s/" + key + "/" + os.Getenv(mapValues[key]) + "/g"
+		err := replaceInFile(key, templateFile)
 		if err != nil {
 			return err
 		}
@@ -698,7 +699,8 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		key = "s/" + key + "/" + os.Getenv(mapValues[key]) + "/g"
+		err := replaceInFile(key, templateFile)
 		if err != nil {
 			return err
 		}
@@ -731,7 +733,8 @@ func (step *Step) restoreTemplate(res Resource, templateFile, crType string) err
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(os.Getenv(mapValues[key]), key, templateFile)
+		key = "s/" + key + "/" + os.Getenv(mapValues[key]) + "/g"
+		err := replaceInFile(key, templateFile)
 		if err != nil {
 			return err
 		}
@@ -777,8 +780,8 @@ func secretExists(namespace, name string) bool {
 	return true
 }
 
-func replaceInFile(old, new, templateFile string) error {
-	cmdString := "s/" + old + "/" + new + "/g"
+func replaceInFile(cmdString, templateFile string) error {
+	//cmdString := "s/" + old + "/" + new + "/g"
 	cmd := exec.Command("sed", "-i", cmdString, templateFile)
 	err := cmd.Run()
 	if err != nil {
@@ -1399,7 +1402,8 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), updatedTemplateFile)
+		key = "s/" + key + "/" + os.Getenv(mapValues[key]) + "/g"
+		err := replaceInFile(key, updatedTemplateFile)
 		if err != nil {
 			return err
 		}
@@ -1528,7 +1532,8 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 		if os.Getenv(mapValues[key]) == "" {
 			return fmt.Errorf("env variable %s not set, set in env-e2e-test.sh before continuing", mapValues[key])
 		}
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		key = "s/" + key + "/" + os.Getenv(mapValues[key]) + "/g"
+		err := replaceInFile(key, templateFile)
 		if err != nil {
 			return err
 		}
