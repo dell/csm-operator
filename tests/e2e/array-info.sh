@@ -52,6 +52,12 @@ export PSCALE_ROLE="csmrole-powerscale"
 export PSCALE_TENANT="csmtenant-powerscale"
 export PSCALE_TENANT_PREFIX="tn1"
 
+# The following is PowerStore specific:
+export PSTORE_USER="username"
+export PSTORE_PASS="password"
+export PSTORE_GLOBALID="myglobalpstoreid"
+export PSTORE_ENDPOINT="1.1.1.1"
+
 # The following are for testing AM
 export VOL_NS=wordpress
 export RES_NS=res-wordpress
