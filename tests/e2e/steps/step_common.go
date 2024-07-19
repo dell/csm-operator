@@ -518,11 +518,11 @@ func checkAuthorizationProxyServerNoRunningPods(ctx context.Context, namespace s
 
 func getPortContainerizedAuth(namespace string) (string, error) {
 	port := ""
-	service := namespace + "-ingress-nginx-controller"
+	//service := namespace + "-ingress-nginx-controller"
 	b, err := exec.Command(
 		"kubectl", "get",
 		"service", service,
-		"-n", namespace,
+		"-n", namespace + "-ingress-nginx-controller",
 		"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
 	).CombinedOutput()
 	if err != nil {
