@@ -14,6 +14,7 @@ package configmap
 
 import (
 	"context"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -33,16 +34,18 @@ func SyncConfigMap(ctx context.Context, configMap corev1.ConfigMap, client clien
 		log.Infow("Creating a new ConfigMap", "Name", configMap.Name)
 		err = client.Create(ctx, &configMap)
 		if err != nil {
-			return err
+			return fmt.Errorf("creating configmap: %v", err)
 		}
 	} else if err != nil {
 		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
 	} else {
 		log.Infow("Updating ConfigMap", "Name:", configMap.Name)
+
+		configMap.ResourceVersion = found.ResourceVersion
 		err = client.Update(ctx, &configMap)
 		if err != nil {
-			return err
+			return fmt.Errorf("updating configmap: %v", err)
 		}
 	}
 

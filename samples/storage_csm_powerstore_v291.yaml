@@ -22,6 +22,7 @@ spec:
   driver:
     csiDriverType: "powerstore"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
@@ -104,9 +105,9 @@ spec:
           value: "false"
         # X_CSI_POWERSTORE_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
         # Allowed Values: x.x.x.x/xx or x.x.x.x
-        # Default Value: 
+        # Default Value:
         - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
-          value: 
+          value:
 
       # nodeSelector: Define node selection constraints for controller pods.
       # For the pod to be eligible to run on a node, the node must have each
@@ -163,7 +164,7 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-  
+
   modules:
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
