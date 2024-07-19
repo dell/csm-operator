@@ -208,33 +208,32 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			return fmt.Errorf("installation of velero %v failed", err1)
 		}
 
-		amNamespace := os.Getenv("AM_NS")
-		if amNamespace == "" {
-			amNamespace = "test-vxflexos"
+		if os.Getenv("AM_NS") == "" {
+			os.Getenv("AM_NS") = "test-vxflexos"
 		}
 
 		// Cleanup backupstoragelocations and volumesnapshotlocation before installing velero
-		cmd := exec.Command("kubectl", "get", "backupstoragelocations.velero.io", "default", "-n", amNamespace)
+		cmd := exec.Command("kubectl", "get", "backupstoragelocations.velero.io", "default", "-n", os.Getenv("AM_NS"))
 		err := cmd.Run()
 		if err == nil {
-			cmd1 = exec.Command("kubectl", "delete", "backupstoragelocations.velero.io", "default", "-n", amNamespace)
+			cmd1 = exec.Command("kubectl", "delete", "backupstoragelocations.velero.io", "default", "-n", os.Getenv("AM_NS"))
 			err1 = cmd1.Run()
 			if err1 != nil {
 				return fmt.Errorf("installation of velero %v failed", err1)
 			}
 		}
 
-		cmd = exec.Command("kubectl", "get", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace)
+		cmd = exec.Command("kubectl", "get", "volumesnapshotlocations.velero.io", "default", "-n", os.Getenv("AM_NS"))
 		err = cmd.Run()
 		if err == nil {
-			cmd1 = exec.Command("kubectl", "delete", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace)
+			cmd1 = exec.Command("kubectl", "delete", "volumesnapshotlocations.velero.io", "default", "-n", os.Getenv("AM_NS"))
 			err1 = cmd1.Run()
 			if err1 != nil {
 				return fmt.Errorf("installation of velero %v failed", err1)
 			}
 		}
 
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml")
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+os.Getenv("AM_NS"), "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml")
 		err2 := cmd2.Run()
 		if err2 != nil {
 			return fmt.Errorf("installation of velero %v failed", err2)
@@ -280,12 +279,11 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 			}
 		}
 	} else if thirdPartyModule == "velero" {
-		amNamespace := os.Getenv("AM_NS")
-		if amNamespace == "" {
-			amNamespace = "test-vxflexos"
+		if os.Getenv("AM_NS") == "" {
+			os.Getenv("AM_NS") = "test-vxflexos"
 		}
 
-		cmd := exec.Command("helm", "delete", "velero", "--namespace="+amNamespace)
+		cmd := exec.Command("helm", "delete", "velero", "--namespace="+ os.Getenv("AM_NS"))
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("uninstallation of velero %v failed", err)
@@ -716,8 +714,8 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 	}
 
 	// create new secret
-	fileArg := "--from-file=config=" + templateFile
-	cmd := exec.Command("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	//fileArg := "--from-file=config=" + templateFile
+	cmd := exec.Command("kubectl", "create", "secret", "generic", "-n", namespace, name, "--from-file=config=" + templateFile)
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to create secret with template file: %s:  %s", templateFile, err.Error())
