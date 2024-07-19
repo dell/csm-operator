@@ -1240,7 +1240,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1332,7 +1332,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/token.yaml", b, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1387,7 +1387,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1434,7 +1434,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/token.yaml", b, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
