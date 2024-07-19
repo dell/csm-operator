@@ -41,6 +41,7 @@ const (
 	PmaxConfigVersion          string = "v2.11.0"
 	AuthServerConfigVersion    string = "v1.11.0"
 	AccConfigVersion           string = "v1.1.0"
+	AppMobConfigVersion        string = "v1.1.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client

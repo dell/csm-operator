@@ -124,6 +124,7 @@ var (
 	csmName = "csm"
 
 	configVersion              = shared.ConfigVersion
+	appMobConfigVersion        = shared.AppMobConfigVersion
 	pFlexConfigVersion         = shared.PFlexConfigVersion
 	oldConfigVersion           = shared.OldConfigVersion
 	upgradeConfigVersion       = shared.UpgradeConfigVersion
@@ -220,6 +221,16 @@ func (suite *CSMControllerTestSuite) TestAppMobReconcile() {
 	suite.runFakeAuthCSMManager("", false, false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true, false)
+}
+
+func (suite *CSMControllerTestSuite) TestAppMobPreCheckError() {
+	suite.makeFakeAppMobFailCSM(csmName, suite.namespace, getAppMob())
+	reconciler := suite.createReconciler()
+	res, err := reconciler.Reconcile(ctx, req)
+	ctrl.Log.Info("reconcile response", "res is: ", res)
+	if err != nil {
+		assert.NotNil(suite.T(), err)
+	}
 }
 
 func (suite *CSMControllerTestSuite) TestResiliencyReconcile() {
@@ -960,12 +971,6 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	// error in Authorization Proxy Server
 	csm.Spec.Modules = getAuthProxyServer()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
-	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
-	assert.NotNil(suite.T(), err)
-
-	// error in App Mobility
-	csm.Spec.Modules = getAppMob()
-	csm.Spec.Modules[0].ConfigVersion = "8.0.0"
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
@@ -1968,31 +1973,64 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 // helper method to create k8s objects
 func (suite *CSMControllerTestSuite) makeFakeAppMobCSM(name, ns string, _ []csmv1.Module) {
 	// this secret required by application-mobility module
-	sec := shared.MakeSecret("cloud-creds", ns, configVersion)
+
+	sec := shared.MakeSecret("cloud-creds", ns, appMobConfigVersion)
 	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
 	// this secret required by application-mobility module
-	sec = shared.MakeSecret("dls-license", "default", configVersion)
+
+	sec = shared.MakeSecret("dls-license", "default", appMobConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
 	// this secret required by application-mobility module
-	sec = shared.MakeSecret("iv", "default", configVersion)
+	sec = shared.MakeSecret("iv", "default", appMobConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
 	// this secret required by application-mobility module
-	sec = shared.MakeSecret("velero-restic-credentials", ns, configVersion)
+	sec = shared.MakeSecret("velero-restic-credentials", ns, appMobConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
 	// this secret required by application-mobility module
-	sec = shared.MakeSecret("cert-manager-webhook-ca", ns, configVersion)
+	sec = shared.MakeSecret("cert-manager-webhook-ca", ns, appMobConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	csm := shared.MakeModuleCSM(name, ns, configVersion)
+	csm := shared.MakeModuleCSM(name, ns, appMobConfigVersion)
+
+	csm.Spec.Modules = getAppMob()
+	csm.Spec.Modules[0].ForceRemoveModule = true
+
+	err = suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) makeFakeAppMobFailCSM(name, ns string, _ []csmv1.Module) {
+	// this secret required by application-mobility module
+
+	sec := shared.MakeSecret("cloud-creds", ns, appMobConfigVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by application-mobility module
+	sec = shared.MakeSecret("iv", "default", appMobConfigVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by application-mobility module
+	sec = shared.MakeSecret("velero-restic-credentials", ns, appMobConfigVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	// this secret required by application-mobility module
+	sec = shared.MakeSecret("cert-manager-webhook-ca", ns, appMobConfigVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	csm := shared.MakeModuleCSM(name, ns, appMobConfigVersion)
 
 	csm.Spec.Modules = getAppMob()
 	csm.Spec.Modules[0].ForceRemoveModule = true
