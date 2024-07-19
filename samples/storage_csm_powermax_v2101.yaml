@@ -22,6 +22,7 @@ spec:
   driver:
     csiDriverType: "powermax"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
@@ -227,7 +228,7 @@ spec:
         enabled: false
         args: [ "--monitor-interval=60s" ]
         image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
-      
+
       # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
       # Configure only when the storageCapacity is set as "true"
       # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m

@@ -22,6 +22,7 @@ spec:
   driver:
     csiDriverType: "powermax"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
