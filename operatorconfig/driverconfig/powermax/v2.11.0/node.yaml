@@ -127,7 +127,7 @@ spec:
               value: "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
             - name: X_CSI_POWERMAX_PROXY_SERVICE_NAME
               value: "csipowermax-reverseproxy"
-            - name: X_CSI_NODE_CHROOT
+            - name: X_CSI_ISCSI_CHROOT
               value: noderoot
             - name: X_CSI_GRPC_MAX_THREADS
               value: "50"

@@ -1,39 +1,5 @@
-# List of E2E Tests Scenarios
-
-- scenario: "Install Authorization Proxy Server V1"
-  paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerscale] for CR [1]"
-    - "Delete custom resource [1]"
-
-# Upgrade from V1 to V2 is not supported
-- scenario: "Install Authorization Proxy Server V1 and upgrade"
-  paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.1
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.0
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerscale] for CR [1]"
-    # upgrade
-    - "Upgrade from custom resource [1] to [2]"
-    - "Validate custom resource [2]"
-    - "Validate [authorization-proxy-server] module from CR [2] is installed"
-    - "Delete custom resource [2]"
-
-# Authorization V2 scenarios only supports powerflex driver
-- scenario: "Install Authorization Proxy Server V2"
+#List of E2E Tests Scenarios
+- scenario: "Install Authorization Proxy Server"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/authorization-templates/csm_authorization_crds.yaml"
@@ -45,15 +11,15 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
-    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [2]"
 
-- scenario: "Install Authorization CRDs for V2"
+- scenario: "Install Authorization CRDs"
   paths:
     - "testfiles/authorization-templates/csm_authorization_crds.yaml"
-  tags:
+  modules:
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -63,7 +29,25 @@
     - "Validate [storages] CRD for Authorization is installed"
     - "Delete Authorization CRDs [1]"
 
-- scenario: "Install Authorization Proxy Server V2 With Default Redis Storage Class"
+- scenario: "Install Authorization Proxy Server and upgrade"
+  paths:
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+  tags:
+    - "authorizationproxyserver"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Apply custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powerflex] for CR [1]"
+    #upgrade
+    - "Upgrade from custom resource [1] to [2]"
+    - "Validate custom resource [2]"
+    - "Validate [authorization-proxy-server] module from CR [2] is installed"
+    - "Delete custom resource [2]"
+
+- scenario: "Install Authorization Proxy Server With Default Redis Storage Class"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_default_redis.yaml"
     - "testfiles/authorization-templates/csm_authorization_crds.yaml"
@@ -75,29 +59,32 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
-    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [2]"
 
-- scenario: "Install Authorization Proxy Server V1 with alternate namespace"
+- scenario: "Install Authorization Proxy Server with alternate namespace"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_alt_ns.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [2]"
 
-- scenario: "Install Authorization Proxy Server & PowerFlex Driver (With Authorization V1), Upgrade both Authorization Proxy Server and PowerFlex Driver"
+- scenario: "Install Authorization Proxy Server & PowerFlex Driver (With Authorization), Upgrade both Authorization Proxy Server and PowerFlex Driver"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.1
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.0
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
   tags:
@@ -137,13 +124,14 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
-    name: Cert CSI
-    run:
-      - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+   name: Cert CSI
+   run:
+     - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone)"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
+    
   tags:
     - "powerscale"
     - "sanity"
@@ -261,16 +249,18 @@
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
       - /bin/bash check_parameters.sh testfiles/powerscale_health_monitor_values.csv dell powerscale
 
-- scenario: "Install PowerScale Driver(With Authorization V1)"
+- scenario: "Install PowerScale Driver(With Authorization)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
     - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -288,6 +278,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
   customTest:
@@ -299,7 +290,7 @@
   paths:
     - "testfiles/storage_csm_powerscale_replica.yaml"
   tags:
-    # - "powerscale"
+    #- "powerscale"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -323,7 +314,7 @@
     - "testfiles/storage_csm_powerscale.yaml"
     - "testfiles/storage_csm_powerscale_replica.yaml"
   tags:
-    # - "powerscale"
+    #- "powerscale"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -365,9 +356,9 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Validate [powerscale] driver from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver, Enable/Disable Authorization V1 module"
+- scenario: "Install PowerScale Driver, Enable/Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "authorizationproxyserver"
@@ -469,10 +460,11 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
 
-- scenario: "Install PowerScale Driver(With Authorization V1 and Observability)"
+- scenario: "Install PowerScale Driver(With Authorization and Observability)"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -481,6 +473,7 @@
     # - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -499,6 +492,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
@@ -508,10 +502,11 @@
     run:
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerScale Driver(Standalone), Enable Authorization V1, Enable Observability"
+- scenario: "Install PowerScale Driver(Standalone), Enable Authorization, Enable Observability"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "powerscale"
@@ -519,6 +514,7 @@
     - "authorization"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -545,13 +541,15 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
 
-- scenario: "Install PowerScale Driver(With Authorization V1 and Observability), Disable Authorization module, Disable Observability module"
+- scenario: "Install PowerScale Driver(With Authorization and Observability), Disable Authorization module, Disable Observability module"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -559,6 +557,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -586,6 +585,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
@@ -753,7 +753,7 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Validate [powerflex] driver from CR [1] is not installed"
 
-- scenario: "Install PowerFlex Driver (With Authorization V2)"
+- scenario: "Install PowerFlex Driver (With Authorization)"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
@@ -782,7 +782,6 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
@@ -793,18 +792,16 @@
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerFlex Driver (With Authorization V2), Upgrade driver and authorization sidecar"
+- scenario: "Install PowerFlex Driver (With Authorization), Upgrade driver and authorization sidecar"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
-    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install Authorization CRDs [4]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -828,9 +825,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [3]"
     - "Delete custom resource [3]"
-    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
-    - "Delete Authorization CRDs [4]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
@@ -865,6 +860,7 @@
     - "Delete custom resource [2]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+
 
 - scenario: "Install PowerFlex Driver(With Observability)"
   paths:
@@ -956,9 +952,9 @@
   paths:
     - "testfiles/storage_csm_powerflex_replica.yaml"
   tags:
-    # - "powerflex"
+    #- "powerflex"
     - "replication"
-    # - "sanity"
+    #- "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
@@ -981,7 +977,7 @@
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
-    # - "powerflex"
+    #- "powerflex"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1002,10 +998,11 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
 
-- scenario: "Install PowerFlex Driver(Standalone), Enable Authorization V1, Enable Observability"
+- scenario: "Install PowerFlex Driver(Standalone), Enable Authorization, Enable Observability"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -1013,6 +1010,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -1030,7 +1028,7 @@
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is not installed"
-    #    - "Set secret for driver from CR [2] to [test-vxflexos-config-auth]"
+#    - "Set secret for driver from CR [2] to [test-vxflexos-config-auth]"
     - "Enable [observability] module from CR [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
@@ -1040,14 +1038,16 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [1]"
     - "Delete custom resource [2]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
 
-- scenario: "Install PowerFlex Driver(With Authorization V1 and Observability)"
+- scenario: "Install PowerFlex Driver(With Authorization and Observability)"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -1055,6 +1055,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -1073,6 +1074,7 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
@@ -1081,9 +1083,9 @@
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: Install PowerFlex Driver(With Authorization V2 and Observability), Disable Observability module, Disable Authorization module"
+- scenario: Install PowerFlex Driver(With Authorization and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
     - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
@@ -1120,7 +1122,6 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
-    - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
@@ -1146,7 +1147,7 @@
   customTest:
     name: CustomTest
     run:
-      - echo "no current test for resiliency"
+     - echo "no current test for resiliency"
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable/Disable Resiliency"
   paths:
@@ -1189,7 +1190,7 @@
   customTest:
     name: CustomTest
     run:
-      - echo "no current test for resiliency"
+     - echo "no current test for resiliency"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable/Disable Resiliency"
   paths:
@@ -1280,7 +1281,7 @@
   customTest:
     name: CustomTest
     run:
-      - echo "no current test for resiliency"
+     - echo "no current test for resiliency"
 
 - scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
   paths:
@@ -1410,15 +1411,15 @@
     - "Apply custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
     - "Validate [powerflex] driver from CR [1] is installed"
-    # upgrade
+    #upgrade
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [application-mobility] module from CR [2] is installed"
-    # downgrade
+    #downgrade
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
-    # clean up
+    #clean up
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml] for [application-mobility]"
@@ -1427,7 +1428,7 @@
 
 - scenario: "Install App Mobility when Velero and Cert-Manager already installed"
   paths:
-    - "testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml"
+    - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"
   tags:
     - "applicationmobility"
   steps:
@@ -1435,7 +1436,7 @@
     - "Set up application mobility CR [testfiles/application-mobility-templates/velero-values.yaml]"
     - "Install [velero]"
     - "Install [cert-manager]"
-    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml]"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml]"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-app-mobility-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
@@ -1448,9 +1449,8 @@
     # Last steps perform Clean UP
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml] for [application-mobility]"
+    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml] for [application-mobility]"
     - "Restore template [testfiles/application-mobility-templates/velero-values.yaml] for [application-mobility]"
-    - "Uninstall [cert-manager]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
   customTest:
@@ -1525,6 +1525,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    #- "Create storageclass with name [powermax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1532,6 +1533,7 @@
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    #- "Delete deployment"
   customTest:
     name: Cert CSI
     run:
@@ -1544,6 +1546,8 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    #- "Create storageclass with name [powermax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    #- "Set up secret with template [testfiles/powermax-templates/powermax-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmax]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1551,6 +1555,8 @@
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    #- "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
+    #- "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
   customTest:
     name: Cert CSI
     run:
@@ -1564,44 +1570,52 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up secret with template [testfiles/powermax-templates/powermax-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmax]"
+    #- "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    #- "Set up secret with template [testfiles/powermax-templates/powermax-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmax]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
-    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
-  customTest:
-    name: Cert CSI
-    run:
-      - cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
-
-- scenario: "Install PowerMax Driver(Standalone), Enable/Disable Observability"
+    #- "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
+    #- "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
+    
+- scenario: "Install PowerMax Driver (With Auth module)"
   paths:
-    - "testfiles/storage_csm_powerscale.yaml"
+    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/storage_csm_powermax_authorization.yaml"
   tags:
+    - "authorizationproxyserver"
+    - "authorization"
     - "powermax"
-    - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is not installed"
-    - "Enable [observability] module from CR [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Disable [observability] module from CR [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
-    - "Validate [observability] module from CR [1] is not installed"
+    - "Install Authorization CRDs [1]"
+    - "Create [authorization-proxy-server] prerequisites from CR [2]"
+    - "Apply custom resource [2]"
+    - "Validate [authorization-proxy-server] module from CR [2] is installed"
+    - "Configure authorization-proxy-server for [powermax] for CR [2]"
+    #- "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    #- "Set up secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pflexAuthSidecar]"
+    #- "Set up secret with template [testfiles/powermax-templates/powerflex-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmax]"
+    #- "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmaxAuth]"
+    - "Apply custom resource [3]"
+    - "Validate custom resource [3]"
+    - "Validate [powermax] driver from CR [3] is installed"
+    - "Validate [authorization] module from CR [3] is installed"
+    - "Run custom test"
     # cleanup
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
+    - "Enable forceRemoveDriver on CR [3]"
+    - "Delete custom resource [3]"
+    - "Delete custom resource [2]"
+    - "Delete Authorization CRDs [1]"
+    #- "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxAuth]"
+    #- "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pflex]"
+    #- "Restore template [testfiles/powermax-templates/csm-authorization-config.json] for [pmaxAuthSidecar]"
+
 
 - scenario: "Install Powermax Driver(Standalone), Enable Resiliency"
   paths:
@@ -1622,10 +1636,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-  customTest:
-    name: CustomTest
-    run:
-      - "echo Todo"
+
 
 - scenario: "Install Powermax Driver(With Resiliency), Disable Resiliency module"
   paths:
@@ -1645,3 +1656,5 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+
+      
