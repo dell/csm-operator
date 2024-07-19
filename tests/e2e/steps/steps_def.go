@@ -1714,8 +1714,8 @@ func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStor
 }
 
 func (step *Step) createCustomResourceDefinition(res Resource, crdNumStr string) error {
-	crdNum, _ := strconv.Atoi(crdNumStr)
-	cmd := exec.Command("kubectl", "apply", "-f", res.Scenario.Paths[crdNum-1])
+	//crdNum, _ := strconv.Atoi(crdNumStr)
+	cmd := exec.Command("kubectl", "apply", "-f", res.Scenario.Paths[strconv.Atoi(crdNumStr)-1])
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("csm authorization crds install failed: %v", err)
@@ -1725,7 +1725,7 @@ func (step *Step) createCustomResourceDefinition(res Resource, crdNumStr string)
 }
 
 func (step *Step) validateCustomResourceDefinition(res Resource, crdName string) error {
-	cmd := exec.Command("kubectl", "get", "crd", fmt.Sprintf("%s.csm-authorization.storage.dell.com", crdName))
+	cmd := exec.Command("kubectl", "get", "crd", crdName + ".csm-authorization.storage.dell.com")
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to validate csm authorization crd [%s]: %v", crdName, err)
@@ -1758,8 +1758,8 @@ func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 }
 
 func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string) error {
-	crdNum, _ := strconv.Atoi(crdNumStr)
-	cmd := exec.Command("kubectl", "delete", "-f", res.Scenario.Paths[crdNum-1])
+	//crdNum, _ := strconv.Atoi(crdNumStr)
+	cmd := exec.Command("kubectl", "delete", "-f", res.Scenario.Paths[strconv.Atoi(crdNumStr)-1])
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("csm authorization crds uninstall failed: %v", err)
