@@ -287,6 +287,14 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 		return nil, err
 	}
 	container := *containerPtr
+	// update the image
+	for _, side := range revProxyModule.Components {
+		if side.Name == ReverseProxyServerComponent {
+			if side.Image != "" {
+				*container.Image = string(side.Image)
+			}
+		}
+	}
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 	// inject revProxy ENVs in driver environment
 	revProxyPort := getRevProxyPort(*revProxyModule)
