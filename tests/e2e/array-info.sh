@@ -75,6 +75,14 @@ export PSTORE_PASS="password"
 export PSTORE_GLOBALID="myglobalpstoreid"
 export PSTORE_ENDPOINT="1.1.1.1"
 
+# The following is Unity specific:
+export UNITY_USER="username"
+export UNITY_PASS="password"
+export UNITY_ARRAYID="myglobalunityid"
+export UNITY_ENDPOINT="1.1.1.1"
+export UNITY_NAS="mynas"
+export UNITY_POOL="mypool"
+
 # The following are for testing AM
 export VOL_NS=wordpress
 export RES_NS=res-wordpress
