@@ -7,6 +7,7 @@ spec:
   driver:
     csiDriverType: "isilon"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
@@ -115,7 +116,7 @@ spec:
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
           value: "debug"
-        
+
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
@@ -252,7 +253,7 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled 
+      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
       #  - key: "offline.vxflexos.storage.dell.com"
       #    operator: "Exists"
       #    effect: "NoSchedule"

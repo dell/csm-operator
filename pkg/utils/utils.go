@@ -356,7 +356,6 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 		}
 	}
 	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
-
 	return YamlString
 }
 

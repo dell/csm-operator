@@ -7,6 +7,7 @@ spec:
   driver:
     csiDriverType: "powerflex"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
@@ -129,7 +130,7 @@ spec:
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
           value: "false"
-        
+
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
         # Allowed values:
         #   true: enable checking of health condition of CSI volumes
@@ -137,7 +138,7 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-          
+
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
         #   true: enable renaming
