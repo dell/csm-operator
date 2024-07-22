@@ -39,13 +39,19 @@ func SyncCSIDriver(ctx context.Context, csi storagev1.CSIDriver, client client.C
 		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
 	} else {
-		log.Infow("Updating existing CSIDriver Object", "Name:", csi.Name)
+		log.Infow("Recreating existing CSIDriver Object", "Name:", csi.Name)
 
 		csi.ResourceVersion = found.ResourceVersion
 		// in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
-		err = client.Update(ctx, &csi)
+		// so we will delete and recreate it
+		err = client.Delete(ctx, &csi)
 		if err != nil {
-			return fmt.Errorf("updating csidriver object: %v", err)
+			return fmt.Errorf("deleting csidriver object: %v", err)
+		}
+
+		err = client.Create(ctx, &csi)
+		if err != nil {
+			return fmt.Errorf("re-creating csidriver object: %v", err)
 		}
 	}
 	return nil
