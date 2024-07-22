@@ -54,10 +54,19 @@ export PSCALE_TENANT_PREFIX="tn1"
 
 # The following are for creating Powermax secret/storage class
 export PMAX_SYSTEMID="Pmax-System-Id"
-export PMAX_ENDPOINT="10.1.1.1"
+export PMAX_ENDPOINT="10.0.0.1:8443"
 export PMAX_AUTH_ENDPOINT="localhost"
 export PMAX_USER="username"
 export PMAX_PASS="password"
+export PMAX_USER_ENCODED="username"
+export PMAX_PASS_ENCODED="password"
+# The following are Authorization Proxy Server specific for powermax:
+export PMAX_POOL_V1="SRP_1"
+export PMAX_STORAGE="powermax"
+export PSCALE_QUOTA="0GB"
+export PSCALE_ROLE="csmrole-powermax"
+export PSCALE_TENANT="csmtenant-powermax"
+export PSCALE_TENANT_PREFIX="tn1"
 
 # The following is PowerStore specific:
 export PSTORE_USER="username"

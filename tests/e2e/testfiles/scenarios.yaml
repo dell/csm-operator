@@ -299,7 +299,7 @@
   paths:
     - "testfiles/storage_csm_powerscale_replica.yaml"
   tags:
-    #- "powerscale"
+    # - "powerscale"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -323,7 +323,7 @@
     - "testfiles/storage_csm_powerscale.yaml"
     - "testfiles/storage_csm_powerscale_replica.yaml"
   tags:
-    #- "powerscale"
+    # - "powerscale"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -959,9 +959,9 @@
   paths:
     - "testfiles/storage_csm_powerflex_replica.yaml"
   tags:
-    #- "powerflex"
+    # - "powerflex"
     - "replication"
-    #- "sanity"
+    # - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
@@ -984,7 +984,7 @@
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
-    #- "powerflex"
+    # - "powerflex"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1033,7 +1033,7 @@
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is not installed"
-#    - "Set secret for driver from CR [2] to [test-vxflexos-config-auth]"
+    #    - "Set secret for driver from CR [2] to [test-vxflexos-config-auth]"
     - "Enable [observability] module from CR [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
@@ -1442,7 +1442,7 @@
 
 - scenario: "Install App Mobility when Velero and Cert-Manager already installed"
   paths:
-    - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"
+    - "testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml"
   tags:
     - "applicationmobility"
   steps:
@@ -1450,7 +1450,7 @@
     - "Set up application mobility CR [testfiles/application-mobility-templates/velero-values.yaml]"
     - "Install [velero]"
     - "Install [cert-manager]"
-    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml]"
+    - "Set up application mobility CR [testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml]"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-app-mobility-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
@@ -1463,8 +1463,9 @@
     # Last steps perform Clean UP
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml] for [application-mobility]"
+    - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_no_velero.yaml] for [application-mobility]"
     - "Restore template [testfiles/application-mobility-templates/velero-values.yaml] for [application-mobility]"
+    - "Uninstall [cert-manager]"
     - "Enable forceRemoveModule on CR [1]"
     - "Delete custom resource [1]"
   customTest:
@@ -1595,7 +1596,7 @@
     - "Delete custom resource [1]"
     #- "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
     #- "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmax]"
-    
+
 - scenario: "Install PowerMax Driver (With Auth module)"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
@@ -1667,4 +1668,3 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
-      

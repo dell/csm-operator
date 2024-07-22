@@ -57,7 +57,7 @@ var (
 	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
-	pmaxCredMap            = map[string]string{"REPLACE_USER": "PMAX_USER", "REPLACE_PASS": "PMAX_PASS"}
+	pmaxCredMap            = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
 	pmaxAuthSidecarMap     = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT", "REPLACE_PORT": "PMAX_AUTH_PORT"}
 	pmaxReverseProxyMap    = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
@@ -1220,6 +1220,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		csmTenantName = os.Getenv("PSCALE_TENANT")
 	}
 
+	if driver == "powermax" {
+		os.Setenv("PMAX_STORAGE", "powermax")
+		os.Setenv("DRIVER_NAMESPACE", "test-powermax")
+		storageType = os.Getenv("PMAX_STORAGE")
+		csmTenantName = os.Getenv("PMAX_TENANT")
+	}
+
 	proxyHost = os.Getenv("PROXY_HOST")
 	driverNamespace = os.Getenv("DRIVER_NAMESPACE")
 
@@ -1277,6 +1284,14 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		systemIdvar = "PSCALE_CLUSTER"
 		uservar = "PSCALE_USER"
 		passvar = "PSCALE_PASS"
+		poolvar = "PSCALE_POOL_V1"
+	}
+
+	if driver == "powermax" {
+		endpointvar = "PMAX_ENDPOINT"
+		systemIdvar = "PMAX_SYSTEMID"
+		uservar = "PMAX_USER"
+		passvar = "PMAX_PASS"
 		poolvar = "PSCALE_POOL_V1"
 	}
 
