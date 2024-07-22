@@ -695,7 +695,7 @@ func (step *Step) setupSecretFromFile(res Resource, file, namespace string) erro
 	return nil
 }
 
-func (step *Step) setUpPowermaxCreds(templateFile, crType string) error {
+func (step *Step) setUpPowermaxCreds(res Resource, templateFile, crType string) error {
 	mapValues, err := determineMap(crType)
 	if err != nil {
 		return err
@@ -716,7 +716,7 @@ func (step *Step) setUpPowermaxCreds(templateFile, crType string) error {
 	return nil
 }
 
-func (step *Step) setUpConfigMap(templateFile, name, namespace, crType string) error {
+func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, crType string) error {
 	mapValues, err := determineMap(crType)
 	if err != nil {
 		return err
@@ -1292,7 +1292,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		systemIdvar = "PMAX_SYSTEMID"
 		uservar = "PMAX_USER"
 		passvar = "PMAX_PASS"
-		poolvar = "PSCALE_POOL_V1"
+		poolvar = "PMAX_POOL_V1"
 	}
 
 	// get env variables

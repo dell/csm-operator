@@ -21,11 +21,11 @@ logLevel: debug
 logFormat: text
 standAloneConfig:
   storageArrays:
-    - storageArrayId: "REPLACE_SYSTEMID" # arrayID
-      primaryURL: "https://REPLACE_AUTH_ENDPOINT:9400" # primary unisphere for arrayID
+    - storageArrayId: "REPLACE_SYSTEMID"
+      primaryURL: "https://REPLACE_AUTH_ENDPOINT:9400"
       proxyCredentialSecrets:
         - powermax-creds
   managementServers:
-    - url: "https://REPLACE_AUTH_ENDPOINT:9400" # primary unisphere endpoint
+    - url: "https://REPLACE_AUTH_ENDPOINT:9400"
       arrayCredentialSecret: powermax-creds
       skipCertificateValidation: true
