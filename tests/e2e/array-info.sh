@@ -63,10 +63,10 @@ export PMAX_PASS_ENCODED="password"
 # The following are Authorization Proxy Server specific for powermax:
 export PMAX_POOL_V1="SRP_1"
 export PMAX_STORAGE="powermax"
-export PSCALE_QUOTA="0GB"
-export PSCALE_ROLE="csmrole-powermax"
-export PSCALE_TENANT="csmtenant-powermax"
-export PSCALE_TENANT_PREFIX="tn1"
+export PMAX_QUOTA="0GB"
+export PMAX_ROLE="csmrole-powermax"
+export PMAX_TENANT="csmtenant-powermax"
+export PMAX_TENANT_PREFIX="tn1"
 
 # The following is PowerStore specific:
 export PSTORE_USER="username"
