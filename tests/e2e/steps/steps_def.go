@@ -695,6 +695,27 @@ func (step *Step) setupSecretFromFile(res Resource, file, namespace string) erro
 	return nil
 }
 
+func (step *Step) setUpPowermaxCreds(templateFile, crType string) error {
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command("kubectl", "apply", "-f", templateFile)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create creds: %s", err.Error())
+	}
+	return nil
+}
+
 func (step *Step) setUpConfigMap(templateFile, name, namespace, crType string) error {
 	mapValues, err := determineMap(crType)
 	if err != nil {
