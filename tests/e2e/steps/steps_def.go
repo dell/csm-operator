@@ -57,6 +57,9 @@ var (
 	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
+	pmaxCredMap            = map[string]string{"REPLACE_USER": "PMAX_USER", "REPLACE_PASS": "PMAX_PASS"}
+	pmaxAuthSidecarMap     = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT", "REPLACE_PORT": "PMAX_AUTH_PORT"}
+	pmaxReverseProxyMap    = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 	// Auth V2
@@ -692,6 +695,36 @@ func (step *Step) setupSecretFromFile(res Resource, file, namespace string) erro
 	return nil
 }
 
+func (step *Step) setUpConfigMap(templateFile, name, namespace, crType string) error {
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	if configMapExists(namespace, name) {
+		cmd := exec.Command("kubectl", "delete", "configmap", "-n", namespace, name)
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to delete configmap: %s", err.Error())
+		}
+	}
+
+	fileArg := "--from-file=config=" + templateFile
+	cmd := exec.Command("kubectl", "create", "cm", name, "-n", namespace, fileArg)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create configmap: %s", err.Error())
+	}
+	return nil
+}
+
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
 	// find which map to use for secret values
 	mapValues, err := determineMap(crType)
@@ -755,6 +788,12 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pscaleAuthSidecarMap
 	} else if crType == "pflexAuthSidecar" {
 		mapValues = pflexAuthSidecarMap
+	} else if crType == "pmaxAuthSidecar" {
+		mapValues = pmaxAuthSidecarMap
+	} else if crType == "pmaxCreds" {
+		mapValues = pmaxCredMap
+	} else if crType == "pmaxReverseProxy" {
+		mapValues = pmaxReverseProxyMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
@@ -774,6 +813,15 @@ func determineMap(crType string) (map[string]string, error) {
 
 func secretExists(namespace, name string) bool {
 	cmd := exec.Command("kubectl", "get", "secret", "-n", namespace, name)
+	err := cmd.Run()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func configMapExists(namespace, name string) bool {
+	cmd := exec.Command("kubectl", "get", "configmap", "-n", namespace, name)
 	err := cmd.Run()
 	if err != nil {
 		return false

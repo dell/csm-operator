@@ -52,6 +52,13 @@ export PSCALE_ROLE="csmrole-powerscale"
 export PSCALE_TENANT="csmtenant-powerscale"
 export PSCALE_TENANT_PREFIX="tn1"
 
+# The following are for creating Powermax secret/storage class
+export PMAX_SYSTEMID="Pmax-System-Id"
+export PMAX_ENDPOINT="10.1.1.1"
+export PMAX_AUTH_ENDPOINT="localhost"
+export PMAX_USER="username"
+export PMAX_PASS="password"
+
 # The following is PowerStore specific:
 export PSTORE_USER="username"
 export PSTORE_PASS="password"
