@@ -737,7 +737,7 @@ func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, cr
 		}
 	}
 
-	fileArg := "--from-file " + templateFile
+	fileArg := "--from-file=config=" + templateFile
 	cmd := exec.Command("kubectl", "create", "cm", name, "-n", namespace, fileArg)
 	err = cmd.Run()
 	if err != nil {
@@ -1222,7 +1222,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	if driver == "powermax" {
 		os.Setenv("PMAX_STORAGE", "powermax")
-		os.Setenv("DRIVER_NAMESPACE", "test-powermax")
+		os.Setenv("DRIVER_NAMESPACE", "powermax")
 		storageType = os.Getenv("PMAX_STORAGE")
 		csmTenantName = os.Getenv("PMAX_TENANT")
 	}

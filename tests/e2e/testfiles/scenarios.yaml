@@ -1600,7 +1600,7 @@
 - scenario: "Install PowerMax Driver (With Auth module)"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
-    - "testfiles/storage_csm_powermax_authorization.yaml"
+    - "testfiles/storage_csm_powermax_reverseproxy_authorization.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
