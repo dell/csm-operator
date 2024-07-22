@@ -737,7 +737,7 @@ func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, cr
 		}
 	}
 
-	fileArg := "--from-file=config=" + templateFile
+	fileArg := "--from-file " + templateFile
 	cmd := exec.Command("kubectl", "create", "cm", name, "-n", namespace, fileArg)
 	err = cmd.Run()
 	if err != nil {
