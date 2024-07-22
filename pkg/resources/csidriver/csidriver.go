@@ -48,11 +48,6 @@ func SyncCSIDriver(ctx context.Context, csi storagev1.CSIDriver, client client.C
 		if err != nil {
 			return fmt.Errorf("deleting csidriver object: %v", err)
 		}
-
-		err = client.Create(ctx, &csi)
-		if err != nil {
-			return fmt.Errorf("re-creating csidriver object: %v", err)
-		}
 	}
 	return nil
 }
