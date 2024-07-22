@@ -13,11 +13,12 @@
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Delete custom resource [1]"
 
+# Upgrade from V1 to V2 is not supported
 - scenario: "Install Authorization Proxy Server V1 and upgrade"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.1
     - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.0
-  tag:
+  tags:
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -138,7 +139,7 @@
   customTest:
     name: Cert CSI
     run:
-       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver(Standalone)"
   paths:
@@ -1290,7 +1291,7 @@
   customTest:
     name: CustomTest
     run:
-     - echo "no current test for resiliency"
+      - echo "no current test for resiliency"
 
 - scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
   paths:
@@ -1424,15 +1425,15 @@
     - "Apply custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
     - "Validate [powerflex] driver from CR [1] is installed"
-    #upgrade
+    # upgrade
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [application-mobility] module from CR [2] is installed"
-    #downgrade
+    # downgrade
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [application-mobility] module from CR [1] is installed"
-    #clean up
+    # clean up
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Restore template [testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml] for [application-mobility]"
