@@ -14,9 +14,9 @@
 
 if [[ $# -ne 1 ]]; then
   echo "Incorrect input parameters provided to script $0."
-  echo "Script Usage:"
+  echo "Script usage:"
   echo "$0 <connectivityclient-version>"
-  echo "Example:- connectivityclient-version => v100 , v110"
+  echo "Example: $0 v110"
   exit 1
 fi
 
@@ -60,7 +60,7 @@ if [[ $(echo "$secret_check" | wc -l) -gt 1 ]]; then
     echo "Dell Connectivity Client ${connectivity_ver} installed."
 else
     echo "No secrets found"
+    $CMD apply -f $ROOTDIR/samples/connectivity_client_secret.yaml
     $CMD apply -f $ROOTDIR/samples/connectivity_client_${connectivity_ver}.yaml
-    $CMD apply -f $ROOTDIR/samples/conn_secret_test.yaml
     echo "Dell Connectivity Client ${connectivity_ver} installed."
 fi

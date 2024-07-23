@@ -154,6 +154,7 @@ function usage() {
   echo "  --pstore                                     use to run e2e powerstore suite"
   echo "  --unity                                      use to run e2e unity suite"
   echo "  --pmax                                       use to run e2e powermax suite"
+  echo "  --client                                     use to run e2e connectivity client suite"
   echo
 
   exit 0
@@ -190,6 +191,8 @@ while getopts ":h-:" optchar; do
       export UNITY=true ;;
     pmax)
       export POWERMAX=true ;;
+    client)
+      export CLIENT=true ;;
     cert-csi)
       CERT_CSI="${!OPTIND}"
       OPTIND=$((OPTIND + 1))
