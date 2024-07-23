@@ -1336,7 +1336,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Create storage
-	fmt.Println("=== Creating Storage ===\n ")
+	fmt.Println("\n=== Creating Storage ===\n ")
 	cmd := exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"storage", "create",
@@ -1355,7 +1355,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Create Tenant
-	fmt.Println("=== Creating Tenant ===\n ")
+	fmt.Println("\n\n=== Creating Tenant ===\n ")
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"tenant", "create",
@@ -1369,7 +1369,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Create Role
-	fmt.Println("=== Creating Role ===\n", cmd.String())
+	fmt.Println("\n\n=== Creating Role ===\n ")
 	if storageType == "powerscale" {
 		quotaLimit = "0"
 	}
@@ -1391,6 +1391,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	time.Sleep(5 * time.Second)
 
 	// Bind role
+	fmt.Println("\n\n=== Creating RoleBinding ===\n ")
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"rolebinding", "create",
@@ -1405,7 +1406,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Generate token
-	fmt.Println("=== Generating token ===\n ")
+	fmt.Println("\n\n=== Generating token ===\n ")
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"generate", "token",
@@ -1420,7 +1421,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Apply token to CSI driver host
-	fmt.Println("=== Applying token ===\n ")
+	fmt.Println("\n\n=== Applying token ===\n ")
 
 	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
 	if err != nil {
