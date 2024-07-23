@@ -9,7 +9,6 @@ spec:
     configVersion: v1.1.0
     forceRemoveClient: true
     connectionTarget: connect-into.dell.com
-    usePrivateCaCerts: true
     common:
       name: connectivity-client-docker-k8s
       image: dellemc/connectivity-client-docker-k8s:1.19.0

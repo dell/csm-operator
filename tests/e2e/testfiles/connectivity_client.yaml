@@ -9,7 +9,6 @@ spec:
     configVersion: v1.0.0
     forceRemoveClient: true
     connectionTarget: connect-into.dell.com
-    usePrivateCaCerts: true
     common:
       name: connectivity-client-docker-k8s
       image: dellemc/connectivity-client-docker-k8s:1.2.3
@@ -20,7 +19,7 @@ spec:
         imagePullPolicy: IfNotPresent
     sideCars:
       - name: kubernetes-proxy
-        image: bitnami/kubectl:latest
+        image: bitnami/kubectl:1.29
         imagePullPolicy: IfNotPresent
       - name: cert-persister
         image: dellemc/connectivity-cert-persister-k8s:0.11.0
