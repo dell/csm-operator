@@ -6,7 +6,7 @@
     - "sanity"
     - "client"
   steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Given an client environment with k8s or openshift, and CSM operator installed"
     - "Install connectivity client from CR [1] and create secret [2]"
     - "Validate connectivity client from CR [1] is installed"
     - "Uninstall connectivity client from CR [1]"
