@@ -31,6 +31,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
+    # Config version for CSI PowerMax v2.10.1 driver
     configVersion: v2.11.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
@@ -43,7 +44,8 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: dellemc/csi-powermax:v2.11.0
+      # Image for CSI PowerMax driver v2.10.1
+      image: dellemc/csi-powermax:nightly
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -73,7 +75,7 @@ spec:
           value: "XYZ"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
-        # Default value: None
+        # Default value: /var/lib/kubelet
         - name: KUBELET_CONFIG_DIR
           value: /var/lib/kubelet
         # X_CSI_POWERMAX_PORTGROUPS: Define the set of existing port groups that the driver will use.
@@ -129,6 +131,25 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
+      # nodeSelector: Define node selection constraints for controller pods.
+      # For the pod to be eligible to run on a node, the node must have each
+      # of the indicated key-value pairs as labels.
+      # Leave as blank to consider all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # tolerations: Define tolerations that would be applied to controller deployment
+      # Leave as blank to install controller on worker nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  - key: "node-role.kubernetes.io/control-plane"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
     node:
       envs:
         # X_CSI_POWERMAX_ISCSI_ENABLE_CHAP: Determine if the driver is going to configure
@@ -156,39 +177,92 @@ spec:
         # Default value: false
         - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
           value: "false"
-        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum Powermax volumes that the controller can publish to the node
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerMax volumes that the controller can schedule on the node
         # Allowed values: Any value greater than or equal to 0
         # Default value: "0"
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "0"
+      # nodeSelector: Define node selection constraints for node pods.
+      # For the pod to be eligible to run on a node, the node must have each
+      # of the indicated key-value pairs as labels.
+      # Leave as blank to consider all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # tolerations: Define tolerations that would be applied to node daemonset
+      # Add/Remove tolerations as per requirement
+      # Leave as blank if you wish to not apply any tolerations
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      tolerations:
+        - key: "node.kubernetes.io/memory-pressure"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node.kubernetes.io/disk-pressure"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node.kubernetes.io/network-unavailable"
+          operator: "Exists"
+          effect: "NoExecute"
     sideCars:
+      # 'pmax' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
+        args: ["--volume-name-prefix=pmax"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+      - name: csi-metadata-retriever
+        image: dellemc/csi-metadata-retriever:v1.7.3
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
-        args: ["--monitor-interval=60s"]
+        args: [ "--monitor-interval=60s" ]
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+      
+      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+      # Configure only when the storageCapacity is set as "true"
+      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+      #- name: provisioner
+      #  args: ["--capacity-poll-interval=5m"]
+
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
       # enabled: Always set to true
       enabled: true
-      configVersion: v2.10.0
       forceRemoveModule: true
+      configVersion: v2.10.0
       components:
-        - name: csipowermax-reverseproxy
-          # image: Define the container images used for the reverse proxy
+      - name: csipowermax-reverseproxy
+      # image: Define the container images used for the reverse proxy
+      # Default value: None
+      # Example: "csipowermax-reverseproxy:v2.9.1"
+        image: dellemc/csipowermax-reverseproxy:nightly
+        envs:
+          # "tlsSecret" defines the TLS secret that is created with certificate
+          # and its associated key
           # Default value: None
-          image: dellemc/csipowermax-reverseproxy:v2.10.0
-          envs:
-            # "tlsSecret" defines the TLS secret that is created with certificate
-            # and its associated key
-            # Default value: None
-            # Example: "tls-secret"
-            - name: X_CSI_REVPROXY_TLS_SECRET
-              value: "csirevproxy-tls-secret"
-            - name: X_CSI_REVPROXY_PORT
-              value: "2222"
-            - name: X_CSI_CONFIG_MAP_NAME
-              value: "powermax-reverseproxy-config"
+          # Example: "tls-secret"
+          - name: X_CSI_REVPROXY_TLS_SECRET
+            value: "csirevproxy-tls-secret"
+          - name: X_CSI_REVPROXY_PORT
+            value: "2222"
+          - name: X_CSI_CONFIG_MAP_NAME
+            value: "powermax-reverseproxy-config"
+          # deployAsSidecar defines the way reversproxy is installed with the driver
+          # set it true, if csm-auth is enabled / you want it as a sidecar container
+          # set it false, if you want it as a deployment
+          - name: "DeployAsSidecar"
+            value: "false"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:
@@ -199,7 +273,7 @@ spec:
       configVersion: v1.10.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.10.0
+          image: dellemc/podmon:nightly
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powermax"
@@ -214,7 +288,7 @@ spec:
             - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powermax.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:v1.10.0
+          image: dellemc/podmon:nightly
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
