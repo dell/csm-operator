@@ -4,6 +4,7 @@
     - "testfiles/connectivity_client_secret.yaml"
   tags:
     - "sanity"
+    - "client"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install connectivity client from CR [1] and create secret [2]"
@@ -19,6 +20,7 @@
     - "testfiles/connectivity_client_secret.yaml"
   tags:
     - "sanity"
+    - "client"
   steps:
     - "Given an client environment with k8s or openshift, and CSM operator installed"
     - "Install connectivity client from CR [1] and create secret [3]"
@@ -30,12 +32,13 @@
     - "Validate connectivity client from CR [2] is not installed"
 
 - scenario: "Validate role/rolebindings created for brownfield-onboard scenario"
-   paths:
+  paths:
      - "testfiles/connectivity_client.yaml"
      - "testfiles/storage_csm_powerflex.yaml"
-   tags:
+  tags:
      - "sanity"
-   steps:
+     - "client"
+  steps:
      - "Given an environment with k8s or openshift, and CSM operator installed"
      - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
      - "Apply custom resource [2]"
@@ -51,13 +54,14 @@
      - "Delete custom resource [2]"
      - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
      - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-     
+
 - scenario: "Validate rbac objects created for brownfield scenario when the client is running and CSM is created"
   paths:
     - "testfiles/connectivity_client.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
     - "sanity"
+    - "client"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install connectivity client from CR [1]"

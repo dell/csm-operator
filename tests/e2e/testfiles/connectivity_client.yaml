@@ -8,7 +8,7 @@ spec:
     csmClientType: "apexConnectivityClient"
     configVersion: v1.0.0
     forceRemoveClient: true
-    connectionTarget: connect-p3.dell.com
+    connectionTarget: connect-into.dell.com
     usePrivateCaCerts: true
     common:
       name: connectivity-client-docker-k8s

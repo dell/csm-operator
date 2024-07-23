@@ -8,7 +8,7 @@ spec:
     csmClientType: "apexConnectivityClient"
     configVersion: v1.1.0
     forceRemoveClient: true
-    connectionTarget: connect-p3.dell.com
+    connectionTarget: connect-into.dell.com
     usePrivateCaCerts: true
     common:
       name: connectivity-client-docker-k8s
@@ -23,5 +23,5 @@ spec:
         image: bitnami/kubectl:latest
         imagePullPolicy: IfNotPresent
       - name: cert-persister
-        image: dellemc/connectivity-cert-persister-k8s:0.11.0
-        imagePullPolicy: IfNotPresent
+        image: dellemc/connectivity-cert-persister-k8s:0.17.0
+        imagePullPolicy: Always
