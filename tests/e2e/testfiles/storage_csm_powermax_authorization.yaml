@@ -1,5 +1,5 @@
 #
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright � 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -263,106 +263,18 @@ spec:
           # set it false, if you want it as a deployment
           - name: "DeployAsSidecar"
             value: "false"
-              
-    # observability: allows to configure observability
-    - name: observability
-      # enabled: Enable/Disable observability
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.9.0
+      configVersion: v1.11.0
       components:
-        - name: topology
-          # enabled: Enable/Disable topology
-          enabled: true
-          # image: Defines karavi-topology image. This shouldn't be changed
-          # Allowed values: string
-          image: dellemc/csm-topology:nightly
-          # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
-          #  for self-signed certs, leave empty string
-          # Allowed values: string
-          certificate: ""
-          # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
-          #  for self-signed certs, leave empty string
-          # Allowed values: string
-          privateKey: ""
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:nightly
           envs:
-            # topology log level
-            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-            # Default value: "INFO"
-            - name: "TOPOLOGY_LOG_LEVEL"
-              value: "INFO"
-        - name: otel-collector
-          # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: true
-          # image: Defines otel-collector image. This shouldn't be changed
-          # Allowed values: string
-          image: otel/opentelemetry-collector:0.42.0
-          # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
-          #  for self-signed certs, leave empty string
-          # Allowed values: string
-          certificate: ""
-          # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
-          #  for self-signed certs, leave empty string
-          # Allowed values: string
-          privateKey: ""
-          envs:
-            # image of nginx proxy image
-            # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
-            - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
-        - name: cert-manager
-          # enabled: Enable/Disable cert-manager
-          # Allowed values:
-          #   true: enable deployment of cert-manager
-          #   false: disable deployment of cert-manager only if it's already deployed
-          # Default value: false
-          enabled: true
-        - name: metrics-powermax
-          # enabled: Enable/Disable PowerMax metrics
-          enabled: true
-          # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powermax:nightly
-          envs:
-            # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
-            # Allowed values: int
-            # Default value: 10
-            - name: "POWERMAX_MAX_CONCURRENT_QUERIES"
-              value: "10"
-            # POWERMAX_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
-            # Allowed values: ture, false
-            # Default value: true
-            - name: "POWERMAX_CAPACITY_METRICS_ENABLED"
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"
-            # POWERMAX_PERFORMANCE_METRICS_ENABLED: enable/disable collection of volume performance metrics
-            # Allowed values: ture, false
-            # Default value: true
-            - name: "POWERMAX_PERFORMANCE_METRICS_ENABLED"
-              value: "true"
-            # POWERMAX_CAPACITY_POLL_FREQUENCY: set polling frequency to get capacity metrics data
-            # Allowed values: int
-            # Default value: 10
-            - name: "POWERMAX_CAPACITY_POLL_FREQUENCY"
-              value: "10"
-            # POWERMAX_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get volume performance data
-            # Allowed values: int
-            # Default value: 10
-            - name: "POWERMAX_PERFORMANCE_POLL_FREQUENCY"
-              value: "10"
-            # PowerMax metrics log level
-            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-            # Default value: "INFO"
-            - name: "POWERMAX_LOG_LEVEL"
-              value: "INFO"
-            # PowerMax Metrics Output logs in the specified format
-            # Valid values: TEXT, JSON
-            # Default value: "TEXT"
-            - name: "POWERMAX_LOG_FORMAT"
-              value: "TEXT"
-            # otel collector address
-            # Allowed values: String
-            # Default value: "otel-collector:55680"
-            - name: "COLLECTOR_ADDRESS"
-              value: "otel-collector:55680"
-            # configMap name which has all array/endpoint related info
-            - name: "X_CSI_CONFIG_MAP_NAME"
-              value: "powermax-reverseproxy-config"

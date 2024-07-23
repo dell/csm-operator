@@ -57,6 +57,10 @@ var (
 	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
+	pmaxCredMap            = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
+	pmaxAuthSidecarMap     = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
+	pmaxStorageMap         = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_RESOURCE_POOL": "PMAX_POOL_V1", "REPLACE_SERVICE_LEVEL": "PMAX_SERVICE_LEVEL"}
+	pmaxReverseProxyMap    = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 	// Auth V2
@@ -692,6 +696,57 @@ func (step *Step) setupSecretFromFile(res Resource, file, namespace string) erro
 	return nil
 }
 
+func (step *Step) setUpPowermaxCreds(res Resource, templateFile, crType string) error {
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command("kubectl", "apply", "-f", templateFile)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create creds: %s", err.Error())
+	}
+	return nil
+}
+
+func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, crType string) error {
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	if configMapExists(namespace, name) {
+		cmd := exec.Command("kubectl", "delete", "configmap", "-n", namespace, name)
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to delete configmap: %s", err.Error())
+		}
+	}
+
+	fileArg := "--from-file=config.yaml=" + templateFile
+	cmd := exec.Command("kubectl", "create", "cm", name, "-n", namespace, fileArg)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create configmap: %s", err.Error())
+	}
+	return nil
+}
+
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
 	// find which map to use for secret values
 	mapValues, err := determineMap(crType)
@@ -755,6 +810,14 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pscaleAuthSidecarMap
 	} else if crType == "pflexAuthSidecar" {
 		mapValues = pflexAuthSidecarMap
+	} else if crType == "pmax" {
+		mapValues = pmaxStorageMap
+	} else if crType == "pmaxAuthSidecar" {
+		mapValues = pmaxAuthSidecarMap
+	} else if crType == "pmaxCreds" {
+		mapValues = pmaxCredMap
+	} else if crType == "pmaxReverseProxy" {
+		mapValues = pmaxReverseProxyMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
@@ -774,6 +837,15 @@ func determineMap(crType string) (map[string]string, error) {
 
 func secretExists(namespace, name string) bool {
 	cmd := exec.Command("kubectl", "get", "secret", "-n", namespace, name)
+	err := cmd.Run()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func configMapExists(namespace, name string) bool {
+	cmd := exec.Command("kubectl", "get", "configmap", "-n", namespace, name)
 	err := cmd.Run()
 	if err != nil {
 		return false
@@ -1151,6 +1223,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		csmTenantName = os.Getenv("PSCALE_TENANT")
 	}
 
+	if driver == "powermax" {
+		os.Setenv("PMAX_STORAGE", "powermax")
+		os.Setenv("DRIVER_NAMESPACE", "powermax")
+		storageType = os.Getenv("PMAX_STORAGE")
+		csmTenantName = os.Getenv("PMAX_TENANT")
+	}
+
 	proxyHost = os.Getenv("PROXY_HOST")
 	driverNamespace = os.Getenv("DRIVER_NAMESPACE")
 
@@ -1181,6 +1260,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 // AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
 func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost, driverNamespace string) error {
+	fmt.Println("=====Waiting for everything to be up and running, adding a sleep time of 60 seconds before creating the role, tenant and role binding===")
+	time.Sleep(60 * time.Second)
 	var (
 		endpoint = ""
 		sysID    = ""
@@ -1209,6 +1290,14 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		uservar = "PSCALE_USER"
 		passvar = "PSCALE_PASS"
 		poolvar = "PSCALE_POOL_V1"
+	}
+
+	if driver == "powermax" {
+		endpointvar = "PMAX_ENDPOINT"
+		systemIdvar = "PMAX_SYSTEMID"
+		uservar = "PMAX_USER"
+		passvar = "PMAX_PASS"
+		poolvar = "PMAX_POOL_V1"
 	}
 
 	// get env variables
@@ -1249,7 +1338,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Create storage
-	fmt.Println("=== Creating Storage ===\n ")
+	fmt.Println("\n=== Creating Storage ===\n ")
 	cmd := exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"storage", "create",
@@ -1268,7 +1357,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Create Tenant
-	fmt.Println("=== Creating Tenant ===\n ")
+	fmt.Println("\n\n=== Creating Tenant ===\n ")
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"tenant", "create",
@@ -1282,7 +1371,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Create Role
-	fmt.Println("=== Creating Role ===\n", cmd.String())
+	fmt.Println("\n\n=== Creating Role ===\n ")
 	if storageType == "powerscale" {
 		quotaLimit = "0"
 	}
@@ -1304,6 +1393,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	time.Sleep(5 * time.Second)
 
 	// Bind role
+	fmt.Println("\n\n=== Creating RoleBinding ===\n ")
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"rolebinding", "create",
@@ -1318,7 +1408,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Generate token
-	fmt.Println("=== Generating token ===\n ")
+	fmt.Println("\n\n=== Generating token ===\n ")
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"generate", "token",
@@ -1333,7 +1423,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	// Apply token to CSI driver host
-	fmt.Println("=== Applying token ===\n ")
+	fmt.Println("\n\n=== Applying token ===\n ")
 
 	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
 	if err != nil {
