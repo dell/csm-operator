@@ -22,5 +22,5 @@ spec:
         image: bitnami/kubectl:1.29
         imagePullPolicy: IfNotPresent
       - name: cert-persister
-        image: dellemc/connectivity-cert-persister-k8s:0.11.0
+        image: dellemc/connectivity-cert-persister-k8s:0.17.0
         imagePullPolicy: IfNotPresent
