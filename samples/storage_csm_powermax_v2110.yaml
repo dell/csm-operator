@@ -86,11 +86,13 @@ spec:
         - name: X_CSI_POWERMAX_PORTGROUPS
           value: ""
         # "X_CSI_TRANSPORT_PROTOCOL" can be "FC" or "FIBRE" for fibrechannel,
-        # "ISCSI" for iSCSI, or "" for autoselection.
+        # "ISCSI" for iSCSI,
+        # "NVMETCP" for NVMeTCP or "" for autoselection.
         # Allowed values:
         #   "FC"    - Fiber Channel protocol
         #   "FIBER" - Fiber Channel protocol
         #   "ISCSI" - iSCSI protocol
+        #   "NVMETCP" = NVMeTCP protocol
         #   ""      - Automatic selection of transport protocol
         # Default value: "" <empty>
         - name: X_CSI_TRANSPORT_PROTOCOL
