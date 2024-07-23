@@ -15,6 +15,7 @@ package csidriver
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	storagev1 "k8s.io/api/storage/v1"
 
@@ -46,12 +47,15 @@ func SyncCSIDriver(ctx context.Context, csi storagev1.CSIDriver, client client.C
 			return fmt.Errorf("getting csidriver object: %v", err)
 		}
 
-		if found.Spec.FSGroupPolicy != csi.Spec.FSGroupPolicy {
+		ok := reflect.DeepEqual(found.Spec, csi.Spec)
+		if !ok {
 			log.Infow("Re-creating existing CSIDriver Object", "Name:", csi.Name)
 
-			// in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
-			// so we will delete and recreate it
-			err = client.Delete(ctx, &csi)
+			// in OCP <= 4.16 and K8s <= 1.29,
+			// fsGroupPolicy is an immutable field
+			// storageCapacity is a mutable field
+			// so we will delete and recreate csidriver object
+			err = client.Delete(ctx, found)
 			if err != nil {
 				return fmt.Errorf("deleting csidriver object: %v", err)
 			}
@@ -59,15 +63,6 @@ func SyncCSIDriver(ctx context.Context, csi storagev1.CSIDriver, client client.C
 			err = client.Create(ctx, &csi)
 			if err != nil {
 				return fmt.Errorf("re-creating csidriver object: %v", err)
-			}
-		} else {
-			// for all other mutable fields, i.e. storageCapacity
-			log.Infow("Updating CSIDriver Object", "Name:", csi.Name)
-
-			csi.ResourceVersion = found.ResourceVersion
-			err = client.Update(ctx, &csi)
-			if err != nil {
-				return fmt.Errorf("updating csidriver object: %v", err)
 			}
 		}
 	}
