@@ -60,6 +60,15 @@ func SyncCSIDriver(ctx context.Context, csi storagev1.CSIDriver, client client.C
 			if err != nil {
 				return fmt.Errorf("re-creating csidriver object: %v", err)
 			}
+		} else {
+			// for all other mutable fields, i.e. storageCapacity
+			log.Infow("Updating CSIDriver Object", "Name:", csi.Name)
+
+			csi.ResourceVersion = found.ResourceVersion
+			err = client.Update(ctx, &csi)
+			if err != nil {
+				return fmt.Errorf("updating csidriver object: %v", err)
+			}
 		}
 	}
 	return nil
