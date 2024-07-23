@@ -32,7 +32,7 @@ spec:
       #   false: disable storage capacity tracking
       storageCapacity: true
     # Config version for CSI PowerMax v2.10.1 driver
-    configVersion: v2.11.0
+    configVersion: v2.10.1
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
@@ -270,13 +270,13 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.9.1
+      configVersion: v1.10.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.9.1
+          image: dellemc/podmon:nightly
           imagePullPolicy: IfNotPresent
           args:
-            - "--labelvalue=csi-isilon"
+            - "--labelvalue=csi-powermax"
             - "--arrayConnectivityPollRate=60"
             - "--skipArrayConnectionValidation=false"
             - "--driverPodLabelValue=dell-storage"
@@ -285,10 +285,10 @@ spec:
             # Below 4 args should not be modified.
             - "--csisock=unix:/var/run/csi/csi.sock"
             - "--mode=controller"
-            - "--driverPath=csi-isilon.dellemc.com"
-            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+            - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powermax.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:v1.9.1
+          image: dellemc/podmon:nightly
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
@@ -297,13 +297,13 @@ spec:
             - name: "X_CSI_PODMON_API_PORT"
               value: "8083"
           args:
-            - "--labelvalue=csi-isilon"
+            - "--labelvalue=csi-powermax"
             - "--arrayConnectivityPollRate=60"
             - "--leaderelection=false"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
             # Below 4 args should not be modified.
-            - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
+            - "--csisock=unix:/var/lib/kubelet/plugins/powermax.emc.dell.com/csi_sock"
             - "--mode=node"
-            - "--driverPath=csi-isilon.dellemc.com"
-            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"  
+            - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powermax.dellemc.com"
