@@ -1676,12 +1676,13 @@ func (step *Step) applyClientCustomResource(res ResourceApex, crNumStr string, s
 		return fmt.Errorf("failed to read secret testdata: %v", err)
 	}
 
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to apply connecivity client CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
-	}
 	if _, err := kubectl.RunKubectlInput(scr.Namespace, string(scrBuff), "apply", "--validate=true", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply secret CR %s in namespace %s: %v", scr.Name, scr.Namespace, err)
 	}
+	if _, err := kubectl.RunKubectlInput(scr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to apply connecivity client CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
+	}
+
 	return nil
 }
 
