@@ -60,6 +60,7 @@ export PMAX_USER="username"
 export PMAX_PASS="password"
 export PMAX_USER_ENCODED="username"
 export PMAX_PASS_ENCODED="password"
+export PMAX_SERVICE_LEVEL="Bronze"
 # The following are Authorization Proxy Server specific for powermax:
 export PMAX_POOL_V1="SRP_1"
 export PMAX_STORAGE="powermax"

@@ -5,19 +5,19 @@ metadata:
   # please do not change
   name: powermax
 parameters:
-  SRP: <RESOURCE_POOL>
-  SYMID: <SYSTEM_ID>
-  ServiceLevel: <SERVICE_LEVEL>
+  SRP: REPLACE_RESOURCE_POOL
+  SYMID: REPLACE_SYSTEMID
+  ServiceLevel: REPLACE_SERVICE_LEVEL
 provisioner: csi-powermax.dellemc.com
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 allowedTopologies:
   - matchLabelExpressions:
-      - key: csi-powermax.dellemc.com/<SYSTEM_ID>
+      - key: csi-powermax.dellemc.com/REPLACE_SYSTEMID
         values:
           - csi-powermax.dellemc.com
-      - key: csi-powermax.dellemc.com/<SYSTEM_ID>.iscsi
+      - key: csi-powermax.dellemc.com/REPLACE_SYSTEMID.iscsi
         values:
           - csi-powermax.dellemc.com
 
