@@ -1260,6 +1260,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 // AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
 func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost, driverNamespace string) error {
+	fmt.Println("=====Waiting for everything to be up and running, adding a sleep time of 60 seconds before creating the role, tenant and role binding===")
+	time.Sleep(60 * time.Second)
 	var (
 		endpoint = ""
 		sysID    = ""
