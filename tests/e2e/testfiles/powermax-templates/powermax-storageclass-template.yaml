@@ -3,11 +3,11 @@ kind: StorageClass
 metadata:
   # authorization expects this storage class name
   # please do not change
-  name: powermax
+  name: op-e2e-pmax
 parameters:
-  SRP: REPLACE_RESOURCE_POOL
-  SYMID: REPLACE_SYSTEMID
-  ServiceLevel: REPLACE_SERVICE_LEVEL
+  SRP: "REPLACE_RESOURCE_POOL"
+  SYMID: "REPLACE_SYSTEMID"
+  ServiceLevel: "REPLACE_SERVICE_LEVEL"
 provisioner: csi-powermax.dellemc.com
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer

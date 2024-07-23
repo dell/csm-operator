@@ -1611,7 +1611,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powermax] for CR [1]"
-    #- "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
@@ -1630,7 +1630,7 @@
   customTest:
     name: Cert CSI
     run:
-      - cert-csi test vio --sc powermax-iscsi --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-pmax --chainNumber 2 --chainLength 2
 
 
 - scenario: "Install Powermax Driver(Standalone), Enable Resiliency"
