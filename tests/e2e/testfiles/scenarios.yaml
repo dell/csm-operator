@@ -1623,9 +1623,9 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
-    #- "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxAuth]"
-    #- "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pflex]"
-    #- "Restore template [testfiles/powermax-templates/csm-authorization-config.json] for [pmaxAuthSidecar]"
+    - "Restore template [testfiles/powermax-templates/csm-authorization-config.json] for [pmaxAuthSidecar]"
+    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxReverseProxy]"
 
 
 - scenario: "Install Powermax Driver(Standalone), Enable Resiliency"
