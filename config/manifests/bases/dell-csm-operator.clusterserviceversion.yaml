@@ -36,13 +36,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: client.common.args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: client.common.authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: client.common.authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: client.common.certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: client.common.certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: client.common.commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: client.common.controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: client.common.credentials
@@ -72,6 +86,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: client.common.envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: client.common.hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: client.common.image
@@ -80,6 +97,12 @@ spec:
         path: client.common.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: client.common.kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: client.common.leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: client.common.licenseName
@@ -105,24 +128,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: client.common.privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: client.common.proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: client.common.proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: client.common.proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: client.common.proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: client.common.proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: client.common.proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: client.common.redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: client.common.redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: client.common.redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: client.common.redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: client.common.replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: client.common.roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: client.common.roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: client.common.sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: client.common.skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: client.common.storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: client.common.storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: client.common.storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: client.common.tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: client.common.tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: client.common.tolerations
@@ -130,6 +202,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: client.common.useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: client.common.vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: client.common.vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: client.common.veleroNamespace
@@ -150,13 +228,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: client.initContainers[0].args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: client.initContainers[0].authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: client.initContainers[0].authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: client.initContainers[0].certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: client.initContainers[0].certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: client.initContainers[0].commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: client.initContainers[0].controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: client.initContainers[0].credentials
@@ -186,6 +278,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: client.initContainers[0].envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: client.initContainers[0].hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: client.initContainers[0].image
@@ -194,6 +289,12 @@ spec:
         path: client.initContainers[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: client.initContainers[0].kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: client.initContainers[0].leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: client.initContainers[0].licenseName
@@ -219,24 +320,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: client.initContainers[0].privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: client.initContainers[0].proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: client.initContainers[0].proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: client.initContainers[0].proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: client.initContainers[0].proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: client.initContainers[0].proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: client.initContainers[0].proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: client.initContainers[0].redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: client.initContainers[0].redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: client.initContainers[0].redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: client.initContainers[0].redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: client.initContainers[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: client.initContainers[0].roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: client.initContainers[0].roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: client.initContainers[0].sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: client.initContainers[0].skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: client.initContainers[0].storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: client.initContainers[0].storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: client.initContainers[0].storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: client.initContainers[0].tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: client.initContainers[0].tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: client.initContainers[0].tolerations
@@ -244,6 +394,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: client.initContainers[0].useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: client.initContainers[0].vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: client.initContainers[0].vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: client.initContainers[0].veleroNamespace
@@ -253,13 +409,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: client.sideCars[0].args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: client.sideCars[0].authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: client.sideCars[0].authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: client.sideCars[0].certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: client.sideCars[0].certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: client.sideCars[0].commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: client.sideCars[0].controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: client.sideCars[0].credentials
@@ -289,6 +459,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: client.sideCars[0].envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: client.sideCars[0].hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: client.sideCars[0].image
@@ -297,6 +470,12 @@ spec:
         path: client.sideCars[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: client.sideCars[0].kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: client.sideCars[0].leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: client.sideCars[0].licenseName
@@ -322,24 +501,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: client.sideCars[0].privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: client.sideCars[0].proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: client.sideCars[0].proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: client.sideCars[0].proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: client.sideCars[0].proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: client.sideCars[0].proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: client.sideCars[0].proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: client.sideCars[0].redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: client.sideCars[0].redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: client.sideCars[0].redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: client.sideCars[0].redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: client.sideCars[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: client.sideCars[0].roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: client.sideCars[0].roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: client.sideCars[0].sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: client.sideCars[0].skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: client.sideCars[0].storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: client.sideCars[0].storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: client.sideCars[0].storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: client.sideCars[0].tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: client.sideCars[0].tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: client.sideCars[0].tolerations
@@ -347,6 +575,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: client.sideCars[0].useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: client.sideCars[0].vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: client.sideCars[0].vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: client.sideCars[0].veleroNamespace
@@ -354,6 +588,11 @@ spec:
         displayName: Use Private CA Certs
         path: client.usePrivateCaCerts
       statusDescriptors:
+      - description: ClientStatus is the status of Client pods
+        displayName: ClientStatus
+        path: clientStatus
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podStatuses
       - description: State is the state of the client installation
         displayName: State
         path: state
@@ -376,13 +615,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.common.args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: driver.common.authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: driver.common.authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: driver.common.certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: driver.common.certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.common.commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: driver.common.controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: driver.common.credentials
@@ -412,6 +665,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: driver.common.envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: driver.common.hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: driver.common.image
@@ -420,6 +676,12 @@ spec:
         path: driver.common.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: driver.common.kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: driver.common.leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: driver.common.licenseName
@@ -445,24 +707,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: driver.common.privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: driver.common.proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: driver.common.proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: driver.common.proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: driver.common.proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.common.proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: driver.common.proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.common.redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: driver.common.redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: driver.common.redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: driver.common.redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.common.replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.common.roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: driver.common.roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: driver.common.sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: driver.common.skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: driver.common.storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: driver.common.storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: driver.common.storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: driver.common.tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: driver.common.tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.common.tolerations
@@ -470,6 +781,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: driver.common.useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: driver.common.vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: driver.common.vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: driver.common.veleroNamespace
@@ -482,13 +799,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.controller.args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: driver.controller.authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: driver.controller.authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: driver.controller.certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: driver.controller.certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.controller.commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: driver.controller.controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: driver.controller.credentials
@@ -518,6 +849,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: driver.controller.envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: driver.controller.hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: driver.controller.image
@@ -526,6 +860,12 @@ spec:
         path: driver.controller.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: driver.controller.kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: driver.controller.leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: driver.controller.licenseName
@@ -551,24 +891,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: driver.controller.privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: driver.controller.proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: driver.controller.proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: driver.controller.proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: driver.controller.proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.controller.proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: driver.controller.proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.controller.redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: driver.controller.redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: driver.controller.redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: driver.controller.redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.controller.replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.controller.roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: driver.controller.roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: driver.controller.sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: driver.controller.skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: driver.controller.storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: driver.controller.storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: driver.controller.storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: driver.controller.tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: driver.controller.tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.controller.tolerations
@@ -576,6 +965,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: driver.controller.useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: driver.controller.vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: driver.controller.vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: driver.controller.veleroNamespace
@@ -600,13 +995,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.initContainers[0].args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: driver.initContainers[0].authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: driver.initContainers[0].authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: driver.initContainers[0].certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: driver.initContainers[0].certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.initContainers[0].commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: driver.initContainers[0].controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: driver.initContainers[0].credentials
@@ -636,6 +1045,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: driver.initContainers[0].envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: driver.initContainers[0].hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: driver.initContainers[0].image
@@ -644,6 +1056,12 @@ spec:
         path: driver.initContainers[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: driver.initContainers[0].kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: driver.initContainers[0].leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: driver.initContainers[0].licenseName
@@ -669,24 +1087,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: driver.initContainers[0].privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: driver.initContainers[0].proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: driver.initContainers[0].proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: driver.initContainers[0].proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: driver.initContainers[0].proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.initContainers[0].proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: driver.initContainers[0].proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.initContainers[0].redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: driver.initContainers[0].redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: driver.initContainers[0].redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: driver.initContainers[0].redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.initContainers[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.initContainers[0].roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: driver.initContainers[0].roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: driver.initContainers[0].sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: driver.initContainers[0].skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: driver.initContainers[0].storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: driver.initContainers[0].storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: driver.initContainers[0].storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: driver.initContainers[0].tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: driver.initContainers[0].tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.initContainers[0].tolerations
@@ -694,6 +1161,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: driver.initContainers[0].useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: driver.initContainers[0].vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: driver.initContainers[0].vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: driver.initContainers[0].veleroNamespace
@@ -703,13 +1176,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.node.args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: driver.node.authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: driver.node.authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: driver.node.certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: driver.node.certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.node.commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: driver.node.controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: driver.node.credentials
@@ -739,6 +1226,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: driver.node.envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: driver.node.hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: driver.node.image
@@ -747,6 +1237,12 @@ spec:
         path: driver.node.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: driver.node.kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: driver.node.leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: driver.node.licenseName
@@ -772,24 +1268,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: driver.node.privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: driver.node.proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: driver.node.proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: driver.node.proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: driver.node.proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.node.proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: driver.node.proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.node.redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: driver.node.redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: driver.node.redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: driver.node.redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.node.replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.node.roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: driver.node.roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: driver.node.sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: driver.node.skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: driver.node.storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: driver.node.storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: driver.node.storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: driver.node.tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: driver.node.tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.node.tolerations
@@ -797,6 +1342,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: driver.node.useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: driver.node.vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: driver.node.vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: driver.node.veleroNamespace
@@ -809,13 +1360,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: driver.sideCars[0].args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: driver.sideCars[0].authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: driver.sideCars[0].authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: driver.sideCars[0].certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: driver.sideCars[0].certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: driver.sideCars[0].commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: driver.sideCars[0].controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: driver.sideCars[0].credentials
@@ -845,6 +1410,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: driver.sideCars[0].envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: driver.sideCars[0].hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: driver.sideCars[0].image
@@ -853,6 +1421,12 @@ spec:
         path: driver.sideCars[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: driver.sideCars[0].kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: driver.sideCars[0].leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: driver.sideCars[0].licenseName
@@ -878,24 +1452,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: driver.sideCars[0].privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: driver.sideCars[0].proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: driver.sideCars[0].proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: driver.sideCars[0].proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: driver.sideCars[0].proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: driver.sideCars[0].proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: driver.sideCars[0].proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: driver.sideCars[0].redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: driver.sideCars[0].redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: driver.sideCars[0].redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: driver.sideCars[0].redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.sideCars[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: driver.sideCars[0].roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: driver.sideCars[0].roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: driver.sideCars[0].sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: driver.sideCars[0].skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: driver.sideCars[0].storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: driver.sideCars[0].storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: driver.sideCars[0].storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: driver.sideCars[0].tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: driver.sideCars[0].tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: driver.sideCars[0].tolerations
@@ -903,6 +1526,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: driver.sideCars[0].useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: driver.sideCars[0].vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: driver.sideCars[0].vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: driver.sideCars[0].veleroNamespace
@@ -925,13 +1554,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: modules[0].components[0].args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: modules[0].components[0].authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: modules[0].components[0].authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: modules[0].components[0].certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: modules[0].components[0].certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: modules[0].components[0].commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: modules[0].components[0].controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: modules[0].components[0].credentials
@@ -961,6 +1604,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: modules[0].components[0].envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: modules[0].components[0].hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: modules[0].components[0].image
@@ -969,6 +1615,12 @@ spec:
         path: modules[0].components[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: modules[0].components[0].kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: modules[0].components[0].leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: modules[0].components[0].licenseName
@@ -994,24 +1646,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: modules[0].components[0].privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: modules[0].components[0].proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: modules[0].components[0].proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: modules[0].components[0].proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: modules[0].components[0].proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: modules[0].components[0].proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: modules[0].components[0].proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: modules[0].components[0].redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: modules[0].components[0].redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: modules[0].components[0].redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: modules[0].components[0].redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: modules[0].components[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: modules[0].components[0].roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: modules[0].components[0].roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: modules[0].components[0].sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: modules[0].components[0].skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: modules[0].components[0].storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: modules[0].components[0].storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: modules[0].components[0].storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: modules[0].components[0].tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: modules[0].components[0].tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: modules[0].components[0].tolerations
@@ -1019,6 +1720,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: modules[0].components[0].useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: modules[0].components[0].vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: modules[0].components[0].vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: modules[0].components[0].veleroNamespace
@@ -1035,13 +1742,27 @@ spec:
       - description: Args is the set of arguments for the container
         displayName: Container Arguments
         path: modules[0].initContainer[0].args
+      - description: AuthorizationController is the image tag for the container
+        displayName: Authorization Controller Container Image
+        path: modules[0].initContainer[0].authorizationController
+      - description: AuthorizationControllerReplicas is the number of replicas for
+          the authorization controller deployment
+        displayName: Authorization Controller Replicas
+        path: modules[0].initContainer[0].authorizationControllerReplicas
       - description: Certificate is a certificate used for a certificate/private-key
           pair
         displayName: Certificate for certificate/private-key pair
         path: modules[0].initContainer[0].certificate
+      - description: CertificateAuthority is a certificate authority used to validate
+          a certificate
+        displayName: Certificate authority for validating a certificate
+        path: modules[0].initContainer[0].certificateAuthority
       - description: Commander is the image tag for the Container
         displayName: Authorization Commander Container Image
         path: modules[0].initContainer[0].commander
+      - description: The interval which the reconcile of each controller is run
+        displayName: Controller Reconcile Interval
+        path: modules[0].initContainer[0].controllerReconcileInterval
       - description: ComponentCred is to store the velero credential contents
         displayName: ComponentCred for velero component
         path: modules[0].initContainer[0].credentials
@@ -1071,6 +1792,9 @@ spec:
       - description: Envs is the set of environment variables for the container
         displayName: Container Environment vars
         path: modules[0].initContainer[0].envs
+      - description: Hostname is the authorization proxy server hostname
+        displayName: Authorization Proxy Server Hostname
+        path: modules[0].initContainer[0].hostname
       - description: Image is the image tag for the Container
         displayName: Container Image
         path: modules[0].initContainer[0].image
@@ -1079,6 +1803,12 @@ spec:
         path: modules[0].initContainer[0].imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: kvEnginePath is the Authorization vault secret path
+        displayName: Authorization KV Engine Path
+        path: modules[0].initContainer[0].kvEnginePath
+      - description: LeaderElection is boolean flag to enable leader election
+        displayName: Leader Election
+        path: modules[0].initContainer[0].leaderElection
       - description: LicenseName is the name of the license for app-mobility
         displayName: License Name for Application Mobility
         path: modules[0].initContainer[0].licenseName
@@ -1104,24 +1834,73 @@ spec:
           pair
         displayName: Private key for certificate/private-key pair
         path: modules[0].initContainer[0].privateKey
+      - description: ProxyServerIngress is the authorization proxy server ingress
+          configuration
+        displayName: Authorization Proxy Server ingress configuration
+        path: modules[0].initContainer[0].proxyServerIngress
+      - description: Annotations is an unstructured key value map that stores additional
+          annotations for the ingress
+        displayName: Authorization Proxy Server Annotations
+        path: modules[0].initContainer[0].proxyServerIngress[0].annotations
+      - description: Hosts is the hosts rules for the ingress
+        displayName: Authorization Proxy Server Hosts
+        path: modules[0].initContainer[0].proxyServerIngress[0].hosts
+      - description: IngressClassName is the ingressClassName
+        displayName: Authorization Proxy Server Ingress Class Name
+        path: modules[0].initContainer[0].proxyServerIngress[0].ingressClassName
       - description: ProxyService is the image tag for the Container
         displayName: Authorization Proxy Service Container Image
         path: modules[0].initContainer[0].proxyService
+      - description: ProxyServiceReplicas is the number of replicas for the proxy
+          service deployment
+        displayName: Proxy Service Replicas
+        path: modules[0].initContainer[0].proxyServiceReplicas
       - description: Redis is the image tag for the Container
         displayName: Authorization Redis Container Image
         path: modules[0].initContainer[0].redis
+      - description: RedisCommander is the name of the redis deployment
+        displayName: Redis Deployment Name
+        path: modules[0].initContainer[0].redisCommander
+      - description: RedisName is the name of the redis statefulset
+        displayName: Redis StatefulSet Name
+        path: modules[0].initContainer[0].redisName
+      - description: RedisReplicas is the number of replicas for the redis deployment
+        displayName: Redis Deployment Replicas
+        path: modules[0].initContainer[0].redisReplicas
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: modules[0].initContainer[0].replicaCount
       - description: RoleService is the image tag for the Container
         displayName: Authorization Role Service Container Image
         path: modules[0].initContainer[0].roleService
+      - description: RoleServiceReplicas is the number of replicas for the role service
+          deployment
+        displayName: Role Service Replicas
+        path: modules[0].initContainer[0].roleServiceReplicas
+      - description: Sentinel is the name of the sentinel statefulSet
+        displayName: Sentinel StatefulSet Name
+        path: modules[0].initContainer[0].sentinel
+      - description: skipCertificateValidation is the flag to skip certificate validation
+        displayName: Authorization Skip Certificate Validation
+        path: modules[0].initContainer[0].skipCertificateValidation
       - description: StorageService is the image tag for the Container
         displayName: Authorization Storage Service Container Image
         path: modules[0].initContainer[0].storageService
+      - description: StorageServiceReplicas is the number of replicas for storage
+          service deployment
+        displayName: Storage Service Replicas
+        path: modules[0].initContainer[0].storageServiceReplicas
+      - description: RedisStorageClass is the authorization proxy server redis storage
+          class for persistence
+        displayName: Authorization Proxy Server Redis storage class
+        path: modules[0].initContainer[0].storageclass
       - description: TenantService is the image tag for the Container
         displayName: Authorization Tenant Service Container Image
         path: modules[0].initContainer[0].tenantService
+      - description: TenantServiceReplicas is the number of replicas for the tenant
+          service deployment
+        displayName: Tenant Service Replicas
+        path: modules[0].initContainer[0].tenantServiceReplicas
       - description: Tolerations is the list of tolerations for the driver pods
         displayName: Tolerations
         path: modules[0].initContainer[0].tolerations
@@ -1129,6 +1908,12 @@ spec:
           velero component
         displayName: use-volume-snapshots for Application Mobilit- Velero
         path: modules[0].initContainer[0].useVolumeSnapshot
+      - description: VaultAddress is the address of the vault
+        displayName: Authorization Vault Address
+        path: modules[0].initContainer[0].vaultAddress
+      - description: VaultRole is the role for the vault
+        displayName: Authorization Vault Role
+        path: modules[0].initContainer[0].vaultRole
       - description: VeleroNamespace is the namespace that Velero is installed in
         displayName: Velero namespace
         path: modules[0].initContainer[0].veleroNamespace
@@ -1136,36 +1921,16 @@ spec:
         displayName: Name
         path: modules[0].name
       statusDescriptors:
-      - description: Number of Available Controller pods
-        displayName: Available
-        path: controllerStatus.available
+      - description: ControllerStatus is the status of Controller pods
+        displayName: ControllerStatus
+        path: controllerStatus
         x-descriptors:
-        - urn:alm:descriptor:text
-      - description: Number of Desired Controller pods
-        displayName: Desired
-        path: controllerStatus.desired
+        - urn:alm:descriptor:com.tectonic.ui:podStatuses
+      - description: NodeStatus is the status of Controller pods
+        displayName: NodeStatus
+        path: nodeStatus
         x-descriptors:
-        - urn:alm:descriptor:text
-      - description: Number of Failed Controller pods
-        displayName: Failed
-        path: controllerStatus.failed
-        x-descriptors:
-        - urn:alm:descriptor:text
-      - description: Number of Available Node pods
-        displayName: Available
-        path: nodeStatus.available
-        x-descriptors:
-        - urn:alm:descriptor:text
-      - description: Number of Desired Node pods
-        displayName: Desired
-        path: nodeStatus.desired
-        x-descriptors:
-        - urn:alm:descriptor:text
-      - description: Number of Failed Node pods
-        displayName: Failed
-        path: nodeStatus.failed
-        x-descriptors:
-        - urn:alm:descriptor:text
+        - urn:alm:descriptor:com.tectonic.ui:podStatuses
       - description: State is the state of the driver installation
         displayName: State
         path: state
