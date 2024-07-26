@@ -3393,7 +3393,7 @@ spec:
         displayName: State
         path: state
         x-descriptors:
-        - urn:alm:descriptor:text        
+        - urn:alm:descriptor:text
       version: v1
   description: "Dell Container Storage Modules (CSM) Operator is a Kubernetes Operator
     which can be \nused to install and manage Dell’s CSI drivers and CSM modules.
