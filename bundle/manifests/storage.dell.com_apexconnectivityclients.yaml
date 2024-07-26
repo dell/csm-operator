@@ -70,28 +70,12 @@ spec:
                         items:
                           type: string
                         type: array
-                      authorizationController:
-                        description: AuthorizationController is the image tag for
-                          the container
-                        type: string
-                      authorizationControllerReplicas:
-                        description: AuthorizationControllerReplicas is the number
-                          of replicas for the authorization controller deployment
-                        type: integer
                       certificate:
                         description: Certificate is a certificate used for a certificate/private-key
                           pair
                         type: string
-                      certificateAuthority:
-                        description: CertificateAuthority is a certificate authority
-                          used to validate a certificate
-                        type: string
                       commander:
                         description: Commander is the image tag for the Container
-                        type: string
-                      controllerReconcileInterval:
-                        description: The interval which the reconcile of each controller
-                          is run
                         type: string
                       credentials:
                         description: ComponentCred is to store the velero credential
@@ -245,9 +229,6 @@ spec:
                           - name
                           type: object
                         type: array
-                      hostname:
-                        description: Hostname is the authorization proxy server hostname
-                        type: string
                       image:
                         description: Image is the image tag for the Container
                         type: string
@@ -255,14 +236,6 @@ spec:
                         description: ImagePullPolicy is the image pull policy for
                           the image
                         type: string
-                      kvEnginePath:
-                        description: kvEnginePath is the Authorization vault secret
-                          path
-                        type: string
-                      leaderElection:
-                        description: LeaderElection is boolean flag to enable leader
-                          election
-                        type: boolean
                       licenseName:
                         description: LicenseName is the name of the license for app-mobility
                         type: string
@@ -290,84 +263,24 @@ spec:
                         description: PrivateKey is a private key used for a certificate/private-key
                           pair
                         type: string
-                      proxyServerIngress:
-                        description: ProxyServerIngress is the authorization proxy
-                          server ingress configuration
-                        items:
-                          description: ProxyServerIngress is the authorization ingress
-                            configuration struct
-                          properties:
-                            annotations:
-                              additionalProperties:
-                                type: string
-                              description: Annotations is an unstructured key value
-                                map that stores additional annotations for the ingress
-                              type: object
-                            hosts:
-                              description: Hosts is the hosts rules for the ingress
-                              items:
-                                type: string
-                              type: array
-                            ingressClassName:
-                              description: IngressClassName is the ingressClassName
-                              type: string
-                          type: object
-                        type: array
                       proxyService:
                         description: ProxyService is the image tag for the Container
                         type: string
-                      proxyServiceReplicas:
-                        description: ProxyServiceReplicas is the number of replicas
-                          for the proxy service deployment
-                        type: integer
                       redis:
                         description: Redis is the image tag for the Container
                         type: string
-                      redisCommander:
-                        description: RedisCommander is the name of the redis deployment
-                        type: string
-                      redisName:
-                        description: RedisName is the name of the redis statefulset
-                        type: string
-                      redisReplicas:
-                        description: RedisReplicas is the number of replicas for the
-                          redis deployment
-                        type: integer
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
                       roleService:
                         description: RoleService is the image tag for the Container
                         type: string
-                      roleServiceReplicas:
-                        description: RoleServiceReplicas is the number of replicas
-                          for the role service deployment
-                        type: integer
-                      sentinel:
-                        description: Sentinel is the name of the sentinel statefulSet
-                        type: string
-                      skipCertificateValidation:
-                        description: skipCertificateValidation is the flag to skip
-                          certificate validation
-                        type: boolean
                       storageService:
                         description: StorageService is the image tag for the Container
-                        type: string
-                      storageServiceReplicas:
-                        description: StorageServiceReplicas is the number of replicas
-                          for storage service deployment
-                        type: integer
-                      storageclass:
-                        description: RedisStorageClass is the authorization proxy
-                          server redis storage class for persistence
                         type: string
                       tenantService:
                         description: TenantService is the image tag for the Container
                         type: string
-                      tenantServiceReplicas:
-                        description: TenantServiceReplicas is the number of replicas
-                          for the tenant service deployment
-                        type: integer
                       tolerations:
                         description: Tolerations is the list of tolerations for the
                           driver pods
@@ -412,12 +325,6 @@ spec:
                         description: UseSnapshot is to check whether volume snapshot
                           is enabled under velero component
                         type: boolean
-                      vaultAddress:
-                        description: VaultAddress is the address of the vault
-                        type: string
-                      vaultRole:
-                        description: VaultRole is the role for the vault
-                        type: string
                       veleroNamespace:
                         description: VeleroNamespace is the namespace that Velero
                           is installed in
@@ -449,28 +356,12 @@ spec:
                           items:
                             type: string
                           type: array
-                        authorizationController:
-                          description: AuthorizationController is the image tag for
-                            the container
-                          type: string
-                        authorizationControllerReplicas:
-                          description: AuthorizationControllerReplicas is the number
-                            of replicas for the authorization controller deployment
-                          type: integer
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
                           type: string
-                        certificateAuthority:
-                          description: CertificateAuthority is a certificate authority
-                            used to validate a certificate
-                          type: string
                         commander:
                           description: Commander is the image tag for the Container
-                          type: string
-                        controllerReconcileInterval:
-                          description: The interval which the reconcile of each controller
-                            is run
                           type: string
                         credentials:
                           description: ComponentCred is to store the velero credential
@@ -624,10 +515,6 @@ spec:
                             - name
                             type: object
                           type: array
-                        hostname:
-                          description: Hostname is the authorization proxy server
-                            hostname
-                          type: string
                         image:
                           description: Image is the image tag for the Container
                           type: string
@@ -635,14 +522,6 @@ spec:
                           description: ImagePullPolicy is the image pull policy for
                             the image
                           type: string
-                        kvEnginePath:
-                          description: kvEnginePath is the Authorization vault secret
-                            path
-                          type: string
-                        leaderElection:
-                          description: LeaderElection is boolean flag to enable leader
-                            election
-                          type: boolean
                         licenseName:
                           description: LicenseName is the name of the license for
                             app-mobility
@@ -671,84 +550,24 @@ spec:
                           description: PrivateKey is a private key used for a certificate/private-key
                             pair
                           type: string
-                        proxyServerIngress:
-                          description: ProxyServerIngress is the authorization proxy
-                            server ingress configuration
-                          items:
-                            description: ProxyServerIngress is the authorization ingress
-                              configuration struct
-                            properties:
-                              annotations:
-                                additionalProperties:
-                                  type: string
-                                description: Annotations is an unstructured key value
-                                  map that stores additional annotations for the ingress
-                                type: object
-                              hosts:
-                                description: Hosts is the hosts rules for the ingress
-                                items:
-                                  type: string
-                                type: array
-                              ingressClassName:
-                                description: IngressClassName is the ingressClassName
-                                type: string
-                            type: object
-                          type: array
                         proxyService:
                           description: ProxyService is the image tag for the Container
                           type: string
-                        proxyServiceReplicas:
-                          description: ProxyServiceReplicas is the number of replicas
-                            for the proxy service deployment
-                          type: integer
                         redis:
                           description: Redis is the image tag for the Container
                           type: string
-                        redisCommander:
-                          description: RedisCommander is the name of the redis deployment
-                          type: string
-                        redisName:
-                          description: RedisName is the name of the redis statefulset
-                          type: string
-                        redisReplicas:
-                          description: RedisReplicas is the number of replicas for
-                            the redis deployment
-                          type: integer
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
-                        roleServiceReplicas:
-                          description: RoleServiceReplicas is the number of replicas
-                            for the role service deployment
-                          type: integer
-                        sentinel:
-                          description: Sentinel is the name of the sentinel statefulSet
-                          type: string
-                        skipCertificateValidation:
-                          description: skipCertificateValidation is the flag to skip
-                            certificate validation
-                          type: boolean
                         storageService:
                           description: StorageService is the image tag for the Container
-                          type: string
-                        storageServiceReplicas:
-                          description: StorageServiceReplicas is the number of replicas
-                            for storage service deployment
-                          type: integer
-                        storageclass:
-                          description: RedisStorageClass is the authorization proxy
-                            server redis storage class for persistence
                           type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
-                        tenantServiceReplicas:
-                          description: TenantServiceReplicas is the number of replicas
-                            for the tenant service deployment
-                          type: integer
                         tolerations:
                           description: Tolerations is the list of tolerations for
                             the driver pods
@@ -793,12 +612,6 @@ spec:
                           description: UseSnapshot is to check whether volume snapshot
                             is enabled under velero component
                           type: boolean
-                        vaultAddress:
-                          description: VaultAddress is the address of the vault
-                          type: string
-                        vaultRole:
-                          description: VaultRole is the role for the vault
-                          type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero
                             is installed in
@@ -815,28 +628,12 @@ spec:
                           items:
                             type: string
                           type: array
-                        authorizationController:
-                          description: AuthorizationController is the image tag for
-                            the container
-                          type: string
-                        authorizationControllerReplicas:
-                          description: AuthorizationControllerReplicas is the number
-                            of replicas for the authorization controller deployment
-                          type: integer
                         certificate:
                           description: Certificate is a certificate used for a certificate/private-key
                             pair
                           type: string
-                        certificateAuthority:
-                          description: CertificateAuthority is a certificate authority
-                            used to validate a certificate
-                          type: string
                         commander:
                           description: Commander is the image tag for the Container
-                          type: string
-                        controllerReconcileInterval:
-                          description: The interval which the reconcile of each controller
-                            is run
                           type: string
                         credentials:
                           description: ComponentCred is to store the velero credential
@@ -990,10 +787,6 @@ spec:
                             - name
                             type: object
                           type: array
-                        hostname:
-                          description: Hostname is the authorization proxy server
-                            hostname
-                          type: string
                         image:
                           description: Image is the image tag for the Container
                           type: string
@@ -1001,14 +794,6 @@ spec:
                           description: ImagePullPolicy is the image pull policy for
                             the image
                           type: string
-                        kvEnginePath:
-                          description: kvEnginePath is the Authorization vault secret
-                            path
-                          type: string
-                        leaderElection:
-                          description: LeaderElection is boolean flag to enable leader
-                            election
-                          type: boolean
                         licenseName:
                           description: LicenseName is the name of the license for
                             app-mobility
@@ -1037,84 +822,24 @@ spec:
                           description: PrivateKey is a private key used for a certificate/private-key
                             pair
                           type: string
-                        proxyServerIngress:
-                          description: ProxyServerIngress is the authorization proxy
-                            server ingress configuration
-                          items:
-                            description: ProxyServerIngress is the authorization ingress
-                              configuration struct
-                            properties:
-                              annotations:
-                                additionalProperties:
-                                  type: string
-                                description: Annotations is an unstructured key value
-                                  map that stores additional annotations for the ingress
-                                type: object
-                              hosts:
-                                description: Hosts is the hosts rules for the ingress
-                                items:
-                                  type: string
-                                type: array
-                              ingressClassName:
-                                description: IngressClassName is the ingressClassName
-                                type: string
-                            type: object
-                          type: array
                         proxyService:
                           description: ProxyService is the image tag for the Container
                           type: string
-                        proxyServiceReplicas:
-                          description: ProxyServiceReplicas is the number of replicas
-                            for the proxy service deployment
-                          type: integer
                         redis:
                           description: Redis is the image tag for the Container
                           type: string
-                        redisCommander:
-                          description: RedisCommander is the name of the redis deployment
-                          type: string
-                        redisName:
-                          description: RedisName is the name of the redis statefulset
-                          type: string
-                        redisReplicas:
-                          description: RedisReplicas is the number of replicas for
-                            the redis deployment
-                          type: integer
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
-                        roleServiceReplicas:
-                          description: RoleServiceReplicas is the number of replicas
-                            for the role service deployment
-                          type: integer
-                        sentinel:
-                          description: Sentinel is the name of the sentinel statefulSet
-                          type: string
-                        skipCertificateValidation:
-                          description: skipCertificateValidation is the flag to skip
-                            certificate validation
-                          type: boolean
                         storageService:
                           description: StorageService is the image tag for the Container
-                          type: string
-                        storageServiceReplicas:
-                          description: StorageServiceReplicas is the number of replicas
-                            for storage service deployment
-                          type: integer
-                        storageclass:
-                          description: RedisStorageClass is the authorization proxy
-                            server redis storage class for persistence
                           type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
-                        tenantServiceReplicas:
-                          description: TenantServiceReplicas is the number of replicas
-                            for the tenant service deployment
-                          type: integer
                         tolerations:
                           description: Tolerations is the list of tolerations for
                             the driver pods
@@ -1159,12 +884,6 @@ spec:
                           description: UseSnapshot is to check whether volume snapshot
                             is enabled under velero component
                           type: boolean
-                        vaultAddress:
-                          description: VaultAddress is the address of the vault
-                          type: string
-                        vaultRole:
-                          description: VaultRole is the role for the vault
-                          type: string
                         veleroNamespace:
                           description: VeleroNamespace is the namespace that Velero
                             is installed in
@@ -1204,5 +923,5 @@ status:
   acceptedNames:
     kind: ""
     plural: ""
-  conditions: null
-  storedVersions: null
+  conditions: []
+  storedVersions: []

@@ -2031,11 +2031,6 @@ spec:
         displayName: Use Private CA Certs
         path: client.usePrivateCaCerts
       statusDescriptors:
-      - description: ClientStatus is the status of Client pods
-        displayName: ClientStatus
-        path: clientStatus
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
       - description: State is the state of the client installation
         displayName: State
         path: state
@@ -3364,21 +3359,41 @@ spec:
         displayName: Name
         path: modules[0].name
       statusDescriptors:
-      - description: ControllerStatus is the status of Controller pods
-        displayName: ControllerStatus
-        path: controllerStatus
+      - description: Number of Available Controller pods
+        displayName: Available
+        path: controllerStatus.available
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
-      - description: NodeStatus is the status of Controller pods
-        displayName: NodeStatus
-        path: nodeStatus
+        - urn:alm:descriptor:text
+      - description: Number of Desired Controller pods
+        displayName: Desired
+        path: controllerStatus.desired
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
+        - urn:alm:descriptor:text
+      - description: Number of Failed Controller pods
+        displayName: Failed
+        path: controllerStatus.failed
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Number of Available Node pods
+        displayName: Available
+        path: nodeStatus.available
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Number of Desired Node pods
+        displayName: Desired
+        path: nodeStatus.desired
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Number of Failed Node pods
+        displayName: Failed
+        path: nodeStatus.failed
+        x-descriptors:
+        - urn:alm:descriptor:text
       - description: State is the state of the driver installation
         displayName: State
         path: state
         x-descriptors:
-        - urn:alm:descriptor:text
+        - urn:alm:descriptor:text        
       version: v1
   description: "Dell Container Storage Modules (CSM) Operator is a Kubernetes Operator
     which can be \nused to install and manage Dell’s CSI drivers and CSM modules.
