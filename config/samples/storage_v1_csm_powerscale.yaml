@@ -240,7 +240,7 @@ spec:
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure when the storageCapacity is set as "true"
         # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
