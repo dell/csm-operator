@@ -2064,7 +2064,7 @@ spec:
     name: registrar
   - image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
     name: resizer
-  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
     name: externalhealthmonitorcontroller
   - image: dellemc/csi-metadata-retriever:v1.8.0
     name: metadataretriever

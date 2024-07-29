@@ -75,7 +75,7 @@ spec:
           name: RELATED_IMAGE_registrar
         - value: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
           name: RELATED_IMAGE_resizer
-        - value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+        - value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
           name: RELATED_IMAGE_externalhealthmonitorcontroller
         - value: dellemc/csi-metadata-retriever:v1.8.0
           name: RELATED_IMAGE_metadataretriever
