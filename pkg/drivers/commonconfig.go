@@ -115,6 +115,10 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	controllerYAML := driverYAML.(utils.ControllerYAML)
 	controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
+	var defaultReplicas int32 = 1
+	if *(controllerYAML.Deployment.Spec.Replicas) == 0 {
+		controllerYAML.Deployment.Spec.Replicas = &defaultReplicas
+	}
 
 	if len(cr.Spec.Driver.Controller.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
@@ -151,15 +155,26 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		}
 
 		removeContainer := false
+		if string(*c.Name) == "csi-external-health-monitor-controller" {
+			removeContainer = true
+		}
 		for _, s := range cr.Spec.Driver.SideCars {
 			if s.Name == *c.Name {
 				if s.Enabled == nil {
-					log.Infow("Container to be enabled", "name", *c.Name)
-					break
+					if string(*c.Name) == "csi-external-health-monitor-controller" {
+						removeContainer = true
+						log.Infow("Container to be removed", "name", *c.Name)
+						break
+					} else {
+						removeContainer = false
+						log.Infow("Container to be enabled", "name", *c.Name)
+						break
+					}
 				} else if !*s.Enabled {
 					removeContainer = true
 					log.Infow("Container to be removed", "name", *c.Name)
 				} else {
+					removeContainer = false
 					log.Infow("Container to be enabled", "name", *c.Name)
 				}
 				break
@@ -368,15 +383,24 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 		}
 		removeContainer := false
+		if string(*c.Name) == "sdc-monitor" {
+			removeContainer = true
+		}
 		for _, s := range cr.Spec.Driver.SideCars {
 			if s.Name == *c.Name {
 				if s.Enabled == nil {
-					log.Infow("Container to be enabled", "name", *c.Name)
-					break
+					if string(*c.Name) == "sdc-monitor" {
+						removeContainer = true
+						log.Infow("Container to be removed", "name", *c.Name)
+					} else {
+						removeContainer = false
+						log.Infow("Container to be enabled", "name", *c.Name)
+					}
 				} else if !*s.Enabled {
 					removeContainer = true
 					log.Infow("Container to be removed", "name", *c.Name)
 				} else {
+					removeContainer = false
 					log.Infow("Container to be enabled", "name", *c.Name)
 				}
 				break

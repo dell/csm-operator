@@ -226,8 +226,8 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	storageCapacity := "false"
 	enableQuota := ""
 	powerflexExternalAccess := ""
-	healthMonitorController := ""
-	healthMonitorNode := ""
+	healthMonitorController := "false"
+	healthMonitorNode := "false"
 
 	// nolint:gosec
 	switch fileType {
