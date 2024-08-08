@@ -58,6 +58,7 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 	// check if skip validation is enabled:
 	skipCertValid := false
 	certCount := 1
+	kubeletConfigDirFound := false
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION" {
 			b, err := strconv.ParseBool(env.Value)
@@ -73,6 +74,15 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 			}
 			certCount = int(d)
 		}
+		if env.Name == "KUBELET_CONFIG_DIR" {
+			kubeletConfigDirFound = true
+		}
+	}
+	if !kubeletConfigDirFound {
+		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
+			Name:  "KUBELET_CONFIG_DIR",
+			Value: "/var/lib/kubelet",
+		})
 	}
 
 	secrets := []string{config}
@@ -154,6 +164,8 @@ func getApplyCertVolume(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyCo
 func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
 	// Parameters to initialise CR values
 	storageCapacity := "false"
+	healthMonitorNode := "false"
+	healthMonitorController := "false"
 
 	switch fileType {
 	case "CSIDriverSpec":
@@ -161,6 +173,20 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			storageCapacity = "true"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
+	case "Controller":
+		for _, env := range cr.Spec.Driver.Controller.Envs {
+			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+				healthMonitorController = env.Value
+			}
+		}
+		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+	case "Node":
+		for _, env := range cr.Spec.Driver.Node.Envs {
+			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+				healthMonitorNode = env.Value
+			}
+		}
+		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 	}
 	return yamlString
 }

@@ -106,6 +106,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if cr.Spec.Driver.CSIDriverType == "powermax" {
 		YamlString = ModifyPowermaxCR(YamlString, cr, "Controller")
 	}
+	if cr.Spec.Driver.CSIDriverType == "isilon" {
+		YamlString = ModifyPowerScaleCR(YamlString, cr, "Controller")
+	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "Deployment")
 	if err != nil {
@@ -155,13 +158,13 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		}
 
 		removeContainer := false
-		if string(*c.Name) == "csi-external-health-monitor-controller" {
+		if string(*c.Name) == "csi-external-health-monitor-controller" || string(*c.Name) == "external-health-monitor" {
 			removeContainer = true
 		}
 		for _, s := range cr.Spec.Driver.SideCars {
 			if s.Name == *c.Name {
 				if s.Enabled == nil {
-					if string(*c.Name) == "csi-external-health-monitor-controller" {
+					if string(*c.Name) == "csi-external-health-monitor-controller" || string(*c.Name) == "external-health-monitor" {
 						removeContainer = true
 						log.Infow("Container to be removed", "name", *c.Name)
 						break
@@ -334,6 +337,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 	if cr.Spec.Driver.CSIDriverType == "powermax" {
 		YamlString = ModifyPowermaxCR(YamlString, cr, "Node")
+	}
+	if cr.Spec.Driver.CSIDriverType == "isilon" {
+		YamlString = ModifyPowerScaleCR(YamlString, cr, "Node")
 	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
