@@ -87,6 +87,23 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 	if len(revproxy.Components) < 1 {
 		return fmt.Errorf("revproxy components can not be nil")
 	}
+
+	// we will populate default values for environments, if nothing is given (minimal yaml)
+	if revproxy.Components[0].Envs == nil {
+		revproxy.Components[0].Envs = append(revproxy.Components[0].Envs, corev1.EnvVar{
+			Name:  "X_CSI_REVPROXY_TLS_SECRET",
+			Value: "csirevproxy-tls-secret",
+		})
+		revproxy.Components[0].Envs = append(revproxy.Components[0].Envs, corev1.EnvVar{
+			Name:  "X_CSI_REVPROXY_PORT",
+			Value: "2222",
+		})
+		revproxy.Components[0].Envs = append(revproxy.Components[0].Envs, corev1.EnvVar{
+			Name:  "X_CSI_CONFIG_MAP_NAME",
+			Value: "powermax-reverseproxy-config",
+		})
+	}
+
 	for _, env := range revproxy.Components[0].Envs {
 		if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
 			proxyServerSecret = env.Value
