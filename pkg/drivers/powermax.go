@@ -82,7 +82,18 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 			}
 		}
 	}
-
+	kubeletConfigDirFound := false
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == "KUBELET_CONFIG_DIR" {
+			kubeletConfigDirFound = true
+		}
+	}
+	if !kubeletConfigDirFound {
+		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
+			Name:  "KUBELET_CONFIG_DIR",
+			Value: "/var/lib/kubelet",
+		})
+	}
 	foundRevProxy := false
 	for _, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.ReverseProxy {
@@ -178,6 +189,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				maxVolumesPerNode = env.Value
 			}
 		}
+
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxManagedArray, managedArray)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxEndpoint, endpoint)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxClusterPrefix, clusterPrefix)
@@ -259,6 +271,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
 	}
+
 	return yamlString
 }
 
