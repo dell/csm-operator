@@ -11,6 +11,7 @@ spec:
       enabled: true
       configVersion: v2.0.0-alpha
       forceRemoveModule: true
+
       components:
         # For Kubernetes Container Platform only
         # enabled: Enable/Disable NGINX Ingress Controller
@@ -20,6 +21,7 @@ spec:
         # Default value: true
         - name: nginx
           enabled: true
+
         # enabled: Enable/Disable cert-manager
         # Allowed values:
         #   true: enable deployment of cert-manager
@@ -27,6 +29,7 @@ spec:
         # Default value: true
         - name: cert-manager
           enabled: true
+
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
@@ -36,29 +39,36 @@ spec:
           storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
+
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
           controllerReconcileInterval: 5m
+
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           certificate: ""
+
           # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: ""
+
           # proxy-server ingress will use this hostname
           # NOTE: an additional hostname can be configured in proxyServerIngress.hosts
           # NOTE: proxy-server ingress is configured to accept IP address connections so hostnames are not required
           hostname: "csm-authorization.com"
+
           # proxy-server ingress configuration
           proxyServerIngress:
             - ingressClassName: nginx
+
               # additional host rules for the proxy-server ingress
               hosts:
                 - authorization-ingress-nginx-controller.authorization.svc.cluster.local
+
               # additional annotations for the proxy-server ingress
-              annotations:
-                "label": "value"
+              annotations: {}
+
         - name: redis
           redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest
@@ -71,6 +81,7 @@ spec:
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
           storageclass: "local-storage"
+
         - name: vault
           vaultConfigurations:
             - identifier: vault0
@@ -80,15 +91,31 @@ spec:
               # clientCertificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
               #  for self-signed certs, leave empty string
               # Allowed values: string
-              clientCertificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmR1bW15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+              clientCertificate: ""
               # clientKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
               #  for self-signed certs, leave empty string
               # Allowed values: string
-              clientKey: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmR1bW15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+              clientKey: ""
               # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
               #  for self-signed certs, leave empty string
               # Allowed values: string
-              certificateAuthority: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmR1bW15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+              certificateAuthority: ""
+            - identifier: vault1
+              address: https://10.0.0.2:8400
+              role: csm-authorization
+              skipCertificateValidation: true
+              # clientCertificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+              #  for self-signed certs, leave empty string
+              # Allowed values: string
+              clientCertificate: ""
+              # clientKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+              #  for self-signed certs, leave empty string
+              # Allowed values: string
+              clientKey: ""
+              # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
+              #  for self-signed certs, leave empty string
+              # Allowed values: string
+              certificateAuthority: ""
 
 ---
 apiVersion: v1
@@ -97,6 +124,7 @@ metadata:
   name: csm-config-params
   namespace: authorization
 data:
-  csm-config-params.yaml: |-
+  csm-config-params.yaml: |
     CONCURRENT_POWERFLEX_REQUESTS: 10
     LOG_LEVEL: debug
+    STORAGE_CAPACITY_POLL_INTERVAL: 5m

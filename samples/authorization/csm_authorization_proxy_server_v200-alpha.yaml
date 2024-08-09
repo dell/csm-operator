@@ -83,7 +83,7 @@ spec:
               # for self-signed certs, leave empty string
               # Allowed values: string
               clientCertificate:
-              # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+              # clientKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
               # for self-signed certs, leave empty string
               # Allowed values: string
               clientKey:

@@ -76,11 +76,11 @@ spec:
               address: https://10.0.0.1:8400
               role: csm-authorization
               skipCertificateValidation: true
-              # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+              # clientCertificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
               #  for self-signed certs, leave empty string
               # Allowed values: string
               clientCertificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmR1bW15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
-              # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+              # clientKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
               #  for self-signed certs, leave empty string
               # Allowed values: string
               clientKey: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmR1bW15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
