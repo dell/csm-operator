@@ -1040,6 +1040,92 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 
 			return false, customResource, sourceClient, checkFn
 		},
+
+		"success - multiple vaults": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			vaultIdentifier := []string{"vault0", "vault1"}
+			vaultArgs := []string{"--vault=vault0,https://10.0.0.1:8400,csm-authorization,true", "--vault=vault1,https://10.0.0.2:8400,csm-authorization,true"}
+			selfSignedCert := []string{"storage-service-selfsigned-vault0", "storage-service-selfsigned-vault1"}
+
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_multiple_vaults.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundVaultClientVolume := false
+				foundSelfSignedTLSSource := false
+				for _, id := range vaultIdentifier {
+					for _, volume := range storageService.Spec.Template.Spec.Volumes {
+						if volume.Name == fmt.Sprintf("vault-client-certificate-%s", id) {
+							foundVaultClientVolume = true
+
+							for _, source := range volume.VolumeSource.Projected.Sources {
+								if source.Secret != nil {
+									if source.Secret.LocalObjectReference.Name == fmt.Sprintf("storage-service-selfsigned-tls-%s", id) {
+										foundSelfSignedTLSSource = true
+									}
+								}
+							}
+						}
+					}
+
+					if !foundVaultClientVolume {
+						t.Errorf("expected volume %s, wasn't found", fmt.Sprintf("vault-client-certificate-%s", id))
+					}
+
+					if !foundSelfSignedTLSSource {
+						t.Errorf("expected volume source %s, wasn't found", fmt.Sprintf("storage-service-self-signed-tls-%s", id))
+					}
+				}
+
+				foundVaultArgs := false
+				for _, vaultArg := range vaultArgs {
+					for _, c := range storageService.Spec.Template.Spec.Containers {
+						if c.Name == "storage-service" {
+							for _, arg := range c.Args {
+								if arg == vaultArg {
+									foundVaultArgs = true
+								}
+							}
+							break
+						}
+					}
+
+					if !foundVaultArgs {
+						t.Errorf("expected arg %s, wasn't found", vaultArg)
+					}
+				}
+
+				for _, cert := range selfSignedCert {
+					issuer := &certmanagerv1.Issuer{}
+					err = client.Get(context.Background(), types.NamespacedName{Name: cert, Namespace: "authorization"}, issuer)
+					if err != nil {
+						t.Errorf("expected issuer %s, wasn't found", cert)
+					}
+
+					certificate := &certmanagerv1.Certificate{}
+					err = client.Get(context.Background(), types.NamespacedName{Name: cert, Namespace: "authorization"}, certificate)
+					if err != nil {
+						t.Errorf("expected certificate %s, wasn't found", cert)
+					}
+				}
+			}
+
+			return false, customResource, sourceClient, checkFn
+		},
 	}
 
 	for name, tc := range tests {
