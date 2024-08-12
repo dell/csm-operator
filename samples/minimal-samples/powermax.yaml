@@ -1,0 +1,18 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powermax
+  namespace: powermax
+spec:
+  driver:
+    csiDriverType: "powermax"
+    configVersion: v2.11.0
+    forceRemoveDriver: true
+  modules:
+    - name: csireverseproxy
+      enabled: true
+      forceRemoveModule: true
+      configVersion: v2.10.0
+      components:
+        - name: csipowermax-reverseproxy
+          image: dellemc/csipowermax-reverseproxy:v2.10.0
