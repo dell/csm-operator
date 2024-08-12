@@ -6,8 +6,10 @@ spec:
   type: "REPLACE_STORAGE_TYPE"
   endpoint: "https://REPLACE_ENDPOINT"
   systemID: "REPLACE_SYSTEM_ID"
-  credentialStore: vault
-  credentialPath: "REPLACE_VAULT_STORAGE_PATH"
+  vault:
+    identifier: vault0
+    kvEngine: secret
+    path: "REPLACE_VAULT_STORAGE_PATH"
   skipCertificateValidation: true
   pollInterval: 30s
 ---
