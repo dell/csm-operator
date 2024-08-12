@@ -127,7 +127,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 }
 
 // GetTestResourcesApex -- parse values file
-func GetTestResourcesApex(valuesFilePath string) ([]ResourceApex, error) {
+func GetTestResourcesApex(valuesFilePath string) ([]Resource, error) {
 	b, err := os.ReadFile(valuesFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read values file: %v", err)
@@ -139,7 +139,7 @@ func GetTestResourcesApex(valuesFilePath string) ([]ResourceApex, error) {
 		return nil, fmt.Errorf("failed to read unmarshal values file: %v", err)
 	}
 
-	resources := []ResourceApex{}
+	resources := []Resource{}
 	for _, scene := range scenarios {
 		customResources := []csmv1.ApexConnectivityClient{}
 		for _, path := range scene.Paths {
@@ -154,8 +154,8 @@ func GetTestResourcesApex(valuesFilePath string) ([]ResourceApex, error) {
 			}
 			customResources = append(customResources, customResource)
 		}
-		resources = append(resources, ResourceApex{
-			ScenarioApex:       scene,
+		resources = append(resources, Resource{
+			Scenario:           scene,
 			CustomResourceApex: customResources,
 		})
 	}
@@ -1632,7 +1632,7 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 }
 
 // Steps for Connectivity Client
-func (step *Step) validateClientTestEnvironment(_ ResourceApex) error {
+func (step *Step) validateClientTestEnvironment(_ Resource) error {
 	if os.Getenv("OPERATOR_NAMESPACE") != "" {
 		operatorNamespace = os.Getenv("OPERATOR_NAMESPACE")
 	}
@@ -1661,17 +1661,17 @@ func (step *Step) validateClientTestEnvironment(_ ResourceApex) error {
 	return nil
 }
 
-func (step *Step) applyClientCustomResource(res ResourceApex, crNumStr string, secretNumStr string) error {
+func (step *Step) applyClientCustomResource(res Resource, crNumStr string, secretNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResourceApex[crNum-1]
-	crBuff, err := os.ReadFile(res.ScenarioApex.Paths[crNum-1])
+	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
 	if err != nil {
 		return fmt.Errorf("failed to read connecivity client testdata: %v", err)
 	}
 
 	scrNum, _ := strconv.Atoi(secretNumStr)
 	scr := res.CustomResourceApex[scrNum-1]
-	scrBuff, err := os.ReadFile(res.ScenarioApex.Paths[scrNum-1])
+	scrBuff, err := os.ReadFile(res.Scenario.Paths[scrNum-1])
 	if err != nil {
 		return fmt.Errorf("failed to read secret testdata: %v", err)
 	}
@@ -1686,7 +1686,7 @@ func (step *Step) applyClientCustomResource(res ResourceApex, crNumStr string, s
 	return nil
 }
 
-func (step *Step) validateConnectivityClientInstalled(res ResourceApex, crNumStr string) error {
+func (step *Step) validateConnectivityClientInstalled(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResourceApex[crNum-1]
 	time.Sleep(60 * time.Second)
@@ -1702,7 +1702,7 @@ func (step *Step) validateConnectivityClientInstalled(res ResourceApex, crNumStr
 	return checkAllRunningPods(context.TODO(), res.CustomResourceApex[crNum-1].Namespace, step.clientSet)
 }
 
-func (step *Step) upgradeCustomResourceClient(res ResourceApex, oldCrNumStr string, newCrNumStr string) error {
+func (step *Step) upgradeCustomResourceClient(res Resource, oldCrNumStr string, newCrNumStr string) error {
 	oldCrNum, _ := strconv.Atoi(oldCrNumStr)
 	oldCr := res.CustomResourceApex[oldCrNum-1]
 
@@ -1723,7 +1723,7 @@ func (step *Step) upgradeCustomResourceClient(res ResourceApex, oldCrNumStr stri
 	return step.ctrlClient.Update(context.TODO(), found)
 }
 
-func (step *Step) validateConnectivityClientNotInstalled(res ResourceApex, crNumStr string) error {
+func (step *Step) validateConnectivityClientNotInstalled(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResourceApex[crNum-1]
 	time.Sleep(20 * time.Second)
@@ -1739,7 +1739,7 @@ func (step *Step) validateConnectivityClientNotInstalled(res ResourceApex, crNum
 }
 
 // uninstallConnectivityClient - uninstall the client
-func (step *Step) uninstallConnectivityClient(res ResourceApex, crNumStr string) error {
+func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResourceApex[crNum-1]
 
@@ -1756,7 +1756,7 @@ func (step *Step) uninstallConnectivityClient(res ResourceApex, crNumStr string)
 		return err
 	}
 
-	crBuff, err := os.ReadFile(res.ScenarioApex.Paths[crNum-1])
+	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
 	if err != nil {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
@@ -1768,11 +1768,11 @@ func (step *Step) uninstallConnectivityClient(res ResourceApex, crNumStr string)
 	return nil
 }
 
-func (step *Step) uninstallConnectivityClientSecret(res ResourceApex, scrNumStr string) error {
+func (step *Step) uninstallConnectivityClientSecret(res Resource, scrNumStr string) error {
 	crNum, _ := strconv.Atoi(scrNumStr)
 	cr := res.CustomResourceApex[crNum-1]
 
-	crBuff, err := os.ReadFile(res.ScenarioApex.Paths[crNum-1])
+	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
 	if err != nil {
 		return fmt.Errorf("failed to read secret testdata: %v", err)
 	}

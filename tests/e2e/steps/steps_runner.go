@@ -156,7 +156,7 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 }
 
 // RunStepClient - runs a step
-func (runner *Runner) RunStepClient(stepName string, res ResourceApex) error {
+func (runner *Runner) RunStepClient(stepName string, res Resource) error {
 	for _, stepDef := range runner.Definitions {
 		if stepDef.Expr.MatchString(stepName) {
 			var values []reflect.Value
