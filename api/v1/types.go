@@ -509,7 +509,7 @@ type Credkey struct {
 	AccessKey string `json:"aws_secret_access_key,omitempty" yaml:"aws_secret_access_key,omitempty"`
 }
 
-// ProxyServerIngress is the authorization ingress configuration struct
+// Vault is the configuration for a vault instance struct
 type Vault struct {
 	// Identifier is the identifier for this vault
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Identifier"
