@@ -235,7 +235,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-powermax:v2.11.0
+          image: amaas-eos-drm2.cec.lab.emc.com:5074/csm/powermax/csi-powermax:minimal-poc
           imagePullPolicy: IfNotPresent
           command: ["/csi-powermax.sh"]
           env:
@@ -283,6 +283,8 @@ spec:
               value: 5m
             - name: X_CSI_POWERMAX_CONFIG_PATH
               value: /powermax-config-params/driver-config-params.yaml
+            - name: X_CSI_POWERMAX_ARRAY_CONFIG_PATH
+              value: /powermax-array-config/powermax-array-config.yaml
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
             - name: X_CSI_VSPHERE_ENABLED
@@ -313,6 +315,8 @@ spec:
               readOnly: true
             - name: powermax-config-params
               mountPath: <DriverDefaultReleaseName>-config-params
+            - name: powermax-array-config
+              mountPath: /powermax-array-config
       volumes:
         - name: socket-dir
           emptyDir:
@@ -323,5 +327,8 @@ spec:
         - name: powermax-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
+        - name: powermax-array-config
+          configMap:
+            name: powermax-array-config
         - name: cert-dir
           emptyDir:
