@@ -51,6 +51,9 @@ const (
 
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
+
+	// CsiDebug -  Debug flag
+	CsiDebug = "<X_CSI_DEBUG>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -101,6 +104,19 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 			}
 			sidenv[j] = updatenv
 		}
+	}
+
+	kubeletConfigDirFound := false
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == "KUBELET_CONFIG_DIR" {
+			kubeletConfigDirFound = true
+		}
+	}
+	if !kubeletConfigDirFound {
+		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
+			Name:  "KUBELET_CONFIG_DIR",
+			Value: "/var/lib/kubelet",
+		})
 	}
 
 	return nil
@@ -228,6 +244,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	powerflexExternalAccess := ""
 	healthMonitorController := "false"
 	healthMonitorNode := "false"
+	csiDebug := "true"
 
 	// nolint:gosec
 	switch fileType {
@@ -239,9 +256,13 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorController = env.Value
 			}
+			if env.Name == "X_CSI_DEBUG" {
+				csiDebug = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
+		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 
 	case "Node":
 		for _, env := range cr.Spec.Driver.Node.Envs {
@@ -263,12 +284,16 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorNode = env.Value
 			}
+			if env.Name == "X_CSI_DEBUG" {
+				csiDebug = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {

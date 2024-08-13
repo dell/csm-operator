@@ -354,6 +354,10 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		dnspolicy := corev1.DNSPolicy(cr.Spec.Driver.DNSPolicy)
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &dnspolicy
 	}
+	var defaultDnsPolicy corev1.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+	if cr.Spec.Driver.DNSPolicy == "" {
+		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &defaultDnsPolicy
+	}
 
 	if len(cr.Spec.Driver.Node.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
