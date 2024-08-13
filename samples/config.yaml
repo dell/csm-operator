@@ -1,0 +1,11 @@
+# these config is used for nighly powerstore pipeline k8s
+# this is a copy of ps-67.yaml 
+arrays:
+  - endpoint: "https://10.230.24.67/api/rest" # full URL path to the PowerStore API
+    globalID: "PS1b7322d7546d"
+    username: "admin"                         # username for connecting to API
+    password: "Pinkballoon082$"               # password for connecting to API
+    skipCertificateValidation: true           # indicates if client side validation of (management)server's certificate can be skipped
+    isDefault: true                           # treat current array as a default (would be used by storage classes without arrayIP parameter)
+    blockProtocol: "auto"                     # what SCSI transport protocol use on node side (FC, ISCSI, None, or auto)
+    nasName: "Generic_NAS"                     # what NAS should be used for NFS volumes

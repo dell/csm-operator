@@ -1,0 +1,17 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: vxflexos
+  namespace: vxflexos
+spec:
+  driver:
+    csiDriverType: "powerflex"
+    configVersion: v2.11.0
+    forceUpdate: false
+    initContainers:
+      - image: dellemc/sdc:4.5.2.1
+        imagePullPolicy: IfNotPresent
+        name: sdc
+        envs:
+          - name: MDM
+            value: "10.247.13.230,10.247.13.232" #provide MDM value

@@ -289,7 +289,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		}
 
 		// check for force cleanup
-		if csm.Spec.Driver.ForceRemoveDriver {
+		if !csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resources deployed from CR by operator
 			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))

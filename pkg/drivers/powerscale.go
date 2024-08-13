@@ -68,6 +68,7 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 		}
 		if env.Name == "CERT_SECRET_COUNT" {
 			d, err := strconv.ParseInt(env.Value, 0, 8)
+			log.Info("environment variable is", env.Name, env.Value)
 			if err != nil {
 				return fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
 			}
@@ -102,6 +103,9 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 func getApplyCertVolume(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {
 	skipCertValid := false
 	certCount := 1
+	if len(cr.Spec.Driver.Common.Envs) == 0 || (len(cr.Spec.Driver.Common.Envs) == 1 && cr.Spec.Driver.Common.Envs[0].Name != "CERT_SECRET_COUNT") {
+		certCount = 0
+	}
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION" {
 			b, err := strconv.ParseBool(env.Value)
