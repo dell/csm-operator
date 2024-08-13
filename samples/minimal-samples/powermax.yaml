@@ -6,13 +6,8 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.11.0
-    forceRemoveDriver: true
+    configVersion: v2.11.0    
   modules:
     - name: csireverseproxy
-      enabled: true
-      forceRemoveModule: true
+      enabled: true      
       configVersion: v2.10.0
-      components:
-        - name: csipowermax-reverseproxy
-          image: dellemc/csipowermax-reverseproxy:v2.10.0

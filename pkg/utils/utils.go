@@ -65,6 +65,7 @@ type K8sImagesConfig struct {
 		Sdc                   string `json:"sdc" yaml:"sdc"`
 		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
 		Podmon                string `json:"podmon" yaml:"podmon"`
+		CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 	} `json:"images" yaml:"images"`
 }
 
