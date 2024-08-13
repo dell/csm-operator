@@ -6,8 +6,8 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.11.0
+    configVersion: v2.11.0    
   modules:
     - name: csireverseproxy
-      enabled: true
+      enabled: true      
       configVersion: v2.10.0
