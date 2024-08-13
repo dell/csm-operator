@@ -43,7 +43,7 @@ import (
 	eventsv1 "k8s.io/client-go/kubernetes/typed/events/v1"
 	eventsv1beta1 "k8s.io/client-go/kubernetes/typed/events/v1beta1"
 	extensionsv1beta1 "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
-	flowcontrolv1alpha1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1alpha1"
+	flowcontrolv1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1"
 	flowcontrolv1beta1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1"
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
 	flowcontrolv1beta3 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3"
@@ -240,7 +240,7 @@ func (c *K8sClient) ExtensionsV1beta1() extensionsv1beta1.ExtensionsV1beta1Inter
 }
 
 // FlowcontrolV1alpha1 retrieves the FlowcontrolV1alpha1Client
-func (c *K8sClient) FlowcontrolV1alpha1() flowcontrolv1alpha1.FlowcontrolV1alpha1Interface {
+func (c *K8sClient) FlowcontrolV1alpha1() flowcontrolv1.FlowcontrolV1Interface {
 	panic("implement me")
 }
 
