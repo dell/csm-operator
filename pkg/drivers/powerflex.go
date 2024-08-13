@@ -88,6 +88,19 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 			break
 		}
 	}
+	if cr.Spec.Driver.InitContainers == nil {
+		cr.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{
+			{
+				Name: "sdc",
+				Envs: []corev1.EnvVar{
+					{
+						Name:  "MDM",
+						Value: mdmVar,
+					},
+				},
+			},
+		}
+	}
 
 	for _, sidecar := range cr.Spec.Driver.SideCars {
 		if sidecar.Name == "sdc-monitor" {
@@ -103,6 +116,19 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 				}
 			}
 			sidenv[j] = updatenv
+		}
+	}
+	if cr.Spec.Driver.SideCars == nil {
+		cr.Spec.Driver.SideCars = []csmv1.ContainerTemplate{
+			{
+				Name: "sdc-monitor",
+				Envs: []corev1.EnvVar{
+					{
+						Name:  "MDM",
+						Value: mdmVar,
+					},
+				},
+			},
 		}
 	}
 
