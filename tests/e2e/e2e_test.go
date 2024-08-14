@@ -109,9 +109,10 @@ var _ = BeforeSuite(func() {
 		framework.Failf("Failed to read apex values file: %v", err)
 	}
 
-	testResources = resApex
-	if strings.Contains(testResources[0].CustomResourceApex[0].Kind, "ApexConnectivityClient") {
+	testResourcesApex := resApex
+	if strings.Contains(testResourcesApex[0].CustomResourceApex[0].Kind, "ApexConnectivityClient") {
 		testApex = true
+		testResources = append(testResources, testResourcesApex...)
 	}
 
 	By("Getting a k8s client")
