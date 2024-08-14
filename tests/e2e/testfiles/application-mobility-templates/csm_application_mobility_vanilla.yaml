@@ -59,17 +59,17 @@ spec:
             - name: "VOL_SNAPSHOT_LOCATION_NAME"
               value: "default"
             # Name of the backup storage url
-            # This field has to be changed to a functional backup storage url 
+            # This field has to be changed to a functional backup storage url
             # Default value: localhost:8000
             - name: "BACKUP_STORAGE_URL"
               value: "http://REPLACE_S3URL"
             # Name of the secret in velero namespace that has credentials to access object store
-            # We can leave the field empty if there no existing secret in velero installed namespace 
+            # We can leave the field empty if there no existing secret in velero installed namespace
             # Default value: existing-cred
             - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
               value: "existing-cred"
-          #If velero is not already present in cluster, set createWithInstall to true to create a secret. 
-          #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.   
+          #If velero is not already present in cluster, set createWithInstall to true to create a secret.
+          #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
           credentials:
             - createWithInstall: true
               #Specify the name to be used for secret that will be created to hold object store credentials.

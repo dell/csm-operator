@@ -72,6 +72,6 @@ metadata:
   name: csm-config-params
   namespace: authorization
 data:
-  csm-config-params.yaml: |
+  csm-config-params.yaml: |-
     CONCURRENT_POWERFLEX_REQUESTS: 10
     LOG_LEVEL: debug

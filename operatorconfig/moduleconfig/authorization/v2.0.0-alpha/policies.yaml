@@ -250,7 +250,7 @@ metadata:
   name: snapshot-create
   namespace: <NAMESPACE>
 data:
-  snapshot-create.rego: |
+  snapshot-create.rego: |-
     package karavi.snapshot.create
 
     import data.karavi.common
