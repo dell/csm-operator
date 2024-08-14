@@ -4,7 +4,7 @@ metadata:
   name: <DriverDefaultReleaseName>-config-params
   namespace: <DriverDefaultReleaseNamespace>
 data:
-  driver-config-params.yaml: |
+  driver-config-params.yaml: |-
     CSI_LOG_LEVEL: "info"
     ALLOW_RWO_MULTIPOD_ACCESS: "false"
     MAX_UNITY_VOLUMES_PER_NODE: 0

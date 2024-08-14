@@ -225,15 +225,13 @@ spec:
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
-        args: [ "--monitor-interval=60s" ]
+        args: ["--monitor-interval=60s"]
         image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
-      
-      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
-      # Configure only when the storageCapacity is set as "true"
-      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-      #- name: provisioner
-      #  args: ["--capacity-poll-interval=5m"]
-
+        # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+        # Configure only when the storageCapacity is set as "true"
+        # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+        #- name: provisioner
+        #  args: ["--capacity-poll-interval=5m"]
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
@@ -242,28 +240,27 @@ spec:
       forceRemoveModule: true
       configVersion: v2.10.0
       components:
-      - name: csipowermax-reverseproxy
-      # image: Define the container images used for the reverse proxy
-      # Default value: None
-      # Example: "csipowermax-reverseproxy:v2.9.1"
-        image: dellemc/csipowermax-reverseproxy:nightly
-        envs:
-          # "tlsSecret" defines the TLS secret that is created with certificate
-          # and its associated key
+        - name: csipowermax-reverseproxy
+          # image: Define the container images used for the reverse proxy
           # Default value: None
-          # Example: "tls-secret"
-          - name: X_CSI_REVPROXY_TLS_SECRET
-            value: "csirevproxy-tls-secret"
-          - name: X_CSI_REVPROXY_PORT
-            value: "2222"
-          - name: X_CSI_CONFIG_MAP_NAME
-            value: "powermax-reverseproxy-config"
-          # deployAsSidecar defines the way reversproxy is installed with the driver
-          # set it true, if csm-auth is enabled / you want it as a sidecar container
-          # set it false, if you want it as a deployment
-          - name: "DeployAsSidecar"
-            value: "false"
-              
+          # Example: "csipowermax-reverseproxy:v2.9.1"
+          image: dellemc/csipowermax-reverseproxy:nightly
+          envs:
+            # "tlsSecret" defines the TLS secret that is created with certificate
+            # and its associated key
+            # Default value: None
+            # Example: "tls-secret"
+            - name: X_CSI_REVPROXY_TLS_SECRET
+              value: "csirevproxy-tls-secret"
+            - name: X_CSI_REVPROXY_PORT
+              value: "2222"
+            - name: X_CSI_CONFIG_MAP_NAME
+              value: "powermax-reverseproxy-config"
+            # deployAsSidecar defines the way reversproxy is installed with the driver
+            # set it true, if csm-auth is enabled / you want it as a sidecar container
+            # set it false, if you want it as a deployment
+            - name: "DeployAsSidecar"
+              value: "false"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability

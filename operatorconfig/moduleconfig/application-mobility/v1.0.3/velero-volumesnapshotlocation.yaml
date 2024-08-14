@@ -7,8 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: velero
     app.kubernetes.io/instance: application-mobility
-
 spec:
   provider: <CONFIGURATION_PROVIDER>
-  config: 
-      region: <BACKUP_REGION_URL>
+  config:
+    region: <BACKUP_REGION_URL>
