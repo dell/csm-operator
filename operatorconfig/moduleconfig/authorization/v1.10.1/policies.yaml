@@ -96,7 +96,7 @@ data:
 
     default claims = {}
     claims = input.claims
-    deny[msg] {                                                                                       
+    deny[msg] {
       claims == {}
       msg := sprintf("missing claims", [])
     }
@@ -236,7 +236,7 @@ metadata:
   name: sdc-approve
   namespace: <NAMESPACE>
 data:
-  sdc-approve.rego: |
+  sdc-approve.rego: |-
     package karavi.sdc.approve
 
     import data.karavi.common

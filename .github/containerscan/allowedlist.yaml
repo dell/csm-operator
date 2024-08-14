@@ -1,7 +1,6 @@
 general:
   vulnerabilities:
-    # list of CVEs that are currently unfixed
-
+  # list of CVEs that are currently unfixed
   bestPracticeViolations:
     # list of best practies violatied that needs a fix
     - CIS-DI-0009

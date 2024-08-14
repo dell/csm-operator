@@ -16,6 +16,6 @@ metadata:
   name: <DriverDefaultReleaseName>-config-params
   namespace: <DriverDefaultReleaseNamespace>
 data:
-  driver-config-params.yaml: |
+  driver-config-params.yaml: |-
     CSI_LOG_LEVEL: "debug"
     CSI_LOG_FORMAT: "TEXT"

@@ -44,20 +44,18 @@ spec:
           value: ""
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
-    
     sideCars:
-    # sdc-monitor is disabled by default, due to high CPU usage
+      # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:4.5.2.1
         envs:
-        - name: HOST_PID
-          value: "1"
-        - name: MDM
-          value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
-
-    # health monitor is disabled by default, refer to driver documentation before enabling it
-    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+          - name: HOST_PID
+            value: "1"
+          - name: MDM
+            value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
+            # health monitor is disabled by default, refer to driver documentation before enabling it
+            # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -77,7 +75,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
       #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -100,10 +97,8 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     node:
       envs:
-
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
         #    true: enable SDC approval
@@ -111,7 +106,6 @@ spec:
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
         #   true: enable renaming
@@ -119,20 +113,17 @@ spec:
         # Default value: false
         - name: X_CSI_RENAME_SDC_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
         # "prefix" + "worker_node_hostname" should not exceed 31 chars.
         # Default value: none
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
-
         # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
         # Allowed values: Any value greater than or equal to 0
         # Default value: "0"
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "1"
-
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -155,15 +146,13 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     initContainers:
       - image: dellemc/sdc:4.5.2.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
-
+            value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
   modules:
     # Application Mobility: enable csm-application-mobility module
     - name: application-mobility
@@ -172,87 +161,78 @@ spec:
       configVersion: v1.0.3
       forceRemoveModule: true
       components:
-      - name: application-mobility-controller-manager
-        # enable: Enable/Disable application mobility controller-manager
-        enabled: true
-        image: dellemc/csm-application-mobility-controller:v1.0.3
-        imagePullPolicy: IfNotPresent
-        envs:
-          # Replica count for application mobility
-          # Allowed values: string
-          # Default value: 1
-          - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
-            value: "1"
-
-      # enabled: Enable/Disable cert-manager
-      # Allowed values:
-      #   true: enable deployment of cert-manager
-      #   false: disable deployment of cert-manager only if it's already deployed
-      # Default value: false
-      - name: cert-manager
-        enabled: true
-      # enabled: Enable/Disable Velero
-      - name: velero
-        image: velero/velero:v1.10.0
-        imagePullPolicy: IfNotPresent
-        enabled: true
-        useVolumeSnapshot: false
-        # enabled: Enable/Disable node-agent service
-        deployNodeAgent: true
-        envs:
-          # Backup storage location name
-          # Allowed values: string
-          # Default value: default
-          - name: "BACKUPSTORAGELOCATION_NAME"
-            value: "default"
-
-          # Velero bucket name
-          # Allowed values: string
-          # Default value: REPLACE_BUCKET_NAME
-          - name: "BUCKET_NAME"
-            value: "REPLACE_BUCKET_NAME"
-
-          # Based on the objectstore being used, the velero plugin and its configuration may need to change!
-          # default value: aws
-          - name: "CONFIGURATION_PROVIDER"
-            value: "aws"
-
-          # Name of the volume snapshot location where snapshots are being taken. Required.
-          # Volume-snapshot-Location Provider will be same as CONFIGURATION_PROVIDER
-          # Default value : default
-          - name: "VOL_SNAPSHOT_LOCATION_NAME"
-            value: "default"
-
-          # Name of the backup storage url
-          # This field HAS to be changed to a functional backup storage url
-          # Default value: localhost:8000
-          - name: "BACKUP_STORAGE_URL"
-            value: "http://REPLACE_S3URL"
-
-          # Name of the secret in velero namespace that has credentials to access object store
-          # We can leave the field empty if there no existing secret in velero installed namespace
-          # Default value: existing-cred
-          - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
-            value: "existing-cred"
-
-        #If velero is not already present in cluster, set enabled to true to create a secret.
-        #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
-        credentials:
-          - createWithInstall: true
-            #Specify the name to be used for secret that will be created to hold object store credentials.
-            name: cloud-creds
-            #Specify the object store access credentials to be stored in a secret with key "cloud".
-            secretContents:
-              aws_access_key_id: console  #Provide the access key id here
-              aws_secret_access_key: console123  #provide the access key here
-
-
+        - name: application-mobility-controller-manager
+          # enable: Enable/Disable application mobility controller-manager
+          enabled: true
+          image: dellemc/csm-application-mobility-controller:v1.0.3
+          imagePullPolicy: IfNotPresent
+          envs:
+            # Replica count for application mobility
+            # Allowed values: string
+            # Default value: 1
+            - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
+              value: "1"
+        # enabled: Enable/Disable cert-manager
+        # Allowed values:
+        #   true: enable deployment of cert-manager
+        #   false: disable deployment of cert-manager only if it's already deployed
+        # Default value: false
+        - name: cert-manager
+          enabled: true
+        # enabled: Enable/Disable Velero
+        - name: velero
+          image: velero/velero:v1.10.0
+          imagePullPolicy: IfNotPresent
+          enabled: true
+          useVolumeSnapshot: false
+          # enabled: Enable/Disable node-agent service
+          deployNodeAgent: true
+          envs:
+            # Backup storage location name
+            # Allowed values: string
+            # Default value: default
+            - name: "BACKUPSTORAGELOCATION_NAME"
+              value: "default"
+            # Velero bucket name
+            # Allowed values: string
+            # Default value: REPLACE_BUCKET_NAME
+            - name: "BUCKET_NAME"
+              value: "REPLACE_BUCKET_NAME"
+            # Based on the objectstore being used, the velero plugin and its configuration may need to change!
+            # default value: aws
+            - name: "CONFIGURATION_PROVIDER"
+              value: "aws"
+            # Name of the volume snapshot location where snapshots are being taken. Required.
+            # Volume-snapshot-Location Provider will be same as CONFIGURATION_PROVIDER
+            # Default value : default
+            - name: "VOL_SNAPSHOT_LOCATION_NAME"
+              value: "default"
+            # Name of the backup storage url
+            # This field HAS to be changed to a functional backup storage url
+            # Default value: localhost:8000
+            - name: "BACKUP_STORAGE_URL"
+              value: "http://REPLACE_S3URL"
+            # Name of the secret in velero namespace that has credentials to access object store
+            # We can leave the field empty if there no existing secret in velero installed namespace
+            # Default value: existing-cred
+            - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
+              value: "existing-cred"
+          #If velero is not already present in cluster, set enabled to true to create a secret.
+          #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
+          credentials:
+            - createWithInstall: true
+              #Specify the name to be used for secret that will be created to hold object store credentials.
+              name: cloud-creds
+              #Specify the object store access credentials to be stored in a secret with key "cloud".
+              secretContents:
+                aws_access_key_id: console #Provide the access key id here
+                aws_secret_access_key: console123 #provide the access key here
     # Init containers to be added to the Velero and Node-agent deployment's spec.
     - initContainer:
         #initContainer image for the dell velero plugin
-      - name: dell-custom-velero-plugin
-        image: dellemc/csm-application-mobility-velero-plugin:v1.0.3
-        #initContainer image for the configuration provider aws
-        #digest for velero/velero-plugin-for-aws:v1.6.2
-      - name: velero-plugin-for-aws
-        image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e
+        - name: dell-custom-velero-plugin
+          image: dellemc/csm-application-mobility-velero-plugin:v1.0.3
+          #initContainer image for the configuration provider aws
+          #digest for velero/velero-plugin-for-aws:v1.6.2
+        - name: velero-plugin-for-aws
+          image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e

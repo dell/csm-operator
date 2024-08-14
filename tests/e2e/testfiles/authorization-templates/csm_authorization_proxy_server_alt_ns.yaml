@@ -20,7 +20,6 @@ spec:
         # Default value: true
         - name: nginx
           enabled: true
-
         # enabled: Enable/Disable cert-manager
         # Allowed values:
         #   true: enable deployment of cert-manager
@@ -28,7 +27,6 @@ spec:
         # Default value: true
         - name: cert-manager
           enabled: true
-
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
@@ -38,34 +36,27 @@ spec:
           storageService: dellemc/csm-authorization-storage:v1.11.0
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
-
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           certificate: ""
-
           # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: ""
-
           # proxy-server ingress will use this hostname
           # NOTE: an additional hostname can be configured in proxyServerIngress.hosts
           # NOTE: proxy-server ingress is configured to accept IP address connections so hostnames are not required
           hostname: "csm-authorization.com"
-
           # proxy-server ingress configuration
           proxyServerIngress:
             - ingressClassName: nginx
-
               # additional host rules for the proxy-server ingress
-              hosts:
-                []
-                # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
+              hosts: []
+              # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
 
               # additional annotations for the proxy-server ingress
               annotations: {}
-
         - name: redis
           redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest
@@ -74,7 +65,6 @@ spec:
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
           storageclass: ""
-
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -82,6 +72,6 @@ metadata:
   name: csm-config-params
   namespace: proxy-ns
 data:
-  csm-config-params.yaml: |
+  csm-config-params.yaml: |-
     CONCURRENT_POWERFLEX_REQUESTS: 10
     LOG_LEVEL: debug
