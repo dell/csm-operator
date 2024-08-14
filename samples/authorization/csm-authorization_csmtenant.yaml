@@ -13,6 +13,6 @@ spec:
   roles: role1,role2
   approveSdc: false
   revoke: false
-  # This prefix is added for each new volume provisioned by the tenant. 
+  # This prefix is added for each new volume provisioned by the tenant.
   # It should not exceed 3 characters. Example: tn1
   volumePrefix: tn1
