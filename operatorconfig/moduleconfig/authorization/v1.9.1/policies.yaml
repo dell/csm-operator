@@ -71,7 +71,35 @@ metadata:
   name: volumes-delete
   namespace: <NAMESPACE>
 data:
-  volumes-delete.rego: "package karavi.volumes.delete\n\nimport data.karavi.common\n\ndefault response = {\n  \"allowed\": true\n}\nresponse = {\n  \"allowed\": false,\n  \"status\": {\n  \"reason\": reason,\n  },\n} {\n  reason = concat(\", \", deny)\n  reason != \"\"\n}\n\ndeny[msg] {\n  common.roles == {}\n  msg := sprintf(\"no role data found\", [])\n}\n\ndefault claims = {}\nclaims = input.claims\ndeny[msg] {                                                                                       \n  claims == {}\n  msg := sprintf(\"missing claims\", [])\n}\n"
+  volumes-delete.rego: |
+    package karavi.volumes.delete
+
+    import data.karavi.common
+
+    default response = {
+      "allowed": true
+    }
+    response = {
+      "allowed": false,
+      "status": {
+      "reason": reason,
+      },
+    } {
+      reason = concat(", ", deny)
+      reason != ""
+    }
+
+    deny[msg] {
+      common.roles == {}
+      msg := sprintf("no role data found", [])
+    }
+
+    default claims = {}
+    claims = input.claims
+    deny[msg] {
+      claims == {}
+      msg := sprintf("missing claims", [])
+    }
 ---
 apiVersion: v1
 kind: ConfigMap
