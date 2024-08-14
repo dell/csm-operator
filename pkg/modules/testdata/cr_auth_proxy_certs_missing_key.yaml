@@ -11,7 +11,6 @@ spec:
       enabled: true
       configVersion: v2.0.0-alpha
       forceRemoveModule: true
-
       components:
         # For Kubernetes Container Platform only
         # enabled: Enable/Disable NGINX Ingress Controller
@@ -21,7 +20,6 @@ spec:
         # Default value: true
         - name: nginx
           enabled: true
-
         # enabled: Enable/Disable cert-manager
         # Allowed values:
         #   true: enable deployment of cert-manager
@@ -29,7 +27,6 @@ spec:
         # Default value: true
         - name: cert-manager
           enabled: true
-
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
@@ -39,36 +36,28 @@ spec:
           storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
-
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
           controllerReconcileInterval: 5m
-
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCVENDQXUyZ0F3SUJBZ0lVVThsYncza09ITk5QSXppRitJb3NUT3pSZVZNd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2daRXhDekFKQmdOVkJBWVRBbFZUTVJFd0R3WURWUVFJREFoT1pYY2dXVzl5YXpFUk1BOEdBMVVFQnd3SQpUbVYzSUZsdmNtc3hEVEFMQmdOVkJBb01CRVJsYkd3eEREQUtCZ05WQkFzTUEwbFRSekVZTUJZR0ExVUVBd3dQClNtOXZjMlZ3Y0drSUNBZ0lDQWdJTVNVd0l3WUpLb1pJaHZjTkFRa0JGaFpxYjI5elpYQndhVjlzZFc1aFFHUmwKYkd3dVkyOXRNQjRYRFRJME1ESXlNVEU0TWpRME1sb1hEVEkwTURVeU1URTRNalEwTWxvd2daRXhDekFKQmdOVgpCQVlUQWxWVE1SRXdEd1lEVlFRSURBaE9aWGNnV1c5eWF6RVJNQThHQTFVRUJ3d0lUbVYzSUZsdmNtc3hEVEFMCkJnTlZCQW9NQkVSbGJHd3hEREFLQmdOVkJBc01BMGxUUnpFWU1CWUdBMVVFQXd3UFNtOXZjMlZ3Y0drSUNBZ0kKQ0FnSU1TVXdJd1lKS29aSWh2Y05BUWtCRmhacWIyOXpaWEJ3YVY5c2RXNWhRR1JsYkd3dVkyOXRNSUlCSWpBTgpCZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5SXhkZ04wNDdnZk41T0h3SHFhMjlHNWd3dDkzCmVidnEwZVdnZE5RWXUvUU91YktoQ3JWYUN6QXBzTGhRcnlhOEM4OWtTM3VmRHNLM3o3aHJIRXhnblc4ZzdGL1cKTjVpaXYzcU9GcDk2ZVc4VFR5UHJhVktKV3psay9xSWhWdkhGVGxTbk5jcmJTZW45RkhxZmR4RnA3ejNVSXdtVQprZk8vTTQ1RHkrcDU2cmdqOW4vSTYvVmtpMWVxalBIN1dZTnZJQXJNa0pvZTBhSFlVSTdqa3dEZ1N6ZE1jMnM3ClI5NWxQTFY1MDgxdFNCWTJtNno0VGt1dktQdG1RZ1pML3JKL2lHUTBLVTkyYmRFUC9USDVSeEkyRHZ2U3BQSzUKUkhzTEhPVDdUZWV5NGJXU1VQemJTRzBRQUE0b1JyNTV2M1VYbmlmMExwNEQ0OU5xcHRSK0VzZkx2d0lEQVFBQgpvMU13VVRBZEJnTlZIUTRFRmdRVVlZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dId1lEVlIwakJCZ3dGb0FVCllZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dEd1lEVlIwVEFRSC9CQVV3QXdFQi96QU5CZ2txaGtpRzl3MEIKQVFzRkFBT0NBUUVBS2dWUjRvQjhlb0hNWTZ2Tm9WUERJd29NU3d2eGUyWnVDN0N0bkRvRUJjUzlrQU12TURqRwpzeFN2b0o2TXlXckpNaUt4aDJmekdGcS9FVWxDcHdKUEwvNTlTYmR3cG54UUxGWjdyZkVjMS9WQ3dOUHcxM0pEClBnZmsvZnd6QVNEcS9mWm5pTmVldHpCa2dQdEdMWDFsU051OHFNSUZHczR0QlpZZS8xNnJ4VFFpMzRsUk56QVUKMlA2YTM3YjhWVU9yRUNhTTlOdUFaY3FWSjRiODhvNXBQSkRldm5Hb3JPOHRMQWhvT3kyclB5QnJKaVhNQ0ZKMAo4TzVQS1NrSlJyQ2x1enBPeEtxUURONTlmVDdYNEp6VzI3MVhqQlIzWVdJTUdha08rSnRUdEwyUDNBWXdtd2E1CnNibUV0UU5rSjNraDhneVNVL2p4WnQrVWVUVWRJYWxDV0E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t"
-
           # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: ""
-
           # proxy-server ingress will use this hostname
           # NOTE: an additional hostname can be configured in proxyServerIngress.hosts
           # NOTE: proxy-server ingress is configured to accept IP address connections so hostnames are not required
           hostname: "csm-authorization.com"
-
           # proxy-server ingress configuration
           proxyServerIngress:
             - ingressClassName: nginx
-
               # additional host rules for the proxy-server ingress
               hosts:
                 - authorization-ingress-nginx-controller.authorization.svc.cluster.local
-
               # additional annotations for the proxy-server ingress
               annotations: {}
-
         - name: redis
           redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest
@@ -77,7 +66,6 @@ spec:
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
           storageclass: ""
-
 ---
 apiVersion: v1
 kind: ConfigMap

@@ -16,6 +16,7 @@ spec:
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
+
     forceRemoveDriver: true
     common:
       image: "dellemc/csi-isilon:nightly"
@@ -29,14 +30,12 @@ spec:
         # Default value: 0
         - name: X_CSI_VERBOSE
           value: "1"
-
         # X_CSI_ISI_PORT: Specify the HTTPs port number of the PowerScale OneFS API server
         # This value acts as a default value for endpointPort, if not specified for a cluster config in secret
         # Allowed value: valid port number
         # Default value: 8080
         - name: X_CSI_ISI_PORT
           value: "8080"
-
         # X_CSI_ISI_PATH: The base path for the volumes to be created on PowerScale cluster.
         # This value acts as a default value for isiPath, if not specified for a cluster config in secret
         # Ensure that this path exists on PowerScale cluster.
@@ -45,7 +44,6 @@ spec:
         # Examples: /ifs/data/csi, /ifs/engineering
         - name: X_CSI_ISI_PATH
           value: "/ifs/data/csi"
-
         # X_CSI_ISI_NO_PROBE_ON_START: Indicates whether the controller/node should probe all the PowerScale clusters during driver initialization
         # Allowed values:
         #   true : do not probe all PowerScale clusters during driver initialization
@@ -53,7 +51,6 @@ spec:
         # Default value: false
         - name: X_CSI_ISI_NO_PROBE_ON_START
           value: "false"
-
         # X_CSI_ISI_AUTOPROBE: automatically probe the PowerScale cluster if not done already during CSI calls.
         # Allowed values:
         #   true : enable auto probe.
@@ -61,7 +58,6 @@ spec:
         # Default value: false
         - name: X_CSI_ISI_AUTOPROBE
           value: "true"
-
         # X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: Specify whether the PowerScale OneFS API server's certificate chain and host name should be verified.
         # Formerly this attribute was named as "X_CSI_ISI_INSECURE"
         # This value acts as a default value for skipCertificateValidation, if not specified for a cluster config in secret
@@ -71,7 +67,6 @@ spec:
         # Default value: true
         - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
           value: "true"
-
         # X_CSI_CUSTOM_TOPOLOGY_ENABLED: Specify if custom topology label <provisionerName>.dellemc.com/<powerscalefqdnorip>:<provisionerName>
         # has to be used for making connection to backend PowerScale Array.
         # If X_CSI_CUSTOM_TOPOLOGY_ENABLED is set to true, then do not specify allowedTopologies in storage class.
@@ -81,77 +76,67 @@ spec:
         # Default value: false
         - name: X_CSI_CUSTOM_TOPOLOGY_ENABLED
           value: "false"
-
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
-
         # certSecretCount: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (isilon-cert-0..isilon-cert-n)
         # Allowed values: n, where n > 0
         # Default value: None
         - name: "CERT_SECRET_COUNT"
           value: "1"
-
         # CSI driver log level
         # Allowed values: "error", "warn"/"warning", "info", "debug"
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
           value: "debug"
-
     controller:
       envs:
-      # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota
-      # on a newly provisioned volume.
-      # This requires SmartQuotas to be enabled on PowerScale cluster.
-      # Allowed values:
-      #   true: set quota for volume
-      #   false: do not set quota for volume
-      - name: X_CSI_ISI_QUOTA_ENABLED
-        value: "true"
-
-      # X_CSI_ISI_ACCESS_ZONE: The name of the access zone a volume can be created in.
-      # If storageclass is missing with AccessZone parameter, then value of X_CSI_ISI_ACCESS_ZONE is used for the same.
-      # Default value: System
-      # Examples: System, zone1
-      - name: X_CSI_ISI_ACCESS_ZONE
-        value: "System"
-
-      # X_CSI_ISI_VOLUME_PATH_PERMISSIONS: The permissions for isi volume directory path
-      # This value acts as a default value for isiVolumePathPermissions, if not specified for a cluster config in secret
-      # Allowed values: valid octal mode number
-      # Default value: "0777"
-      # Examples: "0777", "777", "0755"
-      - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
-        value: "0777"
-
-      # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
-      # Install the 'external-health-monitor' sidecar accordingly.
-      # Allowed values:
-      #   true: enable checking of health condition of CSI volumes
-      #   false: disable checking of health condition of CSI volumes
-      # Default value: false
-      - name: X_CSI_HEALTH_MONITOR_ENABLED
-        value: "false"
-
-      # X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS: Ignore unresolvable hosts on the OneFS.
-      # When set to true, OneFS allows new host to add to existing export list though any of the existing hosts from the
-      # same exports are unresolvable/doesn't exist anymore.
-      # Allowed values:
-      #   true: ignore existing unresolvable hosts and append new host to the existing export
-      #   false: exhibits OneFS default behavior i.e. if any of existing hosts are unresolvable while adding new one it fails
-      # Default value: false
-      - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
-        value: "false"
-
-      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
-      # Default value: 192
-      # Examples: 192, 256
-      - name: X_CSI_MAX_PATH_LIMIT
-        value: "192"
-
+        # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota
+        # on a newly provisioned volume.
+        # This requires SmartQuotas to be enabled on PowerScale cluster.
+        # Allowed values:
+        #   true: set quota for volume
+        #   false: do not set quota for volume
+        - name: X_CSI_ISI_QUOTA_ENABLED
+          value: "true"
+        # X_CSI_ISI_ACCESS_ZONE: The name of the access zone a volume can be created in.
+        # If storageclass is missing with AccessZone parameter, then value of X_CSI_ISI_ACCESS_ZONE is used for the same.
+        # Default value: System
+        # Examples: System, zone1
+        - name: X_CSI_ISI_ACCESS_ZONE
+          value: "System"
+        # X_CSI_ISI_VOLUME_PATH_PERMISSIONS: The permissions for isi volume directory path
+        # This value acts as a default value for isiVolumePathPermissions, if not specified for a cluster config in secret
+        # Allowed values: valid octal mode number
+        # Default value: "0777"
+        # Examples: "0777", "777", "0755"
+        - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
+          value: "0777"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        # X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS: Ignore unresolvable hosts on the OneFS.
+        # When set to true, OneFS allows new host to add to existing export list though any of the existing hosts from the
+        # same exports are unresolvable/doesn't exist anymore.
+        # Allowed values:
+        #   true: ignore existing unresolvable hosts and append new host to the existing export
+        #   false: exhibits OneFS default behavior i.e. if any of existing hosts are unresolvable while adding new one it fails
+        # Default value: false
+        - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
+          value: "false"
+        # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+        # Default value: 192
+        # Examples: 192, 256
+        - name: X_CSI_MAX_PATH_LIMIT
+          value: "192"
       # nodeSelector: Define node selection constraints for pods of controller deployment.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -161,7 +146,6 @@ spec:
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       #  node-role.kubernetes.io/control-plane: ""
-
       # tolerations: Define tolerations for the controller deployment, if required.
       # Default value: None
       tolerations:
@@ -169,42 +153,37 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     node:
       envs:
-      # X_CSI_MAX_VOLUMES_PER_NODE: Specify default value for maximum number of volumes that controller can publish to the node.
-      # If value is zero CO SHALL decide how many volumes of this type can be published by the controller to the node.
-      # This limit is applicable to all the nodes in the cluster for which node label 'max-isilon-volumes-per-node' is not set.
-      # Allowed values: n, where n >= 0
-      # Default value: 0
-      - name: X_CSI_MAX_VOLUMES_PER_NODE
-        value: "0"
-
-      # X_CSI_ALLOWED_NETWORKS: Custom networks for PowerScale export
-      # Specify list of networks which can be used for NFS I/O traffic; CIDR format should be used.
-      # Allowed values: list of one or more networks
-      # Default value: None
-      # Provide them in the following format: "[net1, net2]"
-      # CIDR format should be used
-      # eg: "[192.168.1.0/24, 192.168.100.0/22]"
-      - name: X_CSI_ALLOWED_NETWORKS
-        value: ""
-
-      # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
-      # Install the 'external-health-monitor' sidecar accordingly.
-      # Allowed values:
-      #   true: enable checking of health condition of CSI volumes
-      #   false: disable checking of health condition of CSI volumes
-      # Default value: false
-      - name: X_CSI_HEALTH_MONITOR_ENABLED
-        value: "false"
-
-      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
-      # Default value: 192
-      # Examples: 192, 256
-      - name: X_CSI_MAX_PATH_LIMIT
-        value: "192"
-
+        # X_CSI_MAX_VOLUMES_PER_NODE: Specify default value for maximum number of volumes that controller can publish to the node.
+        # If value is zero CO SHALL decide how many volumes of this type can be published by the controller to the node.
+        # This limit is applicable to all the nodes in the cluster for which node label 'max-isilon-volumes-per-node' is not set.
+        # Allowed values: n, where n >= 0
+        # Default value: 0
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
+        # X_CSI_ALLOWED_NETWORKS: Custom networks for PowerScale export
+        # Specify list of networks which can be used for NFS I/O traffic; CIDR format should be used.
+        # Allowed values: list of one or more networks
+        # Default value: None
+        # Provide them in the following format: "[net1, net2]"
+        # CIDR format should be used
+        # eg: "[192.168.1.0/24, 192.168.100.0/22]"
+        - name: X_CSI_ALLOWED_NETWORKS
+          value: ""
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+        # Default value: 192
+        # Examples: 192, 256
+        - name: X_CSI_MAX_PATH_LIMIT
+          value: "192"
       # nodeSelector: Define node selection constraints for pods of node daemonset
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -214,7 +193,6 @@ spec:
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
       #  node-role.kubernetes.io/control-plane: ""
-
       # tolerations: Define tolerations for the node daemonset, if required.
       # Default value: None
       tolerations:
@@ -231,37 +209,36 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     sideCars:
       - name: provisioner
         args: ["--volume-name-prefix=csipscale"]
-      # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
+        # health monitor is disabled by default, refer to driver documentation before enabling it
+
         enabled: false
         args: ["--monitor-interval=60s"]
-
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
+
       enabled: false
       configVersion: v1.11.0
       components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:nightly
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
-
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:nightly
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
     # replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
       # enabled: Enable/Disable replication feature
+
       # Allowed values:
       #   true: enable replication feature(install dell-csi-replicator sidecar)
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
@@ -269,76 +246,84 @@ spec:
       enabled: false
       configVersion: v1.9.0
       components:
-      - name: dell-csi-replicator
-        # image: Image to use for dell-csi-replicator. This shouldn't be changed
-        # Allowed values: string
-        # Default value: None
-        image: dellemc/dell-csi-replicator:v1.9.0
-        envs:
-          # replicationPrefix: prefix to prepend to storage classes parameters
+        - name: dell-csi-replicator
+          # image: Image to use for dell-csi-replicator. This shouldn't be changed
+
           # Allowed values: string
-          # Default value: replication.storage.dell.com
-          - name: "X_CSI_REPLICATION_PREFIX"
-            value: "replication.storage.dell.com"
-          # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+          # Default value: None
+          image: dellemc/dell-csi-replicator:v1.9.0
+          envs:
+            # replicationPrefix: prefix to prepend to storage classes parameters
+            # Allowed values: string
+            # Default value: replication.storage.dell.com
+            - name: "X_CSI_REPLICATION_PREFIX"
+              value: "replication.storage.dell.com"
+            # Allowed values: string
+            # Default value: powerstore
+            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+              # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+
+              value: "powerscale"
+        - name: dell-replication-controller-manager
+          # image: Defines controller image. This shouldn't be changed
+
           # Allowed values: string
-          # Default value: powerstore
-          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-            value: "powerscale"
+          image: dellemc/dell-replication-controller:v1.9.0
+          envs:
+            # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
+            # Set the value to "self" in case of stretched/single cluster configuration
+            # Allowed values: string
+            - name: "TARGET_CLUSTERS_IDS"
+              value: "self"
+            # Allowed values: "error", "warn"/"warning", "info", "debug"
+            # Default value: "debug"
+            - name: "REPLICATION_CTRL_LOG_LEVEL"
+              # Replication log level
 
-      - name: dell-replication-controller-manager
-        # image: Defines controller image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.9.0
-        envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
-          # Set the value to "self" in case of stretched/single cluster configuration
+              value: "debug"
+            # replicas: Defines number of controller replicas
+            # Allowed values: int
+            # Default value: 1
+            - name: "REPLICATION_CTRL_REPLICAS"
+              value: "1"
+            # It doubles with each failure, upto retry-interval-max
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MIN"
+              # retryIntervalMin: Initial retry interval of failed reconcile request.
+
+              value: "1s"
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MAX"
+              # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
+
+              value: "5m"
+        - name: dell-replication-controller-init
+          # image: Defines replication init container image. This shouldn't be changed
+
           # Allowed values: string
-          - name: "TARGET_CLUSTERS_IDS"
-            value: "self"
-          # Replication log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "REPLICATION_CTRL_LOG_LEVEL"
-            value: "debug"
-
-          # replicas: Defines number of controller replicas
-          # Allowed values: int
-          # Default value: 1
-          - name: "REPLICATION_CTRL_REPLICAS"
-            value: "1"
-          # retryIntervalMin: Initial retry interval of failed reconcile request.
-          # It doubles with each failure, upto retry-interval-max
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MIN"
-            value: "1s"
-          # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MAX"
-            value: "5m"
-
-      - name: dell-replication-controller-init
-        # image: Defines replication init container image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-init:v1.0.0
-
+          image: dellemc/dell-replication-init:v1.0.0
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
+
       enabled: true
       configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
+
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
+
           # Allowed values: string
           image: dellemc/csm-topology:nightly
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
+
           #  for self-signed certs, leave empty string
           # Allowed values: string
           certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCVENDQXUyZ0F3SUJBZ0lVVThsYncza09ITk5QSXppRitJb3NUT3pSZVZNd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2daRXhDekFKQmdOVkJBWVRBbFZUTVJFd0R3WURWUVFJREFoT1pYY2dXVzl5YXpFUk1BOEdBMVVFQnd3SQpUbVYzSUZsdmNtc3hEVEFMQmdOVkJBb01CRVJsYkd3eEREQUtCZ05WQkFzTUEwbFRSekVZTUJZR0ExVUVBd3dQClNtOXZjMlZ3Y0drSUNBZ0lDQWdJTVNVd0l3WUpLb1pJaHZjTkFRa0JGaFpxYjI5elpYQndhVjlzZFc1aFFHUmwKYkd3dVkyOXRNQjRYRFRJME1ESXlNVEU0TWpRME1sb1hEVEkwTURVeU1URTRNalEwTWxvd2daRXhDekFKQmdOVgpCQVlUQWxWVE1SRXdEd1lEVlFRSURBaE9aWGNnV1c5eWF6RVJNQThHQTFVRUJ3d0lUbVYzSUZsdmNtc3hEVEFMCkJnTlZCQW9NQkVSbGJHd3hEREFLQmdOVkJBc01BMGxUUnpFWU1CWUdBMVVFQXd3UFNtOXZjMlZ3Y0drSUNBZ0kKQ0FnSU1TVXdJd1lKS29aSWh2Y05BUWtCRmhacWIyOXpaWEJ3YVY5c2RXNWhRR1JsYkd3dVkyOXRNSUlCSWpBTgpCZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5SXhkZ04wNDdnZk41T0h3SHFhMjlHNWd3dDkzCmVidnEwZVdnZE5RWXUvUU91YktoQ3JWYUN6QXBzTGhRcnlhOEM4OWtTM3VmRHNLM3o3aHJIRXhnblc4ZzdGL1cKTjVpaXYzcU9GcDk2ZVc4VFR5UHJhVktKV3psay9xSWhWdkhGVGxTbk5jcmJTZW45RkhxZmR4RnA3ejNVSXdtVQprZk8vTTQ1RHkrcDU2cmdqOW4vSTYvVmtpMWVxalBIN1dZTnZJQXJNa0pvZTBhSFlVSTdqa3dEZ1N6ZE1jMnM3ClI5NWxQTFY1MDgxdFNCWTJtNno0VGt1dktQdG1RZ1pML3JKL2lHUTBLVTkyYmRFUC9USDVSeEkyRHZ2U3BQSzUKUkhzTEhPVDdUZWV5NGJXU1VQemJTRzBRQUE0b1JyNTV2M1VYbmlmMExwNEQ0OU5xcHRSK0VzZkx2d0lEQVFBQgpvMU13VVRBZEJnTlZIUTRFRmdRVVlZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dId1lEVlIwakJCZ3dGb0FVCllZakFuMmdHQXVDalB3NVZINVI3amNsWElwd3dEd1lEVlIwVEFRSC9CQVV3QXdFQi96QU5CZ2txaGtpRzl3MEIKQVFzRkFBT0NBUUVBS2dWUjRvQjhlb0hNWTZ2Tm9WUERJd29NU3d2eGUyWnVDN0N0bkRvRUJjUzlrQU12TURqRwpzeFN2b0o2TXlXckpNaUt4aDJmekdGcS9FVWxDcHdKUEwvNTlTYmR3cG54UUxGWjdyZkVjMS9WQ3dOUHcxM0pEClBnZmsvZnd6QVNEcS9mWm5pTmVldHpCa2dQdEdMWDFsU051OHFNSUZHczR0QlpZZS8xNnJ4VFFpMzRsUk56QVUKMlA2YTM3YjhWVU9yRUNhTTlOdUFaY3FWSjRiODhvNXBQSkRldm5Hb3JPOHRMQWhvT3kyclB5QnJKaVhNQ0ZKMAo4TzVQS1NrSlJyQ2x1enBPeEtxUURONTlmVDdYNEp6VzI3MVhqQlIzWVdJTUdha08rSnRUdEwyUDNBWXdtd2E1CnNibUV0UU5rSjNraDhneVNVL2p4WnQrVWVUVWRJYWxDV0E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t"
           # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
+
           #  for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBeUl4ZGdOMDQ3Z2ZONU9Id0hxYTI5RzVnd3Q5M2VidnEwZVdnZE5RWXUvUU91YktoCkNyVmFDekFwc0xoUXJ5YThDODlrUzN1ZkRzSzN6N2hySEV4Z25XOGc3Ri9XTjVpaXYzcU9GcDk2ZVc4VFR5UHIKYVZLSld6bGsvcUloVnZIRlRsU25OY3JiU2VuOUZIcWZkeEZwN3ozVUl3bVVrZk8vTTQ1RHkrcDU2cmdqOW4vSQo2L1ZraTFlcWpQSDdXWU52SUFyTWtKb2UwYUhZVUk3amt3RGdTemRNYzJzN1I5NWxQTFY1MDgxdFNCWTJtNno0ClRrdXZLUHRtUWdaTC9ySi9pR1EwS1U5MmJkRVAvVEg1UnhJMkR2dlNwUEs1UkhzTEhPVDdUZWV5NGJXU1VQemIKU0cwUUFBNG9ScjU1djNVWG5pZjBMcDRENDlOcXB0UitFc2ZMdndJREFRQUJBb0lCQUUva2V5dG05ZEw5a094cApoYnJ3TjFwUXpvTlRlc2tvTDNmR3ZwRk1IVDVqRDZxeW1xMGxhZVdqSGppa2RLQVNFait5TXdaUERTSllOOW1zClloODMzaFZadkFmdWRleFlCaDI1dVBrU056eEJIN1FiWHlEcUhJWVc2MEQxWGNyQkxoVHliRnBsb2M1a1JNbnYKdjY4elpMeEdLVWg3L0kvWVJvZEhXWUxXdWhMaTYvVGpKMGNJbWlOVWxMeWhXNHJrUXRveUZmelYvWkZpZGYvWApSYjQwRHRCRk1QbytVdFRBbnJuTlF3UDN2cEF5U09OV2U3MW45dS9XdFlwYzVNeDJGaGZFbm5PcTlZcVNEMVNQCm5hUC9OUndOQ2xOY1BleWZaSU84SytWT3MvbFpBOGErMXREWTZzOFVOTHBvcm42YkRWdEsweU4rTU9YK1FLaXEKTG9KeDZtRUNnWUVBNlU3ZU96OEcybG9wd245ald6YXBobG5TU2RFTHZobS95cllNMy9TN2puTkRYNkd3TkRlKwpFQTFINUs1UDRLNnlleFMvZEllaWo4bDhiRytVb0V3Rm9pOVIxaTdGR21DL1p6WTRpa2IyQXI0MU8yV29kVk9UCkRjNnBjdmlkWnp5ZjJWaGlTMFNLZ3ZodDdzSTlQcjFyZWlyNW9TYXBuUC9hUFhCTkl3dDh3V01DZ1lFQTNBM1AKODNrOUlPdjNNUWhiL1JiUDVBRWZYaW85U0hJNW1oekFLankxY2M1WDdadjI2SmpIc21RNGQrb0s0UjljMGFIWApETDFBRlYrWTkyRTU4ZVE1SXJhQ3JTQVAwYk45bENqLzdEMDFrT2ZnTis5QXJzVy8yc0tFcFRtZENtc3ZGb1JuClNOUzBNYmpDdmQxOEtYdWNFYmdoZzZTcjZwaGN2QWVoaGtpcjZQVUNnWUVBcFl0bXVKZENINUUyYkdIRGVDZFQKSnBkNVZSTlZ4Nit4blA2TUtDVVpLRHkxSTVndzFQeHdpaWRDU2dzOWRtbS9Ed0pyengybXhXdnNNMjBCQXJTdQprcVFNNTNNTVBHbEZwdENjVWRHRUlmSWhCMkpjbzlPSFZwYTdPVzhiRVBPOVlKVU1PZWdLZUdBYWNQMjJRMXhZCmRMa2xvNmt4Vk10ZWFaWFR4ZmdTcjQwQ2dZRUF3K2lnSEZqeHJSK213TVo2YndZaUt4RTh4ZTdCQklCOCs5RmcKMjdtVXFDOVdaTG9YeGRoTzRXa01ST1hlcmJIb1J0SFl6UVNueXQrREphb3Zsa1RqQVI2UGxHWVk3MDduSEVLcwpKYndRdG1OWllUTGwyVE5BclJmRVUvekk3UCtqdWw1Q1BicndlZHZOdEk4OC9RbUpWdFVoTVR3bnVnSFBmYThsCmhKR3FTd2tDZ1lFQW1UKzJQY1VIdVZuYXU1ZjVYMXZPaVI1aGtyNEZYUFhwZVVRZDVyMFZZazBsb01Yc3FQVGsKc0lZN0lmSUlRZ01xbFNnUVhMeVBpbjJPWEN1ZnBKTlVDRlJRamtMV2ZCZW1QbEh6N2hjNURvVHJEU1doOUtETApNak9HL3d4ckRwZGlvRnZmcVA3bldIeGk3UzAxNXpHNHhtbkg2WUZ1TThuaHpyU3NSQzhzV20wPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ=="
@@ -348,18 +333,21 @@ spec:
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
               value: "INFO"
-
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
+
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
+
           # Allowed values: string
           image: otel/opentelemetry-collector:0.42.0
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
+
           #  for self-signed certs, leave empty string
           # Allowed values: string
           certificate: ""
           # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
+
           #  for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: ""
@@ -369,19 +357,20 @@ spec:
             # Default value: "nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
-
         - name: cert-manager
-        # enabled: Enable/Disable cert-manager
-        # Allowed values:
-        #   true: enable deployment of cert-manager
-        #   false: disable deployment of cert-manager only if it's already deployed
-        # Default value: true
-          enabled: true
+          # enabled: Enable/Disable cert-manager
 
+          # Allowed values:
+          #   true: enable deployment of cert-manager
+          #   false: disable deployment of cert-manager only if it's already deployed
+          # Default value: true
+          enabled: true
         - name: metrics-powerscale
           # enabled: Enable/Disable PowerScale metrics
+
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
+
           # Allowed values: string
           image: dellemc/csm-metrics-powerscale:nightly
           envs:
@@ -390,63 +379,75 @@ spec:
             # Default value: 10
             - name: "POWERSCALE_MAX_CONCURRENT_QUERIES"
               value: "10"
-            # POWERSCALE_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
             # Allowed values: ture, false
             # Default value: true
             - name: "POWERSCALE_CAPACITY_METRICS_ENABLED"
+              # POWERSCALE_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
+
               value: "true"
-            # POWERSCALE_PERFORMANCE_METRICS_ENABLED: enable/disable collection of performance metrics
             # Allowed values: ture, false
             # Default value: true
             - name: "POWERSCALE_PERFORMANCE_METRICS_ENABLED"
+              # POWERSCALE_PERFORMANCE_METRICS_ENABLED: enable/disable collection of performance metrics
+
               value: "true"
-            # POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
             # Allowed values: int
             # Default value: 30
             - name: "POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY"
+              # POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
+
               value: "30"
-            # POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get cluster performance metrics data
             # Allowed values: int
             # Default value: 20
             - name: "POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY"
+              # POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get cluster performance metrics data
+
               value: "20"
-            # POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY: set polling frequency to get Quota capacity metrics data
             # Allowed values: int
             # Default value: 20
             - name: "POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY"
+              # POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY: set polling frequency to get Quota capacity metrics data
+
               value: "30"
-            # ISICLIENT_INSECURE: set true/false to skip/verify OneFS API server's certificates
             # Allowed values: ture, false
             # Default value: true
             - name: "ISICLIENT_INSECURE"
+              # ISICLIENT_INSECURE: set true/false to skip/verify OneFS API server's certificates
+
               value: "true"
-            # ISICLIENT_AUTH_TYPE: set 0/1 to enables session-based/basic Authentication
             # Allowed values: ture, false
             # Default value: true
             - name: "ISICLIENT_AUTH_TYPE"
+              # ISICLIENT_AUTH_TYPE: set 0/1 to enables session-based/basic Authentication
+
               value: "0"
-            # ISICLIENT_VERBOSE: set 0/1/2 decide High/Medium/Low content of the OneFS REST API message should be logged in debug level logs
             # Allowed values: 0,1,2
             # Default value: 0
             - name: "ISICLIENT_VERBOSE"
+              # ISICLIENT_VERBOSE: set 0/1/2 decide High/Medium/Low content of the OneFS REST API message should be logged in debug level logs
+
               value: "0"
-            # PowerScale metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
             - name: "POWERSCALE_LOG_LEVEL"
+              # PowerScale metrics log level
+
               value: "INFO"
-            # PowerScale Metrics Output logs in the specified format
             # Valid values: TEXT, JSON
             # Default value: "TEXT"
             - name: "POWERSCALE_LOG_FORMAT"
+              # PowerScale Metrics Output logs in the specified format
+
               value: "TEXT"
-            # Otel collector address
             # Allowed values: String
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
+              # Otel collector address
+
               value: "otel-collector:55680"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
+
       # Allowed values:
       #   true: enable Resiliency feature(deploy podmon sidecar)
       #   false: disable Resiliency feature(do not deploy podmon sidecar)

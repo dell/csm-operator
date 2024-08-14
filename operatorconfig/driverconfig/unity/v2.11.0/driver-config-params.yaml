@@ -4,7 +4,7 @@ metadata:
   name: <DriverDefaultReleaseName>-config-params
   namespace: <DriverDefaultReleaseNamespace>
 data:
-  driver-config-params.yaml: |
+  driver-config-params.yaml: |-
     CSI_LOG_LEVEL: "info"
     CSI_LOG_FORMAT: "JSON"
     ALLOW_RWO_MULTIPOD_ACCESS: "false"

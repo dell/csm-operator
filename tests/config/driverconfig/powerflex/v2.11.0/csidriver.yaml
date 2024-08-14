@@ -1,12 +1,12 @@
 apiVersion: storage.k8s.io/v1
 kind: CSIDriver
 metadata:
-    name: csi-vxflexos.dellemc.com
+  name: csi-vxflexos.dellemc.com
 spec:
-    fsGroupPolicy: ReadWriteOnceWithFSType
-    attachRequired: true
-    podInfoOnMount: true
-    storageCapacity: false
-    volumeLifecycleModes: 
+  fsGroupPolicy: ReadWriteOnceWithFSType
+  attachRequired: true
+  podInfoOnMount: true
+  storageCapacity: false
+  volumeLifecycleModes:
     - Persistent
     - Ephemeral

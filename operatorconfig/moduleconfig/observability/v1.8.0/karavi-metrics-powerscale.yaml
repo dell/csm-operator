@@ -3,9 +3,7 @@ kind: ServiceAccount
 metadata:
   name: karavi-metrics-powerscale-controller
   namespace: karavi
-
 ---
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -20,9 +18,7 @@ rules:
   - apiGroups: [""]
     resources: ["endpoints"]
     verbs: ["*"]
-
 ---
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -35,9 +31,7 @@ roleRef:
   kind: ClusterRole
   name: karavi-metrics-powerscale-controller
   apiGroup: rbac.authorization.k8s.io
-
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -55,16 +49,14 @@ spec:
   selector:
     app.kubernetes.io/name: karavi-metrics-powerscale
     app.kubernetes.io/instance: karavi
-
 ---
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: karavi-metrics-powerscale-configmap
   namespace: karavi
 data:
-  karavi-metrics-powerscale.yaml : |
+  karavi-metrics-powerscale.yaml: |
     COLLECTOR_ADDR: <COLLECTOR_ADDRESS>
     PROVISIONER_NAMES: csi-isilon.dellemc.com
     POWERSCALE_MAX_CONCURRENT_QUERIES: <POWERSCALE_MAX_CONCURRENT_QUERIES>
@@ -78,9 +70,7 @@ data:
     POWERSCALE_ISICLIENT_VERBOSE: <ISICLIENT_VERBOSE>
     LOG_LEVEL: <POWERSCALE_LOG_LEVEL>
     LOG_FORMAT: <POWERSCALE_LOG_FORMAT>
-
 ---
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -89,9 +79,7 @@ metadata:
 data:
   driver-config-params.yaml: |
     CSI_LOG_LEVEL: debug
-
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -155,4 +143,3 @@ spec:
             name: <DriverDefaultReleaseName>-config-params
       restartPolicy: Always
 status: {}
-
