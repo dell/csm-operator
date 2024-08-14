@@ -11,7 +11,6 @@ parameters:
   # Default value: default value specified in values.yaml
   # Examples: System, zone1
   AccessZone: System
-
   # The base path for the volumes to be created on PowerScale cluster.
   # Ensure that this path exists on PowerScale cluster.
   # Allowed values: unix absolute path
@@ -19,14 +18,12 @@ parameters:
   # Default value: value specified in values.yaml for isiPath
   # Examples: /ifs/data/csi, /ifs/engineering
   IsiPath: /ifs/e2etest
-
   # The permissions for isi volume directory path
   # This value overrides the isiVolumePathPermissions attribute of corresponding cluster config in secret, if present
   # Allowed values: valid octal mode number
   # Default value: "0777"
   # Examples: "0777", "777", "0755"
   IsiVolumePathPermissions: "777"
-
   # AccessZone groupnet service IP. Update AzServiceIP if different than endpoint.
   # Optional: true
   # Default value: endpoint of the cluster ClusterName
@@ -40,7 +37,6 @@ parameters:
   # Optional: true
   # Default value: "false"
   RootClientEnabled: "false"
-
   # Name of PowerScale cluster, where pv will be provisioned.
   # This name should match with name of one of the cluster configs in isilon-creds secret.
   # If this parameter is not specified, then default cluster config in isilon-creds secret
@@ -52,7 +48,6 @@ parameters:
   # Optional: true
   # Default value: None
   #csi.storage.k8s.io/fstype: "nfs"
-
 # volumeBindingMode controls when volume binding and dynamic provisioning should occur.
 # Allowed values:
 #   Immediate: indicates that volume binding and dynamic provisioning occurs once the

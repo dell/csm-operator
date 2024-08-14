@@ -20,4 +20,3 @@ allowedTopologies:
       - key: csi-powermax.dellemc.com/REPLACE_SYSTEMID.iscsi
         values:
           - csi-powermax.dellemc.com
-
