@@ -51,7 +51,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.x.x.x,10.x.x.x"  # provide MDM value
+            value: "10.x.x.x,10.x.x.x" #provide MDM value
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -161,7 +161,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
+            value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
   modules:
     # Application Mobility: enable csm-application-mobility module
     - name: application-mobility
@@ -226,22 +226,22 @@ spec:
             # Default value: existing-cred
             - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
               value: "alt-cloud-creds"
-           # If velero is not already present in cluster, set enabled to true to create a secret.
-           # Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
+          #If velero is not already present in cluster, set enabled to true to create a secret.
+          #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
           credentials:
             - createWithInstall: false
-               # Specify the name to be used for secret that will be created to hold object store credentials.
+              #Specify the name to be used for secret that will be created to hold object store credentials.
               name: cloud-creds
-               # Specify the object store access credentials to be stored in a secret with key "cloud".
+              #Specify the object store access credentials to be stored in a secret with key "cloud".
               secretContents:
-                aws_access_key_id: console  # Provide the access key id here
-                aws_secret_access_key: console123  # provide the access key here
+                aws_access_key_id: console #Provide the access key id here
+                aws_secret_access_key: console123 #provide the access key here
     # Init containers to be added to the Velero and Node-agent deployment's spec.
     - initContainer:
-         # initContainer image for the dell velero plugin
+        #initContainer image for the dell velero plugin
         - name: dell-custom-velero-plugin
           image: REPLACE_PLUGIN_IMAGE
-           # initContainer image for the configuration provider aws
-           # digest for velero/velero-plugin-for-aws:v1.10.0
+          #initContainer image for the configuration provider aws
+          #digest for velero/velero-plugin-for-aws:v1.10.0
         - name: velero-plugin-for-aws
           image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
