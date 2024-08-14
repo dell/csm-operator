@@ -17,9 +17,8 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI
-    run: 
+    run:
       - ./cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
-
 - scenario: "Uninstall PowerScale Driver"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
@@ -34,7 +33,6 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Validate [powerscale] driver from CR [1] is not installed"
-
 - scenario: "Install PowerFlex Driver(Standalone)"
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
@@ -54,9 +52,8 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
     name: Cert CSI
-    run: 
+    run:
       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-
 - scenario: "Uninstall PowerFlex Driver"
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
@@ -71,7 +68,6 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Validate [powerflex] driver from CR [1] is not installed"
-
 - scenario: "Install PowerFlex Driver (With Authorization)"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
@@ -103,7 +99,6 @@
     name: Cert CSI
     run:
       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
@@ -141,7 +136,6 @@
     name: Cert CSI
     run:
       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
- 
 - scenario: Install PowerFlex Driver(With Authorization), Disable Authorization module"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
@@ -180,7 +174,6 @@
     name: Cert CSI
     run:
       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-
 - scenario: "Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
@@ -205,7 +198,3 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
-    
-
-
-

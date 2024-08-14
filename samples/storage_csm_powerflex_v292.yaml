@@ -51,12 +51,10 @@ spec:
         # Default value: "TEXT"
         - name: "CSI_LOG_FORMAT"
           value: "TEXT"
-
     sideCars:
       # 'k8s' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         args: ["--volume-name-prefix=k8s"]
-
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
@@ -66,7 +64,6 @@ spec:
             value: "1"
           - name: MDM
             value: "10.xx.xx.xx,10.xx.xx.xx" #do not add mdm value here if it is present in secret
-
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -88,13 +85,11 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
         # X_CSI_POWERFLEX_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
         # Allowed Values: x.x.x.x/xx or x.x.x.x
         # Default Value: None
         - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
           value:
-
       #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -117,7 +112,6 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     node:
       envs:
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
@@ -127,7 +121,6 @@ spec:
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
           value: "false"
-
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
         # Allowed values:
         #   true: enable checking of health condition of CSI volumes
@@ -135,7 +128,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
         #   true: enable renaming
@@ -143,14 +135,12 @@ spec:
         # Default value: false
         - name: X_CSI_RENAME_SDC_ENABLED
           value: "false"
-
         # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
         # "prefix" + "worker_node_hostname" should not exceed 31 chars.
         # Default value: none
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
-
         # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
         # Allowed values: Any value greater than or equal to 0
         # If value is zero Container Orchestrator shall decide how many volumes of this type can be published by the controller to the node.
@@ -158,7 +148,6 @@ spec:
         # Default value: "0"
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "0"
-
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -200,7 +189,6 @@ spec:
       # - key: "isilon.podmon.storage.dell.com"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-
     initContainers:
       - image: dellemc/sdc:4.5
         imagePullPolicy: IfNotPresent
@@ -208,7 +196,6 @@ spec:
         envs:
           - name: MDM
             value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
-
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -222,11 +209,9 @@ spec:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
               value: "csm-authorization.com"
-
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"
-
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
@@ -253,7 +238,6 @@ spec:
             # Default value: "INFO"
             - name: "TOPOLOGY_LOG_LEVEL"
               value: "INFO"
-
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: false
@@ -274,7 +258,6 @@ spec:
             # Default value: "nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
               value: "nginxinc/nginx-unprivileged:1.20"
-
         # enabled: Enable/Disable cert-manager
         # Allowed values:
         #   true: enable deployment of cert-manager
@@ -282,7 +265,6 @@ spec:
         # Default value: false
         - name: cert-manager
           enabled: false
-
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
@@ -339,7 +321,6 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
-
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
@@ -366,7 +347,6 @@ spec:
             # Allowed values: string
             - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
               value: "powerflex"
-
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
@@ -382,7 +362,6 @@ spec:
             # Default value: "debug"
             - name: "REPLICATION_CTRL_LOG_LEVEL"
               value: "debug"
-
             # replicas: Defines number of controller replicas
             # Allowed values: int
             # Default value: 1
@@ -397,7 +376,6 @@ spec:
             # Allowed values: time
             - name: "RETRY_INTERVAL_MAX"
               value: "5m"
-
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:
