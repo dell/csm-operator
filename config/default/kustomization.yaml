@@ -7,7 +7,7 @@ namespace: default
 # field above.
 namePrefix: dell-csm-operator-
 # Labels to add to all resources and selectors.
-#commonLabels:
+ # commonLabels:
 #  someName: someValue
 bases:
   - ../crd
