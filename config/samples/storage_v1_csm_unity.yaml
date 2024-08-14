@@ -78,7 +78,7 @@ spec:
         # Allowed values:
         #   true: skip Unisphere API server's certificate verification
         #   false: verify Unisphere API server's certificates
-        # Default value: true	
+        # Default value: true
         - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
           value: "true"
     sideCars:
