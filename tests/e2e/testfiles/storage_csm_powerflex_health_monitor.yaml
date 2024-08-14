@@ -62,7 +62,7 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "true"
-      #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
+      # "controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
       # Default value: None
