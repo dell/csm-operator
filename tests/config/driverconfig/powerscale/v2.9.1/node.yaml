@@ -30,10 +30,10 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "update"]
-  - apiGroups: [ "security.openshift.io" ]
-    resourceNames: [ "privileged" ]
-    resources: [ "securitycontextconstraints" ]
-    verbs: [ "use" ]
+  - apiGroups: ["security.openshift.io"]
+    resourceNames: ["privileged"]
+    resources: ["securitycontextconstraints"]
+    verbs: ["use"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -63,8 +63,8 @@ spec:
         app: <DriverDefaultReleaseName>-node
     spec:
       serviceAccount: <DriverDefaultReleaseName>-node
-      #nodeSelector:
-      #tolerations:
+      # nodeSelector:
+      # tolerations:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       containers:
@@ -193,4 +193,4 @@ spec:
             secretName: <DriverDefaultReleaseName>-creds
         - name: csi-isilon-config-params
           configMap:
-             name: <DriverDefaultReleaseName>-config-params
+            name: <DriverDefaultReleaseName>-config-params

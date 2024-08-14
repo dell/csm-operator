@@ -70,14 +70,14 @@ spec:
         # ssl authentication. (unity-cert-0..unity-cert-n)
         # This field is only verified if X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION is set to false
         # Allowed values: n, where n > 0
-        # Default value: None          
+        # Default value: None
         - name: CERT_SECRET_COUNT
           value: "1"
         # X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: Specifies if the driver is going to validate unisphere certs while connecting to the Unisphere REST API interface.
         # If it is set to false, then a secret unity-certs has to be created with an X.509 certificate of CA which signed the Unisphere certificate
         # Allowed values:
         #   true: skip Unisphere API server's certificate verification
-        #   false: verify Unisphere API server's certificates 
+        #   false: verify Unisphere API server's certificates
         # Default value: true	
         - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
           value: "true"
@@ -161,7 +161,7 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-# Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-# - key: "node-role.kubernetes.io/control-plane"
-#   operator: "Exists"
-#   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
