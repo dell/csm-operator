@@ -78,8 +78,8 @@ spec:
         app: <DriverDefaultReleaseName>-node
         driver.dellemc.com: dell-storage
     spec:
-      #nodeSelector:
-      #tolerations:
+       # nodeSelector:
+       # tolerations:
       serviceAccount: <DriverDefaultReleaseName>-node
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true

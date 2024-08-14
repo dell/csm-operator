@@ -158,7 +158,7 @@ rules:
     verbs: ["get", "list", "watch"]
   # We require these rules to support users with the OwnerReferencesPermissionEnforcement
   # admission controller enabled:
-  # https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+  # https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/ # ownerreferencespermissionenforcement
   - apiGroups: ["cert-manager.io"]
     resources: ["certificates/finalizers", "certificaterequests/finalizers"]
     verbs: ["update"]
@@ -199,7 +199,7 @@ rules:
     verbs: ["create", "delete"]
   # We require these rules to support users with the OwnerReferencesPermissionEnforcement
   # admission controller enabled:
-  # https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+  # https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/ # ownerreferencespermissionenforcement
   - apiGroups: ["acme.cert-manager.io"]
     resources: ["orders/finalizers"]
     verbs: ["update"]
@@ -255,13 +255,13 @@ rules:
     verbs: ["get", "list", "watch", "create", "delete", "update"]
   # We require the ability to specify a custom hostname when we are creating
   # new ingress resources.
-  # See: https://github.com/openshift/origin/blob/21f191775636f9acadb44fa42beeb4f75b255532/pkg/route/apiserver/admission/ingress_admission.go#L84-L148
+  # See: https://github.com/openshift/origin/blob/21f191775636f9acadb44fa42beeb4f75b255532/pkg/route/apiserver/admission/ingress_admission.go # L84-L148
   - apiGroups: ["route.openshift.io"]
     resources: ["routes/custom-host"]
     verbs: ["create"]
   # We require these rules to support users with the OwnerReferencesPermissionEnforcement
   # admission controller enabled:
-  # https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+  # https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/ # ownerreferencespermissionenforcement
   - apiGroups: ["acme.cert-manager.io"]
     resources: ["challenges/finalizers"]
     verbs: ["update"]
@@ -294,7 +294,7 @@ rules:
     verbs: ["get", "list", "watch"]
   # We require these rules to support users with the OwnerReferencesPermissionEnforcement
   # admission controller enabled:
-  # https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+  # https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/ # ownerreferencespermissionenforcement
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses/finalizers"]
     verbs: ["update"]
@@ -634,9 +634,9 @@ metadata:
 rules:
   # Used for leader election by the controller
   # cert-manager-cainjector-leader-election is used by the CertificateBased injector controller
-  #   see cmd/cainjector/start.go#L113
+  #   see cmd/cainjector/start.go # L113
   # cert-manager-cainjector-leader-election-core is used by the SecretBased injector controller
-  #   see cmd/cainjector/start.go#L137
+  #   see cmd/cainjector/start.go # L137
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     resourceNames: ["cert-manager-cainjector-leader-election", "cert-manager-cainjector-leader-election-core"]

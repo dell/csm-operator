@@ -32,7 +32,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -40,7 +40,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -138,7 +138,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -146,7 +146,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -797,7 +797,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -805,7 +805,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -836,7 +836,7 @@ spec:
                     name:
                       description: |-
                         Name of the referent.
-                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/ # names
                         TODO: Add other useful fields. apiVersion, kind, uid?
                       type: string
                     optional:
@@ -992,7 +992,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -1000,7 +1000,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -1177,7 +1177,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -1185,7 +1185,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -1360,7 +1360,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -1368,7 +1368,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -1438,7 +1438,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -1446,7 +1446,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -1571,7 +1571,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -1579,7 +1579,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -1614,12 +1614,12 @@ spec:
                     kind:
                       description: |-
                         Kind of the referent.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
                       type: string
                     name:
                       description: |-
                         Name of the referent.
-                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/ # names
                       type: string
                     namespace:
                       description: |-
@@ -1629,12 +1629,12 @@ spec:
                     resourceVersion:
                       description: |-
                         Specific resourceVersion to which this reference is made, if any.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # concurrency-control-and-consistency
                       type: string
                     uid:
                       description: |-
                         UID of the referent.
-                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/ # uids
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -1799,7 +1799,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -1807,7 +1807,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -1839,12 +1839,12 @@ spec:
                     kind:
                       description: |-
                         Kind of the referent.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
                       type: string
                     name:
                       description: |-
                         Name of the referent.
-                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/ # names
                       type: string
                     namespace:
                       description: |-
@@ -1854,12 +1854,12 @@ spec:
                     resourceVersion:
                       description: |-
                         Specific resourceVersion to which this reference is made, if any.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # concurrency-control-and-consistency
                       type: string
                     uid:
                       description: |-
                         UID of the referent.
-                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/ # uids
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -1982,7 +1982,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -1990,7 +1990,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -2535,7 +2535,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -2543,7 +2543,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -3099,7 +3099,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -3107,7 +3107,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -3189,7 +3189,7 @@ spec:
                 APIVersion defines the versioned schema of this representation of an object.
                 Servers should convert recognized schemas to the latest internal value, and
                 may reject unrecognized values.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # resources
               type: string
             kind:
               description: |-
@@ -3197,7 +3197,7 @@ spec:
                 Servers may infer this from the endpoint the client submits requests to.
                 Cannot be updated.
                 In CamelCase.
-                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md # types-kinds
               type: string
             metadata:
               type: object
@@ -3218,7 +3218,7 @@ spec:
                     name:
                       description: |-
                         Name of the referent.
-                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/ # names
                         TODO: Add other useful fields. apiVersion, kind, uid?
                       type: string
                     optional:
