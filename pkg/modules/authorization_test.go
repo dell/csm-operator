@@ -777,6 +777,367 @@ func TestAuthorizationKubeMgmtPolicies(t *testing.T) {
 	}
 }
 
+func TestAuthorizationStorageServiceVault(t *testing.T) {
+	vault0Identifier := "vault0"
+	vault0Arg := "--vault=vault0,https://10.0.0.1:8400,csm-authorization,true"
+	vault0SkipCertValidationArg := "--vault=vault0,https://10.0.0.1:8400,csm-authorization,false"
+	selfSignedVault0Issuer := "storage-service-selfsigned-vault0"
+	selfSignedVault0Certificate := "storage-service-selfsigned-vault0"
+	vault0CA := "vault-certificate-authority-vault0"
+	vault0ClientCert := "vault-client-certificate-vault0"
+
+	type checkFn func(*testing.T, ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn){
+		"success - self-signed certificate": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundVaultClientVolume := false
+				foundSelfSignedTLSSource := false
+				for _, volume := range storageService.Spec.Template.Spec.Volumes {
+					if volume.Name == fmt.Sprintf("vault-client-certificate-%s", vault0Identifier) {
+						foundVaultClientVolume = true
+
+						for _, source := range volume.VolumeSource.Projected.Sources {
+							if source.Secret != nil {
+								if source.Secret.LocalObjectReference.Name == fmt.Sprintf("storage-service-selfsigned-tls-%s", vault0Identifier) {
+									foundSelfSignedTLSSource = true
+								}
+							}
+						}
+					}
+				}
+
+				if !foundVaultClientVolume {
+					t.Errorf("expected volume %s, wasn't found", fmt.Sprintf("vault-client-certificate-%s", vault0Identifier))
+				}
+
+				if !foundSelfSignedTLSSource {
+					t.Errorf("expected volume source %s, wasn't found", fmt.Sprintf("storage-service-self-signed-tls-%s", vault0Identifier))
+				}
+
+				foundVaultArgs := false
+				for _, c := range storageService.Spec.Template.Spec.Containers {
+					if c.Name == "storage-service" {
+						for _, arg := range c.Args {
+							if arg == vault0Arg {
+								foundVaultArgs = true
+							}
+						}
+						break
+					}
+				}
+
+				if !foundVaultArgs {
+					t.Errorf("expected arg %s, wasn't found", vault0Arg)
+				}
+
+				issuer := &certmanagerv1.Issuer{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: selfSignedVault0Issuer, Namespace: "authorization"}, issuer)
+				if err != nil {
+					t.Errorf("expected issuer %s, wasn't found", selfSignedVault0Issuer)
+				}
+
+				certificate := &certmanagerv1.Certificate{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: selfSignedVault0Issuer, Namespace: "authorization"}, certificate)
+				if err != nil {
+					t.Errorf("expected certificate %s, wasn't found", selfSignedVault0Certificate)
+				}
+			}
+
+			return false, customResource, sourceClient, checkFn
+		},
+
+		"success - vault certificate authority": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_vault_ca.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundVaultClientVolume := false
+				foundSelfSignedTLSSource := false
+				foundVaultCA := false
+				for _, volume := range storageService.Spec.Template.Spec.Volumes {
+					if volume.Name == fmt.Sprintf("vault-client-certificate-%s", vault0Identifier) {
+						foundVaultClientVolume = true
+
+						for _, source := range volume.VolumeSource.Projected.Sources {
+							if source.Secret != nil {
+								if source.Secret.LocalObjectReference.Name == fmt.Sprintf("storage-service-selfsigned-tls-%s", vault0Identifier) {
+									foundSelfSignedTLSSource = true
+								}
+
+								if source.Secret.LocalObjectReference.Name == fmt.Sprintf("vault-certificate-authority-%s", vault0Identifier) {
+									foundVaultCA = true
+								}
+							}
+						}
+					}
+				}
+
+				if !foundVaultClientVolume {
+					t.Errorf("expected volume %s, wasn't found", fmt.Sprintf("vault-client-certificate-%s", vault0Identifier))
+				}
+
+				if !foundSelfSignedTLSSource {
+					t.Errorf("expected volume source %s, wasn't found", fmt.Sprintf("storage-service-self-signed-tls-%s", vault0Identifier))
+				}
+
+				if !foundVaultCA {
+					t.Errorf("expected volume source %s, wasn't found", fmt.Sprintf("vault-certificate-authority-%s", vault0Identifier))
+				}
+
+				foundVaultArgs := false
+				for _, c := range storageService.Spec.Template.Spec.Containers {
+					if c.Name == "storage-service" {
+						for _, arg := range c.Args {
+							if arg == vault0SkipCertValidationArg {
+								foundVaultArgs = true
+							}
+						}
+						break
+					}
+				}
+
+				if !foundVaultArgs {
+					t.Errorf("expected arg %s, wasn't found", vault0SkipCertValidationArg)
+				}
+
+				issuer := &certmanagerv1.Issuer{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: selfSignedVault0Issuer, Namespace: "authorization"}, issuer)
+				if err != nil {
+					t.Errorf("expected issuer %s, wasn't found", selfSignedVault0Issuer)
+				}
+
+				certificate := &certmanagerv1.Certificate{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: selfSignedVault0Issuer, Namespace: "authorization"}, certificate)
+				if err != nil {
+					t.Errorf("expected certificate %s, wasn't found", selfSignedVault0Certificate)
+				}
+
+				secret := &corev1.Secret{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: vault0CA, Namespace: "authorization"}, secret)
+				if err != nil {
+					t.Errorf("expected secret %s, wasn't found", vault0CA)
+				}
+			}
+
+			return false, customResource, sourceClient, checkFn
+		},
+
+		"success - all vault certificates": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_vault_cert.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundVaultClientVolume := false
+				foundVaultClientSource := false
+				foundVaultCA := false
+				for _, volume := range storageService.Spec.Template.Spec.Volumes {
+					if volume.Name == fmt.Sprintf("vault-client-certificate-%s", vault0Identifier) {
+						foundVaultClientVolume = true
+
+						for _, source := range volume.VolumeSource.Projected.Sources {
+							if source.Secret != nil {
+								if source.Secret.LocalObjectReference.Name == fmt.Sprintf("vault-client-certificate-%s", vault0Identifier) {
+									foundVaultClientSource = true
+								}
+
+								if source.Secret.LocalObjectReference.Name == fmt.Sprintf("vault-certificate-authority-%s", vault0Identifier) {
+									foundVaultCA = true
+								}
+							}
+						}
+					}
+				}
+
+				if !foundVaultClientVolume {
+					t.Errorf("expected volume %s, wasn't found", fmt.Sprintf("vault-client-certificate-%s", vault0Identifier))
+				}
+
+				if !foundVaultClientSource {
+					t.Errorf("expected volume source %s, wasn't found", fmt.Sprintf("storage-service-self-signed-tls-%s", vault0Identifier))
+				}
+
+				if !foundVaultCA {
+					t.Errorf("expected volume source %s, wasn't found", fmt.Sprintf("vault-certificate-authority-%s", vault0Identifier))
+				}
+
+				foundVaultArgs := false
+				for _, c := range storageService.Spec.Template.Spec.Containers {
+					if c.Name == "storage-service" {
+						for _, arg := range c.Args {
+							if arg == vault0SkipCertValidationArg {
+								foundVaultArgs = true
+							}
+						}
+						break
+					}
+				}
+
+				if !foundVaultArgs {
+					t.Errorf("expected arg %s, wasn't found", vault0SkipCertValidationArg)
+				}
+
+				caSecret := &corev1.Secret{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: vault0CA, Namespace: "authorization"}, caSecret)
+				if err != nil {
+					t.Errorf("expected secret %s, wasn't found", vault0CA)
+				}
+
+				clientSecret := &corev1.Secret{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: vault0ClientCert, Namespace: "authorization"}, clientSecret)
+				if err != nil {
+					t.Errorf("expected secret %s, wasn't found", vault0CA)
+				}
+			}
+
+			return false, customResource, sourceClient, checkFn
+		},
+
+		"success - multiple vaults": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			vaultIdentifier := []string{"vault0", "vault1"}
+			vaultArgs := []string{"--vault=vault0,https://10.0.0.1:8400,csm-authorization,true", "--vault=vault1,https://10.0.0.2:8400,csm-authorization,true"}
+			selfSignedCert := []string{"storage-service-selfsigned-vault0", "storage-service-selfsigned-vault1"}
+
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_multiple_vaults.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			certmanagerv1.AddToScheme(scheme.Scheme)
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundVaultClientVolume := false
+				foundSelfSignedTLSSource := false
+				for _, id := range vaultIdentifier {
+					for _, volume := range storageService.Spec.Template.Spec.Volumes {
+						if volume.Name == fmt.Sprintf("vault-client-certificate-%s", id) {
+							foundVaultClientVolume = true
+
+							for _, source := range volume.VolumeSource.Projected.Sources {
+								if source.Secret != nil {
+									if source.Secret.LocalObjectReference.Name == fmt.Sprintf("storage-service-selfsigned-tls-%s", id) {
+										foundSelfSignedTLSSource = true
+									}
+								}
+							}
+						}
+					}
+
+					if !foundVaultClientVolume {
+						t.Errorf("expected volume %s, wasn't found", fmt.Sprintf("vault-client-certificate-%s", id))
+					}
+
+					if !foundSelfSignedTLSSource {
+						t.Errorf("expected volume source %s, wasn't found", fmt.Sprintf("storage-service-self-signed-tls-%s", id))
+					}
+				}
+
+				foundVaultArgs := false
+				for _, vaultArg := range vaultArgs {
+					for _, c := range storageService.Spec.Template.Spec.Containers {
+						if c.Name == "storage-service" {
+							for _, arg := range c.Args {
+								if arg == vaultArg {
+									foundVaultArgs = true
+								}
+							}
+							break
+						}
+					}
+
+					if !foundVaultArgs {
+						t.Errorf("expected arg %s, wasn't found", vaultArg)
+					}
+				}
+
+				for _, cert := range selfSignedCert {
+					issuer := &certmanagerv1.Issuer{}
+					err = client.Get(context.Background(), types.NamespacedName{Name: cert, Namespace: "authorization"}, issuer)
+					if err != nil {
+						t.Errorf("expected issuer %s, wasn't found", cert)
+					}
+
+					certificate := &certmanagerv1.Certificate{}
+					err = client.Get(context.Background(), types.NamespacedName{Name: cert, Namespace: "authorization"}, certificate)
+					if err != nil {
+						t.Errorf("expected certificate %s, wasn't found", cert)
+					}
+				}
+			}
+
+			return false, customResource, sourceClient, checkFn
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			isDeleting, cr, sourceClient, checkFn := tc(t)
+
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			checkFn(t, sourceClient, err)
+		})
+	}
+}
+
 func TestAuthorizationIngress(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {

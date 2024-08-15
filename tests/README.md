@@ -71,6 +71,7 @@ If running the Authorization proxy server e2e tests, further setup must be done:
 
 - have a vault server running configured with the authorization namespace. This is documented in the CSM documentation.
 - update V2 CRs with vault address.
+- the scenario "Install Authorization Proxy Server V2 With Multiple Vaults" requires 2 separate vault instances to be running.
 
 Notes:
   - Authorization V1 scenarios support PowerFlex and PowerScale
