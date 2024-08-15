@@ -6,7 +6,9 @@ spec:
   type: powerflex
   endpoint: https://127.0.0.1
   systemID: 1a99aa999999aa9a
-  credentialStore: vault
-  credentialPath: storage/powerflex
+  vault:
+    identifier: vault0
+    kvEngine: secret
+    path: powerflex/1a99aa999999aa9a
   skipCertificateValidation: true
   pollInterval: 30s
