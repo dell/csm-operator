@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.9.0
+      configVersion: v1.11.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -30,10 +30,10 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: dellemc/csm-authorization-proxy:v1.9.0
-          tenantService: dellemc/csm-authorization-tenant:v1.9.0
-          roleService: dellemc/csm-authorization-role:v1.9.0
-          storageService: dellemc/csm-authorization-storage:v1.9.0
+          proxyService: dellemc/csm-authorization-proxy:v1.11.0
+          tenantService: dellemc/csm-authorization-tenant:v1.11.0
+          roleService: dellemc/csm-authorization-role:v1.11.0
+          storageService: dellemc/csm-authorization-storage:v1.11.0
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
@@ -44,18 +44,16 @@ spec:
           # for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: ""
-          # base hostname for the ingress rules that expose the services
-          # the proxy-server ingress will use this hostname
-          # Allowed values: string
-          # Default value: csm-authorization.com
+          # proxy-server ingress will use this hostname
+          # NOTE: an additional hostname can be configured in proxyServerIngress.hosts
+          # NOTE: proxy-server ingress is configured to accept IP address connections so hostnames are not required
           hostname: "csm-authorization.com"
           # proxy-server ingress configuration
           proxyServerIngress:
             - ingressClassName: nginx
               # additional host rules for the proxy-server ingress
-              hosts: []
-              # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
-
+              hosts:
+                - authorization-ingress-nginx-controller.authorization.svc.cluster.local
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
@@ -65,7 +63,7 @@ spec:
           # to use a different storage class for redis, specify the name of the storage class
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
-          storageclass: ""
+          storageclass: "local-storage"
 ---
 apiVersion: v1
 kind: ConfigMap
