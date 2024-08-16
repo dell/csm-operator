@@ -14,8 +14,8 @@ spec:
   template:
     metadata:
       labels:
-        app: proxy-server
         csm: <NAME>
+        app: proxy-server
     spec:
       containers:
         - name: proxy-server
@@ -50,7 +50,7 @@ spec:
           image: <AUTHORIZATION_OPA_KUBEMGMT_IMAGE>
           imagePullPolicy: IfNotPresent
           args:
-            - "--policies=<NAMESPACE>"
+            - "--namespaces=<NAMESPACE>"
             - "--enable-data"
       volumes:
         - name: config-volume
@@ -93,8 +93,8 @@ spec:
   template:
     metadata:
       labels:
-        app: tenant-service
         csm: <NAME>
+        app: tenant-service
     spec:
       containers:
         - name: tenant-service
@@ -418,6 +418,15 @@ metadata:
 ---
 # Grant OPA/kube-mgmt read-only access to resources. This lets kube-mgmt
 # list configmaps to be loaded into OPA as policies.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: view
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:

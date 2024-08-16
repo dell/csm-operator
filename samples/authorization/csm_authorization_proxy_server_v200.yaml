@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.9.0
+      configVersion: v2.0.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -30,12 +30,21 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: dellemc/csm-authorization-proxy:v1.9.0
-          tenantService: dellemc/csm-authorization-tenant:v1.9.0
-          roleService: dellemc/csm-authorization-role:v1.9.0
-          storageService: dellemc/csm-authorization-storage:v1.9.0
+          proxyService: dellemc/csm-authorization-proxy:v2.0.0
+          proxyServiceReplicas: 1
+          tenantService: dellemc/csm-authorization-tenant:v2.0.0
+          tenantServiceReplicas: 1
+          roleService: dellemc/csm-authorization-role:v2.0.0
+          roleServiceReplicas: 1
+          storageService: dellemc/csm-authorization-storage:v2.0.0
+          storageServiceReplicas: 1
           opa: openpolicyagent/opa
-          opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
+          opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.7
+          authorizationController: dellemc/csm-authorization-controller:v2.0.0
+          authorizationControllerReplicas: 1
+          leaderElection: true
+          # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
+          controllerReconcileInterval: 5m
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
@@ -52,18 +61,35 @@ spec:
           proxyServerIngress:
             - ingressClassName: nginx
               # additional host rules for the proxy-server ingress
-              hosts:
-                - authorization-ingress-nginx-controller.authorization.svc.cluster.local
+              hosts: []
+              # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
+
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
-          redis: redis:6.0.8-alpine
+          redis: redis:7.4.0-alpine
           commander: rediscommander/redis-commander:latest
-          # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
-          # to use a different storage class for redis, specify the name of the storage class
-          # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
-          # Default value: None
-          storageclass: "local-storage"
+          redisName: redis-csm
+          redisCommander: rediscommander
+          sentinel: sentinel
+          redisReplicas: 5
+        - name: vault
+          vaultAddress: https://10.0.0.1:8400
+          vaultRole: csm-authorization
+          skipCertificateValidation: true
+          kvEnginePath: secret
+          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
+          # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificateAuthority: ""
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -74,3 +100,4 @@ data:
   csm-config-params.yaml: |-
     CONCURRENT_POWERFLEX_REQUESTS: 10
     LOG_LEVEL: debug
+    STORAGE_CAPACITY_POLL_INTERVAL: 5m
