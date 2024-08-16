@@ -430,7 +430,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
 		"success v1": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -512,7 +512,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 		"fail v1 - karavi-config-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -531,7 +531,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 		"fail v1 - karavi-storage-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -647,7 +647,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 		"success - creating v1": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -1260,7 +1260,7 @@ func TestAuthorizationIngress(t *testing.T) {
 			return true, true, tmpCR, sourceClient
 		},
 		"success - creating v1.10.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -1298,8 +1298,8 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient
 		},
-		"success - creating v1.9.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v190.yaml")
+		"success - creating v1.11.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1110.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -1580,7 +1580,7 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 			return true, tmpCR, sourceClient, operatorConfig
 		},
 		"success - creating v1": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1100.yaml")
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
