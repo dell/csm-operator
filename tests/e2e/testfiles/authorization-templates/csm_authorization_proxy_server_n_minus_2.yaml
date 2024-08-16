@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.9.0
+      configVersion: v1.10.1
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -30,10 +30,10 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: dellemc/csm-authorization-proxy:v1.9.0
-          tenantService: dellemc/csm-authorization-tenant:v1.9.0
-          roleService: dellemc/csm-authorization-role:v1.9.0
-          storageService: dellemc/csm-authorization-storage:v1.9.0
+          proxyService: dellemc/csm-authorization-proxy:v1.10.1
+          tenantService: dellemc/csm-authorization-tenant:v1.10.1
+          roleService: dellemc/csm-authorization-role:v1.10.1
+          storageService: dellemc/csm-authorization-storage:v1.10.1
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates

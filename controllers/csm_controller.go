@@ -1347,7 +1347,8 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	if err != nil {
 		return fmt.Errorf("failed upgrade check: %v", err)
 	} else if !upgradeValid {
-		return fmt.Errorf("failed upgrade check because upgrade is not valid")
+		log.Infof("upgrade is not valid")
+		return nil
 	}
 
 	// check for owner reference
@@ -1429,6 +1430,9 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 	if configVersionExists {
 		if cr.HasModule(csmv1.AuthorizationServer) {
 			newVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
+			if newVersion == "v2.0.0-alpha" {
+				return false, nil
+			}
 			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
 		}
 		if cr.HasModule(csmv1.ApplicationMobility) {
