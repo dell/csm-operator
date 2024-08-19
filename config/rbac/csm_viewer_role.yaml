@@ -4,17 +4,17 @@ kind: ClusterRole
 metadata:
   name: containerstoragemodule-viewer-role
 rules:
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - containerstoragemodules
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - containerstoragemodules/status
-  verbs:
-  - get
+  - apiGroups:
+      - storage.dell.com
+    resources:
+      - containerstoragemodules
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - storage.dell.com
+    resources:
+      - containerstoragemodules/status
+    verbs:
+      - get

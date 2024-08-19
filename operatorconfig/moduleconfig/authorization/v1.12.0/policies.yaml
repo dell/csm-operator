@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: common
   namespace: <NAMESPACE>
+  labels:
+    openpolicyagent.org/policy: rego
 data:
   common.rego: |
     package karavi.common
@@ -14,6 +16,8 @@ kind: ConfigMap
 metadata:
   name: volumes-create
   namespace: <NAMESPACE>
+  labels:
+    openpolicyagent.org/policy: rego
 data:
   volumes-create.rego: |
     package karavi.volumes.create
@@ -70,6 +74,8 @@ kind: ConfigMap
 metadata:
   name: volumes-delete
   namespace: <NAMESPACE>
+  labels:
+    openpolicyagent.org/policy: rego
 data:
   volumes-delete.rego: |
     package karavi.volumes.delete
@@ -96,7 +102,7 @@ data:
 
     default claims = {}
     claims = input.claims
-    deny[msg] {                                                                                       
+    deny[msg] {
       claims == {}
       msg := sprintf("missing claims", [])
     }
@@ -106,6 +112,8 @@ kind: ConfigMap
 metadata:
   name: volumes-map
   namespace: <NAMESPACE>
+  labels:
+    openpolicyagent.org/policy: rego
 data:
   volumes-map.rego: |
     package karavi.volumes.map
@@ -142,6 +150,8 @@ kind: ConfigMap
 metadata:
   name: powermax-volumes-create
   namespace: <NAMESPACE>
+  labels:
+    openpolicyagent.org/policy: rego
 data:
   volumes-powermax-create.rego: |
     package karavi.volumes.powermax.create
@@ -199,6 +209,8 @@ kind: ConfigMap
 metadata:
   name: volumes-unmap
   namespace: <NAMESPACE>
+  labels:
+    openpolicyagent.org/policy: rego
 data:
   volumes-unmap.rego: |
     package karavi.volumes.unmap
@@ -235,8 +247,10 @@ kind: ConfigMap
 metadata:
   name: sdc-approve
   namespace: <NAMESPACE>
+  labels:
+    openpolicyagent.org/policy: rego
 data:
-  sdc-approve.rego: |
+  sdc-approve.rego: |-
     package karavi.sdc.approve
 
     import data.karavi.common

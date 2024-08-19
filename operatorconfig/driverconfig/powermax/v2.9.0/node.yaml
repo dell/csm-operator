@@ -42,10 +42,10 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "update"]
-  - apiGroups: [ "security.openshift.io" ]
-    resourceNames: [ "privileged" ]
-    resources: [ "securitycontextconstraints" ]
-    verbs: [ "use" ]
+  - apiGroups: ["security.openshift.io"]
+    resourceNames: ["privileged"]
+    resources: ["securitycontextconstraints"]
+    verbs: ["use"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -252,8 +252,8 @@ spec:
             optional: true
         - name: powermax-config-params
           configMap:
-             name: <DriverDefaultReleaseName>-config-params
+            name: <DriverDefaultReleaseName>-config-params
         - name: node-topology-config
           configMap:
-             name: node-topology-config
-             optional: true
+            name: node-topology-config
+            optional: true

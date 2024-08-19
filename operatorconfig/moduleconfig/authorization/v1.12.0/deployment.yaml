@@ -18,50 +18,50 @@ spec:
         app: proxy-server
     spec:
       containers:
-      - name: proxy-server
-        image: <AUTHORIZATION_PROXY_SERVER_IMAGE>
-        imagePullPolicy: Always
-        args:
-          - "--redis-host=redis.<NAMESPACE>.svc.cluster.local:6379"
-          - "--tenant-service=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
-          - "--role-service=role-service.<NAMESPACE>.svc.cluster.local:50051"
-          - "--storage-service=storage-service.<NAMESPACE>.svc.cluster.local:50051"
-        ports:
-        - containerPort: 8080
-        volumeMounts:
-        - name: config-volume
-          mountPath: /etc/karavi-authorization/config
-        - name: storage-volume
-          mountPath: /etc/karavi-authorization/storage
-        - name: csm-config-params
-          mountPath: /etc/karavi-authorization/csm-config-params
-      - name: opa
-        image: <AUTHORIZATION_OPA_IMAGE>
-        imagePullPolicy: IfNotPresent
-        args:
-        - "run"
-        - "--ignore=."
-        - "--server"
-        - "--log-level=debug"
-        ports:
-        - name: http
-          containerPort: 8181
-      - name: kube-mgmt
-        image: <AUTHORIZATION_OPA_KUBEMGMT_IMAGE>
-        imagePullPolicy: IfNotPresent
-        args:
-        - "--policies=<NAMESPACE>"
-        - "--enable-data"
+        - name: proxy-server
+          image: <AUTHORIZATION_PROXY_SERVER_IMAGE>
+          imagePullPolicy: Always
+          args:
+            - "--redis-host=redis.<NAMESPACE>.svc.cluster.local:6379"
+            - "--tenant-service=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
+            - "--role-service=role-service.<NAMESPACE>.svc.cluster.local:50051"
+            - "--storage-service=storage-service.<NAMESPACE>.svc.cluster.local:50051"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/karavi-authorization/config
+            - name: storage-volume
+              mountPath: /etc/karavi-authorization/storage
+            - name: csm-config-params
+              mountPath: /etc/karavi-authorization/csm-config-params
+        - name: opa
+          image: <AUTHORIZATION_OPA_IMAGE>
+          imagePullPolicy: IfNotPresent
+          args:
+            - "run"
+            - "--ignore=."
+            - "--server"
+            - "--log-level=debug"
+          ports:
+            - name: http
+              containerPort: 8181
+        - name: kube-mgmt
+          image: <AUTHORIZATION_OPA_KUBEMGMT_IMAGE>
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--namespaces=<NAMESPACE>"
+            - "--enable-data"
       volumes:
-      - name: config-volume
-        secret:
-          secretName: karavi-config-secret
-      - name: storage-volume
-        secret:
-          secretName: karavi-storage-secret
-      - name: csm-config-params
-        configMap:
-          name: csm-config-params
+        - name: config-volume
+          secret:
+            secretName: karavi-config-secret
+        - name: storage-volume
+          secret:
+            secretName: karavi-storage-secret
+        - name: csm-config-params
+          configMap:
+            name: csm-config-params
 ---
 apiVersion: v1
 kind: Service
@@ -72,10 +72,10 @@ spec:
   selector:
     app: proxy-server
   ports:
-  - name: http
-    protocol: TCP
-    port: 8080
-    targetPort: 8080
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
 ---
 # Tenant Service
 apiVersion: apps/v1
@@ -97,26 +97,26 @@ spec:
         app: tenant-service
     spec:
       containers:
-      - name: tenant-service
-        image: <AUTHORIZATION_TENANT_SERVICE_IMAGE>
-        imagePullPolicy: Always
-        args:
-          - "--redis-host=redis.<NAMESPACE>.svc.cluster.local:6379"
-        ports:
-        - containerPort: 50051
-          name: grpc
-        volumeMounts:
-        - name: config-volume
-          mountPath: /etc/karavi-authorization/config
-        - name: csm-config-params
-          mountPath: /etc/karavi-authorization/csm-config-params
+        - name: tenant-service
+          image: <AUTHORIZATION_TENANT_SERVICE_IMAGE>
+          imagePullPolicy: Always
+          args:
+            - "--redis-host=redis.<NAMESPACE>.svc.cluster.local:6379"
+          ports:
+            - containerPort: 50051
+              name: grpc
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/karavi-authorization/config
+            - name: csm-config-params
+              mountPath: /etc/karavi-authorization/csm-config-params
       volumes:
-      - name: config-volume
-        secret:
-          secretName: karavi-config-secret
-      - name: csm-config-params
-        configMap:
-          name: csm-config-params
+        - name: config-volume
+          secret:
+            secretName: karavi-config-secret
+        - name: csm-config-params
+          configMap:
+            name: csm-config-params
 ---
 apiVersion: v1
 kind: Service
@@ -127,9 +127,9 @@ spec:
   selector:
     app: tenant-service
   ports:
-  - port: 50051
-    targetPort: 50051
-    name: grpc
+    - port: 50051
+      targetPort: 50051
+      name: grpc
 ---
 # Role Service
 apiVersion: v1
@@ -183,22 +183,22 @@ spec:
     spec:
       serviceAccountName: role-service
       containers:
-      - name: role-service
-        image: <AUTHORIZATION_ROLE_SERVICE_IMAGE>
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 50051
-          name: grpc
-        env:
-          - name: NAMESPACE
-            value: <NAMESPACE>
-        volumeMounts:
-        - name: csm-config-params
-          mountPath: /etc/karavi-authorization/csm-config-params
+        - name: role-service
+          image: <AUTHORIZATION_ROLE_SERVICE_IMAGE>
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50051
+              name: grpc
+          env:
+            - name: NAMESPACE
+              value: <NAMESPACE>
+          volumeMounts:
+            - name: csm-config-params
+              mountPath: /etc/karavi-authorization/csm-config-params
       volumes:
-      - name: csm-config-params
-        configMap:
-          name: csm-config-params
+        - name: csm-config-params
+          configMap:
+            name: csm-config-params
 ---
 apiVersion: v1
 kind: Service
@@ -209,9 +209,9 @@ spec:
   selector:
     app: role-service
   ports:
-  - port: 50051
-    targetPort: 50051
-    name: grpc
+    - port: 50051
+      targetPort: 50051
+      name: grpc
 ---
 # Storage service
 apiVersion: v1
@@ -251,9 +251,9 @@ spec:
   selector:
     app: storage-service
   ports:
-  - port: 50051
-    targetPort: 50051
-    name: grpc
+    - port: 50051
+      targetPort: 50051
+      name: grpc
 ---
 # Redis
 apiVersion: apps/v1
@@ -279,19 +279,19 @@ spec:
         tier: backend
     spec:
       containers:
-      - name: primary
-        image: <AUTHORIZATION_REDIS_IMAGE>
-        imagePullPolicy: IfNotPresent
-        args: ["--appendonly", "yes", "--appendfsync", "always"]
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-        ports:
-        - containerPort: 6379
-        volumeMounts:
-          - name: redis-primary-volume
-            mountPath: /data
+        - name: primary
+          image: <AUTHORIZATION_REDIS_IMAGE>
+          imagePullPolicy: IfNotPresent
+          args: ["--appendonly", "yes", "--appendfsync", "always"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-primary-volume
+              mountPath: /data
       volumes:
         - name: redis-primary-volume
           persistentVolumeClaim:
@@ -330,34 +330,34 @@ spec:
         tier: backend
     spec:
       containers:
-      - name: redis-commander
-        image: <AUTHORIZATION_REDIS_COMMANDER_IMAGE>
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: REDIS_HOSTS
-          value: "rbac:redis.<NAMESPACE>.svc.cluster.local:6379"
-        - name: K8S_SIGTERM
-          value: "1"
-        ports:
         - name: redis-commander
-          containerPort: 8081
-        livenessProbe:
-          httpGet:
-            path: /favicon.png
-            port: 8081
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
-        resources:
-          limits:
-            cpu: "500m"
-            memory: "512M"
-        securityContext:
-          runAsNonRoot: true
-          readOnlyRootFilesystem: false
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
+          image: <AUTHORIZATION_REDIS_COMMANDER_IMAGE>
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: REDIS_HOSTS
+              value: "rbac:redis.<NAMESPACE>.svc.cluster.local:6379"
+            - name: K8S_SIGTERM
+              value: "1"
+          ports:
+            - name: redis-commander
+              containerPort: 8081
+          livenessProbe:
+            httpGet:
+              path: /favicon.png
+              port: 8081
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512M"
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
 ---
 apiVersion: v1
 kind: Service
@@ -368,9 +368,9 @@ spec:
   selector:
     app: redis
   ports:
-  - protocol: TCP
-    port: 6379
-    targetPort: 6379
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
 ---
 apiVersion: v1
 kind: Service
@@ -381,9 +381,9 @@ spec:
   selector:
     app: redis-commander
   ports:
-  - protocol: TCP
-    port: 8081
-    targetPort: 8081
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -419,6 +419,15 @@ metadata:
 # Grant OPA/kube-mgmt read-only access to resources. This lets kube-mgmt
 # list configmaps to be loaded into OPA as policies.
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: view
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: opa-viewer
@@ -427,9 +436,9 @@ roleRef:
   name: view
   apiGroup: rbac.authorization.k8s.io
 subjects:
-- kind: Group
-  name: system:serviceaccounts:<NAMESPACE>
-  apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: system:serviceaccounts:<NAMESPACE>
+    apiGroup: rbac.authorization.k8s.io
 ---
 # Define role for OPA/kube-mgmt to update configmaps with policy status.
 apiVersion: rbac.authorization.k8s.io/v1
@@ -438,9 +447,9 @@ metadata:
   namespace: <NAMESPACE>
   name: configmap-modifier
 rules:
-- apiGroups: [""]
-  resources: ["configmaps"]
-  verbs: ["update", "patch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["update", "patch"]
 ---
 # Grant OPA/kube-mgmt role defined above.
 apiVersion: rbac.authorization.k8s.io/v1
@@ -453,6 +462,6 @@ roleRef:
   name: configmap-modifier
   apiGroup: rbac.authorization.k8s.io
 subjects:
-- kind: Group
-  name: system:serviceaccounts:<NAMESPACE>
-  apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: system:serviceaccounts:<NAMESPACE>
+    apiGroup: rbac.authorization.k8s.io
