@@ -314,10 +314,6 @@ spec:
             spec:
               description: StorageSpec defines the desired state of Storage
               properties:
-                credentialPath:
-                  type: string
-                credentialStore:
-                  type: string
                 endpoint:
                   type: string
                 isiPath:
@@ -333,6 +329,15 @@ spec:
                     INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                     Important: Run "make" to regenerate code after modifying this file
                   type: string
+                vault:
+                  properties:
+                    identifier:
+                      type: string
+                    kvEngine:
+                      type: string
+                    path:
+                      type: string
+                  type: object
               required:
                 - skipCertificateValidation
               type: object
