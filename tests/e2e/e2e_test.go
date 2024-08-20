@@ -38,13 +38,11 @@ const (
 )
 
 var (
-	testResources     []step.Resource
-	testResourcesApex []step.ResourceApex
-	tagsSpecified     []string
-	stepRunner        *step.Runner
-	beautify          string
-	testCsm           bool
-	testApex          bool
+	testResources []step.Resource
+	tagsSpecified []string
+	stepRunner    *step.Runner
+	beautify      string
+	testApex      bool
 )
 
 func Contains(slice []string, str string) bool {
@@ -94,25 +92,10 @@ var _ = BeforeSuite(func() {
 	By(fmt.Sprint(tagsSpecified))
 
 	By("Reading values file")
-	res, err := step.GetTestResources(valuesFile)
+	var err error
+	testResources, testApex, err = step.GetTestResources(valuesFile)
 	if err != nil {
 		framework.Failf("Failed to read values file: %v", err)
-	}
-
-	testResources = res
-	if strings.Contains(testResources[0].CustomResource[0].Kind, "ContainerStorageModule") {
-		testCsm = true
-	}
-
-	By("Reading apex values file")
-	resApex, err := step.GetTestResourcesApex(valuesFile)
-	if err != nil {
-		framework.Failf("Failed to read apex values file: %v", err)
-	}
-
-	testResourcesApex = resApex
-	if strings.Contains(testResourcesApex[0].CustomResourceApex[0].Kind, "ApexConnectivityClient") {
-		testApex = true
 	}
 
 	By("Getting a k8s client")
@@ -131,33 +114,31 @@ var _ = BeforeSuite(func() {
 	step.StepRunnerInit(stepRunner, ctrlClient, clientSet)
 
 	beautify = "    "
-
 })
 
 var _ = Describe("[run-e2e-test] E2E Testing", func() {
 
 	It("Running all test Given Test Scenarios", func() {
 		if testApex {
-			for _, test := range testResourcesApex {
-				By(fmt.Sprintf("Starting: %s ", test.ScenarioApex.Scenario))
-				if ContainsTag(test.ScenarioApex.Tags, tagsSpecified) == false {
+			for _, test := range testResources {
+				By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
+				if ContainsTag(test.Scenario.Tags, tagsSpecified) == false {
 					By(fmt.Sprintf("Not tagged for this test run, skipping"))
-					By(fmt.Sprintf("Ending: %s\n", test.ScenarioApex.Scenario))
+					By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 					continue
 				}
 
-				for _, stepName := range test.ScenarioApex.Steps {
+				for _, stepName := range test.Scenario.Steps {
 					By(fmt.Sprintf("%s Executing  %s", beautify, stepName))
 					Eventually(func() error {
 						return stepRunner.RunStepClient(stepName, test)
 					}, timeout, interval).Should(BeNil())
 				}
-				By(fmt.Sprintf("Ending: %s\n", test.ScenarioApex.Scenario))
+				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 				time.Sleep(5 * time.Second)
 			}
 
-		}
-		if testCsm {
+		} else {
 			for _, test := range testResources {
 				By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
 				if ContainsTag(test.Scenario.Tags, tagsSpecified) == false {

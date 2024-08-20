@@ -90,7 +90,56 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 }
 
 // GetTestResources -- parse values file
-func GetTestResources(valuesFilePath string) ([]Resource, error) {
+func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
+	apex := false
+	b, err := os.ReadFile(valuesFilePath)
+	if err != nil {
+		return nil, apex, fmt.Errorf("failed to read values file: %v", err)
+	}
+
+	scenarios := []Scenario{}
+	err = yaml.Unmarshal(b, &scenarios)
+	if err != nil {
+		return nil, apex, fmt.Errorf("failed to read unmarshal values file: %v", err)
+	}
+
+	resources := []Resource{}
+	for _, scene := range scenarios {
+		var customResources []interface{}
+		for _, path := range scene.Paths {
+			b, err := os.ReadFile(path)
+			if err != nil {
+				return nil, apex, fmt.Errorf("failed to read testdata: %v", err)
+			}
+
+			if strings.Contains(path, "_csm_") {
+				customResource := csmv1.ContainerStorageModule{}
+				err = yaml.Unmarshal(b, &customResource)
+				if err != nil {
+					return nil, apex, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
+				}
+				customResources = append(customResources, customResource)
+			} else {
+				apex = true
+				customResource := csmv1.ApexConnectivityClient{}
+				err = yaml.Unmarshal(b, &customResource)
+				if err != nil {
+					return nil, apex, fmt.Errorf("failed to read unmarshal custom resource: %v", err)
+				}
+				customResources = append(customResources, customResource)
+			}
+		}
+		resources = append(resources, Resource{
+			Scenario:       scene,
+			CustomResource: customResources,
+		})
+	}
+
+	return resources, apex, nil
+}
+
+// GetTestResourcesApex -- parse values file
+func GetTestResourcesApex(valuesFilePath string) ([]Resource, error) {
 	b, err := os.ReadFile(valuesFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read values file: %v", err)
@@ -104,44 +153,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 
 	resources := []Resource{}
 	for _, scene := range scenarios {
-		customResources := []csmv1.ContainerStorageModule{}
-		for _, path := range scene.Paths {
-			b, err := os.ReadFile(path)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read testdata: %v", err)
-			}
-			customResource := csmv1.ContainerStorageModule{}
-			err = yaml.Unmarshal(b, &customResource)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
-			}
-			customResources = append(customResources, customResource)
-		}
-		resources = append(resources, Resource{
-			Scenario:       scene,
-			CustomResource: customResources,
-		})
-	}
-
-	return resources, nil
-}
-
-// GetTestResourcesApex -- parse values file
-func GetTestResourcesApex(valuesFilePath string) ([]ResourceApex, error) {
-	b, err := os.ReadFile(valuesFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read values file: %v", err)
-	}
-
-	scenarios := []Scenario{}
-	err = yaml.Unmarshal(b, &scenarios)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read unmarshal values file: %v", err)
-	}
-
-	resources := []ResourceApex{}
-	for _, scene := range scenarios {
-		customResources := []csmv1.ApexConnectivityClient{}
+		var customResources []interface{}
 		for _, path := range scene.Paths {
 			b, err := os.ReadFile(path)
 			if err != nil {
@@ -154,9 +166,10 @@ func GetTestResourcesApex(valuesFilePath string) ([]ResourceApex, error) {
 			}
 			customResources = append(customResources, customResource)
 		}
-		resources = append(resources, ResourceApex{
-			ScenarioApex:       scene,
-			CustomResourceApex: customResources,
+
+		resources = append(resources, Resource{
+			Scenario:       scene,
+			CustomResource: customResources,
 		})
 	}
 
@@ -165,7 +178,7 @@ func GetTestResourcesApex(valuesFilePath string) ([]ResourceApex, error) {
 
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
 	if err != nil {
 		return fmt.Errorf("failed to read testdata: %v", err)
@@ -180,10 +193,10 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 
 func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr string) error {
 	oldCrNum, _ := strconv.Atoi(oldCrNumStr)
-	oldCr := res.CustomResource[oldCrNum-1]
+	oldCr := res.CustomResource[oldCrNum-1].(csmv1.ContainerStorageModule)
 
 	newCrNum, _ := strconv.Atoi(newCrNumStr)
-	newCr := res.CustomResource[newCrNum-1]
+	newCr := res.CustomResource[newCrNum-1].(csmv1.ContainerStorageModule)
 
 	time.Sleep(60 * time.Second)
 
@@ -309,7 +322,7 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 
 func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -327,7 +340,7 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -347,13 +360,13 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	time.Sleep(60 * time.Second)
-	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
+	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	time.Sleep(60 * time.Second)
-	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
+	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
 func (step *Step) setNodeLabel(res Resource, label string) error {
@@ -378,7 +391,7 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -423,7 +436,7 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -888,7 +901,7 @@ func (step *Step) runCustomTest(res Resource) error {
 
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	time.Sleep(60 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -916,7 +929,7 @@ func (step *Step) enableModule(res Resource, module string, crNumStr string) err
 
 func (step *Step) setDriverSecret(res Resource, crNumStr string, driverSecretName string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -931,7 +944,7 @@ func (step *Step) setDriverSecret(res Resource, crNumStr string, driverSecretNam
 
 func (step *Step) disableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -958,7 +971,7 @@ func (step *Step) disableModule(res Resource, module string, crNumStr string) er
 
 func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -974,7 +987,7 @@ func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
 
 func (step *Step) enableForceRemoveModule(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -1020,7 +1033,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 
 func (step *Step) createPrereqs(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.ModuleType(module) {
@@ -1197,7 +1210,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
 	var err error
 	var (
@@ -1632,7 +1645,7 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 }
 
 // Steps for Connectivity Client
-func (step *Step) validateClientTestEnvironment(_ ResourceApex) error {
+func (step *Step) validateClientTestEnvironment(_ Resource) error {
 	if os.Getenv("OPERATOR_NAMESPACE") != "" {
 		operatorNamespace = os.Getenv("OPERATOR_NAMESPACE")
 	}
@@ -1661,34 +1674,32 @@ func (step *Step) validateClientTestEnvironment(_ ResourceApex) error {
 	return nil
 }
 
-func (step *Step) applyClientCustomResource(res ResourceApex, crNumStr string, secretNumStr string) error {
+func (step *Step) applyClientCustomResource(res Resource, crNumStr string, secret string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResourceApex[crNum-1]
-	crBuff, err := os.ReadFile(res.ScenarioApex.Paths[crNum-1])
+	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
+	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
 	if err != nil {
 		return fmt.Errorf("failed to read connecivity client testdata: %v", err)
 	}
 
-	scrNum, _ := strconv.Atoi(secretNumStr)
-	scr := res.CustomResourceApex[scrNum-1]
-	scrBuff, err := os.ReadFile(res.ScenarioApex.Paths[scrNum-1])
+	scrBuff, err := os.ReadFile(secret)
 	if err != nil {
 		return fmt.Errorf("failed to read secret testdata: %v", err)
 	}
 
-	if _, err := kubectl.RunKubectlInput(scr.Namespace, string(scrBuff), "apply", "--validate=true", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to apply secret CR %s in namespace %s: %v", scr.Name, scr.Namespace, err)
+	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(scrBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to apply secret CR in namespace %s: %v", cr.Namespace, err)
 	}
-	if _, err := kubectl.RunKubectlInput(scr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply connecivity client CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
 	}
 
 	return nil
 }
 
-func (step *Step) validateConnectivityClientInstalled(res ResourceApex, crNumStr string) error {
+func (step *Step) validateConnectivityClientInstalled(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResourceApex[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
 	time.Sleep(60 * time.Second)
 	found := new(csmv1.ApexConnectivityClient)
 
@@ -1699,15 +1710,15 @@ func (step *Step) validateConnectivityClientInstalled(res ResourceApex, crNumStr
 		return err
 	}
 
-	return checkAllRunningPods(context.TODO(), res.CustomResourceApex[crNum-1].Namespace, step.clientSet)
+	return checkAllRunningPods(context.TODO(), cr.Namespace, step.clientSet)
 }
 
-func (step *Step) upgradeCustomResourceClient(res ResourceApex, oldCrNumStr string, newCrNumStr string) error {
+func (step *Step) upgradeCustomResourceClient(res Resource, oldCrNumStr string, newCrNumStr string) error {
 	oldCrNum, _ := strconv.Atoi(oldCrNumStr)
-	oldCr := res.CustomResourceApex[oldCrNum-1]
+	oldCr := res.CustomResource[oldCrNum-1].(csmv1.ApexConnectivityClient)
 
 	newCrNum, _ := strconv.Atoi(newCrNumStr)
-	newCr := res.CustomResourceApex[newCrNum-1]
+	newCr := res.CustomResource[newCrNum-1].(csmv1.ApexConnectivityClient)
 
 	found := new(csmv1.ApexConnectivityClient)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1723,9 +1734,9 @@ func (step *Step) upgradeCustomResourceClient(res ResourceApex, oldCrNumStr stri
 	return step.ctrlClient.Update(context.TODO(), found)
 }
 
-func (step *Step) validateConnectivityClientNotInstalled(res ResourceApex, crNumStr string) error {
+func (step *Step) validateConnectivityClientNotInstalled(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResourceApex[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
 	time.Sleep(20 * time.Second)
 	found := new(csmv1.ApexConnectivityClient)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1735,13 +1746,13 @@ func (step *Step) validateConnectivityClientNotInstalled(res ResourceApex, crNum
 		return fmt.Errorf("Found traces of client installation in namespace %s: %v", cr.Namespace, found)
 	}
 
-	return checkNoRunningPods(context.TODO(), res.CustomResourceApex[crNum-1].Namespace, step.clientSet)
+	return checkNoRunningPods(context.TODO(), cr.Namespace, step.clientSet)
 }
 
 // uninstallConnectivityClient - uninstall the client
-func (step *Step) uninstallConnectivityClient(res ResourceApex, crNumStr string) error {
+func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResourceApex[crNum-1]
+	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
 
 	found := new(csmv1.ApexConnectivityClient)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1756,7 +1767,7 @@ func (step *Step) uninstallConnectivityClient(res ResourceApex, crNumStr string)
 		return err
 	}
 
-	crBuff, err := os.ReadFile(res.ScenarioApex.Paths[crNum-1])
+	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
 	if err != nil {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
@@ -1768,17 +1779,15 @@ func (step *Step) uninstallConnectivityClient(res ResourceApex, crNumStr string)
 	return nil
 }
 
-func (step *Step) uninstallConnectivityClientSecret(res ResourceApex, scrNumStr string) error {
-	crNum, _ := strconv.Atoi(scrNumStr)
-	cr := res.CustomResourceApex[crNum-1]
+func (step *Step) uninstallConnectivityClientSecret(res Resource, secret string) error {
 
-	crBuff, err := os.ReadFile(res.ScenarioApex.Paths[crNum-1])
+	crBuff, err := os.ReadFile(secret)
 	if err != nil {
 		return fmt.Errorf("failed to read secret testdata: %v", err)
 	}
 
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to delete secret CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
+	if _, err := kubectl.RunKubectlInput("", string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to delete connectivity client secret : %v", err)
 	}
 
 	return nil
