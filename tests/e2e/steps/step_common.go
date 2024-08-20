@@ -56,9 +56,9 @@ type Scenario struct {
 
 // Resource -
 type Resource struct {
-	Scenario           Scenario
-	CustomResource     []csmv1.ContainerStorageModule
-	CustomResourceApex []csmv1.ApexConnectivityClient
+	Scenario       Scenario
+	CustomResource []interface{}
+	//CustomResourceApex []csmv1.ApexConnectivityClient
 }
 
 // Step -

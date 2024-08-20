@@ -84,7 +84,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 
 	// Connectivity Client steps
 	runner.addStep(`^Given a client environment with k8s or openshift, and CSM operator installed$`, step.validateClientTestEnvironment)
-	runner.addStep(`^Install connectivity client from CR \[(\d+)\] and create secret \[(\d+)\]$`, step.applyClientCustomResource)
+	runner.addStep(`^Install connectivity client from CR \[(\d+)\] and create secret \[([^"]*)\]$`, step.applyClientCustomResource)
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is installed$`, step.validateConnectivityClientInstalled)
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is not installed$`, step.validateConnectivityClientNotInstalled)
 	runner.addStep(`^Uninstall connectivity client from CR \[(\d+)\]`, step.uninstallConnectivityClient)

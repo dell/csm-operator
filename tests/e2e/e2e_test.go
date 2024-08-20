@@ -38,12 +38,13 @@ const (
 )
 
 var (
+	//testResourcesApex []step.Resource
 	testResources []step.Resource
 	tagsSpecified []string
 	stepRunner    *step.Runner
 	beautify      string
-	testCsm       bool
-	testApex      bool
+	//testCsm       bool
+	testApex bool
 )
 
 func Contains(slice []string, str string) bool {
@@ -93,12 +94,14 @@ var _ = BeforeSuite(func() {
 	By(fmt.Sprint(tagsSpecified))
 
 	By("Reading values file")
-	res, err := step.GetTestResources(valuesFile)
+	var err error
+	testResources, testApex, err = step.GetTestResources(valuesFile)
 	if err != nil {
 		framework.Failf("Failed to read values file: %v", err)
 	}
+	//testApex = testApexBool
 
-	testResources = res
+	/*testResources = res
 	if strings.Contains(testResources[0].CustomResource[0].Kind, "ContainerStorageModule") {
 		testCsm = true
 	}
@@ -109,11 +112,11 @@ var _ = BeforeSuite(func() {
 		framework.Failf("Failed to read apex values file: %v", err)
 	}
 
-	testResourcesApex := resApex
-	if strings.Contains(testResourcesApex[0].CustomResourceApex[0].Kind, "ApexConnectivityClient") {
+	//testResourcesApex = resApex
+	if strings.Contains(resApex[0].CustomResourceApex[0].Kind, "ApexConnectivityClient") {
 		testApex = true
-		testResources = append(testResources, testResourcesApex...)
-	}
+		testResources = append(testResources, resApex...)
+	}*/
 
 	By("Getting a k8s client")
 	ctrlClient, err := client.New(config.GetConfigOrDie(), client.Options{})
@@ -131,7 +134,12 @@ var _ = BeforeSuite(func() {
 	step.StepRunnerInit(stepRunner, ctrlClient, clientSet)
 
 	beautify = "    "
-
+	for _, res := range testResources {
+		fmt.Println("---------")
+		fmt.Println(res.Scenario.Scenario)
+		fmt.Println("---CSM---", res.CustomResource)
+		//fmt.Println("===Apex====", res.CustomResourceApex)
+	}
 })
 
 var _ = Describe("[run-e2e-test] E2E Testing", func() {
@@ -156,8 +164,7 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 				time.Sleep(5 * time.Second)
 			}
 
-		}
-		if testCsm {
+		} else {
 			for _, test := range testResources {
 				By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
 				if ContainsTag(test.Scenario.Tags, tagsSpecified) == false {

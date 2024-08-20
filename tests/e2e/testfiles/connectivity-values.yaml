@@ -42,7 +42,7 @@
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
-    - "Install connectivity client from CR [1] and and create secret [2]"
+    - "Install connectivity client from CR [1] and and create secret [testfiles/connectivity_client_secret.yaml]"
     - "Validate connectivity client from CR [1] is installed"
     - "Validate rbac created in namespace [test-vxflexos]"
     - "Uninstall connectivity client from CR [1]"
@@ -61,7 +61,7 @@
     - "client"
   steps:
     - "Given a client environment with k8s or openshift, and CSM operator installed"
-    - "Install connectivity client from CR [1]"
+    - "Install connectivity client from CR [1] and and create secret [testfiles/connectivity_client_secret.yaml]"
     - "Validate connectivity client from CR [1] is installed"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [2]"
