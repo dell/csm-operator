@@ -294,14 +294,19 @@ spec:
             spec:
               description: StorageSpec defines the desired state of Storage
               properties:
-                credentialPath:
-                  type: string
-                credentialStore:
-                  type: string
                 endpoint:
                   type: string
                 pollInterval:
                   type: string
+                vault:
+                  properties:
+                    identifier:
+                      type: string
+                    kvEngine:
+                      type: string
+                    path:
+                      type: string
+                  type: object
                 skipCertificateValidation:
                   type: boolean
                 systemID:
