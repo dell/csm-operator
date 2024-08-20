@@ -1779,14 +1779,14 @@ func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) err
 	return nil
 }
 
-func (step *Step) uninstallConnectivityClientSecret(secret string) error {
+func (step *Step) uninstallConnectivityClientSecret(res Resource, secret string) error {
 
 	crBuff, err := os.ReadFile(secret)
 	if err != nil {
 		return fmt.Errorf("failed to read secret testdata: %v", err)
 	}
 
-	if _, err := kubectl.RunKubectlInput(string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
+	if _, err := kubectl.RunKubectlInput("", string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to delete connectivity client secret : %v", err)
 	}
 
