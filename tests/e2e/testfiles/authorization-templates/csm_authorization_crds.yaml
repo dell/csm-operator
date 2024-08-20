@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: csmroles.csm-authorization.storage.dell.com
 spec:
   group: csm-authorization.storage.dell.com
@@ -39,15 +39,18 @@ spec:
               description: CSMRoleSpec defines the desired state of CSMRole
               properties:
                 pool:
+                  description: Pool is the storage pool name
                   type: string
                 quota:
-                  description: |-
-                    INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                    Important: Run "make" to regenerate code after modifying this file
+                  description: Quota is the total provision capacity for a given role
                   type: string
                 systemID:
+                  description: SystemID is the system ID of the storage array
                   type: string
                 systemType:
+                  description: |-
+                    SystemType is the type of the storage array
+                    Example powerflex, powermax, powerscale
                   type: string
               type: object
             status:
@@ -59,7 +62,17 @@ spec:
                     Important: Run "make" to regenerate code after modifying this file
                     Role.status.conditions.type are: "Available", "NotAvailable", and "UnKnown"
                   items:
-                    description: "Condition contains details for one aspect of the current state of this API Resource.\n---\nThis struct is intended for direct use as an array at the field path .status.conditions.  For example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the observations of a foo's current state.\n\t    // Known .status.conditions.type are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    // +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t    // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t    // other fields\n\t}"
+                    description:
+                      "Condition contains details for one aspect of the current
+                      state of this API Resource.\n---\nThis struct is intended for
+                      direct use as an array at the field path .status.conditions.  For
+                      example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
+                      observations of a foo's current state.\n\t    // Known .status.conditions.type
+                      are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
+                      +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
+                      \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                      patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
+                      \   // other fields\n\t}"
                     properties:
                       lastTransitionTime:
                         description: |-
@@ -128,7 +141,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: csmtenants.csm-authorization.storage.dell.com
 spec:
   group: csm-authorization.storage.dell.com
@@ -165,15 +178,22 @@ spec:
               description: CSMTenantSpec defines the desired state of CSMTenant
               properties:
                 approveSdc:
+                  description: |-
+                    ApproveSdc is a boolean to indicate whether approveSDC is enabled
+                    Default value is false
                   type: boolean
                 revoke:
+                  description: Revoke is a boolean to indicate whether tenant is revoked
                   type: boolean
                 roles:
                   description: |-
-                    INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                    Important: Run "make" to regenerate code after modifying this file
+                    Roles defines the roles for this tenant
+                    Comma separated list
                   type: string
                 volumePrefix:
+                  description:
+                    VolumePrefix is the prefix added for each new volume
+                    provisioned by the tenant
                   maxLength: 3
                   minLength: 1
                   type: string
@@ -189,7 +209,17 @@ spec:
                     INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
                     Important: Run "make" to regenerate code after modifying this file
                   items:
-                    description: "Condition contains details for one aspect of the current state of this API Resource.\n---\nThis struct is intended for direct use as an array at the field path .status.conditions.  For example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the observations of a foo's current state.\n\t    // Known .status.conditions.type are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    // +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t    // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t    // other fields\n\t}"
+                    description:
+                      "Condition contains details for one aspect of the current
+                      state of this API Resource.\n---\nThis struct is intended for
+                      direct use as an array at the field path .status.conditions.  For
+                      example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
+                      observations of a foo's current state.\n\t    // Known .status.conditions.type
+                      are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
+                      +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
+                      \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                      patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
+                      \   // other fields\n\t}"
                     properties:
                       lastTransitionTime:
                         description: |-
@@ -295,19 +325,31 @@ spec:
               description: StorageSpec defines the desired state of Storage
               properties:
                 endpoint:
+                  description: EndPoint is the storage array endpoint
+                  type: string
+                isiPath:
+                  description: |-
+                    IsiPath the base path for the volumes to be created on PowerScale cluster
+                    Needed only for PowerScale
                   type: string
                 pollInterval:
+                  description: PollInterval is the interval to poll the storage array
                   type: string
                 skipCertificateValidation:
+                  description:
+                    SkipCertificateValidation is the flag to skip certificate
+                    validation
                   type: boolean
                 systemID:
+                  description: SystemID is the storage array system ID
                   type: string
                 type:
-                  description: |-
-                    INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                    Important: Run "make" to regenerate code after modifying this file
+                  description: Type is the storage array type
                   type: string
                 vault:
+                  description: |-
+                    Vault is the credential manager for storage arrays
+                    Currently support only Hashicorp Vault
                   properties:
                     identifier:
                       type: string
