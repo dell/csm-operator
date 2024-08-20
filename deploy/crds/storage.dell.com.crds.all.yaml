@@ -177,7 +177,7 @@ spec:
                                       (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                     properties:
                                       containerName:
-                                        description: 'Container name: required for volumes, optional for env vars'
+                                        description: "Container name: required for volumes, optional for env vars"
                                         type: string
                                       divisor:
                                         anyOf:
@@ -187,7 +187,7 @@ spec:
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         x-kubernetes-int-or-string: true
                                       resource:
-                                        description: 'Required: resource to select'
+                                        description: "Required: resource to select"
                                         type: string
                                     required:
                                       - resource
@@ -528,7 +528,7 @@ spec:
                                         (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                       properties:
                                         containerName:
-                                          description: 'Container name: required for volumes, optional for env vars'
+                                          description: "Container name: required for volumes, optional for env vars"
                                           type: string
                                         divisor:
                                           anyOf:
@@ -538,7 +538,7 @@ spec:
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
                                         resource:
-                                          description: 'Required: resource to select'
+                                          description: "Required: resource to select"
                                           type: string
                                       required:
                                         - resource
@@ -868,7 +868,7 @@ spec:
                                         (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                       properties:
                                         containerName:
-                                          description: 'Container name: required for volumes, optional for env vars'
+                                          description: "Container name: required for volumes, optional for env vars"
                                           type: string
                                         divisor:
                                           anyOf:
@@ -878,7 +878,7 @@ spec:
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
                                         resource:
-                                          description: 'Required: resource to select'
+                                          description: "Required: resource to select"
                                           type: string
                                       required:
                                         - resource
@@ -1298,7 +1298,7 @@ spec:
                                       (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                     properties:
                                       containerName:
-                                        description: 'Container name: required for volumes, optional for env vars'
+                                        description: "Container name: required for volumes, optional for env vars"
                                         type: string
                                       divisor:
                                         anyOf:
@@ -1308,7 +1308,7 @@ spec:
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         x-kubernetes-int-or-string: true
                                       resource:
-                                        description: 'Required: resource to select'
+                                        description: "Required: resource to select"
                                         type: string
                                     required:
                                       - resource
@@ -1638,7 +1638,7 @@ spec:
                                       (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                     properties:
                                       containerName:
-                                        description: 'Container name: required for volumes, optional for env vars'
+                                        description: "Container name: required for volumes, optional for env vars"
                                         type: string
                                       divisor:
                                         anyOf:
@@ -1648,7 +1648,7 @@ spec:
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         x-kubernetes-int-or-string: true
                                       resource:
-                                        description: 'Required: resource to select'
+                                        description: "Required: resource to select"
                                         type: string
                                     required:
                                       - resource
@@ -1997,7 +1997,7 @@ spec:
                                         (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                       properties:
                                         containerName:
-                                          description: 'Container name: required for volumes, optional for env vars'
+                                          description: "Container name: required for volumes, optional for env vars"
                                           type: string
                                         divisor:
                                           anyOf:
@@ -2007,7 +2007,7 @@ spec:
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
                                         resource:
-                                          description: 'Required: resource to select'
+                                          description: "Required: resource to select"
                                           type: string
                                       required:
                                         - resource
@@ -2335,7 +2335,7 @@ spec:
                                       (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                     properties:
                                       containerName:
-                                        description: 'Container name: required for volumes, optional for env vars'
+                                        description: "Container name: required for volumes, optional for env vars"
                                         type: string
                                       divisor:
                                         anyOf:
@@ -2345,7 +2345,7 @@ spec:
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         x-kubernetes-int-or-string: true
                                       resource:
-                                        description: 'Required: resource to select'
+                                        description: "Required: resource to select"
                                         type: string
                                     required:
                                       - resource
@@ -2678,7 +2678,7 @@ spec:
                                         (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                       properties:
                                         containerName:
-                                          description: 'Container name: required for volumes, optional for env vars'
+                                          description: "Container name: required for volumes, optional for env vars"
                                           type: string
                                         divisor:
                                           anyOf:
@@ -2688,7 +2688,7 @@ spec:
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
                                         resource:
-                                          description: 'Required: resource to select'
+                                          description: "Required: resource to select"
                                           type: string
                                       required:
                                         - resource
@@ -3042,7 +3042,7 @@ spec:
                                           (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                         properties:
                                           containerName:
-                                            description: 'Container name: required for volumes, optional for env vars'
+                                            description: "Container name: required for volumes, optional for env vars"
                                             type: string
                                           divisor:
                                             anyOf:
@@ -3052,7 +3052,7 @@ spec:
                                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                             x-kubernetes-int-or-string: true
                                           resource:
-                                            description: 'Required: resource to select'
+                                            description: "Required: resource to select"
                                             type: string
                                         required:
                                           - resource
@@ -3391,7 +3391,7 @@ spec:
                                           (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                         properties:
                                           containerName:
-                                            description: 'Container name: required for volumes, optional for env vars'
+                                            description: "Container name: required for volumes, optional for env vars"
                                             type: string
                                           divisor:
                                             anyOf:
@@ -3401,7 +3401,7 @@ spec:
                                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                             x-kubernetes-int-or-string: true
                                           resource:
-                                            description: 'Required: resource to select'
+                                            description: "Required: resource to select"
                                             type: string
                                         required:
                                           - resource
