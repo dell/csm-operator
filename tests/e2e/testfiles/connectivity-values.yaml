@@ -1,13 +1,12 @@
 - scenario: "Install/uninstall APEX Connectivity Client"
   paths:
     - "testfiles/connectivity_client.yaml"
-    - "testfiles/connectivity_client_secret.yaml"
   tags:
     - "sanity"
     - "client"
   steps:
     - "Given a client environment with k8s or openshift, and CSM operator installed"
-    - "Install connectivity client from CR [1] and create secret [2]"
+    - "Install connectivity client from CR [1] and create secret [testfiles/connectivity_client_secret.yaml]"
     - "Validate connectivity client from CR [1] is installed"
     - "Uninstall connectivity client from CR [1]"
     - "Uninstall connectivity client secret from CR [2]"
@@ -16,13 +15,12 @@
   paths:
     - "testfiles/connectivity_client.yaml"
     - "testfiles/connectivity_client_1.yaml"
-    - "testfiles/connectivity_client_secret.yaml"
   tags:
     - "sanity"
     - "client"
   steps:
     - "Given a client environment with k8s or openshift, and CSM operator installed"
-    - "Install connectivity client from CR [1] and create secret [3]"
+    - "Install connectivity client from CR [1] and create secret [testfiles/connectivity_client_secret.yaml]"
     - "Validate connectivity client from CR [1] is installed"
     - "Upgrade client from custom resource [1] to [2]"
     - "Validate connectivity client from CR [2] is installed"

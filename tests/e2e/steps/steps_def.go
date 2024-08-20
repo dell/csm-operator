@@ -91,16 +91,16 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 
 // GetTestResources -- parse values file
 func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
-	testApex := false
+	apex := false
 	b, err := os.ReadFile(valuesFilePath)
 	if err != nil {
-		return nil, testApex, fmt.Errorf("failed to read values file: %v", err)
+		return nil, apex, fmt.Errorf("failed to read values file: %v", err)
 	}
 
 	scenarios := []Scenario{}
 	err = yaml.Unmarshal(b, &scenarios)
 	if err != nil {
-		return nil, testApex, fmt.Errorf("failed to read unmarshal values file: %v", err)
+		return nil, apex, fmt.Errorf("failed to read unmarshal values file: %v", err)
 	}
 
 	resources := []Resource{}
@@ -109,22 +109,22 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 		for _, path := range scene.Paths {
 			b, err := os.ReadFile(path)
 			if err != nil {
-				return nil, testApex, fmt.Errorf("failed to read testdata: %v", err)
+				return nil, apex, fmt.Errorf("failed to read testdata: %v", err)
 			}
 
 			if strings.Contains(path, "_csm_") {
 				customResource := csmv1.ContainerStorageModule{}
 				err = yaml.Unmarshal(b, &customResource)
 				if err != nil {
-					return nil, testApex, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
+					return nil, apex, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
 				}
 				customResources = append(customResources, customResource)
 			} else {
-				testApex = true
+				apex = true
 				customResource := csmv1.ApexConnectivityClient{}
 				err = yaml.Unmarshal(b, &customResource)
 				if err != nil {
-					return nil, testApex, fmt.Errorf("failed to read unmarshal custom resource: %v", err)
+					return nil, apex, fmt.Errorf("failed to read unmarshal custom resource: %v", err)
 				}
 				customResources = append(customResources, customResource)
 			}
@@ -135,7 +135,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 		})
 	}
 
-	return resources, testApex, nil
+	return resources, apex, nil
 }
 
 // GetTestResourcesApex -- parse values file
