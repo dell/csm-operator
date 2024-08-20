@@ -1779,17 +1779,15 @@ func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) err
 	return nil
 }
 
-func (step *Step) uninstallConnectivityClientSecret(res Resource, scrNumStr string) error {
-	crNum, _ := strconv.Atoi(scrNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
+func (step *Step) uninstallConnectivityClientSecret(secret string) error {
 
-	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
+	crBuff, err := os.ReadFile(secret)
 	if err != nil {
 		return fmt.Errorf("failed to read secret testdata: %v", err)
 	}
 
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to delete secret CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
+	if _, err := kubectl.RunKubectlInput(string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to delete connectivity client secret : %v", err)
 	}
 
 	return nil

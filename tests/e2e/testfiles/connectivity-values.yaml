@@ -9,7 +9,7 @@
     - "Install connectivity client from CR [1] and create secret [testfiles/connectivity_client_secret.yaml]"
     - "Validate connectivity client from CR [1] is installed"
     - "Uninstall connectivity client from CR [1]"
-    - "Uninstall connectivity client secret from CR [2]"
+    - "Uninstall connectivity client secret [testfiles/connectivity_client_secret.yaml]"
     - "Validate connectivity client from CR [1] is not installed"
 - scenario: "Upgrade APEX Connectivity Client"
   paths:
@@ -25,7 +25,7 @@
     - "Upgrade client from custom resource [1] to [2]"
     - "Validate connectivity client from CR [2] is installed"
     - "Uninstall connectivity client from CR [2]"
-    - "Uninstall connectivity client secret from CR [3]"
+    - "Uninstall connectivity client secret [testfiles/connectivity_client_secret.yaml]"
     - "Validate connectivity client from CR [2] is not installed"
 - scenario: "Validate role/rolebindings created for brownfield-onboard scenario"
   paths:

@@ -89,7 +89,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is not installed$`, step.validateConnectivityClientNotInstalled)
 	runner.addStep(`^Uninstall connectivity client from CR \[(\d+)\]`, step.uninstallConnectivityClient)
 	runner.addStep(`^Upgrade client from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResourceClient)
-	runner.addStep(`^Uninstall connectivity client secret from CR \[(\d+)\]`, step.uninstallConnectivityClientSecret)
+	runner.addStep(`^Uninstall connectivity client secret \[([^"]*)\]$`, step.uninstallConnectivityClientSecret)
 	runner.addStep(`^Validate rbac created in namespace \[([^"]*)\]$`, step.validateRbacCreated)
 	runner.addStep(`^Validate connectivity client rbac objects are removed from all namespaces$`, step.validateRbacDeleted)
 	runner.addStep(`^Validate connectivity client rbac objects are removed from namespace \[([^"]*)\]$`, step.validateDeleteRbac)
