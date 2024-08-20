@@ -42,7 +42,7 @@
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
-    - "Install connectivity client from CR [1]"
+    - "Install connectivity client from CR [1] and and create secret [2]"
     - "Validate connectivity client from CR [1] is installed"
     - "Validate rbac created in namespace [test-vxflexos]"
     - "Uninstall connectivity client from CR [1]"
