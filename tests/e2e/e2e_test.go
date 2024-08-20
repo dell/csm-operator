@@ -38,13 +38,11 @@ const (
 )
 
 var (
-	//testResourcesApex []step.Resource
 	testResources []step.Resource
 	tagsSpecified []string
 	stepRunner    *step.Runner
 	beautify      string
-	//testCsm       bool
-	testApex bool
+	testApex      bool
 )
 
 func Contains(slice []string, str string) bool {
@@ -99,24 +97,6 @@ var _ = BeforeSuite(func() {
 	if err != nil {
 		framework.Failf("Failed to read values file: %v", err)
 	}
-	//testApex = testApexBool
-
-	/*testResources = res
-	if strings.Contains(testResources[0].CustomResource[0].Kind, "ContainerStorageModule") {
-		testCsm = true
-	}
-
-	By("Reading apex values file")
-	resApex, err := step.GetTestResourcesApex(valuesFile)
-	if err != nil {
-		framework.Failf("Failed to read apex values file: %v", err)
-	}
-
-	//testResourcesApex = resApex
-	if strings.Contains(resApex[0].CustomResourceApex[0].Kind, "ApexConnectivityClient") {
-		testApex = true
-		testResources = append(testResources, resApex...)
-	}*/
 
 	By("Getting a k8s client")
 	ctrlClient, err := client.New(config.GetConfigOrDie(), client.Options{})
@@ -134,12 +114,6 @@ var _ = BeforeSuite(func() {
 	step.StepRunnerInit(stepRunner, ctrlClient, clientSet)
 
 	beautify = "    "
-	for _, res := range testResources {
-		fmt.Println("---------")
-		fmt.Println(res.Scenario.Scenario)
-		fmt.Println("---CSM---", res.CustomResource)
-		//fmt.Println("===Apex====", res.CustomResourceApex)
-	}
 })
 
 var _ = Describe("[run-e2e-test] E2E Testing", func() {

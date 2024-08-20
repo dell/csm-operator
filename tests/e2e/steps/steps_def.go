@@ -111,7 +111,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 			if err != nil {
 				return nil, testApex, fmt.Errorf("failed to read testdata: %v", err)
 			}
-			//var customResource interface{}
+
 			if strings.Contains(path, "_csm_") {
 				customResource := csmv1.ContainerStorageModule{}
 				err = yaml.Unmarshal(b, &customResource)
