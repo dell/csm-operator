@@ -58,7 +58,6 @@ type Scenario struct {
 type Resource struct {
 	Scenario       Scenario
 	CustomResource []interface{}
-	//CustomResourceApex []csmv1.ApexConnectivityClient
 }
 
 // Step -
