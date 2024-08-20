@@ -12,6 +12,7 @@ spec:
     path: "REPLACE_VAULT_STORAGE_PATH"
   skipCertificateValidation: true
   pollInterval: 30s
+  isiPath: "REPLACE_STORAGE_POOL_PATH"
 ---
 apiVersion: csm-authorization.storage.dell.com/v1alpha1
 kind: CSMRole
