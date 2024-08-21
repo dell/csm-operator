@@ -93,7 +93,7 @@ func checkAllRunningPods(ctx context.Context, namespace string, k8sClient kubern
 	}
 
 	if !allReady {
-		return fmt.Errorf(notReadyMessage)
+		return fmt.Errorf("%s", notReadyMessage)
 	}
 	return nil
 }
@@ -153,7 +153,7 @@ func checkObservabilityRunningPods(ctx context.Context, namespace string, k8sCli
 	}
 
 	if !allReady {
-		return fmt.Errorf(notReadyMessage)
+		return fmt.Errorf("%s", notReadyMessage)
 	}
 	return nil
 }
@@ -337,7 +337,7 @@ func checkAuthorizationProxyServerPods(ctx context.Context, namespace string, k8
 	}
 
 	if !allReady {
-		return fmt.Errorf(notReadyMessage)
+		return fmt.Errorf("%s", notReadyMessage)
 	}
 	return nil
 }
