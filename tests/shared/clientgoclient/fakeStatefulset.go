@@ -43,7 +43,7 @@ func (c *FakeStatefulsets) Apply(ctx context.Context, statefulset *applyconfigur
 		return result, err
 	}
 
-	err = json.Unmarshal(data, result)
+	_ = json.Unmarshal(data, result)
 
 	_, err = c.Get(ctx, *statefulset.Name, v1.GetOptions{})
 	if errors.IsNotFound(err) {
