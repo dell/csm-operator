@@ -738,6 +738,8 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
+	// conversion to int32 is safe for a value up to 2147483647
+	// #nosec G115
 	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas))
 
 	// set vault volumes
