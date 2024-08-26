@@ -243,7 +243,7 @@ catalog-build: gen-semver opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: gen-semver ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
-	
+
 # Run linter.
 .PHONY: lint
 lint: build

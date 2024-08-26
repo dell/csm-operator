@@ -714,7 +714,8 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		return fmt.Errorf("applying/deleting vault certificates: %w", err)
 	}
 
-	replicas := 0
+	// replicates needs to be a int32
+	var replicas int32 = 0
 	sentinels := ""
 	image := ""
 	vaults := []csmv1.Vault{}
