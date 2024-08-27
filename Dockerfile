@@ -30,7 +30,7 @@ RUN mkdir ${MICRODIR}
 COPY --from=microbase / ${MICRODIR}
 RUN yum install \
   --installroot ${MICRODIR} \
-  --releasever 8 \
+  --releasever 9 \
   --setop install_weak_deps=false \
   -y \
   ${PACKAGES_TO_INSTALL}
@@ -38,7 +38,7 @@ RUN yum clean all \
   --installroot ${MICRODIR}
 
 # --- baseimage: base image, build from microabse with packages installed by microbuilder
-FROM scratch AS baseimage
+FROM $UBIBASE AS baseimage
 ARG MICRODIR
 COPY --from=microbuilder ${MICRODIR}/ .
 
