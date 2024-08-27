@@ -72,17 +72,28 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v4
       - name: Build Docker Images
+        id: build_image
         run: |
-          chmod +x ./scripts/build-ubi-micro.sh
-          make build-base-image
-          make -o gen-semver
-          podman build -t docker.io/csm-operator -f ./Dockerfile --build-arg GOIMAGE=golang:latest --build-arg BASEIMAGE="localhost/csm-operator-ubimicro"
-          podman save docker.io/library/csm-operator -o /tmp/csm-operator.tar
-          docker load -i /tmp/csm-operator.tar
+          # set the image name that we are building
+          export DEFAULT_IMG="docker.io/csm-operator:for-image-scan"
+          # get the csm-comon.mk definitions
+          make download-csm-common
+          # make the docker image
+          make docker-build
+          # set the image name as it will be used later
+          echo "docker_tag=${DEFAULT_IMG}" >> $GITHUB_OUTPUT
       - name: Scan controller Image
+        if: ${{ !env.ACT }}
         uses: Azure/container-scan@v0
         env:
           DOCKLE_HOST: "unix:///var/run/docker.sock"
         with:
-          image-name: csm-operator
+          image-name: ${{ steps.build_image.outputs.docker_tag }}
           severity-threshold: HIGH
+      - name: Print Scan message
+        if: ${{ env.ACT }}
+        run: |
+          echo "Image built: ${{ steps.build_image.outputs.docker_tag }}"
+          echo "Scan of image skipped due to running locally"
+
+        

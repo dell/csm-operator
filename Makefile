@@ -111,15 +111,17 @@ build: gen-semver fmt vet ## Build manager binary.
 run: generate gen-semver fmt vet static-manifests ## Run a controller from your host.
 	go run ./main.go
 
-podman-build: gen-semver build-base-image ## Build podman image with the manager.
-	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+podman-build: gen-semver ## Build podman image with the manager.
+	$(eval include csm-common.mk)
+	podman build . -t ${DEFAULT_IMG} --build-arg GOIMAGE=$(DEFAULT_GOIMAGE) --build-arg UBIBASE=$(DEFAULT_BASEIMAGE)
 
 podman-push: podman-build ## Builds, tags and pushes docker image with the manager.
 	podman tag ${DEFAULT_IMG} ${IMG}
 	podman push ${IMG}
 
-docker-build: gen-semver build-base-image ## Build docker image with the manager.
-	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+docker-build: gen-semver ## Build docker image with the manager.
+	$(eval include csm-common.mk)
+	docker build . -t ${DEFAULT_IMG} --build-arg GOIMAGE=$(DEFAULT_GOIMAGE) --build-arg UBIBASE=$(DEFAULT_BASEIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}

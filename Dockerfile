@@ -10,10 +10,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASEIMAGE
 ARG GOIMAGE
 
-# Build the manager binary
+# base image, based on ubu-micro
+ARG MICRODIR=/microdir
+ARG PACKAGES_TO_INSTALL="rpm"
+ARG UBIBASE
+ # should be defined in docker.mk
+ARG UBIBUILDER="registry.access.redhat.com/ubi9/ubi@sha256:1ee4d8c50d14d9c9e9229d9a039d793fcbc9aa803806d194c957a397cf1d2b17"
+
+# --- microbase: image provided by RedHat as the UBI micro base image
+FROM $UBIBASE AS microbase
+
+# --- microbuilder: Used to add packages to the microbase image since no package manager exists in micro
+FROM $UBIBUILDER AS microbuilder
+ARG MICRODIR
+ARG PACKAGES_TO_INSTALL
+RUN mkdir ${MICRODIR}
+COPY --from=microbase / ${MICRODIR}
+RUN yum install \
+  --installroot ${MICRODIR} \
+  --releasever 8 \
+  --setop install_weak_deps=false \
+  -y \
+  ${PACKAGES_TO_INSTALL}
+RUN yum clean all \
+  --installroot ${MICRODIR}
+
+# --- baseimage: base image, build from microabse with packages installed by microbuilder
+FROM scratch AS baseimage
+ARG MICRODIR
+COPY --from=microbuilder ${MICRODIR}/ .
+
+
+# --- builder: builds the golang binary
 FROM $GOIMAGE as builder
 
 WORKDIR /workspace
@@ -34,11 +64,11 @@ COPY pkg/ pkg/
 COPY k8s/ k8s/
 COPY tests/ tests/
 
-
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
-FROM $BASEIMAGE as final
+# --- final: resulting image, based upon the baseimage with the components compied from the builder
+FROM baseimage as final
 ENV USER_UID=1001 \
     USER_NAME=dell-csm-operator
 WORKDIR /
