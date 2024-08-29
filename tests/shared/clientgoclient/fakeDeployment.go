@@ -43,7 +43,7 @@ func (c *FakeDeployments) Apply(ctx context.Context, deployment *applyconfigurat
 		return result, err
 	}
 
-	err = json.Unmarshal(data, result)
+	_ = json.Unmarshal(data, result)
 
 	_, err = c.Get(ctx, *deployment.Name, v1.GetOptions{})
 	if errors.IsNotFound(err) {
