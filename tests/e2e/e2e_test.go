@@ -117,7 +117,6 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = Describe("[run-e2e-test] E2E Testing", func() {
-
 	It("Running all test Given Test Scenarios", func() {
 		if testApex {
 			for _, test := range testResources {
@@ -137,7 +136,6 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 				time.Sleep(5 * time.Second)
 			}
-
 		} else {
 			for _, test := range testResources {
 				By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))

@@ -1025,7 +1025,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 	}
 
 	if !allReady {
-		return fmt.Errorf(notReadyMessage)
+		return fmt.Errorf("%s", notReadyMessage)
 	}
 
 	return nil
@@ -1668,7 +1668,7 @@ func (step *Step) validateClientTestEnvironment(_ Resource) error {
 	}
 
 	if !allReady {
-		return fmt.Errorf(notReadyMessage)
+		return fmt.Errorf("%s", notReadyMessage)
 	}
 
 	return nil
@@ -1780,7 +1780,6 @@ func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) err
 }
 
 func (step *Step) uninstallConnectivityClientSecret(res Resource, secret string) error {
-
 	crBuff, err := os.ReadFile(secret)
 	if err != nil {
 		return fmt.Errorf("failed to read secret testdata: %v", err)

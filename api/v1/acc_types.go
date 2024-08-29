@@ -13,8 +13,6 @@
 package v1
 
 import (
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -78,7 +76,7 @@ func (cr *ApexConnectivityClient) GetApexConnectivityClientStatus() *ApexConnect
 
 // GetApexConnectivityClientName - Returns the Client
 func (cr *ApexConnectivityClient) GetApexConnectivityClientName() string {
-	return fmt.Sprintf("%s", cr.Name)
+	return cr.Name
 }
 
 // GetApexConnectivityClientSpec - Returns a pointer to the GetApexConnectivityClientSpec instance
