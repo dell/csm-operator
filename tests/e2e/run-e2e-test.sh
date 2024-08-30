@@ -149,6 +149,7 @@ function usage() {
   echo "  --auth-proxy                                 use to run e2e auth-proxy suite"
   echo "  --resiliency                                 use to run e2e resiliency suite"
   echo "  --app-mobility                               use to run e2e application-mobility suite"
+  echo "  --no-modules                                 use to run e2e powerflex suite without any modules"
   echo "  --pflex                                      use to run e2e powerflex suite"
   echo "  --pscale                                     use to run e2e powerscale suite"
   echo "  --pstore                                     use to run e2e powerstore suite"
@@ -182,7 +183,15 @@ while getopts ":h-:" optchar; do
     app-mobility)
       export APPLICATIONMOBILITY=true ;;
     pflex)
-      export POWERFLEX=true ;;
+      export POWERFLEX=true ;; 
+    no-modules) 
+      export AUTHORIZATION=false
+      export AUTHORIZATIONPROXYSERVER=false
+      export REPLICATION=false
+      export OBSERVABILITY=false
+      export RESILIENCY=false
+      export APPLICATIONMOBILITY=false 
+      ;;
     pscale)
       export POWERSCALE=true ;;
     pstore)
@@ -253,10 +262,14 @@ getArrayInfo
 checkForScenariosFile
 checkForCertCsi
 checkForKaravictl
-if [ -v APPLICATIONMOBILITY ]; then
+if [[ $APPLICATIONMOBILITY == "true" ]]; then
+  echo "Checking for dellctl - APPLICATIONMOBILITY"
   checkForDellctl
+
 fi
-if [ -v AUTHORIZATIONPROXYSERVER ]; then
+
+if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
+  echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
   checkForDellctl
 fi
 checkForGinkgo
