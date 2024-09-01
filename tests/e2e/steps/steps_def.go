@@ -112,7 +112,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 				return nil, apex, fmt.Errorf("failed to read testdata: %v", err)
 			}
 
-			if strings.Contains(path, "_csm_") {
+			if strings.Contains(path, "csm_") {
 				customResource := csmv1.ContainerStorageModule{}
 				err = yaml.Unmarshal(b, &customResource)
 				if err != nil {
@@ -1263,7 +1263,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	switch semver.Major(configVersion) {
 	case "v2":
-		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName)
+		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, configVersion)
 	case "v1":
 		return step.AuthorizationV1Resources(storageType, driver, port, address, driverNamespace)
 	default:
@@ -1457,12 +1457,16 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/csm-authorization-template.yaml"
+		templateFile        = "testfiles/authorization-templates/csm_authorization_template.yaml"
 		updatedTemplateFile = ""
 	)
+
+	if strings.Contains(configVersion, "alpha") {
+		templateFile = "testfiles/authorization-templates/csm_authorization_alpha_template.yaml"
+	}
 
 	if driver == "powerflex" {
 		crMap = "pflexAuthCRs"
