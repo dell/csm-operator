@@ -32,7 +32,7 @@ spec:
           enabled: true
           proxyService: dellemc/csm-authorization-proxy:v2.0.0
           proxyServiceReplicas: 1
-          tenantService:  dellemc/csm-authorization-tenant:v2.0.0
+          tenantService: dellemc/csm-authorization-tenant:v2.0.0
           tenantServiceReplicas: 1
           roleService: dellemc/csm-authorization-role:v2.0.0
           roleServiceReplicas: 1
