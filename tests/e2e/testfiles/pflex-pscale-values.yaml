@@ -70,7 +70,7 @@
     - "Validate [powerflex] driver from CR [1] is not installed"
 - scenario: "Install PowerFlex Driver (With Authorization)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_alpha_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_alpha_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
   modules:
     - "authorization"
@@ -101,7 +101,7 @@
       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_alpha_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_alpha_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
   modules:
     - "authorizationproxyserver"
@@ -138,7 +138,7 @@
       - ./cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 - scenario: Install PowerFlex Driver(With Authorization), Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_alpha_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_alpha_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
   modules:
     - "authorization"

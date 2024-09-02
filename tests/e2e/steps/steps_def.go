@@ -112,7 +112,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 				return nil, apex, fmt.Errorf("failed to read testdata: %v", err)
 			}
 
-			if strings.Contains(path, "csm_") {
+			if strings.Contains(path, "_csm_") {
 				customResource := csmv1.ContainerStorageModule{}
 				err = yaml.Unmarshal(b, &customResource)
 				if err != nil {
@@ -1170,7 +1170,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		"secret", "generic",
 		"karavi-config-secret",
 		"-n", cr.Namespace,
-		"--from-file=config.yaml=testfiles/authorization-templates/csm_authorization_config.yaml",
+		"--from-file=config.yaml=testfiles/authorization-templates/storage_csm_authorization_config.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1178,7 +1178,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	}
 
 	cmd = exec.Command("kubectl", "create", "-n", cr.Namespace,
-		"-f", "testfiles/authorization-templates/csm_authorization_storage_secret.yaml",
+		"-f", "testfiles/authorization-templates/storage_csm_authorization_storage_secret.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1188,7 +1188,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	cmd = exec.Command("kubectl", "get", "sc", "local-storage")
 	err = cmd.Run()
 	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/csm_authorization_local_storage.yaml")
+		cmd = exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/storage_csm_authorization_local_storage.yaml")
 		b, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to delete local storage: %v\nErrMessage:\n%s", err, string(b))
@@ -1196,7 +1196,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	}
 
 	cmd = exec.Command("kubectl", "create",
-		"-f", "testfiles/authorization-templates/csm_authorization_local_storage.yaml",
+		"-f", "testfiles/authorization-templates/storage_csm_authorization_local_storage.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1460,12 +1460,12 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/csm_authorization_template.yaml"
+		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_template.yaml"
 		updatedTemplateFile = ""
 	)
 
 	if strings.Contains(configVersion, "alpha") {
-		templateFile = "testfiles/authorization-templates/csm_authorization_alpha_template.yaml"
+		templateFile = "testfiles/authorization-templates/storage_csm_authorization_alpha_template.yaml"
 	}
 
 	if driver == "powerflex" {
