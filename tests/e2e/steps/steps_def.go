@@ -1170,7 +1170,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		"secret", "generic",
 		"karavi-config-secret",
 		"-n", cr.Namespace,
-		"--from-file=config.yaml=testfiles/authorization-templates/csm_authorization_config.yaml",
+		"--from-file=config.yaml=testfiles/authorization-templates/storage_csm_authorization_config.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1178,7 +1178,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	}
 
 	cmd = exec.Command("kubectl", "create", "-n", cr.Namespace,
-		"-f", "testfiles/authorization-templates/csm_authorization_storage_secret.yaml",
+		"-f", "testfiles/authorization-templates/storage_csm_authorization_storage_secret.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1188,7 +1188,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	cmd = exec.Command("kubectl", "get", "sc", "local-storage")
 	err = cmd.Run()
 	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/csm_authorization_local_storage.yaml")
+		cmd = exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/storage_csm_authorization_local_storage.yaml")
 		b, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to delete local storage: %v\nErrMessage:\n%s", err, string(b))
@@ -1196,7 +1196,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	}
 
 	cmd = exec.Command("kubectl", "create",
-		"-f", "testfiles/authorization-templates/csm_authorization_local_storage.yaml",
+		"-f", "testfiles/authorization-templates/storage_csm_authorization_local_storage.yaml",
 	)
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1263,7 +1263,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 	switch semver.Major(configVersion) {
 	case "v2":
-		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName)
+		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, configVersion)
 	case "v1":
 		return step.AuthorizationV1Resources(storageType, driver, port, address, driverNamespace)
 	default:
@@ -1457,12 +1457,16 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/csm-authorization-template.yaml"
+		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_template.yaml"
 		updatedTemplateFile = ""
 	)
+
+	if strings.Contains(configVersion, "alpha") {
+		templateFile = "testfiles/authorization-templates/storage_csm_authorization_alpha_template.yaml"
+	}
 
 	if driver == "powerflex" {
 		crMap = "pflexAuthCRs"

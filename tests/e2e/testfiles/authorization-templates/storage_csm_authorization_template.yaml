@@ -1,4 +1,4 @@
-apiVersion: csm-authorization.storage.dell.com/v1alpha1
+apiVersion: csm-authorization.storage.dell.com/v1
 kind: Storage
 metadata:
   name: "REPLACE_STORAGE_NAME"
@@ -14,7 +14,7 @@ spec:
   pollInterval: 30s
   isiPath: "REPLACE_STORAGE_POOL_PATH"
 ---
-apiVersion: csm-authorization.storage.dell.com/v1alpha1
+apiVersion: csm-authorization.storage.dell.com/v1
 kind: CSMRole
 metadata:
   labels:
@@ -30,7 +30,7 @@ spec:
   systemType: "REPLACE_STORAGE_TYPE"
   pool: "REPLACE_STORAGE_POOL_PATH"
 ---
-apiVersion: csm-authorization.storage.dell.com/v1alpha1
+apiVersion: csm-authorization.storage.dell.com/v1
 kind: CSMTenant
 metadata:
   labels:
