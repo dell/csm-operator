@@ -149,7 +149,7 @@ function usage() {
   echo "  --auth-proxy                                 use to run e2e auth-proxy suite"
   echo "  --resiliency                                 use to run e2e resiliency suite"
   echo "  --app-mobility                               use to run e2e application-mobility suite"
-  echo "  --no-modules                                 use to run e2e powerflex suite without any modules"
+  echo "  --no-modules                                 use to run e2e suite without any modules"
   echo "  --pflex                                      use to run e2e powerflex suite"
   echo "  --pscale                                     use to run e2e powerscale suite"
   echo "  --pstore                                     use to run e2e powerstore suite"
