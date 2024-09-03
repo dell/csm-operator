@@ -1,4 +1,4 @@
-apiVersion: csm-authorization.storage.dell.com/v1alpha1
+apiVersion: csm-authorization.storage.dell.com/v1
 kind: CSMTenant
 metadata:
   labels:
