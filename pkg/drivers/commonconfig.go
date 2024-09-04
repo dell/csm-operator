@@ -168,11 +168,10 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 						removeContainer = true
 						log.Infow("Container to be removed", "name", *c.Name)
 						break
-					} else {
-						removeContainer = false
-						log.Infow("Container to be enabled", "name", *c.Name)
-						break
 					}
+					removeContainer = false
+					log.Infow("Container to be enabled", "name", *c.Name)
+					break
 				} else if !*s.Enabled {
 					removeContainer = true
 					log.Infow("Container to be removed", "name", *c.Name)
@@ -354,9 +353,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		dnspolicy := corev1.DNSPolicy(cr.Spec.Driver.DNSPolicy)
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &dnspolicy
 	}
-	var defaultDnsPolicy corev1.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+	var defaultDNSPolicy corev1.DNSPolicy = corev1.DNSClusterFirstWithHostNet
 	if cr.Spec.Driver.DNSPolicy == "" {
-		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &defaultDnsPolicy
+		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &defaultDNSPolicy
 	}
 
 	if len(cr.Spec.Driver.Node.Tolerations) != 0 {
