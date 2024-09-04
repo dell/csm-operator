@@ -9,15 +9,15 @@ data:
             tls:
               cert_file: /etc/ssl/certs/tls.crt
               key_file: /etc/ssl/certs/tls.key
-    
+
     exporters:
       prometheus:
         endpoint: 0.0.0.0:8889
       logging:
-    
+
     extensions:
       health_check: {}
-    
+
     service:
       extensions: [health_check]
       pipelines:
@@ -29,9 +29,7 @@ kind: ConfigMap
 metadata:
   name: otel-collector-config
   namespace: karavi
-
 ---
-
 apiVersion: v1
 data:
   nginx.conf: |-
@@ -39,9 +37,9 @@ data:
     events {
       worker_connections  1024;
     }
-    
+
     pid /tmp/nginx.pid;
-    
+
     http {
       include       mime.types;
       default_type  application/octet-stream;
@@ -66,9 +64,7 @@ kind: ConfigMap
 metadata:
   name: nginx-config
   namespace: karavi
-
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -89,9 +85,7 @@ spec:
   selector:
     app.kubernetes.io/name: otel-collector
     app.kubernetes.io/instance: karavi-observability
-
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:

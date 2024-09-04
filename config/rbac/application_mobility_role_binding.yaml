@@ -7,6 +7,6 @@ roleRef:
   kind: ClusterRole
   name: application-mobility-velero-server
 subjects:
-- kind: ServiceAccount
-  name: dell-csm-operator-manager-service-account
-  namespace: dell-csm-operator
+  - kind: ServiceAccount
+    name: dell-csm-operator-manager-service-account
+    namespace: dell-csm-operator

@@ -221,7 +221,6 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case string(csmv1.Resiliency):
 		*c.Image = img.Images.Podmon
 	}
-	return
 }
 
 // UpdateinitContainerApply -

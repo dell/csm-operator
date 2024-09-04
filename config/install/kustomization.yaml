@@ -1,17 +1,14 @@
 # Adds namespace to all resources.
 namespace: dell-csm-operator
 namePrefix: dell-csm-operator-
-
 # Labels to add to all resources and selectors.
 #commonLabels:
 #  someName: someValue
-
 bases:
-- ../serviceaccount
-- ../rbac
-- ../manager
-
+  - ../serviceaccount
+  - ../rbac
+  - ../manager
 images:
   - name: controller
     newName: docker.io/dellemc/dell-csm-operator
-    newTag: v1.6.0
+    newTag: v1.7.0
