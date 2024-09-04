@@ -14,7 +14,6 @@ package k8s
 
 import (
 	"k8s.io/apimachinery/pkg/version"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
@@ -43,14 +42,11 @@ var GetClientSetWrapper = func() (kubernetes.Interface, error) {
 
 // GetKubeAPIServerVersion returns version of the k8s/openshift cluster
 func GetKubeAPIServerVersion() (*version.Info, error) {
-	// Get a config to talk to the apiserver
-	cfg, err := config.GetConfig()
-	// Create the discoveryClient
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
+	k8sClientSet, err := GetClientSetWrapper()
 	if err != nil {
 		return nil, err
 	}
-	sv, err := discoveryClient.ServerVersion()
+	sv, err := k8sClientSet.Discovery().ServerVersion()
 	if err != nil {
 		return nil, err
 	}
