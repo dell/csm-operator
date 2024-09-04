@@ -11,4 +11,4 @@ bases:
 images:
   - name: controller
     newName: docker.io/dellemc/dell-csm-operator
-    newTag: v1.6.0
+    newTag: v1.7.0
