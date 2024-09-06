@@ -1,0 +1,23 @@
+# permissions for end users to view apexconnectivityclients.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: csm-operator-v4
+    app.kubernetes.io/managed-by: kustomize
+  name: apexconnectivityclient-viewer-role
+rules:
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - apexconnectivityclients/status
+  verbs:
+  - get

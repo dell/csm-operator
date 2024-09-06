@@ -1,0 +1,5 @@
+## Append samples of your project ##
+resources:
+- storage_v1_containerstoragemodule.yaml
+- storage_v1_apexconnectivityclient.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
