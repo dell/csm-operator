@@ -1,6 +1,5 @@
+//  Copyright © 2023 - 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 /*
-Copyright 2024.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -28,16 +27,27 @@ type ApexConnectivityClientSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of ApexConnectivityClient. Edit apexconnectivityclient_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Client is a Apex Connectivity Client for Dell Technologies
+	Client Client `json:"client,omitempty" yaml:"client,omitempty"`
 }
 
 // ApexConnectivityClientStatus defines the observed state of ApexConnectivityClient
 type ApexConnectivityClientStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// ClientStatus is the status of Client pods
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="ClientStatus",xDescriptors="urn:alm:descriptor:com.tectonic.ui:podStatuses"
+	ClientStatus PodStatus `json:"clientStatus,omitempty"`
+
+	// State is the state of the client installation
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="State",xDescriptors="urn:alm:descriptor:text"
+	State CSMStateType `json:"state,omitempty" yaml:"state"`
 }
 
+// +kubebuilder:validation:Optional
+// +kubebuilder:resource:scope=Namespaced,shortName={"acc"}
+// +kubebuilder:printcolumn:name="CreationTime",type=date,JSONPath=`.metadata.creationTimestamp`
+// +kubebuilder:printcolumn:name="CSMClientType",type=string,JSONPath=`.spec.client.csmClientType`,description="Type of Client"
+// +kubebuilder:printcolumn:name="ConfigVersion",type=string,JSONPath=`.spec.client.configVersion`,description="Version of Apex client"
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="State of Installation"
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
@@ -61,4 +71,39 @@ type ApexConnectivityClientList struct {
 
 func init() {
 	SchemeBuilder.Register(&ApexConnectivityClient{}, &ApexConnectivityClientList{})
+}
+
+// GetApexConnectivityClientStatus - Returns a pointer to the client instance
+func (cr *ApexConnectivityClient) GetApexConnectivityClientStatus() *ApexConnectivityClientStatus {
+	return &cr.Status
+}
+
+// GetApexConnectivityClientName - Returns the Client
+func (cr *ApexConnectivityClient) GetApexConnectivityClientName() string {
+	return cr.Name
+}
+
+// GetApexConnectivityClientSpec - Returns a pointer to the GetApexConnectivityClientSpec instance
+func (cr *ApexConnectivityClient) GetApexConnectivityClientSpec() *ApexConnectivityClientSpec {
+	return &cr.Spec
+}
+
+// GetClientType - Returns the client type
+func (cr *ApexConnectivityClient) GetClientType() ClientType {
+	return cr.Spec.Client.CSMClientType
+}
+
+// IsBeingDeleted  - Returns  true if a deletion timestamp is set
+func (cr *ApexConnectivityClient) IsBeingDeleted() bool {
+	return !cr.ObjectMeta.DeletionTimestamp.IsZero()
+}
+
+// HasFinalizer returns true if the item has the specified finalizer
+func (cr *ApexConnectivityClient) HasFinalizer(finalizerName string) bool {
+	for _, item := range cr.ObjectMeta.Finalizers {
+		if item == finalizerName {
+			return true
+		}
+	}
+	return false
 }

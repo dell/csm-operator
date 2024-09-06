@@ -5,7 +5,7 @@
 domain: dell.com
 layout:
 - go.kubebuilder.io/v4
-projectName: csm-operator-v4
+projectName: dell-csm-operator
 repo: github.com/dell/csm-operator
 resources:
 - api:
