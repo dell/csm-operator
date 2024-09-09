@@ -4,6 +4,12 @@
 *.dll
 *.so
 *.dylib
+testbin/*
+vendor/
+semver.mk
+cert-csi
+csm-common.mk
+__debug_bin*
 bin/*
 Dockerfile.cross
 
