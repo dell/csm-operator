@@ -5,6 +5,5 @@ metadata:
   namespace: vxflexos
 spec:
   driver:
-    csiDriverType: "powerstore"
+    csiDriverType: "powerflex"
     configVersion: v2.11.0
-    forceRemoveDriver: true
