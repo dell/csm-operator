@@ -4,7 +4,7 @@ namePrefix: dell-csm-operator-
 # Labels to add to all resources and selectors.
 #commonLabels:
 #  someName: someValue
-bases:
+resources:
   - ../serviceaccount
   - ../rbac
   - ../manager

@@ -38,8 +38,8 @@ import (
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/controllers"
 	"github.com/dell/csm-operator/core"
+	"github.com/dell/csm-operator/internal/controller"
 	k8sClient "github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/logger"
 	utils "github.com/dell/csm-operator/pkg/utils"
@@ -214,7 +214,7 @@ func main() {
 	recorder := eventBroadcaster.NewRecorder(clientgoscheme.Scheme, corev1.EventSource{Component: "csm"})
 
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
-	if err = (&controllers.ContainerStorageModuleReconciler{
+	if err = (&controller.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),
 		K8sClient:     k8sClient,
 		Log:           log,
@@ -225,7 +225,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ContainerStorageModule")
 		os.Exit(1)
 	}
-	if err = (&controllers.ApexConnectivityClientReconciler{
+	if err = (&controller.ApexConnectivityClientReconciler{
 		Client:        mgr.GetClient(),
 		K8sClient:     k8sClient,
 		Log:           log,
@@ -236,7 +236,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ApexConnectivityClient")
 		os.Exit(1)
 	}
-	defer close(controllers.StopWatch)
+	defer close(controller.StopWatch)
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
