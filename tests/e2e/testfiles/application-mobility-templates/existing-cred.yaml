@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/instance: application-mobility
 type: Opaque
 stringData:
-  cloud: |
+  cloud: |-
     [default]
     aws_access_key_id=access_key
     aws_secret_access_key=access_key123

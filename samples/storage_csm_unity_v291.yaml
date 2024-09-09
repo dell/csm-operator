@@ -84,19 +84,18 @@ spec:
         # Default value: true
         - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
           value: "true"
-
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         args: ["--volume-name-prefix=csivol"]
-      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
-      # Configure when the storageCapacity is set as "true"
-      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-      #- name: provisioner
-      #  args: ["--capacity-poll-interval=5m"]
-
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
+        # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+        # Configure when the storageCapacity is set as "true"
+        # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+        #- name: provisioner
+        #  args: ["--capacity-poll-interval=5m"]
+
         enabled: false
         args: ["--monitor-interval=60s"]
     controller:
@@ -130,7 +129,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-
       # nodeSelector: Define node selection constraints for node pods.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -145,7 +143,8 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      # - key: "node-role.kubernetes.io/control-plane"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
+
+# Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+# - key: "node-role.kubernetes.io/control-plane"
+#   operator: "Exists"
+#   effect: "NoSchedule"

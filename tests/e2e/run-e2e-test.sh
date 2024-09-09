@@ -149,11 +149,13 @@ function usage() {
   echo "  --auth-proxy                                 use to run e2e auth-proxy suite"
   echo "  --resiliency                                 use to run e2e resiliency suite"
   echo "  --app-mobility                               use to run e2e application-mobility suite"
+  echo "  --no-modules                                 use to run e2e suite without any modules"
   echo "  --pflex                                      use to run e2e powerflex suite"
   echo "  --pscale                                     use to run e2e powerscale suite"
   echo "  --pstore                                     use to run e2e powerstore suite"
   echo "  --unity                                      use to run e2e unity suite"
   echo "  --pmax                                       use to run e2e powermax suite"
+  echo "  --client                                     use to run e2e connectivity client suite"
   echo
 
   exit 0
@@ -182,6 +184,14 @@ while getopts ":h-:" optchar; do
       export APPLICATIONMOBILITY=true ;;
     pflex)
       export POWERFLEX=true ;;
+    no-modules) 
+      export AUTHORIZATION=false
+      export AUTHORIZATIONPROXYSERVER=false
+      export REPLICATION=false
+      export OBSERVABILITY=false
+      export RESILIENCY=false
+      export APPLICATIONMOBILITY=false 
+      ;;
     pscale)
       export POWERSCALE=true ;;
     pstore)
@@ -190,6 +200,8 @@ while getopts ":h-:" optchar; do
       export UNITY=true ;;
     pmax)
       export POWERMAX=true ;;
+    client)
+      export CLIENT=true ;;
     cert-csi)
       CERT_CSI="${!OPTIND}"
       OPTIND=$((OPTIND + 1))
@@ -250,10 +262,12 @@ getArrayInfo
 checkForScenariosFile
 checkForCertCsi
 checkForKaravictl
-if [ -v APPLICATIONMOBILITY ]; then
+if [[ $APPLICATIONMOBILITY == "true" ]]; then
+  echo "Checking for dellctl - APPLICATIONMOBILITY"
   checkForDellctl
 fi
-if [ -v AUTHORIZATIONPROXYSERVER ]; then
+if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
+  echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
   checkForDellctl
 fi
 checkForGinkgo

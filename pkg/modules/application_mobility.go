@@ -560,7 +560,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 			return err
 		}
 
-		volumeSnapshotLoc, err := utils.GetVolumeSnapshotLocation(ctx, vsName, cr.Namespace, ctrlClient)
+		volumeSnapshotLoc, _ := utils.GetVolumeSnapshotLocation(ctx, vsName, cr.Namespace, ctrlClient)
 		if volumeSnapshotLoc != nil {
 			log.Infow("\n Volume Snapshot location Name : ", volumeSnapshotLoc.Name, " already exists and being re-used")
 		}
@@ -571,7 +571,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 		}
 
 		for _, ctrlObj := range ctrlObjects {
-			if isDeleting == false {
+			if !isDeleting {
 				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 					return err
 				}
@@ -794,7 +794,7 @@ func UseBackupStorageLoc(ctx context.Context, isDeleting bool, op utils.Operator
 		return err
 	}
 
-	backupStorageLoc, err := utils.GetBackupStorageLocation(ctx, bslName, cr.Namespace, ctrlClient)
+	backupStorageLoc, _ := utils.GetBackupStorageLocation(ctx, bslName, cr.Namespace, ctrlClient)
 	if backupStorageLoc != nil {
 		log.Infow("\n Backup Storage Name : ", backupStorageLoc.Name, "already exists and being re-used")
 	}
@@ -805,7 +805,7 @@ func UseBackupStorageLoc(ctx context.Context, isDeleting bool, op utils.Operator
 	}
 
 	for _, ctrlObj := range ctrlObjects {
-		if isDeleting == false {
+		if !isDeleting {
 			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}

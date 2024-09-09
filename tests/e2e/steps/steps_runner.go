@@ -66,6 +66,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up secret from \[([^"]*)\] in namespace \[([^"]*)\]`, step.setupSecretFromFile)
 	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
 	runner.addStep(`^Set up secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
+	runner.addStep(`^Set up configMap with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpConfigMap)
+	runner.addStep(`^Set up creds with template \[([^"]*)\] for \[([^"]*)\]`, step.setUpPowermaxCreds)
 	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
 	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
 	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
@@ -81,13 +83,13 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up application mobility CR \[([^"]*)\]$`, step.configureAMInstall)
 
 	// Connectivity Client steps
-	runner.addStep(`^Given an client environment with k8s or openshift, and CSM operator installed$`, step.validateClientTestEnvironment)
-	runner.addStep(`^Install connectivity client from CR \[(\d+)\] and create secret \[(\d+)\]$`, step.applyClientCustomResource)
+	runner.addStep(`^Given a client environment with k8s or openshift, and CSM operator installed$`, step.validateClientTestEnvironment)
+	runner.addStep(`^Install connectivity client from CR \[(\d+)\] and create secret \[([^"]*)\]$`, step.applyClientCustomResource)
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is installed$`, step.validateConnectivityClientInstalled)
 	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is not installed$`, step.validateConnectivityClientNotInstalled)
 	runner.addStep(`^Uninstall connectivity client from CR \[(\d+)\]`, step.uninstallConnectivityClient)
 	runner.addStep(`^Upgrade client from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResourceClient)
-	runner.addStep(`^Uninstall connectivity client secret from CR \[(\d+)\]`, step.uninstallConnectivityClientSecret)
+	runner.addStep(`^Uninstall connectivity client secret \[([^"]*)\]`, step.uninstallConnectivityClientSecret)
 	runner.addStep(`^Validate rbac created in namespace \[([^"]*)\]$`, step.validateRbacCreated)
 	runner.addStep(`^Validate connectivity client rbac objects are removed from all namespaces$`, step.validateRbacDeleted)
 	runner.addStep(`^Validate connectivity client rbac objects are removed from namespace \[([^"]*)\]$`, step.validateDeleteRbac)
@@ -154,7 +156,7 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 }
 
 // RunStepClient - runs a step
-func (runner *Runner) RunStepClient(stepName string, res ResourceApex) error {
+func (runner *Runner) RunStepClient(stepName string, res Resource) error {
 	for _, stepDef := range runner.Definitions {
 		if stepDef.Expr.MatchString(stepName) {
 			var values []reflect.Value

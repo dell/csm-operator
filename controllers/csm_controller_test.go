@@ -211,7 +211,7 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcileOCP() {
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
 	suite.makeFakeAuthServerCSMWithoutPreRequisite(csmName, suite.namespace)
-	suite.runFakeAuthCSMManager("failed authorization proxy server validation", false, false)
+	suite.runFakeAuthCSMManager("timed out waiting for the condition", false, false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true, false)
 }

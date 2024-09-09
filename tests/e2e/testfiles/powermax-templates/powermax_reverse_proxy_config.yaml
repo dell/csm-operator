@@ -1,0 +1,31 @@
+# Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Config to be used in CSM Powermax Reverseproxy
+# Fill in the appropriate values, refer to docs if required
+# Create the configmap using following cmd
+# kubectl/oc create configmap powermax-reverseproxy-config --from-file config.yaml -n <namespace>
+mode: StandAlone # Mode for the reverseproxy, should not be changed
+port: 2222
+logLevel: debug
+logFormat: text
+standAloneConfig:
+  storageArrays:
+    - storageArrayId: "REPLACE_SYSTEMID"
+      primaryURL: "https://REPLACE_AUTH_ENDPOINT:9400"
+      proxyCredentialSecrets:
+        - powermax-creds
+  managementServers:
+    - url: "https://REPLACE_AUTH_ENDPOINT:9400"
+      arrayCredentialSecret: powermax-creds
+      skipCertificateValidation: true

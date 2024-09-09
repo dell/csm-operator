@@ -12,7 +12,6 @@ spec:
     common:
       image: "dellemc/csi-powermax:v2.11.0"
       imagePullPolicy: IfNotPresent
-
   modules:
     - name: resiliency
       configVersion: "v1.10.0"
@@ -51,4 +50,3 @@ spec:
             - "--mode=node"
             - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powermax.dellemc.com"
-

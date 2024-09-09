@@ -11,8 +11,13 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: true
     configVersion: v2.11.0
-    replicas: 2
+    replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
@@ -35,6 +40,8 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
+        - name: X_CSI_QUOTA_ENABLED
+          value: "false"
     sideCars:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
@@ -50,6 +57,12 @@ spec:
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
+    # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+    # Configure when the storageCapacity is set as "true"
+    # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+    #- name: provisioner
+    #  args: ["--capacity-poll-interval=5m"]
+
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
@@ -107,6 +120,11 @@ spec:
         # Default value: false
         - name: X_CSI_RENAME_SDC_ENABLED
           value: "false"
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
         # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
         # "prefix" + "worker_node_hostname" should not exceed 31 chars.
         # Default value: none
@@ -169,7 +187,6 @@ spec:
               value: "replication.storage.dell.com"
             # replicationContextPrefix: prefix to use for naming of resources created by replication feature
             # Allowed values: string
-            # Default value: powerstore
             - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
               value: "powerflex"
         - name: dell-replication-controller-manager

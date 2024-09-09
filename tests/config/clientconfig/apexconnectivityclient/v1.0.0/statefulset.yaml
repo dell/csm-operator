@@ -122,8 +122,7 @@ spec:
         runAsUser: 1001
       containers:
         - name: connectivity-client-docker-k8s
-          securityContext:
-            {}
+          securityContext: {}
           image: "<CONNECTIVITY_CLIENT_IMAGE>"
           imagePullPolicy: IfNotPresent
           args:
@@ -200,7 +199,7 @@ spec:
         - name: kubernetes-proxy
           image: "<KUBERNETES_PROXY_IMAGE>"
           imagePullPolicy: IfNotPresent
-          command: [ "kubectl" ]
+          command: ["kubectl"]
           args:
             - "proxy"
             - "--port=8001"

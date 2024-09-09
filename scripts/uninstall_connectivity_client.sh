@@ -14,9 +14,9 @@
 
 if [[ $# -ne 1 ]]; then
   echo "Incorrect input parameters provided to script $0."
-  echo "Script Usage:"
+  echo "Script usage:"
   echo "$0 <connectivityclient-version>"
-  echo "Example:- connectivityclient-version => v100 , v110"
+  echo "Example: $0 v110"
   exit 1
 fi
 
@@ -40,7 +40,7 @@ if [ -z "$CMD" ]; then
     exit 1
 fi
 
-$CMD apply -f $ROOTDIR/samples/connectivity_client_${connectivity_ver}.yaml
-$CMD apply -f $ROOTDIR/samples/conn_secret_test.yaml
+$CMD delete -f $ROOTDIR/samples/connectivity_client_${connectivity_ver}.yaml
+$CMD delete -f $ROOTDIR/samples/connectivity_client_secret.yaml
 
 echo "Dell Connectivity Client ${connectivity_ver} uninstalled."

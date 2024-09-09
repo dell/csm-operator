@@ -27,7 +27,6 @@
     name: verify app-mobility
     run:
       - sh verify-app-mobility.sh
-
 - scenario: "Install powerflex driver, enable and disable application-mobility"
   paths:
     - "testfiles/application-mobility-templates/powerflex_noAM.yaml"
@@ -59,7 +58,6 @@
     name: verify app-mobility
     run:
       - sh verify-app-mobility.sh
-
 - scenario: "Install App Mobility when Velero and Cert-Manager already installed"
   paths:
     - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"
@@ -91,7 +89,6 @@
     name: verify app-mobility
     run:
       - sh verify-app-mobility.sh
-
 - scenario: "Install App Mobility Velero with different env variables than default"
   paths:
     - "testfiles/application-mobility-templates/alt-velero-secret.yaml"
@@ -124,7 +121,6 @@
     name: verify app-mobility
     run:
       - sh verify-app-mobility.sh
-
 - scenario: "Install App Mobility with powerflex driver- default"
   paths:
     - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"
@@ -151,4 +147,3 @@
     name: verify app-mobility
     run:
       - sh verify-app-mobility.sh
-

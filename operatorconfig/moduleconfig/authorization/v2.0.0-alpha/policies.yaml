@@ -96,7 +96,7 @@ data:
 
     default claims = {}
     claims = input.claims
-    deny[msg] {                                                                                       
+    deny[msg] {
       claims == {}
       msg := sprintf("missing claims", [])
     }
@@ -269,9 +269,8 @@ kind: ConfigMap
 metadata:
   name: redis-csm-cm
   namespace: <NAMESPACE>
-
 data:
-  redis.conf: |
+  redis.conf: ""
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -279,7 +278,7 @@ metadata:
   name: snapshot-create
   namespace: <NAMESPACE>
 data:
-  snapshot-create.rego: |
+  snapshot-create.rego: |-
     package karavi.snapshot.create
 
     import data.karavi.common
