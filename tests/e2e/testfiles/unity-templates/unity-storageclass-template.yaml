@@ -5,11 +5,11 @@ metadata:
     storageclass.beta.kubernetes.io/is-default-class: "false"
   name: op-e2e-unity
 parameters:
-  arrayID: REPLACE_ARRAYID
+  arrayId: REPLACE_ARRAYID
   hostIoSize: "16384"
   isDataReductionEnabled: "false"
   storagePool: REPLACE_POOL
-  thinProvisioned: "false"
+  thinProvisioned: "true"
   tieringPolicy: "0"
   protocol: "NFS"
   nasServer: "REPLACE_NAS"

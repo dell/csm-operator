@@ -1329,7 +1329,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-unity] and template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
-    - "Set up secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [unity-config] in namespace [unity] for [unity]"
+    - "Set up secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
@@ -1342,7 +1342,7 @@
   customTest:
     name: Cert CSI
     run:
-      - cert-csi test vio --sc unity --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-unity --chainNumber 2 --chainLength 2
 - scenario: "Install App Mobility (Standalone)"
   paths:
     - "testfiles/application-mobility-templates/csm_application_mobility_vanilla.yaml"
