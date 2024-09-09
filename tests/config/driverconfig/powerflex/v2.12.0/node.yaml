@@ -82,7 +82,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: dellemc/csi-vxflexos:v2.9.1
+          image: dellemc/csi-vxflexos:v2.11.0
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:
@@ -135,7 +135,7 @@ spec:
               mountPath: /certs
               readOnly: true
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -157,7 +157,7 @@ spec:
         - name: sdc-monitor
           securityContext:
             privileged: true
-          image: dellemc/sdc:4.5
+          image: dellemc/sdc:4.5.2.1
           imagePullPolicy: IfNotPresent
           env:
             - name: HOST_PID
@@ -183,7 +183,7 @@ spec:
         - name: sdc
           securityContext:
             privileged: true
-          image: dellemc/sdc:4.5
+          image: dellemc/sdc:4.5.2.1
           imagePullPolicy: IfNotPresent
           env:
             - name: NODENAME

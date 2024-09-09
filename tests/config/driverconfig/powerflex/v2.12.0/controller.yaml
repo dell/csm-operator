@@ -1,18 +1,3 @@
-#
-#
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#      http://www.apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-#
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -32,25 +17,38 @@ rules:
     verbs: ["list", "watch", "create", "update", "patch"]
   - apiGroups: [""]
     resources: ["nodes"]
-    verbs: ["get", "list", "watch"]
+    verbs: ["get", "list", "watch", "patch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["update", "patch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["storageclasses"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
-    verbs: ["get", "list", "watch", "update", "patch"]
+    verbs: ["get", "list", "watch", "update", "patch", "delete"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments/status"]
+    verbs: ["patch"]
+  - apiGroups: ["csi.storage.k8s.io"]
+    resources: ["csinodeinfos"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "update", "delete"]
+    # below for snapshotter
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "list"]
-  - apiGroups: ["volumegroup.storage.dell.com"]
-    resources: ["dellcsivolumegroupsnapshots", "dellcsivolumegroupsnapshots/status"]
-    verbs: ["create", "list", "watch", "delete", "update"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
     verbs: ["get", "list", "watch"]
@@ -58,34 +56,18 @@ rules:
     resources: ["volumesnapshotcontents"]
     verbs: ["create", "get", "list", "watch", "update", "delete", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshotcontents/status"]
-    verbs: ["update", "patch"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list", "watch", "update", "create", "delete"]
   - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshots", "volumesnapshots/status"]
-    verbs: ["get", "list", "watch", "update"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["volumeattachments/status"]
-    verbs: ["patch"]
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "watch"]
+    resources: ["volumesnapshots/status", "volumesnapshotcontents/status"]
+    verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
-    verbs: ["create", "list", "watch", "delete"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["csinodes"]
-    verbs: ["get", "list", "watch"]
-  # below for resizer
-  - apiGroups: [""]
-    resources: ["persistentvolumeclaims/status"]
-    verbs: ["update", "patch"]
+    verbs: ["create", "list", "watch", "delete", "update"]
   # Permissions for CSIStorageCapacity
   - apiGroups: ["storage.k8s.io"]
     resources: ["csistoragecapacities"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get"]
   - apiGroups: ["apps"]
     resources: ["replicasets"]
     verbs: ["get"]
@@ -108,7 +90,12 @@ apiVersion: apps/v1
 metadata:
   name: <DriverDefaultReleaseName>-controller
   namespace: <DriverDefaultReleaseNamespace>
+  annotations:
+    com.dell.karavi-authorization-proxy: "true"
 spec:
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
   selector:
     matchLabels:
       name: <DriverDefaultReleaseName>-controller
@@ -118,8 +105,8 @@ spec:
       labels:
         name: <DriverDefaultReleaseName>-controller
     spec:
-      serviceAccountName: <DriverDefaultReleaseName>-controller
       affinity:
+        nodeSelector:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
@@ -129,30 +116,15 @@ spec:
                     values:
                       - <DriverDefaultReleaseName>-controller
               topologyKey: kubernetes.io/hostname
+      serviceAccountName: <DriverDefaultReleaseName>-controller
       containers:
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.4.2
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
             - "--v=5"
-            - "--leader-election"
-            - "--worker-threads=130"
-            - "--resync=10s"
-            - "--timeout=130s"
-          env:
-            - name: ADDRESS
-              value: /var/run/csi/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/run/csi
-        - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.9.2
-          imagePullPolicy: IfNotPresent
-          args:
-            - "--csi-address=$(ADDRESS)"
-            - "--v=5"
-            - "--leader-election"
+            - "--leader-election=true"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
@@ -160,18 +132,19 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.2
+          image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
-            - "--volume-name-prefix=csivol"
+            - "--feature-gates=Topology=true"
+            - "--volume-name-prefix=k8s"
             - "--volume-name-uuid-length=10"
+            - "--leader-election=true"
+            - "--timeout=120s"
             - "--v=5"
-            - "--leader-election"
             - "--default-fstype=ext4"
             - "--extra-create-metadata"
-            - "--feature-gates=Topology=true"
-            - "--enable-capacity=false"
+            - "--enable-capacity=true"
             - "--capacity-ownerref-level=2"
             - "--capacity-poll-interval=5m"
           env:
@@ -188,34 +161,44 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
-        - name: snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.3.2
+        - name: csi-external-health-monitor-controller
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
             - "--v=5"
-            - "--leader-election"
-            - "--snapshot-name-prefix=csisnap"
+            - "--leader-election=true"
+            - "--enable-node-watcher=true"
+            - "--http-endpoint=:8080"
+            - "--monitor-interval=60s"
+            - "--timeout=180s"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
-        - name: external-health-monitor
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.10.0
+        - name: snapshotter
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
           imagePullPolicy: IfNotPresent
           args:
-            - "--v=5"
             - "--csi-address=$(ADDRESS)"
-            - "--leader-election"
-            - "--http-endpoint=:8080"
-            - "--enable-node-watcher=true"
-            - "--monitor-interval=60s"
-            - "--timeout=180s"
-            - "--leader-election-renew-deadline=10s"
-            - "--leader-election-lease-duration=15s"
-            - "--leader-election-retry-period=5s"
+            - "--timeout=120s"
+            - "--v=5"
+            - "--leader-election=true"
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
+        - name: resizer
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=5"
+            - "--leader-election=true"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
@@ -223,48 +206,53 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: dellemc/csi-powerstore:v2.9.1
+          image: dellemc/csi-vxflexos:v2.11.0
           imagePullPolicy: IfNotPresent
-          command: ["/csi-powerstore"]
+          command: ["/csi-vxflexos.sh"]
           args:
-            - "--array-config=/powerstore-config/config"
-            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--array-config=/vxflexos-config/config"
+            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
           env:
-            - name: ENABLE_TRACING
-              value:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
             - name: X_CSI_MODE
               value: controller
-            - name: X_CSI_DRIVER_NAME
-              value: "csi-powerstore.dellemc.com"
-            - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
-              value: <X_CSI_POWERSTORE_EXTERNAL_ACCESS>
-            - name: X_CSI_NFS_ACLS
-              value: "<X_CSI_NFS_ACLS>"
-            - name: X_CSI_POWERSTORE_CONFIG_PATH
-              value: /powerstore-config/config
-            - name: X_CSI_POWERSTORE_CONFIG_PARAMS_PATH
-              value: /powerstore-config-params/driver-config-params.yaml
-            - name: GOPOWERSTORE_DEBUG
-              value: true
-            - name: CSI_AUTO_ROUND_OFF_FILESYSTEM_SIZE
+            - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
               value: false
+            - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
+              value: false
+            - name: SSL_CERT_DIR
+              value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_QUOTA_ENABLED
+              value: <X_CSI_QUOTA_ENABLED>
+            - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+              value: <X_CSI_POWERFLEX_EXTERNAL_ACCESS>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
-            - name: powerstore-config
-              mountPath: /powerstore-config
-            - name: powerstore-config-params
-              mountPath: /powerstore-config-params
+            - name: vxflexos-config
+              mountPath: /vxflexos-config
+            - name: vxflexos-config-params
+              mountPath: /vxflexos-config-params
+            - name: certs
+              mountPath: /certs
+              readOnly: true
       volumes:
         - name: socket-dir
           emptyDir:
-        - name: powerstore-config-params
-          configMap:
-            name: <DriverDefaultReleaseName>-config-params
-        - name: powerstore-config
+        - name: vxflexos-config
           secret:
             secretName: <DriverDefaultReleaseName>-config
+        - name: vxflexos-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: <DriverDefaultReleaseName>-certs-0
+                  items:
+                    - key: cert-0
+                      path: cert-0

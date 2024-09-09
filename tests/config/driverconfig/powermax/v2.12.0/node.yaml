@@ -87,7 +87,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-powermax:v2.9.1
+          image: dellemc/csi-powermax:v2.11.0
           imagePullPolicy: IfNotPresent
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
@@ -125,7 +125,7 @@ spec:
               value: "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
             - name: X_CSI_POWERMAX_PROXY_SERVICE_NAME
               value: "csipowermax-reverseproxy"
-            - name: X_CSI_ISCSI_CHROOT
+            - name: X_CSI_NODE_CHROOT
               value: noderoot
             - name: X_CSI_GRPC_MAX_THREADS
               value: "50"
@@ -189,7 +189,7 @@ spec:
             - name: node-topology-config
               mountPath: /node-topology-config
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
