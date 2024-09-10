@@ -65,6 +65,7 @@ type K8sImagesConfig struct {
 		Sdc                   string `json:"sdc" yaml:"sdc"`
 		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
 		Podmon                string `json:"podmon" yaml:"podmon"`
+		CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 	} `json:"images" yaml:"images"`
 }
 
@@ -214,7 +215,7 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case csmv1.Externalhealthmonitor:
 		*c.Image = img.Images.Externalhealthmonitor
 	case csmv1.Sdc:
-		*c.Image = img.Images.Sdc
+		*c.Image = img.Images.Sdcmonitor
 	case csmv1.Sdcmonitor:
 		*c.Image = img.Images.Sdcmonitor
 	case string(csmv1.Resiliency):
