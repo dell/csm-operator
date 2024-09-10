@@ -68,6 +68,19 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 		config = cr.Spec.Driver.AuthSecret
 	}
 
+	kubeletConfigDirFound := false
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == "KUBELET_CONFIG_DIR" {
+			kubeletConfigDirFound = true
+		}
+	}
+	if !kubeletConfigDirFound {
+		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
+			Name:  "KUBELET_CONFIG_DIR",
+			Value: "/var/lib/kubelet",
+		})
+	}
+
 	// Check if driver version is supported by doing a stat on a config file
 	configFilePath := fmt.Sprintf("%s/driverconfig/powerstore/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {

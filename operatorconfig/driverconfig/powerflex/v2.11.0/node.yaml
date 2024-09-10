@@ -111,6 +111,8 @@ spec:
               value: <X_CSI_RENAME_SDC_PREFIX>
             - name: X_CSI_MAX_VOLUMES_PER_NODE
               value: <X_CSI_MAX_VOLUMES_PER_NODE>
+            - name: X_CSI_DEBUG
+              value: true
             - name: X_CSI_POWERFLEX_KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
