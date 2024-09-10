@@ -112,8 +112,8 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 // ModifyUnityCR - Configuring CR parameters
 func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
 	// Parameters to initialise CR values
-	healthMonitorNode := ""
-	healthMonitorController := ""
+	healthMonitorNode := "false"
+	healthMonitorController := "false"
 	storageCapacity := "false"
 	allowedNetworks := ""
 
