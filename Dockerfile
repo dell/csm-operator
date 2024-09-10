@@ -32,11 +32,11 @@ COPY internal/controller/ internal/controller/
 COPY core/ core/
 COPY pkg/ pkg/
 COPY k8s/ k8s/
-COPY tests/ tests/
+COPY test/ test/
 
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager cmd/main.go
 
 FROM $BASEIMAGE as final
 ENV USER_UID=1001 \
