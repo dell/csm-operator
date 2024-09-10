@@ -1,5 +1,5 @@
 name: Workflow
-true:
+on:
   push:
     branches: [main]
   pull_request:
