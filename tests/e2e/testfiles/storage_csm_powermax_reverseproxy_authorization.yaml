@@ -230,7 +230,7 @@ spec:
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure only when the storageCapacity is set as "true"
         # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-        #- name: provisioner
+        # - name: provisioner
         #  args: ["--capacity-poll-interval=5m"]
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax

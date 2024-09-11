@@ -68,22 +68,22 @@ spec:
             # Default value: existing-cred
             - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
               value: "existing-cred"
-          #If velero is not already present in cluster, set createWithInstall to true to create a secret.
-          #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
+          # If velero is not already present in cluster, set createWithInstall to true to create a secret.
+          # Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
           credentials:
             - createWithInstall: true
-              #Specify the name to be used for secret that will be created to hold object store credentials.
+              # Specify the name to be used for secret that will be created to hold object store credentials.
               name: cloud-creds
-              #Specify the object store access credentials to be stored in a secret with key "cloud".
+              # Specify the object store access credentials to be stored in a secret with key "cloud".
               secretContents:
                 aws_access_key_id: console
                 aws_secret_access_key: console123
     # Init containers to be added to the Velero deployment's pod spec.
     # If the value is a string then it is evaluated as a template.
     - initContainer:
-        #initContainer image for the dell velero plugin
+        # initContainer image for the dell velero plugin
         - name: dell-custom-velero-plugin
           image: REPLACE_PLUGIN_IMAGE
-          #initContainer image for the configuration provider aws
+          # initContainer image for the configuration provider aws
         - name: velero-plugin-for-aws
           image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
