@@ -45,8 +45,8 @@ type ApexConnectivityClientStatus struct {
 // +kubebuilder:printcolumn:name="CSMClientType",type=string,JSONPath=`.spec.client.csmClientType`,description="Type of Client"
 // +kubebuilder:printcolumn:name="ConfigVersion",type=string,JSONPath=`.spec.client.configVersion`,description="Version of Apex client"
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="State of Installation"
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // ApexConnectivityClient is the Schema for the ApexConnectivityClient API
 type ApexConnectivityClient struct {

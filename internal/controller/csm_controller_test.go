@@ -1031,7 +1031,7 @@ func TestCustom(t *testing.T) {
 // test with a csm without a finalizer, reconcile should add it
 func (suite *CSMControllerTestSuite) TestContentWatch() {
 	suite.createReconciler().ContentWatch()
-	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
+	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
 	suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
 	close(StopWatch)
 	version, err := utils.GetModuleDefaultVersion("v2.11.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
