@@ -27,6 +27,7 @@ import (
 	"github.com/dell/csm-operator/pkg/resources/rbac"
 	"github.com/dell/csm-operator/pkg/resources/serviceaccount"
 	"github.com/dell/csm-operator/pkg/resources/statefulset"
+	"k8s.io/client-go/util/workqueue"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -48,7 +49,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/ratelimiter"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -364,7 +364,7 @@ func (r *ApexConnectivityClientReconciler) ClientContentWatch() error {
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ApexConnectivityClientReconciler) SetupWithManager(mgr ctrl.Manager, limiter ratelimiter.RateLimiter, maxReconcilers int) error {
+func (r *ApexConnectivityClientReconciler) SetupWithManager(mgr ctrl.Manager, limiter workqueue.TypedRateLimiter[reconcile.Request], maxReconcilers int) error {
 	go r.ClientContentWatch()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&csmv1.ApexConnectivityClient{}).
