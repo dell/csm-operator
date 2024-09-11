@@ -275,6 +275,14 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 		}
 	}
 
+	if authModule.Components == nil {
+		components := make([]csmv1.ContainerTemplate, 0)
+		components = append(components, csmv1.ContainerTemplate{
+			Name: "karavi-authorization-proxy",
+		})
+		authModule.Components = components
+	}
+
 	authConfigVersion := authModule.ConfigVersion
 	if authConfigVersion == "" {
 		authConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
