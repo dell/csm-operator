@@ -89,7 +89,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-powermax:v2.12.0
+          image: dellemc/csi-powermax:nightly  # TODO image has to be updated once the driver is released
           imagePullPolicy: IfNotPresent
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
@@ -137,6 +137,8 @@ spec:
               value: /certs
             - name: X_CSI_POWERMAX_CONFIG_PATH
               value: /powermax-config-params/driver-config-params.yaml
+            - name: X_CSI_POWERMAX_ARRAY_CONFIG_PATH
+              value: /powermax-array-config/powermax-array-config.yaml
             - name: X_CSI_POWERMAX_TOPOLOGY_CONFIG_PATH
               value: /node-topology-config/topologyConfig.yaml
             - name: X_CSI_IG_NODENAME_TEMPLATE
@@ -196,6 +198,8 @@ spec:
               readOnly: true
             - name: powermax-config-params
               mountPath: /powermax-config-params
+            - name: powermax-array-config
+              mountPath: /powermax-array-config
             - name: node-topology-config
               mountPath: /node-topology-config
         - name: registrar
@@ -261,6 +265,9 @@ spec:
         - name: powermax-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
+        - name: powermax-array-config
+          configMap:
+            name: powermax-array-config
         - name: node-topology-config
           configMap:
             name: node-topology-config
