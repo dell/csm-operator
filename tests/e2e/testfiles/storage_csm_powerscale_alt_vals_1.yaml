@@ -68,7 +68,7 @@ spec:
         #   false: verify OneFS API server's certificates
         # Default value: true
         - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
-          #value: "false"
+          # value: "false"
           value: "true"
         # X_CSI_ISI_AUTH_TYPE: Specify the authentication method to be used.
         # Allowed values:
@@ -90,7 +90,7 @@ spec:
         # Ensure that the config.yaml file is present at this path.
         # Default value: None
         - name: KUBELET_CONFIG_DIR
-          #value: "/root/alt-kubelet/kubelet"
+          # value: "/root/alt-kubelet/kubelet"
           value: "/var/lib/kubelet"
         # certSecretCount: Represents number of certificate secrets, which user is going to create for
         # ssl authentication. (isilon-cert-0..isilon-cert-n)
@@ -103,7 +103,7 @@ spec:
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
           value: "error"
-          #value: "debug"
+          # value: "debug"
     controller:
       envs:
         # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota

@@ -85,7 +85,7 @@ spec:
             - name: X_CSI_REVPROXY_TLS_CERT_DIR
               value: /app/tls
             - name: X_CSI_REVPROXY_WATCH_NAMESPACE
-              value: <DriverDefaultReleaseNamespace> #Change this to the namespace where proxy will be installed
+              value: <DriverDefaultReleaseNamespace>  # Change this to the namespace where proxy will be installed
           volumeMounts:
             - name: configmap-volume
               mountPath: /etc/config/configmap

@@ -6,4 +6,4 @@ resources:
   - storage_v1_csm_unity.yaml
   - storage_v1_csm_powermax.yaml
   - storage_v1_csm_connectivity_client.yaml
-#+kubebuilder:scaffold:manifestskustomizesamples
+# +kubebuilder:scaffold:manifestskustomizesamples

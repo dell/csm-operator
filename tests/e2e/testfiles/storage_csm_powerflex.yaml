@@ -51,7 +51,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.x.x.x,10.x.x.x" #provide MDM value
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -60,7 +60,7 @@ spec:
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-    #- name: provisioner
+    # - name: provisioner
     #  args: ["--capacity-poll-interval=5m"]
 
     controller:
@@ -73,7 +73,7 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-      #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
+      # "controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
       # Default value: None
@@ -161,7 +161,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.x.x.x,10.x.x.x" #provide MDM value
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
