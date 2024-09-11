@@ -13,6 +13,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"os"
@@ -26,6 +27,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,7 +38,6 @@ import (
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 
-	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/core"
@@ -50,6 +51,7 @@ import (
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+	//metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -212,15 +214,24 @@ func main() {
 		c.NextProtos = []string{"http/1.1"}
 	}
 
+	var tlsOpts []func(*tls.Config)
+	if !enableHTTP2 {
+		tlsOpts = append(tlsOpts, disableHTTP2)
+	}
+
+	webhookServer := webhook.NewServer(webhook.Options{
+		TLSOpts: tlsOpts,
+		Port:    9443,
+	})
+
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
-		Scheme:                 scheme,
-		Metrics: metricsserver.Options{
-			BindAddress:   metricsAddr,
-			SecureServing: secureMetrics,
-			TLSOpts:       tlsOpts,
-		},
-		// AB: scaffold sets WebhookServer, don't we need it?
-		Port:                   9443, // AB: absent in scaffold
+		Scheme: scheme,
+		//Metrics: metricsserver.Options{
+		//	BindAddress:   metricsAddr,
+		//	SecureServing: secureMetrics,
+		//	TLSOpts:       tlsOpts,
+		//},
+		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "090cae6a.dell.com",
