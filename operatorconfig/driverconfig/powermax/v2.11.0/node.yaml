@@ -77,8 +77,8 @@ spec:
         kubectl.kubernetes.io/default-container: driver
     spec:
       serviceAccount: <DriverDefaultReleaseName>-node
-      #nodeSelector:
-      #tolerations:
+      # nodeSelector:
+      # tolerations:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       containers:
