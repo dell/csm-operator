@@ -92,12 +92,12 @@ func printVersion(log *zap.SugaredLogger) {
 	log.Debugf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH)
 }
 
-func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
+func getOperatorConfig(log *zap.SugaredLogger) (utils.OperatorConfig, error) {
 	cfg := utils.OperatorConfig{}
 
 	isOpenShift, err := k8sClient.IsOpenShift()
 	if err != nil {
-		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
+		return cfg, fmt.Errorf("isOpenShift: %v", err)
 	}
 	cfg.IsOpenShift = isOpenShift
 	if isOpenShift {
@@ -107,7 +107,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	}
 	kubeAPIServerVersion, err := k8sClient.GetKubeAPIServerVersion()
 	if err != nil {
-		log.Info(fmt.Sprintf("kubeVersion err %s", kubeAPIServerVersion))
+		return cfg, fmt.Errorf("kubeVersion: %v", err)
 	}
 	// format the required k8s version
 	majorVersion := kubeAPIServerVersion.Major
@@ -119,16 +119,16 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 
 	minVersion, err = strconv.ParseFloat(K8sMinimumSupportedVersion, 64)
 	if err != nil {
-		log.Info(fmt.Sprintf("minVersion %s", K8sMinimumSupportedVersion))
+		return cfg, fmt.Errorf("malformed minVersion: %v", err)
 	}
 	maxVersion, err = strconv.ParseFloat(K8sMaximumSupportedVersion, 64)
 	if err != nil {
-		log.Info(fmt.Sprintf("maxVersion %s", K8sMaximumSupportedVersion))
+		return cfg, fmt.Errorf("malformed maxVersion: %v", err)
 	}
 
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
 	if err != nil {
-		log.Infof("currentVersion is %s", kubeVersion)
+		return cfg, fmt.Errorf("malformed currentVersion: %s", err)
 	}
 	// intialise variable
 	k8sPath := ""
@@ -145,7 +145,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 
 	_, err = os.ReadDir(filepath.Clean(ConfigDir))
 	if err != nil {
-		log.Errorw(err.Error(), "cannot find driver config path", ConfigDir)
+		log.Errorf("Read driver config dir %s: %v", ConfigDir, err)
 		cfg.ConfigDirectory = Operatorconfig
 		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
 		k8sPath = fmt.Sprintf("%s%s", Operatorconfig, k8sPath)
@@ -157,18 +157,18 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 
 	buf, err := os.ReadFile(filepath.Clean(k8sPath))
 	if err != nil {
-		log.Info(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
+		return cfg, fmt.Errorf("reading file %s, from the configmap mount: %v", k8sPath, err)
 	}
 
 	var imageConfig utils.K8sImagesConfig
 	err = yaml.Unmarshal(buf, &imageConfig)
 	if err != nil {
-		panic(fmt.Sprintf("unmarshalling: %v", err))
+		return cfg, fmt.Errorf("unmarshalling imageConfig: %v", err)
 	}
 
 	cfg.K8sVersion = imageConfig
 
-	return cfg
+	return cfg, nil
 }
 
 func main() {
@@ -201,7 +201,11 @@ func main() {
 	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
 
 	printVersion(log)
-	operatorConfig := getOperatorConfig(log)
+	operatorConfig, err := getOperatorConfig(log)
+	if err != nil {
+		setupLog.Error(err, "unable to get operator config")
+		os.Exit(1)
+	}
 	restConfig := ctrl.GetConfigOrDie()
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
