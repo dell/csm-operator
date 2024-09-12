@@ -71,6 +71,8 @@ jobs:
         id: go
       - name: Checkout the code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Build Docker Images
         run: |
           make -o gen-semver
