@@ -133,7 +133,7 @@ var (
 	}
 
 	accOperatorConfig = utils.OperatorConfig{
-		ConfigDirectory: "../operatorconfig",
+		ConfigDirectory: "../../operatorconfig",
 	}
 	badAccOperatorConfig = utils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",

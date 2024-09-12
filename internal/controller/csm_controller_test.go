@@ -141,7 +141,7 @@ var (
 	}
 
 	operatorConfig = utils.OperatorConfig{
-		ConfigDirectory: "../operatorconfig",
+		ConfigDirectory: "../../operatorconfig",
 	}
 
 	badOperatorConfig = utils.OperatorConfig{
@@ -1034,7 +1034,7 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
 	suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
 	close(StopWatch)
-	version, err := utils.GetModuleDefaultVersion("v2.11.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
+	version, err := utils.GetModuleDefaultVersion("v2.11.0", "csi-isilon", csmv1.Authorization, "../../operatorconfig")
 	assert.NotNil(suite.T(), err)
 	assert.NotNil(suite.T(), version)
 }
@@ -1840,7 +1840,7 @@ func (suite *CSMControllerTestSuite) TestReconcileAppMob() {
 		ConfigDirectory: "../in-valid-path",
 	}
 	goodOperatorConfig := utils.OperatorConfig{
-		ConfigDirectory: "../operatorconfig",
+		ConfigDirectory: "../../operatorconfig",
 	}
 	err := reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
