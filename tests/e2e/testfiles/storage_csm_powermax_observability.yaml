@@ -32,7 +32,7 @@ spec:
       #   false: disable storage capacity tracking
       storageCapacity: true
     # Config version for CSI PowerMax v2.10.1 driver
-    configVersion: v2.11.0
+    configVersion: v2.12.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
@@ -45,7 +45,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerMax driver v2.10.1
-      image: dellemc/csi-powermax:nightly
+      image: dellemc/csi-powermax:v2.12.0
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -238,7 +238,7 @@ spec:
       # enabled: Always set to true
       enabled: true
       forceRemoveModule: true
-      configVersion: v2.10.0
+      configVersion: v2.11.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
@@ -265,7 +265,7 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.9.0
+      configVersion: v1.10.0
       components:
         - name: topology
           # enabled: Enable/Disable topology

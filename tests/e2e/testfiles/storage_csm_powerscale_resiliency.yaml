@@ -26,7 +26,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.11.0
+    configVersion: v2.12.0
     authSecret: isilon-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
@@ -259,7 +259,7 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: true
-      configVersion: v1.10.0
+      configVersion: v1.11.0
       components:
         - name: podmon-controller
           image: dellemc/podmon:nightly
@@ -309,4 +309,4 @@ data:
     PODMON_NODE_LOG_FORMAT: "TEXT"
 spec:
   driver:
-    configVersion: v2.11.0
+    configVersion: v2.12.0
