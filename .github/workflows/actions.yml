@@ -6,7 +6,7 @@ on:
     branches: ["**"]
 jobs:
   # Removing forbidden checks for now. Todo - maintain consistency across platforms
-  #sanitize:
+  # sanitize:
   #  name: Check for forbidden words
   #  runs-on: ubuntu-latest
   #  steps:
