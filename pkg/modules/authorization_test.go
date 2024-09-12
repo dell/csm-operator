@@ -1298,8 +1298,8 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient
 		},
-		"success - creating v1.11.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1110.yaml")
+		"success - creating v1.12.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}

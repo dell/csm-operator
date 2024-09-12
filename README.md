@@ -61,8 +61,8 @@ For any CSM Operator and driver issues, questions or feedback, join the [Dell Te
 
 Dell Container Storage Modules Operator has been tested and qualified with
 
-    * Upstream Kubernetes cluster v1.28, v1.29, v1.30
-    * OpenShift Clusters 4.15, 4.16 with RHEL 8.x & RHCOS worker nodes
+    * Upstream Kubernetes cluster v1.29, v1.30, v1.31
+    * OpenShift Clusters 4.16, 4.17 with RHEL 8.x & RHCOS worker nodes
 
 ## Installation
 
