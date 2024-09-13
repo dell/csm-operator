@@ -71,7 +71,7 @@ func ContainsTag(scenarioTags []string, tagsSpecified []string) bool {
 // return value of true - --no-modules will prevent this test from running
 // return value of false - --no-modules will not prevent this test from running
 func CheckNoModules(scenarioTags []string) bool {
-	if os.Getenv("NOMODULES") == "false" {
+	if os.Getenv("NOMODULES") == "false" || os.Getenv("NOMODULES") == "" {
 		By(fmt.Sprintf("Returning false here"))
 		return false
 	}
