@@ -31,7 +31,7 @@ Any time changes made to the operator are being checked into the main branch, sa
 
 ## Prerequisites
 
-- A supported environment where the Dell Container Storage Modules Operator.
+- A supported environment where the Dell Container Storage Modules Operator is installed
 - Fill in the `array-info.sh` environment variables (more info below).
 - The following namespaces need to be created beforehand:
   - `dell`
@@ -40,7 +40,14 @@ Any time changes made to the operator are being checked into the main branch, sa
   - `proxy-ns`
   - (if running sanity, powerflex, or modules suites) `test-vxflexos`
   - (if running sanity, powerscale, or modules suites) `isilon`
+  - (if running unity suite) `unity`
 - For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
+- Cert-CSI needs to be installed  
+  - See [here](https://dell.github.io/csm-docs/docs/support/cert-csi/#download-release-linux) for instructions 
+- Dellctl needs to be installed
+  - See [here](https://dell.github.io/csm-docs/docs/support/cli/#installation-instructions) for instructions
+- Karavictl needs to be installed
+  - See [here](https://dell.github.io/csm-docs/docs/deployment/helm/modules/installation/authorization/#install-karavictl) for instructions 
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
 
@@ -51,7 +58,7 @@ go get github.com/onsi/gomega/...
 
 ### Array Information
 
-For PowerFlex, PowerScale, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
+For PowerFlex, Unity, PowerScale, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
 
 Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
 

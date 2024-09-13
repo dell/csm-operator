@@ -22,6 +22,7 @@ spec:
   driver:
     csiDriverType: "powerstore"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
@@ -31,7 +32,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.11.0
+    configVersion: v2.12.0
     # authSecret: This is the secret used to validate the default PowerStore secret used for installation
     # Allowed values: <metadataName specified in the Manifest>-config
     # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
@@ -42,7 +43,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-powerstore:v2.11.0"
+      image: "dellemc/csi-powerstore:v2.12.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -79,7 +80,7 @@ spec:
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure only when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-    #- name: provisioner
+    # - name: provisioner
     #  args: ["--capacity-poll-interval=5m"]
 
     controller:
@@ -176,10 +177,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.10.0
+      configVersion: v1.11.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.10.0
+          image: dellemc/podmon:v1.11.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -194,7 +195,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:v1.10.0
+          image: dellemc/podmon:v1.11.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

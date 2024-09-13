@@ -15,18 +15,18 @@
 # Fill in the appropriate values, refer to docs if required
 # Create the configmap using following cmd
 # kubectl/oc create configmap powermax-reverseproxy-config --from-file config.yaml -n <namespace>
-mode: StandAlone # Mode for the reverseproxy, should not be changed
+mode: StandAlone  # Mode for the reverseproxy, should not be changed
 port: 2222
 logLevel: debug
 logFormat: text
 standAloneConfig:
   storageArrays:
-    - storageArrayId: "000000000001" # arrayID
-      primaryURL: https://primary-1.unisphe.re:8443 # primary unisphere for arrayID
-      backupURL: https://backup-1.unisphe.re:8443 # backup unisphere for arrayID
+    - storageArrayId: "000000000001"  # arrayID
+      primaryURL: https://primary-1.unisphe.re:8443  # primary unisphere for arrayID
+      backupURL: https://backup-1.unisphe.re:8443  # backup unisphere for arrayID
       proxyCredentialSecrets:
-        - proxy-secret-11 # credential secret for primary unisphere, e.g., powermax-creds
-        - proxy-secret-12 # credential secret for backup unisphere, e.g., powermax-creds
+        - proxy-secret-11  # credential secret for primary unisphere, e.g., powermax-creds
+        - proxy-secret-12  # credential secret for backup unisphere, e.g., powermax-creds
     - storageArrayId: "000000000002"
       primaryURL: https://primary-2.unisphe.re:8443
       backupURL: https://backup-2.unisphe.re:8443
@@ -34,13 +34,13 @@ standAloneConfig:
         - proxy-secret-21
         - proxy-secret-22
   managementServers:
-    - url: https://primary-1.unisphe.re:8443 # primary unisphere endpoint
-      arrayCredentialSecret: primary-1-secret # credential secret, e.g., powermax-creds
+    - url: https://primary-1.unisphe.re:8443  # primary unisphere endpoint
+      arrayCredentialSecret: primary-1-secret  # credential secret, e.g., powermax-creds
       skipCertificateValidation: true
-    - url: https://backup-1.unisphe.re:8443 # backup unisphere endpoint
-      arrayCredentialSecret: backup-1-secret # credential secret, e.g., powermax-creds
-      skipCertificateValidation: false # value false, to verify unisphere certificate and provide certSecret
-      certSecret: primary-certs # unisphere verification certificate
+    - url: https://backup-1.unisphe.re:8443  # backup unisphere endpoint
+      arrayCredentialSecret: backup-1-secret  # credential secret, e.g., powermax-creds
+      skipCertificateValidation: false  # value false, to verify unisphere certificate and provide certSecret
+      certSecret: primary-certs  # unisphere verification certificate
     - url: https://primary-2.unisphe.re:8443
       arrayCredentialSecret: primary-2-secret
       skipCertificateValidation: true
