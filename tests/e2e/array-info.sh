@@ -73,6 +73,7 @@ export PMAX_TENANT_PREFIX="tn1"
 export PSTORE_USER="username"
 export PSTORE_PASS="password"
 export PSTORE_GLOBALID="myglobalpstoreid"
+# ip only, do not include /api/rest at end
 export PSTORE_ENDPOINT="1.1.1.1"
 
 # The following is Unity specific:
