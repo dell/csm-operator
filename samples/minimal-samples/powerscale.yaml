@@ -11,4 +11,4 @@ spec:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
-      enabled: true
+      enabled: false
