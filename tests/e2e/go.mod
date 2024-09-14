@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	github.com/dell/csm-operator v0.0.0
 	github.com/onsi/ginkgo/v2 v2.20.2
-	github.com/onsi/gomega v1.34.1
+	github.com/onsi/gomega v1.34.2
 	golang.org/x/mod v0.20.0
 	k8s.io/api v0.28.9
 	k8s.io/apimachinery v0.28.9

@@ -1,0 +1,14 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: powerstore
+spec:
+  driver:
+    csiDriverType: "powerstore"
+    configVersion: v2.12.0
+    common:
+      image: "dellemc/csi-powerstore:nightly"
+  modules:
+    - name: resiliency
+      enabled: false
