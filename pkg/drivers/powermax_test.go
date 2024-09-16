@@ -45,7 +45,7 @@ var (
 		expectedErr string
 	}{
 		{"happy path", powerMaxCSM, powerMaxClient, powerMaxSecret, ""},
-		{"no proxy", powerMaxCSMNoProxy, powerMaxClient, powerMaxSecret, "failed to find reverseproxy module"},
+		{"no proxy set defaults", powerMaxCSMNoProxy, powerMaxClient, powerMaxSecret, ""},
 	}
 
 	preCheckpowerMaxTest = []struct {
