@@ -1,7 +1,5 @@
 include docker.mk
 
-CSM_BASE_IMAGE=dellemc/csm-base-image:nightly
-
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
@@ -113,10 +111,10 @@ run: generate gen-semver fmt vet static-manifests ## Run a controller from your 
 	go run ./main.go
 
 podman-build: gen-semver download-csm-common ## Build podman image with the manager.
-	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASE_IMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 podman-build-no-cache: gen-semver download-csm-common ## Build podman image with the manager.
-	podman build --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASE_IMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+	podman build --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 podman-push: podman-build ## Builds, tags and pushes docker image with the manager.
 	podman tag ${DEFAULT_IMG} ${IMG}
@@ -124,7 +122,7 @@ podman-push: podman-build ## Builds, tags and pushes docker image with the manag
 
 docker-build: gen-semver download-csm-common ## Build docker image with the manager.
 	$(eval include csm-common.mk)
-	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASE_IMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}
@@ -204,7 +202,7 @@ bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and m
 
 .PHONY: bundle-build
 bundle-build: gen-semver download-csm-common ## Build the bundle image.
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(CSM_BASE_IMAGE) .
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) .
 
 
 .PHONY: bundle-push
@@ -257,5 +255,5 @@ lint: build
 # Download common CSM configuration file used for builds
 .PHONY: download-csm-common
 download-csm-common:
-	curl -O -L https://raw.githubusercontent.com/dell/csm/main/config/csm-common.mk
+	curl -O -L https://raw.githubusercontent.com/dell/csm/base-image-improvements/config/csm-common.mk
 	$(eval include csm-common.mk)
