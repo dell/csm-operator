@@ -27,15 +27,11 @@ args:
   - "--leaderelection=false"
   - "--driverPodLabelValue=dell-storage"
   - "--ignoreVolumelessPods=false"
-  # Below 4 args should not be modified.
   - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
   - "--mode=node"
   - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
   - "--driverPath=csi-powerstore.dellemc.com"
 env:
-  # podmonAPIPort: Defines the port to be used within the kubernetes cluster
-  # Allowed values: Any valid and free port (string)
-  # Default value: 8083
   - name: "X_CSI_PODMON_API_PORT"
     value: "8083"
   - name: KUBE_NODE_NAME

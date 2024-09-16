@@ -23,7 +23,6 @@ args:
   - "--driverPodLabelValue=dell-storage"
   - "--ignoreVolumelessPods=false"
   - "--arrayConnectivityConnectionLossThreshold=3"
-  # Below 4 args should not be modified.
   - "--csisock=unix:/var/run/csi/csi.sock"
   - "--mode=controller"
   - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
