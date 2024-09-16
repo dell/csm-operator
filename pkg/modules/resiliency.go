@@ -37,6 +37,11 @@ var (
 	XCSIPodmonEnabled = "X_CSI_PODMON_ENABLED"
 )
 
+const (
+	ControllerMode = "controller"
+	NodeMode       = "node"
+)
+
 // ResiliencySupportedDrivers is a map containing the CSI Drivers supported by CSM Resiliency. The key is driver name and the value is the driver plugin identifier
 var ResiliencySupportedDrivers = map[string]SupportedDriverParam{
 	string(csmv1.PowerStore): {
@@ -155,7 +160,7 @@ func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.Containe
 
 func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration) {
 	for _, component := range m.Components {
-		if component.Name == utils.PodmonControllerComponent && mode == "controller" {
+		if component.Name == utils.PodmonControllerComponent && mode == ControllerMode {
 			modifyPodmon(component, container)
 		}
 		if component.Name == utils.PodmonNodeComponent && mode == "node" {
@@ -210,7 +215,7 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConf
 
 // ResiliencyInjectDeployment - inject resiliency into deployment
 func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType string) (*applyv1.DeploymentApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, "controller")
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, ControllerMode)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +255,7 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 
 // ResiliencyInjectDaemonset  - inject resiliency into daemonset
 func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType string) (*applyv1.DaemonSetApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, "node")
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, NodeMode)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +294,7 @@ func CheckApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
 	var container acorev1.ContainerApplyConfiguration
 	// fetch podmonArrayConnectivityPollRate
-	setResiliencyArgs(resiliencyModule, "node", &container)
+	setResiliencyArgs(resiliencyModule, NodeMode, &container)
 	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 
 	for _, cnt := range containers {
