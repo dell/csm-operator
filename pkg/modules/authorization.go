@@ -307,7 +307,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 				Envs: []corev1.EnvVar{
 					{
 						Name:  "PROXY_HOST",
-						Value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local",
+						Value: "csm-authorization.com",
 					},
 					{
 						Name:  "SKIP_CERTIFICATE_VALIDATION",
@@ -473,7 +473,7 @@ func AuthorizationPrecheck(ctx context.Context, op utils.OperatorConfig, auth cs
 				Envs: []corev1.EnvVar{
 					{
 						Name:  "PROXY_HOST",
-						Value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local",
+						Value: "csm-authorization.com",
 					},
 					{
 						Name:  "SKIP_CERTIFICATE_VALIDATION",
