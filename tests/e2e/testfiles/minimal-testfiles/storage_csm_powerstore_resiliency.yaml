@@ -12,3 +12,9 @@ spec:
   modules:
     - name: resiliency
       enabled: true
+      # Adding components since "nightly" image is to be used for e2e
+      components:
+        - name: podmon-controller
+          image: dellemc/podmon:nightly
+        - name: podmon-node
+          image: dellemc/podmon:nightly
