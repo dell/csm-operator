@@ -43,6 +43,7 @@ var (
 	stepRunner    *step.Runner
 	beautify      string
 	testApex      bool
+	moduleTags    = []string{"authorization", "replication", "observability", "authorizationproxyserver", "resiliency", "applicationmobility"}
 )
 
 func Contains(slice []string, str string) bool {
@@ -65,6 +66,25 @@ func ContainsTag(scenarioTags []string, tagsSpecified []string) bool {
 	return false
 }
 
+// if --no-modules was passed in, we need to make sure any test with modules is filtered out
+// even if it contains matching tags
+// return value of true - --no-modules will prevent this test from running
+// return value of false - --no-modules will not prevent this test from running
+func CheckNoModules(scenarioTags []string) bool {
+	if os.Getenv("NOMODULES") == "false" || os.Getenv("NOMODULES") == "" {
+		By(fmt.Sprintf("Returning false here"))
+		return false
+	}
+	for _, tag := range scenarioTags {
+		if Contains(moduleTags, tag) {
+			By(fmt.Sprintf("--no-modules specified, skipping"))
+			return true
+		}
+	}
+	By(fmt.Sprintf("Returning false at end"))
+	return false
+}
+
 // TestE2E -
 func TestE2E(t *testing.T) {
 	if testing.Short() {
@@ -77,7 +97,7 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	tagEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY", "CLIENT"}
+	tagEnvVars := []string{"NOMODULES", "AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY", "CLIENT"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_SCENARIOS_FILE must be set.")
@@ -121,8 +141,14 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 		if testApex {
 			for _, test := range testResources {
 				By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
-				if ContainsTag(test.Scenario.Tags, tagsSpecified) == false {
+				if !ContainsTag(test.Scenario.Tags, tagsSpecified) {
 					By(fmt.Sprintf("Not tagged for this test run, skipping"))
+					By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
+					continue
+				}
+
+				// if no-modules are enabled, skip this test if it has a module tag
+				if CheckNoModules(test.Scenario.Tags) {
 					By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 					continue
 				}
@@ -141,6 +167,12 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 				By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
 				if ContainsTag(test.Scenario.Tags, tagsSpecified) == false {
 					By(fmt.Sprintf("Not tagged for this test run, skipping"))
+					By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
+					continue
+				}
+
+				// if no-modules are enabled, skip this test if it has a module tag
+				if CheckNoModules(test.Scenario.Tags) {
 					By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 					continue
 				}
