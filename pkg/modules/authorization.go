@@ -757,12 +757,14 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	image := ""
 	vaults := []csmv1.Vault{}
 	leaderElection := true
+	otelCollector := ""
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
 			replicas = component.StorageServiceReplicas
 			image = component.StorageService
 			leaderElection = component.LeaderElection
+			otelCollector = component.OpenTelemetryCollectorAddress
 		case AuthRedisComponent:
 			var sentinelValues []string
 			for i := 0; i < component.RedisReplicas; i++ {
@@ -869,6 +871,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	args := []string{
 		"--redis-sentinel=$(SENTINELS)",
 		"--redis-password=$(REDIS_PASSWORD)",
+		fmt.Sprintf("--collector-address=%s", otelCollector),
 		fmt.Sprintf("--leader-election=%t", leaderElection),
 	}
 	args = append(args, vaultArgs...)
@@ -876,6 +879,20 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	for i, c := range deployment.Spec.Template.Spec.Containers {
 		if c.Name == "storage-service" {
 			deployment.Spec.Template.Spec.Containers[i].Args = append(deployment.Spec.Template.Spec.Containers[i].Args, args...)
+			break
+		}
+	}
+
+	// set promhttp container port
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			deployment.Spec.Template.Spec.Containers[i].Ports = append(deployment.Spec.Template.Spec.Containers[i].Ports,
+				corev1.ContainerPort{
+					Name:          "promhttp",
+					Protocol:      "TCP",
+					ContainerPort: 2112,
+				},
+			)
 			break
 		}
 	}
