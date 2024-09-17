@@ -792,7 +792,7 @@ func TestAuthorizationOpenTelemetry(t *testing.T) {
 	}
 
 	storageService := &appsv1.Deployment{}
-	err = sourceClient.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "dell"}, storageService)
+	err = sourceClient.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
 	if err != nil {
 		t.Fatal(err)
 	}
