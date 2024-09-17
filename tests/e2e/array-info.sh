@@ -39,7 +39,7 @@ export PFLEX_TENANT_PREFIX="tn1"
 export PSCALE_CLUSTER="Isilon-System-Name"
 export PSCALE_USER="username"
 export PSCALE_PASS="password"
-export PSCALE_ENDPOINT="1.1.1.1:8080"
+export PSCALE_ENDPOINT="1.1.1.1"
 export PSCALE_AUTH_ENDPOINT="localhost"
 export PSCALE_AUTH_PORT="9400"
 # The following are Authorization Proxy Server specific for powerscale:
@@ -73,6 +73,7 @@ export PMAX_TENANT_PREFIX="tn1"
 export PSTORE_USER="username"
 export PSTORE_PASS="password"
 export PSTORE_GLOBALID="myglobalpstoreid"
+# ip only, do not include /api/rest at end
 export PSTORE_ENDPOINT="1.1.1.1"
 
 # The following is Unity specific:
