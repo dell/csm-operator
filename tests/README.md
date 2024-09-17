@@ -58,7 +58,7 @@ go get github.com/onsi/gomega/...
 
 ### Array Information
 
-For PowerFlex, Unity, PowerScale, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
+For PowerFlex, Unity, PowerScale, PowerStore, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.sh so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
 
 Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
 
