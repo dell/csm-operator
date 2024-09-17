@@ -777,6 +777,49 @@ func TestAuthorizationKubeMgmtPolicies(t *testing.T) {
 	}
 }
 
+func TestAuthorizationOpenTelemetry(t *testing.T) {
+	cr, err := getCustomResource("./testdata/cr_auth_proxy_v2.0.0.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	certmanagerv1.AddToScheme(scheme.Scheme)
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	err = AuthorizationServerDeployment(context.TODO(), false, operatorConfig, cr, sourceClient)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	storageService := &appsv1.Deployment{}
+	err = sourceClient.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "dell"}, storageService)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	argFound := false
+	for _, container := range storageService.Spec.Template.Spec.Containers {
+		if container.Name == "storage-service" {
+			for _, arg := range container.Args {
+				if strings.Contains(arg, "--collector-address") {
+					argFound = true
+					if arg != "--collector-address=otel-collector:8889" {
+						t.Fatalf("expected --collector-address=otel-collector:8889, got %s", arg)
+					}
+					break
+				}
+			}
+		}
+		if argFound {
+			break
+		}
+	}
+
+	if !argFound {
+		t.Fatalf("expected --collector-address=otel-collector:8889, got none")
+	}
+}
+
 func TestAuthorizationStorageServiceVault(t *testing.T) {
 	vault0Identifier := "vault0"
 	vault0Arg := "--vault=vault0,https://10.0.0.1:8400,csm-authorization,true"

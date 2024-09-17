@@ -871,8 +871,12 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	args := []string{
 		"--redis-sentinel=$(SENTINELS)",
 		"--redis-password=$(REDIS_PASSWORD)",
-		fmt.Sprintf("--collector-address=%s", otelCollector),
 		fmt.Sprintf("--leader-election=%t", leaderElection),
+	}
+
+	// if the config version is greater than v2.0.0-alpha, add the collector-address arg
+	if semver.Compare(authModule.ConfigVersion, "v2.0.0-alpha") == 1 {
+		args = append(args, fmt.Sprintf("--collector-address=%s", otelCollector))
 	}
 	args = append(args, vaultArgs...)
 
