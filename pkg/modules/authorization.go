@@ -887,17 +887,19 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
-	// set promhttp container port
-	for i, c := range deployment.Spec.Template.Spec.Containers {
-		if c.Name == "storage-service" {
-			deployment.Spec.Template.Spec.Containers[i].Ports = append(deployment.Spec.Template.Spec.Containers[i].Ports,
-				corev1.ContainerPort{
-					Name:          "promhttp",
-					Protocol:      "TCP",
-					ContainerPort: 2112,
-				},
-			)
-			break
+	// if the config version is greater than v2.0.0-alpha, set promhttp container port
+	if semver.Compare(authModule.ConfigVersion, "v2.0.0-alpha") == 1 {
+		for i, c := range deployment.Spec.Template.Spec.Containers {
+			if c.Name == "storage-service" {
+				deployment.Spec.Template.Spec.Containers[i].Ports = append(deployment.Spec.Template.Spec.Containers[i].Ports,
+					corev1.ContainerPort{
+						Name:          "promhttp",
+						Protocol:      "TCP",
+						ContainerPort: 2112,
+					},
+				)
+				break
+			}
 		}
 	}
 
