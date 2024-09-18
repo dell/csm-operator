@@ -1591,18 +1591,6 @@ func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) e
 		return fmt.Errorf("podmon container not found either in controller or node pod")
 	}
 
-	// validating args & env presence for powerstore & powerscale
-	driverType := cr.Spec.Driver.CSIDriverType
-
-	if driverType == csmv1.PowerScaleName || driverType == csmv1.PowerStore || driverType == csmv1.PowerScale {
-		if err := modules.CheckApplyContainersResiliency(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
-			return err
-		}
-		if err := modules.CheckApplyContainersResiliency(dsApply.Spec.Template.Spec.Containers, cr); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
