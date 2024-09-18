@@ -164,6 +164,7 @@ function usage() {
   echo "  --unity                                      use to run e2e unity suite"
   echo "  --pmax                                       use to run e2e powermax suite"
   echo "  --client                                     use to run e2e connectivity client suite"
+  echo "  --minimal                                    use minimal testfiles scenarios"
   echo
 
   exit 0
@@ -245,6 +246,9 @@ while getopts ":h-:" optchar; do
       ;;
     scenarios=*)
       SCENARIOS=${OPTARG#*=}
+      ;;
+    minimal)
+      export E2E_SCENARIOS_FILE=testfiles/minimal-testfiles/scenarios.yaml
       ;;
     *)
       echo "Unknown option -${OPTARG}"

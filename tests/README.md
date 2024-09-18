@@ -29,6 +29,8 @@ The end-to-end tests test the functionality of the operator as a whole by instal
 
 Any time changes made to the operator are being checked into the main branch, sanity tests should be run (they should take 20-30 minutes to complete, the very first run may take a few minutes more). In addition, if you have made any driver- or module-specific changes, (any changes in `pkg/drivers`, `pkg/modules`, `operatorconfig/driverconfig`, `operatorconfig/moduleconfig`, etc), please run the E2E tests specific to these components as well.
 
+**Note :** To run E2E tests with minimal samples, use the `--minimal` flag when executing the `run-e2e-test.sh` script. This will utilize the `scenarios.yaml` file located at `tests/e2e/testfiles/minimal-testfiles/scenarios.yaml`, which contains the paths to the minimal sample test YAMLs.
+
 ## Prerequisites
 
 - A supported environment where the Dell Container Storage Modules Operator is installed

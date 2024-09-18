@@ -14,6 +14,7 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -22,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -138,7 +140,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 				if newDeployment == nil {
 					panic(err)
 				}
-				err = CheckApplyContainersResiliency(dp.Spec.Template.Spec.Containers, cr)
+				err = checkApplyContainersResiliency(dp.Spec.Template.Spec.Containers, cr)
 				if err != nil {
 					panic(err)
 				}
@@ -366,4 +368,63 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			}
 		})
 	}
+}
+
+// checkApplyContainersResiliency - check container configuration for resiliency
+func checkApplyContainersResiliency(containers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
+	resiliencyModule, err := getResiliencyModule(cr)
+	if err != nil {
+		return err
+	}
+
+	driverContainerName := "driver"
+
+	// fetch podmonAPIPort
+	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
+	var container acorev1.ContainerApplyConfiguration
+	// fetch podmonArrayConnectivityPollRate
+	setResiliencyArgs(resiliencyModule, nodeMode, &container)
+	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
+
+	for _, cnt := range containers {
+		if *cnt.Name == utils.ResiliencySideCarName {
+
+			// check argument in resiliency sidecar(podmon)
+			foundPodmonArrayConnectivityPollRate := false
+			for _, arg := range cnt.Args {
+				if fmt.Sprintf("--arrayConnectivityPollRate=%s", podmonArrayConnectivityPollRate) == arg {
+					foundPodmonArrayConnectivityPollRate = true
+				}
+			}
+			if !foundPodmonArrayConnectivityPollRate {
+				return fmt.Errorf("missing the following argument %s", podmonArrayConnectivityPollRate)
+			}
+
+		} else if *cnt.Name == driverContainerName {
+			// check envs in driver sidecar
+			foundPodmonAPIPort := false
+			foundPodmonArrayConnectivityPollRate := false
+			for _, env := range cnt.Env {
+				if *env.Name == XCSIPodmonAPIPort {
+					foundPodmonAPIPort = true
+					if *env.Value != podmonAPIPort {
+						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIPodmonAPIPort, podmonAPIPort, *env.Value)
+					}
+				}
+				if *env.Name == XCSIPodmonArrayConnectivityPollRate {
+					foundPodmonArrayConnectivityPollRate = true
+					if *env.Value != podmonArrayConnectivityPollRate {
+						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIPodmonArrayConnectivityPollRate, podmonArrayConnectivityPollRate, *env.Value)
+					}
+				}
+			}
+			if !foundPodmonAPIPort {
+				return fmt.Errorf("missing the following argument %s", podmonAPIPort)
+			}
+			if !foundPodmonArrayConnectivityPollRate {
+				return fmt.Errorf("missing the following argument %s", podmonArrayConnectivityPollRate)
+			}
+		}
+	}
+	return nil
 }
