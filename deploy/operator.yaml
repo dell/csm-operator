@@ -1392,7 +1392,7 @@ spec:
               value: docker.io/dellemc/connectivity-client-docker-k8s:1.19.0
             - name: RELATED_IMAGE_cert-persister
               value: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
-          image: amaas-eos-mw1.cec.lab.emc.com:5046/dell-csm-operator:aaron
+          image: docker.io/dellemc/dell-csm-operator:v1.7.0
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
