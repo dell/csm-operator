@@ -757,12 +757,14 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	image := ""
 	vaults := []csmv1.Vault{}
 	leaderElection := true
+	otelCollector := ""
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
 			replicas = component.StorageServiceReplicas
 			image = component.StorageService
 			leaderElection = component.LeaderElection
+			otelCollector = component.OpenTelemetryCollectorAddress
 		case AuthRedisComponent:
 			var sentinelValues []string
 			for i := 0; i < component.RedisReplicas; i++ {
@@ -871,12 +873,33 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		"--redis-password=$(REDIS_PASSWORD)",
 		fmt.Sprintf("--leader-election=%t", leaderElection),
 	}
+
+	// if the config version is greater than v2.0.0-alpha, add the collector-address arg
+	if semver.Compare(authModule.ConfigVersion, "v2.0.0-alpha") == 1 {
+		args = append(args, fmt.Sprintf("--collector-address=%s", otelCollector))
+	}
 	args = append(args, vaultArgs...)
 
 	for i, c := range deployment.Spec.Template.Spec.Containers {
 		if c.Name == "storage-service" {
 			deployment.Spec.Template.Spec.Containers[i].Args = append(deployment.Spec.Template.Spec.Containers[i].Args, args...)
 			break
+		}
+	}
+
+	// if the config version is greater than v2.0.0-alpha, set promhttp container port
+	if semver.Compare(authModule.ConfigVersion, "v2.0.0-alpha") == 1 {
+		for i, c := range deployment.Spec.Template.Spec.Containers {
+			if c.Name == "storage-service" {
+				deployment.Spec.Template.Spec.Containers[i].Ports = append(deployment.Spec.Template.Spec.Containers[i].Ports,
+					corev1.ContainerPort{
+						Name:          "promhttp",
+						Protocol:      "TCP",
+						ContainerPort: 2112,
+					},
+				)
+				break
+			}
 		}
 	}
 

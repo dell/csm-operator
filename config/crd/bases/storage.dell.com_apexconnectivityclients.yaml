@@ -312,6 +312,11 @@ spec:
                         opaKubeMgmt:
                           description: OpaKubeMgmt is the image tag for the Container
                           type: string
+                        openTelemetryCollectorAddress:
+                          description:
+                            OpenTelemetryCollectorAddress is the address
+                            of the OTLP receiving endpoint using gRPC
+                          type: string
                         privateKey:
                           description:
                             PrivateKey is a private key used for a certificate/private-key
@@ -769,6 +774,11 @@ spec:
                           opaKubeMgmt:
                             description: OpaKubeMgmt is the image tag for the Container
                             type: string
+                          openTelemetryCollectorAddress:
+                            description:
+                              OpenTelemetryCollectorAddress is the address
+                              of the OTLP receiving endpoint using gRPC
+                            type: string
                           privateKey:
                             description:
                               PrivateKey is a private key used for a certificate/private-key
@@ -1208,6 +1218,11 @@ spec:
                             type: string
                           opaKubeMgmt:
                             description: OpaKubeMgmt is the image tag for the Container
+                            type: string
+                          openTelemetryCollectorAddress:
+                            description:
+                              OpenTelemetryCollectorAddress is the address
+                              of the OTLP receiving endpoint using gRPC
                             type: string
                           privateKey:
                             description:
