@@ -36,6 +36,7 @@ import (
 	certificatesv1alpha1 "k8s.io/client-go/kubernetes/typed/certificates/v1alpha1"
 	certificatesv1beta1 "k8s.io/client-go/kubernetes/typed/certificates/v1beta1"
 	coordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
+	coordinationv1alpha1 "k8s.io/client-go/kubernetes/typed/coordination/v1alpha1"
 	coordinationv1beta1 "k8s.io/client-go/kubernetes/typed/coordination/v1beta1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	discoveryv1 "k8s.io/client-go/kubernetes/typed/discovery/v1"
@@ -43,7 +44,7 @@ import (
 	eventsv1 "k8s.io/client-go/kubernetes/typed/events/v1"
 	eventsv1beta1 "k8s.io/client-go/kubernetes/typed/events/v1beta1"
 	extensionsv1beta1 "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
-	flowcontrolv1alpha1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1alpha1"
+	flowcontrolv1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1"
 	flowcontrolv1beta1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1"
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
 	flowcontrolv1beta3 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3"
@@ -58,13 +59,14 @@ import (
 	rbacv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	rbacv1alpha1 "k8s.io/client-go/kubernetes/typed/rbac/v1alpha1"
 	rbacv1beta1 "k8s.io/client-go/kubernetes/typed/rbac/v1beta1"
-	resourceV1alpha2 "k8s.io/client-go/kubernetes/typed/resource/v1alpha2"
+	resourceV1alpha3 "k8s.io/client-go/kubernetes/typed/resource/v1alpha3"
 	schedulingv1 "k8s.io/client-go/kubernetes/typed/scheduling/v1"
 	schedulingv1alpha1 "k8s.io/client-go/kubernetes/typed/scheduling/v1alpha1"
 	schedulingv1beta1 "k8s.io/client-go/kubernetes/typed/scheduling/v1beta1"
 	storagev1 "k8s.io/client-go/kubernetes/typed/storage/v1"
 	storagev1alpha1 "k8s.io/client-go/kubernetes/typed/storage/v1alpha1"
 	storagev1beta1 "k8s.io/client-go/kubernetes/typed/storage/v1beta1"
+	"k8s.io/client-go/kubernetes/typed/storagemigration/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -239,8 +241,8 @@ func (c *K8sClient) ExtensionsV1beta1() extensionsv1beta1.ExtensionsV1beta1Inter
 	panic("implement me")
 }
 
-// FlowcontrolV1alpha1 retrieves the FlowcontrolV1alpha1Client
-func (c *K8sClient) FlowcontrolV1alpha1() flowcontrolv1alpha1.FlowcontrolV1alpha1Interface {
+// FlowcontrolV1 retrieves FlowcontrolV1Client
+func (c *K8sClient) FlowcontrolV1() flowcontrolv1.FlowcontrolV1Interface {
 	panic("implement me")
 }
 
@@ -319,8 +321,8 @@ func (c *K8sClient) SchedulingV1() schedulingv1.SchedulingV1Interface {
 	panic("implement me")
 }
 
-// ResourceV1alpha2 retrieves the ResourceV1alpha2Client
-func (c *K8sClient) ResourceV1alpha2() resourceV1alpha2.ResourceV1alpha2Interface {
+// ResourceV1alpha3 retrieves ResourceV1alpha3Client
+func (c *K8sClient) ResourceV1alpha3() resourceV1alpha3.ResourceV1alpha3Interface {
 	panic("implement me")
 }
 
@@ -341,5 +343,15 @@ func (c *K8sClient) StorageV1alpha1() storagev1alpha1.StorageV1alpha1Interface {
 
 // Discovery retrieves DiscoveryInterface
 func (c *K8sClient) Discovery() discovery.DiscoveryInterface {
+	panic("implement me")
+}
+
+// CoordinationV1alpha1 retrieves CoordinationV1alpha1Client
+func (c *K8sClient) CoordinationV1alpha1() coordinationv1alpha1.CoordinationV1alpha1Interface {
+	panic("implement me")
+}
+
+// StoragemigrationV1alpha1 retrieves StoragemigrationV1alpha1Client
+func (c *K8sClient) StoragemigrationV1alpha1() v1alpha1.StoragemigrationV1alpha1Interface {
 	panic("implement me")
 }
