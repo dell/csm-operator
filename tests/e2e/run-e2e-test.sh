@@ -21,6 +21,14 @@ export GO111MODULE=on
 export ACK_GINKGO_RC=true
 export PROG="${0}"
 
+# Start with all modules false, they can be enabled by command line arguments 
+export AUTHORIZATION=false
+export AUTHORIZATIONPROXYSERVER=false
+export REPLICATION=false
+export OBSERVABILITY=false
+export RESILIENCY=false
+export APPLICATIONMOBILITY=false
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -185,7 +193,8 @@ while getopts ":h-:" optchar; do
       export APPLICATIONMOBILITY=true ;;
     pflex)
       export POWERFLEX=true ;;
-    no-modules) 
+    no-modules)
+      export NOMODULES=true 
       export AUTHORIZATION=false
       export AUTHORIZATIONPROXYSERVER=false
       export REPLICATION=false
