@@ -1319,6 +1319,10 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// get env variables
 	if os.Getenv(endpointvar) != "" {
 		endpoint = os.Getenv(endpointvar)
+
+		if driver == "powerscale" {
+			endpoint = endpoint + ":8080"
+		}
 	}
 	if os.Getenv(systemIdvar) != "" {
 		sysID = os.Getenv(systemIdvar)
@@ -1430,7 +1434,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"generate", "token",
 		"--tenant", tenantName,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-		"--access-token-expiration", fmt.Sprint(10*time.Minute),
+		"--access-token-expiration", fmt.Sprint(2*time.Hour),
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
