@@ -30,19 +30,12 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: dellemc/csm-authorization-proxy:v2.0.0
-          proxyServiceReplicas: 1
-          tenantService: dellemc/csm-authorization-tenant:v2.0.0
-          tenantServiceReplicas: 1
-          roleService: dellemc/csm-authorization-role:v2.0.0
-          roleServiceReplicas: 1
-          storageService: dellemc/csm-authorization-storage:v2.0.0
-          storageServiceReplicas: 1
+          proxyService: dellemc/csm-authorization-proxy:v2.0.0-alpha
+          tenantService: dellemc/csm-authorization-tenant:v2.0.0-alpha
+          roleService: dellemc/csm-authorization-role:v2.0.0-alpha
+          storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
           opa: openpolicyagent/opa
-          opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.7
-          authorizationController: dellemc/csm-authorization-controller:v2.0.0
-          authorizationControllerReplicas: 1
-          leaderElection: true
+          opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
           controllerReconcileInterval: 5m
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
@@ -61,45 +54,43 @@ spec:
           proxyServerIngress:
             - ingressClassName: nginx
               # additional host rules for the proxy-server ingress
-              hosts: []
-              # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
-
+              hosts:
+                - authorization-ingress-nginx-controller.authorization.svc.cluster.local
               # additional annotations for the proxy-server ingress
               annotations: {}
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
-          openTelemetryCollectorAddress: ""
+          openTelemetryCollectorAddress: "otel-collector:8889"
         - name: redis
-          redis: redis:7.4.0-alpine
+          redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
+          # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
+          # to use a different storage class for redis, specify the name of the storage class
+          # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
+          # Default value: None
+          storageclass: "local-storage"
         - name: vault
           vaultConfigurations:
             - identifier: vault0
               address: https://10.0.0.1:8400
               role: csm-authorization
               skipCertificateValidation: true
-              # clientCertificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
-              # for self-signed certs, leave empty string
+              # clientCertificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+              #  for self-signed certs, leave empty string
               # Allowed values: string
               clientCertificate: ""
               # clientKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
-              # for self-signed certs, leave empty string
+              #  for self-signed certs, leave empty string
               # Allowed values: string
               clientKey: ""
               # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
               #  for self-signed certs, leave empty string
               # Allowed values: string
               certificateAuthority: ""
-#            - identifier: vault0
-#              address: https://10.0.0.1:8400
-#              role: csm-authorization
-#              skipCertificateValidation: true
-#              clientCertificate:
-#              clientKey:
-#              certificateAuthority:
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -109,6 +100,5 @@ metadata:
 data:
   csm-config-params.yaml: |-
     CONCURRENT_POWERFLEX_REQUESTS: 10
-    CONCURRENT_POWERSCALE_REQUESTS: 10
     LOG_LEVEL: debug
     STORAGE_CAPACITY_POLL_INTERVAL: 5m

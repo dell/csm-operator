@@ -329,6 +329,9 @@ spec:
     - port: 50051
       targetPort: 50051
       name: grpc
+    - port: 2112
+      targetPort: 2112
+      name: promhttp
 ---
 apiVersion: cert-manager.io/v1
 kind: Issuer
