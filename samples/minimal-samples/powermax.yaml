@@ -7,3 +7,6 @@ spec:
   driver:
     csiDriverType: "powermax"
     configVersion: v2.12.0
+  modules:
+    - name: resiliency
+      enabled: true

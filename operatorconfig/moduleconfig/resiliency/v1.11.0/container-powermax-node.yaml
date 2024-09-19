@@ -19,9 +19,22 @@ securityContext:
   capabilities:
     add: ["SYS_ADMIN"]
   allowPrivilegeEscalation: true
-image: dellemc/podmon:v1.11.0
+image: dellemc/podmon:v1.10.0
 imagePullPolicy: IfNotPresent
+args:
+    - "--labelvalue=csi-powermax"
+    - "--arrayConnectivityPollRate=60"
+    - "--leaderelection=false"
+    - "--driverPodLabelValue=dell-storage"
+    - "--ignoreVolumelessPods=false"
+    # Below 4 args should not be modified.
+    - "--csisock=unix:/var/lib/kubelet/plugins/powermax.emc.dell.com/csi_sock"
+    - "--mode=node"
+    - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
+    - "--driverPath=csi-powermax.dellemc.com"
 env:
+  - name: "X_CSI_PODMON_API_PORT"
+    value: "8083"
   - name: KUBE_NODE_NAME
     valueFrom:
       fieldRef:
