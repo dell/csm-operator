@@ -16,7 +16,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	utils "github.com/dell/csm-operator/pkg/utils"
-	"github.com/dell/csm-operator/tests/shared"
+	"github.com/dell/csm-operator/test/shared"
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +29,7 @@ import (
 
 // where to find all the yaml files
 var config = utils.OperatorConfig{
-	ConfigDirectory: "../../tests/config",
+	ConfigDirectory: "../../test/config",
 }
 
 func TestReplicationInjectDeployment(t *testing.T) {

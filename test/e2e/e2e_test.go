@@ -20,7 +20,7 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	step "github.com/dell/csm-operator/tests/e2e/steps"
+	step "github.com/dell/csm-operator/test/e2e/steps"
 
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"

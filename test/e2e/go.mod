@@ -1,4 +1,4 @@
-module github.com/dell/csm-operator/tests/e2e
+module github.com/dell/csm-operator/test/e2e
 
 go 1.22.0
 

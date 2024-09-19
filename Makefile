@@ -126,7 +126,7 @@ check: ## Echo instructions to run one specific workflow locally
 
 tidy:
 	go mod tidy
-	cd tests/e2e/ && go mod tidy
+	cd test/e2e/ && go mod tidy
 
 .PHONY: build
 build: static-manifests gen-semver fmt vet ## Build manager binary.

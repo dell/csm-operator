@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/dell/csm-operator/tests/shared"
+	"github.com/dell/csm-operator/test/shared"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
