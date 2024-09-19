@@ -1357,7 +1357,7 @@ spec:
             - name: RELATED_IMAGE_karavi-authorization-proxy
               value: docker.io/dellemc/csm-authorization-sidecar:v1.12.0
             - name: RELATED_IMAGE_dell-csi-replicator
-              value: docker.io/dellemc/dell-csi-replicator:v1.10.0
+              value: docker.io/dellemc/dell-csi-replicator:v1.12.0
             - name: RELATED_IMAGE_dell-replication-controller-manager
               value: docker.io/dellemc/dell-replication-controller:v1.10.0
             - name: RELATED_IMAGE_topology
