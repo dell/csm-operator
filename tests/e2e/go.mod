@@ -5,14 +5,14 @@ go 1.22.0
 require (
 	github.com/dell/csm-operator v0.0.0
 	github.com/onsi/ginkgo/v2 v2.20.2
-	github.com/onsi/gomega v1.34.1
+	github.com/onsi/gomega v1.34.2
 	golang.org/x/mod v0.21.0
 	k8s.io/api v0.30.5
 	k8s.io/apimachinery v0.30.5
 	k8s.io/client-go v0.30.5
 	k8s.io/kubernetes v1.30.5
 	k8s.io/utils v0.0.0-20240423183400-0849a56e8f22
-	sigs.k8s.io/controller-runtime v0.18.5
+	sigs.k8s.io/controller-runtime v0.15.2
 	sigs.k8s.io/yaml v1.4.0
 )
 
