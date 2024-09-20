@@ -1,7 +1,7 @@
 [{
     "username":"-",
     "password":"-",
-    "intendedEndpoint":"https://REPLACE_ENDPOINT",
+    "intendedEndpoint":"https://REPLACE_ENDPOINT:8080",
     "endpoint":"https://REPLACE_AUTH_ENDPOINT:REPLACE_PORT",
     "systemID": "REPLACE_CLUSTERNAME",
     "insecure":true,
