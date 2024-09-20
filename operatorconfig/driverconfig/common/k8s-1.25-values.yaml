@@ -21,5 +21,5 @@ images:
   sdcmonitor: dellemc/sdc:4.5.1
   # "images.metadataretriever" defines the container images used for csi metadata retriever
   metadataretriever: dellemc/csi-metadata-retriever:v1.8.0
-  # "images.csiReverseProxy" defines the container images used for reverse-proxy
+  # "images.csiReverseProxy" defines the container images used for reverse-proxy by default
   csiReverseProxy: dellemc/csipowermax-reverseproxy:v2.10.0

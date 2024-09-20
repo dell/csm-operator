@@ -1,0 +1,3 @@
+# This file represents the latest version of the released module. This must be updated on every release
+# This version will be used by the minimal manifests to install the latest version when no version is given.
+version: v2.11.0
