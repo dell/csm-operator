@@ -94,17 +94,23 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 			Value: "/var/lib/kubelet",
 		})
 	}
+	version, err := utils.GetLatestVersion(string(csmv1.ReverseProxy), operatorConfig)
+	if err != nil {
+		return err
+	}
 	if cr.Spec.Modules == nil {
-		// this means it's a minimal yaml and we will append reverse-proxy by default
+		// This means it's a minimal yaml and we will append reverse-proxy by default
 		modules := make([]csmv1.Module, 0)
 		modules = append(modules, csmv1.Module{
-			Name:              "csireverseproxy",
+			Name:              csmv1.ReverseProxy,
 			Enabled:           true,
-			ConfigVersion:     "v2.10.0",
+			ConfigVersion:     version,
 			ForceRemoveModule: true,
+			InitContainer:     nil,
 		})
 		cr.Spec.Modules = modules
 	}
+
 	foundRevProxy := false
 	for _, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.ReverseProxy {
@@ -115,9 +121,9 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	if !foundRevProxy {
 		log.Infof("Reverse proxy module not found adding it with default config")
 		cr.Spec.Modules = append(cr.Spec.Modules, csmv1.Module{
-			Name:              "csireverseproxy",
+			Name:              csmv1.ReverseProxy,
 			Enabled:           true,
-			ConfigVersion:     "v2.10.0",
+			ConfigVersion:     version,
 			ForceRemoveModule: true,
 		})
 	}
