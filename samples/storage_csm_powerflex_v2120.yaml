@@ -116,6 +116,13 @@ spec:
       #   effect: "NoSchedule"
     node:
       envs:
+        # X_CSI_SDC_ENABLED: Enable/Disable SDC
+        # Allowed values:
+        #    true: enable SDC
+        #    false: disable SDC
+        # Default value: true
+        - name: X_CSI_SDC_ENABLED
+          value: "true"
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
         #    true: enable SDC approval

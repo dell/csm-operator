@@ -34,6 +34,9 @@ const (
 	// PowerFlexConfigParamsVolumeMount -
 	PowerFlexConfigParamsVolumeMount = "vxflexos-config-params"
 
+	// CsiSdcEnabled - Flag to enable/disable SDC
+	CsiSdcEnabled = "<X_CSI_SDC_ENABLED>"
+
 	// CsiApproveSdcEnabled - Flag to enable/disable SDC approval
 	CsiApproveSdcEnabled = "<X_CSI_APPROVE_SDC_ENABLED>"
 
@@ -72,33 +75,41 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		return err
 	}
 	var newmdm corev1.EnvVar
-	for _, initcontainer := range cr.Spec.Driver.InitContainers {
-		if initcontainer.Name == "sdc" {
-			k := 0
-			initenv := initcontainer.Envs
-			for c, env := range initenv {
-				if env.Name == "MDM" {
-					env.Value = mdmVar
-					newmdm = env
-					k = c
-					break
-				}
-			}
-			initenv[k] = newmdm
-			break
+	sdcEnabled := true
+	for _, env := range cr.Spec.Driver.Node.Envs {
+		if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
+			sdcEnabled = false
 		}
 	}
-	if cr.Spec.Driver.InitContainers == nil {
-		cr.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{
-			{
-				Name: "sdc",
-				Envs: []corev1.EnvVar{
-					{
-						Name:  "MDM",
-						Value: mdmVar,
+	if sdcEnabled {
+		for _, initcontainer := range cr.Spec.Driver.InitContainers {
+			if initcontainer.Name == "sdc" {
+				k := 0
+				initenv := initcontainer.Envs
+				for c, env := range initenv {
+					if env.Name == "MDM" {
+						env.Value = mdmVar
+						newmdm = env
+						k = c
+						break
+					}
+				}
+				initenv[k] = newmdm
+				break
+			}
+		}
+		if cr.Spec.Driver.InitContainers == nil {
+			cr.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{
+				{
+					Name: "sdc",
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "MDM",
+							Value: mdmVar,
+						},
 					},
 				},
-			},
+			}
 		}
 	}
 
@@ -261,6 +272,7 @@ func IsIpv4Regex(ipAddress string) bool {
 
 // ModifyPowerflexCR - Set environment variables provided in CR
 func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
+	sdcEnabled := ""
 	approveSdcEnabled := ""
 	renameSdcEnabled := ""
 	renameSdcPrefix := ""
@@ -292,6 +304,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 
 	case "Node":
 		for _, env := range cr.Spec.Driver.Node.Envs {
+			if env.Name == "X_CSI_SDC_ENABLED" {
+				sdcEnabled = env.Value
+			}
 			if env.Name == "X_CSI_APPROVE_SDC_ENABLED" {
 				approveSdcEnabled = env.Value
 			}
@@ -314,6 +329,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				csiDebug = env.Value
 			}
 		}
+		yamlString = strings.ReplaceAll(yamlString, CsiSdcEnabled, sdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
