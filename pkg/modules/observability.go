@@ -9,8 +9,10 @@
 package modules
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -285,6 +287,55 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.Operat
 }
 
 // getTopology - get topology yaml string
+
+func convertYaml(buf []byte, img string) ([]byte, error) {
+	var meta struct {
+		Kind string `yaml:"kind"`
+	}
+
+	// Prepare a buffer to store the updated YAML
+	var updatedYAML []byte
+
+	// Process each YAML document
+	docs := bytes.Split(buf, []byte("---"))
+	for _, doc := range docs {
+		if len(bytes.TrimSpace(doc)) == 0 {
+			continue // skip empty documents
+		}
+
+		// Unmarshal just the "kind" field to determine the type of resource
+		if err := yaml.Unmarshal(doc, &meta); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal meta: %v", err)
+		}
+
+		// Check if the kind is "Deployment"
+		if meta.Kind == "Deployment" {
+			var deployment appsv1.Deployment
+			// Unmarshal the deployment object
+			if err := yaml.Unmarshal(doc, &deployment); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal Deployment: %v", err)
+			}
+
+			// Update the image
+
+			deployment.Spec.Template.Spec.Containers[0].Image = img
+
+			// Marshal the updated deployment object back to YAML
+			updatedDoc, err := yaml.Marshal(&deployment)
+			if err != nil {
+				return nil, fmt.Errorf("error marshaling Deployment: %v", err)
+			}
+
+			// Append the updated deployment YAML
+			updatedYAML = append(updatedYAML, updatedDoc...)
+			updatedYAML = append(updatedYAML, []byte("\n---\n")...)
+		}
+	}
+
+	// Return the updated YAML
+	return updatedYAML, nil
+}
+
 func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
@@ -299,6 +350,7 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	}
 	YamlString = string(buf)
 
+	fmt.Println(string(buf))
 	logLevel := "INFO"
 	topologyImage := ""
 
@@ -306,6 +358,14 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 		if component.Name == ObservabilityTopologyName {
 			if component.Image != "" {
 				topologyImage = string(component.Image)
+				//fmt.Printf("kkkkkkkkkimage %s", topologyImage)
+				updatedYaml, err := convertYaml(buf, topologyImage)
+				if err != nil {
+					log.Fatalf("Error updating YAML: %v", err)
+				}
+				YamlString = string(updatedYaml)
+				//fmt.Println("ssssssssssssssssssssssssss")
+				//fmt.Println(YamlString)
 			}
 			for _, env := range component.Envs {
 				if strings.Contains(TopologyLogLevel, env.Name) {
@@ -318,7 +378,7 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, TopologyLogLevel, logLevel)
-	YamlString = strings.ReplaceAll(YamlString, TopologyImage, topologyImage)
+	//YamlString = strings.ReplaceAll(YamlString, TopologyImage, topologyImage)
 	return YamlString, nil
 }
 
