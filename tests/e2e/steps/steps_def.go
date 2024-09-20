@@ -1517,7 +1517,13 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), updatedTemplateFile)
+		val := os.Getenv(mapValues[key])
+		if driver == "powerscale" && key == "REPLACE_ENDPOINT" {
+			fmt.Println("Replacing PowerScale Endpoint and adding port...")
+			val = val + ":8080"
+		}
+
+		err := replaceInFile(key, val, updatedTemplateFile)
 		if err != nil {
 			return err
 		}
@@ -1530,6 +1536,9 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	if err != nil && !strings.Contains(string(b), "is already registered") {
 		return fmt.Errorf("failed to create resources for %s: %v\nErrMessage:\n%s", storageType, err, string(b))
 	}
+
+	fmt.Println("Waiting 5 seconds before generating token.")
+	time.Sleep(5 * time.Second)
 
 	// Generate tenant token
 	fmt.Println("=== Generating token ===\n ")
