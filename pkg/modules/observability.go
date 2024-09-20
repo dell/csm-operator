@@ -9,10 +9,8 @@
 package modules
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -260,15 +258,15 @@ func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csm
 // ObservabilityTopology - delete or update topology objects
 func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-	YamlString, err := getTopology(op, cr)
+	topoObjects, err := getTopology(op, cr)
 	if err != nil {
 		return err
 	}
 
-	topoObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
-	if err != nil {
-		return err
-	}
+	// topoObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	// if err != nil {
+	// 	return err
+	// }
 
 	for _, ctrlObj := range topoObjects {
 		log.Infow("current topoObject is ", "ctrlObj", ctrlObj)
@@ -288,65 +286,66 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.Operat
 
 // getTopology - get topology yaml string
 
-func convertYaml(buf []byte, img string) ([]byte, error) {
-	var meta struct {
-		Kind string `yaml:"kind"`
-	}
+// func convertYaml(buf []byte, img string) ([]byte, error) {
+// 	var meta struct {
+// 		Kind string `yaml:"kind"`
+// 	}
 
-	// Prepare a buffer to store the updated YAML
-	var updatedYAML []byte
+// 	// Prepare a buffer to store the updated YAML
+// 	var updatedYAML []byte
 
-	// Process each YAML document
-	docs := bytes.Split(buf, []byte("---"))
-	for _, doc := range docs {
-		if len(bytes.TrimSpace(doc)) == 0 {
-			continue // skip empty documents
-		}
+// 	// Process each YAML document
+// 	docs := bytes.Split(buf, []byte("---"))
+// 	for _, doc := range docs {
+// 		if len(bytes.TrimSpace(doc)) == 0 {
+// 			continue // skip empty documents
+// 		}
 
-		// Unmarshal just the "kind" field to determine the type of resource
-		if err := yaml.Unmarshal(doc, &meta); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal meta: %v", err)
-		}
+// 		// Unmarshal just the "kind" field to determine the type of resource
+// 		if err := yaml.Unmarshal(doc, &meta); err != nil {
+// 			return nil, fmt.Errorf("failed to unmarshal meta: %v", err)
+// 		}
 
-		// Check if the kind is "Deployment"
-		if meta.Kind == "Deployment" {
-			var deployment appsv1.Deployment
-			// Unmarshal the deployment object
-			if err := yaml.Unmarshal(doc, &deployment); err != nil {
-				return nil, fmt.Errorf("failed to unmarshal Deployment: %v", err)
-			}
+// 		// Check if the kind is "Deployment"
+// 		if meta.Kind == "Deployment" {
+// 			var deployment appsv1.Deployment
+// 			// Unmarshal the deployment object
+// 			if err := yaml.Unmarshal(doc, &deployment); err != nil {
+// 				return nil, fmt.Errorf("failed to unmarshal Deployment: %v", err)
+// 			}
 
-			// Update the image
+// 			// Update the image
 
-			deployment.Spec.Template.Spec.Containers[0].Image = img
+// 			deployment.Spec.Template.Spec.Containers[0].Image = img
 
-			// Marshal the updated deployment object back to YAML
-			updatedDoc, err := yaml.Marshal(&deployment)
-			if err != nil {
-				return nil, fmt.Errorf("error marshaling Deployment: %v", err)
-			}
+// 			// Marshal the updated deployment object back to YAML
+// 			updatedDoc, err := yaml.Marshal(&deployment)
+// 			if err != nil {
+// 				return nil, fmt.Errorf("error marshaling Deployment: %v", err)
+// 			}
 
-			// Append the updated deployment YAML
-			updatedYAML = append(updatedYAML, updatedDoc...)
-			updatedYAML = append(updatedYAML, []byte("\n---\n")...)
-		}
-	}
+// 			// Append the updated deployment YAML
+// 			updatedYAML = append(updatedYAML, updatedDoc...)
+// 			updatedYAML = append(updatedYAML, []byte("\n---\n")...)
+// 		}
+// 	}
 
-	// Return the updated YAML
-	return updatedYAML, nil
-}
+// 	// Return the updated YAML
+// 	return updatedYAML, nil
+// }
 
-func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
 	YamlString := ""
+	objs := []crclient.Object{}
 
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
-		return YamlString, err
+		return objs, err
 	}
 
 	buf, err := readConfigFile(obs, cr, op, TopologyYamlFile)
 	if err != nil {
-		return YamlString, err
+		return objs, err
 	}
 	YamlString = string(buf)
 
@@ -358,12 +357,12 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 		if component.Name == ObservabilityTopologyName {
 			if component.Image != "" {
 				topologyImage = string(component.Image)
-				//fmt.Printf("kkkkkkkkkimage %s", topologyImage)
-				updatedYaml, err := convertYaml(buf, topologyImage)
-				if err != nil {
-					log.Fatalf("Error updating YAML: %v", err)
-				}
-				YamlString = string(updatedYaml)
+
+				// updatedYaml, err := convertYaml(buf, topologyImage)
+				// if err != nil {
+				// 	log.Fatalf("Error updating YAML: %v", err)
+				// }
+				// YamlString = string(updatedYaml)
 				//fmt.Println("ssssssssssssssssssssssssss")
 				//fmt.Println(YamlString)
 			}
@@ -379,7 +378,20 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, TopologyLogLevel, logLevel)
 	//YamlString = strings.ReplaceAll(YamlString, TopologyImage, topologyImage)
-	return YamlString, nil
+	//return YamlString, nil
+	topoObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return objs, err
+	}
+	// loop topoObjects to find the deployment and set the image
+	if len(topologyImage) != 0 {
+		for _, ctrlObj := range topoObjects {
+			if deployment, ok := ctrlObj.(*appsv1.Deployment); ok {
+				deployment.Spec.Template.Spec.Containers[0].Image = topologyImage
+			}
+		}
+	}
+	return topoObjects, nil
 }
 
 // OtelCollector - delete or update otel collector objects
