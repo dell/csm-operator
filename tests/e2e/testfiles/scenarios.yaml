@@ -819,6 +819,42 @@
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+- scenario: "Install PowerScale Driver (With Authorization V2)"
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server.yaml"
+    - "testfiles/storage_csm_powerscale_auth.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
+  tags:
+    - "authorization"
+    - "authorizationproxyserver"
+    - "powerscale"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Apply custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powerscale] for CR [1]"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds-auth] in namespace [isilon] for [pscaleAuth]"
+    - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
+    - "Apply custom resource [2]"
+    - "Validate custom resource [2]"
+    - "Validate [powerscale] driver from CR [2] is installed"
+    - "Validate [authorization] module from CR [2] is installed"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [2]"
+    - "Delete custom resource [2]"
+    - "Delete Authorization CRs for [powerscale]"
+    - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [3]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
+    - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
+  customTest:
+    name: Cert CSI
+    run:
+      - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 - scenario: "Install PowerFlex Driver (With Authorization V2), Upgrade driver and authorization sidecar"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_alpha_proxy_server.yaml"
