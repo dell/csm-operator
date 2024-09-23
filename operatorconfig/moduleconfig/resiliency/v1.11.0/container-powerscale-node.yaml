@@ -21,7 +21,20 @@ securityContext:
   capabilities:
     add: ["SYS_ADMIN"]
   allowPrivilegeEscalation: true
+args:
+  - "--labelvalue=csi-isilon"
+  - "--arrayConnectivityPollRate=60"
+  - "--leaderelection=false"
+  - "--driverPodLabelValue=dell-storage"
+  - "--ignoreVolumelessPods=false"
+  # Below 4 args should not be modified.
+  - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
+  - "--mode=node"
+  - "--driverPath=csi-isilon.dellemc.com"
+  - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
 env:
+  - name: "X_CSI_PODMON_API_PORT"
+    value: "8083"
   - name: KUBE_NODE_NAME
     valueFrom:
       fieldRef:
