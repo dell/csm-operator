@@ -352,7 +352,13 @@ spec:
                 configMapKeyRef:
                   name: connectivity-client-docker-k8s-configmap
                   key: DCM_IDENTITY_LOCATION
-          command: ["sh", "-x", "-c", "if [ -s /dcm-client-secret-data/cert.pem ]; then cp -v /dcm-client-secret-data/cert.pem $DCM_IDENTITY_LOCATION/cert.pem; fi"]
+          command:
+            [
+              "sh",
+              "-x",
+              "-c",
+              "if [ -s /dcm-client-secret-data/cert.pem ]; then cp -v /dcm-client-secret-data/cert.pem $DCM_IDENTITY_LOCATION/cert.pem; fi",
+            ]
           volumeMounts:
             - name: certs-store-tmpdir
               mountPath: "/home/connectivity-client/.certs"

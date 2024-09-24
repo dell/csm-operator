@@ -42,22 +42,22 @@ spec:
           value: "false"
 
     sideCars:
-    # 'k8s' represents a string prepended to each volume created by the CSI driver
+      # 'k8s' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         args: ["--volume-name-prefix=k8s"]
 
-    # sdc-monitor is disabled by default, due to high CPU usage
+      # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         image: dellemc/sdc:3.6.1
         envs:
-        - name: HOST_PID
-          value: "1"
-        - name: MDM
-          value: "10.xx.xx.xx,10.xx.xx.xx" #do not add mdm value here if it is present in secret
+          - name: HOST_PID
+            value: "1"
+          - name: MDM
+            value: "10.xx.xx.xx,10.xx.xx.xx" #do not add mdm value here if it is present in secret
 
-    # health monitor is disabled by default, refer to driver documentation before enabling it
-    # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -103,7 +103,6 @@ spec:
 
     node:
       envs:
-
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
         #    true: enable SDC approval
@@ -135,8 +134,6 @@ spec:
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "0"
 
-
-
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -159,7 +156,7 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled 
+      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
       # - key: "offline.vxflexos.storage.dell.com"
       #   operator: "Exists"
       #   effect: "NoSchedule"
@@ -185,7 +182,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
+            value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
 
   modules:
     # Authorization: enable csm-authorization for RBAC
@@ -194,16 +191,16 @@ spec:
       enabled: false
       configVersion: v1.9.0
       components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.9.0
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "csm-authorization.com"
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:v1.9.0
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "csm-authorization.com"
 
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
 
     # observability: allows to configure observability
     - name: observability
@@ -329,52 +326,52 @@ spec:
       enabled: false
       configVersion: v1.7.0
       components:
-      - name: dell-csi-replicator
-        # image: Image to use for dell-csi-replicator. This shouldn't be changed
-        # Allowed values: string
-        # Default value: None
-        image: dellemc/dell-csi-replicator:v1.7.0
-        envs:
-          # replicationPrefix: prefix to prepend to storage classes parameters
+        - name: dell-csi-replicator
+          # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
-          # Default value: replication.storage.dell.com
-          - name: "X_CSI_REPLICATION_PREFIX"
-            value: "replication.storage.dell.com"
-          # replicationContextPrefix: prefix to use for naming of resources created by replication feature
-          # Allowed values: string
-          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-            value: "powerflex"
+          # Default value: None
+          image: dellemc/dell-csi-replicator:v1.7.0
+          envs:
+            # replicationPrefix: prefix to prepend to storage classes parameters
+            # Allowed values: string
+            # Default value: replication.storage.dell.com
+            - name: "X_CSI_REPLICATION_PREFIX"
+              value: "replication.storage.dell.com"
+            # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+            # Allowed values: string
+            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+              value: "powerflex"
 
-      - name: dell-replication-controller-manager
-        # image: Defines controller image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.7.0
-        envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
-          # Set the value to "self" in case of stretched/single cluster configuration
+        - name: dell-replication-controller-manager
+          # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          - name: "TARGET_CLUSTERS_IDS"
-            value: "target-cluster-1"
-          # Replication log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "REPLICATION_CTRL_LOG_LEVEL"
-            value: "debug"
+          image: dellemc/dell-replication-controller:v1.7.0
+          envs:
+            # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
+            # Set the value to "self" in case of stretched/single cluster configuration
+            # Allowed values: string
+            - name: "TARGET_CLUSTERS_IDS"
+              value: "target-cluster-1"
+            # Replication log level
+            # Allowed values: "error", "warn"/"warning", "info", "debug"
+            # Default value: "debug"
+            - name: "REPLICATION_CTRL_LOG_LEVEL"
+              value: "debug"
 
-          # replicas: Defines number of controller replicas
-          # Allowed values: int
-          # Default value: 1
-          - name: "REPLICATION_CTRL_REPLICAS"
-            value: "1"
-          # retryIntervalMin: Initial retry interval of failed reconcile request.
-          # It doubles with each failure, upto retry-interval-max
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MIN"
-            value: "1s"
-          # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MAX"
-            value: "5m"
+            # replicas: Defines number of controller replicas
+            # Allowed values: int
+            # Default value: 1
+            - name: "REPLICATION_CTRL_REPLICAS"
+              value: "1"
+            # retryIntervalMin: Initial retry interval of failed reconcile request.
+            # It doubles with each failure, upto retry-interval-max
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MIN"
+              value: "1s"
+            # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MAX"
+              value: "5m"
 
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature

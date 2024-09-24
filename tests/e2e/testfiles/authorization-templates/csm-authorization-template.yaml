@@ -12,7 +12,6 @@ spec:
   pollInterval: 30s
 
 ---
-
 apiVersion: csm-authorization.storage.dell.com/v1alpha1
 kind: CSMRole
 metadata:
@@ -30,7 +29,6 @@ spec:
   pool: "REPLACE_STORAGE_POOL_PATH"
 
 ---
-
 apiVersion: csm-authorization.storage.dell.com/v1alpha1
 kind: CSMTenant
 metadata:

@@ -3,9 +3,9 @@ kind: ClusterRole
 metadata:
   name: application-mobility-velero-server
 rules:
-- apiGroups:
-  - '*'
-  resources:
-  - '*'
-  verbs:
-  - '*'
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"

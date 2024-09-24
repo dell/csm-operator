@@ -151,4 +151,3 @@
     name: verify app-mobility
     run:
       - sh verify-app-mobility.sh
-

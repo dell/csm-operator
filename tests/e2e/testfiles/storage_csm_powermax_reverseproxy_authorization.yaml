@@ -225,7 +225,7 @@ spec:
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
-        args: [ "--monitor-interval=60s" ]
+        args: ["--monitor-interval=60s"]
         image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
 
       # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity

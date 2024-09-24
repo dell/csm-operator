@@ -7,7 +7,6 @@ spec:
   selfSigned: {}
 
 ---
-
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -19,7 +18,7 @@ spec:
   renewBefore: 360h # 15d
   subject:
     organizations:
-    - dell
+      - dell
   isCA: false
   privateKey:
     algorithm: RSA
@@ -29,8 +28,8 @@ spec:
     - server auth
     - client auth
   dnsNames:
-  - <OBSERVABILITY_SECRET_PREFIX>
-  - <OBSERVABILITY_SECRET_PREFIX>.karavi.svc.kubernetes.local
+    - <OBSERVABILITY_SECRET_PREFIX>
+    - <OBSERVABILITY_SECRET_PREFIX>.karavi.svc.kubernetes.local
   issuerRef:
     name: selfsigned-issuer
     kind: Issuer

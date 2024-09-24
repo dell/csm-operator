@@ -16,8 +16,8 @@
 # Upgrade from V1 to V2 is not supported
 - scenario: "Install Authorization Proxy Server V1 and upgrade"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.1
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.0
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml" # v1.9.1
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml" # v1.10.0
   tags:
     - "authorizationproxyserver"
   steps:
@@ -96,8 +96,8 @@
 
 - scenario: "Install Authorization Proxy Server & PowerFlex Driver (With Authorization V1), Upgrade both Authorization Proxy Server and PowerFlex Driver"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.1
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.0
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml" # v1.9.1
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml" # v1.10.0
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
   tags:
@@ -1631,7 +1631,6 @@
     run:
       - cert-csi test vio --sc op-e2e-pmax --chainNumber 2 --chainLength 2
 
-
 - scenario: "Install Powermax Driver(Standalone), Enable Resiliency"
   paths:
     - "testfiles/storage_csm_powermax.yaml"
@@ -1651,7 +1650,6 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
 
-
 - scenario: "Install Powermax Driver(With Resiliency), Disable Resiliency module"
   paths:
     - "testfiles/storage_csm_powermax_resiliency.yaml"
@@ -1670,4 +1668,3 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-

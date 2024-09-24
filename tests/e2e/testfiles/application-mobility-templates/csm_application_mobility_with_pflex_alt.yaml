@@ -161,7 +161,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  #provide MDM value
+            value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
 
   modules:
     # Application Mobility: enable csm-application-mobility module
@@ -171,90 +171,86 @@ spec:
       configVersion: v1.1.0
       forceRemoveModule: true
       components:
-      - name: application-mobility-controller-manager
-        # enable: Enable/Disable application mobility controller-manager
-        enabled: true
-        image: REPLACE_CONTROLLER_IMAGE
-        imagePullPolicy: Always
-        envs:
-          # Replica count for application mobility
-          # Allowed values: string
-          # Default value: 1
-          - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
-            value: "2"
+        - name: application-mobility-controller-manager
+          # enable: Enable/Disable application mobility controller-manager
+          enabled: true
+          image: REPLACE_CONTROLLER_IMAGE
+          imagePullPolicy: Always
+          envs:
+            # Replica count for application mobility
+            # Allowed values: string
+            # Default value: 1
+            - name: "APPLICATION_MOBILITY_REPLICA_COUNT"
+              value: "2"
 
-      # enabled: Enable/Disable cert-manager
-      # Allowed values:
-      #   true: enable deployment of cert-manager
-      #   false: disable deployment of cert-manager only if it's already deployed
-      # Default value: false
-      - name: cert-manager
-        enabled: false
-      # enabled: Enable/Disable Velero
-      - name: velero
-        image: velero/velero:v1.14.0
-        imagePullPolicy: IfNotPresent
-        enabled: true
-        useVolumeSnapshot: true
-        # enabled: Enable/Disable node-agent service
-        deployNodeAgent: true
-        envs:
-          # Backup storage location name
-          # Allowed values: string
-          # Default value: default
-          - name: "BACKUPSTORAGELOCATION_NAME"
-            value: "default"
+        # enabled: Enable/Disable cert-manager
+        # Allowed values:
+        #   true: enable deployment of cert-manager
+        #   false: disable deployment of cert-manager only if it's already deployed
+        # Default value: false
+        - name: cert-manager
+          enabled: false
+        # enabled: Enable/Disable Velero
+        - name: velero
+          image: velero/velero:v1.14.0
+          imagePullPolicy: IfNotPresent
+          enabled: true
+          useVolumeSnapshot: true
+          # enabled: Enable/Disable node-agent service
+          deployNodeAgent: true
+          envs:
+            # Backup storage location name
+            # Allowed values: string
+            # Default value: default
+            - name: "BACKUPSTORAGELOCATION_NAME"
+              value: "default"
 
-          # Velero bucket name
-          # Allowed values: string
-          # Default value: REPLACE_BUCKET_NAME
-          - name: "BUCKET_NAME"
-            value: "REPLACE_ALT_BUCKET_NAME"
+            # Velero bucket name
+            # Allowed values: string
+            # Default value: REPLACE_BUCKET_NAME
+            - name: "BUCKET_NAME"
+              value: "REPLACE_ALT_BUCKET_NAME"
 
-          # Based on the objectstore being used, the velero plugin and its configuration may need to change!
-          # default value: aws
-          - name: "CONFIGURATION_PROVIDER"
-            value: "aws"
+            # Based on the objectstore being used, the velero plugin and its configuration may need to change!
+            # default value: aws
+            - name: "CONFIGURATION_PROVIDER"
+              value: "aws"
 
-          # Name of the volume snapshot location where snapshots are being taken. Required.
-          # Volume-snapshot-Location Provider will be same as CONFIGURATION_PROVIDER
-          # Default value : default
-          - name: "VOL_SNAPSHOT_LOCATION_NAME"
-            value: "default"
+            # Name of the volume snapshot location where snapshots are being taken. Required.
+            # Volume-snapshot-Location Provider will be same as CONFIGURATION_PROVIDER
+            # Default value : default
+            - name: "VOL_SNAPSHOT_LOCATION_NAME"
+              value: "default"
 
-          # Name of the backup storage url
-          # This field HAS to be changed to a functional backup storage url
-          # Default value: localhost:8000
-          - name: "BACKUP_STORAGE_URL"
-            value: "http://REPLACE_S3URL"
+            # Name of the backup storage url
+            # This field HAS to be changed to a functional backup storage url
+            # Default value: localhost:8000
+            - name: "BACKUP_STORAGE_URL"
+              value: "http://REPLACE_S3URL"
 
-          # Name of the secret in velero namespace that has credentials to access object store
-          # We can leave the field empty if there no existing secret in velero installed namespace
-          # Default value: existing-cred
-          - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
-            value: "alt-cloud-creds"
+            # Name of the secret in velero namespace that has credentials to access object store
+            # We can leave the field empty if there no existing secret in velero installed namespace
+            # Default value: existing-cred
+            - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
+              value: "alt-cloud-creds"
 
-        #If velero is not already present in cluster, set enabled to true to create a secret.
-        #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
-        credentials:
-          - createWithInstall: false
-            #Specify the name to be used for secret that will be created to hold object store credentials.
-            name: cloud-creds
-            #Specify the object store access credentials to be stored in a secret with key "cloud".
-            secretContents:
-              aws_access_key_id: console  #Provide the access key id here
-              aws_secret_access_key: console123 #provide the access key here
-
+          #If velero is not already present in cluster, set enabled to true to create a secret.
+          #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
+          credentials:
+            - createWithInstall: false
+              #Specify the name to be used for secret that will be created to hold object store credentials.
+              name: cloud-creds
+              #Specify the object store access credentials to be stored in a secret with key "cloud".
+              secretContents:
+                aws_access_key_id: console #Provide the access key id here
+                aws_secret_access_key: console123 #provide the access key here
 
     # Init containers to be added to the Velero and Node-agent deployment's spec.
     - initContainer:
         #initContainer image for the dell velero plugin
-      - name: dell-custom-velero-plugin
-        image: REPLACE_PLUGIN_IMAGE
-        #initContainer image for the configuration provider aws
-        #digest for velero/velero-plugin-for-aws:v1.10.0
-      - name: velero-plugin-for-aws
-        image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
-
-
-
+        - name: dell-custom-velero-plugin
+          image: REPLACE_PLUGIN_IMAGE
+          #initContainer image for the configuration provider aws
+          #digest for velero/velero-plugin-for-aws:v1.10.0
+        - name: velero-plugin-for-aws
+          image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc

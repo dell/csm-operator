@@ -7,7 +7,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: <DriverDefaultReleaseName>-controller  
+  name: <DriverDefaultReleaseName>-controller
 rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
@@ -20,7 +20,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
-    verbs: ["get", "list", "watch", "create", "delete", "update","patch"]
+    verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "create", "watch", "update"]
@@ -29,7 +29,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
-    verbs: ["get", "list", "watch", "update","patch"]
+    verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["csinodes"]
     verbs: ["get", "list", "watch", "update"]
@@ -42,7 +42,7 @@ rules:
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "watch"]
-# below for snapshotter
+  # below for snapshotter
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "list"]
@@ -111,13 +111,13 @@ spec:
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                    - <DriverDefaultReleaseName>-controller
-            topologyKey: "kubernetes.io/hostname"
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - <DriverDefaultReleaseName>-controller
+              topologyKey: "kubernetes.io/hostname"
       containers:
         - name: attacher
           image: registry.k8s.io/sig-storage/csi-attacher:v4.4.2
@@ -254,7 +254,7 @@ spec:
           emptyDir:
         - name: unity-config
           configMap:
-              name: <DriverDefaultReleaseName>-config-params
+            name: <DriverDefaultReleaseName>-config-params
         - name: unity-secret
           secret:
-              secretName: <DriverDefaultReleaseName>-creds
+            secretName: <DriverDefaultReleaseName>-creds

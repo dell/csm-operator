@@ -49,7 +49,8 @@ rules:
     resources: ["secrets"]
     verbs: ["get", "list"]
   - apiGroups: ["volumegroup.storage.dell.com"]
-    resources: ["dellcsivolumegroupsnapshots", "dellcsivolumegroupsnapshots/status"]
+    resources:
+      ["dellcsivolumegroupsnapshots", "dellcsivolumegroupsnapshots/status"]
     verbs: ["create", "list", "watch", "delete", "update"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]

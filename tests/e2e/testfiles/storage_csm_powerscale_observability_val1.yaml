@@ -103,54 +103,54 @@ spec:
 
     controller:
       envs:
-      # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota
-      # on a newly provisioned volume.
-      # This requires SmartQuotas to be enabled on PowerScale cluster.
-      # Allowed values:
-      #   true: set quota for volume
-      #   false: do not set quota for volume
-      - name: X_CSI_ISI_QUOTA_ENABLED
-        value: "true"
+        # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota
+        # on a newly provisioned volume.
+        # This requires SmartQuotas to be enabled on PowerScale cluster.
+        # Allowed values:
+        #   true: set quota for volume
+        #   false: do not set quota for volume
+        - name: X_CSI_ISI_QUOTA_ENABLED
+          value: "true"
 
-      # X_CSI_ISI_ACCESS_ZONE: The name of the access zone a volume can be created in.
-      # If storageclass is missing with AccessZone parameter, then value of X_CSI_ISI_ACCESS_ZONE is used for the same.
-      # Default value: System
-      # Examples: System, zone1
-      - name: X_CSI_ISI_ACCESS_ZONE
-        value: "System"
+        # X_CSI_ISI_ACCESS_ZONE: The name of the access zone a volume can be created in.
+        # If storageclass is missing with AccessZone parameter, then value of X_CSI_ISI_ACCESS_ZONE is used for the same.
+        # Default value: System
+        # Examples: System, zone1
+        - name: X_CSI_ISI_ACCESS_ZONE
+          value: "System"
 
-      # X_CSI_ISI_VOLUME_PATH_PERMISSIONS: The permissions for isi volume directory path
-      # This value acts as a default value for isiVolumePathPermissions, if not specified for a cluster config in secret
-      # Allowed values: valid octal mode number
-      # Default value: "0777"
-      # Examples: "0777", "777", "0755"
-      - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
-        value: "0777"
+        # X_CSI_ISI_VOLUME_PATH_PERMISSIONS: The permissions for isi volume directory path
+        # This value acts as a default value for isiVolumePathPermissions, if not specified for a cluster config in secret
+        # Allowed values: valid octal mode number
+        # Default value: "0777"
+        # Examples: "0777", "777", "0755"
+        - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
+          value: "0777"
 
-      # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
-      # Install the 'external-health-monitor' sidecar accordingly.
-      # Allowed values:
-      #   true: enable checking of health condition of CSI volumes
-      #   false: disable checking of health condition of CSI volumes
-      # Default value: false
-      - name: X_CSI_HEALTH_MONITOR_ENABLED
-        value: "false"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
 
-      # X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS: Ignore unresolvable hosts on the OneFS.
-      # When set to true, OneFS allows new host to add to existing export list though any of the existing hosts from the
-      # same exports are unresolvable/doesn't exist anymore.
-      # Allowed values:
-      #   true: ignore existing unresolvable hosts and append new host to the existing export
-      #   false: exhibits OneFS default behavior i.e. if any of existing hosts are unresolvable while adding new one it fails
-      # Default value: false
-      - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
-        value: "false"
+        # X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS: Ignore unresolvable hosts on the OneFS.
+        # When set to true, OneFS allows new host to add to existing export list though any of the existing hosts from the
+        # same exports are unresolvable/doesn't exist anymore.
+        # Allowed values:
+        #   true: ignore existing unresolvable hosts and append new host to the existing export
+        #   false: exhibits OneFS default behavior i.e. if any of existing hosts are unresolvable while adding new one it fails
+        # Default value: false
+        - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
+          value: "false"
 
-      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
-      # Default value: 192
-      # Examples: 192, 256
-      - name: X_CSI_MAX_PATH_LIMIT
-        value: "192"
+        # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+        # Default value: 192
+        # Examples: 192, 256
+        - name: X_CSI_MAX_PATH_LIMIT
+          value: "192"
 
       # nodeSelector: Define node selection constraints for pods of controller deployment.
       # For the pod to be eligible to run on a node, the node must have each
@@ -172,38 +172,38 @@ spec:
 
     node:
       envs:
-      # X_CSI_MAX_VOLUMES_PER_NODE: Specify default value for maximum number of volumes that controller can publish to the node.
-      # If value is zero CO SHALL decide how many volumes of this type can be published by the controller to the node.
-      # This limit is applicable to all the nodes in the cluster for which node label 'max-isilon-volumes-per-node' is not set.
-      # Allowed values: n, where n >= 0
-      # Default value: 0
-      - name: X_CSI_MAX_VOLUMES_PER_NODE
-        value: "0"
+        # X_CSI_MAX_VOLUMES_PER_NODE: Specify default value for maximum number of volumes that controller can publish to the node.
+        # If value is zero CO SHALL decide how many volumes of this type can be published by the controller to the node.
+        # This limit is applicable to all the nodes in the cluster for which node label 'max-isilon-volumes-per-node' is not set.
+        # Allowed values: n, where n >= 0
+        # Default value: 0
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
 
-      # X_CSI_ALLOWED_NETWORKS: Custom networks for PowerScale export
-      # Specify list of networks which can be used for NFS I/O traffic; CIDR format should be used.
-      # Allowed values: list of one or more networks
-      # Default value: None
-      # Provide them in the following format: "[net1, net2]"
-      # CIDR format should be used
-      # eg: "[192.168.1.0/24, 192.168.100.0/22]"
-      - name: X_CSI_ALLOWED_NETWORKS
-        value: ""
+        # X_CSI_ALLOWED_NETWORKS: Custom networks for PowerScale export
+        # Specify list of networks which can be used for NFS I/O traffic; CIDR format should be used.
+        # Allowed values: list of one or more networks
+        # Default value: None
+        # Provide them in the following format: "[net1, net2]"
+        # CIDR format should be used
+        # eg: "[192.168.1.0/24, 192.168.100.0/22]"
+        - name: X_CSI_ALLOWED_NETWORKS
+          value: ""
 
-      # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
-      # Install the 'external-health-monitor' sidecar accordingly.
-      # Allowed values:
-      #   true: enable checking of health condition of CSI volumes
-      #   false: disable checking of health condition of CSI volumes
-      # Default value: false
-      - name: X_CSI_HEALTH_MONITOR_ENABLED
-        value: "false"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
 
-      # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
-      # Default value: 192
-      # Examples: 192, 256
-      - name: X_CSI_MAX_PATH_LIMIT
-        value: "192"
+        # X_CSI_MAX_PATH_LIMIT: this parameter is used for setting the maximum Path length for the given volume.
+        # Default value: 192
+        # Examples: 192, 256
+        - name: X_CSI_MAX_PATH_LIMIT
+          value: "192"
 
       # nodeSelector: Define node selection constraints for pods of node daemonset
       # For the pod to be eligible to run on a node, the node must have each
@@ -247,16 +247,16 @@ spec:
       enabled: false
       configVersion: v1.10.1
       components:
-      - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:nightly
-        envs:
-          # proxyHost: hostname of the csm-authorization server
-          - name: "PROXY_HOST"
-            value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:nightly
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
 
-          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-          - name: "SKIP_CERTIFICATE_VALIDATION"
-            value: "true"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
 
     # replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
@@ -269,58 +269,58 @@ spec:
       enabled: false
       configVersion: v1.9.0
       components:
-      - name: dell-csi-replicator
-        # image: Image to use for dell-csi-replicator. This shouldn't be changed
-        # Allowed values: string
-        # Default value: None
-        image: dellemc/dell-csi-replicator:v1.9.0
-        envs:
-          # replicationPrefix: prefix to prepend to storage classes parameters
+        - name: dell-csi-replicator
+          # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
-          # Default value: replication.storage.dell.com
-          - name: "X_CSI_REPLICATION_PREFIX"
-            value: "replication.storage.dell.com"
-          # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+          # Default value: None
+          image: dellemc/dell-csi-replicator:v1.9.0
+          envs:
+            # replicationPrefix: prefix to prepend to storage classes parameters
+            # Allowed values: string
+            # Default value: replication.storage.dell.com
+            - name: "X_CSI_REPLICATION_PREFIX"
+              value: "replication.storage.dell.com"
+            # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+            # Allowed values: string
+            # Default value: powerstore
+            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+              value: "powerscale"
+
+        - name: dell-replication-controller-manager
+          # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          # Default value: powerstore
-          - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-            value: "powerscale"
+          image: dellemc/dell-replication-controller:v1.9.0
+          envs:
+            # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
+            # Set the value to "self" in case of stretched/single cluster configuration
+            # Allowed values: string
+            - name: "TARGET_CLUSTERS_IDS"
+              value: "self"
+            # Replication log level
+            # Allowed values: "error", "warn"/"warning", "info", "debug"
+            # Default value: "debug"
+            - name: "REPLICATION_CTRL_LOG_LEVEL"
+              value: "debug"
 
-      - name: dell-replication-controller-manager
-        # image: Defines controller image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-controller:v1.9.0
-        envs:
-          # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
-          # Set the value to "self" in case of stretched/single cluster configuration
+            # replicas: Defines number of controller replicas
+            # Allowed values: int
+            # Default value: 1
+            - name: "REPLICATION_CTRL_REPLICAS"
+              value: "1"
+            # retryIntervalMin: Initial retry interval of failed reconcile request.
+            # It doubles with each failure, upto retry-interval-max
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MIN"
+              value: "1s"
+            # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MAX"
+              value: "5m"
+
+        - name: dell-replication-controller-init
+          # image: Defines replication init container image. This shouldn't be changed
           # Allowed values: string
-          - name: "TARGET_CLUSTERS_IDS"
-            value: "self"
-          # Replication log level
-          # Allowed values: "error", "warn"/"warning", "info", "debug"
-          # Default value: "debug"
-          - name: "REPLICATION_CTRL_LOG_LEVEL"
-            value: "debug"
-
-          # replicas: Defines number of controller replicas
-          # Allowed values: int
-          # Default value: 1
-          - name: "REPLICATION_CTRL_REPLICAS"
-            value: "1"
-          # retryIntervalMin: Initial retry interval of failed reconcile request.
-          # It doubles with each failure, upto retry-interval-max
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MIN"
-            value: "1s"
-          # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-          # Allowed values: time
-          - name: "RETRY_INTERVAL_MAX"
-            value: "5m"
-
-      - name: dell-replication-controller-init
-        # image: Defines replication init container image. This shouldn't be changed
-        # Allowed values: string
-        image: dellemc/dell-replication-init:v1.0.0
+          image: dellemc/dell-replication-init:v1.0.0
 
     # observability: allows to configure observability
     - name: observability
@@ -371,11 +371,11 @@ spec:
               value: "nginxinc/nginx-unprivileged:1.20"
 
         - name: cert-manager
-        # enabled: Enable/Disable cert-manager
-        # Allowed values:
-        #   true: enable deployment of cert-manager
-        #   false: disable deployment of cert-manager only if it's already deployed
-        # Default value: true
+          # enabled: Enable/Disable cert-manager
+          # Allowed values:
+          #   true: enable deployment of cert-manager
+          #   false: disable deployment of cert-manager only if it's already deployed
+          # Default value: true
           enabled: true
 
         - name: metrics-powerscale

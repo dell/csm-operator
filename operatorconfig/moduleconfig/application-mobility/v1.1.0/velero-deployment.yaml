@@ -25,12 +25,12 @@ metadata:
     app.kubernetes.io/name: application-mobility-velero
     app.kubernetes.io/instance: application-mobility
 rules:
-- apiGroups:
-    - "*"
-  resources:
-    - "*"
-  verbs:
-    - "*"
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -125,7 +125,7 @@ spec:
           args:
             - server
             - --uploader-type=restic
-          resources: 
+          resources:
             requests:
               cpu: 500m
               memory: 128Mi
@@ -159,13 +159,13 @@ spec:
         - name: <AWS_INIT_CONTAINER_NAME>
           image: <AWS_INIT_CONTAINER_IMAGE>
           volumeMounts:
-           - mountPath: /target
-             name: plugins
+            - mountPath: /target
+              name: plugins
         - name: <DELL_INIT_CONTAINER_NAME>
           image: <DELL_INIT_CONTAINER_IMAGE>
           volumeMounts:
-           - mountPath: /target
-             name: plugins
+            - mountPath: /target
+              name: plugins
       volumes:
         - name: cloud-credentials
           secret:
