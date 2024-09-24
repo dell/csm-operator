@@ -1845,7 +1845,7 @@ spec:
       name: metrics-powerflex
     - image: docker.io/dellemc/podmon:v1.11.0
       name: podmon-node
-    - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+    - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
       name: kube-rbac-proxy
     - image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
       name: attacher
