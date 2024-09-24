@@ -1349,7 +1349,7 @@ spec:
         - name: RELATED_IMAGE_csi-powerstore
           value: docker.io/dellemc/csi-powerstore:v2.11.1
         - name: RELATED_IMAGE_csi-unity
-          value: docker.io/dellemc/csi-unity:v2.11.0
+          value: docker.io/dellemc/csi-unity:v2.11.1
         - name: RELATED_IMAGE_csi-vxflexos
           value: docker.io/dellemc/csi-vxflexos:v2.11.0
         - name: RELATED_IMAGE_sdc
