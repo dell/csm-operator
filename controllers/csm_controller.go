@@ -93,7 +93,11 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
+<<<<<<< HEAD
 	CSMVersion = "v1.12.0"
+=======
+	CSMVersion = "v1.11.1"
+>>>>>>> 0773fbbc (changes of patch 1.6.1)
 )
 
 var (
