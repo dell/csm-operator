@@ -63,7 +63,7 @@ spec:
               name: RELATED_IMAGE_metrics-powerflex
             - value: docker.io/dellemc/podmon:v1.11.0
               name: RELATED_IMAGE_podmon-node
-            - value: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+            - value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
               name: RELATED_IMAGE_kube-rbac-proxy
             - value: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
               name: RELATED_IMAGE_attacher
