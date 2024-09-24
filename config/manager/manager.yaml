@@ -37,7 +37,7 @@ spec:
           name: RELATED_IMAGE_csi-powermax
         - value: docker.io/dellemc/csipowermax-reverseproxy:v2.10.0
           name: RELATED_IMAGE_csipowermax-reverseproxy
-        - value: docker.io/dellemc/csi-powerstore:v2.11.0
+        - value: docker.io/dellemc/csi-powerstore:v2.11.1
           name: RELATED_IMAGE_csi-powerstore
         - value: docker.io/dellemc/csi-unity:v2.11.0
           name: RELATED_IMAGE_csi-unity

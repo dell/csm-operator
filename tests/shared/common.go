@@ -35,7 +35,7 @@ const (
 	JumpDowngradeConfigVersion string = "v2.10.0"
 	OldConfigVersion           string = "v2.2.0"
 	BadConfigVersion           string = "v0"
-	PStoreConfigVersion        string = "v2.11.0"
+	PStoreConfigVersion        string = "v2.11.1"
 	UnityConfigVersion         string = "v2.11.0"
 	PScaleConfigVersion        string = "v2.11.0"
 	PmaxConfigVersion          string = "v2.11.0"
