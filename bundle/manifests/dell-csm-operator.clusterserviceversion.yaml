@@ -198,7 +198,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
                   "name": "external-health-monitor"
                 }
               ]
@@ -560,7 +560,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
                   "name": "external-health-monitor"
                 }
               ]
@@ -904,7 +904,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
                   "name": "external-health-monitor"
                 }
               ]
@@ -1081,7 +1081,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
                   "name": "external-health-monitor"
                 }
               ]
@@ -1238,7 +1238,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
                   "name": "csi-external-health-monitor-controller"
                 }
               ]
@@ -2031,11 +2031,6 @@ spec:
         displayName: Use Private CA Certs
         path: client.usePrivateCaCerts
       statusDescriptors:
-      - description: ClientStatus is the status of Client pods
-        displayName: ClientStatus
-        path: clientStatus
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
       - description: State is the state of the client installation
         displayName: State
         path: state
@@ -3394,6 +3389,11 @@ spec:
         path: nodeStatus.failed
         x-descriptors:
         - urn:alm:descriptor:text
+      - description: State is the state of the driver installation
+        displayName: State
+        path: state
+        x-descriptors:
+        - urn:alm:descriptor:text
       version: v1
   description: "Dell Container Storage Modules (CSM) Operator is a Kubernetes Operator
     which can be \nused to install and manage Dell’s CSI drivers and CSM modules.
@@ -4652,7 +4652,7 @@ spec:
                 - name: RELATED_IMAGE_resizer
                   value: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
                 - name: RELATED_IMAGE_externalhealthmonitorcontroller
-                  value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+                  value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
                 - name: RELATED_IMAGE_metadataretriever
                   value: dellemc/csi-metadata-retriever:v1.8.0
                 - name: RELATED_IMAGE_dell-connectivity-client
@@ -4715,7 +4715,7 @@ spec:
   - email: container.storage.modules@dell.com
     name: Dell Container Storage Modules
   maturity: stable
-  minKubeVersion: 1.24.0
+  minKubeVersion: 1.28.0
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
@@ -4766,7 +4766,7 @@ spec:
     name: registrar
   - image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
     name: resizer
-  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
     name: externalhealthmonitorcontroller
   - image: dellemc/csi-metadata-retriever:v1.8.0
     name: metadataretriever

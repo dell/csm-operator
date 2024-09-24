@@ -587,12 +587,6 @@ spec:
       - description: UsePrivateCaCerts is used to specify private CA signed certs
         displayName: Use Private CA Certs
         path: client.usePrivateCaCerts
-      statusDescriptors:
-      - description: ClientStatus is the status of Client pods
-        displayName: ClientStatus
-        path: clientStatus
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
       - description: State is the state of the client installation
         displayName: State
         path: state
@@ -1921,16 +1915,36 @@ spec:
         displayName: Name
         path: modules[0].name
       statusDescriptors:
-      - description: ControllerStatus is the status of Controller pods
-        displayName: ControllerStatus
-        path: controllerStatus
+      - description: Number of Available Controller pods
+        displayName: Available
+        path: controllerStatus.available
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
-      - description: NodeStatus is the status of Controller pods
-        displayName: NodeStatus
-        path: nodeStatus
+        - urn:alm:descriptor:text
+      - description: Number of Desired Controller pods
+        displayName: Desired
+        path: controllerStatus.desired
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podStatuses
+        - urn:alm:descriptor:text
+      - description: Number of Failed Controller pods
+        displayName: Failed
+        path: controllerStatus.failed
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Number of Available Node pods
+        displayName: Available
+        path: nodeStatus.available
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Number of Desired Node pods
+        displayName: Desired
+        path: nodeStatus.desired
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Number of Failed Node pods
+        displayName: Failed
+        path: nodeStatus.failed
+        x-descriptors:
+        - urn:alm:descriptor:text
       - description: State is the state of the driver installation
         displayName: State
         path: state
@@ -1999,7 +2013,7 @@ spec:
   - email: container.storage.modules@dell.com
     name: Dell Container Storage Modules
   maturity: stable
-  minKubeVersion: 1.24.0
+  minKubeVersion: 1.28.0
   provider:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
@@ -2050,7 +2064,7 @@ spec:
     name: registrar
   - image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
     name: resizer
-  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+  - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
     name: externalhealthmonitorcontroller
   - image: dellemc/csi-metadata-retriever:v1.8.0
     name: metadataretriever
