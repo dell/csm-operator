@@ -24,7 +24,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "registry.connect.redhat.com/dell-emc/csi-unity@"
+      image: "registry.connect.redhat.com/dell-emc/csi-unity@sha256:7f2abaf2c6dd92abc2824f4adc0aac929844452692e9c99cd7cdb99df1f7e129"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
