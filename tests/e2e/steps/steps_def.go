@@ -53,9 +53,9 @@ var (
 	quotaLimit             = "30000000"
 	pflexSecretMap         = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL"}
 	pflexAuthSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
-	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
-	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
-	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
+	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
+	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
+	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	pmaxCredMap            = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
 	pmaxAuthSidecarMap     = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
@@ -67,7 +67,7 @@ var (
 	pflexCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
 
 	// Auth V2
-	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
+	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX", "REPLACE_PORT": "PSCALE_PORT"}
 
 	pstoreSecretMap = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT"}
 )
@@ -328,7 +328,7 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -346,13 +346,13 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
@@ -379,7 +379,7 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -424,7 +424,7 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -889,7 +889,7 @@ func (step *Step) runCustomTest(res Resource) error {
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -1303,6 +1303,16 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// get env variables
 	if os.Getenv(endpointvar) != "" {
 		endpoint = os.Getenv(endpointvar)
+
+		if driver == "powerscale" {
+			port := os.Getenv("PSCALE_PORT")
+			if port == "" {
+				fmt.Println("=== PSCALE_PORT not set, using default port 8080 ===")
+				port = "8080"
+			}
+
+			endpoint = endpoint + ":" + port
+		}
 	}
 	if os.Getenv(systemIdvar) != "" {
 		sysID = os.Getenv(systemIdvar)

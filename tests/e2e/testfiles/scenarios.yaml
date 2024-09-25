@@ -263,7 +263,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization V1)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -367,13 +367,12 @@
 
 - scenario: "Install PowerScale Driver, Enable/Disable Authorization V1 module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
     - "powerscale"
-    # - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
@@ -387,13 +386,14 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is not installed"
     - "Enable [authorization] module from CR [2]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds-auth] in namespace [isilon] for [pscaleAuth]"
     - "Set secret for driver from CR [2] to [isilon-creds-auth]"
     - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
     - "Set up secret with template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [isilon] for [authSidecarCert]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
-    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds-auth] in namespace [isilon] for [pscale]"
     - "Disable [authorization] module from CR [2]"
+    - "Set secret for driver from CR [2] to [isilon-creds]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is not installed"
     # cleanup
@@ -403,6 +403,8 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/rootCertificate.pem] for [authSidecarCert]"
 
 - scenario: "Install PowerScale Driver(With Observability)"
   paths:
@@ -435,6 +437,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -449,6 +452,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
 
 - scenario: "Install PowerScale Driver(With Observability and Custom Certs)"
   paths:
@@ -478,7 +482,6 @@
     - "authorization"
     - "powerscale"
     - "observability"
-    # - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
@@ -534,6 +537,7 @@
     - "Set secret for driver from CR [2] to [isilon-creds-auth]"
     - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
     - "Set up secret with template [testfiles/authorization-templates/rootCertificate.pem] name [proxy-server-root-certificate] in namespace [isilon] for [authSidecarCert]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds-auth] in namespace [isilon] for [pscaleAuth]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is not installed"
@@ -547,8 +551,10 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
+    - "Restore template [testfiles/authorization-templates/rootCertificate.pem] for [authSidecarCert]"
 
-- scenario: "Install PowerScale Driver(With Authorization V1 and Observability), Disable Authorization module, Disable Observability module"
+- scenario: "Install PowerScale Driver(With Authorization V1 and Observability), Disable Observability module, Disable Authorization module"
   paths:
     - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
@@ -572,12 +578,13 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is installed"
-    - "Disable [authorization] module from CR [2]"
-    - "Set secret for driver from CR [2] to [isilon-creds]"
-    - "Validate [powerscale] driver from CR [2] is installed"
-    - "Validate [authorization] module from CR [2] is not installed"
-    - "Validate [observability] module from CR [2] is installed"
     - "Disable [observability] module from CR [2]"
+    - "Validate [powerscale] driver from CR [2] is installed"
+    - "Validate [authorization] module from CR [2] is installed"
+    - "Validate [observability] module from CR [2] is not installed"
+    - "Disable [authorization] module from CR [2]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Set secret for driver from CR [2] to [isilon-creds]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is not installed"
     - "Validate [observability] module from CR [2] is not installed"
@@ -590,6 +597,7 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
     - "Restore template [testfiles/authorization-templates/rootCertificate.pem] for [authSidecarCert]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
   customTest:
     name: Cert CSI
     run:
@@ -1183,6 +1191,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -1191,6 +1200,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
   customTest:
     name: CustomTest
     run:
@@ -1205,6 +1215,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -1218,6 +1229,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
 
 - scenario: "Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver"
   paths:
