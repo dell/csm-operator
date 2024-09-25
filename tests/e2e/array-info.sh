@@ -70,6 +70,10 @@ export PMAX_QUOTA="0GB"
 export PMAX_ROLE="csmrole-powermax"
 export PMAX_TENANT="csmtenant-powermax"
 export PMAX_TENANT_PREFIX="tn1"
+export PMAX_PORTGROUPS=""
+export PMAX_PROTOCOL=""
+export PMAX_ARRAYS="000000000000,000000000001"
+
 
 # The following is PowerStore specific:
 export PSTORE_USER="username"
