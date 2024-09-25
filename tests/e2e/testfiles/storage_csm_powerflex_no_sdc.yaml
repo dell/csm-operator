@@ -17,7 +17,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "10.247.98.98:5000/csi-vxflexos:sreekb-v3"
+      image: "dellemc/csi-vxflexos:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
