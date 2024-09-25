@@ -63,7 +63,9 @@ export PMAX_PASS_ENCODED="password"
 export PMAX_SERVICE_LEVEL="Bronze"
 # The following are Authorization Proxy Server specific for powermax:
 export PMAX_POOL_V1="SRP_1"
+export PMAX_POOL_V2="SRP_1"
 export PMAX_STORAGE="powermax"
+export PMAX_VAULT_STORAGE_PATH="storage\/powermax" # escape / with \
 export PMAX_QUOTA="0GB"
 export PMAX_ROLE="csmrole-powermax"
 export PMAX_TENANT="csmtenant-powermax"

@@ -1,5 +1,5 @@
 #
-# Copyright � 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ spec:
   driver:
     csiDriverType: "powermax"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
@@ -31,7 +32,6 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI PowerMax v2.10.1 driver
     configVersion: v2.11.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
@@ -44,7 +44,6 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerMax driver v2.10.1
       image: dellemc/csi-powermax:nightly
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
@@ -87,11 +86,13 @@ spec:
         - name: X_CSI_POWERMAX_PORTGROUPS
           value: ""
         # "X_CSI_TRANSPORT_PROTOCOL" can be "FC" or "FIBRE" for fibrechannel,
-        # "ISCSI" for iSCSI, or "" for autoselection.
+        # "ISCSI" for iSCSI,
+        # "NVMETCP" for NVMeTCP or "" for autoselection.
         # Allowed values:
         #   "FC"    - Fiber Channel protocol
         #   "FIBER" - Fiber Channel protocol
         #   "ISCSI" - iSCSI protocol
+        #   "NVMETCP" = NVMeTCP protocol
         #   ""      - Automatic selection of transport protocol
         # Default value: "" <empty>
         - name: X_CSI_TRANSPORT_PROTOCOL
@@ -122,6 +123,16 @@ spec:
         # Default value: "" <empty>
         - name: "X_CSI_VCENTER_HOST"
           value: ""
+        # CSI driver log level
+        # Allowed values: "error", "warn"/"warning", "info", "debug"
+        # Default value: "debug"
+        - name: "CSI_LOG_LEVEL"
+          value: "debug"
+        # CSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: "CSI_LOG_FORMAT"
+          value: "TEXT"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
@@ -210,18 +221,18 @@ spec:
     sideCars:
       # 'pmax' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
+        image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
         args: ["--volume-name-prefix=pmax"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.7.3
+        image: dellemc/csi-metadata-retriever:v1.8.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -243,7 +254,6 @@ spec:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          # Example: "csipowermax-reverseproxy:v2.9.1"
           image: dellemc/csipowermax-reverseproxy:nightly
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
@@ -260,7 +270,7 @@ spec:
             # set it true, if csm-auth is enabled / you want it as a sidecar container
             # set it false, if you want it as a deployment
             - name: "DeployAsSidecar"
-              value: "false"
+              value: "true"
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
