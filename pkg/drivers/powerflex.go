@@ -81,35 +81,38 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 			sdcEnabled = false
 		}
 	}
-	if sdcEnabled {
-		for _, initcontainer := range cr.Spec.Driver.InitContainers {
-			if initcontainer.Name == "sdc" {
-				k := 0
-				initenv := initcontainer.Envs
-				for c, env := range initenv {
-					if env.Name == "MDM" {
-						env.Value = mdmVar
-						newmdm = env
-						k = c
-						break
-					}
+
+	newInitContainers := make([]csmv1.ContainerTemplate, 0)
+	for _, initcontainer := range cr.Spec.Driver.InitContainers {
+		if initcontainer.Name != "sdc" {
+			newInitContainers = append(newInitContainers, initcontainer)
+		} else if initcontainer.Name == "sdc" && sdcEnabled {
+			k := 0
+			initenv := initcontainer.Envs
+			for c, env := range initenv {
+				if env.Name == "MDM" {
+					env.Value = mdmVar
+					newmdm = env
+					k = c
+					break
 				}
-				initenv[k] = newmdm
-				break
 			}
+			initenv[k] = newmdm
+			newInitContainers = append(newInitContainers, initcontainer)
 		}
-		if cr.Spec.Driver.InitContainers == nil {
-			cr.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{
-				{
-					Name: "sdc",
-					Envs: []corev1.EnvVar{
-						{
-							Name:  "MDM",
-							Value: mdmVar,
-						},
+	}
+	cr.Spec.Driver.InitContainers = newInitContainers
+	if cr.Spec.Driver.InitContainers == nil && sdcEnabled {
+		cr.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{
+			{
+				Name: "sdc",
+				Envs: []corev1.EnvVar{
+					{
+						Name:  "MDM",
+						Value: mdmVar,
 					},
 				},
-			}
+			},
 		}
 	}
 

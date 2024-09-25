@@ -424,7 +424,19 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = newcontainers
 
-	initcontainers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers
+	initcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
+	sdcEnabled := true
+	for _, env := range cr.Spec.Driver.Node.Envs {
+		if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
+			sdcEnabled = false
+		}
+	}
+	for _, ic := range nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers {
+		if *ic.Name != "sdc" || sdcEnabled {
+			initcontainers = append(initcontainers, ic)
+		}
+	}
+
 	for i := range initcontainers {
 		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
 		utils.UpdateinitContainerApply(cr.Spec.Driver.InitContainers, &initcontainers[i])
