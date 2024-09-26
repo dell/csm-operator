@@ -222,4 +222,3 @@ spec:
           # image: Defines replication init container image. This shouldn't be changed
           # Allowed values: string
           image: dellemc/dell-replication-init:v1.0.0
-          
