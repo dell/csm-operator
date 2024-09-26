@@ -895,19 +895,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 	}
-	// If dell connectivity client is deployed, create role/rolebindings in the csm namespaces
-	if err = utils.CheckAccAndCreateOrDeleteRbac(ctx, operatorConfig, ctrlClient, false); err != nil {
-		return err
-	}
 
-	return nil
-}
-
-// SyncRbac - Sync the current installation - this can lead to a create or update
-func (r *ContainerStorageModuleReconciler) SyncRbac(ctx context.Context, _ csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
-	if err := utils.CheckAccAndCreateOrDeleteRbac(ctx, operatorConfig, ctrlClient, true); err != nil {
-		return err
-	}
 	return nil
 }
 
