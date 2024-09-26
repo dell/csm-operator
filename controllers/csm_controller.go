@@ -282,11 +282,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	if csm.IsBeingDeleted() {
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
 
-		// remove role/rolebinding from the csm object namespace
-		err := r.SyncRbac(ctx, *csm, *operatorConfig, r.Client)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("error when syncing rbac: %v", err)
-		}
 
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {

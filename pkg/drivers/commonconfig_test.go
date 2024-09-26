@@ -58,29 +58,6 @@ var (
 	}
 )
 
-var (
-	acc                         = accForApexConnecityClient("apexConnectivityClient", shared.AccConfigVersion)
-	fakeClient csmv1.ClientType = "fakeClient"
-	badClient  csmv1.ClientType = "badClient"
-
-	testacc = []struct {
-		// every single unit test name
-		name string
-		// acc object
-		acc csmv1.ApexConnectivityClient
-		// acc client
-		accClient csmv1.ClientType
-		// yaml file name to read
-		filename string
-		// expected error
-		expectedErr string
-	}{
-		{"Acc happy path", acc, "apexConnectivityClient", "statefulset.yaml", ""},
-		{"file does not exist", acc, fakeClient, "NonExist.yaml", "no such file or directory"},
-		{"config file is invalid", acc, badClient, "statefulset.yaml", "unmarshal"},
-	}
-)
-
 func TestGetCsiDriver(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
@@ -152,20 +129,6 @@ func TestGetNode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename)
-			if tt.expectedErr == "" {
-				assert.Nil(t, err)
-			} else {
-				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
-			}
-		})
-	}
-}
-
-func TestGetAccController(t *testing.T) {
-	ctx := context.Background()
-	for _, tt := range testacc {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetAccController(ctx, tt.acc, config, tt.accClient)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
