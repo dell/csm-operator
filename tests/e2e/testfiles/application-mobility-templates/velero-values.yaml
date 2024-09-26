@@ -34,7 +34,7 @@ configuration:
       bucket: REPLACE_BUCKET_NAME
       default: true
       config:
-        {region: minio, s3ForcePathStyle: true, s3Url: http://REPLACE_S3URL}
+        { region: minio, s3ForcePathStyle: true, s3Url: http://REPLACE_S3URL }
 
   volumeSnapshotLocation:
     - name: default
