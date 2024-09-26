@@ -93,24 +93,6 @@ func MakeCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
 	return csmObj
 }
 
-// MakeAcc - returns a csm from given params
-func MakeAcc(name, ns, configVersion string) csmv1.ApexConnectivityClient {
-	ApexConnectivityClientObj := MakeApexConnectivityClient(configVersion, "true")
-
-	csmObj := csmv1.ApexConnectivityClient{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   ns,
-			Annotations: make(map[string]string),
-		},
-		Spec: csmv1.ApexConnectivityClientSpec{
-			Client: ApexConnectivityClientObj,
-		},
-		Status: csmv1.ApexConnectivityClientStatus{},
-	}
-	return csmObj
-}
-
 // MakeModuleCSM returns a csm from given params
 func MakeModuleCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
 	moduleObj := MakeModule(configVersion)
@@ -128,14 +110,6 @@ func MakeModuleCSM(name, ns, configVersion string) csmv1.ContainerStorageModule 
 		Status: csmv1.ContainerStorageModuleStatus{},
 	}
 	return csmObj
-}
-
-// MakeApexConnectivityClient returns a driver object from given params
-func MakeApexConnectivityClient(configVersion, _ string) csmv1.Client {
-	ApexConnectivityClientObj := csmv1.Client{
-		ConfigVersion: configVersion,
-	}
-	return ApexConnectivityClientObj
 }
 
 // MakeDriver returns a driver object from given params
