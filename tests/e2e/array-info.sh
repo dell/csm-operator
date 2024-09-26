@@ -40,6 +40,7 @@ export PSCALE_CLUSTER="Isilon-System-Name"
 export PSCALE_USER="username"
 export PSCALE_PASS="password"
 export PSCALE_ENDPOINT="1.1.1.1"
+export PSCALE_PORT="8080"
 export PSCALE_AUTH_ENDPOINT="localhost"
 export PSCALE_AUTH_PORT="9400"
 # The following are Authorization Proxy Server specific for powerscale:

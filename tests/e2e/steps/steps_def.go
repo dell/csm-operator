@@ -1523,7 +1523,19 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), updatedTemplateFile)
+		val := os.Getenv(mapValues[key])
+		if driver == "powerscale" && key == "REPLACE_ENDPOINT" {
+			fmt.Println("Replacing PowerScale Endpoint and adding port...")
+
+			port := os.Getenv(mapValues["REPLACE_PORT"])
+			if port == "" {
+				port = "8080"
+			}
+
+			val = val + ":" + port
+		}
+
+		err := replaceInFile(key, val, updatedTemplateFile)
 		if err != nil {
 			return err
 		}
