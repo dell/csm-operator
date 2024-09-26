@@ -23,7 +23,7 @@ standAloneConfig:
   storageArrays:
     - storageArrayId: "000000000001" # arrayID
       primaryURL: https://primary-1.unisphe.re:8443 # primary unisphere for arrayID
-      backupURL: https://backup-1.unisphe.re:8443 # backup unisphere for arrayID
+      backupURL: https://backup-1.unisphe.re:8443   # backup unisphere for arrayID
       proxyCredentialSecrets:
         - proxy-secret-11 # credential secret for primary unisphere, e.g., powermax-creds
         - proxy-secret-12 # credential secret for backup unisphere, e.g., powermax-creds

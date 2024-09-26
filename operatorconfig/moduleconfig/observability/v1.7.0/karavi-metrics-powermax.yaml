@@ -5,6 +5,7 @@ metadata:
   namespace: karavi
 
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -23,6 +24,7 @@ rules:
     resources: ["secrets"]
     verbs: ["list", "watch", "get"]
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -56,13 +58,14 @@ spec:
     app.kubernetes.io/instance: karavi
 
 ---
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: karavi-metrics-powermax-configmap
   namespace: karavi
 data:
-  karavi-metrics-powermax.yaml: |
+  karavi-metrics-powermax.yaml : |
     COLLECTOR_ADDR: <COLLECTOR_ADDRESS>
     PROVISIONER_NAMES: csi-powermax.dellemc.com
     POWERMAX_CAPACITY_METRICS_ENABLED: <POWERMAX_CAPACITY_METRICS_ENABLED>
@@ -74,6 +77,7 @@ data:
     LOG_FORMAT: <POWERMAX_LOG_FORMAT>
 
 ---
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -85,6 +89,7 @@ data:
     CSI_LOG_FORMAT: TEXT
 
 ---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -136,7 +141,7 @@ spec:
               mountPath: /certs
       volumes:
         - name: certs
-          emptyDir: {}
+          emptyDir: { }
         - name: <X_CSI_CONFIG_MAP_NAME>
           configMap:
             name: <X_CSI_CONFIG_MAP_NAME>

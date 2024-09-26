@@ -4,21 +4,21 @@ kind: ClusterRole
 metadata:
   name: containerstoragemodule-editor-role
 rules:
-  - apiGroups:
-      - storage.dell.com
-    resources:
-      - containerstoragemodules
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - storage.dell.com
-    resources:
-      - containerstoragemodules/status
-    verbs:
-      - get
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - containerstoragemodules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - storage.dell.com
+  resources:
+  - containerstoragemodules/status
+  verbs:
+  - get

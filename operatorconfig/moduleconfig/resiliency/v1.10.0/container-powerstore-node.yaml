@@ -58,4 +58,4 @@ volumeMounts:
   - name: var-run
     mountPath: /var/run
   - name: powerstore-config-params
-    mountPath: /powerstore-config-params
+    mountPath: /powerstore-config-params 

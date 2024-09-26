@@ -1,3 +1,4 @@
+
 # values file for installing velero
 # will be used to test operator behavior when velero is installed already (not technically supported config)
 
@@ -16,14 +17,16 @@ image:
   tag: v1.14.0
   pullPolicy: IfNotPresent
 
+
 credentials:
-  useSecret: true
+  useSecret: true 
   name: existing-cloud-creds
   secretContents:
     cloud: |
       [default]
       aws_access_key_id=console
       aws_secret_access_key=console123
+
 
 configuration:
   # Cloud provider being used (e.g. aws, azure, gcp).
@@ -33,8 +36,11 @@ configuration:
       provider: aws
       bucket: REPLACE_BUCKET_NAME
       default: true
-      config:
-        { region: minio, s3ForcePathStyle: true, s3Url: http://REPLACE_S3URL }
+      config: {
+        region: minio,
+        s3ForcePathStyle: true,
+        s3Url: http://REPLACE_S3URL
+      }
 
   volumeSnapshotLocation:
     - name: default
@@ -44,10 +50,10 @@ initContainers:
   - name: dell-custom-velero-plugin
     image: REPLACE_PLUGIN_IMAGE
     volumeMounts:
-      - mountPath: /target
-        name: plugins
+    - mountPath: /target
+      name: plugins
   - name: velero-plugin-for-aws
     image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
     volumeMounts:
-      - mountPath: /target
-        name: plugins
+    - mountPath: /target
+      name: plugins

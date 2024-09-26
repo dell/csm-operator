@@ -111,7 +111,7 @@ spec:
           value: "false"
         # X_CSI_POWERSTORE_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
         # Allowed Values: x.x.x.x/xx or x.x.x.x
-        # Default Value:
+        # Default Value: 
         - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
           value:
       # nodeSelector: Define node selection constraints for controller pods.

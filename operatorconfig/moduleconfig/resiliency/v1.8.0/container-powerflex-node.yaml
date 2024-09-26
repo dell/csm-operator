@@ -55,4 +55,4 @@ volumeMounts:
   - name: var-run
     mountPath: /var/run
   - name: vxflexos-config-params
-    mountPath: /vxflexos-config-params
+    mountPath: /vxflexos-config-params 

@@ -13,7 +13,7 @@ spec:
     bucket: <BUCKET_NAME>
     cacert: <BUCKET_CACERT>
   default: true
-  config:
-    region: <BACKUP_REGION_URL>
-    s3ForcePathStyle: true
-    s3Url: <BACKUP_STORAGE_URL>
+  config: 
+      region: <BACKUP_REGION_URL>
+      s3ForcePathStyle: true
+      s3Url: <BACKUP_STORAGE_URL>

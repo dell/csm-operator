@@ -92,8 +92,8 @@ spec:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
           image: dellemc/csi-powerstore:v2.9.0
-          imagePullPolicy: IfNotPresent
-          command: ["/csi-powerstore"]
+          imagePullPolicy:  IfNotPresent
+          command: [ "/csi-powerstore" ]
           args:
             - "--array-config=/powerstore-config/config"
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"

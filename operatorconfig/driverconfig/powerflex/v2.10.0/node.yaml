@@ -77,7 +77,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: false
-      containers:
+      containers:  
         - name: driver
           securityContext:
             privileged: true
@@ -86,7 +86,7 @@ spec:
               add: ["SYS_ADMIN"]
           image: dellemc/csi-vxflexos:v2.10.0
           imagePullPolicy: IfNotPresent
-          command: ["/csi-vxflexos.sh"]
+          command: [ "/csi-vxflexos.sh" ]
           args:
             - "--array-config=/vxflexos-config/config"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
@@ -209,11 +209,11 @@ spec:
             - name: os-release
               mountPath: /host-os-release
             - name: sdc-storage
-              mountPath: /storage
+              mountPath: /storage 
             - name: udev-d
               mountPath: /rules.d
             - name: scaleio-path-opt
-              mountPath: /host_drv_cfg_path
+              mountPath: /host_drv_cfg_path 
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
       volumes:

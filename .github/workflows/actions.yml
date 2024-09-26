@@ -115,12 +115,12 @@ jobs:
         uses: actions/checkout@v4
       - name: Build Docker Images
         run: |
-          chmod +x ./scripts/build-ubi-micro.sh
-          make build-base-image
-          make -o gen-semver
-          podman build -t docker.io/csm-operator -f ./Dockerfile --build-arg GOIMAGE=golang:latest --build-arg BASEIMAGE="localhost/csm-operator-ubimicro"
-          podman save docker.io/library/csm-operator -o /tmp/csm-operator.tar
-          docker load -i /tmp/csm-operator.tar
+         chmod +x ./scripts/build-ubi-micro.sh
+         make build-base-image
+         make -o gen-semver
+         podman build -t docker.io/csm-operator -f ./Dockerfile --build-arg GOIMAGE=golang:latest --build-arg BASEIMAGE="localhost/csm-operator-ubimicro"
+         podman save docker.io/library/csm-operator -o /tmp/csm-operator.tar
+         docker load -i /tmp/csm-operator.tar
       - name: Scan controller Image
         uses: Azure/container-scan@v0
         env:

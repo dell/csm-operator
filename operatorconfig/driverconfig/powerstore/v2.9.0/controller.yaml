@@ -49,8 +49,7 @@ rules:
     resources: ["secrets"]
     verbs: ["get", "list"]
   - apiGroups: ["volumegroup.storage.dell.com"]
-    resources:
-      ["dellcsivolumegroupsnapshots", "dellcsivolumegroupsnapshots/status"]
+    resources: ["dellcsivolumegroupsnapshots","dellcsivolumegroupsnapshots/status"]
     verbs: ["create", "list", "watch", "delete", "update"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
@@ -123,13 +122,13 @@ spec:
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: name
-                    operator: In
-                    values:
-                      - <DriverDefaultReleaseName>-controller
-              topologyKey: kubernetes.io/hostname
+          - labelSelector:
+              matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                  - <DriverDefaultReleaseName>-controller
+            topologyKey: kubernetes.io/hostname 
       containers:
         - name: attacher
           image: registry.k8s.io/sig-storage/csi-attacher:v4.4.2
@@ -226,7 +225,7 @@ spec:
         - name: driver
           image: dellemc/csi-powerstore:v2.9.0
           imagePullPolicy: IfNotPresent
-          command: ["/csi-powerstore"]
+          command: [ "/csi-powerstore" ]
           args:
             - "--array-config=/powerstore-config/config"
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"

@@ -10,7 +10,7 @@ spec:
   selector:
     app: wordpress
     tier: frontend
-  type: NodePort
+  type: NodePort 
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -47,26 +47,26 @@ spec:
     spec:
       securityContext:
         sysctls:
-          - name: net.ipv4.ip_unprivileged_port_start
-            value: "0"
+        - name: net.ipv4.ip_unprivileged_port_start
+          value: "0"
       containers:
-        - image: wordpress:6.3.1-apache
+      - image: wordpress:6.3.1-apache
+        name: wordpress
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: wordpress-mysql
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 80
           name: wordpress
-          env:
-            - name: WORDPRESS_DB_HOST
-              value: wordpress-mysql
-            - name: WORDPRESS_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-pass
-                  key: password
-          ports:
-            - containerPort: 80
-              name: wordpress
-          volumeMounts:
-            - name: wordpress-persistent-storage
-              mountPath: /var/www/html
-      volumes:
+        volumeMounts:
         - name: wordpress-persistent-storage
-          persistentVolumeClaim:
-            claimName: wp-pv-claim
+          mountPath: /var/www/html
+      volumes:
+      - name: wordpress-persistent-storage
+        persistentVolumeClaim:
+          claimName: wp-pv-claim

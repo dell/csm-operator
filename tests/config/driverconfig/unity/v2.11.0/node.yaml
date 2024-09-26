@@ -76,7 +76,7 @@ spec:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
           image: dellemc/csi-unity:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy:  IfNotPresent
           args:
             - "--driver-name=csi-unity.dellemc.com"
             - "--driver-config=/unity-config/driver-config-params.yaml"
@@ -183,7 +183,7 @@ spec:
                       path: cert-0
         - name: unity-config
           configMap:
-            name: <DriverDefaultReleaseName>-config-params
+              name: <DriverDefaultReleaseName>-config-params
         - name: unity-secret
           secret:
-            secretName: <DriverDefaultReleaseName>-creds
+              secretName: <DriverDefaultReleaseName>-creds

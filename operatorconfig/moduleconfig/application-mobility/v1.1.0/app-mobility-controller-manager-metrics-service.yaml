@@ -7,10 +7,10 @@ metadata:
   namespace: <NAMESPACE>
 spec:
   ports:
-    - name: https
-      port: 8443
-      protocol: TCP
-      targetPort: https
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: https
   selector:
     control-plane: controller-manager
 ---
@@ -19,7 +19,7 @@ kind: ClusterRole
 metadata:
   name: <NAMESPACE>-metrics-reader
 rules:
-  - nonResourceURLs:
-      - /metrics
-    verbs:
-      - get
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get

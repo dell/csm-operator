@@ -18,7 +18,7 @@ spec:
           namespace: <NAMESPACE>
           path: /convert
       conversionReviewVersions:
-        - v1
+      - v1
   group: mobility.storage.dell.com
   names:
     kind: Backup
@@ -27,172 +27,172 @@ spec:
     singular: backup
   scope: Namespaced
   versions:
-    - name: v1
-      schema:
-        openAPIV3Schema:
-          description: Backup is the Schema for the backups API
-          properties:
-            apiVersion:
-              description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
-              type: string
-            kind:
-              description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: BackupSpec defines the desired state of Backup
-              properties:
-                backupLocation:
-                  description: Velero Storage location where k8s resources and application data will be backed up to. Default value is "default"
-                  nullable: true
-                  type: string
-                clones:
-                  description: Clones is the list of targets where this backup will be cloned to.
-                  items:
-                    properties:
-                      namespaceMapping:
-                        additionalProperties:
-                          type: string
-                        description: NamespaceMapping is a map of source namespace names to target namespace names to restore into. Any source namespaces not included in the map will be restored into namespaces of the same name.
-                        type: object
-                      restoreOnceAvailable:
-                        description: Optionally, specify whether the backup is to be restored to TargetCluster once available. Default value is false. Setting this to true causes the backup to be restored as soon as it is available.
-                        nullable: true
-                        type: boolean
-                      targetCluster:
-                        description: Optionally, specify the targetCluster to restore the backup to.
-                        nullable: true
-                        type: string
-                    type: object
-                  nullable: true
-                  type: array
-                datamover:
-                  description: Default datamover is Restic
-                  nullable: true
-                  type: string
-                excludedNamespaces:
-                  description: ExcludedNamespaces contains a list of namespaces that are not included in the backup.
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                excludedResources:
-                  description: ExcludedResources is a slice of resource names that are not included in the backup.
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                includeClusterResources:
-                  description: IncludeClusterResources specifies whether cluster-scoped resources should be included for consideration in the backup.
-                  nullable: true
-                  type: boolean
-                includedNamespaces:
-                  description: IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                includedResources:
-                  description: IncludedResources is a slice of resource names to include in the backup. If empty, all resources are included.
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                labelSelector:
-                  description: LabelSelector is a metav1.LabelSelector to filter with when adding individual objects to the backup. If empty or nil, all objects are included. Optional.
-                  nullable: true
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Backup is the Schema for the backups API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BackupSpec defines the desired state of Backup
+            properties:
+              backupLocation:
+                description: Velero Storage location where k8s resources and application data will be backed up to. Default value is "default"
+                nullable: true
+                type: string
+              clones:
+                description: Clones is the list of targets where this backup will be cloned to.
+                items:
                   properties:
-                    matchExpressions:
-                      description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                      items:
-                        description: A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
-                        properties:
-                          key:
-                            description: key is the label key that the selector applies to.
-                            type: string
-                          operator:
-                            description: operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.
-                            type: string
-                          values:
-                            description: values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.
-                            items:
-                              type: string
-                            type: array
-                        required:
-                          - key
-                          - operator
-                        type: object
-                      type: array
-                    matchLabels:
+                    namespaceMapping:
                       additionalProperties:
                         type: string
-                      description: matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.
+                      description: NamespaceMapping is a map of source namespace names to target namespace names to restore into. Any source namespaces not included in the map will be restored into namespaces of the same name.
                       type: object
+                    restoreOnceAvailable:
+                      description: Optionally, specify whether the backup is to be restored to TargetCluster once available. Default value is false. Setting this to true causes the backup to be restored as soon as it is available.
+                      nullable: true
+                      type: boolean
+                    targetCluster:
+                      description: Optionally, specify the targetCluster to restore the backup to.
+                      nullable: true
+                      type: string
                   type: object
-                podVolumeBackups:
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                ttl:
-                  description: TTL the Dell Backup retention period
+                nullable: true
+                type: array
+              datamover:
+                description: Default datamover is Restic
+                nullable: true
+                type: string
+              excludedNamespaces:
+                description: ExcludedNamespaces contains a list of namespaces that are not included in the backup.
+                items:
                   type: string
-                veleroBackup:
-                  nullable: true
+                nullable: true
+                type: array
+              excludedResources:
+                description: ExcludedResources is a slice of resource names that are not included in the backup.
+                items:
                   type: string
-              type: object
-            status:
-              description: BackupStatus defines the observed state of Backup
-              properties:
-                clones:
-                  items:
-                    properties:
-                      clusterUID:
-                        description: ClusterID is the identifier with which cluster was registered - should be the kube-system uid of the targetCLuster
-                        nullable: true
-                        type: string
-                      phase:
-                        description: Phase of the restore
-                        type: string
-                      restoreName:
-                        description: RestoreName is the name of the restore object that will restore the backup. This may or may not be used.
-                        nullable: true
-                        type: string
-                      restoreOnceAvailable:
-                        description: RestoreOnceAvailable
-                        nullable: true
-                        type: boolean
-                      targetCluster:
-                        description: TargetCluster to which the backup will be restored
-                        nullable: true
-                        type: string
+                nullable: true
+                type: array
+              includeClusterResources:
+                description: IncludeClusterResources specifies whether cluster-scoped resources should be included for consideration in the backup.
+                nullable: true
+                type: boolean
+              includedNamespaces:
+                description: IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.
+                items:
+                  type: string
+                nullable: true
+                type: array
+              includedResources:
+                description: IncludedResources is a slice of resource names to include in the backup. If empty, all resources are included.
+                items:
+                  type: string
+                nullable: true
+                type: array
+              labelSelector:
+                description: LabelSelector is a metav1.LabelSelector to filter with when adding individual objects to the backup. If empty or nil, all objects are included. Optional.
+                nullable: true
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
+                    items:
+                      description: A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies to.
+                          type: string
+                        operator:
+                          description: operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
-                  type: array
-                completionTimestamp:
-                  description: CompletionTimestamp records the time a backup was completed. Completion time is recorded even on failed backups. Completion time is recorded before uploading the backup object. The server's time is used for CompletionTimestamps
-                  format: date-time
-                  nullable: true
+                type: object
+              podVolumeBackups:
+                items:
                   type: string
-                expiration:
-                  description: Expiration is when this Backup is eligible for garbage-collection.
-                  format: date-time
-                  nullable: true
-                  type: string
-                phase:
-                  description: Phase is the current state of the Backup.
-                  type: string
-                startTimestamp:
-                  description: StartTimestamp records the time a backup was started. The server's time is used for StartTimestamps
-                  format: date-time
-                  nullable: true
-                  type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                nullable: true
+                type: array
+              ttl:
+                description: TTL the Dell Backup retention period
+                type: string
+              veleroBackup:
+                nullable: true
+                type: string
+            type: object
+          status:
+            description: BackupStatus defines the observed state of Backup
+            properties:
+              clones:
+                items:
+                  properties:
+                    clusterUID:
+                      description: ClusterID is the identifier with which cluster was registered - should be the kube-system uid of the targetCLuster
+                      nullable: true
+                      type: string
+                    phase:
+                      description: Phase of the restore
+                      type: string
+                    restoreName:
+                      description: RestoreName is the name of the restore object that will restore the backup. This may or may not be used.
+                      nullable: true
+                      type: string
+                    restoreOnceAvailable:
+                      description: RestoreOnceAvailable
+                      nullable: true
+                      type: boolean
+                    targetCluster:
+                      description: TargetCluster to which the backup will be restored
+                      nullable: true
+                      type: string
+                  type: object
+                type: array
+              completionTimestamp:
+                description: CompletionTimestamp records the time a backup was completed. Completion time is recorded even on failed backups. Completion time is recorded before uploading the backup object. The server's time is used for CompletionTimestamps
+                format: date-time
+                nullable: true
+                type: string
+              expiration:
+                description: Expiration is when this Backup is eligible for garbage-collection.
+                format: date-time
+                nullable: true
+                type: string
+              phase:
+                description: Phase is the current state of the Backup.
+                type: string
+              startTimestamp:
+                description: StartTimestamp records the time a backup was started. The server's time is used for StartTimestamps
+                format: date-time
+                nullable: true
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
@@ -218,47 +218,47 @@ spec:
     singular: clusterconfig
   scope: Namespaced
   versions:
-    - name: v1
-      schema:
-        openAPIV3Schema:
-          description: ClusterConfig is the Schema for the clusterconfigs API
-          properties:
-            apiVersion:
-              description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
-              type: string
-            kind:
-              description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: ClusterConfigSpec defines the desired state of ClusterConfig
-              properties:
-                clusterName:
-                  description: ClusterName is the name with which the cluster is being registered.
-                  type: string
-                kubeConfig:
-                  description: KubeConfig contains the kubeConfig that can be used to connect to the cluster being registered.Either this or SecretRef should be specified.
-                  nullable: true
-                  type: string
-                secretRef:
-                  description: SecretRef is the name of the secret containing kubeConfig to connect to the cluster. Either this or KubeConfig should be specified.
-                  nullable: true
-                  type: string
-              required:
-                - clusterName
-              type: object
-            status:
-              description: ClusterConfigStatus defines the observed state of ClusterConfig
-              properties:
-                phase:
-                  type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: ClusterConfig is the Schema for the clusterconfigs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterConfigSpec defines the desired state of ClusterConfig
+            properties:
+              clusterName:
+                description: ClusterName is the name with which the cluster is being registered.
+                type: string
+              kubeConfig:
+                description: KubeConfig contains the kubeConfig that can be used to connect to the cluster being registered.Either this or SecretRef should be specified.
+                nullable: true
+                type: string
+              secretRef:
+                description: SecretRef is the name of the secret containing kubeConfig to connect to the cluster. Either this or KubeConfig should be specified.
+                nullable: true
+                type: string
+            required:
+            - clusterName
+            type: object
+          status:
+            description: ClusterConfigStatus defines the observed state of ClusterConfig
+            properties:
+              phase:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
@@ -284,76 +284,76 @@ spec:
     singular: podvolumebackup
   scope: Namespaced
   versions:
-    - name: v1
-      schema:
-        openAPIV3Schema:
-          description: PodVolumeBackup is the Schema for the podvolumebackups API
-          properties:
-            apiVersion:
-              description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
-              type: string
-            kind:
-              description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: PodVolumeBackupSpec defines the desired state of PodVolumeBackup
-              properties:
-                backupFromSourceVolume:
-                  description: BackupFromSourceVolume is the bool that indicates whether to backup from source volume instead of its snapshot
-                  type: boolean
-                backupStorageLocation:
-                  description: BackupStorage location to backup to
-                  nullable: true
-                  type: string
-                namespace:
-                  description: Namespace the original pvc and snapshot reside in
-                  nullable: true
-                  type: string
-                pod:
-                  description: Pod is the name of the pod using the volume to be backed up.
-                  type: string
-                repoIdentifier:
-                  description: Identifier of the restic repository where this snapshot will be backed up to
-                  type: string
-                snapshotName:
-                  description: SnapshotName is the name of the snapshot from which to backup
-                  type: string
-                sourcePVCName:
-                  description: SourcePVCName is the name of the pvc used to provision the volume which is to be backed up
-                  type: string
-                veleroPodVolumeBackup:
-                  description: Corresponding velero PodVolumeBackup for this dell PodVolumeBackup
-                  nullable: true
-                  type: string
-                volume:
-                  description: Volume is the name of the volume within the Pod to be backed up.
-                  type: string
-              required:
-                - backupFromSourceVolume
-                - pod
-                - snapshotName
-                - sourcePVCName
-                - volume
-              type: object
-            status:
-              description: PodVolumeBackupStatus defines the observed state of PodVolumeBackup
-              properties:
-                phase:
-                  description: Phase is the current state of the Dell PodVolumeBackup.
-                  enum:
-                    - New
-                    - InProgress
-                    - Completed
-                    - Failed
-                  type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: PodVolumeBackup is the Schema for the podvolumebackups API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PodVolumeBackupSpec defines the desired state of PodVolumeBackup
+            properties:
+              backupFromSourceVolume:
+                description: BackupFromSourceVolume is the bool that indicates whether to backup from source volume instead of its snapshot
+                type: boolean
+              backupStorageLocation:
+                description: BackupStorage location to backup to
+                nullable: true
+                type: string
+              namespace:
+                description: Namespace the original pvc and snapshot reside in
+                nullable: true
+                type: string
+              pod:
+                description: Pod is the name of the pod using the volume to be backed up.
+                type: string
+              repoIdentifier:
+                description: Identifier of the restic repository where this snapshot will be backed up to
+                type: string
+              snapshotName:
+                description: SnapshotName is the name of the snapshot from which to backup
+                type: string
+              sourcePVCName:
+                description: SourcePVCName is the name of the pvc used to provision the volume which is to be backed up
+                type: string
+              veleroPodVolumeBackup:
+                description: Corresponding velero PodVolumeBackup for this dell PodVolumeBackup
+                nullable: true
+                type: string
+              volume:
+                description: Volume is the name of the volume within the Pod to be backed up.
+                type: string
+            required:
+            - backupFromSourceVolume
+            - pod
+            - snapshotName
+            - sourcePVCName
+            - volume
+            type: object
+          status:
+            description: PodVolumeBackupStatus defines the observed state of PodVolumeBackup
+            properties:
+              phase:
+                description: Phase is the current state of the Dell PodVolumeBackup.
+                enum:
+                - New
+                - InProgress
+                - Completed
+                - Failed
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
@@ -379,65 +379,65 @@ spec:
     singular: podvolumerestore
   scope: Namespaced
   versions:
-    - name: v1
-      schema:
-        openAPIV3Schema:
-          description: PodVolumeRestore is the Schema for the podvolumerestores API
-          properties:
-            apiVersion:
-              description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
-              type: string
-            kind:
-              description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: PodVolumeRestoreSpec defines the desired state of PodVolumeRestore
-              properties:
-                backupStorageLocation:
-                  description: BackupStorageLocation is the name of the backup storage location where the restic repository is stored.
-                  type: string
-                namespace:
-                  description: Should this come from PodVolumeRestore's namespace? Namespace is the namespace the pvc.
-                  type: string
-                newNamespace:
-                  description: NewNamespace is the namespace that the pod and pvc are being restored to; used only for init-container approach
-                  type: string
-                podName:
-                  description: PodName is the name of the pod that uses the volume to which data is to be restored; used only for init-container approach
-                  type: string
-                pvcName:
-                  description: PVCName is the name of the pvc to which data is to be restored
-                  type: string
-                repoIdentifier:
-                  description: RepoIdentifier is the restic repository identifier.
-                  type: string
-                resticSnapshotId:
-                  description: ResticSnapshotID is the snapshotID from which data is to be restored
-                  type: string
-                veleroRestore:
-                  description: Velero restore associated with this pod volume restore; used only for init-container approach
-                  type: string
-                volumeName:
-                  description: VolumeName is the name of the volume to which data is to be restored; used only for init-container approach
-                  type: string
-              required:
-                - backupStorageLocation
-                - repoIdentifier
-              type: object
-            status:
-              description: PodVolumeRestoreStatus defines the observed state of PodVolumeRestore
-              properties:
-                phase:
-                  description: Phase is the current state of the PodVolumeRestore.
-                  type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: PodVolumeRestore is the Schema for the podvolumerestores API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PodVolumeRestoreSpec defines the desired state of PodVolumeRestore
+            properties:
+              backupStorageLocation:
+                description: BackupStorageLocation is the name of the backup storage location where the restic repository is stored.
+                type: string
+              namespace:
+                description: Should this come from PodVolumeRestore's namespace? Namespace is the namespace the pvc.
+                type: string
+              newNamespace:
+                description: NewNamespace is the namespace that the pod and pvc are being restored to; used only for init-container approach
+                type: string
+              podName:
+                description: PodName is the name of the pod that uses the volume to which data is to be restored; used only for init-container approach
+                type: string
+              pvcName:
+                description: PVCName is the name of the pvc to which data is to be restored
+                type: string
+              repoIdentifier:
+                description: RepoIdentifier is the restic repository identifier.
+                type: string
+              resticSnapshotId:
+                description: ResticSnapshotID is the snapshotID from which data is to be restored
+                type: string
+              veleroRestore:
+                description: Velero restore associated with this pod volume restore; used only for init-container approach
+                type: string
+              volumeName:
+                description: VolumeName is the name of the volume to which data is to be restored; used only for init-container approach
+                type: string
+            required:
+            - backupStorageLocation
+            - repoIdentifier
+            type: object
+          status:
+            description: PodVolumeRestoreStatus defines the observed state of PodVolumeRestore
+            properties:
+              phase:
+                description: Phase is the current state of the PodVolumeRestore.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
@@ -463,85 +463,85 @@ spec:
     singular: restore
   scope: Namespaced
   versions:
-    - name: v1
-      schema:
-        openAPIV3Schema:
-          description: Restore is the Schema for the restores API
-          properties:
-            apiVersion:
-              description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
-              type: string
-            kind:
-              description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: RestoreSpec defines the desired state of Restore
-              properties:
-                backupName:
-                  description: BackupName is the name of the backup to restore from
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Restore is the Schema for the restores API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: RestoreSpec defines the desired state of Restore
+            properties:
+              backupName:
+                description: BackupName is the name of the backup to restore from
+                type: string
+              excludedNamespaces:
+                description: ExcludedNamespaces contains a list of namespaces in the backup from which resources should not be restored
+                items:
                   type: string
-                excludedNamespaces:
-                  description: ExcludedNamespaces contains a list of namespaces in the backup from which resources should not be restored
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                excludedResources:
-                  description: ExcludedResources is a slice of resource names that are not included in the restore.
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                includeClusterResources:
-                  description: IncludeClusterResources specifies whether cluster-scoped resources should be included for consideration in the restore. If null, defaults to true.
-                  nullable: true
-                  type: boolean
-                includedNamespaces:
-                  description: IncludedNamespaces is a slice of namespace names in the backup to retore objects from If empty, all namespaces are included.
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                includedResources:
-                  description: IncludedResources is a slice of resource names to include in the restore. If empty, all resources in the backup are included.
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                namespaceMapping:
-                  additionalProperties:
-                    type: string
-                  description: NamespaceMapping is a map of source namespace names to target namespace names to restore into. Any source namespaces not included in the map will be restored into namespaces of the same name.
-                  type: object
-                restorePVs:
-                  description: RestorePVs specifies whether to restore all included PVs
-                  nullable: true
-                  type: boolean
-              type: object
-            status:
-              description: RestoreStatus defines the observed state of Restore
-              properties:
-                phase:
-                  description: Phase is the current state of the Restore
+                nullable: true
+                type: array
+              excludedResources:
+                description: ExcludedResources is a slice of resource names that are not included in the restore.
+                items:
                   type: string
-                podVolumeRestores:
-                  description: PodVolumeRestores is the slice of podVolumeRestore names created for this Dell restore
-                  items:
-                    type: string
-                  nullable: true
-                  type: array
-                veleroRestore:
-                  description: VeleroRestore is the name of the velero restore created for this Dell restore
-                  nullable: true
+                nullable: true
+                type: array
+              includeClusterResources:
+                description: IncludeClusterResources specifies whether cluster-scoped resources should be included for consideration in the restore. If null, defaults to true.
+                nullable: true
+                type: boolean
+              includedNamespaces:
+                description: IncludedNamespaces is a slice of namespace names in the backup to retore objects from If empty, all namespaces are included.
+                items:
                   type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                nullable: true
+                type: array
+              includedResources:
+                description: IncludedResources is a slice of resource names to include in the restore. If empty, all resources in the backup are included.
+                items:
+                  type: string
+                nullable: true
+                type: array
+              namespaceMapping:
+                additionalProperties:
+                  type: string
+                description: NamespaceMapping is a map of source namespace names to target namespace names to restore into. Any source namespaces not included in the map will be restored into namespaces of the same name.
+                type: object
+              restorePVs:
+                description: RestorePVs specifies whether to restore all included PVs
+                nullable: true
+                type: boolean
+            type: object
+          status:
+            description: RestoreStatus defines the observed state of Restore
+            properties:
+              phase:
+                description: Phase is the current state of the Restore
+                type: string
+              podVolumeRestores:
+                description: PodVolumeRestores is the slice of podVolumeRestore names created for this Dell restore
+                items:
+                  type: string
+                nullable: true
+                type: array
+              veleroRestore:
+                description: VeleroRestore is the name of the velero restore created for this Dell restore
+                nullable: true
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
@@ -567,238 +567,215 @@ spec:
     singular: schedule
   scope: Namespaced
   versions:
-    - additionalPrinterColumns:
-        - jsonPath: .status.phase
-          name: Status
-          type: string
-        - jsonPath: .spec.paused
-          name: Paused
-          type: boolean
-        - jsonPath: .spec.schedule
-          name: Schedule
-          type: string
-        - jsonPath: .status.lastBackupTime
-          name: lastBackupTime
-          type: date
-      name: v1
-      schema:
-        openAPIV3Schema:
-          description: Schedule is the Schema for the schedules API
-          properties:
-            apiVersion:
-              description:
-                "APIVersion defines the versioned schema of this representation
-                of an object. Servers should convert recognized schemas to the latest
-                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
-              type: string
-            kind:
-              description:
-                "Kind is a string value representing the REST resource this
-                object represents. Servers may infer this from the endpoint the client
-                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: ScheduleSpec defines the desired state of Schedule
-              properties:
-                backupSpec:
-                  description:
-                    BackupSpec is the spec of the Backup to be created on
-                    the specified Schedule.
-                  properties:
-                    backupLocation:
-                      description:
-                        Velero Storage location where k8s resources and application
-                        data will be backed up to. Default value is "default"
-                      nullable: true
-                      type: string
-                    clones:
-                      description:
-                        Clones is the list of targets where this backup will
-                        be cloned to.
-                      items:
-                        properties:
-                          namespaceMapping:
-                            additionalProperties:
-                              type: string
-                            description:
-                              NamespaceMapping is a map of source namespace
-                              names to target namespace names to restore into. Any source
-                              namespaces not included in the map will be restored into
-                              namespaces of the same name.
-                            type: object
-                          restoreOnceAvailable:
-                            description:
-                              Optionally, specify whether the backup is to
-                              be restored to TargetCluster once available. Default value
-                              is false. Setting this to true causes the backup to be
-                              restored as soon as it is available.
-                            nullable: true
-                            type: boolean
-                          targetCluster:
-                            description:
-                              Optionally, specify the targetCluster to restore
-                              the backup to.
-                            nullable: true
-                            type: string
-                        type: object
-                      nullable: true
-                      type: array
-                    datamover:
-                      description: Default datamover is Restic
-                      nullable: true
-                      type: string
-                    excludedNamespaces:
-                      description:
-                        ExcludedNamespaces contains a list of namespaces
-                        that are not included in the backup.
-                      items:
-                        type: string
-                      nullable: true
-                      type: array
-                    excludedResources:
-                      description:
-                        ExcludedResources is a slice of resource names that
-                        are not included in the backup.
-                      items:
-                        type: string
-                      nullable: true
-                      type: array
-                    includeClusterResources:
-                      description:
-                        IncludeClusterResources specifies whether cluster-scoped
-                        resources should be included for consideration in the backup.
-                      nullable: true
-                      type: boolean
-                    includedNamespaces:
-                      description:
-                        IncludedNamespaces is a slice of namespace names
-                        to include objects from. If empty, all namespaces are included.
-                      items:
-                        type: string
-                      nullable: true
-                      type: array
-                    includedResources:
-                      description:
-                        IncludedResources is a slice of resource names to
-                        include in the backup. If empty, all resources are included.
-                      items:
-                        type: string
-                      nullable: true
-                      type: array
-                    labelSelector:
-                      description:
-                        LabelSelector is a metav1.LabelSelector to filter
-                        with when adding individual objects to the backup. If empty
-                        or nil, all objects are included. Optional.
-                      nullable: true
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: Status
+      type: string
+    - jsonPath: .spec.paused
+      name: Paused
+      type: boolean
+    - jsonPath: .spec.schedule
+      name: Schedule
+      type: string
+    - jsonPath: .status.lastBackupTime
+      name: lastBackupTime
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Schedule is the Schema for the schedules API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ScheduleSpec defines the desired state of Schedule
+            properties:
+              backupSpec:
+                description: BackupSpec is the spec of the Backup to be created on
+                  the specified Schedule.
+                properties:
+                  backupLocation:
+                    description: Velero Storage location where k8s resources and application
+                      data will be backed up to. Default value is "default"
+                    nullable: true
+                    type: string
+                  clones:
+                    description: Clones is the list of targets where this backup will
+                      be cloned to.
+                    items:
                       properties:
-                        matchExpressions:
-                          description:
-                            matchExpressions is a list of label selector
-                            requirements. The requirements are ANDed.
-                          items:
-                            description:
-                              A label selector requirement is a selector
-                              that contains values, a key, and an operator that relates
-                              the key and values.
-                            properties:
-                              key:
-                                description:
-                                  key is the label key that the selector
-                                  applies to.
-                                type: string
-                              operator:
-                                description:
-                                  operator represents a key's relationship
-                                  to a set of values. Valid operators are In, NotIn,
-                                  Exists and DoesNotExist.
-                                type: string
-                              values:
-                                description:
-                                  values is an array of string values. If
-                                  the operator is In or NotIn, the values array must
-                                  be non-empty. If the operator is Exists or DoesNotExist,
-                                  the values array must be empty. This array is replaced
-                                  during a strategic merge patch.
-                                items:
-                                  type: string
-                                type: array
-                            required:
-                              - key
-                              - operator
-                            type: object
-                          type: array
-                        matchLabels:
+                        namespaceMapping:
                           additionalProperties:
                             type: string
-                          description:
-                            matchLabels is a map of {key,value} pairs. A
-                            single {key,value} in the matchLabels map is equivalent
-                            to an element of matchExpressions, whose key field is "key",
-                            the operator is "In", and the values array contains only
-                            "value". The requirements are ANDed.
+                          description: NamespaceMapping is a map of source namespace
+                            names to target namespace names to restore into. Any source
+                            namespaces not included in the map will be restored into
+                            namespaces of the same name.
                           type: object
+                        restoreOnceAvailable:
+                          description: Optionally, specify whether the backup is to
+                            be restored to TargetCluster once available. Default value
+                            is false. Setting this to true causes the backup to be
+                            restored as soon as it is available.
+                          nullable: true
+                          type: boolean
+                        targetCluster:
+                          description: Optionally, specify the targetCluster to restore
+                            the backup to.
+                          nullable: true
+                          type: string
                       type: object
-                    podVolumeBackups:
-                      items:
-                        type: string
-                      nullable: true
-                      type: array
-                    ttl:
-                      description: TTL the Dell Backup retention period
-                      type: string
-                    veleroBackup:
-                      nullable: true
-                      type: string
-                  type: object
-                paused:
-                  description: Paused specifies whether the schedule is paused or not
-                  type: boolean
-                schedule:
-                  description:
-                    Schedule is the cron expression representing when to
-                    create the Backup.
-                  type: string
-                setOwnerReferencesInBackup:
-                  description:
-                    SetOwnerReferencesInBackup specifies whether to set OwnerReferences
-                    on Backups created by this Schedule.
-                  nullable: true
-                  type: boolean
-              required:
-                - backupSpec
-                - schedule
-              type: object
-            status:
-              description: ScheduleStatus defines the observed state of Schedule
-              properties:
-                lastBackupTime:
-                  description:
-                    LastBackupTime is the last time when a backup was created
-                    successfully from this schedule.
-                  format: date-time
-                  nullable: true
-                  type: string
-                phase:
-                  description: Phase is the current phase of the schdule.
-                  enum:
-                    - New
-                    - Enabled
-                    - FailedValidation
-                  type: string
-                validationErrors:
-                  description: ValidationErrors is a list of validation errors, if any
-                  items:
+                    nullable: true
+                    type: array
+                  datamover:
+                    description: Default datamover is Restic
+                    nullable: true
                     type: string
-                  type: array
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                  excludedNamespaces:
+                    description: ExcludedNamespaces contains a list of namespaces
+                      that are not included in the backup.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  excludedResources:
+                    description: ExcludedResources is a slice of resource names that
+                      are not included in the backup.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  includeClusterResources:
+                    description: IncludeClusterResources specifies whether cluster-scoped
+                      resources should be included for consideration in the backup.
+                    nullable: true
+                    type: boolean
+                  includedNamespaces:
+                    description: IncludedNamespaces is a slice of namespace names
+                      to include objects from. If empty, all namespaces are included.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  includedResources:
+                    description: IncludedResources is a slice of resource names to
+                      include in the backup. If empty, all resources are included.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  labelSelector:
+                    description: LabelSelector is a metav1.LabelSelector to filter
+                      with when adding individual objects to the backup. If empty
+                      or nil, all objects are included. Optional.
+                    nullable: true
+                    properties:
+                      matchExpressions:
+                        description: matchExpressions is a list of label selector
+                          requirements. The requirements are ANDed.
+                        items:
+                          description: A label selector requirement is a selector
+                            that contains values, a key, and an operator that relates
+                            the key and values.
+                          properties:
+                            key:
+                              description: key is the label key that the selector
+                                applies to.
+                              type: string
+                            operator:
+                              description: operator represents a key's relationship
+                                to a set of values. Valid operators are In, NotIn,
+                                Exists and DoesNotExist.
+                              type: string
+                            values:
+                              description: values is an array of string values. If
+                                the operator is In or NotIn, the values array must
+                                be non-empty. If the operator is Exists or DoesNotExist,
+                                the values array must be empty. This array is replaced
+                                during a strategic merge patch.
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - key
+                          - operator
+                          type: object
+                        type: array
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: matchLabels is a map of {key,value} pairs. A
+                          single {key,value} in the matchLabels map is equivalent
+                          to an element of matchExpressions, whose key field is "key",
+                          the operator is "In", and the values array contains only
+                          "value". The requirements are ANDed.
+                        type: object
+                    type: object
+                  podVolumeBackups:
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  ttl:
+                    description: TTL the Dell Backup retention period
+                    type: string
+                  veleroBackup:
+                    nullable: true
+                    type: string
+                type: object
+              paused:
+                description: Paused specifies whether the schedule is paused or not
+                type: boolean
+              schedule:
+                description: Schedule is the cron expression representing when to
+                  create the Backup.
+                type: string
+              setOwnerReferencesInBackup:
+                description: SetOwnerReferencesInBackup specifies whether to set OwnerReferences
+                  on Backups created by this Schedule.
+                nullable: true
+                type: boolean
+            required:
+            - backupSpec
+            - schedule
+            type: object
+          status:
+            description: ScheduleStatus defines the observed state of Schedule
+            properties:
+              lastBackupTime:
+                description: LastBackupTime is the last time when a backup was created
+                  successfully from this schedule.
+                format: date-time
+                nullable: true
+                type: string
+              phase:
+                description: Phase is the current phase of the schdule.
+                enum:
+                - New
+                - Enabled
+                - FailedValidation
+                type: string
+              validationErrors:
+                description: ValidationErrors is a list of validation errors, if any
+                items:
+                  type: string
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

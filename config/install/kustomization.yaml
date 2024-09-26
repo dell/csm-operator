@@ -7,9 +7,9 @@ namePrefix: dell-csm-operator-
 #  someName: someValue
 
 bases:
-  - ../serviceaccount
-  - ../rbac
-  - ../manager
+- ../serviceaccount
+- ../rbac
+- ../manager
 
 images:
   - name: controller

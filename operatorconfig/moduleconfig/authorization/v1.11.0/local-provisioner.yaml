@@ -14,7 +14,7 @@ spec:
     storage: 8Gi
   volumeMode: Filesystem
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   persistentVolumeReclaimPolicy: Recycle
   storageClassName: csm-authorization-local-storage
   hostPath:

@@ -6,7 +6,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["list", "get", "create", "update", "delete", "watch"]
+    verbs: ["list","get", "create", "update", "delete","watch"]
   - apiGroups: ["storage.dell.com"]
     resources: ["containerstoragemodules"]
     verbs: ["create", "delete"]
