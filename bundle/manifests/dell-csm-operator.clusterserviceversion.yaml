@@ -1166,6 +1166,10 @@ metadata:
               "node": {
                 "envs": [
                   {
+                    "name": "X_CSI_SDC_ENABLED",
+                    "value": "true"
+                  },
+                  {
                     "name": "X_CSI_APPROVE_SDC_ENABLED",
                     "value": "false"
                   },
