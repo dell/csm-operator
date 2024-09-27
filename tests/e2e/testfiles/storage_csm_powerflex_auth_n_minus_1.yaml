@@ -129,14 +129,15 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.11.0
+      configVersion: v1.9.1
       components:
-        - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:v1.11.0
-          envs:
-            # proxyHost: hostname of the csm-authorization server
-            - name: "PROXY_HOST"
-              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-            - name: "SKIP_CERTIFICATE_VALIDATION"
-              value: "true"
+      - name: karavi-authorization-proxy
+        image: dellemc/csm-authorization-sidecar:v1.9.1
+        envs:
+          # proxyHost: hostname of the csm-authorization server
+          - name: "PROXY_HOST"
+            value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+
+          # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+          - name: "SKIP_CERTIFICATE_VALIDATION"
+            value: "true"
