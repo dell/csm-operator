@@ -24,6 +24,7 @@ export PFLEX_PASS="password"
 export PFLEX_SYSTEMID="00990099ddcc"
 export PFLEX_ENDPOINT="10.1.1.1"
 export PFLEX_MDM="10.0.0.1,10.0.0.2"
+export PFLEX_NAS="none"
 export PFLEX_AUTH_ENDPOINT="localhost:9401"
 # The following are Authorization Proxy Server specific for powerflex:
 export PFLEX_POOL="pool1"

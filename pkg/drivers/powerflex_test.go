@@ -56,6 +56,7 @@ var (
 	}{
 		{"missing secret", powerFlexCSM, powerFlexClient, fakeSecret, "no secrets found"},
 		{"happy path", powerFlexCSM, powerFlexClient, powerFlexSecret, ""},
+		{"happy path without sdc", csmForPowerFlex("no-sdc"), powerFlexClient, shared.MakeSecretWithJSON("no-sdc-config", pFlexNS, configJSONFileGood), ""},
 		{"bad version", powerFlexCSMBadVersion, powerFlexClient, powerFlexSecret, "not supported"},
 		{"bad username", csmForPowerFlex("bad-user"), powerFlexClient, shared.MakeSecretWithJSON("bad-user-config", pFlexNS, configJSONFileBadUser), "invalid value for Username"},
 		{"bad password", csmForPowerFlex("bad-pw"), powerFlexClient, shared.MakeSecretWithJSON("bad-pw-config", pFlexNS, configJSONFileBadPW), "invalid value for Password"},
@@ -96,12 +97,13 @@ var (
 		},
 		{
 			name:       "Node case with values",
-			yamlString: "CSI_APPROVE_SDC_ENABLED=NEW_APPROVE_SDC CSI_RENAME_SDC_ENABLED=NEW_RENAME_SDC CSI_PREFIX_RENAME_SDC=NEW_RENAME_PREFIX CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE=NEW_MAX_VOLUMES CSI_HEALTH_MONITOR_ENABLED=NEW_HEALTH_MONITOR_NODE CSI_DEBUG=NEW_DEBUG",
+			yamlString: "CSI_SDC_ENABLED=NEW_SDC_ENABLED CSI_APPROVE_SDC_ENABLED=NEW_APPROVE_SDC CSI_RENAME_SDC_ENABLED=NEW_RENAME_SDC CSI_PREFIX_RENAME_SDC=NEW_RENAME_PREFIX CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE=NEW_MAX_VOLUMES CSI_HEALTH_MONITOR_ENABLED=NEW_HEALTH_MONITOR_NODE CSI_DEBUG=NEW_DEBUG",
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
 						Node: csmv1.ContainerTemplate{
 							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "NEW_SDC_ENABLED"},
 								{Name: "X_CSI_APPROVE_SDC_ENABLED", Value: "NEW_APPROVE_SDC"},
 								{Name: "X_CSI_RENAME_SDC_ENABLED", Value: "NEW_RENAME_SDC"},
 								{Name: "X_CSI_PREFIX_RENAME_SDC", Value: "NEW_RENAME_PREFIX"},
@@ -114,7 +116,7 @@ var (
 				},
 			},
 			fileType: "Node",
-			expected: "CSI_APPROVE_SDC_ENABLED=NEW_APPROVE_SDC CSI_RENAME_SDC_ENABLED=NEW_RENAME_SDC CSI_PREFIX_RENAME_SDC=NEW_RENAME_PREFIX CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE=NEW_MAX_VOLUMES CSI_HEALTH_MONITOR_ENABLED=NEW_HEALTH_MONITOR_NODE CSI_DEBUG=NEW_DEBUG",
+			expected: "CSI_SDC_ENABLED=NEW_SDC_ENABLED CSI_APPROVE_SDC_ENABLED=NEW_APPROVE_SDC CSI_RENAME_SDC_ENABLED=NEW_RENAME_SDC CSI_PREFIX_RENAME_SDC=NEW_RENAME_PREFIX CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE=NEW_MAX_VOLUMES CSI_HEALTH_MONITOR_ENABLED=NEW_HEALTH_MONITOR_NODE CSI_DEBUG=NEW_DEBUG",
 		},
 		{
 			name:       "CSIDriverSpec case with storage capacity",
