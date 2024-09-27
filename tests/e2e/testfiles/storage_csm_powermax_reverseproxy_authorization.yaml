@@ -245,8 +245,8 @@ spec:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          # Example: "csipowermax-reverseproxy:v2.9.1"
-          image: dellemc/csipowermax-reverseproxy:nightly
+          # Example: "csipowermax-reverseproxy:v2.10.0"
+          image: dellemc/csipowermax-reverseproxy:v2.10.0
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -270,7 +270,7 @@ spec:
       configVersion: v1.11.0
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:nightly
+          image: dellemc/csm-authorization-sidecar:v1.11.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
