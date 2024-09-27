@@ -1554,8 +1554,8 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [powermax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmaxCreds]"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1568,7 +1568,7 @@
   customTest:
     name: Cert CSI
     run:
-      - cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-pmax --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerMax Driver(Sidecar)"
   paths:
@@ -1577,8 +1577,8 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [powermax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmaxCreds]"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1591,7 +1591,7 @@
   customTest:
     name: Cert CSI
     run:
-      - cert-csi test vio --sc powermax --chainNumber 2 --chainLength 2
+      - cert-csi test vio --sc op-e2e-pmax --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerMax Driver(With Observability)"
   paths:
@@ -1602,7 +1602,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmaxCreds]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
