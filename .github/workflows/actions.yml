@@ -71,18 +71,16 @@ jobs:
         id: go
       - name: Checkout the code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Build Docker Images
         run: |
-          chmod +x ./scripts/build-ubi-micro.sh
-          make build-base-image
           make -o gen-semver
-          podman build -t docker.io/csm-operator -f ./Dockerfile --build-arg GOIMAGE=golang:latest --build-arg BASEIMAGE="localhost/csm-operator-ubimicro"
-          podman save docker.io/library/csm-operator -o /tmp/csm-operator.tar
-          docker load -i /tmp/csm-operator.tar
+          DEFAULT_IMG=csm-operator:latest make docker-build
       - name: Scan controller Image
         uses: Azure/container-scan@v0
         env:
           DOCKLE_HOST: "unix:///var/run/docker.sock"
         with:
-          image-name: csm-operator
+          image-name: csm-operator:latest
           severity-threshold: HIGH
