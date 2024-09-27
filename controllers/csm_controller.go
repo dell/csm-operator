@@ -282,7 +282,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 	if csm.IsBeingDeleted() {
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
 
-
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resources deployed from CR by operator
