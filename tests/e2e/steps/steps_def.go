@@ -93,6 +93,7 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 }
 
 // GetTestResources -- parse values file
+// TBD: remove apex param from here and caller
 func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 	apex := false
 	b, err := os.ReadFile(valuesFilePath)
@@ -122,14 +123,6 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 					return nil, apex, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
 				}
 				customResources = append(customResources, customResource)
-			} else {
-				apex = true
-				customResource := csmv1.ApexConnectivityClient{}
-				err = yaml.Unmarshal(b, &customResource)
-				if err != nil {
-					return nil, apex, fmt.Errorf("failed to read unmarshal custom resource: %v", err)
-				}
-				customResources = append(customResources, customResource)
 			}
 		}
 		resources = append(resources, Resource{
@@ -141,43 +134,6 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 	return resources, apex, nil
 }
 
-// GetTestResourcesApex -- parse values file
-func GetTestResourcesApex(valuesFilePath string) ([]Resource, error) {
-	b, err := os.ReadFile(valuesFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read values file: %v", err)
-	}
-
-	scenarios := []Scenario{}
-	err = yaml.Unmarshal(b, &scenarios)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read unmarshal values file: %v", err)
-	}
-
-	resources := []Resource{}
-	for _, scene := range scenarios {
-		var customResources []interface{}
-		for _, path := range scene.Paths {
-			b, err := os.ReadFile(path)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read testdata: %v", err)
-			}
-			customResource := csmv1.ApexConnectivityClient{}
-			err = yaml.Unmarshal(b, &customResource)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
-			}
-			customResources = append(customResources, customResource)
-		}
-
-		resources = append(resources, Resource{
-			Scenario:       scene,
-			CustomResource: customResources,
-		})
-	}
-
-	return resources, nil
-}
 
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
@@ -1770,123 +1726,6 @@ func (step *Step) validateClientTestEnvironment(_ Resource) error {
 	return nil
 }
 
-func (step *Step) applyClientCustomResource(res Resource, crNumStr string, secret string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
-	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
-	if err != nil {
-		return fmt.Errorf("failed to read connecivity client testdata: %v", err)
-	}
-
-	scrBuff, err := os.ReadFile(secret)
-	if err != nil {
-		return fmt.Errorf("failed to read secret testdata: %v", err)
-	}
-
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(scrBuff), "apply", "--validate=true", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to apply secret CR in namespace %s: %v", cr.Namespace, err)
-	}
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to apply connecivity client CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
-	}
-
-	return nil
-}
-
-func (step *Step) validateConnectivityClientInstalled(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
-	time.Sleep(60 * time.Second)
-	found := new(csmv1.ApexConnectivityClient)
-
-	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}, found); err != nil {
-		return err
-	}
-
-	return checkAllRunningPods(context.TODO(), cr.Namespace, step.clientSet)
-}
-
-func (step *Step) upgradeCustomResourceClient(res Resource, oldCrNumStr string, newCrNumStr string) error {
-	oldCrNum, _ := strconv.Atoi(oldCrNumStr)
-	oldCr := res.CustomResource[oldCrNum-1].(csmv1.ApexConnectivityClient)
-
-	newCrNum, _ := strconv.Atoi(newCrNumStr)
-	newCr := res.CustomResource[newCrNum-1].(csmv1.ApexConnectivityClient)
-
-	found := new(csmv1.ApexConnectivityClient)
-	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: oldCr.Namespace,
-		Name:      oldCr.Name,
-	}, found); err != nil {
-		fmt.Printf("Failed to get newCr.Name--> %v", err)
-		return err
-	}
-
-	// Update old CR with the spec of new CR
-	found.Spec = newCr.Spec
-	return step.ctrlClient.Update(context.TODO(), found)
-}
-
-func (step *Step) validateConnectivityClientNotInstalled(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
-	time.Sleep(20 * time.Second)
-	found := new(csmv1.ApexConnectivityClient)
-	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}, found); err == nil {
-		return fmt.Errorf("Found traces of client installation in namespace %s: %v", cr.Namespace, found)
-	}
-
-	return checkNoRunningPods(context.TODO(), cr.Namespace, step.clientSet)
-}
-
-// uninstallConnectivityClient - uninstall the client
-func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
-
-	found := new(csmv1.ApexConnectivityClient)
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}, found,
-	)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-
-	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
-	if err != nil {
-		return fmt.Errorf("failed to read testdata: %v", err)
-	}
-
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to delete CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
-	}
-
-	return nil
-}
-
-func (step *Step) uninstallConnectivityClientSecret(res Resource, secret string) error {
-	crBuff, err := os.ReadFile(secret)
-	if err != nil {
-		return fmt.Errorf("failed to read secret testdata: %v", err)
-	}
-
-	if _, err := kubectl.RunKubectlInput("", string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to delete connectivity client secret : %v", err)
-	}
-
-	return nil
-}
 
 func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStorageModule) error {
 	fakeReconcile := utils.FakeReconcileCSM{
