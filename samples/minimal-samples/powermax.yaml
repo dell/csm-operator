@@ -14,4 +14,3 @@ spec:
       enabled: false
     - name: resiliency
       enabled: false
-
