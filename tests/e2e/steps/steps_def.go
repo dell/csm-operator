@@ -63,11 +63,11 @@ var (
 	pmaxReverseProxyMap    = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
+	pmaxArrayConfigMap     = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	// Auth V2
-	pflexCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
-
-	// Auth V2
-	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX", "REPLACE_PORT": "PSCALE_PORT"}
+	pflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
+	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
+	pmaxCrMap   = map[string]string{"REPLACE_STORAGE_NAME": "PMAX_STORAGE", "REPLACE_STORAGE_TYPE": "PMAX_STORAGE", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_SYSTEM_ID": "PMAX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PMAX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PMAX_ROLE", "REPLACE_QUOTA": "PMAX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PMAX_POOL_V2", "REPLACE_TENANT_NAME": "PMAX_TENANT", "REPLACE_TENANT_ROLES": "PMAX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PMAX_TENANT_PREFIX"}
 
 	pstoreSecretMap = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT"}
 	unitySecretMap  = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
@@ -832,6 +832,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pmaxCredMap
 	} else if crType == "pmaxReverseProxy" {
 		mapValues = pmaxReverseProxyMap
+	} else if crType == "pmaxArrayConfig" {
+		mapValues = pmaxArrayConfigMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
@@ -840,6 +842,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pflexCrMap
 	} else if crType == "pscaleAuthCRs" {
 		mapValues = pscaleCrMap
+	} else if crType == "pmaxAuthCRs" {
+		mapValues = pmaxCrMap
 	} else if crType == "pstore" {
 		mapValues = pstoreSecretMap
 	} else if crType == "unity" {
@@ -1483,10 +1487,13 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 
 	if driver == "powerflex" {
 		crMap = "pflexAuthCRs"
-		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerflex.yaml"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
 	} else if driver == "powerscale" {
 		crMap = "pscaleAuthCRs"
-		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerscale.yaml"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
+	} else if driver == "powermax" {
+		crMap = "pmaxAuthCRs"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
 	}
 
 	copyFile := exec.Command("cp", templateFile, updatedTemplateFile)
@@ -1858,9 +1865,11 @@ func (step *Step) validateCustomResourceDefinition(res Resource, crdName string)
 func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 	updatedTemplateFile := ""
 	if driver == "powerflex" {
-		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerflex.yaml"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
 	} else if driver == "powerscale" {
-		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerscale.yaml"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
+	} else if driver == "powermax" {
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
 	}
 
 	cmd := exec.Command("kubectl", "delete", "-f", updatedTemplateFile)
