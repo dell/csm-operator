@@ -137,10 +137,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.11.0
+      configVersion: v1.9.1
       components:
       - name: karavi-authorization-proxy
-        image: dellemc/csm-authorization-sidecar:v1.11.0
+        image: dellemc/csm-authorization-sidecar:v1.9.1
         envs:
           # proxyHost: hostname of the csm-authorization server
           - name: "PROXY_HOST"
