@@ -8,6 +8,10 @@ spec:
     csiDriverType: "powermax"
     configVersion: v2.12.0
 # These are the modules which are optional and can be enabled by specifying to enable/disable.
-#  modules:
-#    - name: resiliency
-#      enabled: true
+ modules:
+   - name: authorization
+     # enable: Enable/Disable csm-authorization
+     enabled: false
+   - name: resiliency
+     enabled: false
+  
