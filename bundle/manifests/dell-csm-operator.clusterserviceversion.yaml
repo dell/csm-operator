@@ -4775,5 +4775,5 @@ spec:
   - image: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
     name: cert-persister
   skips:
-  - dell-csm-operator.v1.6.0
+  - dell-csm-operator.v1.6.1
   version: 1.6.0
