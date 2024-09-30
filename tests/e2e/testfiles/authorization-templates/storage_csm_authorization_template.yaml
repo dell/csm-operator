@@ -5,7 +5,7 @@ metadata:
 spec:
   type: REPLACE_STORAGE_TYPE
   endpoint: https://REPLACE_ENDPOINT
-  systemID: REPLACE_SYSTEM_ID
+  systemID: "REPLACE_SYSTEM_ID"
   vault:
     identifier: vault0
     kvEngine: secret
@@ -26,7 +26,7 @@ metadata:
   name: REPLACE_ROLE_NAME
 spec:
   quota: REPLACE_QUOTA
-  systemID: REPLACE_SYSTEM_ID
+  systemID: "REPLACE_SYSTEM_ID"
   systemType: REPLACE_STORAGE_TYPE
   pool: REPLACE_STORAGE_POOL_PATH
 ---
