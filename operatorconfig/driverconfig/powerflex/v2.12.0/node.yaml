@@ -103,6 +103,8 @@ spec:
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_SDC_ENABLED
+              value: <X_CSI_SDC_ENABLED>
             - name: X_CSI_APPROVE_SDC_ENABLED
               value: <X_CSI_APPROVE_SDC_ENABLED>
             - name: X_CSI_RENAME_SDC_ENABLED
