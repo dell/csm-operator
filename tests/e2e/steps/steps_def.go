@@ -24,6 +24,8 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
+	"encoding/json"
+
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -1367,23 +1369,58 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	// Create storage
-	fmt.Println("\n=== Creating Storage ===\n ")
+	// Check for storage
+	fmt.Println("\n=== Checking Storage ===\n ")
 	cmd := exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
-		"storage", "create",
-		"--type", storageType,
-		"--endpoint", fmt.Sprintf("https://%s", endpoint),
-		"--system-id", sysID,
-		"--user", user,
-		"--password", password,
-		"--array-insecure",
+		"storage", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
-	fmt.Println("=== Storage === \n", cmd.String())
+
+	//by default, assume we will create storage
+	skipStorage := false
+
+	fmt.Println("=== Checking Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+		return fmt.Errorf("failed to check storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+	}
+
+	storage := make(map[string]json.RawMessage)
+
+	err = json.Unmarshal(b, &storage)
+	if err != nil {
+		return fmt.Errorf("failed to marshall response:%s \nErrMessage:\n%s", string(b), err)
+	}
+
+	for k, v := range storage {
+		if k == storageType {
+			fmt.Printf("Storage %s is already registered. \n It has the following config: %s \n", k, v)
+			skipStorage = true
+		}
+	}
+
+	if !skipStorage {
+
+		// Create storage
+		fmt.Println("\n=== Creating Storage ===\n ")
+		cmd = exec.Command("karavictl",
+			"--admin-token", "/tmp/adminToken.yaml",
+			"storage", "create",
+			"--type", storageType,
+			"--endpoint", fmt.Sprintf("https://%s", endpoint),
+			"--system-id", sysID,
+			"--user", user,
+			"--password", password,
+			"--array-insecure",
+			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		)
+		fmt.Println("=== Storage === \n", cmd.String())
+		b, err = cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+		}
+
 	}
 
 	// Create Tenant
@@ -1400,28 +1437,60 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
 
-	// Create Role
-	fmt.Println("\n\n=== Creating Role ===\n ")
-	if storageType == "powerscale" {
-		quotaLimit = "0"
-	}
+	//By default, assume a role will be created
+	skipRole := false
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
-		"role", "create",
-		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
-			roleName, storageType, sysID, pool, quotaLimit),
+		"role", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 
-	fmt.Println("=== Role === \n", cmd.String())
+	fmt.Println("=== Checking Roles === \n", cmd.String())
+
 	b, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
+		return fmt.Errorf("failed to check roles: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	// role creation take few seconds
-	time.Sleep(5 * time.Second)
+	roles := make(map[string]json.RawMessage)
 
+	err = json.Unmarshal(b, &roles)
+	if err != nil {
+		return fmt.Errorf("failed to marshall response:%s \nErrMessage:\n%s", string(b), err)
+	}
+
+	for k, v := range roles {
+		if k == roleName {
+			fmt.Printf("Role %s is already created. \n It has the following config: %s \n", k, v)
+			skipRole = true
+		}
+	}
+
+	if !skipRole {
+
+		// Create Role
+		fmt.Println("\n\n=== Creating Role ===\n ")
+		if storageType == "powerscale" {
+			quotaLimit = "0"
+		}
+		cmd = exec.Command("karavictl",
+			"--admin-token", "/tmp/adminToken.yaml",
+			"role", "create",
+			fmt.Sprintf("--role=%s=%s=%s=%s=%s",
+				roleName, storageType, sysID, pool, quotaLimit),
+			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		)
+
+		fmt.Println("=== Role === \n", cmd.String())
+		b, err = cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
+		}
+
+		// role creation take few seconds
+		time.Sleep(5 * time.Second)
+
+	}
 	// Bind role
 	fmt.Println("\n\n=== Creating RoleBinding ===\n ")
 	cmd = exec.Command("karavictl",
