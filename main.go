@@ -225,19 +225,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ContainerStorageModule")
 		os.Exit(1)
 	}
-	/*
-		if err = (&controllers.ApexConnectivityClientReconciler{
-			Client:        mgr.GetClient(),
-			K8sClient:     k8sClient,
-			Log:           log,
-			Scheme:        mgr.GetScheme(),
-			EventRecorder: recorder,
-			Config:        operatorConfig,
-		}).SetupWithManager(mgr, expRateLimiter, 1); err != nil {
-			setupLog.Error(err, "unable to create controller", "controller", "ApexConnectivityClient")
-			os.Exit(1)
-		}
-	*/
 	defer close(controllers.StopWatch)
 	//+kubebuilder:scaffold:builder
 
