@@ -16,6 +16,7 @@ spec:
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: true
+    forceRemoveDriver: true
     common:
       image: "dellemc/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
@@ -33,7 +34,7 @@ spec:
         # Allowed value: valid port number
         # Default value: 8080
         - name: X_CSI_ISI_PORT
-          value: ""
+          value: "8080"
         # X_CSI_ISI_PATH: The base path for the volumes to be created on PowerScale cluster.
         # This value acts as a default value for isiPath, if not specified for a cluster config in secret
         # Ensure that this path exists on PowerScale cluster.
@@ -65,6 +66,13 @@ spec:
         # Default value: true
         - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
           value: "true"
+        # X_CSI_ISI_AUTH_TYPE: Specify the authentication method to be used.
+        # Allowed values:
+        #   0: basic authentication
+        #   1: session-based authentication
+        # Default value: 0
+        - name: X_CSI_ISI_AUTH_TYPE
+          value: "1"
         # X_CSI_CUSTOM_TOPOLOGY_ENABLED: Specify if custom topology label <provisionerName>.dellemc.com/<powerscalefqdnorip>:<provisionerName>
         # has to be used for making connection to backend PowerScale Array.
         # If X_CSI_CUSTOM_TOPOLOGY_ENABLED is set to true, then do not specify allowedTopologies in storage class.

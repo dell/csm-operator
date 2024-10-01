@@ -1328,7 +1328,7 @@ spec:
   template:
     metadata:
       annotations:
-        storage.dell.com/CSMVersion: v1.11.0
+        storage.dell.com/CSMVersion: v1.11.1
       labels:
         control-plane: controller-manager
     spec:
@@ -1339,7 +1339,7 @@ spec:
         - /manager
         env:
         - name: RELATED_IMAGE_dell-csm-operator
-          value: docker.io/dellemc/dell-csm-operator:v1.6.0
+          value: docker.io/dellemc/dell-csm-operator:v1.6.1
         - name: RELATED_IMAGE_csi-isilon
           value: docker.io/dellemc/csi-isilon:v2.11.0
         - name: RELATED_IMAGE_csi-powermax
@@ -1347,9 +1347,9 @@ spec:
         - name: RELATED_IMAGE_csipowermax-reverseproxy
           value: docker.io/dellemc/csipowermax-reverseproxy:v2.10.0
         - name: RELATED_IMAGE_csi-powerstore
-          value: docker.io/dellemc/csi-powerstore:v2.11.0
+          value: docker.io/dellemc/csi-powerstore:v2.11.1
         - name: RELATED_IMAGE_csi-unity
-          value: docker.io/dellemc/csi-unity:v2.11.0
+          value: docker.io/dellemc/csi-unity:v2.11.1
         - name: RELATED_IMAGE_csi-vxflexos
           value: docker.io/dellemc/csi-vxflexos:v2.11.0
         - name: RELATED_IMAGE_sdc
@@ -1392,7 +1392,7 @@ spec:
           value: docker.io/dellemc/connectivity-client-docker-k8s:1.19.0
         - name: RELATED_IMAGE_cert-persister
           value: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
-        image: docker.io/dellemc/dell-csm-operator:v1.6.0
+        image: docker.io/dellemc/dell-csm-operator:v1.6.1
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

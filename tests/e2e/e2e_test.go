@@ -131,11 +131,9 @@ var _ = BeforeSuite(func() {
 	step.StepRunnerInit(stepRunner, ctrlClient, clientSet)
 
 	beautify = "    "
-
 })
 
 var _ = Describe("[run-e2e-test] E2E Testing", func() {
-
 	It("Running all test Given Test Scenarios", func() {
 		if testApex {
 			for _, test := range testResourcesApex {
@@ -155,7 +153,6 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 				By(fmt.Sprintf("Ending: %s\n", test.ScenarioApex.Scenario))
 				time.Sleep(5 * time.Second)
 			}
-
 		}
 		if testCsm {
 			for _, test := range testResources {

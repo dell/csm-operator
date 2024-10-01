@@ -6,11 +6,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerstore"
-    configVersion: v2.11.0
+    configVersion: v2.11.1
     authSecret: powerstore-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powerstore:v2.11.0"
+      image: "dellemc/csi-powerstore:v2.11.1"
       imagePullPolicy: IfNotPresent
   modules:
     - name: resiliency

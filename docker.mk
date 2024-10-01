@@ -14,11 +14,11 @@ BUNDLE_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-bundle
 # Image tag base for community catalog images
 CATALOG_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-catalog
 
-# Operator version tagged with build number. For e.g. - v1.6.0.001
-VERSION ?= v1.6.0
+# Operator version tagged with build number. For e.g. - v1.6.1.001
+VERSION ?= v1.6.1
 
 # Bundle Version is the semantic version(required by operator-sdk)
-BUNDLE_VERSION ?= 1.6.0
+BUNDLE_VERSION ?= 1.6.1
 
 # Timestamp local builds
 TIMESTAMP := $(shell  date +%Y%m%d%H%M%S)
@@ -37,5 +37,5 @@ IMG ?= "$(REGISTRY)/$(IMAGE_TAG_BASE):$(VERSION)"
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMG ?= "$(REGISTRY)/$(BUNDLE_IMAGE_TAG_BASE_COMMUNITY):$(VERSION)"
 
-# The image tag given to the resulting catalog image (e.g. make catalog-build CATALOG_IMG=example.com/operator-catalog:v1.6.0).
+# The image tag given to the resulting catalog image (e.g. make catalog-build CATALOG_IMG=example.com/operator-catalog:v1.6.1).
 CATALOG_IMG ?= "$(REGISTRY)/$(CATALOG_IMAGE_TAG_BASE_COMMUNITY):$(VERSION)"

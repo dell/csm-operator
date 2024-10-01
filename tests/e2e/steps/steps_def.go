@@ -24,6 +24,8 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
+	"encoding/json"
+
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -50,12 +52,12 @@ const (
 var (
 	authString             = "karavi-authorization-proxy"
 	operatorNamespace      = "dell-csm-operator"
-	quotaLimit             = "30000000"
+	quotaLimit             = "100000000"
 	pflexSecretMap         = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL"}
 	pflexAuthSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
-	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
-	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
-	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
+	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
+	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
+	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	pmaxCredMap            = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
 	pmaxAuthSidecarMap     = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
@@ -67,7 +69,7 @@ var (
 	pflexCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
 
 	// Auth V2
-	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
+	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX", "REPLACE_PORT": "PSCALE_PORT"}
 
 	pstoreSecretMap = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT"}
 )
@@ -328,7 +330,7 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -346,13 +348,13 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].Namespace, step.clientSet)
 }
 
@@ -379,7 +381,7 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -424,7 +426,7 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -889,7 +891,7 @@ func (step *Step) runCustomTest(res Resource) error {
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1]
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -1260,8 +1262,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 // AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
 func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost, driverNamespace string) error {
-	fmt.Println("=====Waiting for everything to be up and running, adding a sleep time of 60 seconds before creating the role, tenant and role binding===")
-	time.Sleep(60 * time.Second)
+	fmt.Println("=====Waiting for everything to be up and running, adding a sleep time of 120 seconds before creating the role, tenant and role binding===")
+	time.Sleep(120 * time.Second)
 	var (
 		endpoint = ""
 		sysID    = ""
@@ -1303,6 +1305,16 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// get env variables
 	if os.Getenv(endpointvar) != "" {
 		endpoint = os.Getenv(endpointvar)
+
+		if driver == "powerscale" {
+			port := os.Getenv("PSCALE_PORT")
+			if port == "" {
+				fmt.Println("=== PSCALE_PORT not set, using default port 8080 ===")
+				port = "8080"
+			}
+
+			endpoint = endpoint + ":" + port
+		}
 	}
 	if os.Getenv(systemIdvar) != "" {
 		sysID = os.Getenv(systemIdvar)
@@ -1337,23 +1349,58 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	// Create storage
-	fmt.Println("\n=== Creating Storage ===\n ")
+	// Check for storage
+	fmt.Println("\n=== Checking Storage ===\n ")
 	cmd := exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
-		"storage", "create",
-		"--type", storageType,
-		"--endpoint", fmt.Sprintf("https://%s", endpoint),
-		"--system-id", sysID,
-		"--user", user,
-		"--password", password,
-		"--array-insecure",
+		"storage", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
-	fmt.Println("=== Storage === \n", cmd.String())
+
+	//by default, assume we will create storage
+	skipStorage := false
+
+	fmt.Println("=== Checking Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+		return fmt.Errorf("failed to check storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+	}
+
+	storage := make(map[string]json.RawMessage)
+
+	err = json.Unmarshal(b, &storage)
+	if err != nil {
+		return fmt.Errorf("failed to marshall response:%s \nErrMessage:\n%s", string(b), err)
+	}
+
+	for k, v := range storage {
+		if k == storageType {
+			fmt.Printf("Storage %s is already registered. \n It has the following config: %s \n", k, v)
+			skipStorage = true
+		}
+	}
+
+	if !skipStorage {
+
+		// Create storage
+		fmt.Println("\n=== Creating Storage ===\n ")
+		cmd = exec.Command("karavictl",
+			"--admin-token", "/tmp/adminToken.yaml",
+			"storage", "create",
+			"--type", storageType,
+			"--endpoint", fmt.Sprintf("https://%s", endpoint),
+			"--system-id", sysID,
+			"--user", user,
+			"--password", password,
+			"--array-insecure",
+			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		)
+		fmt.Println("=== Storage === \n", cmd.String())
+		b, err = cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+		}
+
 	}
 
 	// Create Tenant
@@ -1370,28 +1417,60 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
 
-	// Create Role
-	fmt.Println("\n\n=== Creating Role ===\n ")
-	if storageType == "powerscale" {
-		quotaLimit = "0"
-	}
+	//By default, assume a role will be created
+	skipRole := false
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
-		"role", "create",
-		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
-			roleName, storageType, sysID, pool, quotaLimit),
+		"role", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 
-	fmt.Println("=== Role === \n", cmd.String())
+	fmt.Println("=== Checking Roles === \n", cmd.String())
+
 	b, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
+		return fmt.Errorf("failed to check roles: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	// role creation take few seconds
-	time.Sleep(5 * time.Second)
+	roles := make(map[string]json.RawMessage)
 
+	err = json.Unmarshal(b, &roles)
+	if err != nil {
+		return fmt.Errorf("failed to marshall response:%s \nErrMessage:\n%s", string(b), err)
+	}
+
+	for k, v := range roles {
+		if k == roleName {
+			fmt.Printf("Role %s is already created. \n It has the following config: %s \n", k, v)
+			skipRole = true
+		}
+	}
+
+	if !skipRole {
+
+		// Create Role
+		fmt.Println("\n\n=== Creating Role ===\n ")
+		if storageType == "powerscale" {
+			quotaLimit = "0"
+		}
+		cmd = exec.Command("karavictl",
+			"--admin-token", "/tmp/adminToken.yaml",
+			"role", "create",
+			fmt.Sprintf("--role=%s=%s=%s=%s=%s",
+				roleName, storageType, sysID, pool, quotaLimit),
+			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		)
+
+		fmt.Println("=== Role === \n", cmd.String())
+		b, err = cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
+		}
+
+		// role creation take few seconds
+		time.Sleep(5 * time.Second)
+
+	}
 	// Bind role
 	fmt.Println("\n\n=== Creating RoleBinding ===\n ")
 	cmd = exec.Command("karavictl",
@@ -1447,7 +1526,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/csm-authorization-template.yaml"
+		templateFile        = "testfiles/authorization-templates/csm-authorization-v2-template.yaml"
 		updatedTemplateFile = ""
 	)
 
