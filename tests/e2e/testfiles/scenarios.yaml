@@ -159,8 +159,6 @@
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
