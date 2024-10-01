@@ -18,7 +18,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: proxy-server
+  name: csm-auth-proxy-server
 rules:
   - apiGroups: [""]
     resources: ["events"]
@@ -37,7 +37,7 @@ subjects:
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole
-  name: proxy-server
+  name: csm-auth-proxy-server
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: apps/v1
@@ -196,7 +196,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: role-service
+  name: csm-auth-role-service
 rules:
   - apiGroups: [""]
     resources: ["configmaps"]
@@ -215,7 +215,7 @@ subjects:
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole
-  name: role-service
+  name: csm-auth-role-service
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: apps/v1
@@ -278,7 +278,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: storage-service
+  name: csm-auth-storage-service
 rules:
   - apiGroups: [""]
     resources: ["secrets", "events"]
@@ -300,7 +300,7 @@ subjects:
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole
-  name: storage-service
+  name: csm-auth-storage-service
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -374,7 +374,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: authorization-controller
+  name: csm-auth-authorization-controller
 rules:
   - apiGroups: ["csm-authorization.storage.dell.com"]
     resources: ["csmroles"]
@@ -423,7 +423,7 @@ subjects:
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole
-  name: authorization-controller
+  name: csm-auth-authorization-controller
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: apps/v1
@@ -794,7 +794,7 @@ spec:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: auth-resource-reader
+  name: csm-auth-resource-reader
 rules:
   - apiGroups: [""]
     resources: ["secrets", "configmaps", "pods"]
@@ -814,13 +814,13 @@ subjects:
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole
-  name: auth-resource-reader
+  name: csm-auth-resource-reader
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: view
+  name: csm-auth-view
 ---
 # Grant OPA/kube-mgmt read-only access to resources. This lets kube-mgmt
 # list configmaps to be loaded into OPA as policies.
@@ -830,7 +830,7 @@ metadata:
   name: opa-viewer
 roleRef:
   kind: ClusterRole
-  name: view
+  name: csm-auth-view
   apiGroup: rbac.authorization.k8s.io
 subjects:
   - kind: Group
@@ -863,24 +863,6 @@ subjects:
     name: system:serviceaccounts:<NAMESPACE>
     apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: proxy-server
-  namespace: <NAMESPACE>
----
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: proxy-server
-rules:
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["watch"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["storages", "csmtenants"]
-    verbs: ["get", "list"]
----
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -891,5 +873,5 @@ subjects:
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole
-  name: proxy-server
+  name: csm-auth-proxy-server
   apiGroup: rbac.authorization.k8s.io
