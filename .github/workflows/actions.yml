@@ -79,9 +79,10 @@ jobs:
           podman save docker.io/library/csm-operator -o /tmp/csm-operator.tar
           docker load -i /tmp/csm-operator.tar
       - name: Scan controller Image
-        uses: Azure/container-scan@v0
-        env:
-          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-name: csm-operator
-          severity-threshold: HIGH
+          image-ref: csm-operator:latest
+          severity: 'HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+          trivyignores: '.github/workflows/.trivyignore'
