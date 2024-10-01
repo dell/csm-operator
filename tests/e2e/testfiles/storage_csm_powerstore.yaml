@@ -28,7 +28,7 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
-    configVersion: v2.11.0
+    configVersion: v2.11.1
     authSecret: powerstore-config
     # Controller count
     replicas: 1

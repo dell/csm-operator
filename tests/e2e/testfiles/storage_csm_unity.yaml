@@ -16,7 +16,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.11.0
+    configVersion: v2.11.1
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
