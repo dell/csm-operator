@@ -2,7 +2,7 @@
 
 - scenario: "Install Authorization Proxy Server V1"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -13,11 +13,11 @@
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Delete custom resource [1]"
 
-# Upgrade from V1 to V2 is not supported
+# Upgrade from V1 to V2 is not supported. This test is to install a previous version of Auth V1 and upgrade to the next.
 - scenario: "Install Authorization Proxy Server V1 and upgrade"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.1
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.0
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -35,7 +35,7 @@
 # Authorization V2 scenarios only supports powerflex driver
 - scenario: "Install Authorization Proxy Server V2"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server.yaml"
     - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
@@ -65,7 +65,7 @@
 
 - scenario: "Install Authorization Proxy Server V2 With Default Redis Storage Class"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_default_redis.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server_default_redis.yaml"
     - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
     - "authorizationproxyserver"
@@ -82,7 +82,7 @@
 
 - scenario: "Install Authorization Proxy Server V1 with alternate namespace"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_alt_ns.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_alt_ns.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -96,11 +96,12 @@
 
 - scenario: "Install Authorization Proxy Server & PowerFlex Driver (With Authorization V1), Upgrade both Authorization Proxy Server and PowerFlex Driver"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_2.yaml"  # v1.9.1
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"  # v1.10.0
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
   tags:
+    - "powerflex"
     - "authorization"
     - "authorizationproxyserver"
     # - "sanity"
@@ -263,7 +264,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization V1)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -367,7 +368,7 @@
 
 - scenario: "Install PowerScale Driver, Enable/Disable Authorization V1 module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "authorizationproxyserver"
@@ -475,7 +476,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization V1 and Observability)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -513,7 +514,7 @@
 
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization V1, Enable Observability"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "authorizationproxyserver"
@@ -556,7 +557,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization V1 and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -766,7 +767,7 @@
 
 - scenario: "Install PowerFlex Driver (With Authorization V2)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
     - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
@@ -806,7 +807,7 @@
 
 - scenario: "Install PowerFlex Driver (With Authorization V2), Upgrade driver and authorization sidecar"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
     - "testfiles/authorization-templates/csm_authorization_crds.yaml"
@@ -1017,7 +1018,7 @@
 
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization V1, Enable Observability"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
     - "authorizationproxyserver"
@@ -1059,7 +1060,7 @@
 
 - scenario: "Install PowerFlex Driver(With Authorization V1 and Observability)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -1096,7 +1097,7 @@
 
 - scenario: Install PowerFlex Driver(With Authorization V2 and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
     - "testfiles/authorization-templates/csm_authorization_crds.yaml"
   tags:
@@ -1613,9 +1614,9 @@
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
 
-- scenario: "Install PowerMax Driver (With Auth module)"
+- scenario: "Install PowerMax Driver (With Auth V1 module)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server.yaml"
     - "testfiles/storage_csm_powermax_reverseproxy_authorization.yaml"
   tags:
     - "authorizationproxyserver"

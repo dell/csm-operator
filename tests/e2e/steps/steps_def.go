@@ -52,7 +52,7 @@ const (
 var (
 	authString             = "karavi-authorization-proxy"
 	operatorNamespace      = "dell-csm-operator"
-	quotaLimit             = "30000000"
+	quotaLimit             = "100000000"
 	pflexSecretMap         = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL"}
 	pflexAuthSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -1262,8 +1262,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 // AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
 func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost, driverNamespace string) error {
-	fmt.Println("=====Waiting for everything to be up and running, adding a sleep time of 60 seconds before creating the role, tenant and role binding===")
-	time.Sleep(60 * time.Second)
+	fmt.Println("=====Waiting for everything to be up and running, adding a sleep time of 120 seconds before creating the role, tenant and role binding===")
+	time.Sleep(120 * time.Second)
 	var (
 		endpoint = ""
 		sysID    = ""
@@ -1526,7 +1526,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/csm-authorization-template.yaml"
+		templateFile        = "testfiles/authorization-templates/csm-authorization-v2-template.yaml"
 		updatedTemplateFile = ""
 	)
 

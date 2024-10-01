@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.9.1
+      configVersion: v1.11.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -32,10 +32,10 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: dellemc/csm-authorization-proxy:v1.9.1
-          tenantService: dellemc/csm-authorization-tenant:v1.9.1
-          roleService: dellemc/csm-authorization-role:v1.9.1
-          storageService: dellemc/csm-authorization-storage:v1.9.1
+          proxyService: dellemc/csm-authorization-proxy:v1.11.0
+          tenantService: dellemc/csm-authorization-tenant:v1.11.0
+          roleService: dellemc/csm-authorization-role:v1.11.0
+          storageService: dellemc/csm-authorization-storage:v1.11.0
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
 
@@ -73,7 +73,7 @@ spec:
           # to use a different storage class for redis, specify the name of the storage class
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
-          storageclass: "local-storage"
+          storageclass: ""
 
 ---
 apiVersion: v1
