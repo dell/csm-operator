@@ -34,6 +34,9 @@ const (
 	// PowerFlexConfigParamsVolumeMount -
 	PowerFlexConfigParamsVolumeMount = "vxflexos-config-params"
 
+	// CsiSdcEnabled - Flag to enable/disable SDC
+	CsiSdcEnabled = "<X_CSI_SDC_ENABLED>"
+
 	// CsiApproveSdcEnabled - Flag to enable/disable SDC approval
 	CsiApproveSdcEnabled = "<X_CSI_APPROVE_SDC_ENABLED>"
 
@@ -51,6 +54,9 @@ const (
 
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
+
+	// CsiDebug -  Debug flag
+	CsiDebug = "<X_CSI_DEBUG>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -69,8 +75,18 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		return err
 	}
 	var newmdm corev1.EnvVar
+	sdcEnabled := true
+	for _, env := range cr.Spec.Driver.Node.Envs {
+		if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
+			sdcEnabled = false
+		}
+	}
+
+	newInitContainers := make([]csmv1.ContainerTemplate, 0)
 	for _, initcontainer := range cr.Spec.Driver.InitContainers {
-		if initcontainer.Name == "sdc" {
+		if initcontainer.Name != "sdc" {
+			newInitContainers = append(newInitContainers, initcontainer)
+		} else if initcontainer.Name == "sdc" && sdcEnabled {
 			k := 0
 			initenv := initcontainer.Envs
 			for c, env := range initenv {
@@ -82,7 +98,21 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 				}
 			}
 			initenv[k] = newmdm
-			break
+			newInitContainers = append(newInitContainers, initcontainer)
+		}
+	}
+	cr.Spec.Driver.InitContainers = newInitContainers
+	if cr.Spec.Driver.InitContainers == nil && sdcEnabled {
+		cr.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{
+			{
+				Name: "sdc",
+				Envs: []corev1.EnvVar{
+					{
+						Name:  "MDM",
+						Value: mdmVar,
+					},
+				},
+			},
 		}
 	}
 
@@ -101,6 +131,32 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 			}
 			sidenv[j] = updatenv
 		}
+	}
+	if cr.Spec.Driver.SideCars == nil {
+		cr.Spec.Driver.SideCars = []csmv1.ContainerTemplate{
+			{
+				Name: "sdc-monitor",
+				Envs: []corev1.EnvVar{
+					{
+						Name:  "MDM",
+						Value: mdmVar,
+					},
+				},
+			},
+		}
+	}
+
+	kubeletConfigDirFound := false
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == "KUBELET_CONFIG_DIR" {
+			kubeletConfigDirFound = true
+		}
+	}
+	if !kubeletConfigDirFound {
+		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
+			Name:  "KUBELET_CONFIG_DIR",
+			Value: "/var/lib/kubelet",
+		})
 	}
 
 	return nil
@@ -219,6 +275,7 @@ func IsIpv4Regex(ipAddress string) bool {
 
 // ModifyPowerflexCR - Set environment variables provided in CR
 func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
+	sdcEnabled := ""
 	approveSdcEnabled := ""
 	renameSdcEnabled := ""
 	renameSdcPrefix := ""
@@ -226,8 +283,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	storageCapacity := "false"
 	enableQuota := ""
 	powerflexExternalAccess := ""
-	healthMonitorController := ""
-	healthMonitorNode := ""
+	healthMonitorController := "false"
+	healthMonitorNode := "false"
+	csiDebug := "true"
 
 	// nolint:gosec
 	switch fileType {
@@ -239,12 +297,19 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorController = env.Value
 			}
+			if env.Name == "X_CSI_DEBUG" {
+				csiDebug = env.Value
+			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
+		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 
 	case "Node":
 		for _, env := range cr.Spec.Driver.Node.Envs {
+			if env.Name == "X_CSI_SDC_ENABLED" {
+				sdcEnabled = env.Value
+			}
 			if env.Name == "X_CSI_APPROVE_SDC_ENABLED" {
 				approveSdcEnabled = env.Value
 			}
@@ -263,12 +328,17 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorNode = env.Value
 			}
+			if env.Name == "X_CSI_DEBUG" {
+				csiDebug = env.Value
+			}
 		}
+		yamlString = strings.ReplaceAll(yamlString, CsiSdcEnabled, sdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {

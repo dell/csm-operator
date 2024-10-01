@@ -28,7 +28,7 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
-    configVersion: v2.11.0
+    configVersion: v2.12.0
     authSecret: powerstore-config
     # Controller count
     replicas: 2
@@ -82,7 +82,7 @@ spec:
           value: "false"
         # X_CSI_POWERSTORE_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
         # Allowed Values: x.x.x.x/xx or x.x.x.x
-        # Default Value: 
+        # Default Value:
         - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
           value:
       # nodeSelector: Define node selection constraints for controller pods.
@@ -147,7 +147,7 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: true
-      configVersion: v1.10.0
+      configVersion: v1.11.0
       components:
         - name: podmon-controller
           image: dellemc/podmon:nightly

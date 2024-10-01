@@ -1,5 +1,6 @@
 include docker.mk
 
+
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
@@ -21,7 +22,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.25
+ENVTEST_K8S_VERSION = 1.30
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -84,6 +85,20 @@ driver-unit-test:
 module-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/modules
 
+.PHONY: actions
+actions: ## Run all the github action checks that run on a pull_request creation
+	act -l | grep -v ^Stage | grep pull_request | grep -v image_security_scan | awk '{print $$2}' | while read WF; do act pull_request --no-cache-server --platform ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest --job "$${WF}"; done
+
+.PHONY: check
+check: ## Echo instructions to run one specific workflow locally
+	@echo "GitHub Workflows can be run locally with the following command:"
+	@echo "act pull_request --no-cache-server --platform ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest --job <jobid>"
+	@echo
+	@echo "Where '<jobid>' is a Job ID returned by the command:"
+	@echo "act -l"
+	@echo
+	@echo "NOTE: if act if not installed, it can be from https://github.com/nektos/act"
+
 ##@ Build
 
 tidy:
@@ -98,6 +113,9 @@ run: generate gen-semver fmt vet static-manifests ## Run a controller from your 
 
 podman-build: gen-semver build-base-image ## Build podman image with the manager.
 	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+
+podman-build-no-cache: gen-semver build-base-image ## Build podman image with the manager.
+	podman build --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 podman-push: podman-build ## Builds, tags and pushes docker image with the manager.
 	podman tag ${DEFAULT_IMG} ${IMG}
@@ -208,7 +226,7 @@ OPM = $(shell which opm)
 endif
 endif
 
-# A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v1.6.0).
+# A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v1.7.0).
 # These images MUST exist in a registry and be pull-able.
 BUNDLE_IMGS ?= $(BUNDLE_IMG)
 

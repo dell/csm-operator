@@ -57,13 +57,7 @@ type Scenario struct {
 // Resource -
 type Resource struct {
 	Scenario       Scenario
-	CustomResource []csmv1.ContainerStorageModule
-}
-
-// ResourceApex -
-type ResourceApex struct {
-	ScenarioApex       Scenario
-	CustomResourceApex []csmv1.ApexConnectivityClient
+	CustomResource []interface{}
 }
 
 // Step -
@@ -99,7 +93,7 @@ func checkAllRunningPods(ctx context.Context, namespace string, k8sClient kubern
 	}
 
 	if !allReady {
-		return fmt.Errorf(notReadyMessage)
+		return fmt.Errorf("%s", notReadyMessage)
 	}
 	return nil
 }
@@ -159,7 +153,7 @@ func checkObservabilityRunningPods(ctx context.Context, namespace string, k8sCli
 	}
 
 	if !allReady {
-		return fmt.Errorf(notReadyMessage)
+		return fmt.Errorf("%s", notReadyMessage)
 	}
 	return nil
 }
@@ -343,7 +337,7 @@ func checkAuthorizationProxyServerPods(ctx context.Context, namespace string, k8
 	}
 
 	if !allReady {
-		return fmt.Errorf(notReadyMessage)
+		return fmt.Errorf("%s", notReadyMessage)
 	}
 	return nil
 }

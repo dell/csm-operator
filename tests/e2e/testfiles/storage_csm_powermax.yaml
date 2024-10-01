@@ -32,7 +32,7 @@ spec:
       #   false: disable storage capacity tracking
       storageCapacity: true
     # Config version for CSI PowerMax v2.10.1 driver
-    configVersion: v2.11.0
+    configVersion: v2.12.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
@@ -45,7 +45,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerMax driver v2.10.1
-      image: dellemc/csi-powermax:nightly
+      image: dellemc/csi-powermax:v2.12.0
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -210,59 +210,57 @@ spec:
     sideCars:
       # 'pmax' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
-        args: ["--volume-name-prefix=pmax"]
+        image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+        args: [ "--volume-name-prefix=pmax" ]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.5.0
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.10.0
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.7.3
+        image: dellemc/csi-metadata-retriever:v1.8.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: [ "--monitor-interval=60s" ]
         image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
-      
-      # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
-      # Configure only when the storageCapacity is set as "true"
-      # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-      #- name: provisioner
-      #  args: ["--capacity-poll-interval=5m"]
-
+        # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+        # Configure only when the storageCapacity is set as "true"
+        # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+        # - name: provisioner
+        #  args: ["--capacity-poll-interval=5m"]
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
       # enabled: Always set to true
       enabled: true
       forceRemoveModule: true
-      configVersion: v2.10.0
+      configVersion: v2.11.0
       components:
-      - name: csipowermax-reverseproxy
-      # image: Define the container images used for the reverse proxy
-      # Default value: None
-      # Example: "csipowermax-reverseproxy:v2.9.1"
-        image: dellemc/csipowermax-reverseproxy:nightly
-        envs:
-          # "tlsSecret" defines the TLS secret that is created with certificate
-          # and its associated key
+        - name: csipowermax-reverseproxy
+          # image: Define the container images used for the reverse proxy
           # Default value: None
-          # Example: "tls-secret"
-          - name: X_CSI_REVPROXY_TLS_SECRET
-            value: "csirevproxy-tls-secret"
-          - name: X_CSI_REVPROXY_PORT
-            value: "2222"
-          - name: X_CSI_CONFIG_MAP_NAME
-            value: "powermax-reverseproxy-config"
-          # deployAsSidecar defines the way reversproxy is installed with the driver
-          # set it true, if csm-auth is enabled / you want it as a sidecar container
-          # set it false, if you want it as a deployment
-          - name: "DeployAsSidecar"
-            value: "false"
+          # Example: "csipowermax-reverseproxy:v2.9.1"
+          image: dellemc/csipowermax-reverseproxy:nightly
+          envs:
+            # "tlsSecret" defines the TLS secret that is created with certificate
+            # and its associated key
+            # Default value: None
+            # Example: "tls-secret"
+            - name: X_CSI_REVPROXY_TLS_SECRET
+              value: "csirevproxy-tls-secret"
+            - name: X_CSI_REVPROXY_PORT
+              value: "2222"
+            - name: X_CSI_CONFIG_MAP_NAME
+              value: "powermax-reverseproxy-config"
+            # deployAsSidecar defines the way reversproxy is installed with the driver
+            # set it true, if csm-auth is enabled / you want it as a sidecar container
+            # set it false, if you want it as a deployment
+            - name: "DeployAsSidecar"
+              value: "true"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:
@@ -270,7 +268,7 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.10.0
+      configVersion: v1.11.0
       components:
         - name: podmon-controller
           image: dellemc/podmon:nightly

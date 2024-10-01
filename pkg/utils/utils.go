@@ -65,6 +65,7 @@ type K8sImagesConfig struct {
 		Sdc                   string `json:"sdc" yaml:"sdc"`
 		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
 		Podmon                string `json:"podmon" yaml:"podmon"`
+		CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 	} `json:"images" yaml:"images"`
 }
 
@@ -115,6 +116,11 @@ type ReplicaCluster struct {
 // CSMComponentType - type constraint for DriverType and ModuleType
 type CSMComponentType interface {
 	csmv1.ModuleType | csmv1.DriverType
+}
+
+// LatestVersion - used in minimal manifests for CSM
+type LatestVersion struct {
+	Version string `yaml:"version"`
 }
 
 const (
@@ -214,13 +220,12 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case csmv1.Externalhealthmonitor:
 		*c.Image = img.Images.Externalhealthmonitor
 	case csmv1.Sdc:
-		*c.Image = img.Images.Sdc
+		*c.Image = img.Images.Sdcmonitor
 	case csmv1.Sdcmonitor:
 		*c.Image = img.Images.Sdcmonitor
 	case string(csmv1.Resiliency):
 		*c.Image = img.Images.Podmon
 	}
-	return
 }
 
 // UpdateinitContainerApply -
@@ -1332,4 +1337,25 @@ func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr
 		}
 	}
 	return nil
+}
+
+func GetLatestVersion(resourceType string, op OperatorConfig) (string, error) {
+	path := ""
+	switch resourceType {
+	case string(csmv1.ReverseProxy):
+		path = fmt.Sprintf("%s/moduleconfig/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, "latest.yaml")
+	}
+	// Read the YAML file
+	data, err := os.ReadFile(filepath.Clean(path))
+	if err != nil {
+		return "", err
+	}
+
+	// Unmarshal the YAML data into the Config struct
+	var latestVersion LatestVersion
+	err = yaml.Unmarshal(data, &latestVersion)
+	if err != nil {
+		return "", err
+	}
+	return latestVersion.Version, nil
 }

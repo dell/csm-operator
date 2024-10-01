@@ -355,6 +355,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Leader Election"
 	LeaderElection bool `json:"leaderElection,omitempty" yaml:"leaderElection,omitempty"`
 
+	// OpenTelemetryCollectorAddress is the address of the OTLP receiving endpoint using gRPC
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="OpenTelemetry Collector Address of the OTLP endpoint using gRPC"
+	OpenTelemetryCollectorAddress string `json:"openTelemetryCollectorAddress,omitempty" yaml:"openTelemetryCollectorAddress,omitempty"`
+
 	// The interval which the reconcile of each controller is run
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Controller Reconcile Interval"
 	ControllerReconcileInterval string `json:"controllerReconcileInterval,omitempty" yaml:"controllerReconcileInterval,omitempty"`
@@ -387,21 +391,13 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Redis storage class"
 	RedisStorageClass string `json:"storageclass,omitempty" yaml:"storageclass,omitempty"`
 
-	// VaultAddress is the address of the vault
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Vault Address"
-	VaultAddress string `json:"vaultAddress,omitempty" yaml:"vaultAddress,omitempty"`
-
-	// VaultRole is the role for the vault
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Vault Role"
-	VaultRole string `json:"vaultRole,omitempty" yaml:"vaultRole,omitempty"`
+	// Vaults are the vault configurations
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Configurations"
+	Vaults []Vault `json:"vaultConfigurations,omitempty" yaml:"vaultConfigurations,omitempty"`
 
 	// skipCertificateValidation is the flag to skip certificate validation
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Skip Certificate Validation"
 	SkipCertificateValidation bool `json:"skipCertificateValidation,omitempty" yaml:"skipCertificateValidation,omitempty"`
-
-	// kvEnginePath is the Authorization vault secret path
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization KV Engine Path"
-	KvEnginePath string `json:"kvEnginePath,omitempty" yaml:"kvEnginePath,omitempty"`
 
 	// RedisName is the name of the redis statefulset
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis StatefulSet Name"
@@ -515,4 +511,35 @@ type Credkey struct {
 	// AccessKey contains the key to access objectstore
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="AccessKey"
 	AccessKey string `json:"aws_secret_access_key,omitempty" yaml:"aws_secret_access_key,omitempty"`
+}
+
+// Vault is the configuration for a vault instance struct
+type Vault struct {
+	// Identifier is the identifier for this vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Identifier"
+	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"`
+
+	// Address is the address for this vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Address"
+	Address string `json:"address,omitempty" yaml:"address,omitempty"`
+
+	// Role is the role for this vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Role"
+	Role string `json:"role,omitempty" yaml:"role,omitempty"`
+
+	// SkipCertificateValidation validates the vault server certificate or not
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Skip Certificate Validation"
+	SkipCertificateValidation bool `json:"skipCertificateValidation,omitempty" yaml:"skipCertificateValidation,omitempty"`
+
+	// ClientCertificate is the base64-encoded certificate for connecting to vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault CLient Certificate"
+	ClientCertificate string `json:"clientCertificate,omitempty" yaml:"clientCertificate,omitempty"`
+
+	// ClientKey validates is the base64-encoded certificate key for connecting to vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault CLient Certificate Key"
+	ClientKey string `json:"clientKey,omitempty" yaml:"clientKey,omitempty"`
+
+	// CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Certificate Authority"
+	CertificateAuthority string `json:"certificateAuthority,omitempty" yaml:"certificateAuthority,omitempty"`
 }

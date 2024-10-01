@@ -106,6 +106,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if cr.Spec.Driver.CSIDriverType == "powermax" {
 		YamlString = ModifyPowermaxCR(YamlString, cr, "Controller")
 	}
+	if cr.Spec.Driver.CSIDriverType == "isilon" {
+		YamlString = ModifyPowerScaleCR(YamlString, cr, "Controller")
+	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "Deployment")
 	if err != nil {
@@ -115,6 +118,10 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	controllerYAML := driverYAML.(utils.ControllerYAML)
 	controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
+	var defaultReplicas int32 = 1
+	if *(controllerYAML.Deployment.Spec.Replicas) == 0 {
+		controllerYAML.Deployment.Spec.Replicas = &defaultReplicas
+	}
 
 	if len(cr.Spec.Driver.Controller.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
@@ -151,15 +158,25 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		}
 
 		removeContainer := false
+		if string(*c.Name) == "csi-external-health-monitor-controller" || string(*c.Name) == "external-health-monitor" {
+			removeContainer = true
+		}
 		for _, s := range cr.Spec.Driver.SideCars {
 			if s.Name == *c.Name {
 				if s.Enabled == nil {
+					if string(*c.Name) == "csi-external-health-monitor-controller" || string(*c.Name) == "external-health-monitor" {
+						removeContainer = true
+						log.Infow("Container to be removed", "name", *c.Name)
+						break
+					}
+					removeContainer = false
 					log.Infow("Container to be enabled", "name", *c.Name)
 					break
 				} else if !*s.Enabled {
 					removeContainer = true
 					log.Infow("Container to be removed", "name", *c.Name)
 				} else {
+					removeContainer = false
 					log.Infow("Container to be enabled", "name", *c.Name)
 				}
 				break
@@ -320,6 +337,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	if cr.Spec.Driver.CSIDriverType == "powermax" {
 		YamlString = ModifyPowermaxCR(YamlString, cr, "Node")
 	}
+	if cr.Spec.Driver.CSIDriverType == "isilon" {
+		YamlString = ModifyPowerScaleCR(YamlString, cr, "Node")
+	}
 
 	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
 	if err != nil {
@@ -332,6 +352,10 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	if cr.Spec.Driver.DNSPolicy != "" {
 		dnspolicy := corev1.DNSPolicy(cr.Spec.Driver.DNSPolicy)
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &dnspolicy
+	}
+	var defaultDNSPolicy corev1.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+	if cr.Spec.Driver.DNSPolicy == "" {
+		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &defaultDNSPolicy
 	}
 
 	if len(cr.Spec.Driver.Node.Tolerations) != 0 {
@@ -368,15 +392,24 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 		}
 		removeContainer := false
+		if string(*c.Name) == "sdc-monitor" {
+			removeContainer = true
+		}
 		for _, s := range cr.Spec.Driver.SideCars {
 			if s.Name == *c.Name {
 				if s.Enabled == nil {
-					log.Infow("Container to be enabled", "name", *c.Name)
-					break
+					if string(*c.Name) == "sdc-monitor" {
+						removeContainer = true
+						log.Infow("Container to be removed", "name", *c.Name)
+					} else {
+						removeContainer = false
+						log.Infow("Container to be enabled", "name", *c.Name)
+					}
 				} else if !*s.Enabled {
 					removeContainer = true
 					log.Infow("Container to be removed", "name", *c.Name)
 				} else {
+					removeContainer = false
 					log.Infow("Container to be enabled", "name", *c.Name)
 				}
 				break
@@ -391,7 +424,19 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = newcontainers
 
-	initcontainers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers
+	initcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
+	sdcEnabled := true
+	for _, env := range cr.Spec.Driver.Node.Envs {
+		if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
+			sdcEnabled = false
+		}
+	}
+	for _, ic := range nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers {
+		if *ic.Name != "sdc" || sdcEnabled {
+			initcontainers = append(initcontainers, ic)
+		}
+	}
+
 	for i := range initcontainers {
 		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
 		utils.UpdateinitContainerApply(cr.Spec.Driver.InitContainers, &initcontainers[i])

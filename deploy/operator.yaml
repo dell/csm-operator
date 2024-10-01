@@ -12,1218 +12,1218 @@ metadata:
   name: dell-csm-operator-leader-election-role
   namespace: dell-csm-operator
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: dell-csm-operator-application-mobility-velero-server
 rules:
-- apiGroups:
-  - '*'
-  resources:
-  - '*'
-  verbs:
-  - '*'
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: dell-csm-operator-manager-role
 rules:
-- nonResourceURLs:
-  - /metrics
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resourceNames:
-  - cert-manager-cainjector-leader-election
-  - cert-manager-cainjector-leader-election-core
-  - cert-manager-controller
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resourceNames:
-  - cert-manager-controller
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resourceNames:
-  - ingress-controller-leader
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - endpoints
-  - events
-  - ingresses
-  - persistentvolumeclaims
-  - pods
-  - roles
-  - secrets
-  - serviceaccounts
-  - services
-  - services/finalizers
-  verbs:
-  - '*'
-- apiGroups:
-  - ""
-  resourceNames:
-  - dell-csm-operator-controller-manager
-  resources:
-  - deployments/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - create
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumeclaims/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resourceNames:
-  - cert-manager-webhook-ca
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - '*'
-  resourceNames:
-  - application-mobility-velero-server
-  resources:
-  - '*'
-  verbs:
-  - '*'
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - '*/*'
-  verbs:
-  - '*'
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - challenges
-  verbs:
-  - create
-  - delete
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - challenges
-  - challenges/status
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - challenges
-  - orders
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - challenges/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - clusterissuers
-  - issuers
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - orders
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - watch
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - orders
-  - orders/status
-  verbs:
-  - patch
-  - update
-- apiGroups:
-  - acme.cert-manager.io
-  resources:
-  - orders/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - admissionregistration.k8s.io
-  resources:
-  - mutatingwebhookconfigurations
-  - validatingwebhookconfigurations
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - '*'
-- apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions/status
-  verbs:
-  - get
-  - list
-  - patch
-  - watch
-- apiGroups:
-  - apiregistration.k8s.io
-  resources:
-  - apiservices
-  verbs:
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - apiregistration.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - daemonsets
-  - deployments
-  - replicasets
-  - statefulsets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - auditregistration.k8s.io
-  resources:
-  - auditsinks
-  verbs:
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
-- apiGroups:
-  - authorization.k8s.io
-  resources:
-  - subjectaccessreviews
-  verbs:
-  - create
-- apiGroups:
-  - batch
-  resources:
-  - jobs
-  verbs:
-  - create
-  - delete
-  - list
-  - update
-  - watch
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - '*/*'
-  verbs:
-  - '*'
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificaterequests
-  - certificates
-  - clusterissuers
-  - issuers
-  verbs:
-  - '*'
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificaterequests
-  - certificates
-  - issuers
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificaterequests/finalizers
-  - certificates/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - certificaterequests/status
-  - certificates/status
-  verbs:
-  - patch
-  - update
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - clusterissuers
-  - clusterissuers/status
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cert-manager.io
-  resourceNames:
-  - cert-manager-cainjector-leader-election
-  - cert-manager-cainjector-leader-election-core
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cert-manager.io
-  resources:
-  - issuers
-  - issuers/status
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cert-manager.io
-  resourceNames:
-  - clusterissuers.cert-manager.io/*
-  - issuers.cert-manager.io/*
-  resources:
-  - signers
-  verbs:
-  - approve
-- apiGroups:
-  - certificates.k8s.io
-  resources:
-  - certificatesigningrequests
-  verbs:
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - certificates.k8s.io
-  resources:
-  - certificatesigningrequests/status
-  verbs:
-  - patch
-  - update
-- apiGroups:
-  - certificates.k8s.io
-  resourceNames:
-  - clusterissuers.cert-manager.io/*
-  - issuers.cert-manager.io/*
-  resources:
-  - signers
-  verbs:
-  - sign
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - coordination.k8s.io
-  resourceNames:
-  - cert-manager-cainjector-leader-election
-  - cert-manager-cainjector-leader-election-core
-  resources:
-  - leases
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - coordination.k8s.io
-  resourceNames:
-  - cert-manager-controller
-  resources:
-  - leases
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - coordination.k8s.io
-  resourceNames:
-  - ingress-controller-leader
-  resources:
-  - leases
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - csi.storage.k8s.io
-  resources:
-  - csinodeinfos
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - csmroles
-  verbs:
-  - create
-  - delete
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - csmroles
-  - csmtenants
-  - storages
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - csmroles/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - csmroles/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - csmtenants
-  verbs:
-  - create
-  - delete
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - csmtenants/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - csmtenants/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - storages
-  verbs:
-  - create
-  - delete
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - storages/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - csm-authorization.storage.dell.com
-  resources:
-  - storages/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - discovery.k8s.io
-  resources:
-  - endpointslices
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - gateway.networking.k8s.io
-  resources:
-  - gateways
-  - httproutes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - gateway.networking.k8s.io
-  resources:
-  - gateways/finalizers
-  - httproutes/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - gateway.networking.k8s.io
-  resources:
-  - httproutes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - backups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - backups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - backups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - clusterconfigs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - clusterconfigs/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - clusterconfigs/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - podvolumebackups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - podvolumebackups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - podvolumebackups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - podvolumerestores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - podvolumerestores/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - podvolumerestores/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - restores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - restores/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - restores/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - schedules
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mobility.storage.dell.com
-  resources:
-  - schedules/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - create
-  - get
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - ingressclasses
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - ingresses
-  verbs:
-  - '*'
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - ingresses/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - ingresses/status
-  verbs:
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterrolebindings
-  - clusterroles
-  - replicasets
-  - rolebindings
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterroles/finalizers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - roles
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - subjectaccessreviews
-  verbs:
-  - create
-- apiGroups:
-  - replication.storage.dell.com
-  resources:
-  - dellcsireplicationgroups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - replication.storage.dell.com
-  resources:
-  - dellcsireplicationgroups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - route.openshift.io
-  resources:
-  - routes/custom-host
-  verbs:
-  - create
-- apiGroups:
-  - security.openshift.io
-  resourceNames:
-  - privileged
-  resources:
-  - securitycontextconstraints
-  verbs:
-  - use
-- apiGroups:
-  - snapshot.storage.k8s.io
-  resources:
-  - volumesnapshotclasses
-  - volumesnapshotcontents
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - snapshot.storage.k8s.io
-  resources:
-  - volumesnapshotcontents/status
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - snapshot.storage.k8s.io
-  resources:
-  - volumesnapshots
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - snapshot.storage.k8s.io
-  resources:
-  - volumesnapshots/status
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - apexconnectivityclients
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - apexconnectivityclients/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - apexconnectivityclients/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - containerstoragemodules
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - containerstoragemodules/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - storage.dell.com
-  resources:
-  - containerstoragemodules/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - csidrivers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - csinodes
-  verbs:
-  - create
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - csistoragecapacities
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - storageclasses
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - volumeattachments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - volumeattachments/status
-  verbs:
-  - patch
-- apiGroups:
-  - velero.io
-  resources:
-  - backuprepositories
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - velero.io
-  resources:
-  - backups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - velero.io
-  resources:
-  - backups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - velero.io
-  resources:
-  - backups/status
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-- apiGroups:
-  - velero.io
-  resources:
-  - backupstoragelocations
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - velero.io
-  resources:
-  - deletebackuprequests
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - watch
-- apiGroups:
-  - velero.io
-  resources:
-  - podvolumebackups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - velero.io
-  resources:
-  - podvolumebackups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - velero.io
-  resources:
-  - podvolumebackups/status
-  verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-- apiGroups:
-  - velero.io
-  resources:
-  - podvolumerestores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - velero.io
-  resources:
-  - restores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - volumegroup.storage.dell.com
-  resources:
-  - dellcsivolumegroupsnapshots
-  - dellcsivolumegroupsnapshots/status
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resourceNames:
+      - cert-manager-cainjector-leader-election
+      - cert-manager-cainjector-leader-election-core
+      - cert-manager-controller
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resourceNames:
+      - cert-manager-controller
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resourceNames:
+      - ingress-controller-leader
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - endpoints
+      - events
+      - ingresses
+      - persistentvolumeclaims
+      - pods
+      - roles
+      - secrets
+      - serviceaccounts
+      - services
+      - services/finalizers
+    verbs:
+      - "*"
+  - apiGroups:
+      - ""
+    resourceNames:
+      - dell-csm-operator-controller-manager
+    resources:
+      - deployments/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumes
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resourceNames:
+      - cert-manager-webhook-ca
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - "*"
+    resourceNames:
+      - application-mobility-velero-server
+    resources:
+      - "*"
+    verbs:
+      - "*"
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - "*/*"
+    verbs:
+      - "*"
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - challenges
+    verbs:
+      - create
+      - delete
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - challenges
+      - challenges/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - challenges
+      - orders
+    verbs:
+      - create
+      - delete
+      - deletecollection
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - challenges/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - clusterissuers
+      - issuers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders
+      - orders/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+      - validatingwebhookconfigurations
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - "*"
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions/status
+    verbs:
+      - get
+      - list
+      - patch
+      - watch
+  - apiGroups:
+      - apiregistration.k8s.io
+    resources:
+      - apiservices
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - apiregistration.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - auditregistration.k8s.io
+    resources:
+      - auditsinks
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - create
+      - delete
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - "*/*"
+    verbs:
+      - "*"
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificaterequests
+      - certificates
+      - clusterissuers
+      - issuers
+    verbs:
+      - "*"
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificaterequests
+      - certificates
+      - issuers
+    verbs:
+      - create
+      - delete
+      - deletecollection
+      - patch
+      - update
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificaterequests/finalizers
+      - certificates/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificaterequests/status
+      - certificates/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - clusterissuers
+      - clusterissuers/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - cert-manager.io
+    resourceNames:
+      - cert-manager-cainjector-leader-election
+      - cert-manager-cainjector-leader-election-core
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - issuers
+      - issuers/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - cert-manager.io
+    resourceNames:
+      - clusterissuers.cert-manager.io/*
+      - issuers.cert-manager.io/*
+    resources:
+      - signers
+    verbs:
+      - approve
+  - apiGroups:
+      - certificates.k8s.io
+    resources:
+      - certificatesigningrequests
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - certificates.k8s.io
+    resources:
+      - certificatesigningrequests/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
+      - certificates.k8s.io
+    resourceNames:
+      - clusterissuers.cert-manager.io/*
+      - issuers.cert-manager.io/*
+    resources:
+      - signers
+    verbs:
+      - sign
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - coordination.k8s.io
+    resourceNames:
+      - cert-manager-cainjector-leader-election
+      - cert-manager-cainjector-leader-election-core
+    resources:
+      - leases
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - coordination.k8s.io
+    resourceNames:
+      - cert-manager-controller
+    resources:
+      - leases
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - coordination.k8s.io
+    resourceNames:
+      - ingress-controller-leader
+    resources:
+      - leases
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - csi.storage.k8s.io
+    resources:
+      - csinodeinfos
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - csmroles
+    verbs:
+      - create
+      - delete
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - csmroles
+      - csmtenants
+      - storages
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - csmroles/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - csmroles/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - csmtenants
+    verbs:
+      - create
+      - delete
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - csmtenants/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - csmtenants/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - storages
+    verbs:
+      - create
+      - delete
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - storages/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - csm-authorization.storage.dell.com
+    resources:
+      - storages/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gateways
+      - httproutes
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gateways/finalizers
+      - httproutes/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - httproutes
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - backups
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - backups/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - backups/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - clusterconfigs
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - clusterconfigs/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - clusterconfigs/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - podvolumebackups
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - podvolumebackups/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - podvolumebackups/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - podvolumerestores
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - podvolumerestores/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - podvolumerestores/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - restores
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - restores/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - restores/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - schedules
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - mobility.storage.dell.com
+    resources:
+      - schedules/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - servicemonitors
+    verbs:
+      - create
+      - get
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingressclasses
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - "*"
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses/status
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - clusterrolebindings
+      - clusterroles
+      - replicasets
+      - rolebindings
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - clusterroles/finalizers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - roles
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
+  - apiGroups:
+      - replication.storage.dell.com
+    resources:
+      - dellcsireplicationgroups
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - replication.storage.dell.com
+    resources:
+      - dellcsireplicationgroups/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes/custom-host
+    verbs:
+      - create
+  - apiGroups:
+      - security.openshift.io
+    resourceNames:
+      - privileged
+    resources:
+      - securitycontextconstraints
+    verbs:
+      - use
+  - apiGroups:
+      - snapshot.storage.k8s.io
+    resources:
+      - volumesnapshotclasses
+      - volumesnapshotcontents
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - snapshot.storage.k8s.io
+    resources:
+      - volumesnapshotcontents/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - snapshot.storage.k8s.io
+    resources:
+      - volumesnapshots
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - snapshot.storage.k8s.io
+    resources:
+      - volumesnapshots/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - storage.dell.com
+    resources:
+      - apexconnectivityclients
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - storage.dell.com
+    resources:
+      - apexconnectivityclients/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - storage.dell.com
+    resources:
+      - apexconnectivityclients/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - storage.dell.com
+    resources:
+      - containerstoragemodules
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - storage.dell.com
+    resources:
+      - containerstoragemodules/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - storage.dell.com
+    resources:
+      - containerstoragemodules/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - csidrivers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - csinodes
+    verbs:
+      - create
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - csistoragecapacities
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - storageclasses
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - volumeattachments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - volumeattachments/status
+    verbs:
+      - patch
+  - apiGroups:
+      - velero.io
+    resources:
+      - backuprepositories
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - velero.io
+    resources:
+      - backups
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - velero.io
+    resources:
+      - backups/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - velero.io
+    resources:
+      - backups/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+  - apiGroups:
+      - velero.io
+    resources:
+      - backupstoragelocations
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - velero.io
+    resources:
+      - deletebackuprequests
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - velero.io
+    resources:
+      - podvolumebackups
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - velero.io
+    resources:
+      - podvolumebackups/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - velero.io
+    resources:
+      - podvolumebackups/status
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - update
+  - apiGroups:
+      - velero.io
+    resources:
+      - podvolumerestores
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - velero.io
+    resources:
+      - restores
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - volumegroup.storage.dell.com
+    resources:
+      - dellcsivolumegroupsnapshots
+      - dellcsivolumegroupsnapshots/status
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: dell-csm-operator-metrics-reader
 rules:
-- nonResourceURLs:
-  - /metrics
-  verbs:
-  - get
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: dell-csm-operator-proxy-role
 rules:
-- apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
-- apiGroups:
-  - authorization.k8s.io
-  resources:
-  - subjectaccessreviews
-  verbs:
-  - create
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -1235,9 +1235,9 @@ roleRef:
   kind: Role
   name: dell-csm-operator-leader-election-role
 subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: dell-csm-operator
+  - kind: ServiceAccount
+    name: default
+    namespace: dell-csm-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -1248,9 +1248,9 @@ roleRef:
   kind: ClusterRole
   name: dell-csm-operator-application-mobility-velero-server
 subjects:
-- kind: ServiceAccount
-  name: dell-csm-operator-manager-service-account
-  namespace: dell-csm-operator
+  - kind: ServiceAccount
+    name: dell-csm-operator-manager-service-account
+    namespace: dell-csm-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -1261,9 +1261,9 @@ roleRef:
   kind: ClusterRole
   name: dell-csm-operator-manager-role
 subjects:
-- kind: ServiceAccount
-  name: dell-csm-operator-manager-service-account
-  namespace: dell-csm-operator
+  - kind: ServiceAccount
+    name: dell-csm-operator-manager-service-account
+    namespace: dell-csm-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -1274,9 +1274,9 @@ roleRef:
   kind: ClusterRole
   name: dell-csm-operator-proxy-role
 subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: dell-csm-operator
+  - kind: ServiceAccount
+    name: default
+    namespace: dell-csm-operator
 ---
 apiVersion: v1
 data:
@@ -1306,10 +1306,10 @@ metadata:
   namespace: dell-csm-operator
 spec:
   ports:
-  - name: https
-    port: 8443
-    protocol: TCP
-    targetPort: https
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: https
   selector:
     control-plane: controller-manager
 ---
@@ -1328,94 +1328,94 @@ spec:
   template:
     metadata:
       annotations:
-        storage.dell.com/CSMVersion: v1.11.0
+        storage.dell.com/CSMVersion: v1.12.0
       labels:
         control-plane: controller-manager
     spec:
       containers:
-      - args:
-        - --leader-elect
-        command:
-        - /manager
-        env:
-        - name: RELATED_IMAGE_dell-csm-operator
-          value: docker.io/dellemc/dell-csm-operator:v1.6.0
-        - name: RELATED_IMAGE_csi-isilon
-          value: docker.io/dellemc/csi-isilon:v2.11.0
-        - name: RELATED_IMAGE_csi-powermax
-          value: docker.io/dellemc/csi-powermax:v2.11.0
-        - name: RELATED_IMAGE_csipowermax-reverseproxy
-          value: docker.io/dellemc/csipowermax-reverseproxy:v2.10.0
-        - name: RELATED_IMAGE_csi-powerstore
-          value: docker.io/dellemc/csi-powerstore:v2.11.0
-        - name: RELATED_IMAGE_csi-unity
-          value: docker.io/dellemc/csi-unity:v2.11.0
-        - name: RELATED_IMAGE_csi-vxflexos
-          value: docker.io/dellemc/csi-vxflexos:v2.11.0
-        - name: RELATED_IMAGE_sdc
-          value: docker.io/dellemc/sdc:4.5.2.1
-        - name: RELATED_IMAGE_karavi-authorization-proxy
-          value: docker.io/dellemc/csm-authorization-sidecar:v1.11.0
-        - name: RELATED_IMAGE_dell-csi-replicator
-          value: docker.io/dellemc/dell-csi-replicator:v1.9.0
-        - name: RELATED_IMAGE_dell-replication-controller-manager
-          value: docker.io/dellemc/dell-replication-controller:v1.9.0
-        - name: RELATED_IMAGE_topology
-          value: docker.io/dellemc/csm-topology:v1.9.0
-        - name: RELATED_IMAGE_otel-collector
-          value: docker.io/otel/opentelemetry-collector:0.42.0
-        - name: RELATED_IMAGE_metrics-powerscale
-          value: docker.io/dellemc/csm-metrics-powerscale:v1.6.0
-        - name: RELATED_IMAGE_metrics-powermax
-          value: docker.io/dellemc/csm-metrics-powermax:v1.4.0
-        - name: RELATED_IMAGE_metrics-powerflex
-          value: docker.io/dellemc/csm-metrics-powerflex:v1.9.0
-        - name: RELATED_IMAGE_podmon-node
-          value: docker.io/dellemc/podmon:v1.10.0
-        - name: RELATED_IMAGE_kube-rbac-proxy
-          value: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-        - name: RELATED_IMAGE_attacher
-          value: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
-        - name: RELATED_IMAGE_provisioner
-          value: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
-        - name: RELATED_IMAGE_snapshotter
-          value: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
-        - name: RELATED_IMAGE_registrar
-          value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
-        - name: RELATED_IMAGE_resizer
-          value: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
-        - name: RELATED_IMAGE_externalhealthmonitorcontroller
-          value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
-        - name: RELATED_IMAGE_metadataretriever
-          value: dellemc/csi-metadata-retriever:v1.8.0
-        - name: RELATED_IMAGE_dell-connectivity-client
-          value: docker.io/dellemc/connectivity-client-docker-k8s:1.19.0
-        - name: RELATED_IMAGE_cert-persister
-          value: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
-        image: docker.io/dellemc/dell-csm-operator:v1.6.0
-        imagePullPolicy: Always
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        name: manager
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        resources:
-          limits:
-            cpu: 200m
-            memory: 512Mi
-          requests:
-            cpu: 100m
-            memory: 192Mi
-        securityContext:
-          allowPrivilegeEscalation: false
+        - args:
+            - --leader-elect
+          command:
+            - /manager
+          env:
+            - name: RELATED_IMAGE_dell-csm-operator
+              value: docker.io/dellemc/dell-csm-operator:v1.7.0
+            - name: RELATED_IMAGE_csi-isilon
+              value: docker.io/dellemc/csi-isilon:v2.12.0
+            - name: RELATED_IMAGE_csi-powermax
+              value: docker.io/dellemc/csi-powermax:v2.12.0
+            - name: RELATED_IMAGE_csipowermax-reverseproxy
+              value: docker.io/dellemc/csipowermax-reverseproxy:v2.11.0
+            - name: RELATED_IMAGE_csi-powerstore
+              value: docker.io/dellemc/csi-powerstore:v2.12.0
+            - name: RELATED_IMAGE_csi-unity
+              value: docker.io/dellemc/csi-unity:v2.12.0
+            - name: RELATED_IMAGE_csi-vxflexos
+              value: docker.io/dellemc/csi-vxflexos:v2.12.0
+            - name: RELATED_IMAGE_sdc
+              value: docker.io/dellemc/sdc:4.5.2.1
+            - name: RELATED_IMAGE_karavi-authorization-proxy
+              value: docker.io/dellemc/csm-authorization-sidecar:v1.12.0
+            - name: RELATED_IMAGE_dell-csi-replicator
+              value: docker.io/dellemc/dell-csi-replicator:v1.12.0
+            - name: RELATED_IMAGE_dell-replication-controller-manager
+              value: docker.io/dellemc/dell-replication-controller:v1.10.0
+            - name: RELATED_IMAGE_topology
+              value: docker.io/dellemc/csm-topology:v1.10.0
+            - name: RELATED_IMAGE_otel-collector
+              value: docker.io/otel/opentelemetry-collector:0.42.0
+            - name: RELATED_IMAGE_metrics-powerscale
+              value: docker.io/dellemc/csm-metrics-powerscale:v1.7.0
+            - name: RELATED_IMAGE_metrics-powermax
+              value: docker.io/dellemc/csm-metrics-powermax:v1.5.0
+            - name: RELATED_IMAGE_metrics-powerflex
+              value: docker.io/dellemc/csm-metrics-powerflex:v1.10.0
+            - name: RELATED_IMAGE_podmon-node
+              value: docker.io/dellemc/podmon:v1.11.0
+            - name: RELATED_IMAGE_kube-rbac-proxy
+              value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
+            - name: RELATED_IMAGE_attacher
+              value: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
+            - name: RELATED_IMAGE_provisioner
+              value: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+            - name: RELATED_IMAGE_snapshotter
+              value: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
+            - name: RELATED_IMAGE_registrar
+              value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+            - name: RELATED_IMAGE_resizer
+              value: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
+            - name: RELATED_IMAGE_externalhealthmonitorcontroller
+              value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
+            - name: RELATED_IMAGE_metadataretriever
+              value: dellemc/csi-metadata-retriever:v1.8.0
+            - name: RELATED_IMAGE_dell-connectivity-client
+              value: docker.io/dellemc/connectivity-client-docker-k8s:1.19.0
+            - name: RELATED_IMAGE_cert-persister
+              value: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
+          image: docker.io/dellemc/dell-csm-operator:v1.7.0
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          name: manager
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: 200m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 192Mi
+          securityContext:
+            allowPrivilegeEscalation: false
       securityContext:
         runAsNonRoot: true
       serviceAccountName: dell-csm-operator-manager-service-account

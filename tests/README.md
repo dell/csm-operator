@@ -29,9 +29,11 @@ The end-to-end tests test the functionality of the operator as a whole by instal
 
 Any time changes made to the operator are being checked into the main branch, sanity tests should be run (they should take 20-30 minutes to complete, the very first run may take a few minutes more). In addition, if you have made any driver- or module-specific changes, (any changes in `pkg/drivers`, `pkg/modules`, `operatorconfig/driverconfig`, `operatorconfig/moduleconfig`, etc), please run the E2E tests specific to these components as well.
 
+**Note :** To run E2E tests with minimal samples, use the `--minimal` flag when executing the `run-e2e-test.sh` script. This will utilize the `scenarios.yaml` file located at `tests/e2e/testfiles/minimal-testfiles/scenarios.yaml`, which contains the paths to the minimal sample test YAMLs.
+
 ## Prerequisites
 
-- A supported environment where the Dell Container Storage Modules Operator.
+- A supported environment where the Dell Container Storage Modules Operator is installed
 - Fill in the `array-info.sh` environment variables (more info below).
 - The following namespaces need to be created beforehand:
   - `dell`
@@ -40,7 +42,14 @@ Any time changes made to the operator are being checked into the main branch, sa
   - `proxy-ns`
   - (if running sanity, powerflex, or modules suites) `test-vxflexos`
   - (if running sanity, powerscale, or modules suites) `isilon`
+  - (if running unity suite) `unity`
 - For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
+- Cert-CSI needs to be installed  
+  - See [here](https://dell.github.io/csm-docs/docs/support/cert-csi/#download-release-linux) for instructions 
+- Dellctl needs to be installed
+  - See [here](https://dell.github.io/csm-docs/docs/support/cli/#installation-instructions) for instructions
+- Karavictl needs to be installed
+  - See [here](https://dell.github.io/csm-docs/docs/deployment/helm/modules/installation/authorization/#install-karavictl) for instructions 
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
 
@@ -51,7 +60,7 @@ go get github.com/onsi/gomega/...
 
 ### Array Information
 
-For PowerFlex, PowerScale, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
+For PowerFlex, Unity, PowerScale, PowerStore, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.sh so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
 
 Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
 
@@ -71,6 +80,7 @@ If running the Authorization proxy server e2e tests, further setup must be done:
 
 - have a vault server running configured with the authorization namespace. This is documented in the CSM documentation.
 - update V2 CRs with vault address.
+- the scenario "Install Authorization Proxy Server V2 With Multiple Vaults" requires 2 separate vault instances to be running.
 
 Notes:
   - Authorization V1 scenarios support PowerFlex and PowerScale

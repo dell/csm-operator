@@ -21,6 +21,14 @@ export GO111MODULE=on
 export ACK_GINKGO_RC=true
 export PROG="${0}"
 
+# Start with all modules false, they can be enabled by command line arguments 
+export AUTHORIZATION=false
+export AUTHORIZATIONPROXYSERVER=false
+export REPLICATION=false
+export OBSERVABILITY=false
+export RESILIENCY=false
+export APPLICATIONMOBILITY=false
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -149,12 +157,14 @@ function usage() {
   echo "  --auth-proxy                                 use to run e2e auth-proxy suite"
   echo "  --resiliency                                 use to run e2e resiliency suite"
   echo "  --app-mobility                               use to run e2e application-mobility suite"
+  echo "  --no-modules                                 use to run e2e suite without any modules"
   echo "  --pflex                                      use to run e2e powerflex suite"
   echo "  --pscale                                     use to run e2e powerscale suite"
   echo "  --pstore                                     use to run e2e powerstore suite"
   echo "  --unity                                      use to run e2e unity suite"
   echo "  --pmax                                       use to run e2e powermax suite"
   echo "  --client                                     use to run e2e connectivity client suite"
+  echo "  --minimal                                    use minimal testfiles scenarios"
   echo
 
   exit 0
@@ -183,6 +193,15 @@ while getopts ":h-:" optchar; do
       export APPLICATIONMOBILITY=true ;;
     pflex)
       export POWERFLEX=true ;;
+    no-modules)
+      export NOMODULES=true 
+      export AUTHORIZATION=false
+      export AUTHORIZATIONPROXYSERVER=false
+      export REPLICATION=false
+      export OBSERVABILITY=false
+      export RESILIENCY=false
+      export APPLICATIONMOBILITY=false 
+      ;;
     pscale)
       export POWERSCALE=true ;;
     pstore)
@@ -228,6 +247,9 @@ while getopts ":h-:" optchar; do
     scenarios=*)
       SCENARIOS=${OPTARG#*=}
       ;;
+    minimal)
+      export E2E_SCENARIOS_FILE=testfiles/minimal-testfiles/scenarios.yaml
+      ;;
     *)
       echo "Unknown option -${OPTARG}"
       echo "For help, run $PROG -h"
@@ -253,10 +275,12 @@ getArrayInfo
 checkForScenariosFile
 checkForCertCsi
 checkForKaravictl
-if [ -v APPLICATIONMOBILITY ]; then
+if [[ $APPLICATIONMOBILITY == "true" ]]; then
+  echo "Checking for dellctl - APPLICATIONMOBILITY"
   checkForDellctl
 fi
-if [ -v AUTHORIZATIONPROXYSERVER ]; then
+if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
+  echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
   checkForDellctl
 fi
 checkForGinkgo
