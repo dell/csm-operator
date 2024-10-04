@@ -186,8 +186,6 @@ func main() {
 
 	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
 
-	logType := logger.DevelopmentLogLevel
-	logger.SetLoggerLevel(logType)
 	_, log := logger.GetNewContextWithLogger("main")
 
 	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))

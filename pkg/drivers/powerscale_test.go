@@ -24,11 +24,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 var (
-	csmPScale                = csmWithTolerations(csmv1.PowerScaleName, "shared.ConfigVersion")
 	powerScaleCSM            = csmForPowerScale()
 	powerScaleCSMBadSkipCert = csmForPowerScaleBadSkipCert()
 	powerScaleCSMBadCertCnt  = csmForPowerScaleBadCertCnt()
@@ -68,10 +66,6 @@ var (
 		{"missing secret", powerScaleCSM, powerScaleClient, powerScaleSecret, "failed to find secret"},
 		{"bad version", powerScaleCSMBadVersion, powerScaleClient, powerScaleSecret, "not supported"},
 	}
-
-	opts = zap.Options{
-		Development: true,
-	}
 )
 
 func TestGetApplyCertVolume(t *testing.T) {
@@ -101,7 +95,10 @@ func TestPrecheckPowerScale(t *testing.T) {
 	}
 
 	for _, tt := range powerScaleTests {
-		tt.ct.Create(ctx, tt.sec)
+		err := tt.ct.Create(ctx, tt.sec)
+		if err != nil {
+			assert.Nil(t, err)
+		}
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
 			err := PrecheckPowerScale(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
