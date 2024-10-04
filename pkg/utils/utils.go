@@ -1113,6 +1113,32 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 	return false
 }
 
+// HasModuleComponent - check if module component is present
+func HasModuleComponent(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+	moduleEnabled, module := IsModuleEnabled(ctx, instance, mod)
+	if !moduleEnabled {
+		return false
+	}
+
+	for _, c := range module.Components {
+		if c.Name == componentType {
+			return true
+		}
+	}
+
+	return false
+}
+
+// AddModuleComponent - add a module component in the cr
+func AddModuleComponent(ctx context.Context, instance *csmv1.ContainerStorageModule, mod csmv1.ModuleType, component csmv1.ContainerTemplate) {
+	for _, m := range instance.Spec.Modules {
+		if m.Name == mod {
+			m.Components = append(m.Components, component)
+
+		}
+	}
+}
+
 // IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
 func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, _ ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
 	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)

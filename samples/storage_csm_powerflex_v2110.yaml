@@ -205,16 +205,12 @@ spec:
       components:
         - name: topology
           enabled: true
-         
         - name: otel-collector
           enabled: true
-        
         - name: cert-manager
-          enabled: true
-          
+          enabled: false
         - name: metrics-powerflex
           enabled: true
-         
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication

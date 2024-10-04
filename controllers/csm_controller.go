@@ -740,6 +740,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return nil
 	}
 
+	// Set default components for observability if using miminal manifest (without components)
+	if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Observability); observabilityEnabled {
+		err = modules.LoadDefaultObservabilityComponents(ctx, &cr, operatorConfig)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = r.oldStandAloneModuleCleanup(ctx, &cr, operatorConfig, driverConfig)
 	if err != nil {
 		return err
