@@ -44,13 +44,6 @@ var checkModuleStatus = map[csmv1.ModuleType]func(context.Context, *csmv1.Contai
 	csmv1.AuthorizationServer: authProxyStatusCheck,
 }
 
-func getInt32(pointer *int32) int32 {
-	if pointer == nil {
-		return 0
-	}
-	return *pointer
-}
-
 // calculates deployment state of drivers only; module deployment status will be checked in checkModuleStatus
 func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM) (csmv1.PodStatus, error) {
 	log := logger.GetLogger(ctx)

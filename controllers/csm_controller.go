@@ -240,7 +240,7 @@ var (
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 
 // Reconcile - main loop
-func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ContainerStorageModuleReconciler) Reconcile(ctxNotUsed context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.IncrUpdateCount()
 	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcID
@@ -1340,12 +1340,16 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		log.Infow("Driver not installed yet")
 	} else {
 		if driver.GetOwnerReferences() != nil {
+			found := false
 			cred := driver.GetOwnerReferences()
 			for _, m := range cred {
 				if m.Name == cr.Name {
 					log.Infow("Owner reference is found and matches")
+					found = true
 					break
 				}
+			}
+			if !found {
 				return fmt.Errorf("required Owner reference not found. Please re-install driver ")
 			}
 		}
