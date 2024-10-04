@@ -1263,26 +1263,6 @@ func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	return namespaces, nil
 }
 
-// 2nd parameter is an ApexCC cr
-// CreateBrownfieldRbac creates the role and rolebindings
-/*
-func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client, isDeleting bool) error {
-	logInstance := logger.GetLogger(ctx)
-	csmList := &csmv1.ContainerStorageModuleList{}
-	err := ctrlClient.List(ctx, csmList)
-	if err == nil && len(csmList.Items) > 0 {
-		logInstance.Info("Found existing csm installations. Proceeding to create role/rolebindings")
-		clientNameSpace := cr.Namespace
-		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
-		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNameSpace, ctrlClient, isDeleting); err != nil {
-			logInstance.Error(err, "error creating role/rolebindings")
-			return err
-		}
-	}
-	return nil
-}
-*/
-
 func GetLatestVersion(resourceType string, op OperatorConfig) (string, error) {
 	path := ""
 	switch resourceType {
