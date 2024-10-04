@@ -43,6 +43,8 @@ Any time changes made to the operator are being checked into the main branch, sa
   - (if running sanity, powerflex, or modules suites) `test-vxflexos`
   - (if running sanity, powerscale, or modules suites) `isilon`
   - (if running unity suite) `unity`
+  - (if running powermax e2e tests) `powermax`
+  - (if running powerstore e2e tests) `powerstore`
 - For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
 - Cert-CSI needs to be installed  
   - See [here](https://dell.github.io/csm-docs/docs/support/cert-csi/#download-release-linux) for instructions 
