@@ -101,7 +101,7 @@ spec:
             - name: X_CSI_POWERMAX_ENDPOINT
               value: "<X_CSI_POWERMAX_ENDPOINT>"
             - name: X_CSI_K8S_CLUSTER_PREFIX
-              value: "<X_CSI_K8S_CLUSTER_PREFIX>"
+              value: "CSM"
             - name: X_CSI_MODE
               value: node
             - name: X_CSI_PRIVATE_MOUNT_DIR
