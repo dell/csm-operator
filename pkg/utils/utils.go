@@ -160,6 +160,8 @@ const (
 	ClientNamespace = "<ClientNameSpace>"
 	// BrownfieldManifest - brownfield-onboard.yaml
 	BrownfieldManifest = "brownfield-onboard.yaml"
+	// DefaultInterfaceNames - worker interface names for NFS
+	DefaultInterfaceNames="<DriverInterfaceNames>"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -360,6 +362,14 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 			break
 		}
 	}
+
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == "INTERFACE_NAMES" {
+			YamlString = strings.ReplaceAll(YamlString, DefaultInterfaceNames, env.Value)
+			break
+		}
+	}
+
 	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
 	return YamlString
 }
