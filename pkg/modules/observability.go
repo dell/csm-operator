@@ -11,8 +11,6 @@ package modules
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -192,8 +190,6 @@ const (
 
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	CSMNameSpace string = "<CSM_NAMESPACE>"
-
-	csiDriverType = "<CSI_DRIVER_TYPE>"
 )
 
 // ComponentNameToSecretPrefix - map from component name to secret prefix
@@ -1105,43 +1101,4 @@ func getPowerMaxMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorage
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, revproxyConfigMap)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
 	return YamlString, nil
-}
-
-func LoadDefaultObservabilityComponents(ctx context.Context, cr *csmv1.ContainerStorageModule, op utils.OperatorConfig) error {
-	log := logger.GetLogger(ctx)
-	defaultComps, err := getDefaultObservabilityComponents(cr.GetDriverType(), op)
-	if err != nil {
-		return fmt.Errorf("failed to get default components for observability: %s", err.Error())
-	}
-
-	for _, comp := range defaultComps {
-		if !utils.HasModuleComponent(ctx, *cr, csmv1.Observability, comp.Name) {
-			log.Infow("Adding default component : %s", comp.Name)
-			utils.AddModuleComponent(ctx, cr, csmv1.Observability, comp)
-		}
-	}
-
-	return nil
-}
-
-func getDefaultObservabilityComponents(driverType csmv1.DriverType, op utils.OperatorConfig) ([]csmv1.ContainerTemplate, error) {
-	file := fmt.Sprintf("%s/moduleconfig/observability/default-components.yaml", op.ConfigDirectory)
-	buf, err := os.ReadFile(filepath.Clean(file))
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file %s err: %s", file, err.Error())
-	}
-
-	defaultCsm := new(csmv1.ContainerStorageModule)
-	err = yaml.Unmarshal(buf, &defaultCsm)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal default-components.yaml for observability: %s", err.Error())
-	}
-
-	defaultComps := defaultCsm.GetModule(csmv1.Observability).Components
-	for _, comp := range defaultComps {
-		if strings.HasSuffix(comp.Name, "metrics") {
-			comp.Name = strings.ReplaceAll(comp.Name, csiDriverType, string(driverType))
-		}
-	}
-	return defaultComps, nil
 }

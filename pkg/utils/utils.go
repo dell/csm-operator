@@ -1359,3 +1359,47 @@ func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr
 	}
 	return nil
 }
+
+func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) error {
+	log := logger.GetLogger(ctx)
+	modules := []csmv1.ModuleType{csmv1.Observability}
+	for _, module := range modules {
+		defaultComps, err := getDefaultComponents(cr.GetDriverType(), module, op)
+		if err != nil {
+			return fmt.Errorf("failed to get default components for %s: %s", module, err.Error())
+		}
+
+		for _, comp := range defaultComps {
+			if !HasModuleComponent(ctx, *cr, csmv1.Observability, comp.Name) {
+				log.Infow("Adding default component %s for %s", comp.Name, module)
+				AddModuleComponent(ctx, cr, csmv1.Observability, comp)
+			}
+		}
+	}
+
+	return nil
+}
+
+func getDefaultComponents(driverType csmv1.DriverType, module csmv1.ModuleType, op OperatorConfig) ([]csmv1.ContainerTemplate, error) {
+	file := fmt.Sprintf("%s/moduleconfig/%s/default-components.yaml", module, op.ConfigDirectory)
+	buf, err := os.ReadFile(filepath.Clean(file))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file %s: %s", file, err.Error())
+	}
+
+	defaultCsm := new(csmv1.ContainerStorageModule)
+	err = yaml.Unmarshal(buf, &defaultCsm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal default-components.yaml for observability: %s", err.Error())
+	}
+
+	defaultComps := defaultCsm.GetModule(module).Components
+	if module == csmv1.Observability {
+		for _, comp := range defaultComps {
+			if strings.HasSuffix(comp.Name, "metrics") {
+				comp.Name = strings.ReplaceAll(comp.Name, "<CSI_DRIVER_TYPE>", string(driverType))
+			}
+		}
+	}
+	return defaultComps, nil
+}
