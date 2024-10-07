@@ -7,3 +7,6 @@ data:
   driver-config-params.yaml: |-
     CSI_LOG_LEVEL: debug
     CSI_LOG_FORMAT: TEXT
+
+    interfaceNames:
+      <DriverInterfaceNames>

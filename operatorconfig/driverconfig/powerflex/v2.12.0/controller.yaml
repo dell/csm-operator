@@ -75,7 +75,7 @@ rules:
   - apiGroups: [""]
     resources: ["namespaces"]
     verbs: ["create", "get", "list", "watch"]
-  # Permissions for NFS
+  # Permissions for configmaps needed by NFS without SDC
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["get", "update"]
