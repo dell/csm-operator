@@ -96,7 +96,7 @@ spec:
       serviceAccount: karavi-observability-topology-controller
       containers:
         - name: karavi-topology
-          image: dellemc/csm-topology:v1.9.1
+          image: dellemc/csm-topology:v1.9.0
           resources: {}
           env:
             - name: PORT

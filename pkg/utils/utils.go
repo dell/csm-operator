@@ -1131,9 +1131,9 @@ func HasModuleComponent(ctx context.Context, instance csmv1.ContainerStorageModu
 
 // AddModuleComponent - add a module component in the cr
 func AddModuleComponent(ctx context.Context, instance *csmv1.ContainerStorageModule, mod csmv1.ModuleType, component csmv1.ContainerTemplate) {
-	for _, m := range instance.Spec.Modules {
-		if m.Name == mod {
-			m.Components = append(m.Components, component)
+	for i := range instance.Spec.Modules {
+		if instance.Spec.Modules[i].Name == mod {
+			instance.Spec.Modules[i].Components = append(instance.Spec.Modules[i].Components, component)
 
 		}
 	}
@@ -1371,7 +1371,7 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 
 		for _, comp := range defaultComps {
 			if !HasModuleComponent(ctx, *cr, csmv1.Observability, comp.Name) {
-				log.Infow("Adding default component %s for %s", comp.Name, module)
+				log.Infow(fmt.Sprintf("Adding default component %s for %s ", comp.Name, module))
 				AddModuleComponent(ctx, cr, csmv1.Observability, comp)
 			}
 		}
@@ -1398,9 +1398,9 @@ func getDefaultComponents(driverType csmv1.DriverType, module csmv1.ModuleType, 
 		if driverType == csmv1.PowerScale {
 			driverType = csmv1.PowerScaleName
 		}
-		for _, comp := range defaultComps {
-			if strings.HasSuffix(comp.Name, "metrics") {
-				comp.Name = strings.ReplaceAll(comp.Name, "<CSI_DRIVER_TYPE>", string(driverType))
+		for i := range defaultComps {
+			if strings.HasPrefix(defaultComps[i].Name, "metrics") {
+				defaultComps[i].Name = strings.ReplaceAll(defaultComps[i].Name, "<CSI_DRIVER_TYPE>", string(driverType))
 			}
 		}
 	}
