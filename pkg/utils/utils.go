@@ -1381,7 +1381,7 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 }
 
 func getDefaultComponents(driverType csmv1.DriverType, module csmv1.ModuleType, op OperatorConfig) ([]csmv1.ContainerTemplate, error) {
-	file := fmt.Sprintf("%s/moduleconfig/%s/default-components.yaml", module, op.ConfigDirectory)
+	file := fmt.Sprintf("%s/moduleconfig/%s/default-components.yaml", op.ConfigDirectory, module)
 	buf, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %s", file, err.Error())
@@ -1390,7 +1390,7 @@ func getDefaultComponents(driverType csmv1.DriverType, module csmv1.ModuleType, 
 	defaultCsm := new(csmv1.ContainerStorageModule)
 	err = yaml.Unmarshal(buf, &defaultCsm)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal default-components.yaml for observability: %s", err.Error())
+		return nil, fmt.Errorf("failed to unmarshal default-components.yaml for %s: %s", module, err.Error())
 	}
 
 	defaultComps := defaultCsm.GetModule(module).Components
