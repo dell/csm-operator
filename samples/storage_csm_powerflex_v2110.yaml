@@ -201,7 +201,6 @@ spec:
     # observability: allows to configure observability
     - name: observability
       enabled: true
-      configVersion: v1.9.0
       components:
         - name: topology
           enabled: true

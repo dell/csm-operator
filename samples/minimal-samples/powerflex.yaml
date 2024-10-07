@@ -7,3 +7,15 @@ spec:
   driver:
     csiDriverType: "powerflex"
     configVersion: v2.11.0
+  modules:
+    - name: observability
+      enabled: true
+      components:
+        - name: topology
+          enabled: true
+        - name: otel-collector
+          enabled: true
+        - name: cert-manager
+          enabled: false
+        - name: metrics-powerflex
+          enabled: true

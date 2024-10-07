@@ -1395,6 +1395,9 @@ func getDefaultComponents(driverType csmv1.DriverType, module csmv1.ModuleType, 
 
 	defaultComps := defaultCsm.GetModule(module).Components
 	if module == csmv1.Observability {
+		if driverType == csmv1.PowerScale {
+			driverType = csmv1.PowerScaleName
+		}
 		for _, comp := range defaultComps {
 			if strings.HasSuffix(comp.Name, "metrics") {
 				comp.Name = strings.ReplaceAll(comp.Name, "<CSI_DRIVER_TYPE>", string(driverType))
