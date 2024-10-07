@@ -74,6 +74,29 @@
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
 
+- scenario: "Install Unity Driver(Standalone)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_unity.yaml"
+  tags:
+    - "unity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-unity] and template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
+    - "Set up secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [unity] driver from CR [1] is installed"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/unity-templates/unity-secret-template.yaml] for [unity]"
+    - "Restore template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
+  customTest:
+    name: Cert CSI
+    run:
+      - cert-csi test vio --sc op-e2e-unity --chainNumber 2 --chainLength 2
+
 - scenario: "Install PowerFlex Driver(Standalone)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
