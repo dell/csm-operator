@@ -65,7 +65,7 @@
 
 - scenario: "Install Authorization Proxy Server V2 alpha With Default Redis Storage Class"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server_default_redis.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_default_redis.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_alpha_crds.yaml"
   tags:
     - "authorizationproxyserver"
@@ -817,7 +817,7 @@
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    # - "powerflex"
+    - "powerflex"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -850,7 +850,7 @@
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 - scenario: "Install PowerScale Driver (With Authorization V2)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
   tags:
@@ -886,7 +886,7 @@
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 - scenario: "Install PowerScale Driver(With Authorization V2 and Observability)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
   tags:
@@ -925,7 +925,7 @@
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 - scenario: Install PowerScale Driver(With Authorization V2 and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
   tags:
@@ -1013,7 +1013,7 @@
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-- scenario: "Install PowerFlex Driver , Downgrade driver to supported version"
+- scenario: "Install PowerFlex Driver, Downgrade driver to supported version"
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
     - "testfiles/storage_csm_powerflex_downgrade.yaml"
@@ -1039,7 +1039,7 @@
     - "Delete custom resource [2]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-- scenario: "Install PowerFlex Driver(With Observability)"
+- scenario: "Install PowerFlex Driver (With Observability)"
   paths:
     - "testfiles/storage_csm_powerflex_observability.yaml"
   tags:
@@ -1096,7 +1096,7 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-- scenario: "Install PowerFlex Driver(Standalone), Enable/Disable Observability"
+- scenario: "Install PowerFlex Driver (Standalone), Enable/Disable Observability"
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
@@ -1121,7 +1121,7 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-- scenario: "Install Powerflex Driver(With Replication)"
+- scenario: "Install Powerflex Driver (With Replication)"
   paths:
     - "testfiles/storage_csm_powerflex_replica.yaml"
   tags:
@@ -1145,7 +1145,7 @@
     name: HelloWorld
     run:
       - echo "no current test implemented for replication"
-- scenario: "Install Powerflex Driver(Standalone), Enable/Disable Replication"
+- scenario: "Install Powerflex Driver (Standalone), Enable/Disable Replication"
   paths:
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
@@ -1176,7 +1176,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    # - "powerflex"
+    - "powerflex"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1217,7 +1217,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    # - "powerflex"
+    - "powerflex"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1300,6 +1300,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is installed"
@@ -1307,6 +1308,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
   customTest:
     name: CustomTest
     run:
@@ -1319,6 +1321,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -1332,6 +1335,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
 - scenario: "Install PowerScale Driver(With Resiliency)"
   paths:
     - "testfiles/storage_csm_powerscale_resiliency.yaml"
@@ -1789,7 +1793,7 @@
 
 - scenario: "Install Powermax Driver (With Authorization v2)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
     - "testfiles/storage_csm_powermax_authorization.yaml"
   tags:
@@ -1831,7 +1835,7 @@
 
 - scenario: "Install Powermax Driver (With Authorization v2 and Observability)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
     - "testfiles/storage_csm_powermax_observability_authorization.yaml"
   tags:
