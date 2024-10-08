@@ -9,13 +9,13 @@ spec:
     configVersion: v2.12.0
     forceRemoveDriver: true
 # These are the modules which are optional and can be enabled by specifying to enable/disable.
-#  modules:
-#    - name: authorization
-#      # enable: Enable/Disable csm-authorization
-#      enabled: false
-#      # For Auth 2.0, use v2.0.0 as configVersion
-#      configVersion: v1.11.0
-#    - name: resiliency
-#      enabled: false
-#    - name: replication
-#      enabled: false
+  modules:
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      # For Auth 2.0, use v2.0.0 as configVersion
+      configVersion: v1.11.0
+    - name: resiliency
+      enabled: false
+    - name: replication
+      enabled: false
