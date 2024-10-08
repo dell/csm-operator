@@ -922,6 +922,20 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 
 func getClusterIDs(replica csmv1.Module) ([]string, error) {
 	var clusterIDs []string
+	if replica.Components == nil {
+		// if we are entering this block then it is a minimal yaml and replication is enabled and we will set default cluster as self
+		components := make([]csmv1.ContainerTemplate, 0)
+		components = append(components, csmv1.ContainerTemplate{
+			Name: ReplicationControllerManager,
+		})
+		replica.Components = components
+
+		replica.Components[0].Envs = append(replica.Components[0].Envs, corev1.EnvVar{
+			Name:  "TARGET_CLUSTERS_IDS",
+			Value: "self", //defaults to same cluster for the replication
+		})
+
+	}
 	for _, comp := range replica.Components {
 		if comp.Name == ReplicationControllerManager {
 			for _, env := range comp.Envs {
