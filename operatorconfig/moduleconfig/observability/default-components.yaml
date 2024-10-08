@@ -1,3 +1,4 @@
+---
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 spec:
