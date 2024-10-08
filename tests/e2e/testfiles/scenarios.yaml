@@ -199,16 +199,19 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
+    - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
     - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
   customTest:
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - cert-csi test ephemeral-volume --driver csi-isilon.dellemc.com --attr testfiles/powerscale-templates/ephemeral.properties
 - scenario: "Install PowerScale Driver with first alternate sample file"
   paths:
     - "testfiles/storage_csm_powerscale_alt_vals_1.yaml"
@@ -647,16 +650,19 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
+    - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
     - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
   customTest:
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+      - cert-csi test ephemeral-volume --driver csi-vxflexos.dellemc.com --attr testfiles/powerflex-templates/ephemeral.properties
 - scenario: "Install PowerFlex Driver with first set of alternate values"
   paths:
     - "testfiles/storage_csm_powerflex_alt_vals_1.yaml"
