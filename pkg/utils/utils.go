@@ -1153,7 +1153,6 @@ func AddModuleComponent(instance *csmv1.ContainerStorageModule, mod csmv1.Module
 	for i := range instance.Spec.Modules {
 		if instance.Spec.Modules[i].Name == mod {
 			instance.Spec.Modules[i].Components = append(instance.Spec.Modules[i].Components, component)
-
 		}
 	}
 }
