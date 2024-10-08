@@ -355,6 +355,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Leader Election"
 	LeaderElection bool `json:"leaderElection,omitempty" yaml:"leaderElection,omitempty"`
 
+	// OpenTelemetryCollectorAddress is the address of the OTLP receiving endpoint using gRPC
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="OpenTelemetry Collector Address of the OTLP endpoint using gRPC"
+	OpenTelemetryCollectorAddress string `json:"openTelemetryCollectorAddress,omitempty" yaml:"openTelemetryCollectorAddress,omitempty"`
+
 	// The interval which the reconcile of each controller is run
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Controller Reconcile Interval"
 	ControllerReconcileInterval string `json:"controllerReconcileInterval,omitempty" yaml:"controllerReconcileInterval,omitempty"`

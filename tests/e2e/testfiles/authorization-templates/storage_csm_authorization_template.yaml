@@ -1,18 +1,18 @@
 apiVersion: csm-authorization.storage.dell.com/v1
 kind: Storage
 metadata:
-  name: "REPLACE_STORAGE_NAME"
+  name: REPLACE_STORAGE_NAME
 spec:
-  type: "REPLACE_STORAGE_TYPE"
-  endpoint: "https://REPLACE_ENDPOINT"
+  type: REPLACE_STORAGE_TYPE
+  endpoint: https://REPLACE_ENDPOINT
   systemID: "REPLACE_SYSTEM_ID"
   vault:
     identifier: vault0
     kvEngine: secret
-    path: "REPLACE_VAULT_STORAGE_PATH"
+    path: REPLACE_VAULT_STORAGE_PATH
   skipCertificateValidation: true
   pollInterval: 30s
-  isiPath: "REPLACE_STORAGE_POOL_PATH"
+  isiPath: REPLACE_STORAGE_POOL_PATH
 ---
 apiVersion: csm-authorization.storage.dell.com/v1
 kind: CSMRole
@@ -23,12 +23,12 @@ metadata:
     app.kubernetes.io/part-of: csm-authorization
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: csm-authorization
-  name: "REPLACE_ROLE_NAME"
+  name: REPLACE_ROLE_NAME
 spec:
-  quota: "REPLACE_QUOTA"
+  quota: REPLACE_QUOTA
   systemID: "REPLACE_SYSTEM_ID"
-  systemType: "REPLACE_STORAGE_TYPE"
-  pool: "REPLACE_STORAGE_POOL_PATH"
+  systemType: REPLACE_STORAGE_TYPE
+  pool: REPLACE_STORAGE_POOL_PATH
 ---
 apiVersion: csm-authorization.storage.dell.com/v1
 kind: CSMTenant
@@ -39,12 +39,12 @@ metadata:
     app.kubernetes.io/part-of: csm-authorization
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: csm-authorization
-  name: "REPLACE_TENANT_NAME"
+  name: REPLACE_TENANT_NAME
 spec:
   # TODO(user): Add fields here
-  roles: "REPLACE_TENANT_ROLES"
+  roles: REPLACE_TENANT_ROLES
   approveSdc: false
   revoke: false
   # This prefix is added for each new volume provisioned by the tenant.
   # It should not exceed 3 characters. Example: tn1
-  volumePrefix: "REPLACE_TENANT_VOLUME_PREFIX"
+  volumePrefix: REPLACE_TENANT_VOLUME_PREFIX

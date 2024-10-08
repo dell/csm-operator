@@ -66,6 +66,8 @@ spec:
 
               # additional annotations for the proxy-server ingress
               annotations: {}
+          # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
+          openTelemetryCollectorAddress: ""
         - name: redis
           redis: redis:7.4.0-alpine
           commander: rediscommander/redis-commander:latest

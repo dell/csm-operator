@@ -51,11 +51,11 @@ var (
 	authString             = "karavi-authorization-proxy"
 	operatorNamespace      = "dell-csm-operator"
 	quotaLimit             = "30000000"
-	pflexSecretMap         = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL"}
+	pflexSecretMap         = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS"}
 	pflexAuthSecretMap     = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
-	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
-	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
-	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_PORT": "PSCALE_AUTH_PORT"}
+	pscaleSecretMap        = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
+	pscaleAuthSecretMap    = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
+	pscaleAuthSidecarMap   = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
 	pflexAuthSidecarMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	pmaxCredMap            = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
 	pmaxAuthSidecarMap     = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
@@ -63,11 +63,11 @@ var (
 	pmaxReverseProxyMap    = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
 	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
+	pmaxArrayConfigMap     = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	// Auth V2
-	pflexCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
-
-	// Auth V2
+	pflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
 	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
+	pmaxCrMap   = map[string]string{"REPLACE_STORAGE_NAME": "PMAX_STORAGE", "REPLACE_STORAGE_TYPE": "PMAX_STORAGE", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_SYSTEM_ID": "PMAX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PMAX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PMAX_ROLE", "REPLACE_QUOTA": "PMAX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PMAX_POOL_V2", "REPLACE_TENANT_NAME": "PMAX_TENANT", "REPLACE_TENANT_ROLES": "PMAX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PMAX_TENANT_PREFIX"}
 
 	pstoreSecretMap = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT"}
 	unitySecretMap  = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
@@ -342,7 +342,7 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -360,13 +360,13 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
@@ -393,7 +393,7 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(60 * time.Second)
+	time.Sleep(10 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -438,7 +438,7 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(60 * time.Second)
+	time.Sleep(10 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -832,6 +832,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pmaxCredMap
 	} else if crType == "pmaxReverseProxy" {
 		mapValues = pmaxReverseProxyMap
+	} else if crType == "pmaxArrayConfig" {
+		mapValues = pmaxArrayConfigMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
@@ -840,6 +842,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pflexCrMap
 	} else if crType == "pscaleAuthCRs" {
 		mapValues = pscaleCrMap
+	} else if crType == "pmaxAuthCRs" {
+		mapValues = pmaxCrMap
 	} else if crType == "pstore" {
 		mapValues = pstoreSecretMap
 	} else if crType == "unity" {
@@ -905,7 +909,7 @@ func (step *Step) runCustomTest(res Resource) error {
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(60 * time.Second)
+	time.Sleep(15 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -1319,6 +1323,16 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// get env variables
 	if os.Getenv(endpointvar) != "" {
 		endpoint = os.Getenv(endpointvar)
+
+		if driver == "powerscale" {
+			port := os.Getenv("PSCALE_PORT")
+			if port == "" {
+				fmt.Println("=== PSCALE_PORT not set, using default port 8080 ===")
+				port = "8080"
+			}
+
+			endpoint = endpoint + ":" + port
+		}
 	}
 	if os.Getenv(systemIdvar) != "" {
 		sysID = os.Getenv(systemIdvar)
@@ -1430,7 +1444,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"generate", "token",
 		"--tenant", tenantName,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-		"--access-token-expiration", fmt.Sprint(10*time.Minute),
+		"--access-token-expiration", fmt.Sprint(2*time.Hour),
 	)
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
@@ -1473,10 +1487,13 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 
 	if driver == "powerflex" {
 		crMap = "pflexAuthCRs"
-		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerflex.yaml"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
 	} else if driver == "powerscale" {
 		crMap = "pscaleAuthCRs"
-		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerscale.yaml"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
+	} else if driver == "powermax" {
+		crMap = "pmaxAuthCRs"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
 	}
 
 	copyFile := exec.Command("cp", templateFile, updatedTemplateFile)
@@ -1513,7 +1530,19 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), updatedTemplateFile)
+		val := os.Getenv(mapValues[key])
+		if driver == "powerscale" && key == "REPLACE_ENDPOINT" {
+			fmt.Println("Replacing PowerScale Endpoint and adding port...")
+
+			port := os.Getenv(mapValues["REPLACE_PORT"])
+			if port == "" {
+				port = "8080"
+			}
+
+			val = val + ":" + port
+		}
+
+		err := replaceInFile(key, val, updatedTemplateFile)
 		if err != nil {
 			return err
 		}
@@ -1526,6 +1555,9 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	if err != nil && !strings.Contains(string(b), "is already registered") {
 		return fmt.Errorf("failed to create resources for %s: %v\nErrMessage:\n%s", storageType, err, string(b))
 	}
+
+	fmt.Println("Waiting 5 seconds before generating token.")
+	time.Sleep(5 * time.Second)
 
 	// Generate tenant token
 	fmt.Println("=== Generating token ===\n ")
@@ -1589,18 +1621,6 @@ func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) e
 
 	if !presentInNode || !presentInController {
 		return fmt.Errorf("podmon container not found either in controller or node pod")
-	}
-
-	// validating args & env presence for powerstore & powerscale
-	driverType := cr.Spec.Driver.CSIDriverType
-
-	if driverType == csmv1.PowerScaleName || driverType == csmv1.PowerStore || driverType == csmv1.PowerScale {
-		if err := modules.CheckApplyContainersResiliency(dpApply.Spec.Template.Spec.Containers, cr); err != nil {
-			return err
-		}
-		if err := modules.CheckApplyContainersResiliency(dsApply.Spec.Template.Spec.Containers, cr); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -1845,9 +1865,11 @@ func (step *Step) validateCustomResourceDefinition(res Resource, crdName string)
 func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 	updatedTemplateFile := ""
 	if driver == "powerflex" {
-		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerflex.yaml"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
 	} else if driver == "powerscale" {
-		updatedTemplateFile = "testfiles/authorization-templates/csm-authorization-crs-powerscale.yaml"
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
+	} else if driver == "powermax" {
+		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
 	}
 
 	cmd := exec.Command("kubectl", "delete", "-f", updatedTemplateFile)

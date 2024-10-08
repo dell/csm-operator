@@ -6,7 +6,6 @@ on:
     branches: ["**"]
 
 jobs:
-
   # golang static analysis checks
   go-static-analysis:
     uses: dell/common-github-actions/.github/workflows/go-static-analysis.yaml@main
