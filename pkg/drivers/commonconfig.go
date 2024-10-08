@@ -520,6 +520,10 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		return nil, err
 	}
 
+	if configMap.Data != nil {
+		cmValue = configMap.Data["driver-config-params.yaml"]
+	}
+
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "CSI_LOG_LEVEL" {
 			cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)

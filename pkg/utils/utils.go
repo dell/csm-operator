@@ -161,7 +161,7 @@ const (
 	// BrownfieldManifest - brownfield-onboard.yaml
 	BrownfieldManifest = "brownfield-onboard.yaml"
 	// DefaultInterfaceNames - worker interface names for NFS
-	DefaultInterfaceNames="<DriverInterfaceNames>"
+	DefaultInterfaceNames = "<DriverInterfaceNames>"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
