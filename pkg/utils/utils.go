@@ -932,7 +932,7 @@ func getClusterIDs(replica csmv1.Module) ([]string, error) {
 
 		replica.Components[0].Envs = append(replica.Components[0].Envs, corev1.EnvVar{
 			Name:  "TARGET_CLUSTERS_IDS",
-			Value: "self", //defaults to same cluster for the replication
+			Value: "self", // defaults to same cluster for the replication
 		})
 
 	}
