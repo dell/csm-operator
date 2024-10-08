@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.0.0-alpha
+      configVersion: v2.0.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -30,17 +30,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: dellemc/csm-authorization-proxy:v2.0.0-alpha
+          proxyService: dellemc/csm-authorization-proxy:v2.0.0
           proxyServiceReplicas: 1
-          tenantService: dellemc/csm-authorization-tenant:v2.0.0-alpha
+          tenantService: dellemc/csm-authorization-tenant:v2.0.0
           tenantServiceReplicas: 1
-          roleService: dellemc/csm-authorization-role:v2.0.0-alpha
+          roleService: dellemc/csm-authorization-role:v2.0.0
           roleServiceReplicas: 1
-          storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
+          storageService: dellemc/csm-authorization-storage:v2.0.0
           storageServiceReplicas: 1
           opa: openpolicyagent/opa
-          opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
-          authorizationController: dellemc/csm-authorization-controller:v2.0.0-alpha
+          opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.7
+          authorizationController: dellemc/csm-authorization-controller:v2.0.0
           authorizationControllerReplicas: 1
           leaderElection: true
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
@@ -66,7 +66,7 @@ spec:
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
-          redis: redis:7.2.4-alpine
+          redis: redis:7.4.0-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: redicommander
@@ -80,7 +80,7 @@ spec:
         - name: vault
           vaultConfigurations:
             - identifier: vault0
-              address: https://10.0.0.1:8400
+              address: https://10.0.0.1:8400 # must be replaced in testing with actual vault
               role: csm-authorization
               skipCertificateValidation: true
               # clientCertificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
@@ -106,4 +106,5 @@ data:
   csm-config-params.yaml: |-
     CONCURRENT_POWERFLEX_REQUESTS: 10
     LOG_LEVEL: debug
-    STORAGE_CAPACITY_POLL_INTERVAL: 5m
+    STORAGE_CAPACITY_POLL_INTERVAL: 30s
+    CONCURRENT_POWERSCALE_REQUESTS: 10

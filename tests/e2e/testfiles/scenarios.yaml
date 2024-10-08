@@ -2,7 +2,7 @@
 
 - scenario: "Install Authorization Proxy Server V1"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -16,8 +16,8 @@
 # Upgrade from V1 to V2 is not supported. This test is to install a previous version of Auth V1 and upgrade to the next.
 - scenario: "Install Authorization Proxy Server V1 and upgrade"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_n_minus_1.yaml"
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -32,58 +32,10 @@
     - "Validate [authorization-proxy-server] module from CR [2] is installed"
     - "Delete custom resource [2]"
 
-# Authorization V2 alpha scenarios only supports powerflex driver
-- scenario: "Install Authorization Proxy Server V2 alpha"
-  paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_alpha_proxy_server.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_alpha_crds.yaml"
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install Authorization CRDs [2]"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerflex] for CR [1]"
-    - "Delete Authorization CRs for [powerflex]"
-    - "Delete custom resource [1]"
-    - "Delete Authorization CRDs [2]"
-
-- scenario: "Install Authorization CRDs for V2 alpha"
-  paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_alpha_crds.yaml"
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install Authorization CRDs [1]"
-    - "Validate [csmroles] CRD for Authorization is installed"
-    - "Validate [csmtenants] CRD for Authorization is installed"
-    - "Validate [storages] CRD for Authorization is installed"
-    - "Delete Authorization CRDs [1]"
-
-- scenario: "Install Authorization Proxy Server V2 alpha With Default Redis Storage Class"
-  paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_default_redis.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_alpha_crds.yaml"
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install Authorization CRDs [2]"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerflex] for CR [1]"
-    - "Delete Authorization CRs for [powerflex]"
-    - "Delete custom resource [1]"
-    - "Delete Authorization CRDs [2]"
-
 - scenario: "Install Authorization Proxy Server V2"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server.yaml"
-    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -99,7 +51,7 @@
 
 - scenario: "Install Authorization CRDs for V2"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -110,10 +62,40 @@
     - "Validate [storages] CRD for Authorization is installed"
     - "Delete Authorization CRDs [1]"
 
-- scenario: "Install Authorization Proxy Server V2 With Multiple Vaults"
+- scenario: "Install Authorization Proxy Server V2 With Default Redis Storage Class"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server_default_redis.yaml"
-    - "testfiles/authorization-templates/csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_default_redis.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
+  tags:
+    - "authorizationproxyserver"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [2]"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Apply custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powerflex] for CR [1]"
+    - "Delete Authorization CRs for [powerflex]"
+    - "Delete custom resource [1]"
+    - "Delete Authorization CRDs [2]"
+
+- scenario: "Install Authorization CRDs for V2"
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
+  tags:
+    - "authorizationproxyserver"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [1]"
+    - "Validate [csmroles] CRD for Authorization is installed"
+    - "Validate [csmtenants] CRD for Authorization is installed"
+    - "Validate [storages] CRD for Authorization is installed"
+    - "Delete Authorization CRDs [1]"
+
+- scenario: "Install Authorization Proxy Server V2 With Multiple Vaults" # TODO: Should this be using the multiple_vaults YAML?
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_default_redis.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -129,7 +111,7 @@
 
 - scenario: "Install Authorization Proxy Server V1 with alternate namespace"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_alt_ns.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_alt_ns.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -142,8 +124,8 @@
     - "Delete custom resource [1]"
 - scenario: "Install Authorization Proxy Server & PowerFlex Driver (With Authorization V1), Upgrade both Authorization Proxy Server and PowerFlex Driver"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_n_minus_1.yaml"
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
   tags:
@@ -302,7 +284,7 @@
       - /bin/bash check_parameters.sh testfiles/powerscale_health_monitor_values.csv dell powerscale
 - scenario: "Install PowerScale Driver(With Authorization V1)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -402,7 +384,7 @@
     - "Validate [powerscale] driver from CR [1] is not installed"
 - scenario: "Install PowerScale Driver, Enable/Disable Authorization V1 module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "authorizationproxyserver"
@@ -507,7 +489,7 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
 - scenario: "Install PowerScale Driver(With Authorization V1 and Observability)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -545,7 +527,7 @@
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 - scenario: "Install PowerScale Driver(Standalone), Enable Authorization V1, Enable Observability"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "authorizationproxyserver"
@@ -587,7 +569,7 @@
     - "Restore template [testfiles/authorization-templates/rootCertificate.pem] for [authSidecarCert]"
 - scenario: "Install PowerScale Driver(With Authorization V1 and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -850,7 +832,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
@@ -886,7 +868,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -925,7 +907,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -968,10 +950,10 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
 - scenario: "Install PowerFlex Driver (With Authorization V2), Upgrade driver and authorization sidecar"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_alpha_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
@@ -1169,7 +1151,7 @@
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
 - scenario: "Install PowerFlex Driver(Standalone), Enable Authorization V1, Enable Observability"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
     - "authorizationproxyserver"
@@ -1210,7 +1192,7 @@
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
 - scenario: "Install PowerFlex Driver(With Authorization V1 and Observability)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -1246,9 +1228,9 @@
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 - scenario: Install PowerFlex Driver(With Authorization V2 and Observability), Disable Observability module, Disable Authorization module"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_alpha_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -1756,7 +1738,7 @@
 
 - scenario: "Install PowerMax Driver (With Auth V1 module)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v1_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
     - "testfiles/storage_csm_powermax_reverseproxy_authorization.yaml"
   tags:
     - "authorizationproxyserver"
@@ -1792,7 +1774,7 @@
 - scenario: "Install Powermax Driver (With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
     - "testfiles/storage_csm_powermax_authorization.yaml"
   tags:
     - "authorizationproxyserver"
@@ -1834,7 +1816,7 @@
 - scenario: "Install Powermax Driver (With Authorization v2 and Observability)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
     - "testfiles/storage_csm_powermax_observability_authorization.yaml"
   tags:
     - "authorizationproxyserver"

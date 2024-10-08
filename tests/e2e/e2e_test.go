@@ -113,7 +113,7 @@ var _ = BeforeSuite(func() {
 
 	By("Reading values file")
 	var err error
-	testResources, _, err = step.GetTestResources(valuesFile)
+	testResources, err = step.GetTestResources(valuesFile)
 	if err != nil {
 		framework.Failf("Failed to read values file: %v", err)
 	}
