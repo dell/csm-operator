@@ -811,9 +811,9 @@
     - "Validate [powerflex] driver from CR [1] is not installed"
 - scenario: "Install PowerFlex Driver (With Authorization V2)"
   paths:
-    - "testfiles/authorization-templates/csm_authorization_v2_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_alpha_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
@@ -827,8 +827,6 @@
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
-    - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
