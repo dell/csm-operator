@@ -1360,6 +1360,7 @@ func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr
 	return nil
 }
 
+// LoadDefaultComponents loads the default module components into cr
 func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 	modules := []csmv1.ModuleType{csmv1.Observability}
@@ -1405,4 +1406,25 @@ func getDefaultComponents(driverType csmv1.DriverType, module csmv1.ModuleType, 
 		}
 	}
 	return defaultComps, nil
+}
+
+// SetContainerImage loops through objects to find deployment and set the image for container
+func SetContainerImage(objects []crclient.Object, deploymentName, containerName, image string) {
+	if len(objects) == 0 || len(deploymentName) == 0 || len(containerName) == 0 || len(image) == 0 {
+		return
+	}
+	for _, object := range objects {
+		deployment, ok := object.(*appsv1.Deployment)
+		if !ok || !strings.EqualFold(deployment.Name, deploymentName) {
+			continue
+		}
+		if len(deployment.Spec.Template.Spec.Containers) == 0 {
+			break
+		}
+		for i := range deployment.Spec.Template.Spec.Containers {
+			if strings.EqualFold(deployment.Spec.Template.Spec.Containers[i].Name, containerName) {
+				deployment.Spec.Template.Spec.Containers[i].Image = image
+			}
+		}
+	}
 }
