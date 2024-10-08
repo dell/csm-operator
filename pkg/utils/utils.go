@@ -1135,7 +1135,7 @@ func HasModuleComponent(ctx context.Context, instance csmv1.ContainerStorageModu
 }
 
 // AddModuleComponent - add a module component in the cr
-func AddModuleComponent(ctx context.Context, instance *csmv1.ContainerStorageModule, mod csmv1.ModuleType, component csmv1.ContainerTemplate) {
+func AddModuleComponent(instance *csmv1.ContainerStorageModule, mod csmv1.ModuleType, component csmv1.ContainerTemplate) {
 	for i := range instance.Spec.Modules {
 		if instance.Spec.Modules[i].Name == mod {
 			instance.Spec.Modules[i].Components = append(instance.Spec.Modules[i].Components, component)
@@ -1378,7 +1378,7 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 		for _, comp := range defaultComps {
 			if !HasModuleComponent(ctx, *cr, csmv1.Observability, comp.Name) {
 				log.Infow(fmt.Sprintf("Adding default component %s for %s ", comp.Name, module))
-				AddModuleComponent(ctx, cr, csmv1.Observability, comp)
+				AddModuleComponent(cr, csmv1.Observability, comp)
 			}
 		}
 	}
