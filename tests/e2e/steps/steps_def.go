@@ -1497,7 +1497,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/csm-authorization-v2-template.yaml"
+		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
 		updatedTemplateFile = ""
 	)
 
