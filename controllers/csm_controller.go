@@ -271,6 +271,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		ConfigDirectory: r.Config.ConfigDirectory,
 	}
 
+	// Set default components if using miminal manifest (without components)
+	err = utils.LoadDefaultComponents(ctx, csm, *operatorConfig)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// perform prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
@@ -738,12 +744,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	// driverConfig = nil means no driver specified in manifest
 	if driverConfig == nil {
 		return nil
-	}
-
-	// Set default components if using miminal manifest (without components)
-	err = utils.LoadDefaultComponents(ctx, &cr, operatorConfig)
-	if err != nil {
-		return err
 	}
 
 	err = r.oldStandAloneModuleCleanup(ctx, &cr, operatorConfig, driverConfig)

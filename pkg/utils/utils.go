@@ -1385,7 +1385,7 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 	for _, module := range modules {
 		defaultComps, err := getDefaultComponents(cr.GetDriverType(), module, op)
 		if err != nil {
-			return fmt.Errorf("failed to get default components for %s: %s", module, err.Error())
+			return fmt.Errorf("failed to get default components for %s: %v", module, err)
 		}
 
 		for _, comp := range defaultComps {
