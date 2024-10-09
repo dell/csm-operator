@@ -920,24 +920,9 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	return false, nil
 }
 
-func getClusterIDs(replica csmv1.Module) ([]string, error) {
+func getClusterIDs(ctx context.Context, replica csmv1.Module) []string {
+	log := logger.GetLogger(ctx)
 	var clusterIDs []string
-	
-	if replica.Components == nil {
-		// this means it is a minimal yaml and replication is enabled
-
-		components := make([]csmv1.ContainerTemplate, 0)
-		components = append(components, csmv1.ContainerTemplate{
-			Name: ReplicationControllerManager,
-		})
-		replica.Components = components
-
-		replica.Components[0].Envs = append(replica.Components[0].Envs, corev1.EnvVar{
-			Name:  "TARGET_CLUSTERS_IDS",
-			Value: "self", //defaults to same cluster for the replication
-		})
-
-	}
 
 	for _, comp := range replica.Components {
 		if comp.Name == ReplicationControllerManager {
@@ -949,11 +934,12 @@ func getClusterIDs(replica csmv1.Module) ([]string, error) {
 			}
 		}
 	}
-	err := fmt.Errorf("TARGET_CLUSTERS_IDS on CR should have more than 0 commma seperated cluster IDs. Got  %d", len(clusterIDs))
+
 	if len(clusterIDs) >= 1 {
-		err = nil
+		log.Infof("TARGET_CLUSTERS_IDS not found in CR. Using default value \"self\"")
+		clusterIDs = append(clusterIDs, "self") //defaults to same cluster for the replication
 	}
-	return clusterIDs, err
+	return clusterIDs
 }
 
 func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Client) ([]byte, error) {
@@ -1028,10 +1014,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Replication && m.Enabled {
 			replicaEnabled = true
-			clusterIDs, err := getClusterIDs(m)
-			if err != nil {
-				return replicaEnabled, clusterClients, err
-			}
+			clusterIDs := getClusterIDs(ctx, m)
 
 			for _, clusterID := range clusterIDs {
 				/*Hack: skip-replication-cluster-check - skips check for csm_controller unit test
