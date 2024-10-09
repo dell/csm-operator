@@ -80,7 +80,7 @@ spec:
         - name: vault
           vaultConfigurations:
             - identifier: vault0
-              address: https://10.0.0.1:8400 # must be replaced in testing with actual vault
+              address: https://10.0.0.1:8400  # must be replaced in testing with actual vault
               role: csm-authorization
               skipCertificateValidation: true
               # clientCertificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates

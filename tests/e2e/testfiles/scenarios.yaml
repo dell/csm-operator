@@ -92,7 +92,7 @@
     - "Validate [storages] CRD for Authorization is installed"
     - "Delete Authorization CRDs [1]"
 
-- scenario: "Install Authorization Proxy Server V2 With Multiple Vaults" # TODO: Should this be using the multiple_vaults YAML?
+- scenario: "Install Authorization Proxy Server V2 With Multiple Vaults"  # TODO: Should this be using the multiple_vaults YAML?
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_default_redis.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
