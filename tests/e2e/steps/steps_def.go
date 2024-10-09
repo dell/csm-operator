@@ -23,6 +23,7 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"encoding/json"
 
@@ -133,7 +134,6 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 
 	return resources, apex, nil
 }
-
 
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
@@ -326,6 +326,31 @@ func (step *Step) validateDriverNotInstalled(res Resource, driverName string, cr
 	crNum, _ := strconv.Atoi(crNumStr)
 	time.Sleep(20 * time.Second)
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
+}
+
+func (step *Step) createNamespace(res Resource, namespaceName string) error {
+	found := new(corev1.Namespace)
+	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: namespaceName,
+		Name:      namespaceName,
+	}, found)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			ns := &corev1.Namespace{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "Namespace",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: namespaceName,
+				},
+			}
+			return step.ctrlClient.Create(context.TODO(), ns)
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (step *Step) setNodeLabel(res Resource, label string) error {
@@ -1725,7 +1750,6 @@ func (step *Step) validateClientTestEnvironment(_ Resource) error {
 
 	return nil
 }
-
 
 func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStorageModule) error {
 	fakeReconcile := utils.FakeReconcileCSM{

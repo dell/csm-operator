@@ -48,6 +48,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Validate custom resource \[(\d+)\]$`, step.validateCustomResourceStatus)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is not installed$`, step.validateDriverNotInstalled)
+	runner.addStep(`^Create namespace \[([^"]*)\]$`, step.createNamespace)
 
 	runner.addStep(`^Run custom test$`, step.runCustomTest)
 	runner.addStep(`^Enable forceRemoveDriver on CR \[(\d+)\]$`, step.enableForceRemoveDriver)
@@ -81,7 +82,6 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Delete Authorization CRDs \[(\d+)\]$`, step.deleteCustomResourceDefinition)
 
 	runner.addStep(`^Set up application mobility CR \[([^"]*)\]$`, step.configureAMInstall)
-
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
