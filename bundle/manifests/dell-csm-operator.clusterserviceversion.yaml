@@ -170,23 +170,23 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csipscale"
                   ],
-                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.1.0",
                   "name": "provisioner"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.6.1",
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.7.0",
                   "name": "attacher"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1",
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0",
                   "name": "registrar"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.11.1",
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.12.0",
                   "name": "resizer"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0",
                   "name": "snapshotter"
                 },
                 {
@@ -198,7 +198,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -540,23 +540,23 @@ metadata:
                   "args": [
                     "--volume-name-prefix=pmax"
                   ],
-                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.1.0",
                   "name": "provisioner"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.6.1",
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.7.0",
                   "name": "attacher"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1",
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0",
                   "name": "registrar"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.11.1",
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.12.0",
                   "name": "resizer"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0",
                   "name": "snapshotter"
                 },
                 {
@@ -568,7 +568,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -884,23 +884,23 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csivol"
                   ],
-                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.1.0",
                   "name": "provisioner"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.6.1",
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.7.0",
                   "name": "attacher"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1",
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0",
                   "name": "registrar"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.11.1",
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.12.0",
                   "name": "resizer"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0",
                   "name": "snapshotter"
                 },
                 {
@@ -912,7 +912,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -1061,23 +1061,23 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csivol"
                   ],
-                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.1.0",
                   "name": "provisioner"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.6.1",
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.7.0",
                   "name": "attacher"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1",
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0",
                   "name": "registrar"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.11.1",
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.12.0",
                   "name": "resizer"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0",
                   "name": "snapshotter"
                 },
                 {
@@ -1089,7 +1089,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -1207,23 +1207,23 @@ metadata:
                   "args": [
                     "--volume-name-prefix=k8s"
                   ],
-                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.1.0",
                   "name": "provisioner"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.6.1",
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.7.0",
                   "name": "attacher"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1",
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0",
                   "name": "registrar"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.11.1",
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.12.0",
                   "name": "resizer"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1",
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0",
                   "name": "snapshotter"
                 },
                 {
@@ -1250,7 +1250,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0",
                   "name": "csi-external-health-monitor-controller"
                 }
               ]
@@ -5085,17 +5085,17 @@ spec:
                       - name: RELATED_IMAGE_kube-rbac-proxy
                         value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
                       - name: RELATED_IMAGE_attacher
-                        value: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
+                        value: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
                       - name: RELATED_IMAGE_provisioner
-                        value: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+                        value: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
                       - name: RELATED_IMAGE_snapshotter
-                        value: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
+                        value: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
                       - name: RELATED_IMAGE_registrar
-                        value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+                        value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
                       - name: RELATED_IMAGE_resizer
-                        value: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
+                        value: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
                       - name: RELATED_IMAGE_externalhealthmonitorcontroller
-                        value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
+                        value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
                       - name: RELATED_IMAGE_metadataretriever
                         value: dellemc/csi-metadata-retriever:v1.8.0
                       - name: RELATED_IMAGE_dell-connectivity-client
@@ -5199,17 +5199,17 @@ spec:
       name: podmon-node
     - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
       name: kube-rbac-proxy
-    - image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
+    - image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
       name: attacher
-    - image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+    - image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
       name: provisioner
-    - image: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
+    - image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
       name: snapshotter
-    - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+    - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
       name: registrar
-    - image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
+    - image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
       name: resizer
-    - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
+    - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
       name: externalhealthmonitorcontroller
     - image: dellemc/csi-metadata-retriever:v1.8.0
       name: metadataretriever
