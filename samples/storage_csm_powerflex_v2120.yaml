@@ -47,7 +47,7 @@ spec:
         # Examples: 'worker1: "interface1",worker2: "interface2"'
         # Default value: None, required only when X_CSI_SDC_ENABLED is set to false
         - name: INTERFACE_NAMES
-          value: 
+          value:
     sideCars:
       # 'k8s' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
