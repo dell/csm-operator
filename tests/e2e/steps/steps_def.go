@@ -71,8 +71,10 @@ var (
 	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
 	pmaxCrMap   = map[string]string{"REPLACE_STORAGE_NAME": "PMAX_STORAGE", "REPLACE_STORAGE_TYPE": "PMAX_STORAGE", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_SYSTEM_ID": "PMAX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PMAX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PMAX_ROLE", "REPLACE_QUOTA": "PMAX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PMAX_POOL_V2", "REPLACE_TENANT_NAME": "PMAX_TENANT", "REPLACE_TENANT_ROLES": "PMAX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PMAX_TENANT_PREFIX"}
 
-	pstoreSecretMap = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT"}
-	unitySecretMap  = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
+	pstoreSecretMap          = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT"}
+	pstoreEphemeralVolumeMap = map[string]string{"REPLACE_GLOBALID": "PSTORE_GLOBALID"}
+	unitySecretMap           = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
+	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -852,8 +854,12 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pmaxCrMap
 	} else if crType == "pstore" {
 		mapValues = pstoreSecretMap
+	} else if crType == "pstoreEphemeral" {
+		mapValues = pstoreEphemeralVolumeMap
 	} else if crType == "unity" {
 		mapValues = unitySecretMap
+	} else if crType == "unityEphemeral" {
+		mapValues = unityEphemeralVolumeMap
 	} else {
 		return mapValues, fmt.Errorf("type: %s is not supported", crType)
 	}
