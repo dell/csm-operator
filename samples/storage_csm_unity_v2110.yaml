@@ -166,10 +166,3 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
-      #  - key: "offline.unity.storage.dell.com"
-      #    operator: "Exists"
-      #    effect: "NoSchedule"
-      # - key: "unity.podmon.storage.dell.com"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
