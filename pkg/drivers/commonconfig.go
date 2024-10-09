@@ -544,9 +544,9 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 
 	if cr.Spec.Driver.CSIDriverType == "powerflex" {
 		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name=="INTERFACE_NAMES"{
+			if env.Name == "INTERFACE_NAMES" {
 				cmValue += fmt.Sprintf("\n%s: ", "interfaceNames")
-				for _, v:=range strings.Split(env.Value, ","){
+				for _, v := range strings.Split(env.Value, ",") {
 					cmValue += fmt.Sprintf("\n  %s ", v)
 				}
 			}
