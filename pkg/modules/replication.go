@@ -135,6 +135,18 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig)
 		return nil, nil, err
 	}
 
+	for _, component := range replicaModule.Components {
+		if component.Name == utils.ReplicationSideCarName {
+			if component.Image != "" {
+				image := string(component.Image)
+				container.Image = &image
+			}
+			if component.ImagePullPolicy != "" {
+				container.ImagePullPolicy = &component.ImagePullPolicy
+			}
+		}
+	}
+
 	return &replicaModule, &container, nil
 }
 
