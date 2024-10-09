@@ -1234,7 +1234,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    # - "powerflex"
+    - "powerflex"
     - "observability"
     # - "sanity"
   steps:
