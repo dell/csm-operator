@@ -161,7 +161,7 @@ spec:
             - name: powerstore-config-params
               mountPath: /powerstore-config-params
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
