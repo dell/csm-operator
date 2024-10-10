@@ -94,11 +94,15 @@ func TestPrecheckPowerScale(t *testing.T) {
 		})
 	}
 
+	// grab the first secret
+
 	for _, tt := range powerScaleTests {
+		// create secret for each run
 		err := tt.ct.Create(ctx, tt.sec)
 		if err != nil {
 			assert.Nil(t, err)
 		}
+
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
 			err := PrecheckPowerScale(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
@@ -108,6 +112,12 @@ func TestPrecheckPowerScale(t *testing.T) {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
+
+		// remove secret after each run
+		err = tt.ct.Delete(ctx, tt.sec)
+		if err != nil {
+			assert.Nil(t, err)
+		}
 	}
 }
 

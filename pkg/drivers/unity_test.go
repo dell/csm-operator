@@ -98,6 +98,11 @@ func TestPrecheckUnity(t *testing.T) {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
+		// remove secret after each run
+		err = tt.ct.Delete(ctx, tt.sec)
+		if err != nil {
+			assert.Nil(t, err)
+		}
 	}
 }
 

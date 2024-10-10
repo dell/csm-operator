@@ -63,12 +63,7 @@ spec:
           # to use a different storage class for redis, specify the name of the storage class
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
-<<<<<<<< HEAD:pkg/modules/testdata/cr_auth_proxy_v1110.yaml
           storageclass: "local-storage"
-========
-          storageclass: ""
-
->>>>>>>> def48f4d (Testing cleanup for authorization):tests/e2e/testfiles/authorization-templates/csm_authorization_v1_proxy_server_no_cert.yaml
 ---
 apiVersion: v1
 kind: ConfigMap

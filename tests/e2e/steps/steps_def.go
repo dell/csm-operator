@@ -94,18 +94,16 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 }
 
 // GetTestResources -- parse values file
-// TBD: remove apex param from here and caller
-func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
-	apex := false
+func GetTestResources(valuesFilePath string) ([]Resource, error) {
 	b, err := os.ReadFile(valuesFilePath)
 	if err != nil {
-		return nil, apex, fmt.Errorf("failed to read values file: %v", err)
+		return nil, fmt.Errorf("failed to read values file: %v", err)
 	}
 
 	scenarios := []Scenario{}
 	err = yaml.Unmarshal(b, &scenarios)
 	if err != nil {
-		return nil, apex, fmt.Errorf("failed to read unmarshal values file: %v", err)
+		return nil, fmt.Errorf("failed to read unmarshal values file: %v", err)
 	}
 
 	resources := []Resource{}
@@ -114,17 +112,15 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 		for _, path := range scene.Paths {
 			b, err := os.ReadFile(path)
 			if err != nil {
-				return nil, apex, fmt.Errorf("failed to read testdata: %v", err)
+				return nil, fmt.Errorf("failed to read testdata: %v", err)
 			}
 
-			if strings.Contains(path, "_csm_") {
-				customResource := csmv1.ContainerStorageModule{}
-				err = yaml.Unmarshal(b, &customResource)
-				if err != nil {
-					return nil, apex, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
-				}
-				customResources = append(customResources, customResource)
+			customResource := csmv1.ContainerStorageModule{}
+			err = yaml.Unmarshal(b, &customResource)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
 			}
+			customResources = append(customResources, customResource)
 		}
 		resources = append(resources, Resource{
 			Scenario:       scene,
@@ -132,7 +128,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
 		})
 	}
 
-	return resources, apex, nil
+	return resources, nil
 }
 
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
@@ -1527,13 +1523,9 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/csm-authorization-v2-template.yaml"
+		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
 		updatedTemplateFile = ""
 	)
-
-	if strings.Contains(configVersion, "alpha") {
-		templateFile = "testfiles/authorization-templates/storage_csm_authorization_alpha_template.yaml"
-	}
 
 	if driver == "powerflex" {
 		crMap = "pflexAuthCRs"
