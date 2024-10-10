@@ -1389,7 +1389,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	//By default, assume a role will be created
-	skipRole := false
+	skipCreateRole := false
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
 		"role", "list",
@@ -1413,11 +1413,11 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	for k, v := range roles {
 		if k == roleName {
 			fmt.Printf("Role %s is already created. \n It has the following config: %s \n", k, v)
-			skipRole = true
+			skipCreateRole = true
 		}
 	}
 
-	if !skipRole {
+	if !skipCreateRole {
 
 		// Create Role
 		fmt.Println("\n\n=== Creating Role ===\n ")
