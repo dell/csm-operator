@@ -1390,7 +1390,7 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 
 		for _, comp := range defaultComps {
 			if !HasModuleComponent(ctx, *cr, csmv1.Observability, comp.Name) {
-				log.Infow(fmt.Sprintf("Adding default component %s for %s ", comp.Name, module))
+				log.Infof("Adding default component %s for %s ", comp.Name, module)
 				AddModuleComponent(cr, csmv1.Observability, comp)
 			}
 		}
