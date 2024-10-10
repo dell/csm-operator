@@ -1,6 +1,6 @@
 name: Workflow
 # yamllint sees the below line as a true or false value instead of an 'on' trigger
-on: # yamllint disable-line rule:truthy
+on:  # yamllint disable-line rule:truthy
   push:
     branches: [main]
   pull_request:
