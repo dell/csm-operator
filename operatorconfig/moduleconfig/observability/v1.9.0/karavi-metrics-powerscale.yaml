@@ -106,7 +106,7 @@ spec:
       serviceAccount: karavi-metrics-powerscale-controller
       containers:
         - name: karavi-metrics-powerscale
-          image: <POWERSCALE_OBS_IMAGE>
+          image: dellemc/csm-metrics-powerscale:v1.6.0
           resources: {}
           env:
             - name: POWERSCALE_METRICS_ENDPOINT
