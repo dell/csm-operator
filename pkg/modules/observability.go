@@ -279,7 +279,6 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]cr
 	}
 	YamlString := string(buf)
 
-	fmt.Println(string(buf))
 	logLevel := "INFO"
 	topologyImage := ""
 
