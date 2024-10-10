@@ -271,6 +271,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctxNotUsed context.Context,
 		ConfigDirectory: r.Config.ConfigDirectory,
 	}
 
+	// Set default components if using miminal manifest (without components)
+	err = utils.LoadDefaultComponents(ctx, csm, *operatorConfig)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// perform prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
