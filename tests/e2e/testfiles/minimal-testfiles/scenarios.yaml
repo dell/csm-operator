@@ -96,3 +96,188 @@
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-unity --chainNumber 2 --chainLength 2
+
+- scenario: "Install PowerScale Driver(Standalone)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
+  tags:
+    - "powerscale"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+  customTest:
+    name: Cert CSI
+    run:
+      - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+
+- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Resiliency"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
+  tags:
+    - "powerscale"
+    - "resiliency"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is not installed"
+    - "Enable [resiliency] module from CR [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    - "Disable [resiliency] module from CR [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is not installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+
+- scenario: "Install PowerScale Driver(With Resiliency)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale_resiliency.yaml"
+  tags:
+    - "powerscale"
+    - "resiliency"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+  customTest:
+    name: CustomTest
+    run:
+      - echo "no current test for resiliency"
+
+- scenario: "Install PowerScale Driver(With Replication)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale_replica.yaml"
+  tags:
+    - "powerscale"
+    - "replication"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+  customTest:
+    name: HelloWorld
+    run:
+      - echo "no current test implemented for replication"
+
+- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Replication"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
+    - "testfiles/minimal-testfiles/storage_csm_powerscale_replica.yaml"
+  tags:
+    - "powerscale"
+    - "replication"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is not installed"
+    - "Enable [replication] module from CR [2]"
+    - "Validate [powerscale] driver from CR [2] is installed"
+    - "Validate [replication] module from CR [2] is installed"
+    - "Run custom test"
+    - "Disable [replication] module from CR [1]"
+    - "Validate [replication] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is not installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [2]"
+    - "Delete custom resource [2]"
+  customTest:
+    name: HelloWorld
+    run:
+      - echo "no current test implemented for replication"
+      
+- scenario: "Uninstall PowerScale Driver"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
+  tags:
+    - "powerscale"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Validate [powerscale] driver from CR [1] is not installed"
+
+- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Observability"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
+  tags:
+    - "powerscale"
+    - "observability"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Enable [observability] module from CR [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    - "Disable [observability] module from CR [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+- scenario: "Install PowerScale Driver(With Observability and Custom Certs)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale_observability_top_custom_cert.yaml"
+  tags:
+    - "observability"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
