@@ -53,9 +53,6 @@ const (
 	// TopologyLogLevel -
 	TopologyLogLevel string = "<TOPOLOGY_LOG_LEVEL>"
 
-	// TopologyImage -
-	TopologyImage string = "<TOPOLOGY_IMAGE>"
-
 	// TopologyYamlFile -
 	TopologyYamlFile string = "karavi-topology.yaml"
 
@@ -94,12 +91,6 @@ const (
 
 	// PowerscaleLogFormat - log format
 	PowerscaleLogFormat string = "<POWERSCALE_LOG_FORMAT>"
-
-	// PowerScaleImage - PowerScale image name
-	PowerScaleImage string = "<POWERSCALE_OBS_IMAGE>"
-
-	// PowerflexImage - Powerflex image name
-	PowerflexImage string = "<POWERFLEX_OBS_IMAGE>"
 
 	// PowerflexSdcMetricsEnabled - enable/disable collection of sdc metrics
 	PowerflexSdcMetricsEnabled string = "<POWERFLEX_SDC_METRICS_ENABLED>"
@@ -166,9 +157,6 @@ const (
 
 	// PmaxLogFormat - log format for Powermax metrics
 	PmaxLogFormat string = "<POWERMAX_LOG_FORMAT>"
-
-	// PmaxObsImage - Observability image for Powermax
-	PmaxObsImage string = "<POWERMAX_OBS_IMAGE>"
 
 	// PMaxObsYamlFile - powermax metrics yaml file
 	PMaxObsYamlFile string = "karavi-metrics-powermax.yaml"
@@ -258,12 +246,7 @@ func ObservabilityPrecheck(ctx context.Context, op utils.OperatorConfig, obs csm
 // ObservabilityTopology - delete or update topology objects
 func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-	YamlString, err := getTopology(op, cr)
-	if err != nil {
-		return err
-	}
-
-	topoObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	topoObjects, err := getTopology(op, cr)
 	if err != nil {
 		return err
 	}
@@ -284,20 +267,17 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op utils.Operat
 	return nil
 }
 
-// getTopology - get topology yaml string
-func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
-
+func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
 
 	buf, err := readConfigFile(obs, cr, op, TopologyYamlFile)
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
-	YamlString = string(buf)
+	YamlString := string(buf)
 
 	logLevel := "INFO"
 	topologyImage := ""
@@ -318,8 +298,14 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, TopologyLogLevel, logLevel)
-	YamlString = strings.ReplaceAll(YamlString, TopologyImage, topologyImage)
-	return YamlString, nil
+
+	topoObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return nil, err
+	}
+	utils.SetContainerImage(topoObjects, "karavi-topology", "karavi-topology", topologyImage)
+
+	return topoObjects, nil
 }
 
 // OtelCollector - delete or update otel collector objects
@@ -391,12 +377,7 @@ func getOtelCollector(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 func PowerScaleMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
-	ObjectsYamlString, err := getPowerScaleMetricsObjects(op, cr)
-	if err != nil {
-		return err
-	}
-
-	powerscaleMetricsObjects, err := utils.GetModuleComponentObj([]byte(ObjectsYamlString))
+	powerscaleMetricsObjects, err := getPowerScaleMetricsObjects(op, cr)
 	if err != nil {
 		return err
 	}
@@ -464,19 +445,17 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCo
 }
 
 // getPowerScaleMetricsObjects - get powerscale metrics yaml string
-func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
-
+func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
 
 	buf, err := readConfigFile(obs, cr, op, PscaleObsYamlFile)
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
-	YamlString = string(buf)
+	YamlString := string(buf)
 
 	logLevel := "INFO"
 	otelCollectorAddress := "otel-collector:55680"
@@ -529,7 +508,6 @@ func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStor
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
-	YamlString = strings.ReplaceAll(YamlString, PowerScaleImage, pscaleImage)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PowerScaleMaxConcurrentQueries, maxConcurrentQueries)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleCapacityMetricsEnabled, capacityEnabled)
@@ -544,7 +522,13 @@ func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStor
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
 
-	return YamlString, nil
+	metricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return nil, err
+	}
+	utils.SetContainerImage(metricsObjects, "karavi-metrics-powerscale", "karavi-metrics-powerscale", pscaleImage)
+
+	return metricsObjects, nil
 }
 
 // parseObservabilityMetricsDeployment - update secret volume and inject authorization to deployment
@@ -600,12 +584,7 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 func PowerFlexMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
-	YamlString, err := getPowerFlexMetricsObject(op, cr)
-	if err != nil {
-		return err
-	}
-
-	powerflexMetricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	powerflexMetricsObjects, err := getPowerFlexMetricsObject(op, cr)
 	if err != nil {
 		return err
 	}
@@ -672,19 +651,17 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCon
 }
 
 // getPowerFlexMetricsObject - get powerflex metrics yaml string
-func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
-
+func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
 
 	buf, err := readConfigFile(obs, cr, op, PflexObsYamlFile)
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
-	YamlString = string(buf)
+	YamlString := string(buf)
 
 	otelCollectorAddress := "otel-collector:55680"
 	pflexImage := ""
@@ -731,7 +708,6 @@ func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorag
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
-	YamlString = strings.ReplaceAll(YamlString, PowerflexImage, pflexImage)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexMaxConcurrentQueries, maxConcurrentQueries)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexSdcMetricsEnabled, sdcEnabled)
@@ -743,7 +719,14 @@ func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, PowerflexLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
-	return YamlString, nil
+
+	metricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return nil, err
+	}
+	utils.SetContainerImage(metricsObjects, "karavi-metrics-powerflex", "karavi-metrics-powerflex", pflexImage)
+
+	return metricsObjects, nil
 }
 
 // getObservabilityModule - get instance of observability module
@@ -889,12 +872,7 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op utils.Operato
 func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
-	YamlString, err := getPowerMaxMetricsObject(op, cr)
-	if err != nil {
-		return err
-	}
-
-	powerMaxMetricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	powerMaxMetricsObjects, err := getPowerMaxMetricsObject(op, cr)
 	if err != nil {
 		return err
 	}
@@ -961,19 +939,17 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 }
 
 // getPowerMaxMetricsObject - get powermax metrics yaml string
-func getPowerMaxMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	YamlString := ""
-
+func getPowerMaxMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
 
 	buf, err := readConfigFile(obs, cr, op, PMaxObsYamlFile)
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
-	YamlString = string(buf)
+	YamlString := string(buf)
 
 	otelCollectorAddress := "otel-collector:55680"
 	pmaxImage := ""
@@ -1017,7 +993,6 @@ func getPowerMaxMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorage
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
-	YamlString = strings.ReplaceAll(YamlString, PmaxObsImage, pmaxImage)
 	YamlString = strings.ReplaceAll(YamlString, PmaxLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PmaxLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, PmaxConcurrentQueries, maxConcurrentQueries)
@@ -1028,5 +1003,12 @@ func getPowerMaxMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorage
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, revproxyConfigMap)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
-	return YamlString, nil
+
+	metricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return nil, err
+	}
+	utils.SetContainerImage(metricsObjects, "karavi-metrics-powermax", "karavi-metrics-powermax", pmaxImage)
+
+	return metricsObjects, nil
 }
