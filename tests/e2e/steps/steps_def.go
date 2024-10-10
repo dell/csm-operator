@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/exec"
 	"strconv"
@@ -52,7 +53,7 @@ var (
 	operatorNamespace        = "dell-csm-operator"
 	quotaLimit               = "30000000"
 	pflexSecretMap           = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS"}
-	pflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_POOL": "PFLEX_POOL"}
+	pflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_VOLUME": "PFLEX_VOLUME"}
 	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -924,6 +925,10 @@ func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile stri
 		return err
 	}
 
+	if crType == "pflexEphemeral" {
+		os.Setenv("PFLEX_VOLUME", fmt.Sprintf("k8s-%s", randomAlphaNumberic(10)))
+	}
+
 	for key := range mapValues {
 		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
 		if err != nil {
@@ -932,6 +937,18 @@ func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile stri
 	}
 
 	return nil
+}
+
+func randomAlphaNumberic(length int) string {
+	charset := "abcdefghijklmnopqrstuvwxyz0123456789"
+
+	var result []byte
+	for i := 0; i < length; i++ {
+		randomIndex := rand.Intn(len(charset))
+		result = append(result, charset[randomIndex])
+	}
+
+	return string(result)
 }
 
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
