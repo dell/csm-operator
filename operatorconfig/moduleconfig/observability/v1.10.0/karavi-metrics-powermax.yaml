@@ -106,7 +106,7 @@ spec:
       serviceAccountName: karavi-metrics-powermax-controller
       containers:
         - name: karavi-metrics-powermax
-          image: <POWERMAX_OBS_IMAGE>
+          image: dellemc/csm-metrics-powermax:v1.2.0
           resources: {}
           env:
             - name: POWERMAX_METRICS_ENDPOINT
