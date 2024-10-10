@@ -1041,7 +1041,6 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {
 	logType := logger.DevelopmentLogLevel
-	logger.SetLoggerLevel(logType)
 	_, log := logger.GetNewContextWithLogger("0")
 	log.Infof("Version : %s", logType)
 
@@ -2192,15 +2191,6 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 	default:
 	}
 	return nil
-}
-
-// debugFakeObjects prints the runtime objects in the fake client
-func (suite *CSMControllerTestSuite) debugFakeObjects() {
-	objects := suite.fakeClient.(*crclient.Client).Objects
-	for key, o := range objects {
-		unittestLogger.Info("found fake object ", "name", key.Name)
-		unittestLogger.Info("found fake object ", "object", fmt.Sprintf("%#v", o))
-	}
 }
 
 func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) {
