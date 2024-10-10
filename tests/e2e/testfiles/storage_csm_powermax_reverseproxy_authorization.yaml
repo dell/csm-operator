@@ -32,20 +32,20 @@ spec:
       #   false: disable storage capacity tracking
       storageCapacity: true
     # Config version for CSI PowerMax v2.10.1 driver
-    configVersion: v2.11.0
+    configVersion: v2.12.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
     # Default value: None
-    replicas: 2
+    replicas: 1
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerMax driver v2.10.1
-      image: dellemc/csi-powermax:nightly
+      # Image for CSI PowerMax driver v2.12.0
+      image: dellemc/csi-powermax@sha256:b0f35bd463e24ee5c2a9d11a3f7f2b92bc2e6c39890e32310503868b4df2c7cd
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -268,7 +268,7 @@ spec:
       configVersion: v1.11.0
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:nightly
+          image: dellemc/csm-authorization-sidecar:v1.11.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
