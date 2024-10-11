@@ -45,7 +45,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerMax driver v2.12.0
-      image: dellemc/csi-powermax@sha256:b0f35bd463e24ee5c2a9d11a3f7f2b92bc2e6c39890e32310503868b4df2c7cd
+      image: dellemc/csi-powermax:nightly
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
