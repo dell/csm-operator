@@ -240,7 +240,7 @@ var (
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 
 // Reconcile - main loop
-func (r *ContainerStorageModuleReconciler) Reconcile(ctxNotUsed context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.IncrUpdateCount()
 	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcID
