@@ -697,9 +697,18 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			objects := map[shared.StorageKey]runtime.Object{}
 			fakeClient := crclient.NewFakeClientNoInjector(objects)
-			fakeClient.Create(ctx, vxflexosCreds)
-			fakeClient.Create(ctx, karaviAuthconfig)
-			fakeClient.Create(ctx, proxyAuthzTokens)
+			err = fakeClient.Create(ctx, vxflexosCreds)
+			if err != nil {
+				panic(err)
+			}
+			err = fakeClient.Create(ctx, karaviAuthconfig)
+			if err != nil {
+				panic(err)
+			}
+			err = fakeClient.Create(ctx, proxyAuthzTokens)
+			if err != nil {
+				panic(err)
+			}
 			k8sClient := clientgoclient.NewFakeClient(fakeClient)
 			// pre-run to generate objects
 			err = PowerFlexMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)

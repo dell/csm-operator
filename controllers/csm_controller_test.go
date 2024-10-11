@@ -432,9 +432,11 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeVersionTooOld() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
 
 	annotations := csm.GetAnnotations()
 	if annotations == nil {
