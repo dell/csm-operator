@@ -393,8 +393,8 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 }
 
 // GetNginxControllerStatus - gets deployment status of the NGINX ingress controller
-func GetNginxControllerStatus(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) wait.ConditionFunc {
-	return func() (bool, error) {
+func GetNginxControllerStatus(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) wait.ConditionWithContextFunc {
+	return func(context.Context) (bool, error) {
 		deployment := &appsv1.Deployment{}
 		labelKey := "app.kubernetes.io/name"
 		label := "ingress-nginx"
@@ -437,7 +437,7 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 	log := logger.GetLogger(ctx)
 	log.Infow("Polling status of NGINX ingress controller")
 
-	return wait.PollImmediate(time.Second, timeout, GetNginxControllerStatus(ctx, instance, r))
+	return wait.PollUntilContextTimeout(ctx, time.Second, timeout, true, GetNginxControllerStatus(ctx, instance, r))
 }
 
 // statusForAppMob - calculate success state for application-mobility module

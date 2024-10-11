@@ -418,9 +418,18 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 			objects := map[shared.StorageKey]runtime.Object{}
 			fakeClient := crclient.NewFakeClientNoInjector(objects)
-			fakeClient.Create(ctx, isilonCreds)
-			fakeClient.Create(ctx, karaviAuthconfig)
-			fakeClient.Create(ctx, proxyAuthzTokens)
+			err = fakeClient.Create(ctx, isilonCreds)
+			if err != nil {
+				panic(err)
+			}
+			err = fakeClient.Create(ctx, karaviAuthconfig)
+			if err != nil {
+				panic(err)
+			}
+			err = fakeClient.Create(ctx, proxyAuthzTokens)
+			if err != nil {
+				panic(err)
+			}
 			k8sClient := clientgoclient.NewFakeClient(fakeClient)
 			// pre-run to generate objects
 			err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
@@ -898,9 +907,18 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			objects := map[shared.StorageKey]runtime.Object{}
 			fakeClient := crclient.NewFakeClientNoInjector(objects)
-			fakeClient.Create(ctx, pmaxCreds)
-			fakeClient.Create(ctx, karaviAuthconfig)
-			fakeClient.Create(ctx, proxyAuthzTokens)
+			err = fakeClient.Create(ctx, pmaxCreds)
+			if err != nil {
+				panic(err)
+			}
+			err = fakeClient.Create(ctx, karaviAuthconfig)
+			if err != nil {
+				panic(err)
+			}
+			err = fakeClient.Create(ctx, proxyAuthzTokens)
+			if err != nil {
+				panic(err)
+			}
 			k8sClient := clientgoclient.NewFakeClient(fakeClient)
 			// pre-run to generate objects
 			err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
@@ -986,7 +1004,10 @@ func TestObservabilityCertIssuer(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -998,7 +1019,10 @@ func TestObservabilityCertIssuer(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -1010,7 +1034,10 @@ func TestObservabilityCertIssuer(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig

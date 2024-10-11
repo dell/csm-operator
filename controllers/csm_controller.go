@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -566,7 +567,13 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter ratelimiter.RateLimiter, maxReconcilers int) error {
-	go r.ContentWatch()
+	go func() {
+		err := r.ContentWatch()
+		if err != nil {
+			fmt.Println("ContentWatch failed", err)
+			os.Exit(1)
+		}
+	}()
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&csmv1.ContainerStorageModule{}).
