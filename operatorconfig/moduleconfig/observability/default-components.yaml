@@ -1,0 +1,16 @@
+---
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+spec:
+  modules:
+    - name: observability
+      enabled: true
+      components:
+        - name: topology
+          enabled: true
+        - name: otel-collector
+          enabled: true
+        - name: cert-manager
+          enabled: false
+        - name: metrics-<CSI_DRIVER_TYPE>
+          enabled: true
