@@ -147,6 +147,7 @@ const (
 
 var (
 	redisStorageClass     string
+	authHostname          string
 	proxyIngressClassName string
 	authCertificate       string
 	authPrivateKey        string
@@ -1267,6 +1268,7 @@ func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerSt
 
 	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
+			authHostname = component.Hostname
 			authCertificate = component.Certificate
 			authPrivateKey = component.PrivateKey
 		}
