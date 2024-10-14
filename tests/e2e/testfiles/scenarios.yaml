@@ -180,16 +180,19 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
+    - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
     - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Restore template [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
   customTest:
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+      - cert-csi test ephemeral-volume --pods 1 --driver csi-isilon.dellemc.com --attr testfiles/powerscale-templates/ephemeral.properties
 - scenario: "Install PowerScale Driver with first alternate sample file"
   paths:
     - "testfiles/storage_csm_powerscale_alt_vals_1.yaml"
@@ -628,16 +631,19 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
+    - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
     - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
   customTest:
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+      - cert-csi test ephemeral-volume --pods 1 --driver csi-vxflexos.dellemc.com --attr testfiles/powerflex-templates/ephemeral.properties
 - scenario: "Install PowerFlex Driver with first set of alternate values"
   paths:
     - "testfiles/storage_csm_powerflex_alt_vals_1.yaml"
@@ -1395,6 +1401,7 @@
     - "testfiles/storage_csm_powerstore.yaml"
   tags:
     - "powerstore"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-pstore] and template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
@@ -1402,16 +1409,19 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
+    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
     - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Restore template [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
   customTest:
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-pstore --chainNumber 2 --chainLength 2
+      - cert-csi test ephemeral-volume --pods 1 --driver csi-powerstore.dellemc.com --attr testfiles/powerstore-templates/ephemeral.properties
 - scenario: "Install PowerStore Driver(With Resiliency)"
   paths:
     - "testfiles/storage_csm_powerstore_resiliency.yaml"
@@ -1466,6 +1476,7 @@
     - "testfiles/storage_csm_unity.yaml"
   tags:
     - "unity"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-unity] and template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
@@ -1473,16 +1484,19 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
+    - "Set up ephemeral volume properties [testfiles/unity-templates/ephemeral.properties] for [unityEphemeral]"
     - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/unity-templates/unity-secret-template.yaml] for [unity]"
     - "Restore template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
+    - "Restore template [testfiles/unity-templates/ephemeral.properties] for [unityEphemeral]"
   customTest:
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-unity --chainNumber 2 --chainLength 2
+      - cert-csi test ephemeral-volume --pods 1 --driver csi-unity.dellemc.com --attr testfiles/unity-templates/ephemeral.properties
 - scenario: "Install App Mobility (Standalone)"
   paths:
     - "testfiles/application-mobility-templates/csm_application_mobility_vanilla.yaml"
