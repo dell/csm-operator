@@ -952,7 +952,7 @@ func getClusterIDs(ctx context.Context, replica csmv1.Module) []string {
 
 	if len(clusterIDs) == 0 {
 		log.Infof("TARGET_CLUSTERS_IDS not found in CR. Using default value \"self\"")
-		clusterIDs = append(clusterIDs, "self") //defaults to same cluster for the replication
+		clusterIDs = append(clusterIDs, "self") // defaults to same cluster for the replication
 	}
 	return clusterIDs
 }
