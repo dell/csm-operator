@@ -213,7 +213,7 @@ func (suite *CSMControllerTestSuite) TestReconcileError() {
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.makeFakeAuthServerCSM(csmName, suite.namespace, getAuthProxyServer())
-	suite.runFakeAuthCSMManager("timed out waiting for the condition", false, false)
+	suite.runFakeAuthCSMManager("context deadline exceeded", false, false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true, false)
 }
@@ -227,7 +227,7 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcileOCP() {
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
 	suite.makeFakeAuthServerCSMWithoutPreRequisite(csmName, suite.namespace)
-	suite.runFakeAuthCSMManager("timed out waiting for the condition", false, false)
+	suite.runFakeAuthCSMManager("context deadline exceeded", false, false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true, false)
 }
