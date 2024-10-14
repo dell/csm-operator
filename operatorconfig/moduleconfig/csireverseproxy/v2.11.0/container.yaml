@@ -1,5 +1,5 @@
 name: reverseproxy
-image: dellemc/csipowermax-reverseproxy:v2.10.0
+image: dellemc/csipowermax-reverseproxy:v2.11.0
 imagePullPolicy: IfNotPresent
 env:
   - name: X_CSI_REVPROXY_CONFIG_DIR

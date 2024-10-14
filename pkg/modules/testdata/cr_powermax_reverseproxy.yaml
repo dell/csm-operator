@@ -29,12 +29,12 @@ spec:
     - name: "csireverseproxy"
       # enabled: Always set to true
       enabled: true
-      configVersion: v2.10.0
+      configVersion: v2.11.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: dellemc/csipowermax-reverseproxy:v2.10.0
+          image: dellemc/csipowermax-reverseproxy:2.11.0
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
