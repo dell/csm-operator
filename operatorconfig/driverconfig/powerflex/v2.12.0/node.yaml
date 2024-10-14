@@ -40,6 +40,9 @@ rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "update"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -139,7 +142,7 @@ spec:
               mountPath: /certs
               readOnly: true
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"

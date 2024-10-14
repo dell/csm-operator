@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -459,6 +460,17 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_CONTROLLER_LOG_FORMAT", podmanLogFormat)
 				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_NODE_LOG_LEVEL", podmanLogLevel)
 				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_NODE_LOG_FORMAT", podmanLogFormat)
+			}
+		}
+	}
+
+	if cr.Spec.Driver.CSIDriverType == "powerflex" {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "INTERFACE_NAMES" {
+				cmValue += fmt.Sprintf("\n%s: ", "interfaceNames")
+				for _, v := range strings.Split(env.Value, ",") {
+					cmValue += fmt.Sprintf("\n  %s ", v)
+				}
 			}
 		}
 	}

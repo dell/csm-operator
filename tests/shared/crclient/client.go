@@ -103,9 +103,9 @@ func (f Client) List(ctx context.Context, list client.ObjectList, _ ...client.Li
 			return err
 		}
 	}
-	switch list.(type) {
+	switch l := list.(type) {
 	case *corev1.PodList:
-		return f.listPodList(list.(*corev1.PodList))
+		return f.listPodList(l)
 	case *appsv1.DeploymentList:
 		return f.listDeploymentList(ctx, &appsv1.DeploymentList{})
 	default:

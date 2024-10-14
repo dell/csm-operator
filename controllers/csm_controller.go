@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -240,7 +241,7 @@ var (
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 
 // Reconcile - main loop
-func (r *ContainerStorageModuleReconciler) Reconcile(ctxNotUsed context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.IncrUpdateCount()
 	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcID
@@ -269,6 +270,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctxNotUsed context.Context,
 		IsOpenShift:     r.Config.IsOpenShift,
 		K8sVersion:      r.Config.K8sVersion,
 		ConfigDirectory: r.Config.ConfigDirectory,
+	}
+
+	// Set default components if using miminal manifest (without components)
+	err = utils.LoadDefaultComponents(ctx, csm, *operatorConfig)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
 	// perform prechecks
@@ -560,7 +567,13 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter ratelimiter.RateLimiter, maxReconcilers int) error {
-	go r.ContentWatch()
+	go func() {
+		err := r.ContentWatch()
+		if err != nil {
+			fmt.Println("ContentWatch failed", err)
+			os.Exit(1)
+		}
+	}()
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&csmv1.ContainerStorageModule{}).
