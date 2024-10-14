@@ -63,7 +63,10 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	log := logger.GetLogger(ctx)
 	// Check for default secret only
 	// Array specific will be authenticated in csireverseproxy
-	cred := cr.Spec.Driver.AuthSecret
+	cred := cr.Name + "-creds"
+	if cr.Spec.Driver.AuthSecret != "" {
+		cred = cr.Spec.Driver.AuthSecret
+	}
 
 	// Check if driver version is supported by doing a stat on a config file
 	configFilePath := fmt.Sprintf("%s/driverconfig/powermax/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
