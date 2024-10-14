@@ -49,6 +49,7 @@ var (
 		{"pscale happy path", csm, csmv1.PowerScaleName, "node.yaml", ""},
 		{"powerscale happy path", pScaleCSM, csmv1.PowerScaleName, "node.yaml", ""},
 		{"pflex happy path", pFlexCSM, csmv1.PowerFlex, "node.yaml", ""},
+		{"pflex no-sdc path", csmForPowerFlex("no-sdc"), csmv1.PowerFlex, "node.yaml", ""},
 		{"pstore happy path", pStoreCSM, csmv1.PowerStore, "node.yaml", ""},
 		{"unity happy path", unityCSM, csmv1.Unity, "node.yaml", ""},
 		{"unity happy path when secrets with certificates provided", unityCSMCertProvided, csmv1.Unity, "node.yaml", ""},
