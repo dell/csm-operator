@@ -1159,7 +1159,6 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 	mgr, err := ctrl.NewManager(&rest.Config{}, ctrl.Options{
 		Scheme: scheme.Scheme,
 	})
-
 	if err != nil {
 		panic(err)
 	}
