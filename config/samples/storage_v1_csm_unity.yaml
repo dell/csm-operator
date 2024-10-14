@@ -85,16 +85,16 @@ spec:
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+        image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
       - name: csi-metadata-retriever
         image: dellemc/csi-metadata-retriever:v1.8.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
@@ -107,7 +107,7 @@ spec:
 
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
