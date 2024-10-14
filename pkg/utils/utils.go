@@ -924,6 +924,21 @@ func getClusterIDs(ctx context.Context, replica csmv1.Module) []string {
 	log := logger.GetLogger(ctx)
 	var clusterIDs []string
 
+	if replica.Components == nil {
+		// if we are entering this block then it is a minimal yaml and replication is enabled and we will set default cluster as self
+		components := make([]csmv1.ContainerTemplate, 0)
+		components = append(components, csmv1.ContainerTemplate{
+			Name: ReplicationControllerManager,
+		})
+		replica.Components = components
+
+		replica.Components[0].Envs = append(replica.Components[0].Envs, corev1.EnvVar{
+			Name:  "TARGET_CLUSTERS_IDS",
+			Value: "self", // defaults to same cluster for the replication
+		})
+
+	}
+
 	for _, comp := range replica.Components {
 		if comp.Name == ReplicationControllerManager {
 			for _, env := range comp.Envs {
@@ -1116,6 +1131,31 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 	}
 
 	return false
+}
+
+// HasModuleComponent - check if module component is present
+func HasModuleComponent(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+	moduleEnabled, module := IsModuleEnabled(ctx, instance, mod)
+	if !moduleEnabled {
+		return false
+	}
+
+	for _, c := range module.Components {
+		if c.Name == componentType {
+			return true
+		}
+	}
+
+	return false
+}
+
+// AddModuleComponent - add a module component in the cr
+func AddModuleComponent(instance *csmv1.ContainerStorageModule, mod csmv1.ModuleType, component csmv1.ContainerTemplate) {
+	for i := range instance.Spec.Modules {
+		if instance.Spec.Modules[i].Name == mod {
+			instance.Spec.Modules[i].Components = append(instance.Spec.Modules[i].Components, component)
+		}
+	}
 }
 
 // IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
@@ -1337,6 +1377,76 @@ func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr
 		}
 	}
 	return nil
+}
+
+// LoadDefaultComponents loads the default module components into cr
+func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) error {
+	log := logger.GetLogger(ctx)
+	modules := []csmv1.ModuleType{csmv1.Observability}
+	for _, module := range modules {
+		defaultComps, err := getDefaultComponents(cr.GetDriverType(), module, op)
+		if err != nil {
+			log.Errorf("failed to get default components for %s: %v", module, err)
+			return fmt.Errorf("failed to get default components for %s: %v", module, err)
+		}
+
+		for _, comp := range defaultComps {
+			if !HasModuleComponent(ctx, *cr, csmv1.Observability, comp.Name) {
+				log.Infof("Adding default component %s for %s ", comp.Name, module)
+				AddModuleComponent(cr, csmv1.Observability, comp)
+			}
+		}
+	}
+
+	return nil
+}
+
+func getDefaultComponents(driverType csmv1.DriverType, module csmv1.ModuleType, op OperatorConfig) ([]csmv1.ContainerTemplate, error) {
+	file := fmt.Sprintf("%s/moduleconfig/%s/default-components.yaml", op.ConfigDirectory, module)
+	buf, err := os.ReadFile(filepath.Clean(file))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file %s: %s", file, err.Error())
+	}
+
+	defaultCsm := new(csmv1.ContainerStorageModule)
+	err = yaml.Unmarshal(buf, &defaultCsm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal default-components.yaml for %s: %s", module, err.Error())
+	}
+
+	defaultComps := defaultCsm.GetModule(module).Components
+	if module == csmv1.Observability {
+		if driverType == csmv1.PowerScale {
+			driverType = csmv1.PowerScaleName
+		}
+		for i := range defaultComps {
+			if strings.HasPrefix(defaultComps[i].Name, "metrics") {
+				defaultComps[i].Name = strings.ReplaceAll(defaultComps[i].Name, "<CSI_DRIVER_TYPE>", string(driverType))
+			}
+		}
+	}
+	return defaultComps, nil
+}
+
+// SetContainerImage loops through objects to find deployment and set the image for container
+func SetContainerImage(objects []crclient.Object, deploymentName, containerName, image string) {
+	if len(objects) == 0 || len(deploymentName) == 0 || len(containerName) == 0 || len(image) == 0 {
+		return
+	}
+	for _, object := range objects {
+		deployment, ok := object.(*appsv1.Deployment)
+		if !ok || !strings.EqualFold(deployment.Name, deploymentName) {
+			continue
+		}
+		if len(deployment.Spec.Template.Spec.Containers) == 0 {
+			break
+		}
+		for i := range deployment.Spec.Template.Spec.Containers {
+			if strings.EqualFold(deployment.Spec.Template.Spec.Containers[i].Name, containerName) {
+				deployment.Spec.Template.Spec.Containers[i].Image = image
+			}
+		}
+	}
 }
 
 func GetLatestVersion(resourceType string, op OperatorConfig) (string, error) {

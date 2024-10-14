@@ -41,6 +41,13 @@ spec:
           value: "0"
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
+        # CSI driver interface names for NFS deployment without SDC
+        # Multiple interface names should be separated by comma
+        # Ensure to single quote the whole value and double quote each interface name
+        # Examples: 'worker1: "interface1",worker2: "interface2"'
+        # Default value: None, required only when X_CSI_SDC_ENABLED is set to false
+        - name: INTERFACE_NAMES
+          value:
     sideCars:
       # 'k8s' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
@@ -179,6 +186,13 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
+      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
+      #  - key: "offline.vxflexos.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
+      #  - key: "vxflexos.podmon.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
     initContainers:
       - image: dellemc/sdc:4.5.2.1
         imagePullPolicy: IfNotPresent

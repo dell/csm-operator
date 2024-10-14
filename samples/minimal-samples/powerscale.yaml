@@ -24,3 +24,20 @@ spec:
       enabled: false
     - name: replication
       enabled: true
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
+      components:
+        - name: topology
+          enabled: true
+        - name: otel-collector
+          enabled: true
+        - name: cert-manager
+          # enabled: Enable/Disable cert-manager
+          # Allowed values:
+          #   true: enable deployment of cert-manager
+          #   false: disable deployment of cert-manager only if it's already deployed
+          # Default value: false
+          enabled: false
+        - name: metrics-powerscale
+          enabled: true

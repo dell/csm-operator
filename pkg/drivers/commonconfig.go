@@ -118,7 +118,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	controllerYAML := driverYAML.(utils.ControllerYAML)
 	controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
-	var defaultReplicas int32 = 1
+	var defaultReplicas int32 = 2
 	if *(controllerYAML.Deployment.Spec.Replicas) == 0 {
 		controllerYAML.Deployment.Spec.Replicas = &defaultReplicas
 	}
@@ -538,6 +538,17 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_CONTROLLER_LOG_FORMAT", podmanLogFormat)
 				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_NODE_LOG_LEVEL", podmanLogLevel)
 				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_NODE_LOG_FORMAT", podmanLogFormat)
+			}
+		}
+	}
+
+	if cr.Spec.Driver.CSIDriverType == "powerflex" {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "INTERFACE_NAMES" {
+				cmValue += fmt.Sprintf("\n%s: ", "interfaceNames")
+				for _, v := range strings.Split(env.Value, ",") {
+					cmValue += fmt.Sprintf("\n  %s ", v)
+				}
 			}
 		}
 	}
