@@ -27,6 +27,9 @@ import (
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 
+	appsv1 "k8s.io/api/apps/v1"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -92,9 +95,9 @@ func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) 
 	for _, component := range replicaModule.Components {
 		if component.Name == utils.ReplicationSideCarName {
 			for _, env := range component.Envs {
-				if env.Name == XCSIReplicaPrefix {
+				if env.Name == XCSIReplicaPrefix && env.Value != "" {
 					replicationPrefix = env.Value
-				} else if env.Name == XCSIReplicaCTXPrefix {
+				} else if env.Name == XCSIReplicaCTXPrefix && env.Value != "" {
 					replicationContextPrefix = env.Value
 				}
 			}
@@ -130,6 +133,18 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig)
 	err = yaml.Unmarshal([]byte(YamlString), &container)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	for _, component := range replicaModule.Components {
+		if component.Name == utils.ReplicationSideCarName {
+			if component.Image != "" {
+				image := string(component.Image)
+				container.Image = &image
+			}
+			if component.ImagePullPolicy != "" {
+				container.ImagePullPolicy = &component.ImagePullPolicy
+			}
+		}
 	}
 
 	return &replicaModule, &container, nil
@@ -320,17 +335,17 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 	return nil
 }
 
-func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
 	YamlString := ""
 
 	replica, err := getReplicaModule(cr)
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
 
 	buf, err := readConfigFile(replica, cr, op, "controller.yaml")
 	if err != nil {
-		return YamlString, err
+		return nil, err
 	}
 	YamlString = utils.ModifyCommonCR(string(buf), cr)
 
@@ -347,13 +362,13 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 				replicaImage = string(component.Image)
 			}
 			for _, env := range component.Envs {
-				if strings.Contains(DefaultLogLevel, env.Name) {
+				if strings.Contains(DefaultLogLevel, env.Name) && env.Value != "" {
 					logLevel = env.Value
-				} else if strings.Contains(DefautlReplicaCount, env.Name) {
+				} else if strings.Contains(DefautlReplicaCount, env.Name) && env.Value != "" {
 					replicaCount = env.Value
-				} else if strings.Contains(DefaultRetryMin, env.Name) {
+				} else if strings.Contains(DefaultRetryMin, env.Name) && env.Value != "" {
 					retryMin = env.Value
-				} else if strings.Contains(DefaultRetryMax, env.Name) {
+				} else if strings.Contains(DefaultRetryMax, env.Name) && env.Value != "" {
 					retryMax = env.Value
 				}
 			}
@@ -366,11 +381,23 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 
 	YamlString = strings.ReplaceAll(YamlString, DefaultLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, DefautlReplicaCount, replicaCount)
-	YamlString = strings.ReplaceAll(YamlString, DefaultReplicaImage, replicaImage)
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicaInitImage, replicaInitImage)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMax, retryMax)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
-	return YamlString, nil
+
+	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return nil, err
+	}
+	// loop ctrlObjects to find the deployment and set the image
+	if len(replicaImage) != 0 {
+		for _, ctrlObj := range ctrlObjects {
+			if deployment, ok := ctrlObj.(*appsv1.Deployment); ok {
+				deployment.Spec.Template.Spec.Containers[0].Image = replicaImage
+			}
+		}
+	}
+	return ctrlObjects, nil
 }
 
 func getReplicaModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
@@ -384,12 +411,7 @@ func getReplicaModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 
 // ReplicationManagerController -
 func ReplicationManagerController(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	YamlString, err := getReplicaController(op, cr)
-	if err != nil {
-		return err
-	}
-
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	ctrlObjects, err := getReplicaController(op, cr)
 	if err != nil {
 		return err
 	}
