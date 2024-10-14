@@ -71,6 +71,9 @@ rules:
   - apiGroups: ["apps"]
     resources: ["replicasets"]
     verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "update"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -119,7 +122,7 @@ spec:
       serviceAccountName: <DriverDefaultReleaseName>-controller
       containers:
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -132,7 +135,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+          image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -162,7 +165,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: csi-external-health-monitor-controller
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -179,7 +182,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -193,7 +196,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"

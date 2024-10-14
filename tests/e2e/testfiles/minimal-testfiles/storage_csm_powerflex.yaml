@@ -7,6 +7,8 @@ spec:
   driver:
     csiDriverType: "powerflex"
     configVersion: v2.12.0
+    common:
+      image: "dellemc/csi-vxflexos:nightly"
     forceRemoveDriver: true
   modules:
     # Authorization: enable csm-authorization for RBAC
@@ -22,23 +24,9 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-    - name: replication
-      enabled: true
-    # observability: allows to configure observability
-    - name: observability
-      # enabled: Enable/Disable observability
-      enabled: false
+      # Adding components since "nightly" image is to be used for e2e
       components:
-        - name: topology
-          enabled: true
-        - name: otel-collector
-          enabled: true
-        - name: cert-manager
-          # enabled: Enable/Disable cert-manager
-          # Allowed values:
-          #   true: enable deployment of cert-manager
-          #   false: disable deployment of cert-manager only if it's already deployed
-          # Default value: false
-          enabled: false
-        - name: metrics-powerflex
-          enabled: true
+        - name: podmon-controller
+          image: dellemc/podmon:nightly
+        - name: podmon-node
+          image: dellemc/podmon:nightly
