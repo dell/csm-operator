@@ -42,4 +42,3 @@ spec:
           enabled: false
         - name: metrics-powerflex
           enabled: true
-
