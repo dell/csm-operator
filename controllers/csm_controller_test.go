@@ -41,11 +41,12 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -1155,12 +1156,16 @@ func TestCustom(t *testing.T) {
 
 // test with a csm without a finalizer, reconcile should add it
 func (suite *CSMControllerTestSuite) TestContentWatch() {
-	err := suite.createReconciler().ContentWatch()
+	mgr, err := ctrl.NewManager(&rest.Config{}, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
+
 	if err != nil {
 		panic(err)
 	}
+
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
-	err = suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
+	err = suite.createReconciler().SetupWithManager(mgr, expRateLimiter, 1)
 	if err != nil {
 		panic(err)
 	}
