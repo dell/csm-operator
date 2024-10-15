@@ -1,6 +1,6 @@
 module github.com/dell/csm-operator
 
-go 1.22.0
+go 1.23.2
 
 require (
 	github.com/cert-manager/cert-manager v1.12.3
