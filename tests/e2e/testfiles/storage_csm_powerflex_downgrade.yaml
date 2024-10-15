@@ -167,7 +167,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
     initContainers:
-      - image: dellemc/sdc:4.5.2
+      - image: dellemc/sdc:4.5.2.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:

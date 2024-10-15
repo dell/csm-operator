@@ -1108,6 +1108,13 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Run custom test"
+  customTest:
+    name: Sleep to allow CSM deletion
+    run:
+     - echo "Sleeping for 180 seconds to allow CSM time to delete"
+     - sleep 180
+
 - scenario: "Install Powerflex Driver (With Replication)"
   paths:
     - "testfiles/storage_csm_powerflex_replica.yaml"
