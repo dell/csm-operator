@@ -41,11 +41,12 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -167,12 +168,27 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 	unittestLogger.Info("Init unit test...")
 
-	csmv1.AddToScheme(scheme.Scheme)
-	velerov1.AddToScheme(scheme.Scheme)
-	apiextv1.AddToScheme(scheme.Scheme)
+	err := csmv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+	err = velerov1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+	err = apiextv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
 
-	apiextv1.AddToScheme(scheme.Scheme)
-	certmanagerv1.AddToScheme(scheme.Scheme)
+	err = apiextv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+	err = certmanagerv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
 
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)
@@ -197,7 +213,7 @@ func (suite *CSMControllerTestSuite) TestReconcileError() {
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcile() {
 	suite.makeFakeAuthServerCSM(csmName, suite.namespace, getAuthProxyServer())
-	suite.runFakeAuthCSMManager("timed out waiting for the condition", false, false)
+	suite.runFakeAuthCSMManager("context deadline exceeded", false, false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true, false)
 }
@@ -211,7 +227,7 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcileOCP() {
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
 	suite.makeFakeAuthServerCSMWithoutPreRequisite(csmName, suite.namespace)
-	suite.runFakeAuthCSMManager("timed out waiting for the condition", false, false)
+	suite.runFakeAuthCSMManager("context deadline exceeded", false, false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true, false)
 }
@@ -314,13 +330,19 @@ func (suite *CSMControllerTestSuite) TestPowerScaleAnnotation() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	reconciler := suite.createReconciler()
 	updateCSMError = true
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
 }
@@ -332,13 +354,19 @@ func (suite *CSMControllerTestSuite) TestPowerFlexAnnotation() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	reconciler := suite.createReconciler()
 	updateCSMError = true
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
 }
@@ -350,13 +378,19 @@ func (suite *CSMControllerTestSuite) TestPowerStoreAnnotation() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-config", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	reconciler := suite.createReconciler()
 	updateCSMError = true
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
 }
@@ -368,13 +402,19 @@ func (suite *CSMControllerTestSuite) TestUnityAnnotation() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-config", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	reconciler := suite.createReconciler()
 	updateCSMError = true
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
 }
@@ -386,13 +426,19 @@ func (suite *CSMControllerTestSuite) TestPowermaxAnnotation() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, shared.PmaxConfigVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	reconciler := suite.createReconciler()
 	updateCSMError = true
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	updateCSMError = false
 }
@@ -404,9 +450,15 @@ func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	annotations := csm.GetAnnotations()
 	if annotations == nil {
@@ -421,7 +473,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgrade() {
 	csm.Spec.Driver.ConfigVersion = upgradeConfigVersion
 
 	reconciler := suite.createReconciler()
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Nil(suite.T(), err)
 }
 
@@ -432,9 +484,11 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeVersionTooOld() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
 
 	annotations := csm.GetAnnotations()
 	if annotations == nil {
@@ -449,7 +503,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeVersionTooOld() {
 	csm.Spec.Driver.ConfigVersion = oldConfigVersion
 
 	reconciler := suite.createReconciler()
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 }
 
@@ -460,9 +514,15 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	annotations := csm.GetAnnotations()
 	if annotations == nil {
@@ -476,7 +536,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradeSkipVersion() {
 	csm.Spec.Driver.ConfigVersion = jumpUpgradeConfigVersion
 
 	reconciler := suite.createReconciler()
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Nil(suite.T(), err)
 }
 
@@ -487,9 +547,15 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	annotations := csm.GetAnnotations()
 	if annotations == nil {
@@ -504,7 +570,7 @@ func (suite *CSMControllerTestSuite) TestCsmUpgradePathInvalid() {
 	csm.Spec.Driver.ConfigVersion = invalidConfigVersion
 
 	reconciler := suite.createReconciler()
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 }
 
@@ -515,9 +581,15 @@ func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	annotations := csm.GetAnnotations()
 	if annotations == nil {
@@ -532,7 +604,7 @@ func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
 	csm.Spec.Driver.ConfigVersion = downgradeConfigVersion
 
 	reconciler := suite.createReconciler()
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Nil(suite.T(), err)
 }
 
@@ -543,9 +615,15 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradeVersionTooOld() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	annotations := csm.GetAnnotations()
 	if annotations == nil {
@@ -560,7 +638,7 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradeVersionTooOld() {
 	csm.Spec.Driver.ConfigVersion = oldConfigVersion
 
 	reconciler := suite.createReconciler()
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 }
 
@@ -571,9 +649,15 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradeSkipVersion() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	annotations := csm.GetAnnotations()
 	if annotations == nil {
@@ -588,7 +672,7 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradeSkipVersion() {
 	csm.Spec.Driver.ConfigVersion = jumpDowngradeConfigVersion
 
 	reconciler := suite.createReconciler()
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Nil(suite.T(), err)
 }
 
@@ -599,9 +683,15 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradePathInvalid() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	annotations := csm.GetAnnotations()
 	if annotations == nil {
@@ -616,7 +706,7 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradePathInvalid() {
 	csm.Spec.Driver.ConfigVersion = invalidConfigVersion
 
 	reconciler := suite.createReconciler()
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 }
 
@@ -624,13 +714,19 @@ func (suite *CSMControllerTestSuite) TestCsmFinalizerError() {
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.ObjectMeta.Finalizers = []string{"foo"}
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
-	suite.fakeClient.Create(ctx, &csm)
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	reconciler := suite.createReconciler()
 	updateCSMError = true
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.NotNil(suite.T(), err)
 	updateCSMError = false
 }
@@ -670,7 +766,10 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 			if tt.errorInjector != nil {
 				// need to create all objs before running removeDriver to hit unknown error
 				suite.makeFakeCSM(csmName, suite.namespace, true, append(getAuthModule(), getObservabilityModule()...))
-				r.Reconcile(ctx, req)
+				_, err := r.Reconcile(ctx, req)
+				if err != nil {
+					panic(err)
+				}
 				*tt.errorInjector = true
 			}
 
@@ -756,7 +855,10 @@ func (suite *CSMControllerTestSuite) TestRemoveModule() {
 		suite.T().Run(csmName, func(t *testing.T) {
 			if tt.errorInjector != nil {
 				suite.makeFakeCSM(csmName, suite.namespace, false, getAuthProxyServer())
-				r.Reconcile(ctx, req)
+				_, err := r.Reconcile(ctx, req)
+				if err != nil {
+					panic(err)
+				}
 				*tt.errorInjector = true
 			}
 			err := r.removeModule(ctx, tt.csm, operatorConfig, r.Client)
@@ -850,13 +952,19 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckVersionError() {
 	csm.Annotations[configVersionKey] = configVersion
 
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err := suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
-	suite.fakeClient.Create(ctx, &csm)
+	err = suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	reconciler := suite.createReconciler()
 
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.NotNil(suite.T(), err)
 
 	// set it back to good version for other tests
@@ -874,14 +982,20 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckTypeError() {
 	csm.Annotations[configVersionKey] = configVersion
 
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err := suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
-	suite.fakeClient.Create(ctx, &csm)
+	err = suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	reconciler := suite.createReconciler()
 
 	configVersion = shared.ConfigVersion
-	_, err := reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
 	assert.NotNil(suite.T(), err)
 	// set it back to good version for other tests
 	suite.deleteCSM(csmName)
@@ -898,10 +1012,16 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	csm.Annotations[configVersionKey] = configVersion
 
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err := suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
-	suite.fakeClient.Create(ctx, &csm)
+	err = suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	reconciler := suite.createReconciler()
 
 	badOperatorConfig := utils.OperatorConfig{
@@ -910,7 +1030,7 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 
 	// error in Authorization
 	csm.Spec.Modules = getAuthModule()
-	err := reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
 	// error in Authorization Proxy Server
@@ -956,16 +1076,22 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	csm.Annotations[configVersionKey] = configVersion
 
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	suite.fakeClient.Create(ctx, sec)
+	err := suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
-	suite.fakeClient.Create(ctx, &csm)
+	err = suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
 	reconciler := suite.createReconciler()
 
 	// error in Authorization
 	csm.Spec.Modules = getAuthModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
-	err := reconciler.PreChecks(ctx, &csm, operatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
 	// error in Authorization Proxy Server
@@ -1030,9 +1156,18 @@ func TestCustom(t *testing.T) {
 
 // test with a csm without a finalizer, reconcile should add it
 func (suite *CSMControllerTestSuite) TestContentWatch() {
-	suite.createReconciler().ContentWatch()
+	mgr, err := ctrl.NewManager(&rest.Config{}, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
-	suite.createReconciler().SetupWithManager(nil, expRateLimiter, 1)
+	err = suite.createReconciler().SetupWithManager(mgr, expRateLimiter, 1)
+	if err != nil {
+		panic(err)
+	}
 	close(StopWatch)
 	version, err := utils.GetModuleDefaultVersion("v2.12.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
 	assert.NotNil(suite.T(), err)
@@ -1041,7 +1176,6 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {
 	logType := logger.DevelopmentLogLevel
-	logger.SetLoggerLevel(logType)
 	_, log := logger.GetNewContextWithLogger("0")
 	log.Infof("Version : %s", logType)
 
@@ -1207,7 +1341,10 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(_, expectedErr 
 	os.Setenv("UNIT_TEST", "true")
 
 	// create everything this time
-	reconciler.Reconcile(ctx, req)
+	_, err = reconciler.Reconcile(ctx, req)
+	if err != nil {
+		panic(err)
+	}
 
 	getCSIError = true
 	_, err = reconciler.Reconcile(ctx, req)
@@ -1410,9 +1547,15 @@ func (suite *CSMControllerTestSuite) deleteCSM(csmName string) {
 	err := suite.fakeClient.Get(ctx, key, csm)
 	assert.Nil(suite.T(), err)
 
-	suite.fakeClient.(*crclient.Client).SetDeletionTimeStamp(ctx, csm)
+	err = suite.fakeClient.(*crclient.Client).SetDeletionTimeStamp(ctx, csm)
+	if err != nil {
+		panic(err)
+	}
 
-	suite.fakeClient.Delete(ctx, csm)
+	err = suite.fakeClient.Delete(ctx, csm)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func getObservabilityModule() []csmv1.Module {
@@ -2192,15 +2335,6 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 	default:
 	}
 	return nil
-}
-
-// debugFakeObjects prints the runtime objects in the fake client
-func (suite *CSMControllerTestSuite) debugFakeObjects() {
-	objects := suite.fakeClient.(*crclient.Client).Objects
-	for key, o := range objects {
-		unittestLogger.Info("found fake object ", "name", key.Name)
-		unittestLogger.Info("found fake object ", "object", fmt.Sprintf("%#v", o))
-	}
 }
 
 func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) {
