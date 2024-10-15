@@ -1,0 +1,31 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: isilon
+  namespace: isilon
+spec:
+  driver:
+    csiDriverType: "isilon"
+    configVersion: v2.12.0
+    forceRemoveDriver: true
+    common:
+      image: "dellemc/csi-isilon:nightly"
+  modules:
+    - name: authorization
+      enabled: false
+      # For Auth 2.0, use v2.0.0 as configVersion
+      configVersion: v1.11.0
+    - name: resiliency
+      enabled: false
+    - name: replication
+      enabled: true
+      components:
+        - name: dell-csi-replicator
+          image: dellemc/dell-csi-replicator:nightly
+        - name: dell-replication-controller-manager
+          image: dellemc/dell-replication-controller:nightly
+          # envs:
+          #  - name: "TARGET_CLUSTERS_IDS"
+          #    value: "self"
+        - name: dell-replication-controller-init
+          image: dellemc/dell-replication-init:v1.0.0

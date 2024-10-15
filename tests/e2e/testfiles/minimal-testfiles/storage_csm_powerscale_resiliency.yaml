@@ -1,15 +1,15 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-vxflexos
-  namespace: test-vxflexos
+  name: isilon
+  namespace: isilon
 spec:
   driver:
-    csiDriverType: "powerflex"
+    csiDriverType: "isilon"
     configVersion: v2.12.0
-    common:
-      image: "dellemc/csi-vxflexos:nightly"
     forceRemoveDriver: true
+    common:
+      image: "dellemc/csi-isilon:nightly"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -23,8 +23,7 @@ spec:
       #   true: enable Resiliency feature(deploy podmon sidecar)
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
-      enabled: false
-      # Adding components since "nightly" image is to be used for e2e
+      enabled: true
       components:
         - name: podmon-controller
           image: dellemc/podmon:nightly

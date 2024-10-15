@@ -252,6 +252,16 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"success - creating with minimal manifest": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			tmpCR.Spec.Modules[0].Components = nil
+			deployAsSidecar = false
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
 		"fail - reverseproxy module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
 			if err != nil {
