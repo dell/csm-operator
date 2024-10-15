@@ -1146,8 +1146,16 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	cmd := exec.Command("kubectl", "get", "ns", cr.Namespace)
 	err := cmd.Run()
 	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "ns", cr.Namespace)
+
+		fmt.Printf("\nDeleting all CSM from namespace: %s \n", cr.Namespace)
+		cmd = exec.Command("kubectl", "delete", "csm", "-n", cr.Namespace, "--all")
 		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to delete all CSM from namespace: %v\nErrMessage:\n%s", err, string(b))
+		}
+
+		cmd = exec.Command("kubectl", "delete", "ns", cr.Namespace)
+		b, err = cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to delete authorization namespace: %v\nErrMessage:\n%s", err, string(b))
 		}
