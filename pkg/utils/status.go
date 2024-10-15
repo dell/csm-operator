@@ -117,10 +117,7 @@ func getAccStatefulSetStatus(ctx context.Context, instance *csmv1.ApexConnectivi
 	totalReadyPods := 0
 	totalFailedCount := 0
 
-	_, clusterClients, err := GetAccDefaultClusters(ctx, *instance, r)
-	if err != nil {
-		return int32(totalReplicas), csmv1.PodStatus{}, err
-	}
+	_, clusterClients := GetAccDefaultClusters(ctx, *instance, r)
 
 	for _, cluster := range clusterClients {
 		log.Infof("statefulSet status for cluster: %s", cluster.ClusterID)
