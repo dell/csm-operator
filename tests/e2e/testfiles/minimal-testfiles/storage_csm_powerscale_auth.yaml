@@ -1,0 +1,37 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: isilon
+  namespace: isilon
+spec:
+  driver:
+    csiDriverType: "isilon"
+    configVersion: v2.12.0
+    replicas: 1
+    forceRemoveDriver: true
+    common:
+      image: "dellemc/csi-isilon:nightly"
+  modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: true
+      # For Auth 2.0, use v2.0.0 as configVersion
+      configVersion: v1.12.0
+      components:
+        - name: karavi-authorization-proxy
+          image: dellemc/csm-authorization-sidecar:nightly
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
+    - name: resiliency
+      enabled: false
+    - name: replication
+      enabled: false
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
