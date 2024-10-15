@@ -20,6 +20,8 @@ export ARRAY_INFO_FILE=array-info.sh
 export GO111MODULE=on
 export ACK_GINKGO_RC=true
 export PROG="${0}"
+export GINKGO_OPTS="--timeout 5h"
+
 
 # Start with all modules false, they can be enabled by command line arguments 
 export AUTHORIZATION=false

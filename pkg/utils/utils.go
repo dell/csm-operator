@@ -364,29 +364,6 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	return YamlString
 }
 
-// ModifyCommonCRs - update with common values
-func ModifyCommonCRs(YamlString string, cr csmv1.ApexConnectivityClient) string {
-	if cr.Name != "" {
-		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseName, cr.Name)
-	}
-	if cr.Namespace != "" {
-		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseNamespace, cr.Namespace)
-	}
-	if string(cr.Spec.Client.Common.ImagePullPolicy) != "" {
-		YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Client.Common.ImagePullPolicy))
-	}
-	path := ""
-	for _, env := range cr.Spec.Client.Common.Envs {
-		if env.Name == "KUBELET_CONFIG_DIR" {
-			path = env.Value
-			break
-		}
-	}
-	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
-
-	return YamlString
-}
-
 // GetCTRLObject - get controller object
 func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 	ctrlObjects := []crclient.Object{}
@@ -1058,18 +1035,6 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	return replicaEnabled, clusterClients, nil
 }
 
-// GetAccDefaultClusters - get default clusters
-func GetAccDefaultClusters(_ context.Context, _ csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster) {
-	clusterClients := []ReplicaCluster{
-		{
-			ClusterCTRLClient: r.GetClient(),
-			ClusterK8sClient:  r.GetK8sClient(),
-			ClusterID:         DefaultSourceClusterID,
-		},
-	}
-	return false, clusterClients
-}
-
 // GetSecret - check if the secret is present
 func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*corev1.Secret, error) {
 	found := &corev1.Secret{}
@@ -1338,29 +1303,9 @@ func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	return namespaces, nil
 }
 
-// CheckAccAndCreateOrDeleteRbac checks if the dell connectivity client exists and creates/deletes the role and rolebindings
-func CheckAccAndCreateOrDeleteRbac(ctx context.Context, operatorConfig OperatorConfig, ctrlClient crclient.Client, isDeleting bool) error {
-	logInstance := logger.GetLogger(ctx)
-	accList := &csmv1.ApexConnectivityClientList{}
-	if err := ctrlClient.List(ctx, accList); err != nil {
-		logInstance.Info("dell connectivity client not found")
-	} else if len(accList.Items) <= 0 {
-		logInstance.Info("dell connectivity client not found")
-	} else {
-		logInstance.Info("dell connectivity client found")
-		clientNamespace := accList.Items[0].Namespace
-		accConfigVersion := accList.Items[0].Spec.Client.ConfigVersion
-		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory,
-			csmv1.DreadnoughtClient, accConfigVersion, BrownfieldManifest)
-		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNamespace, ctrlClient, isDeleting); err != nil {
-			logInstance.Error(err, "error creating role/rolebindings")
-			return err
-		}
-	}
-	return nil
-}
-
+// 2nd parameter is an ApexCC cr
 // CreateBrownfieldRbac creates the role and rolebindings
+/*
 func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client, isDeleting bool) error {
 	logInstance := logger.GetLogger(ctx)
 	csmList := &csmv1.ContainerStorageModuleList{}
@@ -1376,6 +1321,7 @@ func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr
 	}
 	return nil
 }
+*/
 
 // LoadDefaultComponents loads the default module components into cr
 func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) error {
