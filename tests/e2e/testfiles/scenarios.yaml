@@ -1112,8 +1112,8 @@
   customTest:
     name: Sleep to allow CSM deletion
     run:
-     - echo "Sleeping for 180 seconds to allow CSM time to delete"
-     - sleep 180
+      - echo "Sleeping for 180 seconds to allow CSM time to delete"
+      - sleep 180
 
 - scenario: "Install Powerflex Driver (With Replication)"
   paths:

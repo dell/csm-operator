@@ -322,11 +322,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
 				maxVolumesPerNode = env.Value
 			}
-			/*
-				// commenting out for now, as enableQuota is not used and linter says the assignment is ineffectual
-				if env.Name == "X_CSI_QUOTA_ENABLED" {
-					enableQuota = env.Value
-				}*/
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorNode = env.Value
 			}
