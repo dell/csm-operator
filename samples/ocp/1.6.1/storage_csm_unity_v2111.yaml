@@ -1,0 +1,168 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: unity
+  namespace: unity
+spec:
+  driver:
+    csiDriverType: "unity"
+    csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
+      # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
+      # Allowed values: ReadWriteOnceWithFSType, File , None
+      # Default value: ReadWriteOnceWithFSType
+      fSGroupPolicy: "ReadWriteOnceWithFSType"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: true
+    configVersion: v2.11.1
+    # Controller count
+    replicas: 2
+    dnsPolicy: ClusterFirstWithHostNet
+    forceUpdate: false
+    forceRemoveDriver: true
+    common:
+      image: "registry.connect.redhat.com/dell-emc/csi-unity@sha256:7f2abaf2c6dd92abc2824f4adc0aac929844452692e9c99cd7cdb99df1f7e129"
+      imagePullPolicy: IfNotPresent
+      envs:
+        # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
+        # Allowed values: boolean
+        # Default value: "false"
+        # Examples : "true" , "false"
+        - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
+          value: "false"
+        - name: X_CSI_EPHEMERAL_STAGING_PATH
+          value: "/var/lib/kubelet/plugins/kubernetes.io/csi/pv/"
+        # X_CSI_ISCSI_CHROOT is the path to which the driver will chroot before
+        # running any iscsi commands. This value should only be set when instructed
+        # by technical support
+        - name: X_CSI_ISCSI_CHROOT
+          value: "/noderoot"
+        # X_CSI_UNITY_SYNC_NODEINFO_INTERVAL - Time interval to add node info to array. Default 15 minutes. Minimum value should be 1.
+        # Allowed values: integer
+        # Default value: 15
+        # Examples : 0 , 2
+        - name: X_CSI_UNITY_SYNC_NODEINFO_INTERVAL
+          value: "15"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: /var/lib/kubelet
+        - name: KUBELET_CONFIG_DIR
+          value: /var/lib/kubelet
+        # CSI_LOG_LEVEL is used to set the logging level of the driver.
+        # Allowed values: "error", "warn"/"warning", "info", "debug"
+        # Default value: "info"
+        - name: CSI_LOG_LEVEL
+          value: debug
+        # CSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: CSI_LOG_FORMAT
+          value: "TEXT"
+        # TENANT_NAME - Tenant name that need to added while adding host entry to the array.
+        # Allowed values: string
+        # Default value: ""
+        # Examples : "tenant2" , "tenant3"
+        - name: TENANT_NAME
+          value: ""
+        # CERT_SECRET_COUNT: Represents number of certificate secrets, which user is going to create for
+        # ssl authentication. (unity-cert-0..unity-cert-n)
+        # This field is only verified if X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION is set to false
+        # Allowed values: n, where n > 0
+        # Default value: None
+        - name: CERT_SECRET_COUNT
+          value: "1"
+        # X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: Specifies if the driver is going to validate unisphere certs while connecting to the Unisphere REST API interface.
+        # If it is set to false, then a secret unity-certs has to be created with an X.509 certificate of CA which signed the Unisphere certificate
+        # Allowed values:
+        #   true: skip Unisphere API server's certificate verification
+        #   false: verify Unisphere API server's certificates
+        # Default value: true
+        - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
+          value: "true"
+    sideCars:
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner@sha256:405a14e1aa702f7ea133cea459e8395fe40a6125c088c55569e696d48e1bd385
+        args: ["--volume-name-prefix=csivol"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher@sha256:b4d611100ece2f9bc980d1cb19c2285b8868da261e3b1ee8f45448ab5512ab94
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:f25af73ee708ff9c82595ae99493cdef9295bd96953366cddf36305f82555dac
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer@sha256:a541e6cc2d8b011bb21b1d4ffec6b090e85270cce6276ee302d86153eec0af43
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:2e04046334baf9be425bb0fa1d04c2d1720d770825eedbdbcdb10d430da4ad8c
+      - name: csi-metadata-retriever
+        image: registry.connect.redhat.com/dell-emc/csi-metadata-retriever@sha256:abf97fc03ff59147ef0cd9ec3e58fcd5ef499aa9c13da53a8b99731884cb87d9
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      - name: external-health-monitor
+        # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+        # Configure when the storageCapacity is set as "true"
+        # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+        # - name: provisioner
+        #  args: ["--capacity-poll-interval=5m"]
+
+        enabled: false
+        args: ["--monitor-interval=60s"]
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:97e806babd29424737464aaafdc3ede91119c077ddc0b7ecf423c5dca4833d84
+    controller:
+      envs:
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # tolerations: Define tolerations for the controllers, if required.
+      # Leave as blank to install controller on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+    node:
+      envs:
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        # X_CSI_ALLOWED_NETWORKS: Custom networks for Unity export
+        # Specify list of networks which can be used for NFS I/O traffic; CIDR format should be used.
+        # Allowed values: list of one or more networks (comma separated)
+        # Default value: ""
+        # Provide them in the following format: "net1, net2"
+        # CIDR format should be used
+        # eg: "192.168.1.0/24, 192.168.100.0/22"
+        - name: X_CSI_ALLOWED_NETWORKS
+          value: ""
+      # nodeSelector: Define node selection constraints for node pods.
+      # For the pod to be eligible to run on a node, the node must have each
+      # of the indicated key-value pairs as labels.
+      # Leave as blank to consider all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # tolerations: Define tolerations for the controllers, if required.
+      # Leave as blank to install controller on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
