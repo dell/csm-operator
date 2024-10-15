@@ -502,10 +502,7 @@ func (r *ApexConnectivityClientReconciler) SyncACC(ctx context.Context, cr csmv1
 
 	controller := accconfig.Controller
 
-	_, clusterClients, err := utils.GetAccDefaultClusters(ctx, cr, r)
-	if err != nil {
-		return err
-	}
+	_, clusterClients := utils.GetAccDefaultClusters(ctx, cr, r)
 
 	for _, cluster := range clusterClients {
 		log.Infof("Starting SYNC for %s cluster", cluster.ClusterID)
