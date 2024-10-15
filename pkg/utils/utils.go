@@ -1059,7 +1059,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 }
 
 // GetAccDefaultClusters - get default clusters
-func GetAccDefaultClusters(_ context.Context, _ csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster, error) {
+func GetAccDefaultClusters(_ context.Context, _ csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster) {
 	clusterClients := []ReplicaCluster{
 		{
 			ClusterCTRLClient: r.GetClient(),
@@ -1067,9 +1067,7 @@ func GetAccDefaultClusters(_ context.Context, _ csmv1.ApexConnectivityClient, r 
 			ClusterID:         DefaultSourceClusterID,
 		},
 	}
-
-	replicaEnabled := false
-	return replicaEnabled, clusterClients, nil
+	return false, clusterClients
 }
 
 // GetSecret - check if the secret is present
