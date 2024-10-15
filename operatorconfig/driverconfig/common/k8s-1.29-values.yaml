@@ -22,4 +22,4 @@ images:
   # "images.metadataretriever" defines the container images used for csi metadata retriever
   metadataretriever: dellemc/csi-metadata-retriever:v1.8.0
   # "images.csiReverseProxy" defines the container images used for reverse-proxy by default
-  csiReverseProxy: dellemc/csipowermax-reverseproxy:nightly # TODO change to latest version once it is released
+  csiReverseProxy: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly # TODO change to latest version once it is released
