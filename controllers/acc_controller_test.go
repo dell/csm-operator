@@ -636,7 +636,7 @@ func (suite *AccControllerTestSuite) handleAccPodTest(r *ApexConnectivityClientR
 	err := suite.fakeClient.Get(accCtx, client.ObjectKey{Namespace: suite.namespace, Name: name}, pod)
 	assert.Nil(suite.T(), err)
 
-	// since deployments/daemonsets dont create pod in non-k8s env, we have to explicitely create pod
+	// since deployments/daemonsets don't create pod in non-k8s env, we have to explicitly create pod
 	r.handlePodsUpdate(pod, pod)
 }
 
