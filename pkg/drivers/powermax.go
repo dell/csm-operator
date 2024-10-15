@@ -98,18 +98,6 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	if err != nil {
 		return err
 	}
-	if cr.Spec.Modules == nil {
-		// This means it's a minimal yaml and we will append reverse-proxy by default
-		modules := make([]csmv1.Module, 0)
-		modules = append(modules, csmv1.Module{
-			Name:              csmv1.ReverseProxy,
-			Enabled:           true,
-			ConfigVersion:     version,
-			ForceRemoveModule: true,
-			InitContainer:     nil,
-		})
-		cr.Spec.Modules = modules
-	}
 
 	foundRevProxy := false
 	for _, mod := range cr.Spec.Modules {
@@ -120,11 +108,34 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	}
 	if !foundRevProxy {
 		log.Infof("Reverse proxy module not found adding it with default config")
+		components := make([]csmv1.ContainerTemplate, 0)
+		components = append(components, csmv1.ContainerTemplate{
+			Name: "csipowermax-reverseproxy",
+		})
+
+		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
+			Name:  "X_CSI_REVPROXY_TLS_SECRET",
+			Value: "csirevproxy-tls-secret",
+		})
+		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
+			Name:  "X_CSI_REVPROXY_PORT",
+			Value: "2222",
+		})
+		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
+			Name:  "X_CSI_CONFIG_MAP_NAME",
+			Value: "powermax-reverseproxy-config",
+		})
+		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
+			Name:  "DeployAsSidecar",
+			Value: "true",
+		})
+
 		cr.Spec.Modules = append(cr.Spec.Modules, csmv1.Module{
 			Name:              csmv1.ReverseProxy,
 			Enabled:           true,
 			ConfigVersion:     version,
 			ForceRemoveModule: true,
+			Components:        components,
 		})
 	}
 
