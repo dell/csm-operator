@@ -79,7 +79,10 @@ func TestPrecheckPowerStore(t *testing.T) {
 	}
 
 	for _, tt := range powerStoreTests {
-		tt.ct.Create(ctx, tt.sec)
+		err := tt.ct.Create(ctx, tt.sec)
+		if err != nil {
+			assert.Nil(t, err)
+		}
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
 			err := PrecheckPowerStore(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
@@ -88,6 +91,12 @@ func TestPrecheckPowerStore(t *testing.T) {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
+
+		// remove secret after each run
+		err = tt.ct.Delete(ctx, tt.sec)
+		if err != nil {
+			assert.Nil(t, err)
+		}
 	}
 }
 

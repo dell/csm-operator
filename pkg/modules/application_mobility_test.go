@@ -295,7 +295,10 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 					Name: "application-mobility-certificate",
 				},
 			}
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
@@ -308,7 +311,10 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -498,7 +504,10 @@ func TestAppMobilityVelero(t *testing.T) {
 					Name: "application-mobility-velero",
 				},
 			}
-			velerov1.AddToScheme(scheme.Scheme)
+			err = velerov1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
@@ -511,7 +520,10 @@ func TestAppMobilityVelero(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			velerov1.AddToScheme(scheme.Scheme)
+			err = velerov1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -524,7 +536,10 @@ func TestAppMobilityVelero(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			velerov1.AddToScheme(scheme.Scheme)
+			err = velerov1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			ApplicationMobilityOldVersion = "v1.0.3"
 
@@ -538,7 +553,10 @@ func TestAppMobilityVelero(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			velerov1.AddToScheme(scheme.Scheme)
+			err = velerov1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			ApplicationMobilityOldVersion = "old-version"
 
@@ -692,7 +710,10 @@ func TestVeleroCrdDeploy(t *testing.T) {
 					Name: "backuprepositories.velero.io",
 				},
 			}
-			apiextv1.AddToScheme(scheme.Scheme)
+			err = apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
@@ -704,7 +725,10 @@ func TestVeleroCrdDeploy(t *testing.T) {
 
 			tmpCR := customResource
 
-			apiextv1.AddToScheme(scheme.Scheme)
+			err = apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
@@ -776,7 +800,10 @@ func TestAppMobCrdDeploy(t *testing.T) {
 					Name: "clusterconfigs.mobility.storage.dell.com",
 				},
 			}
-			apiextv1.AddToScheme(scheme.Scheme)
+			err = apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
@@ -788,7 +815,10 @@ func TestAppMobCrdDeploy(t *testing.T) {
 
 			tmpCR := customResource
 
-			apiextv1.AddToScheme(scheme.Scheme)
+			err = apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
@@ -861,7 +891,10 @@ func TestBackupStorageLoc(t *testing.T) {
 				},
 			}
 
-			velerov1.AddToScheme(scheme.Scheme)
+			err = velerov1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
@@ -872,7 +905,10 @@ func TestBackupStorageLoc(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			velerov1.AddToScheme(scheme.Scheme)
+			err = velerov1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
