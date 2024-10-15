@@ -16,7 +16,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.11.0
+    configVersion: v2.10.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -31,8 +31,6 @@ spec:
           value: "false"
         - name: X_CSI_DEBUG
           value: "true"
-        - name: X_CSI_ALLOW_RWO_MULTI_POD_ACCESS
-          value: "false"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
         # Default value: None
@@ -40,6 +38,10 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
+        - name: X_CSI_NFS_ACLS
+          value: "0777"
+        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+          value: ""
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
     sideCars:
@@ -51,16 +53,16 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.x.x.x,10.x.x.x"  # provide MDM value
-      # health monitor is disabled by default, refer to driver documentation before enabling it
-      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+            value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
+            # health monitor is disabled by default, refer to driver documentation before enabling it
+            # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-    # - name: provisioner
+    #- name: provisioner
     #  args: ["--capacity-poll-interval=5m"]
 
     controller:
@@ -73,12 +75,10 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-      # "controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
+      #"controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
       # Default value: None
-      # Examples:
-      #  node-role.kubernetes.io/control-plane: ""
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
       #  node-role.kubernetes.io/master: ""
@@ -99,13 +99,6 @@ spec:
       #   effect: "NoSchedule"
     node:
       envs:
-        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
-        # Allowed values:
-        #   true: enable checking of health condition of CSI volumes
-        #   false: disable checking of health condition of CSI volumes
-        # Default value: false
-        - name: X_CSI_HEALTH_MONITOR_ENABLED
-          value: "false"
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
         #    true: enable SDC approval
@@ -120,23 +113,21 @@ spec:
         # Default value: false
         - name: X_CSI_RENAME_SDC_ENABLED
           value: "false"
-        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
-        # Allowed values: Any value greater than or equal to 0
-        # Default value: "0"
-        - name: X_CSI_MAX_VOLUMES_PER_NODE
-          value: "0"
         # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
         # "prefix" + "worker_node_hostname" should not exceed 31 chars.
         # Default value: none
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "1"
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
       # Default value: None
-      # Examples:
-      #  node-role.kubernetes.io/control-plane: ""
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
       #  node-role.kubernetes.io/master: ""
@@ -161,19 +152,19 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
+            value: "10.xx.xx.xx,10.xx.xx.xx" #provide MDM value
   modules:
     # Application Mobility: enable csm-application-mobility module
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: true
-      configVersion: v1.2.0
+      configVersion: v1.0.3
       forceRemoveModule: true
       components:
         - name: application-mobility-controller-manager
           # enable: Enable/Disable application mobility controller-manager
           enabled: true
-          image: REPLACE_CONTROLLER_IMAGE
+          image: dellemc/csm-application-mobility-controller:v1.0.3
           imagePullPolicy: IfNotPresent
           envs:
             # Replica count for application mobility
@@ -187,15 +178,15 @@ spec:
         #   false: disable deployment of cert-manager only if it's already deployed
         # Default value: false
         - name: cert-manager
-          enabled: false
+          enabled: true
         # enabled: Enable/Disable Velero
         - name: velero
-          image: velero/velero:v1.14.0
+          image: velero/velero:v1.10.0
           imagePullPolicy: IfNotPresent
-          enabled: false
+          enabled: true
           useVolumeSnapshot: false
           # enabled: Enable/Disable node-agent service
-          deployNodeAgent: false
+          deployNodeAgent: true
           envs:
             # Backup storage location name
             # Allowed values: string
@@ -226,22 +217,22 @@ spec:
             # Default value: existing-cred
             - name: "APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME"
               value: "existing-cred"
-          # If velero is not already present in cluster, set enabled to true to create a secret.
-          # Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
+          #If velero is not already present in cluster, set enabled to true to create a secret.
+          #Either this or APPLICATION_MOBILITY_OBJECT_STORE_SECRET_NAME above must be provided.
           credentials:
             - createWithInstall: true
-              # Specify the name to be used for secret that will be created to hold object store credentials.
+              #Specify the name to be used for secret that will be created to hold object store credentials.
               name: cloud-creds
-              # Specify the object store access credentials to be stored in a secret with key "cloud".
+              #Specify the object store access credentials to be stored in a secret with key "cloud".
               secretContents:
-                aws_access_key_id: console  # Provide the access key id here
-                aws_secret_access_key: console123  # provide the access key here
+                aws_access_key_id: console #Provide the access key id here
+                aws_secret_access_key: console123 #provide the access key here
     # Init containers to be added to the Velero and Node-agent deployment's spec.
     - initContainer:
-        # initContainer image for the dell velero plugin
+        #initContainer image for the dell velero plugin
         - name: dell-custom-velero-plugin
-          image: REPLACE_PLUGIN_IMAGE
-          # initContainer image for the configuration provider aws
-          # digest for velero/velero-plugin-for-aws:v1.10.0
+          image: dellemc/csm-application-mobility-velero-plugin:v1.0.3
+          #initContainer image for the configuration provider aws
+          #digest for velero/velero-plugin-for-aws:v1.6.2
         - name: velero-plugin-for-aws
-          image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
+          image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e
