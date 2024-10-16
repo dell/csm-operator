@@ -39,7 +39,10 @@ func TestMain(m *testing.M) {
 	operatorConfig = utils.OperatorConfig{}
 	operatorConfig.ConfigDirectory = "../../operatorconfig"
 
-	apiextv1.AddToScheme(scheme.Scheme)
+	err := apiextv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
 
 	if st := m.Run(); st > status {
 		status = st

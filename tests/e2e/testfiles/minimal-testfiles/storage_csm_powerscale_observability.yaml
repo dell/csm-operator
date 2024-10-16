@@ -1,17 +1,18 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: powermax
-  namespace: powermax
+  name: isilon
+  namespace: isilon
 spec:
   driver:
-    csiDriverType: "powermax"
+    csiDriverType: "isilon"
     configVersion: v2.12.0
     forceRemoveDriver: true
-  # These are the modules which are optional and can be enabled by specifying to enable/disable.
+    common:
+      image: "dellemc/csi-isilon:nightly"
   modules:
+    # Authorization: enable csm-authorization for RBAC
     - name: authorization
-      # enable: Enable/Disable csm-authorization
       enabled: false
       # For Auth 2.0, use v2.0.0 as configVersion
       configVersion: v1.11.0
@@ -21,18 +22,16 @@ spec:
       enabled: false
     - name: observability
       # enabled: Enable/Disable observability
-      enabled: false
+      enabled: true
       components:
         - name: topology
           enabled: true
+          image: dellemc/csm-topology:nightly
         - name: otel-collector
           enabled: true
+          image: otel/opentelemetry-collector:0.42.0
         - name: cert-manager
-          # enabled: Enable/Disable cert-manager
-          # Allowed values:
-          #   true: enable deployment of cert-manager
-          #   false: disable deployment of cert-manager only if it's already deployed
-          # Default value: false
           enabled: false
-        - name: metrics-powermax
+        - name: metrics-powerscale
           enabled: true
+          image: dellemc/csm-metrics-powerscale:nightly

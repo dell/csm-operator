@@ -102,7 +102,7 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		}
 	}
 	cr.Spec.Driver.InitContainers = newInitContainers
-	if cr.Spec.Driver.InitContainers == nil && sdcEnabled {
+	if len(cr.Spec.Driver.InitContainers) == 0 && sdcEnabled {
 		cr.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{
 			{
 				Name: "sdc",
@@ -275,7 +275,7 @@ func IsIpv4Regex(ipAddress string) bool {
 
 // ModifyPowerflexCR - Set environment variables provided in CR
 func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
-	sdcEnabled := ""
+	sdcEnabled := "true"
 	approveSdcEnabled := ""
 	renameSdcEnabled := ""
 	renameSdcPrefix := ""
@@ -321,9 +321,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			}
 			if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
 				maxVolumesPerNode = env.Value
-			}
-			if env.Name == "X_CSI_QUOTA_ENABLED" {
-				enableQuota = env.Value
 			}
 			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 				healthMonitorNode = env.Value

@@ -26,12 +26,13 @@ import (
 )
 
 var (
-	powerMaxCSM           = csmForPowerMax()
-	powerMaxCSMNoProxy    = csmForPowerMaxNOProxy()
-	powerMaxCSMBadVersion = csmForPowerMaxBadVersion()
-	powerMaxClient        = crclient.NewFakeClientNoInjector(objects)
-	powerMaxSecret        = shared.MakeSecret("csm-creds", "pmax-test", shared.PmaxConfigVersion)
-	pMaxfakeSecret        = shared.MakeSecret("fake-creds", "fake-test", shared.PmaxConfigVersion)
+	powerMaxCSM                = csmForPowerMax()
+	powerMaxCSMNoProxy         = csmForPowerMaxNOProxy()
+	powerMaxCSMBadVersion      = csmForPowerMaxBadVersion()
+	powermaxDefaultKubeletPath = getDefaultKubeletPath()
+	powerMaxClient             = crclient.NewFakeClientNoInjector(objects)
+	powerMaxSecret             = shared.MakeSecret("csm-creds", "pmax-test", shared.PmaxConfigVersion)
+	pMaxfakeSecret             = shared.MakeSecret("fake-creds", "fake-test", shared.PmaxConfigVersion)
 
 	powerMaxTests = []struct {
 		// every single unit test name
@@ -62,6 +63,7 @@ var (
 	}{
 		{"missing secret", powerMaxCSM, powerMaxClient, pMaxfakeSecret, "failed to find secret"},
 		{"bad version", powerMaxCSMBadVersion, powerMaxClient, powerMaxSecret, "not supported"},
+		{"bad latest version", powermaxDefaultKubeletPath, powerMaxClient, powerMaxSecret, ""},
 	}
 )
 
@@ -79,7 +81,10 @@ func TestPrecheckPowerMax(t *testing.T) {
 	}
 
 	for _, tt := range powerMaxTests {
-		tt.ct.Create(ctx, tt.sec)
+		err := tt.ct.Create(ctx, tt.sec)
+		if err != nil {
+			assert.Nil(t, err)
+		}
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
 			err := PrecheckPowerMax(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
@@ -89,6 +94,12 @@ func TestPrecheckPowerMax(t *testing.T) {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
+
+		// remove secret after each run
+		err = tt.ct.Delete(ctx, tt.sec)
+		if err != nil {
+			assert.Nil(t, err)
+		}
 	}
 }
 
@@ -124,6 +135,15 @@ func csmForPowerMaxBadVersion() csmv1.ContainerStorageModule {
 	// Add pmax driver version
 	res.Spec.Driver.ConfigVersion = "v0"
 	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
+	return res
+}
+
+func getDefaultKubeletPath() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	kubeEnv := corev1.EnvVar{Name: "KUBELET_CONFIG_DIR", Value: "/fake"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{kubeEnv}
 
 	return res
 }

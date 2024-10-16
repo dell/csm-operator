@@ -1,12 +1,13 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: test-vxflexos
-  namespace: test-vxflexos
+  name: vxflexos
+  namespace: vxflexos
 spec:
   driver:
     csiDriverType: "powerflex"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
@@ -16,13 +17,13 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.10.1
+    configVersion: v2.11.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.10.1"
+      image: "registry.connect.redhat.com/dell-emc/csi-vxflexos@sha256:a4e96d11be8920f01b273748a8cf8cfc60515403640f77f101a13f7d79056e23"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -43,11 +44,22 @@ spec:
     sideCars:
       # 'k8s' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner@sha256:405a14e1aa702f7ea133cea459e8395fe40a6125c088c55569e696d48e1bd385
         args: ["--volume-name-prefix=k8s"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher@sha256:b4d611100ece2f9bc980d1cb19c2285b8868da261e3b1ee8f45448ab5512ab94
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:f25af73ee708ff9c82595ae99493cdef9295bd96953366cddf36305f82555dac
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer@sha256:a541e6cc2d8b011bb21b1d4ffec6b090e85270cce6276ee302d86153eec0af43
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:2e04046334baf9be425bb0fa1d04c2d1720d770825eedbdbcdb10d430da4ad8c
+      - name: csi-metadata-retriever
+        image: registry.connect.redhat.com/dell-emc/csi-metadata-retriever@sha256:abf97fc03ff59147ef0cd9ec3e58fcd5ef499aa9c13da53a8b99731884cb87d9
         # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:3.6.1
+        image: docker.io/dellemc/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
         envs:
           - name: HOST_PID
             value: "1"
@@ -58,6 +70,7 @@ spec:
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:97e806babd29424737464aaafdc3ede91119c077ddc0b7ecf423c5dca4833d84
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
@@ -74,6 +87,11 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
+        # X_CSI_POWERFLEX_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
+        # Allowed Values: x.x.x.x/xx or x.x.x.x
+        # Default Value: None
+        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+          value:
       # "controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -104,6 +122,13 @@ spec:
         #    false: disable SDC approval
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
+          value: "false"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
@@ -147,27 +172,8 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
-      # - key: "offline.vxflexos.storage.dell.com"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
-      # - key: "vxflexos.podmon.storage.dell.com"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
-      # - key: "offline.unity.storage.dell.com"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
-      # - key: "unity.podmon.storage.dell.com"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
-      # - key: "offline.isilon.storage.dell.com"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
-      # - key: "isilon.podmon.storage.dell.com"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
     initContainers:
-      - image: dellemc/sdc:4.5.2.1
+      - image: docker.io/dellemc/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -178,10 +184,13 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.9.0
+      # For PowerFlex Tech-Preview v2.0.0-alpha use v1.11.0 as configVersion.
+      # Do not change the configVersion to v2.0.0-alpha
+      configVersion: v1.11.0
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:v1.9.0
+          # Use image: dellemc/csm-authorization-sidecar:v2.0.0-alpha for PowerFlex Tech-Preview v2.0.0-alpha
+          image: registry.connect.redhat.com/dell-emc/csm-authorization-sidecar@sha256:5d3f43f2c1bb0704ddf4b9d8f9218cc2d77cabcd73ec9e7076f4865809d2fc5d
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -193,14 +202,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.7.0
+      configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.7.0
+          image: registry.connect.redhat.com/dell-emc/csm-topology@sha256:25eb850d37bdd78fa62f39c17d8208a4f21539ff7396dc7b672bf6945bba388d
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -220,7 +229,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.42.0
+          image: docker.io/otel/opentelemetry-collector@sha256:cecb0904bcc2a90c823c2c044e7034934ab6c98b5ec52c337c0f6c6e57cd3cf1
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -246,7 +255,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:v1.7.0
+          image: registry.connect.redhat.com/dell-emc/csm-metrics-powerflex@sha256:03d145edb80b8633168af7c7236bde6887cd9f28b6c765fce427f245599feef6
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -307,13 +316,13 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.7.0
+      configVersion: v1.9.0
       components:
         - name: dell-csi-replicator
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: dellemc/dell-csi-replicator:v1.7.0
+          image: registry.connect.redhat.com/dell-emc/dell-csi-replicator@sha256:d378bd9538dd73fca6f6837df6f01570f16e4d30aa6704588ecda4e39ce12668
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -327,7 +336,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/dell-replication-controller:v1.7.0
+          image: registry.connect.redhat.com/dell-emc/dell-replication-controller@sha256:d06408eb29f2da630bf46452f25cec022758d414ea7122618d7f1374e224b443
           envs:
             # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
             # Set the value to "self" in case of stretched/single cluster configuration
@@ -360,10 +369,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.8.0
+      configVersion: v1.10.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.8.0
+          image: docker.io/dellemc/podmon@sha256:818d32881238b4f91fef65f5f800bcef180b612bd33c3ca9965571bc7b43cf26
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-vxflexos"
@@ -377,7 +386,7 @@ spec:
             - "--mode=controller"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
         - name: podmon-node
-          image: dellemc/podmon:v1.8.0
+          image: docker.io/dellemc/podmon@sha256:818d32881238b4f91fef65f5f800bcef180b612bd33c3ca9965571bc7b43cf26
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
