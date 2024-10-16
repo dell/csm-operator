@@ -89,7 +89,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-powermax:nightly  # TODO image has to be updated once the driver is released
+          image: quay.io/dell/container-storage-modules/csi-powermax:nightly
           imagePullPolicy: IfNotPresent
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
