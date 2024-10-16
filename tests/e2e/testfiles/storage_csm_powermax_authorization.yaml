@@ -37,7 +37,7 @@ spec:
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
     # Default value: None
-    replicas: 2
+    replicas: 1
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
     dnsPolicy: ClusterFirstWithHostNet
