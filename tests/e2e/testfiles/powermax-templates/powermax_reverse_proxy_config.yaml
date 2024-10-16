@@ -26,6 +26,6 @@ standAloneConfig:
       proxyCredentialSecrets:
         - powermax-creds
   managementServers:
-    - url: "https://REPLACE_ENDPOINT" 
+    - url: "https://REPLACE_ENDPOINT"
       arrayCredentialSecret: powermax-creds
       skipCertificateValidation: true
