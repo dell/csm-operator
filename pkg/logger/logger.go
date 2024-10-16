@@ -34,16 +34,8 @@ const (
 	LogCtxIDKey = "TraceId"
 )
 
-var defaultLogLevel LogLevel
-
 // loggerKey holds the context key used for loggers.
 type loggerKey struct{}
-
-// SetLoggerLevel helps set defaultLogLevel, using which newLogger func helps
-// create either development logger or production logger
-func SetLoggerLevel(logLevel LogLevel) {
-	defaultLogLevel = logLevel
-}
 
 // getLogger returns the logger associated with the given context.
 // If there is no logger associated with context, getLogger func will return
@@ -89,8 +81,6 @@ func newLogger() *zap.Logger {
 	consoleEncoder := zapcore.NewConsoleEncoder(pe)
 
 	level := zap.InfoLevel
-	level = zap.DebugLevel
-
 	core := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stderr), level)
 
 	l := zap.New(core, zap.AddCaller())

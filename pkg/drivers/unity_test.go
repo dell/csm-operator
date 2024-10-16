@@ -85,7 +85,11 @@ func TestPrecheckUnity(t *testing.T) {
 	}
 
 	for _, tt := range unityTests {
-		tt.ct.Create(ctx, tt.sec)
+		err := tt.ct.Create(ctx, tt.sec)
+		if err != nil {
+			assert.Nil(t, err)
+		}
+
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
 			err := PrecheckUnity(ctx, &tt.csm, config, tt.ct)
 			if tt.expectedErr == "" {
@@ -94,6 +98,11 @@ func TestPrecheckUnity(t *testing.T) {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
+		// remove secret after each run
+		err = tt.ct.Delete(ctx, tt.sec)
+		if err != nil {
+			assert.Nil(t, err)
+		}
 	}
 }
 
@@ -164,22 +173,6 @@ func csmForUnitySkipCertISFalse() csmv1.ContainerStorageModule {
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
 	// Add unity driver version
-	res.Spec.Driver.ConfigVersion = shared.UnityConfigVersion
-	res.Spec.Driver.CSIDriverType = csmv1.Unity
-
-	return res
-}
-
-// makes a csm object with bad allowed network input
-func csmForUnityAllowedNetwork() csmv1.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.UnityConfigVersion)
-
-	// Add log level to cover some code in GetConfigMap
-	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
-	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ALLOWED_NETWORKS", Value: "THIS IS BAD INPUT NETWORK"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
-
-	// Add unitydriver version
 	res.Spec.Driver.ConfigVersion = shared.UnityConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.Unity
 
