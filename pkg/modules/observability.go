@@ -219,6 +219,7 @@ var defaultSecretsName = map[csmv1.DriverType]string{
 	csmv1.PowerScaleName: "<DriverDefaultReleaseName>-creds",
 	csmv1.PowerFlex:      "<DriverDefaultReleaseName>-config",
 	csmv1.PowerFlexName:  "<DriverDefaultReleaseName>-config",
+	csmv1.PowerMax:       "<DriverDefaultReleaseName>-creds",
 }
 
 var defaultAuthSecretsName = []string{"karavi-authorization-config", "proxy-authz-tokens", "proxy-server-root-certificate"}

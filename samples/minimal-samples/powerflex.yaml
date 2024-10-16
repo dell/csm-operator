@@ -23,7 +23,7 @@ spec:
       # Default value: false
       enabled: false
     - name: replication
-      enabled: true
+      enabled: false
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability

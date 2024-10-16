@@ -47,20 +47,6 @@ var (
 	}{
 		{"happy path", powerMaxCSM, powerMaxClient, powerMaxSecret, ""},
 		{"no proxy set defaults", powerMaxCSMNoProxy, powerMaxClient, powerMaxSecret, ""},
-	}
-
-	preCheckpowerMaxTest = []struct {
-		// every single unit test name
-		name string
-		// csm object
-		csm csmv1.ContainerStorageModule
-		// client
-		ct client.Client
-		// secret
-		sec *corev1.Secret
-		// expected error
-		expectedErr string
-	}{
 		{"missing secret", powerMaxCSM, powerMaxClient, pMaxfakeSecret, "failed to find secret"},
 		{"bad version", powerMaxCSMBadVersion, powerMaxClient, powerMaxSecret, "not supported"},
 		{"bad latest version", powermaxDefaultKubeletPath, powerMaxClient, powerMaxSecret, ""},
@@ -69,17 +55,6 @@ var (
 
 func TestPrecheckPowerMax(t *testing.T) {
 	ctx := context.Background()
-	for _, tt := range preCheckpowerMaxTest {
-		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
-			err := PrecheckPowerMax(ctx, &tt.csm, config, tt.ct)
-			if tt.expectedErr == "" {
-				assert.Nil(t, err)
-			} else {
-				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
-			}
-		})
-	}
-
 	for _, tt := range powerMaxTests {
 		err := tt.ct.Create(ctx, tt.sec)
 		if err != nil {
