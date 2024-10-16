@@ -282,7 +282,7 @@ spec:
               value: /app/certs
             - name: X_CSI_REPLICATION_CONFIG_FILE_NAME
               value: config
-          image: dellemc/dell-replication-controller:v1.10.0
+          image: <REPLICATION_CONTROLLER_IMAGE>
           imagePullPolicy: Always
           name: manager
           resources:
