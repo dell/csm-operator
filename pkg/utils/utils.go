@@ -1098,17 +1098,26 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 
 // HasModuleComponent - check if module component is present
 func HasModuleComponent(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+	log := logger.GetLogger(ctx)
 	moduleEnabled, module := IsModuleEnabled(ctx, instance, mod)
 	if !moduleEnabled {
+		log.Infof("HasModuleComponent returned false for module: %s", mod)
 		return false
+	}
+
+	log.Infof("Component type is: %s", componentType)
+
+	for i, c := range module.Components {
+		log.Infof("Module.component at %d is: %s", i, c)
 	}
 
 	for _, c := range module.Components {
 		if c.Name == componentType {
+			log.Infof("HasModuleComponent returned true for: %s", componentType)
 			return true
 		}
 	}
-
+	log.Infof("HasModuleComponent returned false for component type: %s", componentType)
 	return false
 }
 
@@ -1303,41 +1312,26 @@ func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	return namespaces, nil
 }
 
-// 2nd parameter is an ApexCC cr
-// CreateBrownfieldRbac creates the role and rolebindings
-/*
-func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client, isDeleting bool) error {
-	logInstance := logger.GetLogger(ctx)
-	csmList := &csmv1.ContainerStorageModuleList{}
-	err := ctrlClient.List(ctx, csmList)
-	if err == nil && len(csmList.Items) > 0 {
-		logInstance.Info("Found existing csm installations. Proceeding to create role/rolebindings")
-		clientNameSpace := cr.Namespace
-		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
-		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNameSpace, ctrlClient, isDeleting); err != nil {
-			logInstance.Error(err, "error creating role/rolebindings")
-			return err
-		}
-	}
-	return nil
-}
-*/
-
 // LoadDefaultComponents loads the default module components into cr
 func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 	modules := []csmv1.ModuleType{csmv1.Observability}
 	for _, module := range modules {
+		log.Infof("Loading default components for %s", module)
 		defaultComps, err := getDefaultComponents(cr.GetDriverType(), module, op)
 		if err != nil {
 			log.Errorf("failed to get default components for %s: %v", module, err)
 			return fmt.Errorf("failed to get default components for %s: %v", module, err)
 		}
-
-		for _, comp := range defaultComps {
-			if !HasModuleComponent(ctx, *cr, csmv1.Observability, comp.Name) {
-				log.Infof("Adding default component %s for %s ", comp.Name, module)
-				AddModuleComponent(cr, csmv1.Observability, comp)
+		//only load default components if module is enabled
+		moduleEnabled, _ := IsModuleEnabled(ctx, *cr, module)
+		if moduleEnabled {
+			for _, comp := range defaultComps {
+				log.Infof("Comp is: %s ", comp.Name)
+				if !HasModuleComponent(ctx, *cr, module, comp.Name) {
+					log.Infof("Adding default component %s for %s ", comp.Name, module)
+					AddModuleComponent(cr, csmv1.Observability, comp)
+				}
 			}
 		}
 	}
