@@ -45,7 +45,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerMax driver v2.12.0
-      image: dellemc/csi-powermax:nightly
+      image: quay.io/dell/container-storage-modules/csi-powermax:nightly
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -221,7 +221,7 @@ spec:
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.8.0
+        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.8.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -244,7 +244,7 @@ spec:
           # image: Define the container images used for the reverse proxy
           # Default value: None
           # Example: "csipowermax-reverseproxy:v2.9.1"
-          image: dellemc/csipowermax-reverseproxy:nightly
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -272,7 +272,7 @@ spec:
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:nightly
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -318,7 +318,7 @@ spec:
           # enabled: Enable/Disable PowerMax metrics
           enabled: true
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powermax:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int

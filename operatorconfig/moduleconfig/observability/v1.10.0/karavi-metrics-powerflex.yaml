@@ -105,7 +105,7 @@ spec:
       serviceAccount: karavi-metrics-powerflex-controller
       containers:
         - name: karavi-metrics-powerflex
-          image: dellemc/csm-metrics-powerflex:v1.10.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.10.0
           resources: {}
           env:
             - name: POWERFLEX_METRICS_ENDPOINT
