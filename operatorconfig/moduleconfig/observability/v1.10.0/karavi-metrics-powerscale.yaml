@@ -106,7 +106,7 @@ spec:
       serviceAccount: karavi-metrics-powerscale-controller
       containers:
         - name: karavi-metrics-powerscale
-          image: dellemc/csm-metrics-powerscale:v1.7.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.7.0
           resources: {}
           env:
             - name: POWERSCALE_METRICS_ENDPOINT
