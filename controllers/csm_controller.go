@@ -818,6 +818,11 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
+				_, err = modules.CreateReplicationConfigmap(cr, operatorConfig, ctrlClient)
+				if err != nil {
+					return fmt.Errorf("injecting replication into replication configmap: %v", err)
+				}
+
 				clusterRole, err := modules.ReplicationInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting replication into controller cluster role: %v", err)
@@ -1254,6 +1259,10 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		if replicationEnabled {
 			log.Infow("Deleting Replication controller")
 			if err = modules.ReplicationManagerController(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
+				return err
+			}
+			log.Infow("Deleting Replication configmap")
+			if err = modules.DeleteReplicationConfigmap(instance, cluster.ClusterCTRLClient); err != nil {
 				return err
 			}
 		}
