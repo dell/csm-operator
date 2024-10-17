@@ -25,3 +25,17 @@ spec:
         - name: metrics-powermax
           enabled: true
           image: quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly
+    - name: csireverseproxy
+      enabled: true
+      forceRemoveModule: true
+      configVersion: v2.11.0
+      components:
+        - name: csipowermax-reverseproxy
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+          envs:
+            - name: X_CSI_REVPROXY_TLS_SECRET
+              value: "csirevproxy-tls-secret"
+            - name: X_CSI_REVPROXY_PORT
+              value: "2222"
+            - name: X_CSI_CONFIG_MAP_NAME
+              value: "powermax-reverseproxy-config"
