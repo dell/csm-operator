@@ -1581,7 +1581,7 @@ func getObservabilityModule() []csmv1.Module {
 					Envs: []corev1.EnvVar{
 						{
 							Name:  "NGINX_PROXY_IMAGE",
-							Value: "nginxinc/nginx-unprivileged:1.20",
+							Value: "nginxinc/nginx-unprivileged:1.27",
 						},
 					},
 				},
