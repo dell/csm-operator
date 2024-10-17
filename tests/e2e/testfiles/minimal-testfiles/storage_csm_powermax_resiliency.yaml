@@ -1,0 +1,43 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powermax
+  namespace: powermax
+spec:
+  driver:
+    csiDriverType: "powermax"
+    configVersion: v2.12.0
+    common:
+      image: "dellemc/csi-powermax:nightly"
+    forceRemoveDriver: true
+  modules:
+  - name: authorization
+    enabled: false
+    configVersion: v1.11.0
+  - name: resiliency
+    enabled: true
+    components:
+    - name: podmon-controller
+      image: dellemc/podmon:nightly
+    - name: podmon-node
+      image: dellemc/podmon:nightly
+  - name: replication
+    enabled: false
+    components:
+    - name: dell-csi-replicator
+      image: dellemc/dell-csi-replicator:nightly
+    - name: dell-replication-controller-manager
+      image: dellemc/dell-replication-controller:nightly
+    - name: dell-replication-controller-init
+      image: dellemc/dell-replication-init:v1.0.0
+  - name: observability
+    enabled: false
+    components:
+    - name: topology
+      enabled: true
+    - name: otel-collector
+      enabled: true
+    - name: cert-manager
+      enabled: false
+    - name: metrics-powermax
+      enabled: true
