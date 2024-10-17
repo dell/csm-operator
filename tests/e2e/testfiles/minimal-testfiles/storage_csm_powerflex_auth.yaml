@@ -8,7 +8,7 @@ spec:
     csiDriverType: "powerflex"
     configVersion: v2.12.0
     common:
-      image: "dellemc/csi-vxflexos:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
     forceRemoveDriver: true
   modules:
     # Authorization: enable csm-authorization for RBAC
