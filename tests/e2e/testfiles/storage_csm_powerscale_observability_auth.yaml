@@ -18,7 +18,7 @@ spec:
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -220,7 +220,7 @@ spec:
       configVersion: v1.12.0
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -239,7 +239,7 @@ spec:
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:nightly
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -286,7 +286,7 @@ spec:
           enabled: true
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-metrics-powerscale:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int
