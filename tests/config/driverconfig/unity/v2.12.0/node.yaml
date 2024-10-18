@@ -75,7 +75,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-unity:nightly
+          image: quay.io/dell/container-storage-modules/csi-unity:nightly
           imagePullPolicy: IfNotPresent
           args:
             - "--driver-name=csi-unity.dellemc.com"
