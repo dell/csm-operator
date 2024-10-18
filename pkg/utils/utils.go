@@ -1098,26 +1098,16 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 
 // HasModuleComponent - check if module component is present
 func HasModuleComponent(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
-	log := logger.GetLogger(ctx)
 	moduleEnabled, module := IsModuleEnabled(ctx, instance, mod)
 	if !moduleEnabled {
-		log.Infof("HasModuleComponent returned false for module: %s", mod)
 		return false
-	}
-
-	log.Infof("Component type is: %s", componentType)
-
-	for i, c := range module.Components {
-		log.Infof("Module.component at %d is: %s", i, c)
 	}
 
 	for _, c := range module.Components {
 		if c.Name == componentType {
-			log.Infof("HasModuleComponent returned true for: %s", componentType)
 			return true
 		}
 	}
-	log.Infof("HasModuleComponent returned false for component type: %s", componentType)
 	return false
 }
 
@@ -1323,11 +1313,10 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 			log.Errorf("failed to get default components for %s: %v", module, err)
 			return fmt.Errorf("failed to get default components for %s: %v", module, err)
 		}
-		//only load default components if module is enabled
+		// only load default components if module is enabled
 		moduleEnabled, _ := IsModuleEnabled(ctx, *cr, module)
 		if moduleEnabled {
 			for _, comp := range defaultComps {
-				log.Infof("Comp is: %s ", comp.Name)
 				if !HasModuleComponent(ctx, *cr, module, comp.Name) {
 					log.Infof("Adding default component %s for %s ", comp.Name, module)
 					AddModuleComponent(cr, csmv1.Observability, comp)
