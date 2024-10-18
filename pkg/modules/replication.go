@@ -444,27 +444,22 @@ func CreateReplicationConfigmap(ctx context.Context, cr csmv1.ContainerStorageMo
 		return nil, err
 	}
 
-	configMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "dell-replication-controller-config",
-			Namespace: "dell-replication-controller",
-		},
-		Data: map[string]string{
-			"dell-replication-controller-config.yaml": string(buf),
-		},
+	var cm corev1.ConfigMap
+	if err := yaml.Unmarshal(buf, &cm); err != nil {
+		return nil, err
 	}
 
 	// Check if the ConfigMap already exists
 	foundConfigMap := &corev1.ConfigMap{}
 
-	err = ctrlClient.Get(ctx, t1.NamespacedName{Name: configMap.Name, Namespace: configMap.Namespace}, foundConfigMap)
+	err = ctrlClient.Get(ctx, t1.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}, foundConfigMap)
 	if err != nil && k8serrors.IsNotFound(err) {
 		// ConfigMap doesn't exist, create it
-		if err := ctrlClient.Create(ctx, configMap); err != nil {
+		if err := ctrlClient.Create(ctx, &cm); err != nil {
 			return nil, err
 		}
 	}
-	return []crclient.Object{configMap}, nil
+	return []crclient.Object{&cm}, nil
 }
 
 func DeleteReplicationConfigmap(cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
