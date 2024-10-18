@@ -9,7 +9,7 @@ spec:
     configVersion: v2.12.0
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -26,6 +26,6 @@ spec:
       enabled: true
       components:
         - name: podmon-controller
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly
         - name: podmon-node
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly

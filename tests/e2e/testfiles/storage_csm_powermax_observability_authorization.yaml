@@ -44,7 +44,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: dellemc/csi-powermax:nightly
+      image: quay.io/dell/container-storage-modules/csi-powermax:nightly
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -329,9 +329,9 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            # Default value: "nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
+              value: "nginxinc/nginx-unprivileged:1.27"
         - name: cert-manager
           # enabled: Enable/Disable cert-manager
           # Allowed values:

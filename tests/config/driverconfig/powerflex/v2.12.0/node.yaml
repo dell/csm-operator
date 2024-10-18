@@ -85,7 +85,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: dellemc/csi-vxflexos:v2.12.0
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.12.0
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:

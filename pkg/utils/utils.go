@@ -1097,11 +1097,8 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 }
 
 // HasModuleComponent - check if module component is present
-func HasModuleComponent(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
-	moduleEnabled, module := IsModuleEnabled(ctx, instance, mod)
-	if !moduleEnabled {
-		return false
-	}
+func HasModuleComponent(instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+	module := instance.GetModule(mod)
 
 	for _, c := range module.Components {
 		if c.Name == componentType {
@@ -1307,7 +1304,10 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 	log := logger.GetLogger(ctx)
 	modules := []csmv1.ModuleType{csmv1.Observability}
 	for _, module := range modules {
-		log.Infof("Loading default components for %s", module)
+		if !cr.HasModule(module) {
+			continue
+		}
+
 		defaultComps, err := getDefaultComponents(cr.GetDriverType(), module, op)
 		if err != nil {
 			log.Errorf("failed to get default components for %s: %v", module, err)
@@ -1317,7 +1317,7 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 		moduleEnabled, _ := IsModuleEnabled(ctx, *cr, module)
 		if moduleEnabled {
 			for _, comp := range defaultComps {
-				if !HasModuleComponent(ctx, *cr, module, comp.Name) {
+				if !HasModuleComponent(*cr, module, comp.Name) {
 					log.Infof("Adding default component %s for %s ", comp.Name, module)
 					AddModuleComponent(cr, csmv1.Observability, comp)
 				}
@@ -1374,25 +1374,4 @@ func SetContainerImage(objects []crclient.Object, deploymentName, containerName,
 			}
 		}
 	}
-}
-
-func GetLatestVersion(resourceType string, op OperatorConfig) (string, error) {
-	path := ""
-	switch resourceType {
-	case string(csmv1.ReverseProxy):
-		path = fmt.Sprintf("%s/moduleconfig/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, "latest.yaml")
-	}
-	// Read the YAML file
-	data, err := os.ReadFile(filepath.Clean(path))
-	if err != nil {
-		return "", err
-	}
-
-	// Unmarshal the YAML data into the Config struct
-	var latestVersion LatestVersion
-	err = yaml.Unmarshal(data, &latestVersion)
-	if err != nil {
-		return "", err
-	}
-	return latestVersion.Version, nil
 }

@@ -8,5 +8,5 @@ spec:
     csiDriverType: "unity"
     configVersion: v2.12.0
     common:
-      image: "dellemc/csi-unity:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-unity:nightly"
     forceRemoveDriver: true
