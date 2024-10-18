@@ -14,6 +14,7 @@ package utils
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -30,13 +31,13 @@ func TestHasModuleComponent(t *testing.T) {
 		expectedResult bool
 	}{
 		{
-			name: "Module disabled",
+			name: "Module does not exist",
 			instance: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Modules: []csmv1.Module{
 						{
-							Name:    csmv1.Observability,
-							Enabled: false,
+							Name:    csmv1.Replication,
+							Enabled: true,
 						},
 					},
 				},
@@ -46,13 +47,32 @@ func TestHasModuleComponent(t *testing.T) {
 			expectedResult: false,
 		},
 		{
-			name: "Module enabled, component exists",
+			name: "Module exist and component does not exist",
 			instance: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Modules: []csmv1.Module{
 						{
 							Name:    csmv1.Observability,
-							Enabled: true,
+							Enabled: false,
+							Components: []csmv1.ContainerTemplate{
+								{Name: "topology"},
+							},
+						},
+					},
+				},
+			},
+			mod:            csmv1.Observability,
+			componentType:  "metrics-powerflex",
+			expectedResult: false,
+		},
+		{
+			name: "Module exist and component exists",
+			instance: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Modules: []csmv1.Module{
+						{
+							Name:    csmv1.Observability,
+							Enabled: false,
 							Components: []csmv1.ContainerTemplate{
 								{Name: "metrics-powerflex"},
 								{Name: "topology"},
@@ -64,25 +84,6 @@ func TestHasModuleComponent(t *testing.T) {
 			mod:            csmv1.Observability,
 			componentType:  "metrics-powerflex",
 			expectedResult: true,
-		},
-		{
-			name: "Module enabled, component does not exist",
-			instance: csmv1.ContainerStorageModule{
-				Spec: csmv1.ContainerStorageModuleSpec{
-					Modules: []csmv1.Module{
-						{
-							Name:    csmv1.Observability,
-							Enabled: true,
-							Components: []csmv1.ContainerTemplate{
-								{Name: "topology"},
-							},
-						},
-					},
-				},
-			},
-			mod:            csmv1.Observability,
-			componentType:  "metrics-powerflex",
-			expectedResult: false,
 		},
 	}
 
@@ -108,7 +109,63 @@ func TestAddModuleComponent(t *testing.T) {
 		want *csmv1.ContainerStorageModule
 	}{
 		{
-			name: "Add component to a module",
+			name: "Module does not exist",
+			args: args{
+				instance: &csmv1.ContainerStorageModule{
+					Spec: csmv1.ContainerStorageModuleSpec{
+						Modules: []csmv1.Module{
+							{
+								Name:    csmv1.Replication,
+								Enabled: false,
+							},
+						},
+					},
+				},
+				mod:       csmv1.Observability,
+				component: csmv1.ContainerTemplate{Name: "topology"},
+			},
+			want: &csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Modules: []csmv1.Module{
+						{
+							Name:    csmv1.Replication,
+							Enabled: false,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Module exists and component is empty",
+			args: args{
+				instance: &csmv1.ContainerStorageModule{
+					Spec: csmv1.ContainerStorageModuleSpec{
+						Modules: []csmv1.Module{
+							{
+								Name:    csmv1.Observability,
+								Enabled: false,
+							},
+						},
+					},
+				},
+				mod:       csmv1.Observability,
+				component: csmv1.ContainerTemplate{Name: "topology"},
+			},
+			want: &csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Modules: []csmv1.Module{
+						{
+							Name:    csmv1.Observability,
+							Enabled: false,
+							Components: []csmv1.ContainerTemplate{
+								{Name: "topology"}},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Module exists and component is not empty",
 			args: args{
 				instance: &csmv1.ContainerStorageModule{
 					Spec: csmv1.ContainerStorageModuleSpec{
@@ -146,6 +203,98 @@ func TestAddModuleComponent(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			AddModuleComponent(tt.args.instance, tt.args.mod, tt.args.component)
 			assert.Equal(t, tt.want, tt.args.instance)
+		})
+	}
+}
+
+func TestLoadDefaultComponents(t *testing.T) {
+	incorrectOp := OperatorConfig{
+		ConfigDirectory: "invalid/path",
+	}
+	correctOp := OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	type args struct {
+		ctx context.Context
+		cr  *csmv1.ContainerStorageModule
+		op  OperatorConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *csmv1.ContainerStorageModule
+		wantErr bool
+	}{
+		{
+			name: "Observability module does not exist",
+			args: args{
+				ctx: context.Background(),
+				cr: &csmv1.ContainerStorageModule{
+					Spec: csmv1.ContainerStorageModuleSpec{
+						Modules: []csmv1.Module{
+							{
+								Name:    csmv1.Replication,
+								Enabled: true,
+							},
+						},
+					},
+				},
+				op: correctOp,
+			},
+			want: &csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Modules: []csmv1.Module{
+						{
+							Name:    csmv1.Replication,
+							Enabled: true,
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Default components not found",
+			args: args{
+				ctx: context.Background(),
+				cr: &csmv1.ContainerStorageModule{
+					Spec: csmv1.ContainerStorageModuleSpec{
+						Modules: []csmv1.Module{
+							{
+								Name:    csmv1.Observability,
+								Enabled: true,
+							},
+						},
+					},
+				},
+				op: incorrectOp,
+			},
+			want: &csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Modules: []csmv1.Module{
+						{
+							Name:    csmv1.Observability,
+							Enabled: true,
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		// ... other test cases ...
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := LoadDefaultComponents(tt.args.ctx, tt.args.cr, tt.args.op)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("LoadDefaultComponents() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !reflect.DeepEqual(tt.args.cr, tt.want) {
+				t.Errorf("LoadDefaultComponents() got = %v, want %v", tt.args.cr, tt.want)
+			}
 		})
 	}
 }

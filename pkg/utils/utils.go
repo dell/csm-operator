@@ -1098,10 +1098,7 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 
 // HasModuleComponent - check if module component is present
 func HasModuleComponent(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
-	moduleEnabled, module := IsModuleEnabled(ctx, instance, mod)
-	if !moduleEnabled {
-		return false
-	}
+	module := instance.GetModule(mod)
 
 	for _, c := range module.Components {
 		if c.Name == componentType {
@@ -1328,6 +1325,10 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 	log := logger.GetLogger(ctx)
 	modules := []csmv1.ModuleType{csmv1.Observability}
 	for _, module := range modules {
+		if !cr.HasModule(module) {
+			continue
+		}
+
 		defaultComps, err := getDefaultComponents(cr.GetDriverType(), module, op)
 		if err != nil {
 			log.Errorf("failed to get default components for %s: %v", module, err)
