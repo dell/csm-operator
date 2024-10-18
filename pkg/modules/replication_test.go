@@ -18,8 +18,12 @@ import (
 	utils "github.com/dell/csm-operator/pkg/utils"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	t1 "k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
@@ -404,5 +408,74 @@ func TestReplicationManagerController(t *testing.T) {
 				assert.Error(t, err)
 			}
 		})
+	}
+}
+
+func TestReplicationConfigmap(t *testing.T) {
+	// Create a fake client to use in the test
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(scheme).Build()
+
+	// Create a test ContainerStorageModule
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Call the function we want to test
+	// we can't use test config, as it doesn't have versionvalues
+	var realConfig = utils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	objs, err := CreateReplicationConfigmap(context.Background(), cr, realConfig, fakeClient)
+
+	// Check that the function returned the expected results
+	if err != nil {
+		t.Errorf("CreateReplicationConfigmap returned an unexpected error: %v", err)
+	}
+
+	if len(objs) != 1 {
+		t.Errorf("CreateReplicationConfigmap returned the wrong number of objects: %d", len(objs))
+	}
+
+	cm, ok := objs[0].(*corev1.ConfigMap)
+	if !ok {
+		t.Errorf("CreateReplicationConfigmap returned the wrong type of object: %T", objs[0])
+	}
+
+	if cm.Name != "dell-replication-controller-config" {
+		t.Errorf("CreateReplicationConfigmap returned the wrong ConfigMap name: %s", cm.Name)
+	}
+
+	if cm.Namespace != "dell-replication-controller" {
+		t.Errorf("CreateReplicationConfigmap returned the wrong ConfigMap namespace: %s", cm.Namespace)
+	}
+
+	// Check that the ConfigMap was created in the fake client
+	foundConfigMap := &corev1.ConfigMap{}
+	err = fakeClient.Get(context.Background(), t1.NamespacedName{Name: "dell-replication-controller-config", Namespace: "dell-replication-controller"}, foundConfigMap)
+	if err != nil {
+		t.Errorf("ConfigMap was not created in the fake client: %v", err)
+	}
+
+	// Now verify that the ConfigMap can be deleted properly
+	// Call the function we want to test
+	if err := DeleteReplicationConfigmap(cr, fakeClient); err != nil {
+		t.Errorf("DeleteReplicationConfigmap returned an unexpected error: %v", err)
+	}
+
+	// Check that the ConfigMap was deleted from the fake client
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "dell-replication-controller-config",
+			Namespace: "dell-replication-controller",
+		},
+	}
+	err = fakeClient.Get(context.Background(), t1.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}, configMap)
+	if err == nil {
+		t.Errorf("ConfigMap was not deleted from the fake client")
+	} else if !k8serrors.IsNotFound(err) {
+		t.Errorf("ConfigMap was not deleted from the fake client: %v", err)
 	}
 }
