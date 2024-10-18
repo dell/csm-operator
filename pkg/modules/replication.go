@@ -15,11 +15,12 @@ package modules
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	t1 "k8s.io/apimachinery/pkg/types"
-	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
@@ -466,7 +467,7 @@ func DeleteReplicationConfigmap(cr csmv1.ContainerStorageModule, ctrlClient clie
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "dell-replication-controller-config",
-			Namespace: cr.Namespace,
+			Namespace: "dell-replication-controller",
 		},
 	}
 
