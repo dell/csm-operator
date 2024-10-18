@@ -9,7 +9,7 @@ spec:
     configVersion: v2.12.0
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -19,7 +19,7 @@ spec:
       configVersion: v1.12.0
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -36,16 +36,16 @@ spec:
       enabled: false
       components:
         - name: podmon-controller
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly
         - name: podmon-node
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly
     - name: replication
       enabled: false
       components:
         - name: dell-csi-replicator
-          image: dellemc/dell-csi-replicator:nightly
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
         - name: dell-replication-controller-manager
-          image: dellemc/dell-replication-controller:nightly
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
         - name: dell-replication-controller-init
           image: dellemc/dell-replication-init:v1.0.0
     - name: observability
@@ -54,7 +54,7 @@ spec:
       components:
         - name: topology
           enabled: true
-          image: dellemc/csm-topology:nightly
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
         - name: otel-collector
           enabled: true
           image: otel/opentelemetry-collector:0.42.0
@@ -62,4 +62,4 @@ spec:
           enabled: false
         - name: metrics-powerscale
           enabled: true
-          image: dellemc/csm-metrics-powerscale:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly

@@ -30,17 +30,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: dellemc/csm-authorization-proxy:v2.0.0
+          proxyService: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.0.0
           proxyServiceReplicas: 1
-          tenantService: dellemc/csm-authorization-tenant:v2.0.0
+          tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.0.0
           tenantServiceReplicas: 1
-          roleService: dellemc/csm-authorization-role:v2.0.0
+          roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.0.0
           roleServiceReplicas: 1
-          storageService: dellemc/csm-authorization-storage:v2.0.0
+          storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.0.0
           storageServiceReplicas: 1
           opa: openpolicyagent/opa
           opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.7
-          authorizationController: dellemc/csm-authorization-controller:v2.0.0
+          authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.0.0
           authorizationControllerReplicas: 1
           leaderElection: true
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
