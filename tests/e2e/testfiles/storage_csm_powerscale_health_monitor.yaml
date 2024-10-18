@@ -18,7 +18,7 @@ spec:
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -225,7 +225,7 @@ spec:
       configVersion: v1.12.0
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -248,7 +248,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: dellemc/dell-csi-replicator:nightly
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -263,7 +263,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/dell-replication-controller:nightly
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
           envs:
             # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
             # Set the value to "self" in case of stretched/single cluster configuration
@@ -304,7 +304,7 @@ spec:
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:nightly
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -328,7 +328,7 @@ spec:
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-metrics-powerscale:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int

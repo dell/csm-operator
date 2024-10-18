@@ -9,7 +9,7 @@ spec:
     configVersion: v2.12.0
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -34,7 +34,7 @@ spec:
           #  for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBeUl4ZGdOMDQ3Z2ZONU9Id0hxYTI5RzVnd3Q5M2VidnEwZVdnZE5RWXUvUU91YktoCkNyVmFDekFwc0xoUXJ5YThDODlrUzN1ZkRzSzN6N2hySEV4Z25XOGc3Ri9XTjVpaXYzcU9GcDk2ZVc4VFR5UHIKYVZLSld6bGsvcUloVnZIRlRsU25OY3JiU2VuOUZIcWZkeEZwN3ozVUl3bVVrZk8vTTQ1RHkrcDU2cmdqOW4vSQo2L1ZraTFlcWpQSDdXWU52SUFyTWtKb2UwYUhZVUk3amt3RGdTemRNYzJzN1I5NWxQTFY1MDgxdFNCWTJtNno0ClRrdXZLUHRtUWdaTC9ySi9pR1EwS1U5MmJkRVAvVEg1UnhJMkR2dlNwUEs1UkhzTEhPVDdUZWV5NGJXU1VQemIKU0cwUUFBNG9ScjU1djNVWG5pZjBMcDRENDlOcXB0UitFc2ZMdndJREFRQUJBb0lCQUUva2V5dG05ZEw5a094cApoYnJ3TjFwUXpvTlRlc2tvTDNmR3ZwRk1IVDVqRDZxeW1xMGxhZVdqSGppa2RLQVNFait5TXdaUERTSllOOW1zClloODMzaFZadkFmdWRleFlCaDI1dVBrU056eEJIN1FiWHlEcUhJWVc2MEQxWGNyQkxoVHliRnBsb2M1a1JNbnYKdjY4elpMeEdLVWg3L0kvWVJvZEhXWUxXdWhMaTYvVGpKMGNJbWlOVWxMeWhXNHJrUXRveUZmelYvWkZpZGYvWApSYjQwRHRCRk1QbytVdFRBbnJuTlF3UDN2cEF5U09OV2U3MW45dS9XdFlwYzVNeDJGaGZFbm5PcTlZcVNEMVNQCm5hUC9OUndOQ2xOY1BleWZaSU84SytWT3MvbFpBOGErMXREWTZzOFVOTHBvcm42YkRWdEsweU4rTU9YK1FLaXEKTG9KeDZtRUNnWUVBNlU3ZU96OEcybG9wd245ald6YXBobG5TU2RFTHZobS95cllNMy9TN2puTkRYNkd3TkRlKwpFQTFINUs1UDRLNnlleFMvZEllaWo4bDhiRytVb0V3Rm9pOVIxaTdGR21DL1p6WTRpa2IyQXI0MU8yV29kVk9UCkRjNnBjdmlkWnp5ZjJWaGlTMFNLZ3ZodDdzSTlQcjFyZWlyNW9TYXBuUC9hUFhCTkl3dDh3V01DZ1lFQTNBM1AKODNrOUlPdjNNUWhiL1JiUDVBRWZYaW85U0hJNW1oekFLankxY2M1WDdadjI2SmpIc21RNGQrb0s0UjljMGFIWApETDFBRlYrWTkyRTU4ZVE1SXJhQ3JTQVAwYk45bENqLzdEMDFrT2ZnTis5QXJzVy8yc0tFcFRtZENtc3ZGb1JuClNOUzBNYmpDdmQxOEtYdWNFYmdoZzZTcjZwaGN2QWVoaGtpcjZQVUNnWUVBcFl0bXVKZENINUUyYkdIRGVDZFQKSnBkNVZSTlZ4Nit4blA2TUtDVVpLRHkxSTVndzFQeHdpaWRDU2dzOWRtbS9Ed0pyengybXhXdnNNMjBCQXJTdQprcVFNNTNNTVBHbEZwdENjVWRHRUlmSWhCMkpjbzlPSFZwYTdPVzhiRVBPOVlKVU1PZWdLZUdBYWNQMjJRMXhZCmRMa2xvNmt4Vk10ZWFaWFR4ZmdTcjQwQ2dZRUF3K2lnSEZqeHJSK213TVo2YndZaUt4RTh4ZTdCQklCOCs5RmcKMjdtVXFDOVdaTG9YeGRoTzRXa01ST1hlcmJIb1J0SFl6UVNueXQrREphb3Zsa1RqQVI2UGxHWVk3MDduSEVLcwpKYndRdG1OWllUTGwyVE5BclJmRVUvekk3UCtqdWw1Q1BicndlZHZOdEk4OC9RbUpWdFVoTVR3bnVnSFBmYThsCmhKR3FTd2tDZ1lFQW1UKzJQY1VIdVZuYXU1ZjVYMXZPaVI1aGtyNEZYUFhwZVVRZDVyMFZZazBsb01Yc3FQVGsKc0lZN0lmSUlRZ01xbFNnUVhMeVBpbjJPWEN1ZnBKTlVDRlJRamtMV2ZCZW1QbEh6N2hjNURvVHJEU1doOUtETApNak9HL3d4ckRwZGlvRnZmcVA3bldIeGk3UzAxNXpHNHhtbkg2WUZ1TThuaHpyU3NSQzhzV20wPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ=="
-          image: dellemc/csm-topology:nightly
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
         - name: otel-collector
           enabled: true
           image: otel/opentelemetry-collector:0.42.0
@@ -42,4 +42,4 @@ spec:
           enabled: false
         - name: metrics-powerscale
           enabled: true
-          image: dellemc/csm-metrics-powerscale:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly

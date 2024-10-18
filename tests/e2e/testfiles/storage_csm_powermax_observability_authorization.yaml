@@ -44,7 +44,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: dellemc/csi-powermax:nightly
+      image: quay.io/dell/container-storage-modules/csi-powermax:nightly
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
