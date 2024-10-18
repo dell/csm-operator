@@ -1,5 +1,5 @@
 name: dell-csi-replicator
-image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.10.0
+image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
 imagePullPolicy: IfNotPresent
 args:
   - "--csi-address=$(ADDRESS)"

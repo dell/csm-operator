@@ -1,5 +1,5 @@
 name: reverseproxy
-image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.11.0
+image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
 imagePullPolicy: IfNotPresent
 env:
   - name: X_CSI_REVPROXY_CONFIG_DIR
