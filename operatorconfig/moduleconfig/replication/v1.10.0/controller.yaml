@@ -271,7 +271,7 @@ spec:
               value: /app/certs
             - name: X_CSI_REPLICATION_CONFIG_FILE_NAME
               value: config
-          image: <REPLICATION_CONTROLLER_IMAGE>
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
           imagePullPolicy: Always
           name: manager
           resources:
