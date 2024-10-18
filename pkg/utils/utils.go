@@ -1393,24 +1393,3 @@ func SetContainerImage(objects []crclient.Object, deploymentName, containerName,
 		}
 	}
 }
-
-func GetLatestVersion(resourceType string, op OperatorConfig) (string, error) {
-	path := ""
-	switch resourceType {
-	case string(csmv1.ReverseProxy):
-		path = fmt.Sprintf("%s/moduleconfig/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, "latest.yaml")
-	}
-	// Read the YAML file
-	data, err := os.ReadFile(filepath.Clean(path))
-	if err != nil {
-		return "", err
-	}
-
-	// Unmarshal the YAML data into the Config struct
-	var latestVersion LatestVersion
-	err = yaml.Unmarshal(data, &latestVersion)
-	if err != nil {
-		return "", err
-	}
-	return latestVersion.Version, nil
-}
