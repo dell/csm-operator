@@ -818,7 +818,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
-				_, err = modules.CreateReplicationConfigmap(cr, operatorConfig, ctrlClient)
+				_, err = modules.CreateReplicationConfigmap(ctx, cr, operatorConfig, ctrlClient)
 				if err != nil {
 					return fmt.Errorf("injecting replication into replication configmap: %v", err)
 				}
