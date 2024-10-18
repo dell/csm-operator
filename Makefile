@@ -85,6 +85,9 @@ driver-unit-test:
 module-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/modules
 
+utils-unit-test:
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/utils
+
 .PHONY: actions
 actions: ## Run all the github action checks that run on a pull_request creation
 	act -l | grep -v ^Stage | grep pull_request | grep -v image_security_scan | awk '{print $$2}' | while read WF; do act pull_request --no-cache-server --platform ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest --job "$${WF}"; done

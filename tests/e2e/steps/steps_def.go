@@ -25,6 +25,8 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
+	"encoding/json"
+
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -51,14 +53,14 @@ const (
 var (
 	authString               = "karavi-authorization-proxy"
 	operatorNamespace        = "dell-csm-operator"
-	quotaLimit               = "30000000"
-	pflexSecretMap           = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS"}
-	pflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_VOLUME": "PFLEX_VOLUME"}
+	quotaLimit               = "100000000"
+	pflexSecretMap           = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL"}
 	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSidecarMap     = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleEphemeralVolumeMap = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
+	pflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_VOLUME": "PFLEX_VOLUME"}
 	pflexAuthSidecarMap      = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	pmaxCredMap              = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
 	pmaxAuthSidecarMap       = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
@@ -96,56 +98,7 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 }
 
 // GetTestResources -- parse values file
-func GetTestResources(valuesFilePath string) ([]Resource, bool, error) {
-	apex := false
-	b, err := os.ReadFile(valuesFilePath)
-	if err != nil {
-		return nil, apex, fmt.Errorf("failed to read values file: %v", err)
-	}
-
-	scenarios := []Scenario{}
-	err = yaml.Unmarshal(b, &scenarios)
-	if err != nil {
-		return nil, apex, fmt.Errorf("failed to read unmarshal values file: %v", err)
-	}
-
-	resources := []Resource{}
-	for _, scene := range scenarios {
-		var customResources []interface{}
-		for _, path := range scene.Paths {
-			b, err := os.ReadFile(path)
-			if err != nil {
-				return nil, apex, fmt.Errorf("failed to read testdata: %v", err)
-			}
-
-			if strings.Contains(path, "_csm_") {
-				customResource := csmv1.ContainerStorageModule{}
-				err = yaml.Unmarshal(b, &customResource)
-				if err != nil {
-					return nil, apex, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
-				}
-				customResources = append(customResources, customResource)
-			} else {
-				apex = true
-				customResource := csmv1.ApexConnectivityClient{}
-				err = yaml.Unmarshal(b, &customResource)
-				if err != nil {
-					return nil, apex, fmt.Errorf("failed to read unmarshal custom resource: %v", err)
-				}
-				customResources = append(customResources, customResource)
-			}
-		}
-		resources = append(resources, Resource{
-			Scenario:       scene,
-			CustomResource: customResources,
-		})
-	}
-
-	return resources, apex, nil
-}
-
-// GetTestResourcesApex -- parse values file
-func GetTestResourcesApex(valuesFilePath string) ([]Resource, error) {
+func GetTestResources(valuesFilePath string) ([]Resource, error) {
 	b, err := os.ReadFile(valuesFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read values file: %v", err)
@@ -165,14 +118,14 @@ func GetTestResourcesApex(valuesFilePath string) ([]Resource, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to read testdata: %v", err)
 			}
-			customResource := csmv1.ApexConnectivityClient{}
+
+			customResource := csmv1.ContainerStorageModule{}
 			err = yaml.Unmarshal(b, &customResource)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
 			}
 			customResources = append(customResources, customResource)
 		}
-
 		resources = append(resources, Resource{
 			Scenario:       scene,
 			CustomResource: customResources,
@@ -1193,8 +1146,16 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	cmd := exec.Command("kubectl", "get", "ns", cr.Namespace)
 	err := cmd.Run()
 	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "ns", cr.Namespace)
+
+		fmt.Printf("\nDeleting all CSM from namespace: %s \n", cr.Namespace)
+		cmd = exec.Command("kubectl", "delete", "csm", "-n", cr.Namespace, "--all")
 		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to delete all CSM from namespace: %v\nErrMessage:\n%s", err, string(b))
+		}
+
+		cmd = exec.Command("kubectl", "delete", "ns", cr.Namespace)
+		b, err = cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to delete authorization namespace: %v\nErrMessage:\n%s", err, string(b))
 		}
@@ -1325,8 +1286,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 
 // AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
 func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost, driverNamespace string) error {
-	fmt.Println("=====Waiting for everything to be up and running, adding a sleep time of 60 seconds before creating the role, tenant and role binding===")
-	time.Sleep(60 * time.Second)
+	fmt.Println("=====Waiting for everything to be up and running, adding a sleep time of 120 seconds before creating the role, tenant and role binding===")
+	time.Sleep(120 * time.Second)
 	var (
 		endpoint = ""
 		sysID    = ""
@@ -1412,23 +1373,58 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	// Create storage
-	fmt.Println("\n=== Creating Storage ===\n ")
+	// Check for storage
+	fmt.Println("\n=== Checking Storage ===\n ")
 	cmd := exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
-		"storage", "create",
-		"--type", storageType,
-		"--endpoint", fmt.Sprintf("https://%s", endpoint),
-		"--system-id", sysID,
-		"--user", user,
-		"--password", password,
-		"--array-insecure",
+		"storage", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
-	fmt.Println("=== Storage === \n", cmd.String())
+
+	//by default, assume we will create storage
+	skipStorage := false
+
+	fmt.Println("=== Checking Storage === \n", cmd.String())
 	b, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+		return fmt.Errorf("failed to check storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+	}
+
+	storage := make(map[string]json.RawMessage)
+
+	err = json.Unmarshal(b, &storage)
+	if err != nil {
+		return fmt.Errorf("failed to marshall response:%s \nErrMessage:\n%s", string(b), err)
+	}
+
+	for k, v := range storage {
+		if k == storageType {
+			fmt.Printf("Storage %s is already registered. \n It has the following config: %s \n", k, v)
+			skipStorage = true
+		}
+	}
+
+	if !skipStorage {
+
+		// Create storage
+		fmt.Println("\n=== Creating Storage ===\n ")
+		cmd = exec.Command("karavictl",
+			"--admin-token", "/tmp/adminToken.yaml",
+			"storage", "create",
+			"--type", storageType,
+			"--endpoint", fmt.Sprintf("https://%s", endpoint),
+			"--system-id", sysID,
+			"--user", user,
+			"--password", password,
+			"--array-insecure",
+			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		)
+		fmt.Println("=== Storage === \n", cmd.String())
+		b, err = cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
+		}
+
 	}
 
 	// Create Tenant
@@ -1445,28 +1441,60 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
 
-	// Create Role
-	fmt.Println("\n\n=== Creating Role ===\n ")
-	if storageType == "powerscale" {
-		quotaLimit = "0"
-	}
+	//By default, assume a role will be created
+	skipCreateRole := false
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
-		"role", "create",
-		fmt.Sprintf("--role=%s=%s=%s=%s=%s",
-			roleName, storageType, sysID, pool, quotaLimit),
+		"role", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 
-	fmt.Println("=== Role === \n", cmd.String())
+	fmt.Println("=== Checking Roles === \n", cmd.String())
+
 	b, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
+		return fmt.Errorf("failed to check roles: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	// role creation take few seconds
-	time.Sleep(5 * time.Second)
+	roles := make(map[string]json.RawMessage)
 
+	err = json.Unmarshal(b, &roles)
+	if err != nil {
+		return fmt.Errorf("failed to marshall response:%s \nErrMessage:\n%s", string(b), err)
+	}
+
+	for k, v := range roles {
+		if k == roleName {
+			fmt.Printf("Role %s is already created. \n It has the following config: %s \n", k, v)
+			skipCreateRole = true
+		}
+	}
+
+	if !skipCreateRole {
+
+		// Create Role
+		fmt.Println("\n\n=== Creating Role ===\n ")
+		if storageType == "powerscale" {
+			quotaLimit = "0"
+		}
+		cmd = exec.Command("karavictl",
+			"--admin-token", "/tmp/adminToken.yaml",
+			"role", "create",
+			fmt.Sprintf("--role=%s=%s=%s=%s=%s",
+				roleName, storageType, sysID, pool, quotaLimit),
+			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		)
+
+		fmt.Println("=== Role === \n", cmd.String())
+		b, err = cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
+		}
+
+		// role creation take few seconds
+		time.Sleep(5 * time.Second)
+
+	}
 	// Bind role
 	fmt.Println("\n\n=== Creating RoleBinding ===\n ")
 	cmd = exec.Command("karavictl",
@@ -1522,13 +1550,9 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_template.yaml"
+		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
 		updatedTemplateFile = ""
 	)
-
-	if strings.Contains(configVersion, "alpha") {
-		templateFile = "testfiles/authorization-templates/storage_csm_authorization_alpha_template.yaml"
-	}
 
 	if driver == "powerflex" {
 		crMap = "pflexAuthCRs"
@@ -1741,124 +1765,6 @@ func (step *Step) validateClientTestEnvironment(_ Resource) error {
 
 	if !allReady {
 		return fmt.Errorf("%s", notReadyMessage)
-	}
-
-	return nil
-}
-
-func (step *Step) applyClientCustomResource(res Resource, crNumStr string, secret string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
-	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
-	if err != nil {
-		return fmt.Errorf("failed to read connecivity client testdata: %v", err)
-	}
-
-	scrBuff, err := os.ReadFile(secret)
-	if err != nil {
-		return fmt.Errorf("failed to read secret testdata: %v", err)
-	}
-
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(scrBuff), "apply", "--validate=true", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to apply secret CR in namespace %s: %v", cr.Namespace, err)
-	}
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to apply connecivity client CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
-	}
-
-	return nil
-}
-
-func (step *Step) validateConnectivityClientInstalled(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
-	time.Sleep(60 * time.Second)
-	found := new(csmv1.ApexConnectivityClient)
-
-	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}, found); err != nil {
-		return err
-	}
-
-	return checkAllRunningPods(context.TODO(), cr.Namespace, step.clientSet)
-}
-
-func (step *Step) upgradeCustomResourceClient(res Resource, oldCrNumStr string, newCrNumStr string) error {
-	oldCrNum, _ := strconv.Atoi(oldCrNumStr)
-	oldCr := res.CustomResource[oldCrNum-1].(csmv1.ApexConnectivityClient)
-
-	newCrNum, _ := strconv.Atoi(newCrNumStr)
-	newCr := res.CustomResource[newCrNum-1].(csmv1.ApexConnectivityClient)
-
-	found := new(csmv1.ApexConnectivityClient)
-	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: oldCr.Namespace,
-		Name:      oldCr.Name,
-	}, found); err != nil {
-		fmt.Printf("Failed to get newCr.Name--> %v", err)
-		return err
-	}
-
-	// Update old CR with the spec of new CR
-	found.Spec = newCr.Spec
-	return step.ctrlClient.Update(context.TODO(), found)
-}
-
-func (step *Step) validateConnectivityClientNotInstalled(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
-	time.Sleep(20 * time.Second)
-	found := new(csmv1.ApexConnectivityClient)
-	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}, found); err == nil {
-		return fmt.Errorf("Found traces of client installation in namespace %s: %v", cr.Namespace, found)
-	}
-
-	return checkNoRunningPods(context.TODO(), cr.Namespace, step.clientSet)
-}
-
-// uninstallConnectivityClient - uninstall the client
-func (step *Step) uninstallConnectivityClient(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ApexConnectivityClient)
-
-	found := new(csmv1.ApexConnectivityClient)
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}, found,
-	)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-
-	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
-	if err != nil {
-		return fmt.Errorf("failed to read testdata: %v", err)
-	}
-
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to delete CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
-	}
-
-	return nil
-}
-
-func (step *Step) uninstallConnectivityClientSecret(res Resource, secret string) error {
-	crBuff, err := os.ReadFile(secret)
-	if err != nil {
-		return fmt.Errorf("failed to read secret testdata: %v", err)
-	}
-
-	if _, err := kubectl.RunKubectlInput("", string(crBuff), "delete", "--wait=true", "--timeout=30s", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to delete connectivity client secret : %v", err)
 	}
 
 	return nil

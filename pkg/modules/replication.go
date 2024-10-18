@@ -51,8 +51,6 @@ const (
 	DefaultRetryMin = "<RETRY_INTERVAL_MIN>"
 	// DefaultRetryMax -
 	DefaultRetryMax = "<RETRY_INTERVAL_MAX>"
-	// DefaultReplicaImage -
-	DefaultReplicaImage = "<REPLICATION_CONTROLLER_IMAGE>"
 	// DefaultReplicaInitImage -
 	DefaultReplicaInitImage = "<REPLICATION_INIT_IMAGE>"
 )
