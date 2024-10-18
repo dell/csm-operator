@@ -1097,7 +1097,7 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 }
 
 // HasModuleComponent - check if module component is present
-func HasModuleComponent(ctx context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+func HasModuleComponent(instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
 	module := instance.GetModule(mod)
 
 	for _, c := range module.Components {
@@ -1336,7 +1336,7 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 		}
 
 		for _, comp := range defaultComps {
-			if !HasModuleComponent(ctx, *cr, csmv1.Observability, comp.Name) {
+			if !HasModuleComponent(*cr, csmv1.Observability, comp.Name) {
 				log.Infof("Adding default component %s for %s ", comp.Name, module)
 				AddModuleComponent(cr, csmv1.Observability, comp)
 			}

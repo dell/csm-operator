@@ -80,8 +80,7 @@ func TestHasModuleComponent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.TODO()
-			result := HasModuleComponent(ctx, tt.instance, tt.mod, tt.componentType)
+			result := HasModuleComponent(tt.instance, tt.mod, tt.componentType)
 
 			assert.Equal(t, tt.expectedResult, result)
 		})
