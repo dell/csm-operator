@@ -27,7 +27,7 @@ spec:
       configVersion: v1.11.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.11.0
+          image: quay.io/dell/container-storage-modules/podmon:v1.11.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-vxflexos"
@@ -41,7 +41,7 @@ spec:
             - "--mode=controller"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
         - name: podmon-node
-          image: dellemc/podmon:v1.11.0
+          image: quay.io/dell/container-storage-modules/podmon:v1.11.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

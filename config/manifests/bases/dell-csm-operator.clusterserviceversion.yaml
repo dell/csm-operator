@@ -2448,37 +2448,37 @@ spec:
   relatedImages:
     - image: docker.io/dellemc/dell-csm-operator:v1.7.0
       name: dell-csm-operator
-    - image: docker.io/dellemc/csi-isilon:v2.12.0
+    - image: quay.io/dell/container-storage-modules/csi-isilon:v2.12.0
       name: csi-isilon
-    - image: docker.io/dellemc/csi-powermax:v2.12.0s
+    - image: quay.io/dell/container-storage-modules/csi-powermax:v2.12.0s
       name: csi-powermax
-    - image: docker.io/dellemc/csipowermax-reverseproxy:v2.11.0
+    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.11.0
       name: csipowermax-reverseproxy
-    - image: docker.io/dellemc/csi-powerstore:v2.12.0
+    - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.12.0
       name: csi-powerstore
-    - image: docker.io/dellemc/csi-unity:v2.12.0
+    - image: quay.io/dell/container-storage-modules/csi-unity:v2.12.0
       name: csi-unity
-    - image: docker.io/dellemc/csi-vxflexos:v2.12.0
+    - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.12.0
       name: csi-vxflexos
     - image: docker.io/dellemc/sdc:4.5.2.1
       name: sdc
-    - image: docker.io/dellemc/csm-authorization-sidecar:v1.12.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
       name: karavi-authorization-proxy
-    - image: docker.io/dellemc/dell-csi-replicator:v1.10.0
+    - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.10.0
       name: dell-csi-replicator
-    - image: docker.io/dellemc/dell-replication-controller:v1.10.0
+    - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.10.0
       name: dell-replication-controller-manager
-    - image: docker.io/dellemc/csm-topology:v1.10.0
+    - image: quay.io/dell/container-storage-modules/csm-topology:v1.10.0
       name: topology
     - image: docker.io/otel/opentelemetry-collector:0.42.0
       name: otel-collector
-    - image: docker.io/dellemc/csm-metrics-powerscale:v1.7.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.7.0
       name: metrics-powerscale
-    - image: docker.io/dellemc/csm-metrics-powermax:v1.5.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.5.0
       name: metrics-powermax
-    - image: docker.io/dellemc/csm-metrics-powerflex:v1.10.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.10.0
       name: metrics-powerflex
-    - image: docker.io/dellemc/podmon:v1.11.0
+    - image: quay.io/dell/container-storage-modules/podmon:v1.11.0
       name: podmon-node
     - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
       name: kube-rbac-proxy
@@ -2494,7 +2494,7 @@ spec:
       name: resizer
     - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
       name: externalhealthmonitorcontroller
-    - image: dellemc/csi-metadata-retriever:v1.8.0
+    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.8.0
       name: metadataretriever
     - image: docker.io/dellemc/connectivity-client-docker-k8s:1.19.0
       name: dell-connectivity-client

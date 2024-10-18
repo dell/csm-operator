@@ -351,7 +351,7 @@ func getOtelCollector(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 	}
 	YamlString = string(buf)
 
-	nginxProxyImage := "nginxinc/nginx-unprivileged:1.20"
+	nginxProxyImage := "nginxinc/nginx-unprivileged:1.27"
 	otelCollectorImage := "otel/opentelemetry-collector:0.42.0"
 
 	for _, component := range obs.Components {

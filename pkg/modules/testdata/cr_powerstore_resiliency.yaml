@@ -10,7 +10,7 @@ spec:
     authSecret: powerstore-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powerstore:v2.12.0"
+      image: "quay.io/dell/container-storage-modules/csi-powerstore:v2.12.0"
       imagePullPolicy: IfNotPresent
   modules:
     - name: resiliency
@@ -18,7 +18,7 @@ spec:
       enabled: true
       components:
         - name: podmon-controller
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly
           imagePullPolicy: IfNotPresent
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
@@ -31,7 +31,7 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

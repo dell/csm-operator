@@ -10,7 +10,7 @@ spec:
     authSecret: test-powermax-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powermax:v2.12.0"
+      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.12.0"
       imagePullPolicy: IfNotPresent
   modules:
     # observability: allows to configure observability
@@ -24,7 +24,7 @@ spec:
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.10.0
+          image: quay.io/dell/container-storage-modules/csm-topology:v1.10.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -40,14 +40,14 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            # Default value: "nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
+              value: "nginxinc/nginx-unprivileged:1.27"
         - name: metrics-powermax
           # enabled: Enable/Disable PowerMax metrics
           enabled: true
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powermax:v1.5.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.5.0
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int
@@ -97,7 +97,7 @@ spec:
       enabled: false
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:v1.12.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

@@ -23,7 +23,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-unity:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-unity:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS

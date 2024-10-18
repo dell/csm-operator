@@ -8,7 +8,7 @@ spec:
     csiDriverType: "powerflex"
     configVersion: v2.12.0
     common:
-      image: "dellemc/csi-vxflexos:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
     forceRemoveDriver: true
   modules:
     - name: observability
@@ -16,7 +16,7 @@ spec:
       components:
         - name: topology
           enabled: true
-          image: dellemc/csm-topology:nightly
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
         - name: otel-collector
           enabled: true
           image: otel/opentelemetry-collector:0.42.0
