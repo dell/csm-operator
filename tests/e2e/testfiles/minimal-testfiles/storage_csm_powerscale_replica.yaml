@@ -9,7 +9,7 @@ spec:
     configVersion: v2.12.0
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
   modules:
     - name: authorization
       enabled: false
@@ -21,11 +21,11 @@ spec:
       enabled: true
       components:
         - name: dell-csi-replicator
-          image: dellemc/dell-csi-replicator:nightly
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
         - name: dell-replication-controller-manager
-          image: dellemc/dell-replication-controller:nightly
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
           # envs:
           #  - name: "TARGET_CLUSTERS_IDS"
           #    value: "self"
         - name: dell-replication-controller-init
-          image: dellemc/dell-replication-init:v1.0.0
+          image: quay.io/dell/container-storage-modules/dell-replication-init:v1.0.0

@@ -10,7 +10,7 @@ spec:
     authSecret: powermax-creds
     replicas: 1
     common:
-      image: "dellemc/csi-powermax:v2.12.0"
+      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.12.0"
       imagePullPolicy: IfNotPresent
   modules:
     - name: resiliency
@@ -18,7 +18,7 @@ spec:
       enabled: true
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.11.0
+          image: quay.io/dell/container-storage-modules/podmon:v1.11.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powermax"
@@ -32,7 +32,7 @@ spec:
             - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powermax.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:v1.11.0
+          image: quay.io/dell/container-storage-modules/podmon:v1.11.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
