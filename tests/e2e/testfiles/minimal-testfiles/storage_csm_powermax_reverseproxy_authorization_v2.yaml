@@ -10,10 +10,11 @@ spec:
     common:
       image: "quay.io/dell/container-storage-modules/csi-powermax:nightly"
     forceRemoveDriver: true
+    replicas: 1
   modules:
     - name: authorization
       enabled: true
-      configVersion: v1.11.0
+      configVersion: v2.0.0
       components:
         - name: karavi-authorization-proxy
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
