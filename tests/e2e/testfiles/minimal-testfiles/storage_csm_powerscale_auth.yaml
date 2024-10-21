@@ -10,7 +10,7 @@ spec:
     replicas: 1
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -20,7 +20,7 @@ spec:
       configVersion: v1.12.0
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

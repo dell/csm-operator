@@ -10,7 +10,7 @@ spec:
     authSecret: isilon-creds-custom
     replicas: 1
     common:
-      image: "dellemc/csi-isilon:v2.12.0"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.12.0"
       imagePullPolicy: IfNotPresent
   modules:
     - name: authorization
@@ -18,7 +18,7 @@ spec:
       enabled: true
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:v1.12.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

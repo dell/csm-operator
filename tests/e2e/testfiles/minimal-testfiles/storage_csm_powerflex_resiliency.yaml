@@ -8,7 +8,7 @@ spec:
     csiDriverType: "powerflex"
     configVersion: v2.12.0
     common:
-      image: "dellemc/csi-vxflexos:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
     forceRemoveDriver: true
   modules:
     - name: resiliency
@@ -16,6 +16,6 @@ spec:
       # Adding components since "nightly" image is to be used for e2e
       components:
         - name: podmon-controller
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly
         - name: podmon-node
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly

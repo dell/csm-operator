@@ -17,7 +17,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -161,7 +161,7 @@ spec:
       configVersion: v1.12.0
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -180,7 +180,7 @@ spec:
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:nightly
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -196,14 +196,14 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            # Default value: "nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
+              value: "nginxinc/nginx-unprivileged:1.27"
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int

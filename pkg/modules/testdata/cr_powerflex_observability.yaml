@@ -17,7 +17,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-powermax:v2.12.0"
+      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.12.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -134,7 +134,7 @@ spec:
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.10.0
+          image: quay.io/dell/container-storage-modules/csm-topology:v1.10.0
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
           certificate: ""
@@ -162,9 +162,9 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            # Default value: "nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
+              value: "nginxinc/nginx-unprivileged:1.27"
         - name: cert-manager
           # enabled: Enable/Disable cert-manager
           # Allowed values:
@@ -176,7 +176,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:v1.10.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.10.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -233,7 +233,7 @@ spec:
       enabled: false
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:v1.12.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
