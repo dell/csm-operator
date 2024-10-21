@@ -1,0 +1,19 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  annotations:
+    storageclass.beta.kubernetes.io/is-default-class: "false"
+  name: op-e2e-unity
+parameters:
+  arrayId: REPLACE_ARRAYID
+  hostIoSize: "16384"
+  isDataReductionEnabled: "false"
+  storagePool: REPLACE_POOL
+  thinProvisioned: "true"
+  tieringPolicy: "0"
+  protocol: "NFS"
+  nasServer: "REPLACE_NAS"
+provisioner: csi-unity.dellemc.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true

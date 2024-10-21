@@ -22,7 +22,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.25
+ENVTEST_K8S_VERSION = 1.30
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -84,6 +84,9 @@ driver-unit-test:
 
 module-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/modules
+
+utils-unit-test:
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/utils
 
 .PHONY: actions
 actions: ## Run all the github action checks that run on a pull_request creation
@@ -226,7 +229,7 @@ OPM = $(shell which opm)
 endif
 endif
 
-# A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v1.6.0).
+# A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v1.7.0).
 # These images MUST exist in a registry and be pull-able.
 BUNDLE_IMGS ?= $(BUNDLE_IMG)
 

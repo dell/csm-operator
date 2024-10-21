@@ -37,6 +37,11 @@ var (
 	XCSIPodmonEnabled = "X_CSI_PODMON_ENABLED"
 )
 
+const (
+	controllerMode = "controller"
+	nodeMode       = "node"
+)
+
 // ResiliencySupportedDrivers is a map containing the CSI Drivers supported by CSM Resiliency. The key is driver name and the value is the driver plugin identifier
 var ResiliencySupportedDrivers = map[string]SupportedDriverParam{
 	string(csmv1.PowerStore): {
@@ -155,7 +160,7 @@ func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.Containe
 
 func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration) {
 	for _, component := range m.Components {
-		if component.Name == utils.PodmonControllerComponent && mode == "controller" {
+		if component.Name == utils.PodmonControllerComponent && mode == controllerMode {
 			modifyPodmon(component, container)
 		}
 		if component.Name == utils.PodmonNodeComponent && mode == "node" {
@@ -210,7 +215,7 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConf
 
 // ResiliencyInjectDeployment - inject resiliency into deployment
 func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType string) (*applyv1.DeploymentApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, "controller")
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, controllerMode)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +255,7 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 
 // ResiliencyInjectDaemonset  - inject resiliency into daemonset
 func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, driverType string) (*applyv1.DaemonSetApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, "node")
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, nodeMode)
 	if err != nil {
 		return nil, err
 	}
@@ -274,63 +279,4 @@ func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.
 	}
 
 	return &ds, nil
-}
-
-// CheckApplyContainersResiliency - check container configuration for resiliency
-func CheckApplyContainersResiliency(containers []acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule) error {
-	resiliencyModule, err := getResiliencyModule(cr)
-	if err != nil {
-		return err
-	}
-
-	driverContainerName := "driver"
-
-	// fetch podmonAPIPort
-	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
-	var container acorev1.ContainerApplyConfiguration
-	// fetch podmonArrayConnectivityPollRate
-	setResiliencyArgs(resiliencyModule, "node", &container)
-	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
-
-	for _, cnt := range containers {
-		if *cnt.Name == utils.ResiliencySideCarName {
-
-			// check argument in resiliency sidecar(podmon)
-			foundPodmonArrayConnectivityPollRate := false
-			for _, arg := range cnt.Args {
-				if fmt.Sprintf("--arrayConnectivityPollRate=%s", podmonArrayConnectivityPollRate) == arg {
-					foundPodmonArrayConnectivityPollRate = true
-				}
-			}
-			if !foundPodmonArrayConnectivityPollRate {
-				return fmt.Errorf("missing the following argument %s", podmonArrayConnectivityPollRate)
-			}
-
-		} else if *cnt.Name == driverContainerName {
-			// check envs in driver sidecar
-			foundPodmonAPIPort := false
-			foundPodmonArrayConnectivityPollRate := false
-			for _, env := range cnt.Env {
-				if *env.Name == XCSIPodmonAPIPort {
-					foundPodmonAPIPort = true
-					if *env.Value != podmonAPIPort {
-						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIPodmonAPIPort, podmonAPIPort, *env.Value)
-					}
-				}
-				if *env.Name == XCSIPodmonArrayConnectivityPollRate {
-					foundPodmonArrayConnectivityPollRate = true
-					if *env.Value != podmonArrayConnectivityPollRate {
-						return fmt.Errorf("expected %s to have a value of: %s but got: %s", XCSIPodmonArrayConnectivityPollRate, podmonArrayConnectivityPollRate, *env.Value)
-					}
-				}
-			}
-			if !foundPodmonAPIPort {
-				return fmt.Errorf("missing the following argument %s", podmonAPIPort)
-			}
-			if !foundPodmonArrayConnectivityPollRate {
-				return fmt.Errorf("missing the following argument %s", podmonArrayConnectivityPollRate)
-			}
-		}
-	}
-	return nil
 }

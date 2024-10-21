@@ -162,7 +162,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 
 			return false, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
-		"Fail - no components": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+		"success - no components": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -181,7 +181,7 @@ func TestReverseProxyPrecheck(t *testing.T) {
 				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
 			}
 
-			return false, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient
+			return true, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 	}
 	for name, tc := range tests {
@@ -249,6 +249,16 @@ func TestReverseProxyServer(t *testing.T) {
 				panic(err)
 			}
 			deployAsSidecar = true
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating with minimal manifest": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			tmpCR.Spec.Modules[0].Components = nil
+			deployAsSidecar = false
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},

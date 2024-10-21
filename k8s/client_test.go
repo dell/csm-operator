@@ -14,7 +14,6 @@ package k8s
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -166,7 +165,8 @@ func Test_GetVersion(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, out, fmt.Sprintf("%s.%s", major, minor))
+				assert.Equal(t, major, out.Major)
+				assert.Equal(t, minor, out.Minor)
 			}
 		})
 	}

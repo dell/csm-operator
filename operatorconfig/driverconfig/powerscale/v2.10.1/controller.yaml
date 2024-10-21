@@ -233,7 +233,7 @@ spec:
               mountPath: /var/run/csi
         - name: csi-metadata-retriever
           image: dellemc/csi-metadata-retriever:v1.7.3
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
             - "--timeout=120s"

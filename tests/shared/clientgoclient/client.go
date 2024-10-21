@@ -43,7 +43,7 @@ import (
 	eventsv1 "k8s.io/client-go/kubernetes/typed/events/v1"
 	eventsv1beta1 "k8s.io/client-go/kubernetes/typed/events/v1beta1"
 	extensionsv1beta1 "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
-	flowcontrolv1alpha1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1alpha1"
+	flowcontrolv1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1"
 	flowcontrolv1beta1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1"
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
 	flowcontrolv1beta3 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3"
@@ -65,6 +65,7 @@ import (
 	storagev1 "k8s.io/client-go/kubernetes/typed/storage/v1"
 	storagev1alpha1 "k8s.io/client-go/kubernetes/typed/storage/v1alpha1"
 	storagev1beta1 "k8s.io/client-go/kubernetes/typed/storage/v1beta1"
+	storagemigrationv1alpha1 "k8s.io/client-go/kubernetes/typed/storagemigration/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -239,8 +240,8 @@ func (c *K8sClient) ExtensionsV1beta1() extensionsv1beta1.ExtensionsV1beta1Inter
 	panic("implement me")
 }
 
-// FlowcontrolV1alpha1 retrieves the FlowcontrolV1alpha1Client
-func (c *K8sClient) FlowcontrolV1alpha1() flowcontrolv1alpha1.FlowcontrolV1alpha1Interface {
+// FlowcontrolV1 retrieves the FlowcontrolV1Client
+func (c *K8sClient) FlowcontrolV1() flowcontrolv1.FlowcontrolV1Interface {
 	panic("implement me")
 }
 
@@ -336,6 +337,11 @@ func (c *K8sClient) StorageV1() storagev1.StorageV1Interface {
 
 // StorageV1alpha1 retrieves the StorageV1alpha1Client
 func (c *K8sClient) StorageV1alpha1() storagev1alpha1.StorageV1alpha1Interface {
+	panic("implement me")
+}
+
+// StoragemigrationV1alpha1 retrieves StoragemigrationV1alpha1Interface
+func (c *K8sClient) StoragemigrationV1alpha1() storagemigrationv1alpha1.StoragemigrationV1alpha1Interface {
 	panic("implement me")
 }
 

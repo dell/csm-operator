@@ -15,7 +15,7 @@
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
     - "Run custom test"
-    #upgrade
+    # upgrade
     - "Upgrade from custom resource [1] to [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"

@@ -1,0 +1,8 @@
+# list of CVEs that are currently unfixed
+# list of best practies violatied that needs a fix
+CIS-DI-0009
+DKL-DI-0006
+CIS-DI-0005
+CIS-DI-0006
+CIS-DI-0008
+DKL-LI-0003

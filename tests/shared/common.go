@@ -27,19 +27,19 @@ import (
 
 // ConfigVersions used for all unit tests
 const (
-	PFlexConfigVersion         string = "v2.11.0"
-	DowngradeConfigVersion     string = "v2.10.1"
-	ConfigVersion              string = "v2.10.1"
-	UpgradeConfigVersion       string = "v2.9.1"
-	JumpUpgradeConfigVersion   string = "v2.11.0"
-	JumpDowngradeConfigVersion string = "v2.10.1"
+	PFlexConfigVersion         string = "v2.12.0"
+	DowngradeConfigVersion     string = "v2.11.0"
+	ConfigVersion              string = "v2.11.0"
+	UpgradeConfigVersion       string = "v2.11.0"
+	JumpUpgradeConfigVersion   string = "v2.12.0"
+	JumpDowngradeConfigVersion string = "v2.11.0"
 	OldConfigVersion           string = "v2.2.0"
 	BadConfigVersion           string = "v0"
-	PStoreConfigVersion        string = "v2.11.0"
-	UnityConfigVersion         string = "v2.11.0"
-	PScaleConfigVersion        string = "v2.11.0"
-	PmaxConfigVersion          string = "v2.11.0"
-	AuthServerConfigVersion    string = "v1.11.0"
+	PStoreConfigVersion        string = "v2.12.0"
+	UnityConfigVersion         string = "v2.12.0"
+	PScaleConfigVersion        string = "v2.12.0"
+	PmaxConfigVersion          string = "v2.12.0"
+	AuthServerConfigVersion    string = "v1.12.0"
 	AccConfigVersion           string = "v1.1.0"
 	AppMobConfigVersion        string = "v1.1.0"
 )
@@ -93,24 +93,6 @@ func MakeCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
 	return csmObj
 }
 
-// MakeAcc - returns a csm from given params
-func MakeAcc(name, ns, configVersion string) csmv1.ApexConnectivityClient {
-	ApexConnectivityClientObj := MakeApexConnectivityClient(configVersion, "true")
-
-	csmObj := csmv1.ApexConnectivityClient{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   ns,
-			Annotations: make(map[string]string),
-		},
-		Spec: csmv1.ApexConnectivityClientSpec{
-			Client: ApexConnectivityClientObj,
-		},
-		Status: csmv1.ApexConnectivityClientStatus{},
-	}
-	return csmObj
-}
-
 // MakeModuleCSM returns a csm from given params
 func MakeModuleCSM(name, ns, configVersion string) csmv1.ContainerStorageModule {
 	moduleObj := MakeModule(configVersion)
@@ -128,14 +110,6 @@ func MakeModuleCSM(name, ns, configVersion string) csmv1.ContainerStorageModule 
 		Status: csmv1.ContainerStorageModuleStatus{},
 	}
 	return csmObj
-}
-
-// MakeApexConnectivityClient returns a driver object from given params
-func MakeApexConnectivityClient(configVersion, _ string) csmv1.Client {
-	ApexConnectivityClientObj := csmv1.Client{
-		ConfigVersion: configVersion,
-	}
-	return ApexConnectivityClientObj
 }
 
 // MakeDriver returns a driver object from given params

@@ -63,7 +63,10 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	log := logger.GetLogger(ctx)
 	// Check for default secret only
 	// Array specific will be authenticated in csireverseproxy
-	cred := cr.Spec.Driver.AuthSecret
+	cred := cr.Name + "-creds"
+	if cr.Spec.Driver.AuthSecret != "" {
+		cred = cr.Spec.Driver.AuthSecret
+	}
 
 	// Check if driver version is supported by doing a stat on a config file
 	configFilePath := fmt.Sprintf("%s/driverconfig/powermax/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
@@ -82,6 +85,22 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 			}
 		}
 	}
+	kubeletConfigDirFound := false
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == "KUBELET_CONFIG_DIR" {
+			kubeletConfigDirFound = true
+		}
+	}
+	if !kubeletConfigDirFound {
+		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
+			Name:  "KUBELET_CONFIG_DIR",
+			Value: "/var/lib/kubelet",
+		})
+	}
+	version, err := utils.GetLatestVersion(string(csmv1.ReverseProxy), operatorConfig)
+	if err != nil {
+		return err
+	}
 
 	foundRevProxy := false
 	for _, mod := range cr.Spec.Modules {
@@ -91,7 +110,36 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		}
 	}
 	if !foundRevProxy {
-		return fmt.Errorf("failed to find reverseproxy module")
+		log.Infof("Reverse proxy module not found adding it with default config")
+		components := make([]csmv1.ContainerTemplate, 0)
+		components = append(components, csmv1.ContainerTemplate{
+			Name: "csipowermax-reverseproxy",
+		})
+
+		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
+			Name:  "X_CSI_REVPROXY_TLS_SECRET",
+			Value: "csirevproxy-tls-secret",
+		})
+		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
+			Name:  "X_CSI_REVPROXY_PORT",
+			Value: "2222",
+		})
+		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
+			Name:  "X_CSI_CONFIG_MAP_NAME",
+			Value: "powermax-reverseproxy-config",
+		})
+		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
+			Name:  "DeployAsSidecar",
+			Value: "true",
+		})
+
+		cr.Spec.Modules = append(cr.Spec.Modules, csmv1.Module{
+			Name:              csmv1.ReverseProxy,
+			Enabled:           true,
+			ConfigVersion:     version,
+			ForceRemoveModule: true,
+			Components:        components,
+		})
 	}
 
 	log.Debugw("preCheck", "secrets", cred)
@@ -178,6 +226,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				maxVolumesPerNode = env.Value
 			}
 		}
+
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxManagedArray, managedArray)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxEndpoint, endpoint)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxClusterPrefix, clusterPrefix)
@@ -259,6 +308,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
 	}
+
 	return yamlString
 }
 

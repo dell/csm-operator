@@ -225,6 +225,14 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
+      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
+      # - key: "offline.isilon.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # - key: "isilon.podmon.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+
     sideCars:
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
@@ -244,11 +252,11 @@ spec:
         enabled: false
         args: ["--monitor-interval=60s"]
         image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
-    # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
-    # Configure when the storageCapacity is set as "true"
-    # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-    #- name: provisioner
-    #  args: ["--capacity-poll-interval=5m"]
+  #   Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+  #   Configure when the storageCapacity is set as "true"
+  #   Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+  #    - name: provisioner
+  #      args: ["--capacity-poll-interval=5m"]
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
