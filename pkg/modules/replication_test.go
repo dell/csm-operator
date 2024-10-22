@@ -461,7 +461,7 @@ func TestReplicationConfigmap(t *testing.T) {
 
 	// Now verify that the ConfigMap can be deleted properly
 	// Call the function we want to test
-	if err := DeleteReplicationConfigmap(cr, fakeClient); err != nil {
+	if err := DeleteReplicationConfigmap(fakeClient); err != nil {
 		t.Errorf("DeleteReplicationConfigmap returned an unexpected error: %v", err)
 	}
 

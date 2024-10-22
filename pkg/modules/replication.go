@@ -463,7 +463,7 @@ func CreateReplicationConfigmap(ctx context.Context, cr csmv1.ContainerStorageMo
 	return []crclient.Object{&cm}, nil
 }
 
-func DeleteReplicationConfigmap(cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func DeleteReplicationConfigmap(ctrlClient client.Client) error {
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "dell-replication-controller-config",
