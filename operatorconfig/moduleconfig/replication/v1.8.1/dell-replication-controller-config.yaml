@@ -8,4 +8,3 @@ data:
     clusterId: ""
     targets: []
     CSI_LOG_LEVEL: "debug"
-
