@@ -1262,7 +1262,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 				return err
 			}
 			log.Infow("Deleting Replication configmap")
-			if err = modules.DeleteReplicationConfigmap(instance, cluster.ClusterCTRLClient); err != nil {
+			if err = modules.DeleteReplicationConfigmap(cluster.ClusterCTRLClient); err != nil {
 				return err
 			}
 		}
