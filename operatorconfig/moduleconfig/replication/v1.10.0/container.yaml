@@ -1,6 +1,6 @@
 name: dell-csi-replicator
 image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
-imagePullPolicy: IfNotPresent
+imagePullPolicy: Always
 args:
   - "--csi-address=$(ADDRESS)"
   - "--leader-election=true"

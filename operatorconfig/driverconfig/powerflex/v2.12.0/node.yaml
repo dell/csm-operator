@@ -88,7 +88,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
           image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command: ["/csi-vxflexos.sh"]
           args:
             - "--array-config=/vxflexos-config/config"

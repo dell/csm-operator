@@ -1,6 +1,6 @@
 name: reverseproxy
 image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
-imagePullPolicy: IfNotPresent
+imagePullPolicy: Always
 env:
   - name: X_CSI_REVPROXY_CONFIG_DIR
     value: /etc/config/configmap

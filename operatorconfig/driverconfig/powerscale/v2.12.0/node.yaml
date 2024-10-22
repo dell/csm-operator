@@ -80,7 +80,7 @@ spec:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
           image: quay.io/dell/container-storage-modules/csi-isilon:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: CSI_ENDPOINT
               value: <KUBELET_CONFIG_DIR>/plugins/csi-isilon/csi_sock

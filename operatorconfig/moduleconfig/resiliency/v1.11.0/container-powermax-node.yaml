@@ -20,7 +20,7 @@ securityContext:
     add: ["SYS_ADMIN"]
   allowPrivilegeEscalation: true
 image: quay.io/dell/container-storage-modules/podmon:nightly
-imagePullPolicy: IfNotPresent
+imagePullPolicy: Always
 args:
   - "--labelvalue=csi-powermax"
   - "--arrayConnectivityPollRate=60"

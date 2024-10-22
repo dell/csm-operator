@@ -15,7 +15,7 @@
 #
 name: podmon
 image: quay.io/dell/container-storage-modules/podmon:nightly
-imagePullPolicy: IfNotPresent
+imagePullPolicy: Always
 args:
   - "--labelvalue=csi-isilon"
   - "--arrayConnectivityPollRate=60"

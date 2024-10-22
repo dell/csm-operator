@@ -218,7 +218,7 @@ spec:
             - "--driver-name=csi-unity.dellemc.com"
             - "--driver-config=/unity-config/driver-config-params.yaml"
             - "--driver-secret=/unity-secret/config"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
