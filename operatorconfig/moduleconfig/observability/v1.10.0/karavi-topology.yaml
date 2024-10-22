@@ -96,7 +96,7 @@ spec:
       serviceAccount: karavi-observability-topology-controller
       containers:
         - name: karavi-topology
-          image: quay.io/dell/container-storage-modules/csm-topology:v1.10.0
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
           resources: {}
           env:
             - name: PORT

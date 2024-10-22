@@ -19,7 +19,7 @@ securityContext:
   capabilities:
     add: ["SYS_ADMIN"]
   allowPrivilegeEscalation: true
-image: quay.io/dell/container-storage-modules/podmon:v1.11.0
+image: quay.io/dell/container-storage-modules/podmon:nightly
 imagePullPolicy: IfNotPresent
 args:
   - "--labelvalue=csi-powerstore"

@@ -258,7 +258,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-isilon:v2.12.0
+          image: quay.io/dell/container-storage-modules/csi-isilon:nightly
           imagePullPolicy: IfNotPresent
           command: ["/csi-isilon"]
           args:
