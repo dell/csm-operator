@@ -429,7 +429,6 @@ func TestReplicationConfigmap(t *testing.T) {
 		ConfigDirectory: "../../operatorconfig",
 	}
 	objs, err := CreateReplicationConfigmap(context.Background(), cr, realConfig, fakeClient)
-
 	// Check that the function returned the expected results
 	if err != nil {
 		t.Errorf("CreateReplicationConfigmap returned an unexpected error: %v", err)
