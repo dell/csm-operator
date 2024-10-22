@@ -168,9 +168,9 @@
     - "Delete custom resource [1]"
 - scenario: "Install PowerFlex Driver (With Authorization V2)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerflex_auth.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
@@ -208,7 +208,7 @@
 
 - scenario: "Install PowerFlex Driver(With Authorization V1)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server_no_cert.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerflex_auth_v1.yaml"
   tags:
     - "authorizationproxyserver"
@@ -468,7 +468,7 @@
 
 - scenario: "Install PowerScale Driver(With Authorization V1)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_n_minus_1.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale_auth.yaml"
   tags:
     - "authorizationproxyserver"
@@ -503,7 +503,7 @@
 
 - scenario: "Install PowerScale Driver, Enable/Disable Authorization V1 module"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server_n_minus_1.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_n_minus_1.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
   tags:
     - "authorizationproxyserver"
@@ -545,9 +545,9 @@
 
 - scenario: "Install PowerScale Driver (With Authorization V2)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale_auth2.0.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
