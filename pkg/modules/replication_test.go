@@ -425,7 +425,7 @@ func TestReplicationConfigmap(t *testing.T) {
 
 	// Call the function we want to test
 	// we can't use test config, as it doesn't have versionvalues
-	var realConfig = utils.OperatorConfig{
+	realConfig := utils.OperatorConfig{
 		ConfigDirectory: "../../operatorconfig",
 	}
 	objs, err := CreateReplicationConfigmap(context.Background(), cr, realConfig, fakeClient)
