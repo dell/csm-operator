@@ -19,11 +19,11 @@ export DELLCTL="/usr/local/bin/dellctl"
 
 # The following are for creating PFlex secret/storage class
 # do not include "https://" in the endpoint
-export PFLEX_USER="username"
-export PFLEX_PASS="password"
-export PFLEX_SYSTEMID="00990099ddcc"
-export PFLEX_ENDPOINT="10.1.1.1"
-export PFLEX_MDM="10.0.0.1,10.0.0.2"
+export PFLEX_USER="admin"
+export PFLEX_PASS="Pass4you123!"
+export PFLEX_SYSTEMID="be84bfe40e796c0f"
+export PFLEX_ENDPOINT="10.225.109.54"
+export PFLEX_MDM="10.225.109.64,10.225.109.65"
 export PFLEX_NAS="none"
 export PFLEX_AUTH_ENDPOINT="localhost:9401"
 # The following are Authorization Proxy Server specific for powerflex:
@@ -96,9 +96,9 @@ export UNITY_POOL="mypool"
 export VOL_NS=wordpress
 export RES_NS=res-wordpress
 export AM_NS=test-vxflexos
-export BACKEND_STORAGE_URL="10.0.0.4:32000"
+export BACKEND_STORAGE_URL="http://10.247.66.66:32000"
 export BUCKET_NAME="my-bucket"
 export ALT_BUCKET_NAME="alt-bucket"
 # Be sure to escape / with \
-export AM_CONTROLLER_IMAGE="dellemc/csm-application-mobility-controller:nightly"
-export AM_PLUGIN_IMAGE="dellemc/csm-application-mobility-velero-plugin:nightly"
+export AM_CONTROLLER_IMAGE="quay.io/dell/container-storage-modules/csm-application-mobility-controller:nightly"
+export AM_PLUGIN_IMAGE="quay.io/dell/container-storage-modules/csm-application-mobility-velero-plugin:nightly"
