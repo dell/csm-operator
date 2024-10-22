@@ -1,6 +1,6 @@
 # List of E2E Tests Scenarios for minimal samples
 
-- scenario: "Install PowerStore Driver(Standalone)"
+- scenario: "Install PowerStore Driver (Minimal, Standalone)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
   tags:
@@ -23,7 +23,7 @@
     run:
       - cert-csi test vio --sc op-e2e-pstore --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerStore Driver(With Resiliency)"
+- scenario: "Install PowerStore Driver (Minimal, With Resiliency)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerstore_resiliency.yaml"
   tags:
@@ -48,7 +48,7 @@
     run:
       - echo "no current test for resiliency"
 
-- scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
+- scenario: "Install PowerStore Driver (Minimal, Standalone), Enable Resiliency"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
   tags:
@@ -74,7 +74,7 @@
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
 
-- scenario: "Install Unity Driver(Standalone)"
+- scenario: "Install Unity Driver (Minimal, Standalone)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_unity.yaml"
   tags:
@@ -97,7 +97,7 @@
     run:
       - cert-csi test vio --sc op-e2e-unity --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerFlex Driver(Standalone)"
+- scenario: "Install PowerFlex Driver (Minimal, Standalone)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
   tags:
@@ -121,7 +121,7 @@
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerFlex Driver(With Resiliency)"
+- scenario: "Install PowerFlex Driver (Minimal, With Resiliency)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerflex_resiliency.yaml"
   tags:
@@ -143,7 +143,7 @@
     name: CustomTest
     run:
       - echo "no current test for resiliency"
-- scenario: "Install PowerFlex Driver(Standalone), Enable/Disable Resiliency"
+- scenario: "Install PowerFlex Driver (Minimal, Standalone), Enable/Disable Resiliency"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
   tags:
@@ -166,7 +166,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-- scenario: "Install PowerFlex Driver (With Authorization V2)"
+- scenario: "Install PowerFlex Driver (Minimal, With Authorization V2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerflex_auth.yaml"
@@ -206,7 +206,7 @@
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerFlex Driver(With Authorization V1)"
+- scenario: "Install PowerFlex Driver (Minimal, With Authorization V1)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_no_cert.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerflex_auth_v1.yaml"
@@ -240,7 +240,7 @@
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-- scenario: "Install PowerFlex Driver(With Observability)"
+- scenario: "Install PowerFlex Driver (Minimal, With Observability)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerflex_observability.yaml"
   tags:
@@ -263,7 +263,7 @@
     name: Cert CSI
     run:
       - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
-- scenario: "Install PowerFlex Driver(With Observability and Custom Cert for Otel-Collector)"
+- scenario: "Install PowerFlex Driver (Minimal, With Observability and Custom Cert for Otel-Collector)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerflex_observability_otel_custom_cert.yaml"
   tags:
@@ -280,7 +280,7 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-- scenario: "Install PowerScale Driver(Standalone)"
+- scenario: "Install PowerScale Driver (Minimal, Standalone)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
   tags:
@@ -304,7 +304,7 @@
     run:
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Resiliency"
+- scenario: "Install PowerScale Driver (Minimal, Standalone), Enable/Disable Resiliency"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
   tags:
@@ -329,7 +329,7 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
 
-- scenario: "Install PowerScale Driver(With Resiliency)"
+- scenario: "Install PowerScale Driver (Minimal, With Resiliency)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerscale_resiliency.yaml"
   tags:
@@ -352,7 +352,7 @@
     run:
       - echo "no current test for resiliency"
 
-- scenario: "Install PowerScale Driver(With Replication)"
+- scenario: "Install PowerScale Driver (Minimal, With Replication)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerscale_replica.yaml"
   tags:
@@ -375,7 +375,7 @@
     run:
       - echo "no current test implemented for replication"
 
-- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Replication"
+- scenario: "Install PowerScale Driver (Minimal, Standalone), Enable/Disable Replication"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale_replica.yaml"
@@ -405,7 +405,7 @@
     run:
       - echo "no current test implemented for replication"
 
-- scenario: "Uninstall PowerScale Driver"
+- scenario: "Uninstall PowerScale Driver (Minimal)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
   tags:
@@ -422,7 +422,7 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Validate [powerscale] driver from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Observability"
+- scenario: "Install PowerScale Driver (Minimal, Standalone), Enable/Disable Observability"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
   tags:
@@ -447,7 +447,7 @@
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
 
-- scenario: "Install PowerScale Driver(With Observability and Custom Certs)"
+- scenario: "Install PowerScale Driver (Minimal, With Observability and Custom Certs)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerscale_observability_top_custom_cert.yaml"
   tags:
@@ -466,7 +466,7 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
 
-- scenario: "Install PowerScale Driver(With Authorization V1)"
+- scenario: "Install PowerScale Driver (Minimal, With Authorization V1)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_n_minus_1.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale_auth.yaml"
@@ -501,7 +501,7 @@
     run:
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
-- scenario: "Install PowerScale Driver, Enable/Disable Authorization V1 module"
+- scenario: "Install PowerScale Driver (Minimal), Enable/Disable Authorization V1 module"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server_n_minus_1.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
@@ -543,7 +543,7 @@
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/rootCertificate.pem] for [authSidecarCert]"
 
-- scenario: "Install PowerScale Driver (With Authorization V2)"
+- scenario: "Install PowerScale Driver (Minimal, With Authorization V2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale_auth2.0.yaml"
@@ -580,7 +580,7 @@
     run:
       - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
-- scenario: "Install Powerflex Driver(With Replication)"
+- scenario: "Install Powerflex Driver (Minimal, With Replication)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerflex_replica.yaml"
   tags:
@@ -605,7 +605,7 @@
     run:
       - echo "no current test implemented for replication"
 
-- scenario: "Install PowerMax Driver(Standalone)"
+- scenario: "Install PowerMax Driver (Minimal, Standalone)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax.yaml"
   tags:
@@ -629,7 +629,7 @@
     run:
       - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
 
-- scenario: "Install PowerMax Driver(With Observability)"
+- scenario: "Install PowerMax Driver (Minimal, With Observability)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax_observability.yaml"
   tags:
@@ -651,7 +651,7 @@
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
 
-- scenario: "Install PowerMax Driver (With Auth V1 module)"
+- scenario: "Install PowerMax Driver (Minimal, With Auth V1 module)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization.yaml"
@@ -686,7 +686,7 @@
     run:
       - cert-csi test vio --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
 
-- scenario: "Install Powermax Driver (With Authorization v2)"
+- scenario: "Install Powermax Driver (Minimal, With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
@@ -728,7 +728,7 @@
       - cert-csi test vio --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
 
 
-- scenario: "Install Powermax Driver(Standalone), Enable Resiliency"
+- scenario: "Install Powermax Driver (Minimal, Standalone), Enable Resiliency"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax.yaml"
   tags:
@@ -753,7 +753,7 @@
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
 
-- scenario: "Install Powermax Driver(With Resiliency), Disable Resiliency module"
+- scenario: "Install Powermax Driver (Minimal, With Resiliency), Disable Resiliency module"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax_resiliency.yaml"
   tags:
@@ -778,7 +778,7 @@
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
 
-- scenario: "Install Powermax Driver(With Replication)"
+- scenario: "Install Powermax Driver (Minimal, With Replication)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax_replica.yaml"
   tags:
