@@ -87,7 +87,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly # TODO: This should be changed to v2.12.0 once the image is released
           imagePullPolicy: Always
           command: ["/csi-vxflexos.sh"]
           args:

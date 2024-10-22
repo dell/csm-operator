@@ -126,9 +126,7 @@ spec:
             name: otel-collector-config
       containers:
         - name: nginx-proxy
-          image: <NGINX_PROXY_
-          
-          >
+          image: <NGINX_PROXY_IMAGE>
           volumeMounts:
             - name: tls-secret
               mountPath: /etc/ssl/certs

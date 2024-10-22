@@ -7,8 +7,6 @@ spec:
   driver:
     csiDriverType: "powerflex"
     configVersion: v2.12.0
-    common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
     forceRemoveDriver: true
   modules:
     # Authorization: enable csm-authorization for RBAC
@@ -24,9 +22,3 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      # Adding components since "nightly" image is to be used for e2e
-      components:
-        - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
-        - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
