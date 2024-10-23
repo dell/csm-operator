@@ -31,6 +31,8 @@ const (
 	DefaultDriverConfigParamsVolumeMount = "<DriverConfigParamsVolumeMount>"
 	// CertManagerManifest -
 	CertManagerManifest = "cert-manager.yaml"
+	// CertManagerCRDsManifest -
+	CertManagerCRDsManifest = "cert-manager-crds.yaml"
 	// CommonNamespace -
 	CommonNamespace = "<NAMESPACE>"
 	// CSMName - name
@@ -102,9 +104,26 @@ func getCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	return YamlString, nil
 }
 
+func getCertManagerCRDs(op utils.OperatorConfig) (string, error) {
+	YamlString := ""
+
+	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/cert-manager/%s", op.ConfigDirectory, CertManagerCRDsManifest)
+	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	return YamlString, nil
+}
+
 // CommonCertManager - apply/delete cert-manager objects
 func CommonCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getCertManager(op, cr)
+	if err != nil {
+		return err
+	}
+	crdYamlString, err := getCertManagerCRDs(op)
 	if err != nil {
 		return err
 	}
@@ -112,6 +131,20 @@ func CommonCertManager(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
+	}
+
+	crdObjects, err := utils.GetModuleComponentObj([]byte(crdYamlString))
+	if err != nil {
+		return err
+	}
+
+	// keep cert-manager CRDs in place, even if cert-manager is uninstalled
+	for _, crdObj := range crdObjects {
+		if !isDeleting {
+			if err := utils.ApplyObject(ctx, crdObj, ctrlClient); err != nil {
+				return err
+			}
+		}
 	}
 
 	for _, ctrlObj := range ctrlObjects {
