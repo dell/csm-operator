@@ -218,6 +218,17 @@ spec:
         - key: "node.kubernetes.io/network-unavailable"
           operator: "Exists"
           effect: "NoExecute"
+    # Uncomment and tab if nodes you wish to use have the node-role.kubernetes.io/master taint
+    # - key: "node-role.kubernetes.io/master"
+    #   operator: "Exists"
+    #   effect: "NoSchedule"
+    # Uncomment and tab if CSM for Resiliency and CSI Driver pods monitor is enabled
+    #  - key: "offline.powermax.storage.dell.com"
+    #    operator: "Exists"
+    #    effect: "NoSchedule"
+    #  - key: "powermax.podmon.storage.dell.com"
+    #    operator: "Exists"
+    #    effect: "NoSchedule"
     sideCars:
       # 'pmax' represents a string prepended to each volume created by the CSI driver
       - name: provisioner

@@ -6,4 +6,39 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerflex"
-    configVersion: v2.11.0
+    configVersion: v2.12.0
+    forceRemoveDriver: true
+  modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      # For Auth 2.0, use v2.0.0 as configVersion
+      configVersion: v1.11.0
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+    - name: replication
+      enabled: false
+    # observability: allows to configure observability
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
+      components:
+        - name: topology
+          enabled: true
+        - name: otel-collector
+          enabled: true
+        - name: cert-manager
+          # enabled: Enable/Disable cert-manager
+          # Allowed values:
+          #   true: enable deployment of cert-manager
+          #   false: disable deployment of cert-manager only if it's already deployed
+          # Default value: false
+          enabled: false
+        - name: metrics-powerflex
+          enabled: true

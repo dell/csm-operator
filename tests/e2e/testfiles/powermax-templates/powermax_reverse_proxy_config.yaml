@@ -22,10 +22,10 @@ logFormat: text
 standAloneConfig:
   storageArrays:
     - storageArrayId: "REPLACE_SYSTEMID"
-      primaryURL: "https://REPLACE_AUTH_ENDPOINT:9400"
+      primaryURL: "https://REPLACE_ENDPOINT"
       proxyCredentialSecrets:
         - powermax-creds
   managementServers:
-    - url: "https://REPLACE_AUTH_ENDPOINT:9400"
+    - url: "https://REPLACE_ENDPOINT"
       arrayCredentialSecret: powermax-creds
       skipCertificateValidation: true

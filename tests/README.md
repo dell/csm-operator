@@ -29,6 +29,8 @@ The end-to-end tests test the functionality of the operator as a whole by instal
 
 Any time changes made to the operator are being checked into the main branch, sanity tests should be run (they should take 20-30 minutes to complete, the very first run may take a few minutes more). In addition, if you have made any driver- or module-specific changes, (any changes in `pkg/drivers`, `pkg/modules`, `operatorconfig/driverconfig`, `operatorconfig/moduleconfig`, etc), please run the E2E tests specific to these components as well.
 
+**Note :** To run E2E tests with minimal samples, use the `--minimal` flag when executing the `run-e2e-test.sh` script. This will utilize the `scenarios.yaml` file located at `tests/e2e/testfiles/minimal-testfiles/scenarios.yaml`, which contains the paths to the minimal sample test YAMLs.
+
 ## Prerequisites
 
 - A supported environment where the Dell Container Storage Modules Operator is installed
@@ -41,6 +43,8 @@ Any time changes made to the operator are being checked into the main branch, sa
   - (if running sanity, powerflex, or modules suites) `test-vxflexos`
   - (if running sanity, powerscale, or modules suites) `isilon`
   - (if running unity suite) `unity`
+  - (if running powermax suite) `powermax`
+  - (if running powerstore suite) `powerstore` 
 - For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
 - Cert-CSI needs to be installed  
   - See [here](https://dell.github.io/csm-docs/docs/support/cert-csi/#download-release-linux) for instructions 
@@ -58,7 +62,7 @@ go get github.com/onsi/gomega/...
 
 ### Array Information
 
-For PowerFlex, Unity, PowerScale, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
+For PowerFlex, Unity, PowerScale, PowerStore, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.sh so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
 
 Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
 

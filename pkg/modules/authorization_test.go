@@ -617,7 +617,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 				},
 			}
 
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
@@ -629,7 +632,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -641,7 +647,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -653,7 +662,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -665,7 +677,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -677,7 +692,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
@@ -689,7 +707,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
@@ -701,7 +722,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
@@ -713,7 +737,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
@@ -740,7 +767,10 @@ func TestAuthorizationKubeMgmtPolicies(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	certmanagerv1.AddToScheme(scheme.Scheme)
+	err = certmanagerv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
 	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 	err = AuthorizationServerDeployment(context.TODO(), false, operatorConfig, cr, sourceClient)
@@ -777,6 +807,52 @@ func TestAuthorizationKubeMgmtPolicies(t *testing.T) {
 	}
 }
 
+func TestAuthorizationOpenTelemetry(t *testing.T) {
+	cr, err := getCustomResource("./testdata/cr_auth_proxy_v2.0.0.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = certmanagerv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	err = AuthorizationServerDeployment(context.TODO(), false, operatorConfig, cr, sourceClient)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	storageService := &appsv1.Deployment{}
+	err = sourceClient.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	argFound := false
+	for _, container := range storageService.Spec.Template.Spec.Containers {
+		if container.Name == "storage-service" {
+			for _, arg := range container.Args {
+				if strings.Contains(arg, "--collector-address") {
+					argFound = true
+					if arg != "--collector-address=otel-collector:8889" {
+						t.Fatalf("expected --collector-address=otel-collector:8889, got %s", arg)
+					}
+					break
+				}
+			}
+		}
+		if argFound {
+			break
+		}
+	}
+
+	if !argFound {
+		t.Fatalf("expected --collector-address=otel-collector:8889, got none")
+	}
+}
+
 func TestAuthorizationStorageServiceVault(t *testing.T) {
 	vault0Identifier := "vault0"
 	vault0Arg := "--vault=vault0,https://10.0.0.1:8400,csm-authorization,true"
@@ -795,7 +871,10 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 				panic(err)
 			}
 
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
@@ -871,7 +950,10 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 				panic(err)
 			}
 
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
@@ -962,7 +1044,10 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 				panic(err)
 			}
 
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
@@ -1051,7 +1136,10 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 				panic(err)
 			}
 
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
@@ -1500,7 +1588,10 @@ func TestAuthorizationCertificates(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, true, tmpCR, sourceClient, operatorConfig
@@ -1512,7 +1603,10 @@ func TestAuthorizationCertificates(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -1525,7 +1619,10 @@ func TestAuthorizationCertificates(t *testing.T) {
 			}
 
 			tmpCR := customResource
-			certmanagerv1.AddToScheme(scheme.Scheme)
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
@@ -1563,7 +1660,10 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 					Name: "csmroles.csm-authorization.storage.dell.com",
 				},
 			}
-			apiextv1.AddToScheme(scheme.Scheme)
+			err = apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
@@ -1575,7 +1675,10 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 
 			tmpCR := customResource
 
-			apiextv1.AddToScheme(scheme.Scheme)
+			err = apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
@@ -1587,7 +1690,10 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 
 			tmpCR := customResource
 
-			apiextv1.AddToScheme(scheme.Scheme)
+			err = apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},

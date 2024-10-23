@@ -118,6 +118,11 @@ type CSMComponentType interface {
 	csmv1.ModuleType | csmv1.DriverType
 }
 
+// LatestVersion - used in minimal manifests for CSM
+type LatestVersion struct {
+	Version string `yaml:"version"`
+}
+
 const (
 	// DefaultReleaseName constant
 	DefaultReleaseName = "<DriverDefaultReleaseName>"
@@ -356,29 +361,6 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 		}
 	}
 	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
-	return YamlString
-}
-
-// ModifyCommonCRs - update with common values
-func ModifyCommonCRs(YamlString string, cr csmv1.ApexConnectivityClient) string {
-	if cr.Name != "" {
-		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseName, cr.Name)
-	}
-	if cr.Namespace != "" {
-		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseNamespace, cr.Namespace)
-	}
-	if string(cr.Spec.Client.Common.ImagePullPolicy) != "" {
-		YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Client.Common.ImagePullPolicy))
-	}
-	path := ""
-	for _, env := range cr.Spec.Client.Common.Envs {
-		if env.Name == "KUBELET_CONFIG_DIR" {
-			path = env.Value
-			break
-		}
-	}
-	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
-
 	return YamlString
 }
 
@@ -915,8 +897,25 @@ func MinVersionCheck(minVersion string, version string) (bool, error) {
 	return false, nil
 }
 
-func getClusterIDs(replica csmv1.Module) ([]string, error) {
+func getClusterIDs(ctx context.Context, replica csmv1.Module) []string {
+	log := logger.GetLogger(ctx)
 	var clusterIDs []string
+
+	if replica.Components == nil {
+		// if we are entering this block then it is a minimal yaml and replication is enabled and we will set default cluster as self
+		components := make([]csmv1.ContainerTemplate, 0)
+		components = append(components, csmv1.ContainerTemplate{
+			Name: ReplicationControllerManager,
+		})
+		replica.Components = components
+
+		replica.Components[0].Envs = append(replica.Components[0].Envs, corev1.EnvVar{
+			Name:  "TARGET_CLUSTERS_IDS",
+			Value: "self", // defaults to same cluster for the replication
+		})
+
+	}
+
 	for _, comp := range replica.Components {
 		if comp.Name == ReplicationControllerManager {
 			for _, env := range comp.Envs {
@@ -927,11 +926,12 @@ func getClusterIDs(replica csmv1.Module) ([]string, error) {
 			}
 		}
 	}
-	err := fmt.Errorf("TARGET_CLUSTERS_IDS on CR should have more than 0 commma seperated cluster IDs. Got  %d", len(clusterIDs))
-	if len(clusterIDs) >= 1 {
-		err = nil
+
+	if len(clusterIDs) == 0 {
+		log.Infof("TARGET_CLUSTERS_IDS not found in CR. Using default value \"self\"")
+		clusterIDs = append(clusterIDs, "self") // defaults to same cluster for the replication
 	}
-	return clusterIDs, err
+	return clusterIDs
 }
 
 func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Client) ([]byte, error) {
@@ -1006,10 +1006,7 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.Replication && m.Enabled {
 			replicaEnabled = true
-			clusterIDs, err := getClusterIDs(m)
-			if err != nil {
-				return replicaEnabled, clusterClients, err
-			}
+			clusterIDs := getClusterIDs(ctx, m)
 
 			for _, clusterID := range clusterIDs {
 				/*Hack: skip-replication-cluster-check - skips check for csm_controller unit test
@@ -1035,20 +1032,6 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 			}
 		}
 	}
-	return replicaEnabled, clusterClients, nil
-}
-
-// GetAccDefaultClusters - get default clusters
-func GetAccDefaultClusters(_ context.Context, _ csmv1.ApexConnectivityClient, r ReconcileCSM) (bool, []ReplicaCluster, error) {
-	clusterClients := []ReplicaCluster{
-		{
-			ClusterCTRLClient: r.GetClient(),
-			ClusterK8sClient:  r.GetK8sClient(),
-			ClusterID:         DefaultSourceClusterID,
-		},
-	}
-
-	replicaEnabled := false
 	return replicaEnabled, clusterClients, nil
 }
 
@@ -1111,6 +1094,27 @@ func IsModuleComponentEnabled(ctx context.Context, instance csmv1.ContainerStora
 	}
 
 	return false
+}
+
+// HasModuleComponent - check if module component is present
+func HasModuleComponent(instance csmv1.ContainerStorageModule, mod csmv1.ModuleType, componentType string) bool {
+	module := instance.GetModule(mod)
+
+	for _, c := range module.Components {
+		if c.Name == componentType {
+			return true
+		}
+	}
+	return false
+}
+
+// AddModuleComponent - add a module component in the cr
+func AddModuleComponent(instance *csmv1.ContainerStorageModule, mod csmv1.ModuleType, component csmv1.ContainerTemplate) {
+	for i := range instance.Spec.Modules {
+		if instance.Spec.Modules[i].Name == mod {
+			instance.Spec.Modules[i].Components = append(instance.Spec.Modules[i].Components, component)
+		}
+	}
 }
 
 // IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
@@ -1295,41 +1299,79 @@ func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	return namespaces, nil
 }
 
-// CheckAccAndCreateOrDeleteRbac checks if the dell connectivity client exists and creates/deletes the role and rolebindings
-func CheckAccAndCreateOrDeleteRbac(ctx context.Context, operatorConfig OperatorConfig, ctrlClient crclient.Client, isDeleting bool) error {
-	logInstance := logger.GetLogger(ctx)
-	accList := &csmv1.ApexConnectivityClientList{}
-	if err := ctrlClient.List(ctx, accList); err != nil {
-		logInstance.Info("dell connectivity client not found")
-	} else if len(accList.Items) <= 0 {
-		logInstance.Info("dell connectivity client not found")
-	} else {
-		logInstance.Info("dell connectivity client found")
-		clientNamespace := accList.Items[0].Namespace
-		accConfigVersion := accList.Items[0].Spec.Client.ConfigVersion
-		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory,
-			csmv1.DreadnoughtClient, accConfigVersion, BrownfieldManifest)
-		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNamespace, ctrlClient, isDeleting); err != nil {
-			logInstance.Error(err, "error creating role/rolebindings")
-			return err
+// LoadDefaultComponents loads the default module components into cr
+func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) error {
+	log := logger.GetLogger(ctx)
+	modules := []csmv1.ModuleType{csmv1.Observability}
+	for _, module := range modules {
+		if !cr.HasModule(module) {
+			continue
+		}
+
+		defaultComps, err := getDefaultComponents(cr.GetDriverType(), module, op)
+		if err != nil {
+			log.Errorf("failed to get default components for %s: %v", module, err)
+			return fmt.Errorf("failed to get default components for %s: %v", module, err)
+		}
+		// only load default components if module is enabled
+		moduleEnabled, _ := IsModuleEnabled(ctx, *cr, module)
+		if moduleEnabled {
+			for _, comp := range defaultComps {
+				if !HasModuleComponent(*cr, module, comp.Name) {
+					log.Infof("Adding default component %s for %s ", comp.Name, module)
+					AddModuleComponent(cr, csmv1.Observability, comp)
+				}
+			}
 		}
 	}
+
 	return nil
 }
 
-// CreateBrownfieldRbac creates the role and rolebindings
-func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client, isDeleting bool) error {
-	logInstance := logger.GetLogger(ctx)
-	csmList := &csmv1.ContainerStorageModuleList{}
-	err := ctrlClient.List(ctx, csmList)
-	if err == nil && len(csmList.Items) > 0 {
-		logInstance.Info("Found existing csm installations. Proceeding to create role/rolebindings")
-		clientNameSpace := cr.Namespace
-		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
-		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNameSpace, ctrlClient, isDeleting); err != nil {
-			logInstance.Error(err, "error creating role/rolebindings")
-			return err
+func getDefaultComponents(driverType csmv1.DriverType, module csmv1.ModuleType, op OperatorConfig) ([]csmv1.ContainerTemplate, error) {
+	file := fmt.Sprintf("%s/moduleconfig/%s/default-components.yaml", op.ConfigDirectory, module)
+	buf, err := os.ReadFile(filepath.Clean(file))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file %s: %s", file, err.Error())
+	}
+
+	defaultCsm := new(csmv1.ContainerStorageModule)
+	err = yaml.Unmarshal(buf, &defaultCsm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal default-components.yaml for %s: %s", module, err.Error())
+	}
+
+	defaultComps := defaultCsm.GetModule(module).Components
+	if module == csmv1.Observability {
+		if driverType == csmv1.PowerScale {
+			driverType = csmv1.PowerScaleName
+		}
+		for i := range defaultComps {
+			if strings.HasPrefix(defaultComps[i].Name, "metrics") {
+				defaultComps[i].Name = strings.ReplaceAll(defaultComps[i].Name, "<CSI_DRIVER_TYPE>", string(driverType))
+			}
 		}
 	}
-	return nil
+	return defaultComps, nil
+}
+
+// SetContainerImage loops through objects to find deployment and set the image for container
+func SetContainerImage(objects []crclient.Object, deploymentName, containerName, image string) {
+	if len(objects) == 0 || len(deploymentName) == 0 || len(containerName) == 0 || len(image) == 0 {
+		return
+	}
+	for _, object := range objects {
+		deployment, ok := object.(*appsv1.Deployment)
+		if !ok || !strings.EqualFold(deployment.Name, deploymentName) {
+			continue
+		}
+		if len(deployment.Spec.Template.Spec.Containers) == 0 {
+			break
+		}
+		for i := range deployment.Spec.Template.Spec.Containers {
+			if strings.EqualFold(deployment.Spec.Template.Spec.Containers[i].Name, containerName) {
+				deployment.Spec.Template.Spec.Containers[i].Image = image
+			}
+		}
+	}
 }

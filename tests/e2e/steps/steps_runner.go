@@ -71,6 +71,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)
 	runner.addStep(`^Create storageclass with name \[([^"]*)\] and template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
 	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
+	runner.addStep(`^Set up ephemeral volume properties \[([^"]*)\] for \[([^"]*)\]`, step.setupEphemeralVolumeProperties)
 
 	// Configure authorization-proxy-server for [powerflex]
 	runner.addStep(`^Configure authorization-proxy-server for \[([^"]*)\] for CR \[(\d+)\]$`, step.configureAuthorizationProxyServer)
@@ -82,17 +83,6 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 
 	runner.addStep(`^Set up application mobility CR \[([^"]*)\]$`, step.configureAMInstall)
 
-	// Connectivity Client steps
-	runner.addStep(`^Given a client environment with k8s or openshift, and CSM operator installed$`, step.validateClientTestEnvironment)
-	runner.addStep(`^Install connectivity client from CR \[(\d+)\] and create secret \[([^"]*)\]$`, step.applyClientCustomResource)
-	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is installed$`, step.validateConnectivityClientInstalled)
-	runner.addStep(`^Validate connectivity client from CR \[(\d+)\] is not installed$`, step.validateConnectivityClientNotInstalled)
-	runner.addStep(`^Uninstall connectivity client from CR \[(\d+)\]`, step.uninstallConnectivityClient)
-	runner.addStep(`^Upgrade client from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResourceClient)
-	runner.addStep(`^Uninstall connectivity client secret \[([^"]*)\]`, step.uninstallConnectivityClientSecret)
-	runner.addStep(`^Validate rbac created in namespace \[([^"]*)\]$`, step.validateRbacCreated)
-	runner.addStep(`^Validate connectivity client rbac objects are removed from all namespaces$`, step.validateRbacDeleted)
-	runner.addStep(`^Validate connectivity client rbac objects are removed from namespace \[([^"]*)\]$`, step.validateDeleteRbac)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {

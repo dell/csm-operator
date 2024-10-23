@@ -118,7 +118,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	controllerYAML := driverYAML.(utils.ControllerYAML)
 	controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
-	var defaultReplicas int32 = 1
+	var defaultReplicas int32 = 2
 	if *(controllerYAML.Deployment.Spec.Replicas) == 0 {
 		controllerYAML.Deployment.Spec.Replicas = &defaultReplicas
 	}
@@ -235,84 +235,6 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	return &controllerYAML, nil
 }
 
-// GetAccController get acc StatefulSet yaml
-func GetAccController(ctx context.Context, cr csmv1.ApexConnectivityClient, operatorConfig utils.OperatorConfig, clientName csmv1.ClientType) (*utils.StatefulControllerYAML, error) {
-	log := logger.GetLogger(ctx)
-
-	clientNameLower := strings.ToLower(string(clientName))
-	configMapPath := fmt.Sprintf("%s/clientconfig/%s/%s/statefulset.yaml", operatorConfig.ConfigDirectory, clientNameLower, cr.Spec.Client.ConfigVersion)
-	log.Debugw("GetAccController", "configMapPath", configMapPath)
-	buf, err := os.ReadFile(filepath.Clean(configMapPath))
-	if err != nil {
-		return nil, err
-	}
-
-	YamlString := utils.ModifyCommonCRs(string(buf), cr)
-	if cr.Spec.Client.CSMClientType == "apexConnectivityClient" {
-		YamlString = ModifyApexConnectivityClientCR(YamlString, cr)
-	}
-
-	AccYAML, err := utils.GetDriverYaml(YamlString, "StatefulSet")
-	if err != nil {
-		log.Errorw("GetAccController", "Error getting driver yaml", "error", err)
-		return nil, err
-	}
-
-	statefulsetYAML := AccYAML.(utils.StatefulControllerYAML)
-
-	containers := statefulsetYAML.StatefulSet.Spec.Template.Spec.Containers
-	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
-	for i, c := range containers {
-		if string(*c.Name) == "connectivity-client-docker-k8s" {
-			if string(cr.Spec.Client.Common.Image) != "" {
-				image := string(cr.Spec.Client.Common.Image)
-				c.Image = &image
-			}
-		}
-
-		removeContainer := false
-		for _, s := range cr.Spec.Client.SideCars {
-			if s.Name == *c.Name {
-				if s.Enabled == nil {
-					log.Infow("Container to be enabled", "name", *c.Name)
-					break
-				} else if !*s.Enabled {
-					removeContainer = true
-					log.Infow("Container to be removed", "name", *c.Name)
-				} else {
-					log.Infow("Container to be enabled", "name", *c.Name)
-				}
-				break
-			}
-		}
-		if !removeContainer {
-			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-			utils.UpdateSideCarApply(cr.Spec.Client.SideCars, &containers[i])
-			newcontainers = append(newcontainers, c)
-		}
-
-	}
-
-	statefulsetYAML.StatefulSet.Spec.Template.Spec.Containers = newcontainers
-
-	crUID := cr.GetUID()
-	bController := true
-	bOwnerDeletion := !cr.Spec.Client.ForceRemoveClient
-	kind := cr.Kind
-	v1 := "apps/v1"
-	statefulsetYAML.StatefulSet.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
-		{
-			APIVersion:         &v1,
-			Controller:         &bController,
-			BlockOwnerDeletion: &bOwnerDeletion,
-			Kind:               &kind,
-			Name:               &cr.Name,
-			UID:                &crUID,
-		},
-	}
-	return &statefulsetYAML, nil
-}
-
 // GetNode get node yaml
 func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string) (*utils.NodeYAML, error) {
 	log := logger.GetLogger(ctx)
@@ -424,7 +346,19 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = newcontainers
 
-	initcontainers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers
+	initcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
+	sdcEnabled := true
+	for _, env := range cr.Spec.Driver.Node.Envs {
+		if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
+			sdcEnabled = false
+		}
+	}
+	for _, ic := range nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers {
+		if *ic.Name != "sdc" || sdcEnabled {
+			initcontainers = append(initcontainers, ic)
+		}
+	}
+
 	for i := range initcontainers {
 		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
 		utils.UpdateinitContainerApply(cr.Spec.Driver.InitContainers, &initcontainers[i])
@@ -530,6 +464,17 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		}
 	}
 
+	if cr.Spec.Driver.CSIDriverType == "powerflex" {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "INTERFACE_NAMES" {
+				cmValue += fmt.Sprintf("\n%s: ", "interfaceNames")
+				for _, v := range strings.Split(env.Value, ",") {
+					cmValue += fmt.Sprintf("\n  %s ", v)
+				}
+			}
+		}
+	}
+
 	configMapData = map[string]string{
 		"driver-config-params.yaml": cmValue,
 	}
@@ -585,64 +530,4 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	}
 
 	return &csidriver, nil
-}
-
-// ModifyApexConnectivityClientCR - update the custom resource
-func ModifyApexConnectivityClientCR(yamlString string, cr csmv1.ApexConnectivityClient) string {
-	namespace := ""
-	aggregatorURL := AggregatorURLDefault
-	connectivityClientImage := ""
-	kubeProxyImage := ""
-	certPersisterImage := ""
-	accInitContainerImage := ""
-	caCertFlag := ""
-	caCertsList := ""
-
-	namespace = cr.Namespace
-
-	if cr.Spec.Client.ConnectionTarget != "" {
-		aggregatorURL = string(cr.Spec.Client.ConnectionTarget)
-	}
-
-	if cr.Spec.Client.UsePrivateCaCerts {
-		caCertFlag = CaCertFlag
-		caCertsList = CaCertsList
-	}
-
-	if cr.Spec.Client.Common.Name == ConnectivityClientContainerName {
-		if cr.Spec.Client.Common.Image != "" {
-			connectivityClientImage = string(cr.Spec.Client.Common.Image)
-		}
-	}
-
-	for _, initContainer := range cr.Spec.Client.InitContainers {
-		if initContainer.Name == AccInitContainerName {
-			if initContainer.Image != "" {
-				accInitContainerImage = string(initContainer.Image)
-			}
-		}
-	}
-
-	for _, sidecar := range cr.Spec.Client.SideCars {
-		if sidecar.Name == KubernetesProxySidecarName {
-			if sidecar.Image != "" {
-				kubeProxyImage = string(sidecar.Image)
-			}
-		}
-		if sidecar.Name == CertPersisterSidecarName {
-			if sidecar.Image != "" {
-				certPersisterImage = string(sidecar.Image)
-			}
-		}
-	}
-
-	yamlString = strings.ReplaceAll(yamlString, AccNamespace, namespace)
-	yamlString = strings.ReplaceAll(yamlString, AggregatorURL, aggregatorURL)
-	yamlString = strings.ReplaceAll(yamlString, CaCertOption, caCertFlag)
-	yamlString = strings.ReplaceAll(yamlString, CaCerts, caCertsList)
-	yamlString = strings.ReplaceAll(yamlString, ConnectivityClientContainerImage, connectivityClientImage)
-	yamlString = strings.ReplaceAll(yamlString, AccInitContainerImage, accInitContainerImage)
-	yamlString = strings.ReplaceAll(yamlString, KubernetesProxySidecarImage, kubeProxyImage)
-	yamlString = strings.ReplaceAll(yamlString, CertPersisterSidecarImage, certPersisterImage)
-	return yamlString
 }

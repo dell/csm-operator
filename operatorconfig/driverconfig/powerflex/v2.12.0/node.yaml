@@ -40,6 +40,9 @@ rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "update"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -84,7 +87,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: dellemc/csi-vxflexos:v2.12.0
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.12.0
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:
@@ -103,6 +106,8 @@ spec:
               value: /certs
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_SDC_ENABLED
+              value: <X_CSI_SDC_ENABLED>
             - name: X_CSI_APPROVE_SDC_ENABLED
               value: <X_CSI_APPROVE_SDC_ENABLED>
             - name: X_CSI_RENAME_SDC_ENABLED
@@ -137,7 +142,7 @@ spec:
               mountPath: /certs
               readOnly: true
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"

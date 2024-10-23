@@ -17,7 +17,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:nightly"
+      image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
       imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -129,10 +129,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.11.0
+      configVersion: v1.12.0
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

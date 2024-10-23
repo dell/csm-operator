@@ -14,8 +14,20 @@
 #
 #
 name: podmon
-image: dellemc/podmon:v1.10.0
+image: quay.io/dell/container-storage-modules/podmon:v1.11.0
 imagePullPolicy: IfNotPresent
+args:
+  - "--labelvalue=csi-isilon"
+  - "--arrayConnectivityPollRate=60"
+  - "--skipArrayConnectionValidation=false"
+  - "--driverPodLabelValue=dell-storage"
+  - "--ignoreVolumelessPods=false"
+  - "--arrayConnectivityConnectionLossThreshold=3"
+  # Below 4 args should not be modified.
+  - "--csisock=unix:/var/run/csi/csi.sock"
+  - "--mode=controller"
+  - "--driverPath=csi-isilon.dellemc.com"
+  - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
 env:
   - name: MY_NODE_NAME
     valueFrom:

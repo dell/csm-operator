@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -240,7 +241,7 @@ var (
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 
 // Reconcile - main loop
-func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.IncrUpdateCount()
 	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcID
@@ -271,6 +272,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 		ConfigDirectory: r.Config.ConfigDirectory,
 	}
 
+	// Set default components if using miminal manifest (without components)
+	err = utils.LoadDefaultComponents(ctx, csm, *operatorConfig)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// perform prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
@@ -281,12 +288,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(ctx context.Context, req ct
 
 	if csm.IsBeingDeleted() {
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
-
-		// remove role/rolebinding from the csm object namespace
-		err := r.SyncRbac(ctx, *csm, *operatorConfig, r.Client)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("error when syncing rbac: %v", err)
-		}
 
 		// check for force cleanup
 		if csm.Spec.Driver.ForceRemoveDriver {
@@ -566,7 +567,13 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter ratelimiter.RateLimiter, maxReconcilers int) error {
-	go r.ContentWatch()
+	go func() {
+		err := r.ContentWatch()
+		if err != nil {
+			fmt.Println("ContentWatch failed", err)
+			os.Exit(1)
+		}
+	}()
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&csmv1.ContainerStorageModule{}).
@@ -895,19 +902,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 	}
-	// If dell connectivity client is deployed, create role/rolebindings in the csm namespaces
-	if err = utils.CheckAccAndCreateOrDeleteRbac(ctx, operatorConfig, ctrlClient, false); err != nil {
-		return err
-	}
 
-	return nil
-}
-
-// SyncRbac - Sync the current installation - this can lead to a create or update
-func (r *ContainerStorageModuleReconciler) SyncRbac(ctx context.Context, _ csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
-	if err := utils.CheckAccAndCreateOrDeleteRbac(ctx, operatorConfig, ctrlClient, true); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -1358,12 +1353,16 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		log.Infow("Driver not installed yet")
 	} else {
 		if driver.GetOwnerReferences() != nil {
+			found := false
 			cred := driver.GetOwnerReferences()
 			for _, m := range cred {
 				if m.Name == cr.Name {
 					log.Infow("Owner reference is found and matches")
+					found = true
 					break
 				}
+			}
+			if !found {
 				return fmt.Errorf("required Owner reference not found. Please re-install driver ")
 			}
 		}

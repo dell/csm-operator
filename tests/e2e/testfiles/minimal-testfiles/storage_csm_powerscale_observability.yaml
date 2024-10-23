@@ -1,0 +1,37 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: isilon
+  namespace: isilon
+spec:
+  driver:
+    csiDriverType: "isilon"
+    configVersion: v2.12.0
+    forceRemoveDriver: true
+    common:
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
+  modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      enabled: false
+      # For Auth 2.0, use v2.0.0 as configVersion
+      configVersion: v1.11.0
+    - name: resiliency
+      enabled: false
+    - name: replication
+      enabled: false
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: true
+      components:
+        - name: topology
+          enabled: true
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
+        - name: otel-collector
+          enabled: true
+          image: otel/opentelemetry-collector:0.42.0
+        - name: cert-manager
+          enabled: false
+        - name: metrics-powerscale
+          enabled: true
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly

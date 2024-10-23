@@ -43,7 +43,7 @@ spec:
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-powerstore:v2.12.0"
+      image: "quay.io/dell/container-storage-modules/csi-powerstore:v2.12.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -60,23 +60,23 @@ spec:
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+        image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.11.1
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.0.1
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.8.0
+        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.8.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.12.1
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure only when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
@@ -180,7 +180,7 @@ spec:
       configVersion: v1.11.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.11.0
+          image: quay.io/dell/container-storage-modules/podmon:v1.11.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -195,7 +195,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:v1.11.0
+          image: quay.io/dell/container-storage-modules/podmon:v1.11.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

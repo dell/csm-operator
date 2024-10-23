@@ -77,7 +77,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dellemc/csi-unity:v2.12.0
+          image: quay.io/dell/container-storage-modules/csi-unity:v2.12.0
           imagePullPolicy: IfNotPresent
           args:
             - "--driver-name=csi-unity.dellemc.com"
@@ -134,7 +134,7 @@ spec:
             - name: unity-secret
               mountPath: /unity-secret
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"

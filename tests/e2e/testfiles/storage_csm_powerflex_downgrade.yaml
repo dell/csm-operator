@@ -16,13 +16,13 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.9.2
+    configVersion: v2.10.1
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.9.2"
+      image: "dellemc/csi-vxflexos:v2.10.1"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -167,7 +167,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
     initContainers:
-      - image: dellemc/sdc:4.5.2
+      - image: dellemc/sdc:4.5.2.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -232,9 +232,9 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            # Default value: "nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
+              value: "nginxinc/nginx-unprivileged:1.27"
         # enabled: Enable/Disable cert-manager
         # Allowed values:
         #   true: enable deployment of cert-manager

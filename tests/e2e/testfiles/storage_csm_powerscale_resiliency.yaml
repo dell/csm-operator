@@ -33,7 +33,7 @@ spec:
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -262,7 +262,7 @@ spec:
       configVersion: v1.11.0
       components:
         - name: podmon-controller
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly
           imagePullPolicy: IfNotPresent
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
@@ -275,7 +275,7 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
-          image: dellemc/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:nightly
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
@@ -293,20 +293,3 @@ spec:
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: isilon-config-params
-  namespace: isilon
-data:
-  driver-config-params.yaml: |
-    CSI_LOG_LEVEL: "debug"
-    CSI_LOG_FORMAT: "TEXT"
-    PODMON_CONTROLLER_LOG_LEVEL: "debug"
-    PODMON_CONTROLLER_LOG_FORMAT: "TEXT"
-    PODMON_NODE_LOG_LEVEL: "debug"
-    PODMON_NODE_LOG_FORMAT: "TEXT"
-spec:
-  driver:
-    configVersion: v2.12.0

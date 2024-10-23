@@ -21,7 +21,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.25
+ENVTEST_K8S_VERSION = 1.30
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -83,6 +83,9 @@ driver-unit-test:
 
 module-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/modules
+
+utils-unit-test:
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/utils
 
 .PHONY: actions
 actions: ## Run all the github action checks that run on a pull_request creation

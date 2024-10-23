@@ -1,0 +1,26 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: test-vxflexos
+  namespace: test-vxflexos
+spec:
+  driver:
+    csiDriverType: "powerflex"
+    configVersion: v2.12.0
+    common:
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
+    forceRemoveDriver: true
+  modules:
+    - name: replication
+      enabled: true
+      configVersion: v1.10.0
+      components:
+        - name: dell-csi-replicator
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
+        - name: dell-replication-controller-manager
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+          envs:
+            - name: "TARGET_CLUSTERS_IDS"
+              value: "self"
+        - name: dell-replication-controller-init
+          image: dellemc/dell-replication-init:v1.0.0

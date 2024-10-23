@@ -1,0 +1,25 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powermax
+  namespace: powermax
+spec:
+  driver:
+    csiDriverType: "powermax"
+    configVersion: v2.12.0
+    common:
+      image: "quay.io/dell/container-storage-modules/csi-powermax:nightly"
+    forceRemoveDriver: true
+    replicas: 1
+  modules:
+    - name: authorization
+      enabled: true
+      configVersion: v2.0.0
+      components:
+        - name: karavi-authorization-proxy
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          envs:
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"

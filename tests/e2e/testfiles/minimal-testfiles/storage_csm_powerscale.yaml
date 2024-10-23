@@ -1,0 +1,65 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: isilon
+  namespace: isilon
+spec:
+  driver:
+    csiDriverType: "isilon"
+    configVersion: v2.12.0
+    forceRemoveDriver: true
+    common:
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
+  modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      # For Auth 2.0, use v2.0.0 as configVersion
+      configVersion: v1.12.0
+      components:
+        - name: karavi-authorization-proxy
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+      components:
+        - name: podmon-controller
+          image: quay.io/dell/container-storage-modules/podmon:nightly
+        - name: podmon-node
+          image: quay.io/dell/container-storage-modules/podmon:nightly
+    - name: replication
+      enabled: false
+      components:
+        - name: dell-csi-replicator
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
+        - name: dell-replication-controller-manager
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+        - name: dell-replication-controller-init
+          image: dellemc/dell-replication-init:v1.0.0
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
+      components:
+        - name: topology
+          enabled: true
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
+        - name: otel-collector
+          enabled: true
+          image: otel/opentelemetry-collector:0.42.0
+        - name: cert-manager
+          enabled: false
+        - name: metrics-powerscale
+          enabled: true
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly

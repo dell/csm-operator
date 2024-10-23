@@ -143,6 +143,10 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 	// Add pflex driver version
 	res.Spec.Driver.ConfigVersion = shared.PFlexConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+	if customCSMName == "no-sdc" {
+		res.Spec.Driver.Node.Envs = append(res.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSI_SDC_ENABLED", Value: "false"})
+		res.Spec.Driver.Common.Envs = append(res.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "INTERFACE_NAMES", Value: "worker1: \"interface1\",worker2: \"interface2\""})
+	}
 
 	return res
 }
@@ -404,56 +408,5 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
 	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
 
-	return res
-}
-
-func accForApexConnecityClient(client csmv1.ClientType, version string) csmv1.ApexConnectivityClient {
-	res := shared.MakeAcc("acc", "client-test", shared.AccConfigVersion)
-
-	// Add ForceRemoveClient
-	res.Spec.Client.ForceRemoveClient = true
-
-	// Add image name
-	res.Spec.Client.Common.Image = "thisIsAnImage"
-
-	// add connection target
-	res.Spec.Client.ConnectionTarget = "thisIsConnectionTarget"
-
-	// add private cacert
-	res.Spec.Client.UsePrivateCaCerts = true
-
-	// add common name
-	res.Spec.Client.Common.Name = "connectivity-client-docker-k8s"
-
-	// Add client version
-	res.Spec.Client.ConfigVersion = version
-
-	// Add client type
-	res.Spec.Client.CSMClientType = client
-
-	res.Spec.Client.InitContainers = []csmv1.ContainerTemplate{{
-		Name:            "connectivity-client-init",
-		Image:           "image",
-		ImagePullPolicy: "IfNotPresent",
-		Args:            []string{},
-		Envs:            []corev1.EnvVar{{Name: "DCM_IDENTITY_LOCATION"}},
-		Tolerations:     []corev1.Toleration{},
-	}}
-
-	// Add  Sidecar
-	res.Spec.Client.SideCars = []csmv1.ContainerTemplate{
-		{
-			Name:            "cert-persister",
-			Image:           "image",
-			ImagePullPolicy: "Always",
-			Args:            []string{},
-		},
-		{
-			Name:            "kubernetes-proxy",
-			Image:           "image",
-			ImagePullPolicy: "Always",
-			Args:            []string{},
-		},
-	}
 	return res
 }

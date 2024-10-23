@@ -14,14 +14,26 @@
 #
 #
 name: podmon
-image: dellemc/podmon:v1.10.0
+image: quay.io/dell/container-storage-modules/podmon:v1.11.0
 imagePullPolicy: IfNotPresent
 securityContext:
   privileged: true
   capabilities:
     add: ["SYS_ADMIN"]
   allowPrivilegeEscalation: true
+args:
+  - "--labelvalue=csi-vxflexos"
+  - "--leaderelection=false"
+  - "--driverPodLabelValue=dell-storage"
+  - "--ignoreVolumelessPods=false"
+  - "--arrayConnectivityPollRate=5"
+  # Below 3 args should not be modified.
+  - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
+  - "--mode=node"
+  - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
 env:
+  - name: "X_CSI_PODMON_API_PORT"
+    value: "8083"
   - name: KUBE_NODE_NAME
     valueFrom:
       fieldRef:
