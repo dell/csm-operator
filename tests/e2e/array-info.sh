@@ -15,7 +15,7 @@
 # USER MODIFICATION REQUIRED: must supply address of Authorization Proxy Server
 # Since this e2e exposes the Proxy Server via NodePort, you can use a cluster node IP
 export PROXY_HOST="csm-authorization.com"
-export DELLCTL="/usr/local/bin/dellctl"
+#export DELLCTL="/usr/local/bin/dellctl"
 
 # The following are for creating PFlex secret/storage class
 # do not include "https://" in the endpoint
