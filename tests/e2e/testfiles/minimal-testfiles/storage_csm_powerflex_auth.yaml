@@ -18,9 +18,6 @@ spec:
       configVersion: v2.0.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             - name: "PROXY_HOST"
               value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-            - name: "SKIP_CERTIFICATE_VALIDATION"
-              value: "true"
