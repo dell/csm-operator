@@ -1,4 +1,4 @@
 parameter name, grep option for paramater value, parameter value,resource to describe,number of occurences of parameter name
-Image,,dellemc/csi-vxflexos,csm,1
+Image,,quay.io/dell/container-storage-modules/csi-vxflexos,csm,1
 Image Pull Policy,,Never,csm,2
 Image,,dellemc/sdc:4.5.2.1,node,1
