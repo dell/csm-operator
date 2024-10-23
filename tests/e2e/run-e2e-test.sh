@@ -92,12 +92,12 @@ function checkForDellctl() {
       exit 1
     }
     cp $DELLCTL /usr/local/bin/
-  fi
 
-  dellctl --help >&/dev/null || {
-    echo "error: dellctl required but not available - exiting"
-    exit 1
-  }
+    dellctl --help >&/dev/null || {
+      echo "error: dellctl required but not available - exiting"
+      exit 1
+    }
+  fi
 }
 
 function checkForGinkgo() {

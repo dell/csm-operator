@@ -100,5 +100,5 @@ export BACKEND_STORAGE_URL="10.0.0.4:32000"
 export BUCKET_NAME="my-bucket"
 export ALT_BUCKET_NAME="alt-bucket"
 # Be sure to escape / with \
-export AM_CONTROLLER_IMAGE="dellemc/csm-application-mobility-controller:nightly"
-export AM_PLUGIN_IMAGE="dellemc/csm-application-mobility-velero-plugin:nightly"
+export AM_CONTROLLER_IMAGE="dellemc\/csm-application-mobility-controller:nightly"
+export AM_PLUGIN_IMAGE="dellemc\/csm-application-mobility-velero-plugin:nightly"
