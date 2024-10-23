@@ -11,4 +11,3 @@ spec:
   modules:
     - name: replication
       enabled: true
-      configVersion: v1.10.0

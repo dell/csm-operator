@@ -7,15 +7,6 @@ spec:
   driver:
     csiDriverType: "powerstore"
     configVersion: v2.12.0
-    replicas: 1
-    common:
-      image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
   modules:
     - name: resiliency
       enabled: false
-      # Adding components since "nightly" image is to be used for e2e
-      components:
-        - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
-        - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly

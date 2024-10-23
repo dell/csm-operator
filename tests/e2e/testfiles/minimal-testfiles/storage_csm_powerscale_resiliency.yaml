@@ -8,8 +8,6 @@ spec:
     csiDriverType: "isilon"
     configVersion: v2.12.0
     forceRemoveDriver: true
-    common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -18,14 +16,5 @@ spec:
       # For Auth 2.0, use v2.0.0 as configVersion
       configVersion: v1.11.0
     - name: resiliency
-      # enabled: Enable/Disable Resiliency feature
-      # Allowed values:
-      #   true: enable Resiliency feature(deploy podmon sidecar)
-      #   false: disable Resiliency feature(do not deploy podmon sidecar)
-      # Default value: false
       enabled: true
-      components:
-        - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
-        - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+
