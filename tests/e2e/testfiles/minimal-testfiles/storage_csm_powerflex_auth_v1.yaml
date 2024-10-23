@@ -22,4 +22,3 @@ spec:
           envs:
             - name: "PROXY_HOST"
               value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-
