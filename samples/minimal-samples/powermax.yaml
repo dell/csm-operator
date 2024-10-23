@@ -17,14 +17,10 @@ spec:
       configVersion: v1.12.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
               value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-            - name: "SKIP_CERTIFICATE_VALIDATION"
-              value: "true"
     - name: resiliency
       enabled: false
     - name: replication
