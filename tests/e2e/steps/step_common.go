@@ -13,6 +13,7 @@
 package steps
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -524,4 +525,16 @@ func getPortContainerizedAuth(namespace string) (string, error) {
 	}
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil
+}
+
+func execShell(command string, args ...string) error {
+	fmt.Printf("cmd: %s %s\n", command, strings.Join(args, " "))
+	cmd := exec.Command(command, args...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("cmd err: %s\nstderr: %s", err.Error(), stderr.String())
+	}
+	return nil
 }

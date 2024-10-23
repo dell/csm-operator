@@ -735,8 +735,7 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 
 	// if secret exists- delete it
 	if secretExists(namespace, name) {
-		cmd := exec.Command("kubectl", "delete", "secret", "-n", namespace, name)
-		err := cmd.Run()
+		err := execShell("kubectl", "delete", "secret", "-n", namespace, name)
 		if err != nil {
 			return fmt.Errorf("failed to delete secret: %s", err.Error())
 		}
@@ -744,10 +743,9 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 
 	// create new secret
 	fileArg := "--from-file=config=" + templateFile
-	cmd := exec.Command("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
-	err = cmd.Run()
+	err = execShell("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
-		return fmt.Errorf("failed to create secret with template file: %s:  %s", templateFile, err.Error())
+		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
 	}
 
 	return nil
@@ -840,7 +838,7 @@ func configMapExists(namespace, name string) bool {
 }
 
 func replaceInFile(old, new, templateFile string) error {
-	cmdString := "s/" + old + "/" + new + "/g"
+	cmdString := "s|" + old + "|" + new + "|g"
 	cmd := exec.Command("sed", "-i", cmdString, templateFile)
 	err := cmd.Run()
 	if err != nil {
@@ -1017,7 +1015,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 		return err
 	}
 	if len(pods) == 0 {
-		return fmt.Errorf("no pod was found")
+		return fmt.Errorf("operator is not installed in namespace [%s]", operatorNamespace)
 	}
 
 	notReadyMessage := ""
@@ -1030,7 +1028,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 	}
 
 	if !allReady {
-		return fmt.Errorf("%s", notReadyMessage)
+		return fmt.Errorf("Bad Operator state:%s", notReadyMessage)
 	}
 
 	return nil
