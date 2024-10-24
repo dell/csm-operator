@@ -10,7 +10,7 @@ metadata:
   namespace: ns1
 spec:
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   volumeMode: Filesystem
   resources:
     requests:
@@ -20,12 +20,12 @@ spec:
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
-    name: pflextest
+  name: pflextest
     namespace: ns1
 spec:
-    serviceName: default
+  serviceName: default
     selector:
-        matchLabels:
+      matchLabels:
           app: pflextest
     template:
       metadata:
