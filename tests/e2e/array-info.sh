@@ -93,8 +93,8 @@ export UNITY_NAS="mynas"
 export UNITY_POOL="mypool"
 
 # The following are for testing AM
-export VOL_NS=wordpress
-export RES_NS=res-wordpress
+export VOL_NS=ns1
+export RES_NS=res-ns1
 export AM_NS=test-vxflexos
 export BACKEND_STORAGE_URL="http://10.247.66.66:32000"
 export BUCKET_NAME="my-bucket"
