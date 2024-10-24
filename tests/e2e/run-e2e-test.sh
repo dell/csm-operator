@@ -84,14 +84,16 @@ function checkForKaravictl() {
     exit 1
   }
 }
-
 function checkForDellctl() {
-  if [ -v DELLCTL ]; then
-    stat $DELLCTL >&/dev/null || {
-      echo "error: $DELLCTL is not a valid path for dellctl - exiting"
-      exit 1
-    }
-    cp $DELLCTL /usr/local/bin/
+  if [ -n "$DELLCTL" ]; then
+    # Check if the file exists and is not the same as the destination
+    if [ "$DELLCTL" != "/usr/local/bin/dellctl" ]; then
+      stat "$DELLCTL" >&/dev/null || {
+        echo "error: $DELLCTL is not a valid path for dellctl - exiting"
+        exit 1
+      }
+      cp "$DELLCTL" /usr/local/bin/
+    fi
   fi
 
   dellctl --help >&/dev/null || {
