@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -527,7 +528,7 @@ func getPortContainerizedAuth(namespace string) (string, error) {
 	return port, nil
 }
 
-func execShell(command string, args ...string) error {
+func execCommand(command string, args ...string) error {
 	fmt.Printf("cmd: %s %s\n", command, strings.Join(args, " "))
 	cmd := exec.Command(command, args...)
 	var stderr bytes.Buffer
@@ -535,6 +536,18 @@ func execShell(command string, args ...string) error {
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("cmd err: %s\nstderr: %s", err.Error(), stderr.String())
+	}
+	return nil
+}
+
+func execShell(commands string) error {
+	fmt.Println("shell: " + commands)
+	cmd := exec.Command("sh", "-c", commands)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("shell err: %s", err.Error())
 	}
 	return nil
 }

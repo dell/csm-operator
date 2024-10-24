@@ -735,7 +735,7 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 
 	// if secret exists- delete it
 	if secretExists(namespace, name) {
-		err := execShell("kubectl", "delete", "secret", "-n", namespace, name)
+		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
 		if err != nil {
 			return fmt.Errorf("failed to delete secret: %s", err.Error())
 		}
@@ -743,7 +743,7 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 
 	// create new secret
 	fileArg := "--from-file=config=" + templateFile
-	err = execShell("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
 		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
 	}
@@ -1733,6 +1733,42 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	// Calling it here, since configureAMInstall is used to setup each AM test
+	err = setupAMImagePullSecret()
+	if err != nil {
+		return fmt.Errorf("failed to setup RH registry authentication for App Mobility: %v", err)
+	}
+
+	return nil
+}
+
+// For authentication to registry.redhat.io, create an image pull secret and
+// associate it with the service account vxflexos-app-mobility-controller,
+// that is used by the AM controller manager.
+// Normally, this service account is created by Operator, but we create it here
+// in advance to set imagePullSecrets.
+func setupAMImagePullSecret() error {
+
+	if os.Getenv("RH_REGISTRY_USERNAME") == "" || os.Getenv("RH_REGISTRY_PASSWORD") == "" {
+		return fmt.Errorf("env variable RH_REGISTRY_USERNAME or RH_REGISTRY_PASSWORD is not set," +
+			" set it in array-info.sh before continuing")
+	}
+
+	// Create or update the image pull secret
+	err := execShell(`kubectl -n test-vxflexos create secret docker-registry rhregcred \
+--docker-server="https://registry.redhat.io" --docker-username="$RH_REGISTRY_USERNAME" \
+--docker-password="$RH_REGISTRY_PASSWORD" --dry-run=client -o yaml --save-config | kubectl apply -f -`)
+	if err != nil {
+		return fmt.Errorf("failed to create rh image pull secret: %v", err)
+	}
+
+	// Create or update the service account and associate it with the image pull secret
+	err = execShell(`kubectl create --dry-run=client -o yaml --save-config \
+-f testfiles/application-mobility-templates/controller-manager-sa.yaml | kubectl apply -f -`)
+	if err != nil {
+		return fmt.Errorf("failed to create am controller manager service account: %v", err)
 	}
 
 	return nil
