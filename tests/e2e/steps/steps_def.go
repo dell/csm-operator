@@ -217,28 +217,28 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		if err2 != nil {
 			return fmt.Errorf("installation of velero %v failed", err2)
 		}
-	} else if thirdPartyModule == "wordpress" {
+	} else if thirdPartyModule == "sample-app" {
 
-		cmd := exec.Command("kubectl", "get", "ns", "wordpress")
+		cmd := exec.Command("kubectl", "get", "ns", "ns1")
 		err := cmd.Run()
 		if err != nil {
-			cmd = exec.Command("kubectl", "create", "ns", "wordpress")
+			cmd = exec.Command("kubectl", "create", "ns", "ns1")
 			err = cmd.Run()
 			if err != nil {
 				return err
 			}
 		}
 
-		// create wordpress APP for AM testing, requires pflex driver installed and op-e2e-vxflexos SC created
-		cmd2 := exec.Command("kubectl", "apply", "-n", "wordpress", "-k", "testfiles/sample-application")
+		// create a stateful set with one pod and one volume for AM testing, requires pflex driver installed and op-e2e-vxflexos SC created
+		cmd2 := exec.Command("kubectl", "apply", "-n", "ns1", "-f", "testfiles/sample-application/test-sts.yaml")
 		err = cmd2.Run()
 		if err != nil {
 			return err
 		}
 
 		// give wp time to setup before we create backup/restores
-		fmt.Println("Sleeping 120 seconds to allow WP time to create")
-		time.Sleep(120 * time.Second)
+		fmt.Println("Sleeping 20 seconds to allow stateful set time to create")
+		time.Sleep(20 * time.Second)
 
 	}
 
@@ -268,11 +268,11 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 		if err != nil {
 			return fmt.Errorf("uninstallation of velero %v failed", err)
 		}
-	} else if thirdPartyModule == "wordpress" {
-		cmd := exec.Command("kubectl", "delete", "-n", "wordpress", "-k", "testfiles/sample-application")
+	} else if thirdPartyModule == "sample-app" {
+		cmd := exec.Command("kubectl", "delete", "-n", "ns1", "-f", "testfiles/sample-application/test-sts.yaml")
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("uninstallation of wordpress %v failed", err)
+			return fmt.Errorf("uninstallation of stateful set failed:  %v", err)
 		}
 
 	}

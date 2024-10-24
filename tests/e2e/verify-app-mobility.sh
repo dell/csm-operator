@@ -24,7 +24,7 @@ RESTORE_NAME=r$BACKUP_NAME_EXT
 RET=$?
 if [ "${RET}" == "127" ]; then
   echo "dellctl is not installed, attempting install"
-  wget https://github.com/dell/csm/releases/download/v1.7.1/dellctl  
+  wget https://github.com/dell/csm/releases/download/v1.11.1/dellctl  
   chmod +x dellctl 
 fi
 
