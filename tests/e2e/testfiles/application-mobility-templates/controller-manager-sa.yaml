@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: vxflexos-app-mobility-controller
+  name: test-vxflexos-controller-manager
   namespace: test-vxflexos
 imagePullSecrets:
   - name: rhregcred
