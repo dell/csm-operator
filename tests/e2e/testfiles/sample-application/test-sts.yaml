@@ -21,12 +21,12 @@ kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: pflextest
-    namespace: ns1
+  namespace: ns1
 spec:
   serviceName: default
-    selector:
-      matchLabels:
-          app: pflextest
+  selector:
+    matchLabels:
+      app: pflextest
     template:
       metadata:
         labels:
