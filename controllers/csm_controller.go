@@ -811,6 +811,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 				node.Rbac.ClusterRole = *clusterRoleForNode
 			case csmv1.Replication:
+				// This function adds replication sidecar to driver pods.
 				log.Info("Injecting CSM Replication")
 				dp, err := modules.ReplicationInjectDeployment(controller.Deployment, cr, operatorConfig)
 				if err != nil {
@@ -887,8 +888,16 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 		if replicationEnabled {
+			// This will also create the dell-replication-controller namespace.
 			if err = modules.ReplicationManagerController(ctx, false, operatorConfig, cr, cluster.ClusterCTRLClient); err != nil {
 				return fmt.Errorf("failed to deploy replication controller: %v", err)
+			}
+
+			// Create ConfigMap if it does not already exist.
+			// ConfigMap requires namespace to be created.
+			_, err = modules.CreateReplicationConfigmap(ctx, cr, operatorConfig, ctrlClient)
+			if err != nil {
+				return fmt.Errorf("injecting replication into replication configmap: %v", err)
 			}
 		}
 
@@ -1254,6 +1263,10 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		if replicationEnabled {
 			log.Infow("Deleting Replication controller")
 			if err = modules.ReplicationManagerController(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
+				return err
+			}
+			log.Infow("Deleting Replication configmap")
+			if err = modules.DeleteReplicationConfigmap(cluster.ClusterCTRLClient); err != nil {
 				return err
 			}
 		}

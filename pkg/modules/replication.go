@@ -17,6 +17,11 @@ import (
 	"fmt"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	t1 "k8s.io/apimachinery/pkg/types"
+
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
 	"github.com/dell/csm-operator/pkg/drivers"
@@ -424,6 +429,53 @@ func ReplicationManagerController(ctx context.Context, isDeleting bool, op utils
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func CreateReplicationConfigmap(ctx context.Context, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, ctrlClient client.Client) ([]crclient.Object, error) {
+	replica, err := getReplicaModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := readConfigFile(replica, cr, op, "dell-replication-controller-config.yaml")
+	if err != nil {
+		return nil, err
+	}
+
+	var cm corev1.ConfigMap
+	if err := yaml.Unmarshal(buf, &cm); err != nil {
+		return nil, err
+	}
+
+	// Check if the ConfigMap already exists
+	foundConfigMap := &corev1.ConfigMap{}
+
+	err = ctrlClient.Get(ctx, t1.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}, foundConfigMap)
+	if err != nil && k8serrors.IsNotFound(err) {
+		// ConfigMap doesn't exist, create it
+		if err := ctrlClient.Create(ctx, &cm); err != nil {
+			return nil, err
+		}
+	}
+	return []crclient.Object{&cm}, nil
+}
+
+func DeleteReplicationConfigmap(ctrlClient client.Client) error {
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "dell-replication-controller-config",
+			Namespace: "dell-replication-controller",
+		},
+	}
+
+	if err := ctrlClient.Delete(context.Background(), configMap); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil
+		}
+		return err
 	}
 
 	return nil
