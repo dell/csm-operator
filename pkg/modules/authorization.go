@@ -299,25 +299,24 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 		return nil, nil, err
 	}
 
-	// If there are no components, create one
-	if len(authModule.Components) == 0 {
-		authModule.Components = []csmv1.ContainerTemplate{
-			{
-				Name: "karavi-authorization-proxy",
-				Envs: []corev1.EnvVar{
-					{
-						Name:  "PROXY_HOST",
-						Value: "csm-authorization.com",
-					},
-					{
-						Name:  "SKIP_CERTIFICATE_VALIDATION",
-						Value: "true",
-					},
-				},
-			},
+	for i, component := range authModule.Components {
+		if component.Name == "karavi-authorization-proxy" {
+			skipcertFound := false
+			for _, env := range authModule.Components[i].Envs {
+				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
+					skipcertFound = true
+					break
+				}
+			}
+			// If SKIP_CERTIFICATE_VALIDATION is not found, add it
+			if !skipcertFound {
+				authModule.Components[i].Envs = append(authModule.Components[i].Envs, corev1.EnvVar{
+					Name:  "SKIP_CERTIFICATE_VALIDATION",
+					Value: "true",
+				})
+			}
 		}
 	}
-
 	container.Env = utils.ReplaceAllApplyCustomEnvs(container.Env, authModule.Components[0].Envs, authModule.Components[0].Envs)
 
 	skipCertValid := false
@@ -466,21 +465,22 @@ func AuthorizationPrecheck(ctx context.Context, op utils.OperatorConfig, auth cs
 	// Check for secrets
 	skipCertValid := false
 	// check if components are present or not
-	if len(auth.Components) == 0 {
-		auth.Components = []csmv1.ContainerTemplate{
-			{
-				Name: "karavi-authorization-proxy",
-				Envs: []corev1.EnvVar{
-					{
-						Name:  "PROXY_HOST",
-						Value: "csm-authorization.com",
-					},
-					{
-						Name:  "SKIP_CERTIFICATE_VALIDATION",
-						Value: "true",
-					},
-				},
-			},
+	for i, component := range auth.Components {
+		if component.Name == "karavi-authorization-proxy" {
+			skipcertFound := false
+			for _, env := range auth.Components[i].Envs {
+				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
+					skipcertFound = true
+					break
+				}
+			}
+			// If SKIP_CERTIFICATE_VALIDATION is not found, add it
+			if !skipcertFound {
+				auth.Components[i].Envs = append(auth.Components[i].Envs, corev1.EnvVar{
+					Name:  "SKIP_CERTIFICATE_VALIDATION",
+					Value: "true",
+				})
+			}
 		}
 	}
 

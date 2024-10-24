@@ -192,12 +192,8 @@ func TestLoadDefaultComponents(t *testing.T) {
 				cr:  createCR(csmv1.PowerScale, csmv1.Observability, false, nil),
 				op:  validOp,
 			},
-			want: createCR(csmv1.PowerScale, csmv1.Observability, false, []csmv1.ContainerTemplate{
-				{Name: "topology", Enabled: enabled},
-				{Name: "otel-collector", Enabled: enabled},
-				{Name: "cert-manager", Enabled: disabled},
-				{Name: "metrics-powerscale", Enabled: enabled},
-			}),
+			// if module is disabled, no components should be added
+			want:    createCR(csmv1.PowerScale, csmv1.Observability, false, nil),
 			wantErr: false,
 		},
 		{
@@ -210,11 +206,10 @@ func TestLoadDefaultComponents(t *testing.T) {
 				}),
 				op: validOp,
 			},
+			// if module is disabled, no components should be added
 			want: createCR(csmv1.PowerFlex, csmv1.Observability, false, []csmv1.ContainerTemplate{
 				{Name: "otel-collector", Enabled: enabled},
 				{Name: "metrics-powerflex", Enabled: enabled},
-				{Name: "topology", Enabled: enabled},
-				{Name: "cert-manager", Enabled: disabled},
 			}),
 			wantErr: false,
 		},

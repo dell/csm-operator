@@ -238,7 +238,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: csi-metadata-retriever
-          image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.8.0
+          image: quay.io/dell/container-storage-modules/csi-metadata-retriever:nightly
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"

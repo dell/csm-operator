@@ -1105,7 +1105,6 @@ func HasModuleComponent(instance csmv1.ContainerStorageModule, mod csmv1.ModuleT
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -1300,26 +1299,6 @@ func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, e
 	return namespaces, nil
 }
 
-// 2nd parameter is an ApexCC cr
-// CreateBrownfieldRbac creates the role and rolebindings
-/*
-func CreateBrownfieldRbac(ctx context.Context, operatorConfig OperatorConfig, cr csmv1.ApexConnectivityClient, ctrlClient crclient.Client, isDeleting bool) error {
-	logInstance := logger.GetLogger(ctx)
-	csmList := &csmv1.ContainerStorageModuleList{}
-	err := ctrlClient.List(ctx, csmList)
-	if err == nil && len(csmList.Items) > 0 {
-		logInstance.Info("Found existing csm installations. Proceeding to create role/rolebindings")
-		clientNameSpace := cr.Namespace
-		brownfieldManifestFilePath := fmt.Sprintf("%s/clientconfig/%s/%s/%s", operatorConfig.ConfigDirectory, csmv1.DreadnoughtClient, cr.Spec.Client.ConfigVersion, BrownfieldManifest)
-		if err = BrownfieldOnboard(ctx, brownfieldManifestFilePath, clientNameSpace, ctrlClient, isDeleting); err != nil {
-			logInstance.Error(err, "error creating role/rolebindings")
-			return err
-		}
-	}
-	return nil
-}
-*/
-
 // LoadDefaultComponents loads the default module components into cr
 func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) error {
 	log := logger.GetLogger(ctx)
@@ -1334,11 +1313,14 @@ func LoadDefaultComponents(ctx context.Context, cr *csmv1.ContainerStorageModule
 			log.Errorf("failed to get default components for %s: %v", module, err)
 			return fmt.Errorf("failed to get default components for %s: %v", module, err)
 		}
-
-		for _, comp := range defaultComps {
-			if !HasModuleComponent(*cr, csmv1.Observability, comp.Name) {
-				log.Infof("Adding default component %s for %s ", comp.Name, module)
-				AddModuleComponent(cr, csmv1.Observability, comp)
+		// only load default components if module is enabled
+		moduleEnabled, _ := IsModuleEnabled(ctx, *cr, module)
+		if moduleEnabled {
+			for _, comp := range defaultComps {
+				if !HasModuleComponent(*cr, module, comp.Name) {
+					log.Infof("Adding default component %s for %s ", comp.Name, module)
+					AddModuleComponent(cr, csmv1.Observability, comp)
+				}
 			}
 		}
 	}
