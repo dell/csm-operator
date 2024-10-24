@@ -8,6 +8,8 @@ spec:
     csiDriverType: "powermax"
     configVersion: v2.12.0
     forceRemoveDriver: true
+    common:
+      image: "quay.io/dell/container-storage-modules/csi-powermax:nightly"
   modules:
     - name: replication
       enabled: true
