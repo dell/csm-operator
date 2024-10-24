@@ -271,7 +271,7 @@ spec:
               value: /app/certs
             - name: X_CSI_REPLICATION_CONFIG_FILE_NAME
               value: config
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly # TODO: Change this image to latest released version once it is released
           imagePullPolicy: Always
           name: manager
           resources:
