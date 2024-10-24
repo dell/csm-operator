@@ -13,4 +13,9 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.11.0
+      configVersion: v1.12.0
+      components:
+        - name: karavi-authorization-proxy
+          envs:
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
