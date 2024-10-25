@@ -28,4 +28,4 @@ spec:
           #  - name: "TARGET_CLUSTERS_IDS"
           #    value: "self"
         - name: dell-replication-controller-init
-          image: quay.io/dell/container-storage-modules/dell-replication-init:v1.0.0
+          image: dellemc/dell-replication-init:v1.0.0

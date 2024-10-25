@@ -10,5 +10,5 @@ bases:
   - ../manager
 images:
   - name: controller
-    newName: docker.io/dellemc/dell-csm-operator
+    newName: quay.io/dell/container-storage-modules/dell-csm-operator
     newTag: v1.7.0
