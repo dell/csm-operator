@@ -9,14 +9,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 # Must specify and manually create driver namespace
-
 # USER MODIFICATION REQUIRED: must supply address of Authorization Proxy Server
 # Since this e2e exposes the Proxy Server via NodePort, you can use a cluster node IP
 export PROXY_HOST="csm-authorization.com"
 export DELLCTL="/usr/local/bin/dellctl"
-
 # The following are for creating PFlex secret/storage class
 # do not include "https://" in the endpoint
 export PFLEX_USER="username"
@@ -34,7 +31,6 @@ export PFLEX_QUOTA="10GB"
 export PFLEX_ROLE="csmrole-powerflex"
 export PFLEX_TENANT="csmtenant-powerflex"
 export PFLEX_TENANT_PREFIX="tn1"
-
 # The following are for creating PScale secret/storage class
 # do not include "https://" in the endpoint
 export PSCALE_CLUSTER="Isilon-System-Name"
@@ -53,7 +49,6 @@ export PSCALE_QUOTA="0GB"
 export PSCALE_ROLE="csmrole-powerscale"
 export PSCALE_TENANT="csmtenant-powerscale"
 export PSCALE_TENANT_PREFIX="tn1"
-
 # The following are for creating Powermax secret/storage class
 export PMAX_SYSTEMID="Pmax-System-Id"
 export PMAX_ENDPOINT="10.0.0.1:8443"
@@ -75,15 +70,12 @@ export PMAX_TENANT_PREFIX="tn1"
 export PMAX_PORTGROUPS=""
 export PMAX_PROTOCOL=""
 export PMAX_ARRAYS="000000000000,000000000001"
-
-
 # The following is PowerStore specific:
 export PSTORE_USER="username"
 export PSTORE_PASS="password"
 export PSTORE_GLOBALID="myglobalpstoreid"
 # ip only, do not include /api/rest at end
 export PSTORE_ENDPOINT="1.1.1.1"
-
 # The following is Unity specific:
 export UNITY_USER="username"
 export UNITY_PASS="password"
@@ -91,7 +83,6 @@ export UNITY_ARRAYID="myglobalunityid"
 export UNITY_ENDPOINT="1.1.1.1"
 export UNITY_NAS="mynas"
 export UNITY_POOL="mypool"
-
 # The following are for testing AM
 export VOL_NS=wordpress
 export RES_NS=res-wordpress
