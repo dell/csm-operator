@@ -213,12 +213,12 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-unity:v2.12.0
+          image: quay.io/dell/container-storage-modules/csi-unity:nightly # TODO: This should be changed to v2.12.0 once the image is released
           args:
             - "--driver-name=csi-unity.dellemc.com"
             - "--driver-config=/unity-config/driver-config-params.yaml"
             - "--driver-secret=/unity-secret/config"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
