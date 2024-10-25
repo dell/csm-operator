@@ -55,7 +55,7 @@ spec:
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
       - name: csi-metadata-retriever
-        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.8.0
+        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
         # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
