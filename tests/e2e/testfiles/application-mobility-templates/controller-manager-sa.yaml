@@ -1,0 +1,9 @@
+# Normally, this service account is created by Operator,
+# but we create it here in advance to set imagePullSecrets.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-vxflexos-controller-manager
+  namespace: test-vxflexos
+imagePullSecrets:
+  - name: rhregcred
