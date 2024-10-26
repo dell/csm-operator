@@ -15,6 +15,7 @@ package steps
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -524,4 +525,26 @@ func getPortContainerizedAuth(namespace string) (string, error) {
 	}
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil
+}
+
+func execCommand(command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+	if isDebugEnabled() {
+		fmt.Printf("cmd: %s %s\n", command, strings.Join(args, " "))
+		cmd.Stdout = os.Stdout
+	}
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("cmd err: %v", err)
+	}
+	return nil
+}
+
+func execShell(commands string) error {
+	return execCommand("sh", "-c", commands)
+}
+
+func isDebugEnabled() bool {
+	return os.Getenv("E2E_VERBOSE") == "true"
 }

@@ -54,7 +54,7 @@ var (
 	authString               = "karavi-authorization-proxy"
 	operatorNamespace        = "dell-csm-operator"
 	quotaLimit               = "100000000"
-	pflexSecretMap           = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL"}
+	pflexSecretMap           = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS"}
 	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -217,28 +217,28 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		if err2 != nil {
 			return fmt.Errorf("installation of velero %v failed", err2)
 		}
-	} else if thirdPartyModule == "wordpress" {
+	} else if thirdPartyModule == "sample-app" {
 
-		cmd := exec.Command("kubectl", "get", "ns", "wordpress")
+		cmd := exec.Command("kubectl", "get", "ns", "ns1")
 		err := cmd.Run()
 		if err != nil {
-			cmd = exec.Command("kubectl", "create", "ns", "wordpress")
+			cmd = exec.Command("kubectl", "create", "ns", "ns1")
 			err = cmd.Run()
 			if err != nil {
 				return err
 			}
 		}
 
-		// create wordpress APP for AM testing, requires pflex driver installed and op-e2e-vxflexos SC created
-		cmd2 := exec.Command("kubectl", "apply", "-n", "wordpress", "-k", "testfiles/sample-application")
+		// create a stateful set with one pod and one volume for AM testing, requires pflex driver installed and op-e2e-vxflexos SC created
+		cmd2 := exec.Command("kubectl", "apply", "-n", "ns1", "-f", "testfiles/sample-application/test-sts.yaml")
 		err = cmd2.Run()
 		if err != nil {
 			return err
 		}
 
 		// give wp time to setup before we create backup/restores
-		fmt.Println("Sleeping 120 seconds to allow WP time to create")
-		time.Sleep(120 * time.Second)
+		fmt.Println("Sleeping 20 seconds to allow stateful set time to create")
+		time.Sleep(20 * time.Second)
 
 	}
 
@@ -268,11 +268,11 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 		if err != nil {
 			return fmt.Errorf("uninstallation of velero %v failed", err)
 		}
-	} else if thirdPartyModule == "wordpress" {
-		cmd := exec.Command("kubectl", "delete", "-n", "wordpress", "-k", "testfiles/sample-application")
+	} else if thirdPartyModule == "sample-app" {
+		cmd := exec.Command("kubectl", "delete", "-n", "ns1", "-f", "testfiles/sample-application/test-sts.yaml")
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("uninstallation of wordpress %v failed", err)
+			return fmt.Errorf("uninstallation of stateful set failed:  %v", err)
 		}
 
 	}
@@ -735,8 +735,7 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 
 	// if secret exists- delete it
 	if secretExists(namespace, name) {
-		cmd := exec.Command("kubectl", "delete", "secret", "-n", namespace, name)
-		err := cmd.Run()
+		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
 		if err != nil {
 			return fmt.Errorf("failed to delete secret: %s", err.Error())
 		}
@@ -744,10 +743,9 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 
 	// create new secret
 	fileArg := "--from-file=config=" + templateFile
-	cmd := exec.Command("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
-	err = cmd.Run()
+	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
-		return fmt.Errorf("failed to create secret with template file: %s:  %s", templateFile, err.Error())
+		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
 	}
 
 	return nil
@@ -840,7 +838,7 @@ func configMapExists(namespace, name string) bool {
 }
 
 func replaceInFile(old, new, templateFile string) error {
-	cmdString := "s/" + old + "/" + new + "/g"
+	cmdString := "s|" + old + "|" + new + "|g"
 	cmd := exec.Command("sed", "-i", cmdString, templateFile)
 	err := cmd.Run()
 	if err != nil {
@@ -1017,7 +1015,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 		return err
 	}
 	if len(pods) == 0 {
-		return fmt.Errorf("no pod was found")
+		return fmt.Errorf("operator is not installed in namespace [%s]", operatorNamespace)
 	}
 
 	notReadyMessage := ""
@@ -1030,7 +1028,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 	}
 
 	if !allReady {
-		return fmt.Errorf("%s", notReadyMessage)
+		return fmt.Errorf("Bad Operator state:%s", notReadyMessage)
 	}
 
 	return nil
@@ -1735,6 +1733,42 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	// Calling it here, since configureAMInstall is used to setup each AM test
+	err = setupAMImagePullSecret()
+	if err != nil {
+		return fmt.Errorf("failed to setup RH registry authentication for App Mobility: %v", err)
+	}
+
+	return nil
+}
+
+// For authentication to registry.redhat.io, create an image pull secret and
+// associate it with the service account vxflexos-app-mobility-controller,
+// that is used by the AM controller manager.
+// Normally, this service account is created by Operator, but we create it here
+// in advance to set imagePullSecrets.
+func setupAMImagePullSecret() error {
+
+	if os.Getenv("RH_REGISTRY_USERNAME") == "" || os.Getenv("RH_REGISTRY_PASSWORD") == "" {
+		return fmt.Errorf("env variable RH_REGISTRY_USERNAME or RH_REGISTRY_PASSWORD is not set," +
+			" set it in array-info.sh before continuing")
+	}
+
+	// Create or update the image pull secret
+	err := execShell(`kubectl -n test-vxflexos create secret docker-registry rhregcred \
+--docker-server="https://registry.redhat.io" --docker-username="$RH_REGISTRY_USERNAME" \
+--docker-password="$RH_REGISTRY_PASSWORD" --dry-run=client -o yaml --save-config | kubectl apply -f -`)
+	if err != nil {
+		return fmt.Errorf("failed to create rh image pull secret: %v", err)
+	}
+
+	// Create or update the service account and associate it with the image pull secret
+	err = execShell(`kubectl create --dry-run=client -o yaml --save-config \
+-f testfiles/application-mobility-templates/controller-manager-sa.yaml | kubectl apply -f -`)
+	if err != nil {
+		return fmt.Errorf("failed to create am controller manager service account: %v", err)
 	}
 
 	return nil
