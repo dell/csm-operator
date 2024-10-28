@@ -18,7 +18,6 @@ RESTORE_NAME=r$BACKUP_NAME_EXT
 
 # no need to check for pod success since e2e already does that
 
-
 echo "*** make sure dellctl is installed"
 if [ ! -f ./dellctl ]; then
   echo "installing dellctl"
