@@ -1545,7 +1545,6 @@
     - "testfiles/application-mobility-templates/powerflex_noAM.yaml"
   tags:
     - "applicationmobility"
-    - "powerflex"
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"

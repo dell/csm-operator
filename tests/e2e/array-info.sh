@@ -13,7 +13,6 @@
 # USER MODIFICATION REQUIRED: must supply address of Authorization Proxy Server
 # Since this e2e exposes the Proxy Server via NodePort, you can use a cluster node IP
 export PROXY_HOST="csm-authorization.com"
-export DELLCTL="/usr/local/bin/dellctl"
 # The following are for creating PFlex secret/storage class
 # do not include "https://" in the endpoint
 export PFLEX_USER="username"
@@ -26,7 +25,7 @@ export PFLEX_AUTH_ENDPOINT="localhost:9401"
 # The following are Authorization Proxy Server specific for powerflex:
 export PFLEX_POOL="pool1"
 export PFLEX_STORAGE="powerflex"
-export PFLEX_VAULT_STORAGE_PATH="storage\/powerflex" # escape / with \
+export PFLEX_VAULT_STORAGE_PATH="storage/powerflex"
 export PFLEX_QUOTA="10GB"
 export PFLEX_ROLE="csmrole-powerflex"
 export PFLEX_TENANT="csmtenant-powerflex"
@@ -42,9 +41,9 @@ export PSCALE_AUTH_ENDPOINT="localhost"
 export PSCALE_AUTH_PORT="9400"
 # The following are Authorization Proxy Server specific for powerscale:
 export PSCALE_POOL_V1="ifs/data/csi"
-export PSCALE_POOL_V2="\/ifs\/data\/csi" # escape / with \
+export PSCALE_POOL_V2="/ifs/data/csi"
 export PSCALE_STORAGE="powerscale"
-export PSCALE_VAULT_STORAGE_PATH="storage\/powerscale" # escape / with \
+export PSCALE_VAULT_STORAGE_PATH="storage/powerscale"
 export PSCALE_QUOTA="0GB"
 export PSCALE_ROLE="csmrole-powerscale"
 export PSCALE_TENANT="csmtenant-powerscale"
@@ -62,7 +61,7 @@ export PMAX_SERVICE_LEVEL="Bronze"
 export PMAX_POOL_V1="SRP_1"
 export PMAX_POOL_V2="SRP_1"
 export PMAX_STORAGE="powermax"
-export PMAX_VAULT_STORAGE_PATH="storage\/powermax" # escape / with \
+export PMAX_VAULT_STORAGE_PATH="storage/powermax"
 export PMAX_QUOTA="0GB"
 export PMAX_ROLE="csmrole-powermax"
 export PMAX_TENANT="csmtenant-powermax"
@@ -93,3 +92,6 @@ export ALT_BUCKET_NAME="alt-bucket"
 # Be sure to escape / with \
 export AM_CONTROLLER_IMAGE="quay.io/dell/container-storage-modules/csm-application-mobility-controller:nightly"
 export AM_PLUGIN_IMAGE="quay.io/dell/container-storage-modules/csm-application-mobility-velero-plugin:nightly"
+# Credentials for pulling images from registry.redhat.io
+export RH_REGISTRY_USERNAME=""
+export RH_REGISTRY_PASSWORD=""

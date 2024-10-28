@@ -8,8 +8,6 @@ spec:
     csiDriverType: "isilon"
     configVersion: v2.12.0
     forceRemoveDriver: true
-    common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -26,12 +24,9 @@ spec:
       components:
         - name: topology
           enabled: true
-          image: quay.io/dell/container-storage-modules/csm-topology:nightly
         - name: otel-collector
           enabled: true
-          image: otel/opentelemetry-collector:0.42.0
         - name: cert-manager
           enabled: false
         - name: metrics-powerscale
           enabled: true
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly

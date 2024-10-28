@@ -79,8 +79,8 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: quay.io/dell/container-storage-modules/csi-isilon:v2.12.0
-          imagePullPolicy: IfNotPresent
+          image: quay.io/dell/container-storage-modules/csi-isilon:nightly # TODO: This should be changed to v2.12.0 once the image is released
+          imagePullPolicy: Always
           env:
             - name: CSI_ENDPOINT
               value: <KUBELET_CONFIG_DIR>/plugins/csi-isilon/csi_sock

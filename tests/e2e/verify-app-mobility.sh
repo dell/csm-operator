@@ -18,17 +18,20 @@ RESTORE_NAME=r$BACKUP_NAME_EXT
 
 # no need to check for pod success since e2e already does that
 
-
-# make sure dellctl is installed
-./dellctl 
-RET=$?
-if [ "${RET}" == "127" ]; then
-  echo "dellctl is not installed, attempting install"
-  wget https://github.com/dell/csm/releases/download/v1.11.1/dellctl  
-  chmod +x dellctl 
+echo "*** make sure dellctl is installed"
+if [ ! -f ./dellctl ]; then
+  echo "installing dellctl"
+  wget https://github.com/dell/csm/releases/download/v1.11.1/dellctl
+  if [ $? -ne 0 ]; then
+    echo "failed to install dellctl."
+    exit 1
+  fi
 fi
+chmod +x ./dellctl
+echo "*** dellctl running version:"
+./dellctl -v
 
-# make sure env variables are present
+echo "*** make sure env variables are present"
 ExitCode=0
 if [ "${VOL_NS}" == "" ]; then
    echo "env variable VOL_NS is not set"
@@ -49,11 +52,11 @@ if [ "${ExitCode}" == "1" ]; then
 fi
 
 
-# attempt backup, check if successful
+echo "*** attempt backup, check if successful"
 ./dellctl backup create $BACKUP_NAME --include-namespaces $VOL_NS -n $AM_NS
 
 
-# check return code from backup command
+echo "*** check return code from backup command"
 RET=$?
 if [ "${RET}" != "0" ]; then
   echo "backup failed with return code $RET"
@@ -61,7 +64,7 @@ if [ "${RET}" != "0" ]; then
 fi
 
 
-# give the backup resource 5 minutes to succeed
+echo "*** give the backup resource 5 minutes to succeed"
 BACKUP_WAIT_TIME=$((SECONDS+300))
 sleep 5
 while [ $SECONDS -lt $BACKUP_WAIT_TIME ]; do
@@ -70,7 +73,7 @@ while [ $SECONDS -lt $BACKUP_WAIT_TIME ]; do
     echo "backup successful"
     break
   fi
-  echo "waiting for backup to complete"
+  echo "waiting 60s for backup to complete"
   sleep 60
 done
 
@@ -84,7 +87,7 @@ fi
 
 kubectl delete ns $RES_NS
 
-# attempt restore, check if successful
+echo "*** attempt restore, check if successful"
 ./dellctl restore create $RESTORE_NAME --from-backup $BACKUP_NAME -n $AM_NS --namespace-mappings $VOL_NS:$RES_NS
 RET=$?
 if [ "${RET}" != "0" ]; then
@@ -93,7 +96,7 @@ if [ "${RET}" != "0" ]; then
 fi
 
 
-# give the backup resource 5 minutes to succeed
+echo "*** give the backup resource 5 minutes to succeed"
 RESTORE_WAIT_TIME=$((SECONDS+300))
 sleep 5
 while [ $SECONDS -lt $RESTORE_WAIT_TIME ]; do
@@ -114,14 +117,13 @@ if [ "${NUM_GOOD_RESTORE}" != "1" ]; then
   exit 1
 fi
 
-# success -- delete test restore and backup
+echo "*** success -- delete test restore and backup"
 
 ./dellctl backup delete $BACKUP_NAME -n $AM_NS --confirm
 
 ./dellctl restore delete $RESTORE_NAME -n $AM_NS --confirm
 
-# wait for resources to delete- needed because we will delete the AM deployment after
-
+echo "*** wait for resources to delete - needed because we will delete the AM deployment after"
 RESTORE_WAIT_TIME=$((SECONDS+300))
 while [ $SECONDS -lt $RESTORE_WAIT_TIME ]; do
   NUM_RESTORE=$(./dellctl restore get $RESTORE_NAME -n $AM_NS | grep "Completed" | wc -l)
