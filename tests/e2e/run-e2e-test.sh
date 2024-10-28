@@ -21,7 +21,7 @@ export GO111MODULE=on
 export ACK_GINKGO_RC=true
 export PROG="${0}"
 export GINKGO_OPTS="--timeout 5h"
-
+export E2E_VERBOSE=false
 
 # Start with all modules false, they can be enabled by command line arguments 
 export AUTHORIZATION=false
@@ -87,11 +87,14 @@ function checkForKaravictl() {
 
 function checkForDellctl() {
   if [ -v DELLCTL ]; then
-    stat $DELLCTL >&/dev/null || {
-      echo "error: $DELLCTL is not a valid path for dellctl - exiting"
-      exit 1
-    }
-    cp $DELLCTL /usr/local/bin/
+    # Check if the file exists and is not the same as the destination
+    if [ "$DELLCTL" != "/usr/local/bin/dellctl" ]; then
+      stat "$DELLCTL" >&/dev/null || {
+        echo "error: $DELLCTL is not a valid path for dellctl - exiting"
+        exit 1
+      }
+      cp "$DELLCTL" /usr/local/bin/
+    fi
   fi
 
   dellctl --help >&/dev/null || {
@@ -147,6 +150,7 @@ function usage() {
   echo "Options:"
   echo "  Optional"
   echo "  -h                                           print out helptext"
+  echo "  -v                                           enable verbose logging"
   echo "  --cert-csi=<path to cert-csi binary>         use to specify cert-csi binary, if not in PATH"
   echo "  --karavictl=<path to karavictl binary>       use to specify karavictl binary, if not in PATH"
   echo "  --dellctl=<path to dellctl binary>           use to specify dellctl binary, if not in PATH"
@@ -175,7 +179,7 @@ function usage() {
 ###############################################################################
 # Parse command-line options
 ###############################################################################
-while getopts ":h-:" optchar; do
+while getopts ":hv-:" optchar; do
   case "${optchar}" in
   -)
     case "${OPTARG}" in
@@ -261,6 +265,9 @@ while getopts ":h-:" optchar; do
     ;;
   h)
     usage
+    ;;
+  v)
+    E2E_VERBOSE=true
     ;;
   *)
     echo "Unknown option -${OPTARG}"

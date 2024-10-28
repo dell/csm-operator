@@ -7,8 +7,6 @@ spec:
   driver:
     csiDriverType: "powerflex"
     configVersion: v2.12.0
-    common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
     forceRemoveDriver: true
   modules:
     - name: observability
@@ -43,5 +41,3 @@ spec:
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
-          # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powerflex:nightly

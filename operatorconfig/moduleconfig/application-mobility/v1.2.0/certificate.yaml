@@ -1,0 +1,21 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: <NAMESPACE>-selfsigned-issuer
+  namespace: <NAMESPACE>
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: <NAMESPACE>-serving-cert
+  namespace: <NAMESPACE>
+spec:
+  dnsNames:
+    - <NAMESPACE>-webhook-service.<NAMESPACE>.svc
+    - <NAMESPACE>-webhook-service.<NAMESPACE>.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: <NAMESPACE>-selfsigned-issuer
+  secretName: webhook-server-cert
