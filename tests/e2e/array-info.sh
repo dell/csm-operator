@@ -17,7 +17,7 @@ export PROXY_HOST="csm-authorization.com"
 # do not include "https://" in the endpoint
 export PFLEX_USER="username"
 export PFLEX_PASS="password"
-export PFLEX_SYSTEMID="00990099ddcc"
+export PFLEX_SYSTEMID="systemID"
 export PFLEX_ENDPOINT="10.1.1.1"
 export PFLEX_MDM="10.0.0.1,10.0.0.2"
 export PFLEX_NAS="none"
@@ -89,10 +89,9 @@ export AM_NS=test-vxflexos
 export BACKEND_STORAGE_URL="10.0.0.4:32000"
 export BUCKET_NAME="my-bucket"
 export ALT_BUCKET_NAME="alt-bucket"
-export AM_CONTROLLER_IMAGE="dellemc/csm-application-mobility-controller:nightly"
-export AM_PLUGIN_IMAGE="dellemc/csm-application-mobility-velero-plugin:nightly"
-
+# Be sure to escape / with \
+export AM_CONTROLLER_IMAGE="quay.io/dell/container-storage-modules/csm-application-mobility-controller:nightly"
+export AM_PLUGIN_IMAGE="quay.io/dell/container-storage-modules/csm-application-mobility-velero-plugin:nightly"
 # Credentials for pulling images from registry.redhat.io
 export RH_REGISTRY_USERNAME=""
 export RH_REGISTRY_PASSWORD=""
-
