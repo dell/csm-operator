@@ -330,8 +330,6 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	return merr
 }
 
-// UpdateAccStatus of csm
-
 // HandleValidationError for csm
 func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM,
 	validationError error,
