@@ -238,7 +238,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: csi-metadata-retriever
-          image: quay.io/dell/container-storage-modules/csi-metadata-retriever:nightly # TODO: This should be changed to v1.9.0 once the image is released
+          image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
           imagePullPolicy: Always
           args:
             - "--csi-address=$(ADDRESS)"
@@ -258,7 +258,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-isilon:nightly  # TODO: This should be changed to v2.12.0 once the image is released
+          image: quay.io/dell/container-storage-modules/csi-isilon:v2.12.0
           imagePullPolicy: Always
           command: ["/csi-isilon"]
           args:

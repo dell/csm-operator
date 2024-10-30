@@ -109,7 +109,7 @@ spec:
       serviceAccount: karavi-metrics-powerscale-controller
       containers:
         - name: karavi-metrics-powerscale
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly # TODO: Change this image to latest released version once it is released
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.7.0
           resources: {}
           env:
             - name: POWERSCALE_METRICS_ENDPOINT
