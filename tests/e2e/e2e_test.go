@@ -26,8 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"k8s.io/kubernetes/test/e2e/framework"
 )
 
@@ -42,7 +40,6 @@ var (
 	tagsSpecified []string
 	stepRunner    *step.Runner
 	beautify      string
-	testApex      bool
 	moduleTags    = []string{"authorization", "replication", "observability", "authorizationproxyserver", "resiliency", "applicationmobility"}
 )
 
@@ -97,7 +94,7 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	tagEnvVars := []string{"NOMODULES", "AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY", "CLIENT"}
+	tagEnvVars := []string{"NOMODULES", "AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_SCENARIOS_FILE must be set.")
@@ -138,54 +135,28 @@ var _ = BeforeSuite(func() {
 
 var _ = Describe("[run-e2e-test] E2E Testing", func() {
 	It("Running all test Given Test Scenarios", func() {
-		if testApex {
-			for _, test := range testResources {
-				By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
-				if !ContainsTag(test.Scenario.Tags, tagsSpecified) {
-					By(fmt.Sprintf("Not tagged for this test run, skipping"))
-					By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
-					continue
-				}
-
-				// if no-modules are enabled, skip this test if it has a module tag
-				if CheckNoModules(test.Scenario.Tags) {
-					By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
-					continue
-				}
-
-				for _, stepName := range test.Scenario.Steps {
-					By(fmt.Sprintf("%s Executing  %s", beautify, stepName))
-					Eventually(func() error {
-						return stepRunner.RunStepClient(stepName, test)
-					}, timeout, interval).Should(BeNil())
-				}
+		for _, test := range testResources {
+			By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
+			if ContainsTag(test.Scenario.Tags, tagsSpecified) == false {
+				By(fmt.Sprintf("Not tagged for this test run, skipping"))
 				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
-				time.Sleep(5 * time.Second)
+				continue
 			}
-		} else {
-			for _, test := range testResources {
-				By(fmt.Sprintf("Starting: %s ", test.Scenario.Scenario))
-				if ContainsTag(test.Scenario.Tags, tagsSpecified) == false {
-					By(fmt.Sprintf("Not tagged for this test run, skipping"))
-					By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
-					continue
-				}
 
-				// if no-modules are enabled, skip this test if it has a module tag
-				if CheckNoModules(test.Scenario.Tags) {
-					By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
-					continue
-				}
-
-				for _, stepName := range test.Scenario.Steps {
-					By(fmt.Sprintf("%s Executing  %s", beautify, stepName))
-					Eventually(func() error {
-						return stepRunner.RunStep(stepName, test)
-					}, timeout, interval).Should(BeNil())
-				}
+			// if no-modules are enabled, skip this test if it has a module tag
+			if CheckNoModules(test.Scenario.Tags) {
 				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
-				time.Sleep(5 * time.Second)
+				continue
 			}
+
+			for _, stepName := range test.Scenario.Steps {
+				By(fmt.Sprintf("%s Executing  %s", beautify, stepName))
+				Eventually(func() error {
+					return stepRunner.RunStep(stepName, test)
+				}, timeout, interval).Should(BeNil())
+			}
+			By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
+			time.Sleep(5 * time.Second)
 		}
 	})
 })

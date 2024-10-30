@@ -134,7 +134,6 @@ replace (
 	k8s.io/code-generator => k8s.io/code-generator v0.30.5
 	k8s.io/cri-api => k8s.io/cri-api v0.30.5
 	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.30.5
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.30.5
 	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.30.5
 	k8s.io/kube-proxy => k8s.io/kube-proxy v0.30.5
 	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.30.5

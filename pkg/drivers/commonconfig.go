@@ -30,53 +30,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	// AccNamespace - deployment namespace
-	AccNamespace string = "<NAMESPACE>"
-
-	// AggregatorURLDefault - default aggregator location
-	AggregatorURLDefault string = "connect-into.dell.com"
-
-	// AggregatorURL - tag for specifying aggregator endpoint
-	AggregatorURL string = "<AGGREGATOR_URL>"
-
-	// CaCertOption - tag for specifying if cacert option is used
-	CaCertOption string = "<CACERT_OPTION>"
-
-	// CaCertFlag - cacert option
-	CaCertFlag string = "--cacert"
-
-	// CaCerts - tag for specifying --cacert value
-	CaCerts string = "<CACERTS>"
-
-	// CaCertsList - cert locations for aggregator and loadbalancer
-	CaCertsList string = "/opt/dellemc/certs/loadbalancer_root_ca_cert.crt,/opt/dellemc/certs/aggregator_internal_root_ca_cert.crt"
-
-	// ConnectivityClientContainerName - name of the DCM client container
-	ConnectivityClientContainerName string = "connectivity-client-docker-k8s"
-
-	// ConnectivityClientContainerImage - tag for DCM client image
-	ConnectivityClientContainerImage string = "<CONNECTIVITY_CLIENT_IMAGE>"
-
-	// KubernetesProxySidecarName - name of proxy sidecar container
-	KubernetesProxySidecarName string = "kubernetes-proxy"
-
-	// KubernetesProxySidecarImage - tag for proxy image
-	KubernetesProxySidecarImage string = "<KUBERNETES_PROXY_IMAGE>"
-
-	// CertPersisterSidecarName - name of cert persister image
-	CertPersisterSidecarName string = "cert-persister"
-
-	// CertPersisterSidecarImage - name of cert persister image
-	CertPersisterSidecarImage string = "<CERT_PERSISTER_IMAGE>"
-
-	// AccInitContainerName - name of init container image
-	AccInitContainerName string = "connectivity-client-init"
-
-	// AccInitContainerImage - tag for init container image
-	AccInitContainerImage string = "<ACC_INIT_CONTAINER_IMAGE>"
-)
-
 var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerScaleName: "isilon-configs",
 }
