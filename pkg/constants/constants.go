@@ -76,8 +76,5 @@ var CsmLabel = "csm"
 // CsmNamespaceLabel - label to track namespace for csm
 var CsmNamespaceLabel = "csmNamespace"
 
-// AccLabel - label client resources
-var AccLabel = "acc"
-
 // NotFoundMsg - error message
 var NotFoundMsg = "not found"

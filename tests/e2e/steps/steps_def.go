@@ -13,7 +13,6 @@
 package steps
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math/rand"
@@ -1774,36 +1773,6 @@ func setupAMImagePullSecret() error {
 	return nil
 }
 
-// Steps for Connectivity Client
-func (step *Step) validateClientTestEnvironment(_ Resource) error {
-	if os.Getenv("OPERATOR_NAMESPACE") != "" {
-		operatorNamespace = os.Getenv("OPERATOR_NAMESPACE")
-	}
-
-	pods, err := fpod.GetPodsInNamespace(context.TODO(), step.clientSet, operatorNamespace, map[string]string{})
-	if err != nil {
-		return err
-	}
-	if len(pods) == 0 {
-		return fmt.Errorf("no pod was found")
-	}
-
-	notReadyMessage := ""
-	allReady := true
-	for _, pod := range pods {
-		if pod.Status.Phase != corev1.PodRunning {
-			allReady = false
-			notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
-		}
-	}
-
-	if !allReady {
-		return fmt.Errorf("%s", notReadyMessage)
-	}
-
-	return nil
-}
-
 func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStorageModule) error {
 	fakeReconcile := utils.FakeReconcileCSM{
 		Client:    step.ctrlClient,
@@ -1878,64 +1847,5 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 	if err != nil {
 		return fmt.Errorf("csm authorization crds uninstall failed: %v", err)
 	}
-	return nil
-}
-
-func (step *Step) validateRbacCreated(_ Resource, namespace string) error {
-	fmt.Println("=== validating Rbac created ===")
-
-	cmd := exec.Command("kubectl", "get", "rolebindings", "-n", namespace)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to run command")
-	}
-
-	roles := strings.Split(out.String(), "\n")
-	for _, role := range roles {
-		if strings.Contains(role, "Role/connectivity-client-docker-k8s") {
-			return nil
-		}
-	}
-
-	return nil
-}
-
-func (step *Step) validateRbacDeleted(_ Resource) error {
-	fmt.Println("validating RBAC deletion in all namespaces")
-	cmd := exec.Command("kubectl", "get", "rolebindings", "--all-namespaces")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to run command")
-	}
-	roles := strings.Split(out.String(), "\n")
-	for _, role := range roles {
-		if strings.Contains(role, "Role/connectivity-client-docker-k8s") {
-			return fmt.Errorf("RoleBinding 'connectivity-client-docker-k8s' still exists")
-		}
-	}
-	fmt.Println("RBAC deletion is successful for all namespaces")
-	return nil
-}
-
-func (step *Step) validateDeleteRbac(_ Resource, namespace string) error {
-	fmt.Println("validating Rbac deletion on namespace", namespace)
-	cmd := exec.Command("kubectl", "get", "rolebindings", "-n", namespace)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to run command")
-	}
-	roles := strings.Split(out.String(), "\n")
-	for _, role := range roles {
-		if strings.Contains(role, "Role/connectivity-client-docker-k8s") {
-			return fmt.Errorf("RoleBinding 'connectivity-client-docker-k8s' still exists in namespace '%s'", namespace)
-		}
-	}
-	fmt.Println("RBAC deletion is successful for namespace:", namespace)
 	return nil
 }

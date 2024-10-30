@@ -14,7 +14,7 @@
 #
 #
 name: podmon
-image: quay.io/dell/container-storage-modules/podmon:nightly # TODO: Change this image to latest released version once it is released
+image: quay.io/dell/container-storage-modules/podmon:v1.11.0
 imagePullPolicy: Always
 args:
   - "--labelvalue=csi-vxflexos"

@@ -79,10 +79,6 @@ spec:
               name: RELATED_IMAGE_externalhealthmonitorcontroller
             - value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
               name: RELATED_IMAGE_metadataretriever
-            - value: docker.io/dellemc/connectivity-client-docker-k8s:1.19.0
-              name: RELATED_IMAGE_dell-connectivity-client
-            - value: docker.io/dellemc/connectivity-cert-persister-k8s:0.11.0
-              name: RELATED_IMAGE_cert-persister
           securityContext:
             allowPrivilegeEscalation: false
           livenessProbe:
