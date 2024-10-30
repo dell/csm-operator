@@ -62,7 +62,7 @@ For any CSM Operator and driver issues, questions or feedback, join the [Dell Te
 Dell Container Storage Modules Operator has been tested and qualified with
 
     * Upstream Kubernetes cluster v1.29, v1.30, v1.31
-    * OpenShift Clusters 4.16, 4.17 with RHEL 8.x & RHCOS worker nodes
+    * OpenShift Clusters 4.16, 4.17 with RHEL 9.x & RHCOS worker nodes
 
 ## Installation
 
@@ -106,26 +106,6 @@ To install CSI drivers and CSM modules using the operator please refer here at [
 ## Uninstall CSI Drivers and CSM Modules
 
 To uninstall CSI drivers and CSM modules installed using the operator please refer here at [https://dell.github.io/csm-docs/docs/deployment/csmoperator/](https://dell.github.io/csm-docs/docs/deployment/csmoperator/).
-
-## Install Apex Connectivity Client
-
-  1. Ensure that CSM Operator is installed and the operator pods are up and running.
-  2. Edit the images to point to the correct location in `connectivity_client_v100.yaml` sample file located at `csm-operator\samples` folder.
-  3. To deploy Apex Connectivity Client, execute `kubectl create -f samples\connectivity_client_v100.yaml`.
-  4. Ensure that the Apex Connectivity Client pods are up and running.
-
-## Update Apex Connectivity Client
-
-  1. Ensure that CSM Operator is installed and the operator pods are up and running.
-  2. Edit the required images to point to the correct location in `connectivity_client_v100.yaml` sample file located at `csm-operator\samples` folder.
-  3. To update Apex Connectivity Client, execute `kubectl apply -f samples\connectivity_client_v100.yaml`.
-  4. Ensure that the Apex Connectivity Client pods are up and running.
-
-## Uninstall Apex Connectivity Client
-
-  1. Ensure that CSM Operator is installed and the operator pods are up and running.
-  2. To uninstall Apex Connectivity Client, execute `kubectl delete -f samples\connectivity_client_v100.yaml`
-  3. Ensure that the Apex Connectivity Client pods are deleted.
 
 ## Versioning
 

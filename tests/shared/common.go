@@ -40,7 +40,6 @@ const (
 	PScaleConfigVersion        string = "v2.12.0"
 	PmaxConfigVersion          string = "v2.12.0"
 	AuthServerConfigVersion    string = "v1.12.0"
-	AccConfigVersion           string = "v1.1.0"
 	AppMobConfigVersion        string = "v1.1.0"
 )
 

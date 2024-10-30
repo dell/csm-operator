@@ -225,7 +225,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-powerstore:nightly # TODO: This should be changed to v2.12.0 once the image is released
+          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.12.0
           imagePullPolicy: Always
           command: ["/csi-powerstore"]
           args:

@@ -1,5 +1,5 @@
 name: dell-csi-replicator
-image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly  # TODO: Change this image to latest released version once it is released
+image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.10.0
 imagePullPolicy: Always
 args:
   - "--csi-address=$(ADDRESS)"
