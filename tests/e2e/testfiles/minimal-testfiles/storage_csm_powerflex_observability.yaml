@@ -15,7 +15,9 @@ spec:
         - name: topology
           enabled: true
         - name: otel-collector
+          enabled: true
           image: otel/opentelemetry-collector:0.42.0
         - name: cert-manager
+          enabled: true
         - name: metrics-powerflex
           enabled: true
