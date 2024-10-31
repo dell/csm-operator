@@ -69,7 +69,6 @@ jobs:
         with:
           threshold: 90
           test-folder: "pkg/utils/"
-          
   image_security_scan:
     name: Image Scanner
     runs-on: ubuntu-latest
