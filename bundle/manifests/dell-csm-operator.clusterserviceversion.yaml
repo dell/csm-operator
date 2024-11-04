@@ -1126,7 +1126,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:4.5.2.1",
+                  "image": "docker.io/dellemc/sdc:4.5.2.1",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "sdc"
                 }
@@ -1202,7 +1202,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "dellemc/sdc:4.5.2.1",
+                  "image": "docker.io/dellemc/sdc:4.5.2.1",
                   "name": "sdc-monitor"
                 },
                 {

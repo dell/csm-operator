@@ -193,6 +193,7 @@ IMAGEFILEDIR="${REPODIR}/scripts/images.tar"
 FILES_WITH_IMAGE_NAMES=(
   "${REPODIR}/operatorconfig/driverconfig/common/default.yaml"
   "${REPODIR}/bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
+  "${REPODIR}/samples/ocp/*/*.yaml"
 )
 
 # list of all files to be included
