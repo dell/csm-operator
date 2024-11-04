@@ -62,7 +62,7 @@ run_command() {
 # build_image_manifest
 # builds a manifest of all the images referred to by the latest operator csv
 build_image_manifest() {
-  local REGEX="([-_./:A-Za-z0-9]{3,}):([-_.A-Za-z0-9]{1,})"
+  local REGEX="([-_./:A-Za-z0-9]{3,})[^@sha256]:([-_.A-Za-z0-9]{1,})|([-_./:A-Za-z0-9]{3,})@sha256:([-_.A-Za-z0-9]{1,})"
 
   status "Building image manifest file"
   if [ -e "${IMAGEFILEDIR}" ]; then
