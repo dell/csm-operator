@@ -34,7 +34,7 @@ spec:
           tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v1.12.0
           roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v1.12.0
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v1.12.0
-          opa: docker.io/openpolicyagent/opa
+          opa: docker.io/openpolicyagent/opa:latest
           opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.7
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string

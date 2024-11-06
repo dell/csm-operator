@@ -34,7 +34,7 @@ spec:
           tenantService: docker.io/dellemc/csm-authorization-tenant:v1.10.1
           roleService: docker.io/dellemc/csm-authorization-role:v1.10.1
           storageService: docker.io/dellemc/csm-authorization-storage:v1.10.1
-          opa: docker.io/openpolicyagent/opa
+          opa: docker.io/openpolicyagent/opa:latest
           opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:0.11
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string

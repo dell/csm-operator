@@ -38,7 +38,7 @@ spec:
           roleServiceReplicas: 1
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.0.0
           storageServiceReplicas: 1
-          opa: docker.io/openpolicyagent/opa
+          opa: docker.io/openpolicyagent/opa:latest
           opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.7
           authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.0.0
           authorizationControllerReplicas: 1

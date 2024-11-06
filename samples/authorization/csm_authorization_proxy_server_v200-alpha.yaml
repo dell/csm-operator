@@ -38,7 +38,7 @@ spec:
           roleServiceReplicas: 1
           storageService: docker.io/dellemc/csm-authorization-storage:v2.0.0-alpha
           storageServiceReplicas: 1
-          opa: docker.io/openpolicyagent/opa
+          opa: docker.io/openpolicyagent/opa:latest
           opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:0.11
           authorizationController: docker.io/dellemc/csm-authorization-controller:v2.0.0-alpha
           authorizationControllerReplicas: 1
