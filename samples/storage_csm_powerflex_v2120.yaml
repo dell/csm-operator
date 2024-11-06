@@ -66,7 +66,7 @@ spec:
         # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: dellemc/sdc:4.5.2.1
+        image: docker.io/dellemc/sdc:4.5.2.1
         envs:
           - name: HOST_PID
             value: "1"
@@ -194,7 +194,7 @@ spec:
       #    operator: "Exists"
       #    effect: "NoSchedule"
     initContainers:
-      - image: dellemc/sdc:4.5.2.1
+      - image: docker.io/dellemc/sdc:4.5.2.1
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -250,7 +250,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.42.0
+          image: docker.io/otel/opentelemetry-collector:0.42.0
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -264,7 +264,7 @@ spec:
             # Allowed values: string
             # Default value: "nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.27"
+              value: "docker.io/nginxinc/nginx-unprivileged:1.27"
         # enabled: Enable/Disable cert-manager
         # Allowed values:
         #   true: enable deployment of cert-manager
