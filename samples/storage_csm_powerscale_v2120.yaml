@@ -357,7 +357,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.42.0
+          image: docker.io/otel/opentelemetry-collector:0.42.0
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -369,7 +369,7 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.27"
+            # Default value: "docker.io/nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
               value: "docker.io/nginxinc/nginx-unprivileged:1.27"
         - name: cert-manager

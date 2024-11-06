@@ -253,11 +253,11 @@ metadata:
                     "envs": [
                       {
                         "name": "NGINX_PROXY_IMAGE",
-                        "value": "nginxinc/nginx-unprivileged:1.27"
+                        "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "otel/opentelemetry-collector:0.42.0",
-                    "name": "otel-collector",
+                    "image": "docker.io/otel/opentelemetry-collector:0.42.0",
+                    "name": "docker.io/otel-collector",
                     "privateKey": ""
                   },
                   {
@@ -653,10 +653,10 @@ metadata:
                     "envs": [
                       {
                         "name": "NGINX_PROXY_IMAGE",
-                        "value": "nginxinc/nginx-unprivileged:1.27"
+                        "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "otel/opentelemetry-collector:0.42.0",
+                    "image": "docker.io/otel/opentelemetry-collector:0.42.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -1258,10 +1258,10 @@ metadata:
                     "envs": [
                       {
                         "name": "NGINX_PROXY_IMAGE",
-                        "value": "nginxinc/nginx-unprivileged:1.27"
+                        "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "otel/opentelemetry-collector:0.42.0",
+                    "image": "docker.io/otel/opentelemetry-collector:0.42.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },

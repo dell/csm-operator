@@ -385,7 +385,7 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            # Default value: "docker.io/nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
               value: "docker.io/nginxinc/nginx-unprivileged:1.20"
         - name: cert-manager
