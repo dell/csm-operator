@@ -257,7 +257,7 @@ metadata:
                       }
                     ],
                     "image": "docker.io/otel/opentelemetry-collector:0.42.0",
-                    "name": "docker.io/otel-collector",
+                    "name": "otel-collector",
                     "privateKey": ""
                   },
                   {
