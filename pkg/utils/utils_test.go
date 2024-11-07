@@ -18,10 +18,16 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/stretchr/testify/assert"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 // createCR is a helper function to create ContainerStorageModule object
@@ -40,6 +46,101 @@ func createCR(driverType csmv1.DriverType, moduleType csmv1.ModuleType, moduleEn
 			},
 		},
 	}
+}
+
+func TestSplitYaml(t *testing.T) {
+	// Note: For all tests, the yaml converter puts maps into alphabetical order and has all 'tabs' as 4 spaces.
+	// Whitespaces are *very particular* in unit test comparisons. Be aware of this.
+	// If you feed in:
+	//   containers:
+	//     - name: my-container
+	//       image: my-image
+	//
+	// you WILL get back:
+	//
+	//     containers:
+	//         - image: my-image
+	//           name: my-container
+	//
+	// Test case: Split a single YAML document
+	yamlString := `apiVersion: v1
+kind: Pod
+metadata:
+    name: my-pod
+spec:
+    containers:
+        - image: my-image
+          name: my-container
+`
+
+	expectedResult := [][]byte{
+		[]byte(yamlString),
+	}
+	result, err := SplitYaml([]byte(yamlString))
+	assert.Nil(t, err)
+	assert.Equal(t, expectedResult, result)
+
+	// Test case: Split multiple YAML documents
+	yamlString = `---
+apiVersion: v1
+kind: Pod
+metadata:
+    name: my-pod
+spec:
+    containers:
+        - name: my-container
+          image: my-image
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: my-service
+spec:
+    selector:
+        app: my-app
+    ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 9376
+`
+	expectedResult = [][]byte{
+		[]byte(`apiVersion: v1
+kind: Pod
+metadata:
+    name: my-pod
+spec:
+    containers:
+        - image: my-image
+          name: my-container
+`),
+		[]byte(`apiVersion: v1
+kind: Service
+metadata:
+    name: my-service
+spec:
+    ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 9376
+    selector:
+        app: my-app
+`),
+	}
+	result, err = SplitYaml([]byte(yamlString))
+	assert.Nil(t, err)
+	assert.Equal(t, expectedResult, result)
+
+	// Test case: Empty YAML
+	yamlString = ""
+	expectedResult = [][]byte{}
+	result, err = SplitYaml([]byte(yamlString))
+	assert.Nil(t, err)
+	assert.Nil(t, result)
+
+	// Test case: YAML with null byte
+	yamlString = "\x00"
+	result, err = SplitYaml([]byte(yamlString))
+	assert.NotNil(t, err)
 }
 
 func TestHasModuleComponent(t *testing.T) {
@@ -84,6 +185,135 @@ func TestHasModuleComponent(t *testing.T) {
 
 			assert.Equal(t, tt.expectedResult, result)
 		})
+	}
+}
+
+func TestIsModuleComponentEnabled(t *testing.T) {
+	ctx := context.Background()
+
+	// Test case: Module and component are enabled
+	cr := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Observability,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "topology",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	enabled := IsModuleComponentEnabled(ctx, cr, csmv1.Observability, "topology")
+	if !enabled {
+		t.Errorf("Expected true, got false")
+	}
+
+	// Test case: Module is disabled
+	cr = csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Observability,
+					Enabled: false,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "topology",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	enabled = IsModuleComponentEnabled(ctx, cr, csmv1.Observability, "topology")
+	if enabled {
+		t.Errorf("Expected false, got true")
+	}
+
+	// Test case: Component is disabled
+	cr = csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Observability,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "topology",
+							Enabled: &[]bool{false}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	enabled = IsModuleComponentEnabled(ctx, cr, csmv1.Observability, "topology")
+	if enabled {
+		t.Errorf("Expected false, got true")
+	}
+
+	// Test case: Component does not exist
+	cr = csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Observability,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "otel-collector",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	enabled = IsModuleComponentEnabled(ctx, cr, csmv1.Observability, "topology")
+	if enabled {
+		t.Errorf("Expected false, got true")
+	}
+}
+
+func TestIsModuleEnabled(t *testing.T) {
+	ctx := context.Background()
+	cr := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Observability,
+					Enabled: true,
+				},
+			},
+		},
+	}
+
+	// Test case: Module is enabled
+	enabled, module := IsModuleEnabled(ctx, cr, csmv1.Observability)
+	if !enabled {
+		t.Errorf("Expected true, got false")
+	}
+	if module.Name != csmv1.Observability {
+		t.Errorf("Expected module name %s, got %s", csmv1.Observability, module.Name)
+	}
+
+	// Test case: Module is disabled
+	cr.Spec.Modules[0].Enabled = false
+	enabled, module = IsModuleEnabled(ctx, cr, csmv1.Observability)
+	if enabled {
+		t.Errorf("Expected false, got true")
+	}
+	if module.Name != "" {
+		t.Errorf("Expected module name %s, got %s", "", module.Name)
 	}
 }
 
@@ -419,5 +649,49 @@ func TestSetContainerImage(t *testing.T) {
 
 			assert.Equal(t, tt.args.want, container)
 		})
+	}
+}
+
+func TestGetBackupStorageLocation(t *testing.T) {
+	ctx := context.Background()
+	scheme := runtime.NewScheme()
+
+	// Register the necessary types with the scheme
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(velerov1.AddToScheme(scheme))
+
+	// Set the scheme as the default scheme
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(velerov1.AddToScheme(scheme))
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+	// Test case: BackupStorageLocation does not exist
+	name := "test-backup-storage"
+	namespace := "test-namespace"
+	_, err := GetBackupStorageLocation(ctx, name, namespace, fakeClient)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	// Test case: BackupStorageLocation exists
+	backupStorage := &velerov1.BackupStorageLocation{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	if err := fakeClient.Create(ctx, backupStorage); err != nil {
+		t.Errorf("Failed to create BackupStorageLocation: %v", err)
+	}
+	backupStorage, err = GetBackupStorageLocation(ctx, name, namespace, fakeClient)
+	if err != nil {
+		t.Errorf("Failed to get BackupStorageLocation: %v", err)
+	}
+	if backupStorage.Name != name {
+		t.Errorf("Expected name %s, got %s", name, backupStorage.Name)
+	}
+	if backupStorage.Namespace != namespace {
+		t.Errorf("Expected namespace %s, got %s", namespace, backupStorage.Namespace)
 	}
 }
