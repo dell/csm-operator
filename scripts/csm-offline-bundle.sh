@@ -62,6 +62,8 @@ run_command() {
 # build_image_manifest
 # builds a manifest of all the images referred to by the latest operator csv
 build_image_manifest() {
+  local REGEX="([-_./:A-Za-z0-9]{3,}):([-_.A-Za-z0-9]{1,})"
+
   status "Building image manifest file"
   if [ -e "${IMAGEFILEDIR}" ]; then
     rm -rf "${IMAGEFILEDIR}"
@@ -69,9 +71,6 @@ build_image_manifest() {
   if [ -f "${IMAGEMANIFEST}" ]; then
     rm -rf "${IMAGEMANIFEST}"
   fi
-
-  local TAG_REGEX="([-_./:A-Za-z0-9]{3,}):([-_.A-Za-z0-9]{1,})"
-  local SHA_REGEX="([-_./:A-Za-z0-9]{3,})@sha256:([-_.A-Za-z0-9]{1,})"
 
   for F in ${FILES_WITH_IMAGE_NAMES[@]}; do
     echo "   Processing file ${F}"
@@ -82,11 +81,7 @@ build_image_manifest() {
       # - search all files for strings that make $REGEX
       # - exclude anything with double '//'' as that is a URL and not an image name
       # - make sure at least one '/' is found
-
-      # use TAG_REGEX to match image names by tag
-      egrep -oh "${TAG_REGEX}" ${F} | egrep -v '//' | egrep '/' >> "${IMAGEMANIFEST}.tmp"
-      # use SHA_REGEX to match image names by sha
-      egrep -oh "${SHA_REGEX}" ${F} | egrep -v '//' | egrep '/' >> "${IMAGEMANIFEST}.tmp"
+      egrep -oh "${REGEX}" ${F} | egrep -v '//' | egrep '/' >> "${IMAGEMANIFEST}.tmp"
     fi
   done
 
@@ -195,11 +190,9 @@ IMAGEFILEDIR="${REPODIR}/scripts/images.tar"
 
 
 # directories to search all files for image names
-shopt -s globstar
 FILES_WITH_IMAGE_NAMES=(
   "${REPODIR}/operatorconfig/driverconfig/common/default.yaml"
   "${REPODIR}/bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
-  "${REPODIR}/samples/**/*.yaml"
 )
 
 # list of all files to be included
