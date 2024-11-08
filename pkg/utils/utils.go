@@ -189,17 +189,24 @@ func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 
 // UpdateSideCarApply -
 func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	for _, side := range sideCars {
-		if *c.Name == side.Name {
-			if side.Image != "" {
-				*c.Image = string(side.Image)
+	UpdateContainerApply(sideCars, c)
+}
+
+// TODO: It seems like this function only acts on envs that are shared between
+// the new and the old, with any that aren't on the new being left alone (instead of deleted)
+// and any that aren't on the old being ignored (instead of added). Unknown if this is intentional.
+func UpdateContainerApply(toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
+	for _, ctr := range toBeApplied {
+		if *c.Name == ctr.Name {
+			if ctr.Image != "" {
+				*c.Image = string(ctr.Image)
 			}
-			if side.ImagePullPolicy != "" {
-				*c.ImagePullPolicy = side.ImagePullPolicy
+			if ctr.ImagePullPolicy != "" {
+				*c.ImagePullPolicy = ctr.ImagePullPolicy
 			}
 			emptyEnv := make([]corev1.EnvVar, 0)
-			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, side.Envs)
-			c.Args = ReplaceAllArgs(c.Args, side.Args)
+			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, ctr.Envs)
+			c.Args = ReplaceAllArgs(c.Args, ctr.Args)
 		}
 	}
 }
@@ -220,7 +227,7 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case csmv1.Externalhealthmonitor:
 		*c.Image = img.Images.Externalhealthmonitor
 	case csmv1.Sdc:
-		*c.Image = img.Images.Sdcmonitor
+		*c.Image = img.Images.Sdc // DISCUSS: Why does this point to Sdcmonitor and not Sdc?
 	case csmv1.Sdcmonitor:
 		*c.Image = img.Images.Sdcmonitor
 	case string(csmv1.Resiliency):
@@ -228,31 +235,23 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	}
 }
 
-// UpdateinitContainerApply -
-func UpdateinitContainerApply(initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	for _, init := range initContainers {
-		if *c.Name == init.Name {
-			if init.Image != "" {
-				*c.Image = string(init.Image)
-			}
-			if init.ImagePullPolicy != "" {
-				*c.ImagePullPolicy = init.ImagePullPolicy
-			}
-			emptyEnv := make([]corev1.EnvVar, 0)
-			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, init.Envs)
-			c.Args = ReplaceAllArgs(c.Args, init.Args)
-
-		}
-	}
+// UpdateInitContainerApply -
+func UpdateInitContainerApply(initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
+	UpdateContainerApply(initContainers, c)
 }
 
 // ReplaceAllApplyCustomEnvs -
+// TODO: It seems like this function only acts on envs that are shared between
+// the new and the old, with any that aren't on the new being left alone (instead of deleted)
+// and any that aren't on the old being ignored (instead of added). Unknown if this is intentional.
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 	commonEnv []corev1.EnvVar,
 	nrEnv []corev1.EnvVar,
 ) []acorev1.EnvVarApplyConfiguration {
 	newEnv := make([]acorev1.EnvVarApplyConfiguration, 0)
 	temp := make(map[string]string)
+
+	// get the name and value of the new env and store it in a map using name as key
 	for _, update := range commonEnv {
 		if update.Value == "" {
 			update.Value = "NA"
@@ -266,6 +265,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 		temp[update.Name] = update.Value
 	}
 	for _, old := range driverEnv {
+		// Update the value for an existing name
 		if temp[*old.Name] != "" {
 			val := temp[*old.Name]
 			if val == "NA" {
@@ -278,6 +278,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 			}
 			newEnv = append(newEnv, e)
 		} else {
+			// if new config does not have a value for the existing name...
 			e := acorev1.EnvVarApplyConfiguration{
 				Name: old.Name,
 			}

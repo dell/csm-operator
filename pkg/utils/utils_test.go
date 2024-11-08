@@ -24,8 +24,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -693,5 +693,224 @@ func TestGetBackupStorageLocation(t *testing.T) {
 	}
 	if backupStorage.Namespace != namespace {
 		t.Errorf("Expected namespace %s, got %s", namespace, backupStorage.Namespace)
+	}
+}
+
+func TestUpdateSideCarApply(t *testing.T) {
+	// Test case: update sidecar with matching name
+	sc1env1 := "sidecar1-env1"
+	sc1env2 := "sidecar1-env2"
+	sc1env3 := "sidecar1-env3"
+	oldenv1val := "old-env1-value"
+	oldenv3val := "old-env3-value"
+	newenv1val := "sidecar1-env1-value"
+	newenv2val := "sidecar1-env2-value"
+	sideCars := []csmv1.ContainerTemplate{
+		{
+			Name:            "sidecar1",
+			Image:           "sidecar1-image",
+			ImagePullPolicy: "sidecar1-image-pull-policy",
+			Envs: []corev1.EnvVar{
+				{
+					Name:  sc1env1,
+					Value: newenv1val,
+				},
+				{
+					Name:  sc1env2,
+					Value: newenv2val,
+				},
+			},
+		},
+		{
+			Name:            "sidecar2",
+			Image:           "sidecar2-image",
+			ImagePullPolicy: "sidecar2-image-pull-policy",
+			Envs: []corev1.EnvVar{
+				{
+					Name:  "sidecar2-env1",
+					Value: "sidecar2-env1-value",
+				},
+				{
+					Name:  "sidecar2-env2",
+					Value: "sidecar2-env2-value",
+				},
+			},
+		},
+	}
+
+	container := acorev1.Container().
+		WithName("sidecar1").
+		WithImage("old-image").
+		WithImagePullPolicy("old-image-pull-policy").
+		WithEnv(&acorev1.EnvVarApplyConfiguration{
+
+			Name:  &sc1env1,
+			Value: &oldenv1val,
+		},
+		).WithEnv(&acorev1.EnvVarApplyConfiguration{
+		Name:  &sc1env3,
+		Value: &oldenv3val,
+	},
+	)
+
+	UpdateSideCarApply(sideCars, container)
+
+	expectedContainer := acorev1.Container().WithName("sidecar1").WithImage("sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
+		WithEnv(&acorev1.EnvVarApplyConfiguration{
+			Name:  &sc1env1,
+			Value: &newenv1val,
+		}).
+		/*WithEnv(&acorev1.EnvVarApplyConfiguration{ // IF we want to have new vars added in the Apply method, this will need to be uncommented.
+			Name:  &sc1env2,
+			Value: &newenv2val,
+		}).*/
+		WithEnv(&acorev1.EnvVarApplyConfiguration{
+			Name:  &sc1env3,
+			Value: &oldenv3val,
+		},
+		)
+
+	assert.Equal(t, expectedContainer, container)
+
+	// repeat the test with the other function that uses the child function
+	// very minor code coverage gain, 0.1%
+	UpdateInitContainerApply(sideCars, container)
+	assert.Equal(t, expectedContainer, container)
+}
+
+func TestReplaceAllContainerImageApply(t *testing.T) {
+	// Create a list of Images that will replace the image names in 'containers', below
+	mockImages := K8sImagesConfig{
+		K8sVersion: "test-k8s-version",
+		// TODO: Why is Images an anonymous struct? Why is it not a known and defined struct?
+		Images: struct {
+			Attacher              string "json:\"attacher\" yaml:\"attacher\""
+			Provisioner           string "json:\"provisioner\" yaml:\"provisioner\""
+			Snapshotter           string "json:\"snapshotter\" yaml:\"snapshotter\""
+			Registrar             string "json:\"registrar\" yaml:\"registrar\""
+			Resizer               string "json:\"resizer\" yaml:\"resizer\""
+			Externalhealthmonitor string "json:\"externalhealthmonitorcontroller\" yaml:\"externalhealthmonitorcontroller\""
+			Sdc                   string "json:\"sdc\" yaml:\"sdc\""
+			Sdcmonitor            string "json:\"sdcmonitor\" yaml:\"sdcmonitor\""
+			Podmon                string "json:\"podmon\" yaml:\"podmon\""
+			CSIRevProxy           string "json:\"csiReverseProxy\" yaml:\"csiReverseProxy\""
+		}{
+			Provisioner:           "new-provisioner-image",
+			Attacher:              "new-attacher-image",
+			Snapshotter:           "new-snapshotter-image",
+			Registrar:             "new-registrar-image",
+			Resizer:               "new-resizer-image",
+			Externalhealthmonitor: "new-externalhealthmonitor-image",
+			Sdc:                   "new-sdc-image",
+			Sdcmonitor:            "new-sdcmonitor-image",
+			Podmon:                "new-podmon-image",
+		},
+	}
+
+	// config with container image names that will be replaced
+	containers := []struct {
+		Name    string
+		Image   string
+		NewName string
+	}{
+		{
+			Name:    "provisioner",
+			Image:   "old-provisioner-image",
+			NewName: mockImages.Images.Provisioner,
+		},
+		{
+			Name:    "attacher",
+			Image:   "old-attacher-image",
+			NewName: mockImages.Images.Attacher,
+		},
+		{
+			Name:    "snapshotter",
+			Image:   "old-snapshotter-image",
+			NewName: mockImages.Images.Snapshotter,
+		},
+		{
+			Name:    "registrar",
+			Image:   "old-registrar-image",
+			NewName: mockImages.Images.Registrar,
+		},
+		{
+			Name:    "resizer",
+			Image:   "old-resizer-image",
+			NewName: mockImages.Images.Resizer,
+		},
+		{
+			Name:    "external-health-monitor",
+			Image:   "old-external-health-monitor-image",
+			NewName: mockImages.Images.Externalhealthmonitor,
+		},
+		{
+			Name:    "sdc",
+			Image:   "old-sdc-image",
+			NewName: mockImages.Images.Sdc,
+		},
+		{
+			Name:    "sdc-monitor",
+			Image:   "old-sdc-monitor-image",
+			NewName: mockImages.Images.Sdcmonitor,
+		},
+		{
+			Name:    "resiliency",
+			Image:   "old-podmon-image",
+			NewName: mockImages.Images.Podmon,
+		},
+	}
+
+	for _, ctr := range containers {
+		c := &acorev1.ContainerApplyConfiguration{
+			Name:  &ctr.Name,
+			Image: &ctr.Image,
+		}
+
+		// Call the function to test
+		ReplaceAllContainerImageApply(mockImages, c)
+
+		assert.Equal(t, ctr.NewName, *c.Image)
+	}
+}
+
+func TestModifyCommonCR(t *testing.T) {
+	// Test case 1: Modify the name and namespace
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				Common: csmv1.ContainerTemplate{
+					ImagePullPolicy: corev1.PullPolicy("Always"),
+				},
+			},
+		},
+	}
+	yamlString := "name: " + DefaultReleaseName
+	expected := "name: test-name"
+
+	result := ModifyCommonCR(yamlString, cr)
+	assert.Equal(t, expected, result)
+
+	// Test case 2: Modify the image pull policy
+	cr.Name = ""
+	cr.Namespace = ""
+	yamlString = "imagePullPolicy: " + DefaultImagePullPolicy
+	expected = "imagePullPolicy: Always"
+
+	result = ModifyCommonCR(yamlString, cr)
+	assert.Equal(t, expected, result)
+
+	// Test case 3: Modify both name, namespace, and image pull policy
+	cr.Name = "test-name"
+	cr.Namespace = "test-namespace"
+	yamlString = "name: " + DefaultReleaseName + "\nimagePullPolicy: " + DefaultImagePullPolicy
+	expected = "name: test-name\nimagePullPolicy: Always"
+
+	result = ModifyCommonCR(yamlString, cr)
+	if result != expected {
+		t.Errorf("Expected %s, but got %s", expected, result)
 	}
 }
