@@ -87,7 +87,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly # TODO: This should be changed to v2.12.0 once the image is released
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.12.0
           imagePullPolicy: Always
           command: ["/csi-vxflexos.sh"]
           args:
@@ -124,6 +124,9 @@ spec:
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
+            - name: disks-path
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/disks
+              mountPropagation: "Bidirectional"
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
               mountPropagation: "Bidirectional"
@@ -229,6 +232,10 @@ spec:
         - name: driver-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
+            type: DirectoryOrCreate
+        - name: disks-path
+          hostPath:
+            path: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/disks
             type: DirectoryOrCreate
         - name: volumedevices-path
           hostPath:
