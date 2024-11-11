@@ -33,7 +33,7 @@ spec:
           proxyService: docker.io/dellemc/csm-authorization-proxy:v1.11.0
           tenantService: docker.io/dellemc/csm-authorization-tenant:v1.11.0
           roleService: docker.io/dellemc/csm-authorization-role:v1.11.0
-          storageService: docker.io/ellemc/csm-authorization-storage:v1.11.0
+          storageService: docker.io/dellemc/csm-authorization-storage:v1.11.0
           opa: docker.io/openpolicyagent/opa:latest
           opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:0.11
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
