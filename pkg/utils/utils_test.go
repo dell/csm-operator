@@ -21,10 +21,15 @@ import (
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	confcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	confmetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -912,5 +917,453 @@ func TestModifyCommonCR(t *testing.T) {
 	result = ModifyCommonCR(yamlString, cr)
 	if result != expected {
 		t.Errorf("Expected %s, but got %s", expected, result)
+	}
+}
+
+func TestReplaceAllArgs(t *testing.T) {
+	// Test case: replace all args
+	defaultArgs := []string{"arg1=value1", "arg2=value2", "arg3=value3"}
+	crArgs := []string{"arg1=newValue1", "arg2=newValue2"}
+	expected := []string{"arg1=newValue1", "arg2=newValue2", "arg3=value3"}
+
+	result := ReplaceAllArgs(defaultArgs, crArgs)
+	assert.Equal(t, expected, result)
+
+	// Test case: replace some args
+	defaultArgs = []string{"arg1=value1", "arg2=value2", "arg3=value3"}
+	crArgs = []string{"arg1=newValue1"}
+	expected = []string{"arg1=newValue1", "arg2=value2", "arg3=value3"}
+
+	result = ReplaceAllArgs(defaultArgs, crArgs)
+	assert.Equal(t, expected, result)
+
+	// Test case: replace no args
+	defaultArgs = []string{"arg1=value1", "arg2=value2", "arg3=value3"}
+	crArgs = []string{}
+	expected = []string{"arg1=value1", "arg2=value2", "arg3=value3"}
+
+	result = ReplaceAllArgs(defaultArgs, crArgs)
+	assert.Equal(t, expected, result)
+}
+
+// TODO: Cover more object types:
+// ClusterRole, ClusterRoleBinding, ConfigMap, Deployment
+func TestGetCTRLObject(t *testing.T) {
+	// Test case: empty input
+	ctrlBuf := []byte{}
+	expected := []crclient.Object{}
+
+	result, err := GetCTRLObject(ctrlBuf)
+
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+
+	assert.Equal(t, result, expected)
+
+	// Test case: valid input
+	ctrlBuf = []byte(`
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+`)
+
+	expected = []crclient.Object{
+		&corev1.Service{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Service",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "my-service",
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": "MyApp",
+				},
+				Ports: []corev1.ServicePort{
+					{
+						Protocol:   corev1.ProtocolTCP,
+						Port:       80,
+						TargetPort: intstr.FromInt(9376),
+					},
+				},
+			},
+		},
+	}
+
+	result, err = GetCTRLObject(ctrlBuf)
+
+	assert.Nil(t, err)
+	assert.Equal(t, result, expected)
+
+	// Test case: invalid input
+	ctrlBuf = []byte(`
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+		`)
+
+	expected = []crclient.Object{}
+
+	result, err = GetCTRLObject(ctrlBuf)
+
+	assert.NotNil(t, err)
+	assert.Equal(t, result, expected)
+}
+
+// TODO: Cover more object types:
+// CustomResourceDefinition, ServiceAccount,
+// ClusterRoleBinding, Role, RoleBinding,
+// PersistentVolumeClaim, Job, IngressClass,
+// Ingress, etc... see the associated method and check its coverage.
+func TestGetModuleComponentObj(t *testing.T) {
+	// Test case: Valid YAML
+	yamlString := []byte(`
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: my-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  key: value
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: MyApp
+  template:
+    metadata:
+      labels:
+        app: MyApp
+    spec:
+      containers:
+      - name: my-container
+        image: my-image
+        ports:
+        - containerPort: 8080
+    `)
+
+	ctrlObjects, err := GetModuleComponentObj(yamlString)
+	if err != nil {
+		t.Fatalf("Failed to get module component objects: %v", err)
+	}
+
+	if len(ctrlObjects) != 4 {
+		t.Errorf("Expected 4 objects, got %d", len(ctrlObjects))
+	}
+
+	for _, obj := range ctrlObjects {
+		switch obj.(type) {
+		case *corev1.Service:
+			sv, ok := obj.(*corev1.Service)
+			if !ok {
+				t.Errorf("Expected Service object, got %T", obj)
+			}
+			if sv.Name != "my-service" {
+				t.Errorf("Expected service name 'my-service', got %s", sv.Name)
+			}
+		case *rbacv1.ClusterRole:
+			cr, ok := obj.(*rbacv1.ClusterRole)
+			if !ok {
+				t.Errorf("Expected ClusterRole object, got %T", obj)
+			}
+			if cr.Name != "my-cluster-role" {
+				t.Errorf("Expected cluster role name 'my-cluster-role', got %s", cr.Name)
+			}
+		case *corev1.ConfigMap:
+			cm, ok := obj.(*corev1.ConfigMap)
+			if !ok {
+				t.Errorf("Expected ConfigMap object, got %T", obj)
+			}
+			if cm.Name != "my-config" {
+				t.Errorf("Expected config map name 'my-config', got %s", cm.Name)
+			}
+		case *appsv1.Deployment:
+			dp, ok := obj.(*appsv1.Deployment)
+			if !ok {
+				t.Errorf("Expected Deployment object, got %T", obj)
+			}
+			if dp.Name != "my-deployment" {
+				t.Errorf("Expected deployment name 'my-deployment', got %s", dp.Name)
+			}
+		default:
+			t.Errorf("Unexpected object type: %T", obj)
+		}
+	}
+
+	// Test case: Invalid YAML
+	invalidYamlString := []byte(`
+		apiVersion: v1
+		kind: Service
+		metadata:
+			name: my-service
+		spec:
+			selector:
+				app: MyApp
+			ports:
+				- protocol: TCP
+					port: 80
+					targetPort: 9376
+		---
+		apiVersion: rbac.authorization.k8s.io/v1
+		kind: ClusterRole
+		metadata:
+			name: my-cluster-role
+		rules:
+		- apiGroups: [""]
+			resources: ["pods"]
+			verbs: ["get", "watch", "list"]
+		---
+		apiVersion: v1
+		kind: ConfigMap
+		metadata:
+			name: my-config
+		data:
+			key: value
+		---
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+			name: my-deployment
+		spec:
+			replicas: "invalid"
+			selector:
+				matchLabels:
+					app: MyApp
+			template:
+				metadata:
+					labels:
+						app: MyApp
+				spec:
+					containers:
+					- name: my-container
+						image: my-image
+						ports:
+						- containerPort: 8080
+					`)
+
+	ctrlObjects, err = GetModuleComponentObj(invalidYamlString)
+	assert.NotNil(t, err)
+}
+
+func TestGetDriverYaml(t *testing.T) {
+	// Test case: Valid YAML - DaemonSet
+	// TODO: This string does not cover all elements necessary to build the rbac object.
+	yamlString := `
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: my-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  key: value
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: my-daemonset
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: MyApp
+  template:
+    metadata:
+      labels:
+        app: MyApp
+    spec:
+      containers:
+      - name: my-container
+        image: my-image
+        ports:
+        - containerPort: 8080
+    `
+
+	ctrlObject, err := GetDriverYaml(yamlString, "DaemonSet")
+	appsv1 := "apps/v1"
+	daemonset := "DaemonSet"
+	myDaemonset := "my-daemonset"
+	myContainer := "my-container"
+	myImage := "my-image"
+	port8080 := int32(8080)
+	// TODO: This object will need to be built precisely to match the input spec.
+	expected := NodeYAML{
+		DaemonSetApplyConfig: confv1.DaemonSetApplyConfiguration{
+			TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
+				APIVersion: &appsv1,
+				Kind:       &daemonset,
+			},
+			ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+				Name: &myDaemonset,
+			},
+			Spec: &confv1.DaemonSetSpecApplyConfiguration{
+				// Spec configuration
+				Selector: &confmetav1.LabelSelectorApplyConfiguration{
+					MatchLabels: map[string]string{
+						"app": "MyApp",
+					},
+				},
+				Template: &confcorev1.PodTemplateSpecApplyConfiguration{
+					// Template configuration
+					Spec: &confcorev1.PodSpecApplyConfiguration{
+						Containers: []confcorev1.ContainerApplyConfiguration{
+							{
+								// Container configuration
+								Name:  &myContainer,
+								Image: &myImage,
+								Ports: []confcorev1.ContainerPortApplyConfiguration{
+									{
+										ContainerPort: &port8080,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Status: &confv1.DaemonSetStatusApplyConfiguration{
+				// Status configuration
+			},
+		},
+		Rbac: RbacYAML{
+			ServiceAccount: corev1.ServiceAccount{
+				// ServiceAccount configuration
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "ServiceAccount",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+			},
+			ClusterRole: rbacv1.ClusterRole{
+				// ClusterRole configuration
+			},
+			ClusterRoleBinding: rbacv1.ClusterRoleBinding{
+				// ClusterRoleBinding configuration
+			},
+		},
+	}
+
+	assert.Nil(t, err)
+	// TODO: Proper comparison here once the
+	// expected object has been ironed out
+	assert.NotNil(t, ctrlObject)
+	assert.NotNil(t, expected)
+	// assert.Equal(t, ctrlObject, expected)
+
+	// Test case: valid YAML - deployment
+	// TODO: Reuse and edit the above input/expected outputs with modificatons for Deployment obj
+
+	// Test case: Invalid YAML
+	invalidYamlString := `
+		apiVersion: v1
+		kind: Service
+		metadata:
+			name: my-service
+		spec:
+			selector:
+				app: MyApp
+			ports:
+				- protocol: TCP
+					port: 80
+					targetPort: 9376
+		---
+		apiVersion: rbac.authorization.k8s.io/v1
+		kind: ClusterRole
+		metadata:
+			name: my-cluster-role
+		rules:
+		- apiGroups: [""]
+			resources: ["pods"]
+			verbs: ["get", "watch", "list"]
+		---
+		apiVersion: v1
+		kind: ConfigMap
+		metadata:
+			name: my-config
+		data:
+			key: value
+		---
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+			name: my-deployment
+		spec:
+			replicas: "invalid"
+			selector:
+				matchLabels:
+					app: MyApp
+			template:
+				metadata:
+					labels:
+						app: MyApp
+				spec:
+					containers:
+					- name: my-container
+						image: my-image
+						ports:
+						- containerPort: 8080
+					`
+
+	_, err = GetDriverYaml(invalidYamlString, "Deployment")
+	if err == nil {
+		t.Errorf("Expected error, got nil")
 	}
 }

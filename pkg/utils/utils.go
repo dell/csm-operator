@@ -691,18 +691,6 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 		}
 	}
 
-	if kind == "StatefulSet" {
-		var ss confv1.StatefulSetApplyConfiguration
-		err := yaml.Unmarshal(podBuf, &ss)
-		if err != nil {
-			return nil, err
-		}
-		return StatefulControllerYAML{
-			StatefulSet: ss,
-			Rbac:        rbac,
-		}, nil
-	}
-
 	if kind == "Deployment" {
 		var dp confv1.DeploymentApplyConfiguration
 		err := yaml.Unmarshal(podBuf, &dp)
