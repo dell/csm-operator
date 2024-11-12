@@ -225,6 +225,17 @@ func TestAuthInjectDeployment(t *testing.T) {
 			}
 			return true, true, controllerYAML.Deployment, operatorConfig, customResource
 		},
+		"success - greenfield injection mising skip certificate validation env": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_missing_skip_cert_env.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			if err != nil {
+				panic(err)
+			}
+			return true, true, controllerYAML.Deployment, operatorConfig, customResource
+		},
 		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
