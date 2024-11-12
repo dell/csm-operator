@@ -347,7 +347,8 @@ func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorage
 	}
 	log.Error(validationError, fmt.Sprintf(" *************Create/Update %s failed ********",
 		instance.GetDriverType()))
-	return LogBannerAndReturn(reconcile.Result{Requeue: false}, validationError)
+	LogEndReconcile()
+	return reconcile.Result{Requeue: false}, validationError
 }
 
 // HandleSuccess for csm
@@ -387,7 +388,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		}
 		return requeue
 	}
-	requeue, _ = LogBannerAndReturn(requeue, nil)
+	LogEndReconcile()
 	return requeue
 }
 

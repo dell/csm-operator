@@ -13,7 +13,13 @@
 package utils
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"io"
+	"os"
+	"strings"
+	"sync"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -34,6 +40,34 @@ import (
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+func captureOutput(f func()) string {
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		panic(err)
+	}
+	stdout := os.Stdout
+	stderr := os.Stderr
+	defer func() {
+		os.Stdout = stdout
+		os.Stderr = stderr
+	}()
+	os.Stdout = writer
+	os.Stderr = writer
+	out := make(chan string)
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+	go func() {
+		var buf bytes.Buffer
+		wg.Done()
+		io.Copy(&buf, reader)
+		out <- buf.String()
+	}()
+	wg.Wait()
+	f()
+	writer.Close()
+	return <-out
+}
 
 // createCR is a helper function to create ContainerStorageModule object
 func createCR(driverType csmv1.DriverType, moduleType csmv1.ModuleType, moduleEnabled bool, components []csmv1.ContainerTemplate) *csmv1.ContainerStorageModule {
@@ -1367,3 +1401,393 @@ spec:
 		t.Errorf("Expected error, got nil")
 	}
 }
+
+func TestDeleteObject(t *testing.T) {
+	// Test case: Delete object successfully
+	ctx := context.Background()
+	ctrlClient := fake.NewClientBuilder().Build()
+
+	obj := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "my-namespace",
+		},
+	}
+
+	ctrlClient.Create(ctx, obj)
+	err := DeleteObject(ctx, obj, ctrlClient)
+	assert.Nil(t, err)
+
+	// Test case: Object not found
+	// just try to delete the same object that we know is no longer there (since it was just deleted)
+
+	if err := DeleteObject(ctx, obj, ctrlClient); err != nil {
+		t.Errorf("Failed to delete object: %v", err)
+	}
+}
+
+func TestApplyObject(t *testing.T) {
+	// Test case: Create a new object
+	ctx := context.Background()
+	ctrlClient := fake.NewClientBuilder().Build()
+
+	obj := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "my-namespace",
+		},
+	}
+
+	err := ApplyObject(ctx, obj, ctrlClient)
+	assert.Nil(t, err)
+
+	// Test case: Update an existing object
+	obj.Labels = map[string]string{"key": "value"}
+
+	err = ApplyObject(ctx, obj, ctrlClient)
+	assert.Nil(t, err)
+
+	// Test case: Error during object creation
+	// TODO: Come up with some way to inject an error during creation
+	// apply the same object as before doesn't trigger an error...
+}
+
+// TODO: This is where I left off. Come back tomorrow.
+func TestLogEndReconcile(t *testing.T) {
+	// Call the function
+	output := captureOutput(func() { LogEndReconcile() })
+
+	expectedOutput := "################End Reconcile##############\n"
+	if output != expectedOutput {
+		t.Errorf("Expected output %q, but got %q", expectedOutput, output)
+	}
+}
+
+func TestGetModuleDefaultVersion(t *testing.T) {
+	tests := []struct {
+		name             string
+		driverConfig     string
+		driverType       csmv1.DriverType
+		moduleType       csmv1.ModuleType
+		path             string
+		expectedVersion  string
+		expectedErrorMsg string
+	}{
+		{
+			name:             "valid version",
+			driverConfig:     "v2.12.0",
+			driverType:       csmv1.PowerScale,
+			moduleType:       csmv1.Observability,
+			path:             "../../operatorconfig",
+			expectedVersion:  "v1.10.0",
+			expectedErrorMsg: "",
+		},
+		/*
+			{
+				name:             "invalid driver",
+				driverConfig:     "v2.12.0",
+				driverType:       csmv1.UnknownDriver,
+				moduleType:       csmv1.Observability,
+				path:             "../operatorconfig",
+				expectedVersion:  "",
+				expectedErrorMsg: "unknown driver type: UnknownDriver",
+			},*/
+		{
+			name:             "invalid version",
+			driverConfig:     "v20.12.0",
+			driverType:       csmv1.PowerScale,
+			moduleType:       csmv1.Observability,
+			path:             "../../operatorconfig",
+			expectedVersion:  "",
+			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			version, err := GetModuleDefaultVersion(tt.driverConfig, tt.driverType, tt.moduleType, tt.path)
+			if tt.expectedErrorMsg != "" {
+				if err == nil {
+					t.Errorf("expected error containing %q, but got nil", tt.expectedErrorMsg)
+				} else if !strings.Contains(err.Error(), tt.expectedErrorMsg) {
+					t.Errorf("expected error containing %q, but got %v", tt.expectedErrorMsg, err)
+				}
+			} else if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if version != tt.expectedVersion {
+				t.Errorf("expected version %q, but got %q", tt.expectedVersion, version)
+			}
+		})
+	}
+}
+
+func TestVersionParser(t *testing.T) {
+	tests := []struct {
+		name          string
+		driverConfig  string
+		expectedMajor int
+		expectedMinor int
+		expectedError string
+	}{
+		{
+			name:          "valid version",
+			driverConfig:  "v2.12.0",
+			expectedMajor: 2,
+			expectedMinor: 12,
+			expectedError: "",
+		},
+		{
+			name:          "invalid version",
+			driverConfig:  "v2.12",
+			expectedMajor: -1,
+			expectedMinor: -1,
+			expectedError: "not in correct version format",
+		},
+		{
+			name:          "valid version alt format - no leading v",
+			driverConfig:  "2.12.0",
+			expectedMajor: 2,
+			expectedMinor: 12,
+			expectedError: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fmt.Println("test case: ", tt.name)
+			majorVersion, minorVersion, err := versionParser(tt.driverConfig)
+			if tt.expectedError != "" {
+				if err == nil {
+					t.Errorf("expected error containing %q, but got nil", tt.expectedError)
+				} else if !strings.Contains(err.Error(), tt.expectedError) {
+					t.Errorf("expected error containing %q, but got %v", tt.expectedError, err)
+				}
+			} else if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if majorVersion != tt.expectedMajor {
+				t.Errorf("expected major version %d, but got %d", tt.expectedMajor, majorVersion)
+			}
+
+			if minorVersion != tt.expectedMinor {
+				t.Errorf("expected minor version %d, but got %d", tt.expectedMinor, minorVersion)
+			}
+		})
+	}
+}
+
+func TestMinVersionCheck(t *testing.T) {
+	tests := []struct {
+		name           string
+		minVersion     string
+		version        string
+		expectedResult bool
+		expectedError  string
+	}{
+		{
+			name:           "valid version",
+			minVersion:     "v2.12.0",
+			version:        "v2.12.1",
+			expectedResult: true,
+			expectedError:  "",
+		},
+		{
+			name:           "invalid version",
+			minVersion:     "v2.12.0",
+			version:        "v2.11.0",
+			expectedResult: false,
+			expectedError:  "",
+		},
+		{
+			name:           "invalid version format",
+			minVersion:     "v2.12.0",
+			version:        "v2.12",
+			expectedResult: false,
+			expectedError:  "not in correct version format",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := MinVersionCheck(tt.minVersion, tt.version)
+			if tt.expectedError != "" {
+				if err == nil {
+					t.Errorf("expected error containing %q, but got nil", tt.expectedError)
+				} else if !strings.Contains(err.Error(), tt.expectedError) {
+					t.Errorf("expected error containing %q, but got %v", tt.expectedError, err)
+				}
+			} else if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if result != tt.expectedResult {
+				t.Errorf("expected result %v, but got %v", tt.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestGetClusterIDs(t *testing.T) {
+	tests := []struct {
+		name           string
+		replica        csmv1.Module
+		expectedOutput []string
+	}{
+		{
+			name: "valid version",
+			replica: csmv1.Module{
+				Components: []csmv1.ContainerTemplate{
+					{
+						Name: ReplicationControllerManager,
+						Envs: []corev1.EnvVar{
+							{
+								Name:  "TARGET_CLUSTERS_IDS",
+								Value: "cluster1,cluster2",
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: []string{"cluster1", "cluster2"},
+		},
+		{
+			name: "invalid version",
+			replica: csmv1.Module{
+				Components: []csmv1.ContainerTemplate{
+					{
+						Name: ReplicationControllerManager,
+						Envs: []corev1.EnvVar{
+							{
+								Name:  "TARGET_CLUSTERS_IDS",
+								Value: "cluster1,cluster2,cluster3",
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: []string{"cluster1", "cluster2", "cluster3"},
+		},
+		{
+			name: "valid version - nil replica components",
+			replica: csmv1.Module{
+				Components: nil,
+			},
+			expectedOutput: []string{"self"},
+		},
+		{
+			name: "valid version - empty cluster list",
+			replica: csmv1.Module{
+				Components: []csmv1.ContainerTemplate{
+					{
+						Name: ReplicationControllerManager,
+						Envs: []corev1.EnvVar{
+							{
+								Name:  "TARGET_CLUSTERS_IDS",
+								Value: "",
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: []string{"self"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			output := getClusterIDs(ctx, tt.replica)
+
+			assert.Equal(t, output, tt.expectedOutput)
+		})
+	}
+}
+
+func TestGetConfigData(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+
+	// Create a fake ctrlClient
+	ctrlClient := fake.NewClientBuilder().Build()
+
+	// Create a fake clusterID
+	clusterID := "test-cluster"
+
+	// Create a fake secret
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterID,
+			Namespace: ReplicationControllerNameSpace,
+		},
+		Data: map[string][]byte{
+			"data": []byte("test-data"),
+		},
+	}
+
+	// Add the secret to the ctrlClient
+	if err := ctrlClient.Create(ctx, secret); err != nil {
+		t.Fatalf("failed to create secret: %v", err)
+	}
+
+	// Call the function
+	configData, err := getConfigData(ctx, clusterID, ctrlClient)
+
+	// Assert the expected result
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if !bytes.Equal(configData, secret.Data["data"]) {
+		t.Errorf("expected configData %v, but got %v", secret.Data["data"], configData)
+	}
+
+	// TODO: Add a test case for checking for a secret that isn't there
+}
+
+// TODO: This test case isn't working yet. Needs some work,
+// NewControllerRuntimeClient is rejecting the input.
+/*
+func TestGetClusterCtrlClient(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+
+	// Create a fake ctrlClient
+	ctrlClient := fake.NewClientBuilder().Build()
+
+	// Create a fake clusterID
+	clusterID := "test-cluster"
+
+	// Create a fake secret
+	secret := corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterID,
+			Namespace: ReplicationControllerNameSpace,
+		},
+		Data: map[string][]byte{
+			"data": []byte("test-data"),
+		},
+	}
+
+	// Add the secret to the ctrlClient
+	if err := ctrlClient.Create(ctx, &secret); err != nil {
+		t.Fatalf("failed to create secret: %v", err)
+	}
+
+	// Call the function
+	// TODO: This is erroring out, need to examine why
+	clusterCtrlClient, err := getClusterCtrlClient(ctx, clusterID, ctrlClient)
+
+	// Assert the expected result
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if clusterCtrlClient == nil {
+		t.Error("expected clusterCtrlClient to be non-nil")
+	}
+}*/
