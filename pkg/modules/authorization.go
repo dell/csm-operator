@@ -308,7 +308,6 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 					break
 				}
 			}
-
 			// If SKIP_CERTIFICATE_VALIDATION is not found, add it
 			if !skipcertFound {
 				authModule.Components[i].Envs = append(authModule.Components[i].Envs, corev1.EnvVar{
