@@ -18,6 +18,6 @@ images:
   # container.
   externalhealthmonitorcontroller: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
   # "images.sdcmonitor" defines the container images used to monitor sdc container
-  sdcmonitor: dellemc/sdc:4.5.2.1
+  sdcmonitor: docker.io/dellemc/sdc:4.5.2.1
   # "images.metadataretriever" defines the container images used for csi metadata retriever
   metadataretriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0

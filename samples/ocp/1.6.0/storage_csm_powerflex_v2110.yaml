@@ -189,7 +189,7 @@ spec:
       configVersion: v1.11.0
       components:
         - name: karavi-authorization-proxy
-          # Use image: dellemc/csm-authorization-sidecar:v2.0.0-alpha for PowerFlex Tech-Preview v2.0.0-alpha
+          # Use image: docker.io/dellemc/csm-authorization-sidecar:v2.0.0-alpha for PowerFlex Tech-Preview v2.0.0-alpha
           image: registry.connect.redhat.com/dell-emc/csm-authorization-sidecar@sha256:5d3f43f2c1bb0704ddf4b9d8f9218cc2d77cabcd73ec9e7076f4865809d2fc5d
           envs:
             # proxyHost: hostname of the csm-authorization server
@@ -241,9 +241,9 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            # Default value: "docker.io/nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
+              value: "docker.io/nginxinc/nginx-unprivileged:1.20"
         # enabled: Enable/Disable cert-manager
         # Allowed values:
         #   true: enable deployment of cert-manager

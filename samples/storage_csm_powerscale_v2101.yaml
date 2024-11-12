@@ -26,7 +26,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerScale driver v2.10.1
-      image: "dellemc/csi-isilon:v2.10.1"
+      image: "docker.io/dellemc/csi-isilon:v2.10.1"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -246,7 +246,7 @@ spec:
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.7.3
+        image: docker.io/dellemc/csi-metadata-retriever:v1.7.3
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -265,7 +265,7 @@ spec:
       configVersion: v1.10.1
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:v1.10.1
+          image: docker.io/dellemc/csm-authorization-sidecar:v1.10.1
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -288,7 +288,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: dellemc/dell-csi-replicator:v1.8.1
+          image: docker.io/dellemc/dell-csi-replicator:v1.8.1
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -303,7 +303,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/dell-replication-controller:v1.8.1
+          image: docker.io/dellemc/dell-replication-controller:v1.8.1
           envs:
             # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
             # Set the value to "self" in case of stretched/single cluster configuration
@@ -340,7 +340,7 @@ spec:
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.8.1
+          image: docker.io/dellemc/csm-topology:v1.8.1
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -360,7 +360,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.42.0
+          image: docker.io/otel/opentelemetry-collector:0.42.0
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -372,9 +372,9 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            # Default value: "docker.io/nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
+              value: "docker.io/nginxinc/nginx-unprivileged:1.20"
         - name: cert-manager
           # enabled: Enable/Disable cert-manager
           # Allowed values:
@@ -387,7 +387,7 @@ spec:
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-metrics-powerscale:v1.5.1
+          image: docker.io/dellemc/csm-metrics-powerscale:v1.5.1
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int
@@ -459,7 +459,7 @@ spec:
       configVersion: v1.9.1
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.9.1
+          image: docker.io/dellemc/podmon:v1.9.1
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-isilon"
@@ -474,7 +474,7 @@ spec:
             - "--driverPath=csi-isilon.dellemc.com"
             - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
         - name: podmon-node
-          image: dellemc/podmon:v1.9.1
+          image: docker.io/dellemc/podmon:v1.9.1
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
