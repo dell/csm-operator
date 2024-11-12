@@ -46,7 +46,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerMax driver v2.10.1
-      image: dellemc/csi-powermax:v2.10.1
+      image: docker.io/dellemc/csi-powermax:v2.10.1
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -233,7 +233,7 @@ spec:
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.7.3
+        image: docker.io/dellemc/csi-metadata-retriever:v1.7.3
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -256,7 +256,7 @@ spec:
           # image: Define the container images used for the reverse proxy
           # Default value: None
           # Example: "csipowermax-reverseproxy:v2.9.1"
-          image: dellemc/csipowermax-reverseproxy:v2.9.1
+          image: docker.io/dellemc/csipowermax-reverseproxy:v2.9.1
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -280,7 +280,7 @@ spec:
       configVersion: v1.10.1
       components:
         - name: karavi-authorization-proxy
-          image: dellemc/csm-authorization-sidecar:v1.10.1
+          image: docker.io/dellemc/csm-authorization-sidecar:v1.10.1
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -303,7 +303,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: dellemc/dell-csi-replicator:v1.8.1
+          image: docker.io/dellemc/dell-csi-replicator:v1.8.1
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -318,7 +318,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/dell-replication-controller:v1.8.1
+          image: docker.io/dellemc/dell-replication-controller:v1.8.1
           envs:
             # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
             # Set the value to "self" in case of stretched/single cluster configuration
@@ -355,7 +355,7 @@ spec:
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:v1.8.1
+          image: docker.io/dellemc/csm-topology:v1.8.1
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -375,7 +375,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.42.0
+          image: docker.io/otel/opentelemetry-collector:0.42.0
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -387,9 +387,9 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.20"
+            # Default value: "docker.io/nginxinc/nginx-unprivileged:1.20"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.20"
+              value: "docker.io/nginxinc/nginx-unprivileged:1.20"
         - name: cert-manager
           # enabled: Enable/Disable cert-manager
           # Allowed values:
@@ -401,7 +401,7 @@ spec:
           # enabled: Enable/Disable PowerMax metrics
           enabled: false
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powermax:v1.3.1
+          image: docker.io/dellemc/csm-metrics-powermax:v1.3.1
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int
