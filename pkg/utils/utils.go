@@ -42,7 +42,6 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
 	"k8s.io/client-go/kubernetes"
@@ -781,6 +780,7 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 }
 
 // ApplyCTRLObject -
+// TODO: Refactor to make use of ApplyObject. There's no need for so much repeated code.
 func ApplyCTRLObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 
@@ -810,10 +810,10 @@ func ApplyCTRLObject(ctx context.Context, obj crclient.Object, ctrlClient crclie
 	return nil
 }
 
-// LogBannerAndReturn -
-func LogBannerAndReturn(result reconcile.Result, err error) (reconcile.Result, error) {
+// LogEndReconcile - Print the 'ending reconcile' message
+func LogEndReconcile() {
 	fmt.Println("################End Reconcile##############")
-	return result, err
+	return
 }
 
 // GetModuleDefaultVersion -
