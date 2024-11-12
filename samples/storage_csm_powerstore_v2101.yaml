@@ -45,7 +45,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI PowerStore driver v2.10.1
-      image: "dellemc/csi-powerstore:v2.10.1"
+      image: "docker.io/dellemc/csi-powerstore:v2.10.1"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -73,7 +73,7 @@ spec:
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.7.3
+        image: docker.io/dellemc/csi-metadata-retriever:v1.7.3
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -189,7 +189,7 @@ spec:
       configVersion: v1.9.1
       components:
         - name: podmon-controller
-          image: dellemc/podmon:v1.9.1
+          image: docker.io/dellemc/podmon:v1.9.1
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -204,7 +204,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: dellemc/podmon:v1.9.1
+          image: docker.io/dellemc/podmon:v1.9.1
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

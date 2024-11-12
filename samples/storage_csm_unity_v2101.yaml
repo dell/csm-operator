@@ -26,7 +26,7 @@ spec:
     forceRemoveDriver: true
     common:
       # Image for CSI Unity driver v2.10.1
-      image: "dellemc/csi-unity:v2.10.1"
+      image: "docker.io/dellemc/csi-unity:v2.10.1"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
@@ -93,7 +93,7 @@ spec:
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v7.0.1
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.7.3
+        image: docker.io/dellemc/csi-metadata-retriever:v1.7.3
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
