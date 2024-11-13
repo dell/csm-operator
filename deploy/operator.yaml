@@ -318,18 +318,6 @@ rules:
       - update
       - watch
   - apiGroups:
-      - apps
-    resources:
-      - deployments
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
       - auditregistration.k8s.io
     resources:
       - auditsinks
@@ -512,14 +500,6 @@ rules:
       - get
       - patch
       - update
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-    verbs:
-      - get
-      - list
-      - watch
   - apiGroups:
       - csi.storage.k8s.io
     resources:
@@ -1328,7 +1308,7 @@ spec:
               value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.12.0
             - name: RELATED_IMAGE_sdc
               value: docker.io/dellemc/sdc:4.5.2.1
-            - name: RELATED_IMAGE_csm-authorization-sidecar
+            - name: RELATED_IMAGE_karavi-authorization-proxy
               value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0
             - name: RELATED_IMAGE_csm-authorization-proxy
               value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.0.0
