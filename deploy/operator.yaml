@@ -318,6 +318,18 @@ rules:
       - update
       - watch
   - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
       - auditregistration.k8s.io
     resources:
       - auditsinks
@@ -500,6 +512,14 @@ rules:
       - get
       - patch
       - update
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups:
       - csi.storage.k8s.io
     resources:
