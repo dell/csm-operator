@@ -177,7 +177,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
@@ -577,7 +577,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
@@ -1229,7 +1229,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
@@ -4289,7 +4289,7 @@ spec:
                         value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.12.0
                       - name: RELATED_IMAGE_sdc
                         value: docker.io/dellemc/sdc:4.5.2.1
-                      - name: RELATED_IMAGE_csm-authorization-sidecar
+                      - name: RELATED_IMAGE_karavi-authorization-proxy
                         value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0
                       - name: RELATED_IMAGE_csm-authorization-proxy
                         value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.0.0
@@ -4410,7 +4410,7 @@ spec:
       name: csi-vxflexos
     - image: docker.io/dellemc/sdc:4.5.2.1
       name: sdc
-    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0
       name: karavi-authorization-proxy
     - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.10.0
       name: dell-csi-replicator
