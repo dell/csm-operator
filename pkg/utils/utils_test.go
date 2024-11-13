@@ -69,6 +69,23 @@ func captureOutput(f func()) string {
 	return <-out
 }
 
+// fullFakeClient is a helper function to create a fake client with all types pre-registered
+func fullFakeClient() crclient.WithWatch {
+	// CSM types must be registered with the scheme
+	scheme := runtime.NewScheme()
+	csmv1.AddToScheme(scheme)  // for CSM objects
+	corev1.AddToScheme(scheme) // for namespaces
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(velerov1.AddToScheme(scheme))
+
+	// Create a fake ctrlClient
+	ctrlClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+
+	return ctrlClient
+}
+
 // createCR is a helper function to create ContainerStorageModule object
 func createCR(driverType csmv1.DriverType, moduleType csmv1.ModuleType, moduleEnabled bool, components []csmv1.ContainerTemplate) *csmv1.ContainerStorageModule {
 	return &csmv1.ContainerStorageModule{
@@ -693,18 +710,8 @@ func TestSetContainerImage(t *testing.T) {
 
 func TestGetBackupStorageLocation(t *testing.T) {
 	ctx := context.Background()
-	scheme := runtime.NewScheme()
+	fakeClient := fullFakeClient()
 
-	// Register the necessary types with the scheme
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(velerov1.AddToScheme(scheme))
-
-	// Set the scheme as the default scheme
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(velerov1.AddToScheme(scheme))
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(scheme).
-		Build()
 	// Test case: BackupStorageLocation does not exist
 	name := "test-backup-storage"
 	namespace := "test-namespace"
@@ -1405,7 +1412,7 @@ spec:
 func TestDeleteObject(t *testing.T) {
 	// Test case: Delete object successfully
 	ctx := context.Background()
-	ctrlClient := fake.NewClientBuilder().Build()
+	ctrlClient := fullFakeClient()
 
 	obj := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1429,7 +1436,7 @@ func TestDeleteObject(t *testing.T) {
 func TestApplyObject(t *testing.T) {
 	// Test case: Create a new object
 	ctx := context.Background()
-	ctrlClient := fake.NewClientBuilder().Build()
+	ctrlClient := fullFakeClient()
 
 	obj := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1711,7 +1718,7 @@ func TestGetConfigData(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a fake ctrlClient
-	ctrlClient := fake.NewClientBuilder().Build()
+	ctrlClient := fullFakeClient()
 
 	// Create a fake clusterID
 	clusterID := "test-cluster"
@@ -1754,7 +1761,7 @@ func TestGetClusterCtrlClient(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a fake ctrlClient
-	ctrlClient := fake.NewClientBuilder().Build()
+	ctrlClient := fullFakeClient()
 
 	// Create a fake clusterID
 	clusterID := "test-cluster"
@@ -1790,4 +1797,198 @@ func TestGetClusterCtrlClient(t *testing.T) {
 	if clusterCtrlClient == nil {
 		t.Error("expected clusterCtrlClient to be non-nil")
 	}
+}
+*/
+
+func TestGetNamespaces(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+
+	// CSM types must be registered with the scheme
+	scheme := runtime.NewScheme()
+	csmv1.AddToScheme(scheme)  // for CSM objects
+	corev1.AddToScheme(scheme) // for namespaces
+
+	// Create a fake ctrlClient
+	ctrlClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+
+	// Create fake namespaces
+	ns1 := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-namespace",
+		},
+	}
+
+	ns2 := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-ns-2",
+		},
+	}
+
+	// Add the namespaces to the ctrlClient
+	if err := ctrlClient.Create(ctx, ns1); err != nil {
+		t.Fatalf("failed to create ns: %v", err)
+	}
+	if err := ctrlClient.Create(ctx, ns2); err != nil {
+		t.Fatalf("failed to create ns: %v", err)
+	}
+
+	// Create fake CSM objects and add those
+	csm1 := createCR(csmv1.PowerFlex, csmv1.Replication, true, nil)
+	csm1.ObjectMeta = metav1.ObjectMeta{
+		Name:      "test-csm-obj",
+		Namespace: "test-namespace",
+	}
+	if err := ctrlClient.Create(ctx, csm1); err != nil {
+		t.Fatalf("failed to create csm object: %v", err)
+	}
+
+	// Call the function
+	namespaces, err := GetNamespaces(ctx, ctrlClient)
+
+	// Assert the expected result
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if len(namespaces) != 1 {
+		t.Errorf("expected 1 namespaces, got %d", len(namespaces))
+	}
+	if namespaces[0] != "test-namespace" {
+		t.Errorf("expected namespace %s, got %s", "test-namespace", namespaces[0])
+	}
+}
+
+func TestContains(t *testing.T) {
+	// Test case: slice contains the specified string
+	slice := []string{"apple", "banana", "cherry"}
+	str := "banana"
+	expected := true
+	result := Contains(slice, str)
+	if result != expected {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+
+	// Test case: slice does not contain the specified string
+	slice = []string{"apple", "banana", "cherry"}
+	str = "grape"
+	expected = false
+	result = Contains(slice, str)
+	if result != expected {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+
+	// Test case: empty slice
+	slice = []string{}
+	str = "apple"
+	expected = false
+	result = Contains(slice, str)
+	if result != expected {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+}
+
+func TestIsAppMobilityComponentEnabled(t *testing.T) {
+	// Test case: component is enabled
+	instance := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.ApplicationMobility,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "application-mobility-controller-manager",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+	expected := true
+	result := IsAppMobilityComponentEnabled(context.Background(), instance, nil, csmv1.ApplicationMobility, "application-mobility-controller-manager")
+	if result != expected {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+
+	// Test case: component is disabled
+	instance.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
+	expected = false
+	result = IsAppMobilityComponentEnabled(context.Background(), instance, nil, csmv1.ApplicationMobility, "application-mobility-controller-manager")
+	if result != expected {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+
+	// Test case: module is disabled
+	instance.Spec.Modules[0].Enabled = false
+	result = IsAppMobilityComponentEnabled(context.Background(), instance, nil, csmv1.ApplicationMobility, "application-mobility-controller-manager")
+	if result != expected {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+}
+
+// TODO: Broken/unfinished. No reconciler object support.
+/*
+func TestGetDefaultClusters(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+
+	// CSM types must be registered with the scheme
+	scheme := runtime.NewScheme()
+	csmv1.AddToScheme(scheme)  // for CSM objects
+	corev1.AddToScheme(scheme) // for namespaces
+
+	// Create a fake ctrlClient
+	ctrlClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+	// Test case: replication module is enabled
+	instance := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Replication,
+					Enabled: true,
+				},
+			},
+		},
+	}
+
+	fakeReconcile := FakeReconcileCSM{
+		Client:    ctrlClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+	expectedReplicaEnabled := true
+	expectedClusterClients := []ReplicaCluster{
+		{
+			ClusterCTRLClient: r.GetClient(),
+			ClusterK8sClient:  r.GetK8sClient(),
+			ClusterID:         DefaultSourceClusterID,
+		},
+	}
+
+	replicaEnabled, clusterClients, err := GetDefaultClusters(ctx, instance, fakeReconcile)
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+	if replicaEnabled != expectedReplicaEnabled {
+		t.Errorf("Expected %v, but got %v", expectedReplicaEnabled, replicaEnabled)
+	}
+	assert.Equal(t, clusterClients, expectedClusterClients)
+
+	// Test case: replication module is disabled
+	instance.Spec.Modules[0].Enabled = false
+	expectedReplicaEnabled = false
+	expectedClusterClients = []ReplicaCluster{}
+
+	replicaEnabled, clusterClients, err = GetDefaultClusters(context.TODO(), instance, r)
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+	if replicaEnabled != expectedReplicaEnabled {
+		t.Errorf("Expected %v, but got %v", expectedReplicaEnabled, replicaEnabled)
+	}
+	assert.Equal(t, clusterClients, expectedClusterClients)
 }*/
