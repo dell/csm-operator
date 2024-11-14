@@ -81,7 +81,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Delete Authorization CRs for \[([^"]*)\]$`, step.deleteAuthorizationCRs)
 	runner.addStep(`^Delete Authorization CRDs \[(\d+)\]$`, step.deleteCustomResourceDefinition)
 	runner.addStep(`^Set up application mobility CR \[([^"]*)\]$`, step.configureAMInstall)
-	runner.addStep(`^Install tls secret in namespace \[([^"]*)\]`, step.setUpTLSSecrets)
+	runner.addStep(`^Set up reverse proxy tls secret namespace \[([^"]*)\]`, step.setUpReverseProxy)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {

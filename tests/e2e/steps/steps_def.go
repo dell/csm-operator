@@ -675,10 +675,7 @@ func (step *Step) setUpPowermaxCreds(res Resource, templateFile, crType string) 
 		return err
 	}
 
-	fmt.Println("template file",templateFile)
-	fmt.Println("crType",crType)
 	for key := range mapValues {
-		fmt.Println("Key-Env: ",key," : ", os.Getenv(mapValues[key]))
 		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
 		if err != nil {
 			return err
@@ -1857,7 +1854,7 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 	return nil
 }
 
-func (step *Step) setUpTLSSecrets(res Resource, namespace string) error {
+func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
     // Check if the revproxy-certs secret exists
     revproxyExists := false
     cmd := exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace)
@@ -1912,8 +1909,6 @@ func (step *Step) setUpTLSSecrets(res Resource, namespace string) error {
         return fmt.Errorf("failed to generate TLS certificate: %v", err)
     }
 
-    fmt.Println("Key path:", keyPath)
-    fmt.Println("Cert path:", crtPath)
     if _, err := os.Stat(keyPath); os.IsNotExist(err) {
         return fmt.Errorf("key file does not exist: %v", keyPath)
     }
