@@ -15,11 +15,10 @@
 # Fill in the appropriate values, refer to docs if required
 # Create the configmap using following cmd
 # kubectl/oc create configmap powermax-reverseproxy-config --from-file config.yaml -n <namespace>
-mode: StandAlone  # Mode for the reverseproxy, should not be changed
 port: 2222
 logLevel: debug
 logFormat: text
-standAloneConfig:
+Config:
   storageArrays:
     - storageArrayId: "REPLACE_SYSTEMID"
       primaryURL: "https://REPLACE_ENDPOINT"
