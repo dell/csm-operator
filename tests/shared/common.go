@@ -14,10 +14,11 @@ package shared
 
 import (
 	"os"
-
+	"log"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -172,7 +173,10 @@ func MakeConfigMap(name, ns, _ string) *corev1.ConfigMap {
 
 // MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
-	configJSON, _ := os.ReadFile(configFile)
+	configJSON, err := os.ReadFile(filepath.Clean(configFile))
+	if err != nil {
+		log.Fatalf("failed to read testdata: %v", err)
+	}
 	data := map[string][]byte{
 		"config": configJSON,
 	}
