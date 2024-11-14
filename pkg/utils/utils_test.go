@@ -1929,6 +1929,34 @@ func TestIsAppMobilityComponentEnabled(t *testing.T) {
 	}
 }
 
+func TestIsResiliencyModuleEnabled(t *testing.T) {
+	// Test case: resiliency module is enabled
+	instance := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Resiliency,
+					Enabled: true,
+				},
+			},
+		},
+	}
+
+	expected := true
+	result := IsResiliencyModuleEnabled(context.Background(), instance, nil)
+	if result != expected {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+
+	// Test case: resiliency module is disabled
+	instance.Spec.Modules[0].Enabled = false
+	expected = false
+	result = IsResiliencyModuleEnabled(context.Background(), instance, nil)
+	if result != expected {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+}
+
 // TODO: Broken/unfinished. No reconciler object support.
 /*
 func TestGetDefaultClusters(t *testing.T) {
@@ -1992,3 +2020,183 @@ func TestGetDefaultClusters(t *testing.T) {
 	}
 	assert.Equal(t, clusterClients, expectedClusterClients)
 }*/
+
+func TestGetVolumeSnapshotLocation(t *testing.T) {
+	// Test case: snapshot location exists
+	ctx := context.Background()
+	fakeClient := fullFakeClient()
+
+	snapshotLocation := &velerov1.VolumeSnapshotLocation{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-snapshot-location",
+			Namespace: "test-namespace",
+		},
+	}
+	if err := fakeClient.Create(ctx, snapshotLocation); err != nil {
+		t.Errorf("Failed to create VolumeSnapshotLocation: %v", err)
+	}
+
+	snapshotLocation, err := GetVolumeSnapshotLocation(ctx, "test-snapshot-location", "test-namespace", fakeClient)
+	if err != nil {
+		t.Errorf("Failed to get VolumeSnapshotLocation: %v", err)
+	}
+	if snapshotLocation.Name != "test-snapshot-location" {
+		t.Errorf("Expected name %s, got %s", "test-snapshot-location", snapshotLocation.Name)
+	}
+	if snapshotLocation.Namespace != "test-namespace" {
+		t.Errorf("Expected namespace %s, got %s", "test-namespace", snapshotLocation.Namespace)
+	}
+
+	// Test case: snapshot location does not exist
+	_, err = GetVolumeSnapshotLocation(ctx, "non-existent-snapshot-location", "test-namespace", fakeClient)
+	if err == nil {
+		t.Errorf("Expected error, but got nil")
+	}
+}
+
+func TestGetSecret(t *testing.T) {
+	ctx := context.Background()
+	ctrlClient := fullFakeClient()
+
+	// Create a fake secret
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-secret",
+			Namespace: "test-namespace",
+		},
+		Data: map[string][]byte{
+			"data": []byte("test-data"),
+		},
+	}
+
+	// Add the secret to the ctrlClient
+	if err := ctrlClient.Create(ctx, secret); err != nil {
+		t.Fatalf("failed to create secret: %v", err)
+	}
+
+	// Call the function
+	found, err := GetSecret(ctx, "test-secret", "test-namespace", ctrlClient)
+
+	// Assert the expected result
+	assert.Nil(t, err)
+	assert.Equal(t, found.Name, "test-secret")
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if found.Name != "test-secret" {
+		t.Errorf("expected name %s, got %s", "test-secret", found.Name)
+	}
+
+	// error case: secret doesn't exist
+	if err := ctrlClient.Delete(ctx, secret); err != nil {
+		t.Fatalf("failed to create secret: %v", err)
+	}
+
+	// Call the function
+	found, err = GetSecret(ctx, "test-secret", "test-namespace", ctrlClient)
+
+	// Assert the expected result
+	assert.NotNil(t, err)
+}
+
+func TestDetermineUnitTestRun(t *testing.T) {
+	// Test case: UNIT_TEST environment variable is not set
+	ctx := context.Background()
+
+	result := DetermineUnitTestRun(ctx)
+	if result {
+		t.Errorf("Expected false, but got %v", result)
+	}
+
+	// Test case: UNIT_TEST environment variable is set to "true"
+	t.Setenv("UNIT_TEST", "true")
+	result = DetermineUnitTestRun(ctx)
+	if !result {
+		t.Errorf("Expected true, but got %v", result)
+	}
+
+	// Test case: UNIT_TEST environment variable is set to "false"
+	t.Setenv("UNIT_TEST", "false")
+	result = DetermineUnitTestRun(ctx)
+	if result {
+		t.Errorf("Expected false, but got %v", result)
+	}
+}
+
+func TestIsValidUpgrade(t *testing.T) {
+	ctx := context.Background()
+
+	csmComponentType := csmv1.Authorization
+	operatorConfig := OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
+	// Test case: upgrade is valid
+	oldVersion := "v1.11.0"
+	newVersion := "v1.12.0"
+	expectedIsValid := true
+
+	isValid, err := IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
+	assert.Nil(t, err)
+	assert.Equal(t, isValid, expectedIsValid)
+
+	// Test case: downgrade is valid
+	oldVersion = "v1.12.0"
+	newVersion = "v1.11.0"
+	expectedIsValid = true
+
+	isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
+	assert.Nil(t, err)
+	assert.Equal(t, isValid, expectedIsValid)
+
+	// Test case: upgrade is not valid
+	oldVersion = "v1.11.0"
+	newVersion = "v1.99.0"
+	expectedIsValid = false
+
+	isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
+	assert.NotNil(t, err)
+	assert.Equal(t, isValid, expectedIsValid)
+
+	// Test case: downgrade is not valid
+	oldVersion = "v1.11.0"
+	newVersion = "v1.0.0"
+	expectedIsValid = false
+
+	isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
+	assert.NotNil(t, err)
+	assert.Equal(t, isValid, expectedIsValid)
+
+	// Test case: same version-- just a config update, no upgrade/downgrade
+	oldVersion = "v1.11.0"
+	newVersion = "v1.11.0"
+	expectedIsValid = true
+
+	isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
+	assert.Nil(t, err)
+	assert.Equal(t, isValid, expectedIsValid)
+
+	/*
+		// Test case: error returned from getUpgradeInfo
+		oldVersion = "1.0.0"
+		newVersion = "2.0.0"
+		operatorConfig.UpgradePaths = map[string]UpgradePaths{
+			"driver": {
+				MinUpgradePath: "2.0.0",
+			},
+		}
+		expectedIsValid = false
+		expectedErr := fmt.Errorf("getUpgradeInfo not successful")
+
+		isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
+		if err == nil {
+			t.Errorf("Expected error, but got nil")
+		}
+		if err.Error() != expectedErr.Error() {
+			t.Errorf("Expected error %v, but got %v", expectedErr, err)
+		}
+		if isValid != expectedIsValid {
+			t.Errorf("Expected %v, but got %v", expectedIsValid, isValid)
+		}*/
+}
