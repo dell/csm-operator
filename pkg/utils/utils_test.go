@@ -1743,12 +1743,8 @@ func TestGetConfigData(t *testing.T) {
 	configData, err := getConfigData(ctx, clusterID, ctrlClient)
 
 	// Assert the expected result
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if !bytes.Equal(configData, secret.Data["data"]) {
-		t.Errorf("expected configData %v, but got %v", secret.Data["data"], configData)
-	}
+	assert.Nil(t, err)
+	assert.Equal(t, configData, secret.Data["data"])
 
 	// TODO: Add a test case for checking for a secret that isn't there
 }
@@ -2200,3 +2196,40 @@ func TestIsValidUpgrade(t *testing.T) {
 			t.Errorf("Expected %v, but got %v", expectedIsValid, isValid)
 		}*/
 }
+
+// TODO: Work on this, it's failing with an unmarshal error. It's the last thing I was working on before EOD.
+/*
+func TestGetClusterCtrlClient(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+
+	// Create a fake ctrlClient
+	ctrlClient := fullFakeClient()
+
+	// Create a fake clusterID
+	clusterID := "test-cluster"
+
+	// Create a fake secret
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterID,
+			Namespace: ReplicationControllerNameSpace,
+		},
+		Data: map[string][]byte{
+			"data": []byte("test-data"),
+		},
+	}
+
+	// Add the secret to the ctrlClient
+	if err := ctrlClient.Create(ctx, secret); err != nil {
+		t.Fatalf("failed to create secret: %v", err)
+	}
+
+	// Call the function
+	clusterCtrlClient, err := getClusterCtrlClient(ctx, clusterID, ctrlClient)
+
+	// Assert the expected result
+	assert.NoError(t, err)
+	assert.NotNil(t, clusterCtrlClient)
+}
+*/

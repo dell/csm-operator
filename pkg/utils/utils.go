@@ -1221,50 +1221,6 @@ func getUpgradeInfo[T CSMComponentType](ctx context.Context, operatorConfig Oper
 	return upgradePath.MinUpgradePath, nil
 }
 
-// BrownfieldOnboard will onboard the brownfield cluster
-func BrownfieldOnboard(ctx context.Context, path string, clientNameSpace string, ctrlClient crclient.Client, isDeleting bool) error {
-	logInstance := logger.GetLogger(ctx)
-
-	namespaces, err := GetNamespaces(ctx, ctrlClient)
-	if err != nil {
-		logInstance.Error(err, "Failed to get namespaces")
-		return err
-	}
-
-	manifestFile, err := os.ReadFile(filepath.Clean(path))
-	if err != nil {
-		logInstance.Error(err, "Failed to read manifest file")
-		return err
-	}
-
-	yamlFile := string(manifestFile)
-
-	for _, ns := range namespaces {
-
-		yamlFile := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
-		yamlFile = strings.ReplaceAll(yamlFile, ClientNamespace, clientNameSpace)
-
-		deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
-		if err != nil {
-			return err
-		}
-		for _, ctrlObj := range deployObjects {
-			if isDeleting {
-				err := DeleteObject(ctx, ctrlObj, ctrlClient)
-				if err != nil {
-					return err
-				}
-			} else {
-				err := ApplyObject(ctx, ctrlObj, ctrlClient)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
-}
-
 // GetNamespaces returns the list of namespaces in the cluster
 // DISCUSS: That description is inaccurate-- it only lists the namespaces that
 // contain a CSM CRD. Should we rename the function and update the description, or
