@@ -13,7 +13,9 @@
 package shared
 
 import (
+	"log"
 	"os"
+	"path/filepath"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -172,7 +174,10 @@ func MakeConfigMap(name, ns, _ string) *corev1.ConfigMap {
 
 // MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
-	configJSON, _ := os.ReadFile(configFile)
+	configJSON, err := os.ReadFile(filepath.Clean(configFile))
+	if err != nil {
+		log.Fatalf("failed to read testdata: %v", err)
+	}
 	data := map[string][]byte{
 		"config": configJSON,
 	}
