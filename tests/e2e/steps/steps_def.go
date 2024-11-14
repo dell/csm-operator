@@ -68,8 +68,8 @@ var (
 	pmaxReverseProxyMap      = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap   = map[string]string{}
 	amConfigMap              = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
-	pmaxArrayConfigMap       = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_AUTH_ENDPOINT": "PMAX_ENDPOINT"}
-	pmaxAuthArrayConfigMap   = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
+	pmaxArrayConfigMap       = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_ENDPOINT"}
+	pmaxAuthArrayConfigMap   = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	// Auth V2
 	pflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
 	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
@@ -1858,40 +1858,61 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 }
 
 func (step *Step) setUpTLSSecrets(res Resource, namespace string) error {
+    // Check if the revproxy-certs secret exists
+    revproxyExists := false
+    cmd := exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace)
+    err := cmd.Run()
+    if err == nil {
+        fmt.Println("revproxy-certs secret already exists, skipping creation.")
+        revproxyExists = true
+    }
+
+    // Check if the csirevproxy-tls-secret exists
+    csirevproxyExists := false
+    cmd = exec.Command("kubectl", "get", "secret", "csirevproxy-tls-secret", "-n", namespace)
+    err = cmd.Run()
+    if err == nil {
+        fmt.Println("csirevproxy-tls-secret already exists, skipping creation.")
+        csirevproxyExists = true
+    }
+
+    // If both secrets exist, no need to generate TLS key and certificate
+    if revproxyExists && csirevproxyExists {
+        return nil
+    }
+
     // Create a temporary directory in the current working directory
-	cwd, err := os.Getwd()
+    cwd, err := os.Getwd()
     if err != nil {
         return fmt.Errorf("failed to get current working directory: %v", err)
     }
 
-	tmpDir, err := os.MkdirTemp(cwd, "tls-setup")
+    tmpDir, err := os.MkdirTemp(cwd, "tls-setup")
     if err != nil {
         return fmt.Errorf("failed to create temporary directory: %v", err)
     }
     fmt.Println("Temporary directory created at:", tmpDir) // Print the path for verification
     defer os.RemoveAll(tmpDir) // Clean up the temporary directory
 
-    // Paths for the key, certificate files, and config file
+    // Paths for the key and certificate files
     keyPath := filepath.Join(tmpDir, "tls.key")
     crtPath := filepath.Join(tmpDir, "tls.crt")
 
-
     // Generate TLS key
-    cmd := exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
+    cmd = exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
     err = cmd.Run()
     if err != nil {
         return fmt.Errorf("failed to generate TLS key: %v", err)
     }
 
-    // Generate TLS certificate using the config file
+    // Generate TLS certificate
     cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", keyPath, "-out", crtPath, "-days", "3650", "-subj", "/CN=US")
     err = cmd.Run()
     if err != nil {
         return fmt.Errorf("failed to generate TLS certificate: %v", err)
     }
 
-
-	fmt.Println("Key path:", keyPath)
+    fmt.Println("Key path:", keyPath)
     fmt.Println("Cert path:", crtPath)
     if _, err := os.Stat(keyPath); os.IsNotExist(err) {
         return fmt.Errorf("key file does not exist: %v", keyPath)
@@ -1900,41 +1921,23 @@ func (step *Step) setUpTLSSecrets(res Resource, namespace string) error {
         return fmt.Errorf("cert file does not exist: %v", crtPath)
     }
 
-	// Check if the revproxy-certs secret exists and delete it if it does
-	cmd = exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace)
-	err = cmd.Run()
-	if err == nil {
-		// Secret exists, delete it
-		cmd = exec.Command("kubectl", "delete", "secret", "revproxy-certs", "-n", namespace)
-		err = cmd.Run()
-		if err != nil {
-			return fmt.Errorf("failed to delete existing revproxy-certs secret: %v", err)
-		}
-	}
-    // Create Kubernetes secret for revproxy-certs
-    cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath)
-    err = cmd.Run()
-    if err != nil {
-        return fmt.Errorf("failed to create revproxy-certs secret: %v", err)
+    // Create Kubernetes secret for revproxy-certs if it does not exist
+    if !revproxyExists {
+        cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath)
+        err = cmd.Run()
+        if err != nil {
+            return fmt.Errorf("failed to create revproxy-certs secret: %v", err)
+        }
     }
 
-	    // Check if the csirevproxy-tls-secret exists and delete it if it does
-	cmd = exec.Command("kubectl", "get", "secret", "csirevproxy-tls-secret", "-n", namespace)
-	err = cmd.Run()
-	if err == nil {
-		// Secret exists, delete it
-		cmd = exec.Command("kubectl", "delete", "secret", "csirevproxy-tls-secret", "-n", namespace)
-		err = cmd.Run()
-		if err != nil {
-			return fmt.Errorf("failed to delete existing csirevproxy-tls-secret: %v", err)
-		}
-	}
-
-    // Create Kubernetes secret for csirevproxy-tls-secret
-    cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath)
-    err = cmd.Run()
-    if err != nil {
-        return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
+    // Create Kubernetes secret for csirevproxy-tls-secret if it does not exist
+    if !csirevproxyExists {
+        cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath)
+        err = cmd.Run()
+        if err != nil {
+            return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
+        }
     }
+
     return nil
 }
