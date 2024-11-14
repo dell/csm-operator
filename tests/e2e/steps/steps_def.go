@@ -41,6 +41,7 @@ import (
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
+	"path/filepath"
 )
 
 const (
@@ -1846,6 +1847,57 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("csm authorization crds uninstall failed: %v", err)
+	}
+	return nil
+}
+
+func (step *Step) setUpTLSSecrets(res Resource, namespace string) error {
+	// Create a temporary directory
+	tmpDir, err := os.MkdirTemp("", "tls-setup")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tmpDir) // Clean up the temporary directory
+
+	// Paths for the key and certificate files
+	keyPath := filepath.Join(tmpDir, "tls.key")
+	crtPath := filepath.Join(tmpDir, "tls.crt")
+
+	// Generate TLS key
+	cmd := exec.Command("openssl", "genrsa", "-out", "tls.key", "2048")
+	// cmd := exec.Command("openssl", "genrsa", "-out", "2048")
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS key: %v", err)
+	}
+
+	// Generate TLS certificate
+	cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", "tls.key", "-out", "tls.crt", "-days", "3650")
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS certificate: %v", err)
+	}
+
+	// Create Kubernetes secret for revproxy-certs
+	cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create revproxy-certs secret: %v", err)
+	}
+
+	// Create Kubernetes secret for csirevproxy-tls-secret
+	cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
+	}
+	return nil
+}
+
+func deleteFolder(folderPath string) error {
+	err := os.RemoveAll(folderPath)
+	if err != nil {
+		return fmt.Errorf("failed to delete folder %s: %v", folderPath, err)
 	}
 	return nil
 }
