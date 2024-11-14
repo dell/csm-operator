@@ -68,7 +68,8 @@ var (
 	pmaxReverseProxyMap      = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap   = map[string]string{}
 	amConfigMap              = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
-	pmaxArrayConfigMap       = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
+	pmaxArrayConfigMap       = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_AUTH_ENDPOINT": "PMAX_ENDPOINT"}
+	pmaxAuthArrayConfigMap   = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	// Auth V2
 	pflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
 	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
@@ -674,7 +675,10 @@ func (step *Step) setUpPowermaxCreds(res Resource, templateFile, crType string) 
 		return err
 	}
 
+	fmt.Println("template file",templateFile)
+	fmt.Println("crType",crType)
 	for key := range mapValues {
+		fmt.Println("Key-Env: ",key," : ", os.Getenv(mapValues[key]))
 		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
 		if err != nil {
 			return err
@@ -794,6 +798,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pmaxReverseProxyMap
 	} else if crType == "pmaxArrayConfig" {
 		mapValues = pmaxArrayConfigMap
+	} else if crType == "pmaxAuthArrayConfig" {
+		mapValues = pmaxAuthArrayConfigMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
@@ -1852,52 +1858,83 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 }
 
 func (step *Step) setUpTLSSecrets(res Resource, namespace string) error {
-	// Create a temporary directory
-	tmpDir, err := os.MkdirTemp("", "tls-setup")
-	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %v", err)
-	}
-	defer os.RemoveAll(tmpDir) // Clean up the temporary directory
+    // Create a temporary directory in the current working directory
+	cwd, err := os.Getwd()
+    if err != nil {
+        return fmt.Errorf("failed to get current working directory: %v", err)
+    }
 
-	// Paths for the key and certificate files
-	keyPath := filepath.Join(tmpDir, "tls.key")
-	crtPath := filepath.Join(tmpDir, "tls.crt")
+	tmpDir, err := os.MkdirTemp(cwd, "tls-setup")
+    if err != nil {
+        return fmt.Errorf("failed to create temporary directory: %v", err)
+    }
+    fmt.Println("Temporary directory created at:", tmpDir) // Print the path for verification
+    defer os.RemoveAll(tmpDir) // Clean up the temporary directory
 
-	// Generate TLS key
-	cmd := exec.Command("openssl", "genrsa", "-out", "tls.key", "2048")
-	// cmd := exec.Command("openssl", "genrsa", "-out", "2048")
+    // Paths for the key, certificate files, and config file
+    keyPath := filepath.Join(tmpDir, "tls.key")
+    crtPath := filepath.Join(tmpDir, "tls.crt")
+
+
+    // Generate TLS key
+    cmd := exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
+    err = cmd.Run()
+    if err != nil {
+        return fmt.Errorf("failed to generate TLS key: %v", err)
+    }
+
+    // Generate TLS certificate using the config file
+    cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", keyPath, "-out", crtPath, "-days", "3650", "-subj", "/CN=US")
+    err = cmd.Run()
+    if err != nil {
+        return fmt.Errorf("failed to generate TLS certificate: %v", err)
+    }
+
+
+	fmt.Println("Key path:", keyPath)
+    fmt.Println("Cert path:", crtPath)
+    if _, err := os.Stat(keyPath); os.IsNotExist(err) {
+        return fmt.Errorf("key file does not exist: %v", keyPath)
+    }
+    if _, err := os.Stat(crtPath); os.IsNotExist(err) {
+        return fmt.Errorf("cert file does not exist: %v", crtPath)
+    }
+
+	// Check if the revproxy-certs secret exists and delete it if it does
+	cmd = exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace)
 	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to generate TLS key: %v", err)
+	if err == nil {
+		// Secret exists, delete it
+		cmd = exec.Command("kubectl", "delete", "secret", "revproxy-certs", "-n", namespace)
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to delete existing revproxy-certs secret: %v", err)
+		}
 	}
+    // Create Kubernetes secret for revproxy-certs
+    cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath)
+    err = cmd.Run()
+    if err != nil {
+        return fmt.Errorf("failed to create revproxy-certs secret: %v", err)
+    }
 
-	// Generate TLS certificate
-	cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", "tls.key", "-out", "tls.crt", "-days", "3650")
+	    // Check if the csirevproxy-tls-secret exists and delete it if it does
+	cmd = exec.Command("kubectl", "get", "secret", "csirevproxy-tls-secret", "-n", namespace)
 	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to generate TLS certificate: %v", err)
+	if err == nil {
+		// Secret exists, delete it
+		cmd = exec.Command("kubectl", "delete", "secret", "csirevproxy-tls-secret", "-n", namespace)
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to delete existing csirevproxy-tls-secret: %v", err)
+		}
 	}
 
-	// Create Kubernetes secret for revproxy-certs
-	cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath)
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to create revproxy-certs secret: %v", err)
-	}
-
-	// Create Kubernetes secret for csirevproxy-tls-secret
-	cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath)
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
-	}
-	return nil
-}
-
-func deleteFolder(folderPath string) error {
-	err := os.RemoveAll(folderPath)
-	if err != nil {
-		return fmt.Errorf("failed to delete folder %s: %v", folderPath, err)
-	}
-	return nil
+    // Create Kubernetes secret for csirevproxy-tls-secret
+    cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath)
+    err = cmd.Run()
+    if err != nil {
+        return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
+    }
+    return nil
 }
