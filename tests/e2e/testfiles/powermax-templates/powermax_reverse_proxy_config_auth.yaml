@@ -18,7 +18,7 @@
 port: 2222
 logLevel: debug
 logFormat: text
-Config:
+config:
   storageArrays:
     - storageArrayId: "REPLACE_SYSTEMID"
       primaryURL: "https://REPLACE_AUTH_ENDPOINT:9400"
