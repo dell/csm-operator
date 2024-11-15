@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ func TestGetDeploymentStatus(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Test get deployment status when instance name is empty",
+			name: "Test getDeploymentStatus when instance name is empty",
 			args: args{
 				ctx:      context.Background(),
 				instance: createCSM("", "", csmv1.PowerFlex, csmv1.Replication, true, nil),
@@ -66,7 +66,7 @@ func TestGetDeploymentStatus(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Test get deployment status when instance name is authorization",
+			name: "Test getDeploymentStatus when instance name is authorization",
 			args: args{
 				ctx:      context.Background(),
 				instance: createCSM(string(csmv1.Authorization), "", csmv1.PowerFlex, csmv1.Replication, true, nil),
@@ -80,7 +80,7 @@ func TestGetDeploymentStatus(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Test get deployment status when instance name is application-mobility",
+			name: "Test getDeploymentStatus when instance name is application-mobility",
 			args: args{
 				ctx:      context.Background(),
 				instance: createCSM(string(csmv1.ApplicationMobility), "", csmv1.PowerFlex, csmv1.Replication, true, nil),
@@ -94,7 +94,7 @@ func TestGetDeploymentStatus(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Test get deployment status when instance name is controller is not found",
+			name: "Test getDeploymentStatus when instance name is controller is not found",
 			args: args{
 				ctx:      context.Background(),
 				instance: createCSM(string(csmv1.PowerFlex), "", csmv1.PowerFlex, csmv1.Replication, false, nil),
@@ -120,7 +120,57 @@ func TestGetDeploymentStatus(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestGetDaemonSetStatus(t *testing.T) {
+
+	ns := "default"
+	licenceCred := getSecret(ns, "dls-license")
+	ivLicense := getSecret(ns, "iv")
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).WithObjects(ivLicense).Build()
+
+	fakeReconcile := FakeReconcileCSM{
+		Client:    sourceClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+	type args struct {
+		ctx      context.Context
+		instance *csmv1.ContainerStorageModule
+		r        ReconcileCSM
+	}
+	tests := []struct {
+		name             string
+		args             args
+		wantTotalDesired int
+		wantStatus       csmv1.PodStatus
+		wantErr          bool
+	}{
+		{
+			name: "Test getDaemonSetStatus when GetDefaultClusters fails",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("", "", csmv1.PowerFlex, csmv1.Observability, true, nil),
+				r:        &fakeReconcile,
+			},
+			wantTotalDesired: 0,
+			wantStatus: csmv1.PodStatus{
+				Available: "0",
+				Desired:   "0",
+				Failed:    "0",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, err := getDaemonSetStatus(tt.args.ctx, tt.args.instance, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getDaemonSetStatus() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
 }
 
 func TestWaitForNginxController(t *testing.T) {
