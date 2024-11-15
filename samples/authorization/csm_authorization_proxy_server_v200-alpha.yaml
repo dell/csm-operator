@@ -30,17 +30,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: dellemc/csm-authorization-proxy:v2.0.0-alpha
+          proxyService: docker.io/dellemc/csm-authorization-proxy:v2.0.0-alpha
           proxyServiceReplicas: 1
-          tenantService: dellemc/csm-authorization-tenant:v2.0.0-alpha
+          tenantService: docker.io/dellemc/csm-authorization-tenant:v2.0.0-alpha
           tenantServiceReplicas: 1
-          roleService: dellemc/csm-authorization-role:v2.0.0-alpha
+          roleService: docker.io/dellemc/csm-authorization-role:v2.0.0-alpha
           roleServiceReplicas: 1
-          storageService: dellemc/csm-authorization-storage:v2.0.0-alpha
+          storageService: docker.io/dellemc/csm-authorization-storage:v2.0.0-alpha
           storageServiceReplicas: 1
-          opa: openpolicyagent/opa
-          opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
-          authorizationController: dellemc/csm-authorization-controller:v2.0.0-alpha
+          opa: docker.io/openpolicyagent/opa:latest
+          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:0.11
+          authorizationController: docker.io/dellemc/csm-authorization-controller:v2.0.0-alpha
           authorizationControllerReplicas: 1
           leaderElection: true
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
@@ -67,8 +67,8 @@ spec:
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
-          redis: redis:7.2.4-alpine
-          commander: rediscommander/redis-commander:latest
+          redis: docker.io/redis:7.2.4-alpine
+          commander: docker.io/rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel

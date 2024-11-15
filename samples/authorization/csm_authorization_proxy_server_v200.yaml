@@ -38,8 +38,8 @@ spec:
           roleServiceReplicas: 1
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.0.0
           storageServiceReplicas: 1
-          opa: openpolicyagent/opa
-          opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.7
+          opa: docker.io/openpolicyagent/opa:latest
+          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.7
           authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.0.0
           authorizationControllerReplicas: 1
           leaderElection: true
@@ -69,8 +69,8 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
-          redis: redis:7.4.0-alpine
-          commander: rediscommander/redis-commander:latest
+          redis: docker.io/redis:7.4.0-alpine
+          commander: docker.io/rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
