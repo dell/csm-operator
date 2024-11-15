@@ -24,7 +24,7 @@ import (
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func Test_getDeploymentStatus(t *testing.T) {
+func TestGetDeploymentStatus(t *testing.T) {
 
 	ns := "default"
 	licenceCred := getSecret(ns, "dls-license")
