@@ -22,6 +22,13 @@ import (
 	"sync"
 	"testing"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	admissionregistration "k8s.io/api/admissionregistration/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	networking "k8s.io/api/networking/v1"
+	storagev1 "k8s.io/api/storage/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/stretchr/testify/assert"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
@@ -1063,6 +1070,216 @@ spec:
 	assert.Equal(t, result, expected)
 }
 
+func TestGetCTRLObjectClusterRole(t *testing.T) {
+	// Test case: empty input
+	ctrlBuf := []byte{}
+	expected := []crclient.Object{}
+
+	result, err := GetCTRLObject(ctrlBuf)
+
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+
+	assert.Equal(t, result, expected)
+	// Test case: valid input
+	ctrlBuf = []byte(`
+apiVersion: v1
+kind: ClusterRole
+metadata:
+  name: my-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+`)
+
+	expected = []crclient.Object{
+		&rbacv1.ClusterRole{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ClusterRole",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "my-cluster-role",
+			},
+			Rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"pods"},
+					Verbs:     []string{"get", "watch", "list"},
+				},
+			},
+		},
+	}
+
+	result, err = GetCTRLObject(ctrlBuf)
+
+	assert.Nil(t, err)
+	assert.Equal(t, result, expected)
+}
+
+func TestGetCTRLObjectClusterRoleBinding(t *testing.T) {
+	// Test case: empty input
+	ctrlBuf := []byte{}
+	expected := []crclient.Object{}
+
+	result, err := GetCTRLObject(ctrlBuf)
+
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+
+	assert.Equal(t, result, expected)
+	// Test case: valid input
+	ctrlBuf = []byte(`
+apiVersion: v1
+kind: ClusterRoleBinding
+metadata:
+  name: my-cluster-role-binding
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+`)
+	expected = []crclient.Object{
+		&rbacv1.ClusterRoleBinding{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ClusterRoleBinding",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "my-cluster-role-binding",
+			},
+		},
+	}
+
+	result, err = GetCTRLObject(ctrlBuf)
+
+	assert.Nil(t, err)
+	assert.Equal(t, result, expected)
+
+}
+
+func TestGetCTRLObjectConfigMap(t *testing.T) {
+	// Test case: empty input
+	ctrlBuf := []byte{}
+	expected := []crclient.Object{}
+
+	result, err := GetCTRLObject(ctrlBuf)
+
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+
+	assert.Equal(t, result, expected)
+	// Test case: valid input
+	ctrlBuf = []byte(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  key: value
+`)
+	expected = []crclient.Object{
+		&corev1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ConfigMap",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "my-config",
+			},
+			Data: map[string]string{
+				"key": "value",
+			},
+		},
+	}
+
+	result, err = GetCTRLObject(ctrlBuf)
+
+	assert.Nil(t, err)
+	assert.Equal(t, result, expected)
+
+}
+func TestGetCTRLObjectDeployment(t *testing.T) {
+	// Test case: empty input
+	ctrlBuf := []byte{}
+	expected := []crclient.Object{}
+
+	result, err := GetCTRLObject(ctrlBuf)
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+	assert.Equal(t, result, expected)
+	// Test case: valid input
+	ctrlBuf = []byte(`
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  selector:
+    matchLabels:
+      app: MyApp
+  template:
+    metadata:
+      labels:
+        app: MyApp
+    spec:
+      containers:
+        - name: myapp
+          image: my-image
+          ports:
+            - containerPort: 8080
+`)
+	expected = []crclient.Object{
+		&appsv1.Deployment{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Deployment",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "my-deployment",
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app": "MyApp",
+					},
+				},
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							"app": "MyApp",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "myapp",
+								Image: "my-image",
+								Ports: []corev1.ContainerPort{
+									{
+										ContainerPort: 8080,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	result, err = GetCTRLObject(ctrlBuf)
+
+	assert.Nil(t, err)
+	assert.Equal(t, result, expected)
+
+}
+
 // TODO: Cover more object types:
 // CustomResourceDefinition, ServiceAccount,
 // ClusterRoleBinding, Role, RoleBinding,
@@ -1088,9 +1305,9 @@ kind: ClusterRole
 metadata:
   name: my-cluster-role
 rules:
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "watch", "list"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -1114,19 +1331,258 @@ spec:
         app: MyApp
     spec:
       containers:
-      - name: my-container
-        image: my-image
-        ports:
-        - containerPort: 8080
-    `)
-
+        - name: my-container
+          image: my-image
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: CustomResourceDefinition
+metadata:
+  name: my-crd
+spec:
+  group: my-group
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  scope: Namespaced
+  names:
+    plural: my-crds
+    singular: my-cr
+  preserveUnknownFields: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-sa
+---
+apiVersion: v1
+kind: ClusterRoleBinding
+metadata:
+  name: my-crb
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: v1
+kind: Role
+metadata:
+  name: my-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: v1
+kind: RoleBinding
+metadata:
+  name: my-role-binding
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: my-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: my-container
+          image: my-image
+        - name: my-other-container
+          image: my-other-image
+        - name: my-third-container
+          image: my-third-image
+        - name: my-fourth-container
+          image: my-fourth-image
+        - name: my-fifth-container
+          image: my-fifth-image
+      restartPolicy: OnFailure
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+  annotations:
+    kubernetes.io/ingress.class: my-ingress-class
+spec:
+  rules:
+    - host: my-host
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: my-service
+              servicePort: 80
+---
+apiVersion: v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: my-vwc
+webhooks:
+  - name: my-vwh
+    rules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        # TODO: Add support for "DELETE"
+        # TODO: Add support for "CONNECT"
+        # TODO: Add support for "PATCH"
+        # TODO: Add support for "LIST"
+        resources: ["pods"]
+---
+apiVersion: v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: my-mwc
+webhooks:
+  - name: my-mwh
+    rules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        # TODO: Add support for "DELETE"
+        # TODO: Add support for "CONNECT"
+        # TODO: Add support for "PATCH"
+        # TODO: Add support for "LIST"
+        resources: ["pods"]
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-secret
+type: Opaque
+data:
+  key: dmFsdWU=
+---
+apiVersion: v1
+kind: DaemonSet
+metadata:
+  name: my-daemonset
+spec:
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-container
+          image: my-image
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: BackupStorageLocation
+metadata:
+  name: my-bsl
+spec:
+  provider: aws
+  objectStorage:
+    bucket: my-bucket
+    region: us-east-1
+---
+apiVersion: v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: my-vsl
+spec:
+  provider: aws
+  objectStorage:
+    bucket: my-bucket
+    region: us-east-1
+---
+apiVersion: v1
+kind: Issuer
+metadata:
+  name: my-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: v1
+kind: Certificate
+metadata:
+  name: my-certificate
+spec:
+  secretName: my-secret
+  issuerRef:
+    name: my-issuer
+  dnsNames:
+    - my-dns-name
+---
+apiVersion: v1
+kind: StatefulSet
+metadata:
+  name: my-sts
+spec:
+  serviceName: my-service
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-container
+          image: my-image
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: StorageClass
+metadata:
+  name: my-sc
+provisioner: my-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: my-pv
+spec:
+  storageClassName: my-storage-class
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /tmp/my-pv
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-ns
+---
+apiVersion: v1
+kind: IngressClass
+metadata:
+  name: my-ic
+spec:
+  controller: my-ingress-controller
+---
+`)
 	ctrlObjects, err := GetModuleComponentObj(yamlString)
 	if err != nil {
 		t.Fatalf("Failed to get module component objects: %v", err)
 	}
 
-	if len(ctrlObjects) != 4 {
-		t.Errorf("Expected 4 objects, got %d", len(ctrlObjects))
+	if len(ctrlObjects) != 25 {
+		t.Errorf("Expected 25 objects, got %d", len(ctrlObjects))
 	}
 
 	for _, obj := range ctrlObjects {
@@ -1162,6 +1618,174 @@ spec:
 			}
 			if dp.Name != "my-deployment" {
 				t.Errorf("Expected deployment name 'my-deployment', got %s", dp.Name)
+			}
+		case *apiextv1.CustomResourceDefinition:
+			crd, ok := obj.(*apiextv1.CustomResourceDefinition)
+			if !ok {
+				t.Errorf("Expected CustomResourceDefinition object, got %T", obj)
+			}
+			if crd.Name != "my-crd" {
+				t.Errorf("Expected custom resource definition name 'my-crd', got %s", crd.Name)
+			}
+		case *corev1.ServiceAccount:
+			sa, ok := obj.(*corev1.ServiceAccount)
+			if !ok {
+				t.Errorf("Expected ServiceAccount object, got %T", obj)
+			}
+			if sa.Name != "my-sa" {
+				t.Errorf("Expected service account name 'my-service-account', got %s", sa.Name)
+			}
+		case *rbacv1.ClusterRoleBinding:
+			crb, ok := obj.(*rbacv1.ClusterRoleBinding)
+			if !ok {
+				t.Errorf("Expected ClusterRoleBinding object, got %T", obj)
+			}
+			if crb.Name != "my-crb" {
+				t.Errorf("Expected cluster role binding name 'my-crb', got %s", crb.Name)
+			}
+		case *rbacv1.Role:
+			role, ok := obj.(*rbacv1.Role)
+			if !ok {
+				t.Errorf("Expected Role object, got %T", obj)
+			}
+			if role.Name != "my-role" {
+				t.Errorf("Expected role name 'my-role', got %s", role.Name)
+			}
+		case *rbacv1.RoleBinding:
+			rb, ok := obj.(*rbacv1.RoleBinding)
+			if !ok {
+				t.Errorf("Expected RoleBinding object, got %T", obj)
+			}
+			if rb.Name != "my-role-binding" {
+				t.Errorf("Expected role binding name 'my-role-binding', got %s", rb.Name)
+			}
+		case *corev1.PersistentVolumeClaim:
+			pvc, ok := obj.(*corev1.PersistentVolumeClaim)
+			if !ok {
+				t.Errorf("Expected PersistentVolumeClaim object, got %T", obj)
+			}
+			if pvc.Name != "my-pvc" {
+				t.Errorf("Expected persistent volume claim name 'my-pvc', got %s", pvc.Name)
+			}
+		case *batchv1.Job:
+			job, ok := obj.(*batchv1.Job)
+			if !ok {
+				t.Errorf("Expected Job object, got %T", obj)
+			}
+			if job.Name != "my-job" {
+				t.Errorf("Expected job name 'my-job', got %s", job.Name)
+			}
+		case *networking.Ingress:
+			ing, ok := obj.(*networking.Ingress)
+			if !ok {
+				t.Errorf("Expected Ingress object, got %T", obj)
+			}
+			if ing.Name != "my-ingress" {
+				t.Errorf("Expected ingress name 'my-ingress', got %s", ing.Name)
+			}
+		case *admissionregistration.ValidatingWebhookConfiguration:
+			vwc, ok := obj.(*admissionregistration.ValidatingWebhookConfiguration)
+			if !ok {
+				t.Errorf("Expected ValidatingWebhookConfiguration object, got %T", obj)
+			}
+			if vwc.Name != "my-vwc" {
+				t.Errorf("Expected validating webhook configuration name 'my-vwc', got %s", vwc.Name)
+			}
+		case *admissionregistration.MutatingWebhookConfiguration:
+			mwc, ok := obj.(*admissionregistration.MutatingWebhookConfiguration)
+			if !ok {
+				t.Errorf("Expected MutatingWebhookConfiguration object, got %T", obj)
+			}
+			if mwc.Name != "my-mwc" {
+				t.Errorf("Expected mutating webhook configuration name 'my-mwc', got %s", mwc.Name)
+			}
+		case *corev1.Secret:
+			secret, ok := obj.(*corev1.Secret)
+			if !ok {
+				t.Errorf("Expected Secret object, got %T", obj)
+			}
+			if secret.Name != "my-secret" {
+				t.Errorf("Expected secret name 'my-secret', got %s", secret.Name)
+			}
+		case *appsv1.DaemonSet:
+			ds, ok := obj.(*appsv1.DaemonSet)
+			if !ok {
+				t.Errorf("Expected DaemonSet object, got %T", obj)
+			}
+			if ds.Name != "my-daemonset" {
+				t.Errorf("Expected daemon set name 'my-daemonset', got %s", ds.Name)
+			}
+		case *velerov1.BackupStorageLocation:
+			bsl, ok := obj.(*velerov1.BackupStorageLocation)
+			if !ok {
+				t.Errorf("Expected BackupStorageLocation object, got %T", obj)
+			}
+			if bsl.Name != "my-bsl" {
+				t.Errorf("Expected backup storage location name 'my-bsl', got %s", bsl.Name)
+			}
+		case *velerov1.VolumeSnapshotLocation:
+			vsl, ok := obj.(*velerov1.VolumeSnapshotLocation)
+			if !ok {
+				t.Errorf("Expected VolumeSnapshotLocation object, got %T", obj)
+			}
+			if vsl.Name != "my-vsl" {
+				t.Errorf("Expected volume snapshot location name 'my-vsl', got %s", vsl.Name)
+			}
+		case *certmanagerv1.Issuer:
+			issuer, ok := obj.(*certmanagerv1.Issuer)
+			if !ok {
+				t.Errorf("Expected Issuer object, got %T", obj)
+			}
+			if issuer.Name != "my-issuer" {
+				t.Errorf("Expected issuer name 'my-issuer', got %s", issuer.Name)
+			}
+		case *certmanagerv1.Certificate:
+			cert, ok := obj.(*certmanagerv1.Certificate)
+			if !ok {
+				t.Errorf("Expected Certificate object, got %T", obj)
+			}
+			if cert.Name != "my-certificate" {
+				t.Errorf("Expected certificate name 'my-cert', got %s", cert.Name)
+			}
+		case *appsv1.StatefulSet:
+			sts, ok := obj.(*appsv1.StatefulSet)
+			if !ok {
+				t.Errorf("Expected StatefulSet object, got %T", obj)
+			}
+			if sts.Name != "my-sts" {
+				t.Errorf("Expected stateful set name 'my-sts', got %s", sts.Name)
+			}
+		case *storagev1.StorageClass:
+			sc, ok := obj.(*storagev1.StorageClass)
+			if !ok {
+				t.Errorf("Expected StorageClass object, got %T", obj)
+			}
+			if sc.Name != "my-sc" {
+				t.Errorf("Expected storage class name 'my-sc', got %s", sc.Name)
+			}
+		case *corev1.PersistentVolume:
+			pv, ok := obj.(*corev1.PersistentVolume)
+			if !ok {
+				t.Errorf("Expected PersistentVolume object, got %T", obj)
+			}
+			if pv.Name != "my-pv" {
+				t.Errorf("Expected persistent volume name 'my-pv', got %s", pv.Name)
+			}
+		case *corev1.Namespace:
+			ns, ok := obj.(*corev1.Namespace)
+			if !ok {
+				t.Errorf("Expected Namespace object, got %T", obj)
+			}
+			if ns.Name != "my-ns" {
+				t.Errorf("Expected namespace name 'my-ns', got %s", ns.Name)
+			}
+		case *networking.IngressClass:
+			ic, ok := obj.(*networking.IngressClass)
+			if !ok {
+				t.Errorf("Expected IngressClass object, got %T", obj)
+			}
+			if ic.Name != "my-ic" {
+				t.Errorf("Expected ingress class name 'my-ic', got %s", ic.Name)
 			}
 		default:
 			t.Errorf("Unexpected object type: %T", obj)
@@ -1430,6 +2054,26 @@ func TestDeleteObject(t *testing.T) {
 
 	if err := DeleteObject(ctx, obj, ctrlClient); err != nil {
 		t.Errorf("Failed to delete object: %v", err)
+	}
+}
+
+func TestApplyCTRLObject(t *testing.T) {
+	// Test case: Create a new object
+	ctx := context.Background()
+	ctrlClient := fullFakeClient()
+
+	obj := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "my-namespace",
+		},
+	}
+	ctrlClient.Create(ctx, obj)
+	err := ApplyCTRLObject(ctx, obj, ctrlClient)
+	assert.Nil(t, err)
+
+	if err := ApplyCTRLObject(ctx, obj, ctrlClient); err != nil {
+		t.Errorf("Failed to apply object: %v", err)
 	}
 }
 
