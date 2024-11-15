@@ -17,7 +17,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -155,4 +158,479 @@ func createCSM(name string, namespace string, driverType csmv1.DriverType, modul
 			},
 		},
 	}
+}
+
+func TestAppMobStatusCheck(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+	ctrlClient := fullFakeClient()
+
+	// Create a fake csm1 of csmv1.ContainerStorageModule
+	csm1 := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.ApplicationMobility,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "application-mobility-controller-manager",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "cert-manager",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "velero",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// add the CSM object to the client
+	ctrlClient.Create(ctx, &csm1)
+	i32One := int32(1)
+
+	// add fake deployments and fake daemonsets to the client
+	deployment1 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "application-mobility-controller-manager",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment2 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "application-mobility-velero",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment3 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-webhook",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment4 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-cainjector",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment5 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	ctrlClient.Create(ctx, &deployment1)
+	ctrlClient.Create(ctx, &deployment2)
+	ctrlClient.Create(ctx, &deployment3)
+	ctrlClient.Create(ctx, &deployment4)
+	ctrlClient.Create(ctx, &deployment5)
+
+	// create a fake running pod
+	pod := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "node-agent",
+			Namespace: "test-namespace",
+			Labels:    map[string]string{"name": "node-agent"},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "fake-container",
+					Image: "fake-image",
+				},
+			},
+		},
+	}
+	err := ctrlClient.Create(ctx, &pod)
+
+	// Create a fake instance of ReconcileCSM
+	fakeReconcile := FakeReconcileCSM{
+		Client:    ctrlClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	// test 1: pods are running
+	status, err := appMobStatusCheck(ctx, &csm1, &fakeReconcile, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, true, status)
+
+	// TODO: Other test scenarios:
+	//if !certEnabled && !veleroEnabled
+	//if !certEnabled && veleroEnabled
+	//if certEnabled && !veleroEnabled
+}
+
+func TestObservabilityStatusCheck(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+	ctrlClient := fullFakeClient()
+
+	// Create a fake csm1 of csmv1.ContainerStorageModule
+	csm1 := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: "powerflex",
+			},
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Observability,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "topology",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "cert-manager",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "otel-collector",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "metrics-powerflex",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// add the CSM object to the client
+	ctrlClient.Create(ctx, &csm1)
+	i32One := int32(1)
+
+	// add fake deployments to the client
+	// first set of deployments: karavi
+	deployment1 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "otel-collector",
+			Namespace: "karavi",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment2 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karavi-topology",
+			Namespace: "karavi",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment3 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karavi-metrics-powerflex",
+			Namespace: "karavi",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	ctrlClient.Create(ctx, &deployment1)
+	ctrlClient.Create(ctx, &deployment2)
+	ctrlClient.Create(ctx, &deployment3)
+
+	// second set of deployments: cert manager
+	// same namespace as CSM object
+	deployment4 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment5 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-cainjector",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment6 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-webhook",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	ctrlClient.Create(ctx, &deployment4)
+	ctrlClient.Create(ctx, &deployment5)
+	ctrlClient.Create(ctx, &deployment6)
+
+	// Create a fake instance of ReconcileCSM
+	fakeReconcile := FakeReconcileCSM{
+		Client:    ctrlClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	// test 1: pods are running
+	status, err := observabilityStatusCheck(ctx, &csm1, &fakeReconcile, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, true, status)
+
+	// TODO: Other test scenarios:
+	// various failing replicas for the deployments
+}
+
+func TestAuthProxyStatusCheck(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+	ctrlClient := fullFakeClient()
+
+	// Create a fake csm1 of csmv1.ContainerStorageModule
+	csm1 := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: "powerflex",
+			},
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.AuthorizationServer,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "ingress-nginx",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "cert-manager",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// add the CSM object to the client
+	ctrlClient.Create(ctx, &csm1)
+	i32One := int32(1)
+
+	// add fake deployments to the client
+	// first set of deployments: karavi
+	deployment1 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-namespace-ingress-nginx-controller",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment2 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment3 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-cainjector",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment4 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-webhook",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment5 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "proxy-server",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment6 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "redis-commander",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment7 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "redis-primary",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment8 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "role-service",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment9 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "storage-service",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	deployment10 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tenant-service",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+	ctrlClient.Create(ctx, &deployment1)
+	ctrlClient.Create(ctx, &deployment2)
+	ctrlClient.Create(ctx, &deployment3)
+	ctrlClient.Create(ctx, &deployment4)
+	ctrlClient.Create(ctx, &deployment5)
+	ctrlClient.Create(ctx, &deployment6)
+	ctrlClient.Create(ctx, &deployment7)
+	ctrlClient.Create(ctx, &deployment8)
+	ctrlClient.Create(ctx, &deployment9)
+	ctrlClient.Create(ctx, &deployment10)
+
+	// Create a fake instance of ReconcileCSM
+	fakeReconcile := FakeReconcileCSM{
+		Client:    ctrlClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	// test 1: pods are running
+	status, err := authProxyStatusCheck(ctx, &csm1, &fakeReconcile, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, true, status)
+
+	// TODO: Other test scenarios:
+	// various failing replicas for the deployments
 }
