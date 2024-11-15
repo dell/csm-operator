@@ -16,6 +16,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -116,6 +117,119 @@ func TestGetDeploymentStatus(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getDeploymentStatus() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+
+}
+
+func TestWaitForNginxController(t *testing.T) {
+	zero := int32(0)
+	one := int32(1)
+
+	name := "authorization-ingress-nginx-controller"
+	ns := "authorization"
+
+	tests := map[string]func() (*FakeReconcileCSM, csmv1.ContainerStorageModule, time.Duration, bool){
+		"Test wait for nginx controller success": func() (*FakeReconcileCSM, csmv1.ContainerStorageModule, time.Duration, bool) {
+			nginx := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: ns,
+					Labels:    map[string]string{"app.kubernetes.io/name": "ingress-nginx"},
+				},
+				Spec: appsv1.DeploymentSpec{
+					Replicas: &one,
+				},
+				Status: appsv1.DeploymentStatus{
+					ReadyReplicas: one,
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(nginx).Build()
+			fakeReconcile := &FakeReconcileCSM{
+				Client: sourceClient,
+			}
+			authorization := createCSM("authorization", "authorization", "", csmv1.AuthorizationServer, true, nil)
+			wantErr := false
+
+			return fakeReconcile, *authorization, 1 * time.Second, wantErr
+		},
+		"Test wait for nginx controller replicas not ready to ready": func() (*FakeReconcileCSM, csmv1.ContainerStorageModule, time.Duration, bool) {
+			nginx := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: ns,
+					Labels:    map[string]string{"app.kubernetes.io/name": "ingress-nginx"},
+				},
+				Spec: appsv1.DeploymentSpec{
+					Replicas: &one,
+				},
+				Status: appsv1.DeploymentStatus{
+					ReadyReplicas: zero,
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(nginx).Build()
+			fakeReconcile := &FakeReconcileCSM{
+				Client: sourceClient,
+			}
+			authorization := createCSM("authorization", "authorization", "", csmv1.AuthorizationServer, true, nil)
+			wantErr := false
+
+			go func() {
+				time.Sleep(1 * time.Second)
+				nginx.Status.ReadyReplicas = one
+				err := sourceClient.Status().Update(context.Background(), nginx)
+				if err != nil {
+					t.Errorf("failed to update nginx deployment: %v", err)
+				}
+			}()
+
+			return fakeReconcile, *authorization, 3 * time.Second, wantErr
+		},
+		"Test wait for nginx controller times out": func() (*FakeReconcileCSM, csmv1.ContainerStorageModule, time.Duration, bool) {
+			nginx := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: ns,
+					Labels:    map[string]string{"app.kubernetes.io/name": "ingress-nginx"},
+				},
+				Spec: appsv1.DeploymentSpec{
+					Replicas: &one,
+				},
+				Status: appsv1.DeploymentStatus{
+					ReadyReplicas: zero,
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(nginx).Build()
+			fakeReconcile := &FakeReconcileCSM{
+				Client: sourceClient,
+			}
+			authorization := createCSM("authorization", "authorization", "", csmv1.AuthorizationServer, true, nil)
+			wantErr := true
+
+			return fakeReconcile, *authorization, 1 * time.Second, wantErr
+		},
+		"Test nginx controller not found": func() (*FakeReconcileCSM, csmv1.ContainerStorageModule, time.Duration, bool) {
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			fakeReconcile := &FakeReconcileCSM{
+				Client: sourceClient,
+			}
+			authorization := createCSM("authorization", "authorization", "", csmv1.AuthorizationServer, true, nil)
+			wantErr := true
+
+			return fakeReconcile, *authorization, 1 * time.Second, wantErr
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			fakeReconcile, authorization, duration, wantErr := test()
+			err := WaitForNginxController(context.Background(), authorization, fakeReconcile, duration)
+			if (err != nil) != wantErr {
+				t.Errorf("WaitForNginxController() error = %v, wantErr %v", err, wantErr)
+				return
 			}
 		})
 	}
