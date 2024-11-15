@@ -39,9 +39,9 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"k8s.io/utils/pointer"
+	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
-	"path/filepath"
 )
 
 const (
@@ -1855,84 +1855,84 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 }
 
 func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
-    // Check if the revproxy-certs secret exists
-    revproxyExists := false
-    cmd := exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace)
-    err := cmd.Run()
-    if err == nil {
-        fmt.Println("revproxy-certs secret already exists, skipping creation.")
-        revproxyExists = true
-    }
+	// Check if the revproxy-certs secret exists
+	revproxyExists := false
+	cmd := exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace)
+	err := cmd.Run()
+	if err == nil {
+		fmt.Println("revproxy-certs secret already exists, skipping creation.")
+		revproxyExists = true
+	}
 
-    // Check if the csirevproxy-tls-secret exists
-    csirevproxyExists := false
-    cmd = exec.Command("kubectl", "get", "secret", "csirevproxy-tls-secret", "-n", namespace)
-    err = cmd.Run()
-    if err == nil {
-        fmt.Println("csirevproxy-tls-secret already exists, skipping creation.")
-        csirevproxyExists = true
-    }
+	// Check if the csirevproxy-tls-secret exists
+	csirevproxyExists := false
+	cmd = exec.Command("kubectl", "get", "secret", "csirevproxy-tls-secret", "-n", namespace)
+	err = cmd.Run()
+	if err == nil {
+		fmt.Println("csirevproxy-tls-secret already exists, skipping creation.")
+		csirevproxyExists = true
+	}
 
-    // If both secrets exist, no need to generate TLS key and certificate
-    if revproxyExists && csirevproxyExists {
-        return nil
-    }
+	// If both secrets exist, no need to generate TLS key and certificate
+	if revproxyExists && csirevproxyExists {
+		return nil
+	}
 
-    // Create a temporary directory in the current working directory
-    cwd, err := os.Getwd()
-    if err != nil {
-        return fmt.Errorf("failed to get current working directory: %v", err)
-    }
+	// Create a temporary directory in the current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %v", err)
+	}
 
-    tmpDir, err := os.MkdirTemp(cwd, "tls-setup")
-    if err != nil {
-        return fmt.Errorf("failed to create temporary directory: %v", err)
-    }
-    fmt.Println("Temporary directory created at:", tmpDir) // Print the path for verification
-    defer os.RemoveAll(tmpDir) // Clean up the temporary directory
+	tmpDir, err := os.MkdirTemp(cwd, "tls-setup")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary directory: %v", err)
+	}
+	fmt.Println("Temporary directory created at:", tmpDir) // Print the path for verification
+	defer os.RemoveAll(tmpDir)                             // Clean up the temporary directory
 
-    // Paths for the key and certificate files
-    keyPath := filepath.Join(tmpDir, "tls.key")
-    crtPath := filepath.Join(tmpDir, "tls.crt")
+	// Paths for the key and certificate files
+	keyPath := filepath.Join(tmpDir, "tls.key")
+	crtPath := filepath.Join(tmpDir, "tls.crt")
 
-    // Generate TLS key
-    cmd = exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
-    err = cmd.Run()
-    if err != nil {
-        return fmt.Errorf("failed to generate TLS key: %v", err)
-    }
+	// Generate TLS key
+	cmd = exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS key: %v", err)
+	}
 
-    // Generate TLS certificate
-    cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", keyPath, "-out", crtPath, "-days", "3650", "-subj", "/CN=US")
-    err = cmd.Run()
-    if err != nil {
-        return fmt.Errorf("failed to generate TLS certificate: %v", err)
-    }
+	// Generate TLS certificate
+	cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", keyPath, "-out", crtPath, "-days", "3650", "-subj", "/CN=US")
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS certificate: %v", err)
+	}
 
-    if _, err := os.Stat(keyPath); os.IsNotExist(err) {
-        return fmt.Errorf("key file does not exist: %v", keyPath)
-    }
-    if _, err := os.Stat(crtPath); os.IsNotExist(err) {
-        return fmt.Errorf("cert file does not exist: %v", crtPath)
-    }
+	if _, err := os.Stat(keyPath); os.IsNotExist(err) {
+		return fmt.Errorf("key file does not exist: %v", keyPath)
+	}
+	if _, err := os.Stat(crtPath); os.IsNotExist(err) {
+		return fmt.Errorf("cert file does not exist: %v", crtPath)
+	}
 
-    // Create Kubernetes secret for revproxy-certs if it does not exist
-    if !revproxyExists {
-        cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath)
-        err = cmd.Run()
-        if err != nil {
-            return fmt.Errorf("failed to create revproxy-certs secret: %v", err)
-        }
-    }
+	// Create Kubernetes secret for revproxy-certs if it does not exist
+	if !revproxyExists {
+		cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath)
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to create revproxy-certs secret: %v", err)
+		}
+	}
 
-    // Create Kubernetes secret for csirevproxy-tls-secret if it does not exist
-    if !csirevproxyExists {
-        cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath)
-        err = cmd.Run()
-        if err != nil {
-            return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
-        }
-    }
+	// Create Kubernetes secret for csirevproxy-tls-secret if it does not exist
+	if !csirevproxyExists {
+		cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath)
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
+		}
+	}
 
-    return nil
+	return nil
 }
