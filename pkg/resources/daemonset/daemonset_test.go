@@ -47,7 +47,9 @@ func getTestLogger() *zap.SugaredLogger {
 func TestSyncDaemonset(t *testing.T) {
 	ctx := context.Background()
 	logger := getTestLogger()
-	defer logger.Sync()
+	defer func() {
+		_ = logger.Sync() // ignore the error from logger.Sync()
+	}()
 
 	daemonset := appsv1.DaemonSetApplyConfiguration{
 		ObjectMetaApplyConfiguration: &v1.ObjectMetaApplyConfiguration{
