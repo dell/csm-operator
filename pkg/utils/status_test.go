@@ -153,7 +153,7 @@ func TestWaitForNginxController(t *testing.T) {
 
 			return fakeReconcile, *authorization, 1 * time.Second, wantErr
 		},
-		"Test wait for nginx controller replica change to ready": func() (*FakeReconcileCSM, csmv1.ContainerStorageModule, time.Duration, bool) {
+		"Test wait for nginx controller replicas not ready to ready": func() (*FakeReconcileCSM, csmv1.ContainerStorageModule, time.Duration, bool) {
 			nginx := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
@@ -202,6 +202,16 @@ func TestWaitForNginxController(t *testing.T) {
 			}
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(nginx).Build()
+			fakeReconcile := &FakeReconcileCSM{
+				Client: sourceClient,
+			}
+			authorization := createCSM("authorization", "authorization", "", csmv1.AuthorizationServer, true, nil)
+			wantErr := true
+
+			return fakeReconcile, *authorization, 1 * time.Second, wantErr
+		},
+		"Test nginx controller not found": func() (*FakeReconcileCSM, csmv1.ContainerStorageModule, time.Duration, bool) {
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			fakeReconcile := &FakeReconcileCSM{
 				Client: sourceClient,
 			}
