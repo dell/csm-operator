@@ -31,10 +31,10 @@ import (
 func TestGetDeploymentStatus(t *testing.T) {
 
 	ns := "default"
-	licenceCred := getSecret(ns, "dls-license")
+	licenseCred := getSecret(ns, "dls-license")
 	ivLicense := getSecret(ns, "iv")
 
-	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).WithObjects(ivLicense).Build()
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenseCred).WithObjects(ivLicense).Build()
 
 	fakeReconcile := FakeReconcileCSM{
 		Client:    sourceClient,
@@ -125,9 +125,9 @@ func TestGetDeploymentStatus(t *testing.T) {
 func TestGetDaemonSetStatus(t *testing.T) {
 
 	ns := "default"
-	licenceCred := getSecret(ns, "dls-license")
+	licenseCred := getSecret(ns, "dls-license")
 	ivLicense := getSecret(ns, "iv")
-	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenceCred).WithObjects(ivLicense).Build()
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenseCred).WithObjects(ivLicense).Build()
 
 	fakeReconcile := FakeReconcileCSM{
 		Client:    sourceClient,
@@ -148,9 +148,14 @@ func TestGetDaemonSetStatus(t *testing.T) {
 		{
 			name: "Test getDaemonSetStatus when GetDefaultClusters fails",
 			args: args{
-				ctx:      context.Background(),
-				instance: createCSM("", "", csmv1.PowerFlex, csmv1.Observability, true, nil),
-				r:        &fakeReconcile,
+				ctx: context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, []csmv1.ContainerTemplate{
+					{
+						Name: "dell-replication-controller-manager",
+						Envs: []corev1.EnvVar{{Name: "TARGET_CLUSTERS_IDS", Value: "cluster-2"}},
+					},
+				}),
+				r: &fakeReconcile,
 			},
 			wantTotalDesired: 0,
 			wantStatus: csmv1.PodStatus{
