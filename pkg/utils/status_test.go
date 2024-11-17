@@ -690,44 +690,6 @@ func TestWaitForNginxController(t *testing.T) {
 
 }
 
-func getSecret(namespace, secretName string) *corev1.Secret {
-	return &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: namespace,
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"data": []byte(secretName),
-		},
-	}
-}
-
-func createCSM(name string, namespace string, driverType csmv1.DriverType, moduleType csmv1.ModuleType, moduleEnabled bool, components []csmv1.ContainerTemplate) *csmv1.ContainerStorageModule {
-	return &csmv1.ContainerStorageModule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: csmv1.ContainerStorageModuleSpec{
-			Driver: csmv1.Driver{
-				CSIDriverType: driverType,
-			},
-			Modules: []csmv1.Module{
-				{
-					Name:       moduleType,
-					Enabled:    moduleEnabled,
-					Components: components,
-				},
-			},
-		},
-	}
-}
-
 func TestAppMobStatusCheck(t *testing.T) {
 	// Create a fake context.Context
 	ctx := context.Background()
@@ -1201,4 +1163,43 @@ func TestAuthProxyStatusCheck(t *testing.T) {
 
 	// TODO: Other test scenarios:
 	// various failing replicas for the deployments
+}
+
+// helpers
+func getSecret(namespace, secretName string) *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"data": []byte(secretName),
+		},
+	}
+}
+
+func createCSM(name string, namespace string, driverType csmv1.DriverType, moduleType csmv1.ModuleType, moduleEnabled bool, components []csmv1.ContainerTemplate) *csmv1.ContainerStorageModule {
+	return &csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: driverType,
+			},
+			Modules: []csmv1.Module{
+				{
+					Name:       moduleType,
+					Enabled:    moduleEnabled,
+					Components: components,
+				},
+			},
+		},
+	}
 }
