@@ -108,15 +108,15 @@ func TestGetDeploymentStatus(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := getDeploymentStatus(tt.args.ctx, tt.args.instance, tt.args.r)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("getDeploymentStatus() error = %v, wantErr %v", err, tt.wantErr)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := getDeploymentStatus(test.args.ctx, test.args.instance, test.args.r)
+			if (err != nil) != test.wantErr {
+				t.Errorf("getDeploymentStatus() error = %v, wantErr %v", err, test.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getDeploymentStatus() = %v, want %v", got, tt.want)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("getDeploymentStatus() = %v, want %v", got, test.want)
 			}
 		})
 	}
@@ -133,7 +133,7 @@ func TestGetDaemonSetStatus(t *testing.T) {
 	tests := []struct {
 		name             string
 		args             args
-		wantTotalDesired int
+		wantTotalDesired int32
 		wantStatus       csmv1.PodStatus
 		wantErr          bool
 	}{
@@ -205,7 +205,7 @@ func TestGetDaemonSetStatus(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Test getDaemonSetStatus when daemonset found",
+			name: "Test getDaemonSetStatus with empty daemonset",
 			args: args{
 				ctx:      context.Background(),
 				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
@@ -239,14 +239,80 @@ func TestGetDaemonSetStatus(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Test getDaemonSetStatus with one pending pod",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-node",
+							Namespace: "powerflex",
+						},
+						Status: appsv1.DaemonSetStatus{
+							DesiredNumberScheduled: 1,
+						},
+					}).WithObjects(
+						&corev1.Pod{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "Pod",
+								APIVersion: "v1",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "powerflex-driver",
+								Namespace: "powerflex",
+								Labels: map[string]string{
+									"app": "powerflex-node",
+								},
+							},
+							Status: corev1.PodStatus{
+								Phase: corev1.PodPending,
+								Conditions: []corev1.PodCondition{
+									{Type: corev1.PodReady, Status: corev1.ConditionTrue},
+								},
+							},
+						}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+			},
+			wantTotalDesired: 1,
+			wantStatus: csmv1.PodStatus{
+				Available: "0",
+				Desired:   "1",
+				Failed:    "1",
+			},
+			wantErr: true,
+		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := getDaemonSetStatus(tt.args.ctx, tt.args.instance, tt.args.r)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("getDaemonSetStatus() error = %v, wantErr %v", err, tt.wantErr)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			totalDesired, podStatus, err := getDaemonSetStatus(test.args.ctx, test.args.instance, test.args.r)
+			if (err != nil) != test.wantErr {
+				t.Errorf("getDaemonSetStatus() error = %v, wantErr %v", err, test.wantErr)
 				return
+			}
+
+			if err == nil && totalDesired != test.wantTotalDesired {
+				t.Errorf("getDaemonSetStatus() totalDesired = %v, wantTotalDesired %v", totalDesired, test.wantTotalDesired)
+				return
+			}
+
+			if err == nil && !reflect.DeepEqual(podStatus, test.wantStatus) {
+				t.Errorf("getDeploymentStatus() = %v, want %v", podStatus, test.wantStatus)
 			}
 		})
 	}
