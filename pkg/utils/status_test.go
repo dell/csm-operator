@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/constants"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1163,6 +1164,29 @@ func TestAuthProxyStatusCheck(t *testing.T) {
 
 	// TODO: Other test scenarios:
 	// various failing replicas for the deployments
+}
+
+func TestSetStatus(t *testing.T) {
+	ctx := context.Background()
+	instance := createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil)
+
+	newStatus := &csmv1.ContainerStorageModuleStatus{
+		State: constants.Succeeded,
+		NodeStatus: csmv1.PodStatus{
+			Available: "1",
+			Failed:    "0",
+			Desired:   "1",
+		},
+		ControllerStatus: csmv1.PodStatus{
+			Available: "1",
+			Failed:    "0",
+			Desired:   "1",
+		},
+	}
+
+	SetStatus(ctx, nil, instance, newStatus)
+
+	assert.Equal(t, newStatus, instance.GetCSMStatus())
 }
 
 // helpers
