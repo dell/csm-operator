@@ -117,16 +117,17 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 
 	for _, cluster := range clusterClients {
 		totalRunning = 0
-		log.Infof("\ndaemonset status for cluster: %s", cluster.ClusterID)
+		log.Infof("\ngetting daemonset status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
 		ds := &appsv1.DaemonSet{}
 
 		nodeName := instance.GetNodeName()
-		log.Infof("nodeName is %s", nodeName)
+		namespace := instance.GetNamespace()
+		log.Infof("nodeName: %s, namespace: %s ", nodeName, namespace)
 		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
 			Name:      nodeName,
-			Namespace: instance.GetNamespace(),
+			Namespace: namespace,
 		}, ds)
 		if err != nil {
 			return 0, csmv1.PodStatus{}, err
@@ -135,7 +136,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		podList := &corev1.PodList{}
 		label := instance.GetName() + "-node"
 		opts := []client.ListOption{
-			client.InNamespace(instance.GetNamespace()),
+			client.InNamespace(namespace),
 			client.MatchingLabels{"app": label},
 		}
 

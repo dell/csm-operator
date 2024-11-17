@@ -124,20 +124,12 @@ func TestGetDeploymentStatus(t *testing.T) {
 
 func TestGetDaemonSetStatus(t *testing.T) {
 
-	ns := "default"
-	licenseCred := getSecret(ns, "dls-license")
-	ivLicense := getSecret(ns, "iv")
-	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenseCred).WithObjects(ivLicense).Build()
-
-	fakeReconcile := FakeReconcileCSM{
-		Client:    sourceClient,
-		K8sClient: fake.NewSimpleClientset(),
-	}
 	type args struct {
 		ctx      context.Context
 		instance *csmv1.ContainerStorageModule
 		r        ReconcileCSM
 	}
+
 	tests := []struct {
 		name             string
 		args             args
@@ -155,7 +147,10 @@ func TestGetDaemonSetStatus(t *testing.T) {
 						Envs: []corev1.EnvVar{{Name: "TARGET_CLUSTERS_IDS", Value: "cluster-2"}},
 					},
 				}),
-				r: &fakeReconcile,
+				r: &FakeReconcileCSM{
+					Client:    ctrlClientFake.NewClientBuilder().Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
 			},
 			wantTotalDesired: 0,
 			wantStatus: csmv1.PodStatus{
@@ -164,6 +159,85 @@ func TestGetDaemonSetStatus(t *testing.T) {
 				Failed:    "0",
 			},
 			wantErr: true,
+		},
+		{
+			name: "Test getDaemonSetStatus when namespace not found",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client:    ctrlClientFake.NewClientBuilder().Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+			},
+			wantTotalDesired: 0,
+			wantStatus: csmv1.PodStatus{
+				Available: "0",
+				Desired:   "0",
+				Failed:    "0",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Test getDaemonSetStatus when daemonset not found",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+			},
+			wantTotalDesired: 0,
+			wantStatus: csmv1.PodStatus{
+				Available: "0",
+				Desired:   "0",
+				Failed:    "0",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Test getDaemonSetStatus when daemonset found",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-node",
+							Namespace: "powerflex",
+						},
+					}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+			},
+			wantTotalDesired: 0,
+			wantStatus: csmv1.PodStatus{
+				Available: "0",
+				Desired:   "0",
+				Failed:    "0",
+			},
+			wantErr: false,
 		},
 	}
 
