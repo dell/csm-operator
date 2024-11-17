@@ -192,7 +192,6 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		totalAvialable += totalRunning
 		totalDesired += ds.Status.DesiredNumberScheduled
 		totalFailedCount += failedCount
-
 	}
 
 	if totalFailedCount > 0 {

@@ -296,6 +296,265 @@ func TestGetDaemonSetStatus(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Test getDaemonSetStatus with container state ImagePullBackoff",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-node",
+							Namespace: "powerflex",
+						},
+						Status: appsv1.DaemonSetStatus{
+							DesiredNumberScheduled: 1,
+						},
+					}).WithObjects(
+						&corev1.Pod{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "Pod",
+								APIVersion: "v1",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "powerflex-driver",
+								Namespace: "powerflex",
+								Labels: map[string]string{
+									"app": "powerflex-node",
+								},
+							},
+							Status: corev1.PodStatus{
+								Phase: corev1.PodPending,
+								Conditions: []corev1.PodCondition{
+									{Type: corev1.PodReady, Status: corev1.ConditionTrue},
+								},
+								ContainerStatuses: []corev1.ContainerStatus{
+									{
+										State: corev1.ContainerState{
+											Waiting: &corev1.ContainerStateWaiting{
+												Reason: "ImagePullBackOff",
+											},
+										},
+									},
+								},
+							},
+						}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+			},
+			wantTotalDesired: 1,
+			wantStatus: csmv1.PodStatus{
+				Available: "0",
+				Desired:   "1",
+				Failed:    "1",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Test getDaemonSetStatus with container state ContainerCreating",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-node",
+							Namespace: "powerflex",
+						},
+						Status: appsv1.DaemonSetStatus{
+							DesiredNumberScheduled: 1,
+						},
+					}).WithObjects(
+						&corev1.Pod{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "Pod",
+								APIVersion: "v1",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "powerflex-driver",
+								Namespace: "powerflex",
+								Labels: map[string]string{
+									"app": "powerflex-node",
+								},
+							},
+							Status: corev1.PodStatus{
+								Phase: corev1.PodPending,
+								Conditions: []corev1.PodCondition{
+									{Type: corev1.PodReady, Status: corev1.ConditionTrue},
+								},
+								ContainerStatuses: []corev1.ContainerStatus{
+									{
+										State: corev1.ContainerState{
+											Waiting: &corev1.ContainerStateWaiting{
+												Reason: "ContainerCreating",
+											},
+										},
+									},
+								},
+							},
+						}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+			},
+			wantTotalDesired: 1,
+			wantStatus: csmv1.PodStatus{
+				Available: "0",
+				Desired:   "1",
+				Failed:    "1",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Test getDaemonSetStatus with container state running",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-node",
+							Namespace: "powerflex",
+						},
+						Status: appsv1.DaemonSetStatus{
+							DesiredNumberScheduled: 1,
+						},
+					}).WithObjects(
+						&corev1.Pod{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "Pod",
+								APIVersion: "v1",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "powerflex-driver",
+								Namespace: "powerflex",
+								Labels: map[string]string{
+									"app": "powerflex-node",
+								},
+							},
+							Status: corev1.PodStatus{
+								Phase: corev1.PodRunning,
+								Conditions: []corev1.PodCondition{
+									{Type: corev1.PodReady, Status: corev1.ConditionTrue},
+								},
+								ContainerStatuses: []corev1.ContainerStatus{
+									{
+										State: corev1.ContainerState{
+											Running: &corev1.ContainerStateRunning{
+												StartedAt: metav1.Time{Time: time.Now()},
+											}},
+									},
+								},
+							},
+						}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+			},
+			wantTotalDesired: 1,
+			wantStatus: csmv1.PodStatus{
+				Available: "1",
+				Desired:   "1",
+				Failed:    "0",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Test getDaemonSetStatus with pod running but container not running",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-node",
+							Namespace: "powerflex",
+						},
+						Status: appsv1.DaemonSetStatus{
+							DesiredNumberScheduled: 1,
+						},
+					}).WithObjects(
+						&corev1.Pod{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "Pod",
+								APIVersion: "v1",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "powerflex-driver",
+								Namespace: "powerflex",
+								Labels: map[string]string{
+									"app": "powerflex-node",
+								},
+							},
+							Status: corev1.PodStatus{
+								Phase: corev1.PodRunning,
+								ContainerStatuses: []corev1.ContainerStatus{
+									{
+										State: corev1.ContainerState{
+											Running: &corev1.ContainerStateRunning{
+												StartedAt: metav1.Time{Time: time.Now()},
+											}},
+									},
+								},
+							},
+						}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+			},
+			wantTotalDesired: 1,
+			wantStatus: csmv1.PodStatus{
+				Available: "0",
+				Desired:   "1",
+				Failed:    "0",
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, test := range tests {
