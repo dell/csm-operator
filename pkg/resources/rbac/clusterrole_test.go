@@ -80,6 +80,22 @@ func TestSyncClusterRole(t *testing.T) {
 
 	})
 
+	t.Run("Handle error on getting creating clusterRole", func(t *testing.T) {
+		client := &MockClient{
+			CreateFunc: func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+				return nil
+			},
+			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+				return apierrors.NewNotFound(rbacv1.Resource("clusterrole"), key.Name)
+			},
+		}
+
+		err := SyncClusterRole(ctx, clusterRole, client)
+		assert.Error(t, err)
+		assert.Equal(t, "clusterrole.rbac.authorization.k8s.io \"my-cluster-role\" not found", err.Error())
+
+	})
+
 	t.Run("Handle existing clusterRole", func(t *testing.T) {
 		client := &MockClient{
 			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
@@ -89,6 +105,21 @@ func TestSyncClusterRole(t *testing.T) {
 
 		err := SyncClusterRole(ctx, clusterRole, client)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Handle existing clusterRole update error", func(t *testing.T) {
+		client := &MockClient{
+			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+				return nil
+			},
+			UpdateFunc: func(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+				return errors.New("update error")
+			},
+		}
+
+		err := SyncClusterRole(ctx, clusterRole, client)
+		assert.Error(t, err)
+		assert.Equal(t, "update error", err.Error())
 	})
 }
 
