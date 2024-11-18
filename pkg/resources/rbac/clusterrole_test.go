@@ -17,6 +17,7 @@ import (
 	"errors"
 	"testing"
 
+	common "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -53,7 +54,7 @@ func TestSyncClusterRole(t *testing.T) {
 	})
 
 	t.Run("Handle error on getting clusterRole", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return errors.New("get error")
 			},
@@ -65,7 +66,7 @@ func TestSyncClusterRole(t *testing.T) {
 	})
 
 	t.Run("Handle error on creating clusterRole", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return apierrors.NewNotFound(rbacv1.Resource("clusterrole"), key.Name)
 			},
@@ -80,7 +81,7 @@ func TestSyncClusterRole(t *testing.T) {
 	})
 
 	t.Run("Handle error on getting creating clusterRole", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			CreateFunc: func(_ context.Context, _ client.Object, _ ...client.CreateOption) error {
 				return nil
 			},
@@ -95,7 +96,7 @@ func TestSyncClusterRole(t *testing.T) {
 	})
 
 	t.Run("Handle existing clusterRole", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return nil
 			},
@@ -106,7 +107,7 @@ func TestSyncClusterRole(t *testing.T) {
 	})
 
 	t.Run("Handle existing clusterRole update error", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return nil
 			},
@@ -119,33 +120,4 @@ func TestSyncClusterRole(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, "update error", err.Error())
 	})
-}
-
-// MockClient is a mock implementation of the client.Client interface for testing purposes.
-type MockClient struct {
-	client.Client
-	GetFunc    func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
-	CreateFunc func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
-	UpdateFunc func(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error
-}
-
-func (m *MockClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	if m.GetFunc != nil {
-		return m.GetFunc(ctx, key, obj, opts...)
-	}
-	return nil
-}
-
-func (m *MockClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
-	if m.CreateFunc != nil {
-		return m.CreateFunc(ctx, obj, opts...)
-	}
-	return nil
-}
-
-func (m *MockClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
-	if m.UpdateFunc != nil {
-		return m.UpdateFunc(ctx, obj, opts...)
-	}
-	return nil
 }

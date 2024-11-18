@@ -17,6 +17,7 @@ import (
 	"errors"
 	"testing"
 
+	common "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -53,7 +54,7 @@ func TestSyncServiceAccountp(t *testing.T) {
 	})
 
 	t.Run("Handle error on getting ServiceAccount", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return errors.New("get error")
 			},
@@ -65,7 +66,7 @@ func TestSyncServiceAccountp(t *testing.T) {
 	})
 
 	t.Run("Handle error on creating ServiceAccount", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return apierrors.NewNotFound(corev1.Resource("serviceaccount"), key.Name)
 			},
@@ -80,7 +81,7 @@ func TestSyncServiceAccountp(t *testing.T) {
 	})
 
 	t.Run("Handle existing ServiceAccount", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return nil
 			},
@@ -89,25 +90,4 @@ func TestSyncServiceAccountp(t *testing.T) {
 		err := SyncServiceAccount(ctx, serviceAccount, client)
 		assert.NoError(t, err)
 	})
-}
-
-// MockClient is a mock implementation of the client.Client interface for testing purposes.
-type MockClient struct {
-	client.Client
-	GetFunc    func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
-	CreateFunc func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
-}
-
-func (m *MockClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	if m.GetFunc != nil {
-		return m.GetFunc(ctx, key, obj, opts...)
-	}
-	return nil
-}
-
-func (m *MockClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
-	if m.CreateFunc != nil {
-		return m.CreateFunc(ctx, obj, opts...)
-	}
-	return nil
 }

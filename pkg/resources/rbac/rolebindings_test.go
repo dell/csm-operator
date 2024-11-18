@@ -17,6 +17,7 @@ import (
 	"errors"
 	"testing"
 
+	common "github.com/dell/csm-operator/pkg/utils"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,7 +49,7 @@ func TestSyncClusterRoleBindings(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				rb:  *MockClusterRoleBinding("test", "test", "test"),
-				client: &MockClient{
+				client: &common.MockClient{
 					GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 						return errors.New("unknown error")
 					},
@@ -70,7 +71,7 @@ func TestSyncClusterRoleBindings(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				rb:  *MockClusterRoleBinding("test", "test", "test"),
-				client: &MockClient{
+				client: &common.MockClient{
 					UpdateFunc: func(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
 						return nil
 					},
@@ -83,7 +84,7 @@ func TestSyncClusterRoleBindings(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				rb:  *MockClusterRoleBinding("test", "test", "test"),
-				client: &MockClient{
+				client: &common.MockClient{
 					UpdateFunc: func(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
 						return errors.New("update error")
 					},

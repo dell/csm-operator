@@ -17,6 +17,7 @@ import (
 	"errors"
 	"testing"
 
+	common "github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -81,7 +82,7 @@ func TestSyncConfigMap(t *testing.T) {
 	})
 
 	t.Run("Handle error on getting ConfigMap", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return errors.New("get error")
 			},
@@ -93,7 +94,7 @@ func TestSyncConfigMap(t *testing.T) {
 	})
 
 	t.Run("Handle error on creating ConfigMap", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return apierrors.NewNotFound(corev1.Resource("configmap"), key.Name)
 			},
@@ -108,7 +109,7 @@ func TestSyncConfigMap(t *testing.T) {
 	})
 
 	t.Run("Handle error on updating ConfigMap", func(t *testing.T) {
-		client := &MockClient{
+		client := &common.MockClient{
 			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return nil
 			},
@@ -122,33 +123,4 @@ func TestSyncConfigMap(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, "updating configmap: update error", err.Error())
 	})
-}
-
-// MockClient is a mock implementation of the client.Client interface for testing purposes.
-type MockClient struct {
-	client.Client
-	GetFunc    func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
-	CreateFunc func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
-	UpdateFunc func(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error
-}
-
-func (m *MockClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	if m.GetFunc != nil {
-		return m.GetFunc(ctx, key, obj, opts...)
-	}
-	return nil
-}
-
-func (m *MockClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
-	if m.CreateFunc != nil {
-		return m.CreateFunc(ctx, obj, opts...)
-	}
-	return nil
-}
-
-func (m *MockClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
-	if m.UpdateFunc != nil {
-		return m.UpdateFunc(ctx, obj, opts...)
-	}
-	return nil
 }
