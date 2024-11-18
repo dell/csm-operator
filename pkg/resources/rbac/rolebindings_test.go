@@ -50,7 +50,7 @@ func TestSyncClusterRoleBindings(t *testing.T) {
 				ctx: context.Background(),
 				rb:  *MockClusterRoleBinding("test", "test", "test"),
 				client: &MockClient{
-					GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+					GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 						return errors.New("unknown error")
 					},
 				},
@@ -72,7 +72,7 @@ func TestSyncClusterRoleBindings(t *testing.T) {
 				ctx: context.Background(),
 				rb:  *MockClusterRoleBinding("test", "test", "test"),
 				client: &MockClient{
-					UpdateFunc: func(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+					UpdateFunc: func(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
 						return nil
 					},
 				},
@@ -85,7 +85,7 @@ func TestSyncClusterRoleBindings(t *testing.T) {
 				ctx: context.Background(),
 				rb:  *MockClusterRoleBinding("test", "test", "test"),
 				client: &MockClient{
-					UpdateFunc: func(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+					UpdateFunc: func(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
 						return errors.New("update error")
 					},
 				},

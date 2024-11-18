@@ -54,7 +54,7 @@ func TestSyncClusterRole(t *testing.T) {
 
 	t.Run("Handle error on getting clusterRole", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return errors.New("get error")
 			},
 		}
@@ -66,10 +66,10 @@ func TestSyncClusterRole(t *testing.T) {
 
 	t.Run("Handle error on creating clusterRole", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return apierrors.NewNotFound(rbacv1.Resource("clusterrole"), key.Name)
 			},
-			CreateFunc: func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+			CreateFunc: func(_ context.Context, _ client.Object, _ ...client.CreateOption) error {
 				return errors.New("create error")
 			},
 		}
@@ -82,10 +82,10 @@ func TestSyncClusterRole(t *testing.T) {
 
 	t.Run("Handle error on getting creating clusterRole", func(t *testing.T) {
 		client := &MockClient{
-			CreateFunc: func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+			CreateFunc: func(_ context.Context, _ client.Object, _ ...client.CreateOption) error {
 				return nil
 			},
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return apierrors.NewNotFound(rbacv1.Resource("clusterrole"), key.Name)
 			},
 		}
@@ -98,7 +98,7 @@ func TestSyncClusterRole(t *testing.T) {
 
 	t.Run("Handle existing clusterRole", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return nil
 			},
 		}
@@ -109,10 +109,10 @@ func TestSyncClusterRole(t *testing.T) {
 
 	t.Run("Handle existing clusterRole update error", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return nil
 			},
-			UpdateFunc: func(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+			UpdateFunc: func(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
 				return errors.New("update error")
 			},
 		}

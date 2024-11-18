@@ -54,7 +54,7 @@ func TestSyncServiceAccountp(t *testing.T) {
 
 	t.Run("Handle error on getting ServiceAccount", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return errors.New("get error")
 			},
 		}
@@ -66,10 +66,10 @@ func TestSyncServiceAccountp(t *testing.T) {
 
 	t.Run("Handle error on creating ServiceAccount", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return apierrors.NewNotFound(corev1.Resource("serviceaccount"), key.Name)
 			},
-			CreateFunc: func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+			CreateFunc: func(_ context.Context, _ client.Object, _ ...client.CreateOption) error {
 				return errors.New("create error")
 			},
 		}
@@ -82,7 +82,7 @@ func TestSyncServiceAccountp(t *testing.T) {
 
 	t.Run("Handle existing ServiceAccount", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return nil
 			},
 		}

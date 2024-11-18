@@ -15,6 +15,7 @@ package daemonset
 import (
 	"context"
 	"fmt"
+
 	// "errors"
 	"testing"
 
@@ -99,7 +100,7 @@ func TestSyncDaemonset(t *testing.T) {
 		k8sClient := fake.NewSimpleClientset()
 
 		// error getting daemonset
-		k8sClient.PrependReactor("get", "daemonsets", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
+		k8sClient.PrependReactor("get", "daemonsets", func(_ k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
 			return true, nil, apierrors.NewInternalError(fmt.Errorf("internal error"))
 		})
 
@@ -113,7 +114,7 @@ func TestSyncDaemonset(t *testing.T) {
 		k8sClient := fake.NewSimpleClientset()
 
 		// daemonset not found
-		k8sClient.PrependReactor("get", "daemonsets", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
+		k8sClient.PrependReactor("get", "daemonsets", func(_ k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
 			return true, nil, apierrors.NewNotFound(schema.GroupResource{Group: "apps", Resource: "daemonsets"}, "test-daemonset")
 		})
 
