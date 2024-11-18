@@ -82,7 +82,7 @@ func TestSyncConfigMap(t *testing.T) {
 
 	t.Run("Handle error on getting ConfigMap", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return errors.New("get error")
 			},
 		}
@@ -94,10 +94,10 @@ func TestSyncConfigMap(t *testing.T) {
 
 	t.Run("Handle error on creating ConfigMap", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return apierrors.NewNotFound(corev1.Resource("configmap"), key.Name)
 			},
-			CreateFunc: func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+			CreateFunc: func(_ context.Context, _ client.Object, _ ...client.CreateOption) error {
 				return errors.New("create error")
 			},
 		}
@@ -105,16 +105,15 @@ func TestSyncConfigMap(t *testing.T) {
 		err := SyncConfigMap(ctx, configMap, client)
 		assert.Error(t, err)
 		assert.Equal(t, "creating configmap: create error", err.Error())
-
 	})
 
 	t.Run("Handle error on updating ConfigMap", func(t *testing.T) {
 		client := &MockClient{
-			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 				return nil
 			},
 
-			UpdateFunc: func(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+			UpdateFunc: func(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
 				return errors.New("update error")
 			},
 		}
