@@ -2027,16 +2027,6 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 			expectedVersion:  "v1.10.0",
 			expectedErrorMsg: "",
 		},
-		/*
-			{
-				name:             "invalid driver",
-				driverConfig:     "v2.12.0",
-				driverType:       csmv1.UnknownDriver,
-				moduleType:       csmv1.Observability,
-				path:             "../operatorconfig",
-				expectedVersion:  "",
-				expectedErrorMsg: "unknown driver type: UnknownDriver",
-			},*/
 		{
 			name:             "invalid version",
 			driverConfig:     "v20.12.0",
@@ -2287,53 +2277,6 @@ func TestGetConfigData(t *testing.T) {
 	// TODO: Add a test case for checking for a secret that isn't there
 }
 
-// TODO: This test case isn't working yet. Needs some work,
-// NewControllerRuntimeClient is rejecting the input.
-/*
-func TestGetClusterCtrlClient(t *testing.T) {
-	// Create a fake context.Context
-	ctx := context.Background()
-
-	// Create a fake ctrlClient
-	ctrlClient := fullFakeClient()
-
-	// Create a fake clusterID
-	clusterID := "test-cluster"
-
-	// Create a fake secret
-	secret := corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterID,
-			Namespace: ReplicationControllerNameSpace,
-		},
-		Data: map[string][]byte{
-			"data": []byte("test-data"),
-		},
-	}
-
-	// Add the secret to the ctrlClient
-	if err := ctrlClient.Create(ctx, &secret); err != nil {
-		t.Fatalf("failed to create secret: %v", err)
-	}
-
-	// Call the function
-	// TODO: This is erroring out, need to examine why
-	clusterCtrlClient, err := getClusterCtrlClient(ctx, clusterID, ctrlClient)
-
-	// Assert the expected result
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if clusterCtrlClient == nil {
-		t.Error("expected clusterCtrlClient to be non-nil")
-	}
-}
-*/
-
 func TestGetNamespaces(t *testing.T) {
 	// Create a fake context.Context
 	ctx := context.Background()
@@ -2490,70 +2433,6 @@ func TestIsResiliencyModuleEnabled(t *testing.T) {
 	}
 }
 
-// TODO: Broken/unfinished. No reconciler object support.
-/*
-func TestGetDefaultClusters(t *testing.T) {
-	// Create a fake context.Context
-	ctx := context.Background()
-
-	// CSM types must be registered with the scheme
-	scheme := runtime.NewScheme()
-	csmv1.AddToScheme(scheme)  // for CSM objects
-	corev1.AddToScheme(scheme) // for namespaces
-
-	// Create a fake ctrlClient
-	ctrlClient := fake.NewClientBuilder().
-		WithScheme(scheme).
-		Build()
-	// Test case: replication module is enabled
-	instance := csmv1.ContainerStorageModule{
-		Spec: csmv1.ContainerStorageModuleSpec{
-			Modules: []csmv1.Module{
-				{
-					Name:    csmv1.Replication,
-					Enabled: true,
-				},
-			},
-		},
-	}
-
-	fakeReconcile := FakeReconcileCSM{
-		Client:    ctrlClient,
-		K8sClient: fake.NewSimpleClientset(),
-	}
-	expectedReplicaEnabled := true
-	expectedClusterClients := []ReplicaCluster{
-		{
-			ClusterCTRLClient: r.GetClient(),
-			ClusterK8sClient:  r.GetK8sClient(),
-			ClusterID:         DefaultSourceClusterID,
-		},
-	}
-
-	replicaEnabled, clusterClients, err := GetDefaultClusters(ctx, instance, fakeReconcile)
-	if err != nil {
-		t.Errorf("Expected no error, but got %v", err)
-	}
-	if replicaEnabled != expectedReplicaEnabled {
-		t.Errorf("Expected %v, but got %v", expectedReplicaEnabled, replicaEnabled)
-	}
-	assert.Equal(t, clusterClients, expectedClusterClients)
-
-	// Test case: replication module is disabled
-	instance.Spec.Modules[0].Enabled = false
-	expectedReplicaEnabled = false
-	expectedClusterClients = []ReplicaCluster{}
-
-	replicaEnabled, clusterClients, err = GetDefaultClusters(context.TODO(), instance, r)
-	if err != nil {
-		t.Errorf("Expected no error, but got %v", err)
-	}
-	if replicaEnabled != expectedReplicaEnabled {
-		t.Errorf("Expected %v, but got %v", expectedReplicaEnabled, replicaEnabled)
-	}
-	assert.Equal(t, clusterClients, expectedClusterClients)
-}*/
-
 func TestGetVolumeSnapshotLocation(t *testing.T) {
 	// Test case: snapshot location exists
 	ctx := context.Background()
@@ -2709,67 +2588,7 @@ func TestIsValidUpgrade(t *testing.T) {
 	isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
 	assert.Nil(t, err)
 	assert.Equal(t, isValid, expectedIsValid)
-
-	/*
-		// Test case: error returned from getUpgradeInfo
-		oldVersion = "1.0.0"
-		newVersion = "2.0.0"
-		operatorConfig.UpgradePaths = map[string]UpgradePaths{
-			"driver": {
-				MinUpgradePath: "2.0.0",
-			},
-		}
-		expectedIsValid = false
-		expectedErr := fmt.Errorf("getUpgradeInfo not successful")
-
-		isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
-		if err == nil {
-			t.Errorf("Expected error, but got nil")
-		}
-		if err.Error() != expectedErr.Error() {
-			t.Errorf("Expected error %v, but got %v", expectedErr, err)
-		}
-		if isValid != expectedIsValid {
-			t.Errorf("Expected %v, but got %v", expectedIsValid, isValid)
-		}*/
 }
-
-// TODO: Work on this, it's failing with an unmarshal error. It's the last thing I was working on before EOD.
-/*
-func TestGetClusterCtrlClient(t *testing.T) {
-	// Create a fake context.Context
-	ctx := context.Background()
-
-	// Create a fake ctrlClient
-	ctrlClient := fullFakeClient()
-
-	// Create a fake clusterID
-	clusterID := "test-cluster"
-
-	// Create a fake secret
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterID,
-			Namespace: ReplicationControllerNameSpace,
-		},
-		Data: map[string][]byte{
-			"data": []byte("test-data"),
-		},
-	}
-
-	// Add the secret to the ctrlClient
-	if err := ctrlClient.Create(ctx, secret); err != nil {
-		t.Fatalf("failed to create secret: %v", err)
-	}
-
-	// Call the function
-	clusterCtrlClient, err := getClusterCtrlClient(ctx, clusterID, ctrlClient)
-
-	// Assert the expected result
-	assert.NoError(t, err)
-	assert.NotNil(t, clusterCtrlClient)
-}
-*/
 
 func TestGetClusterCtrlClient(t *testing.T) {
 	// Create a fake context.Context
