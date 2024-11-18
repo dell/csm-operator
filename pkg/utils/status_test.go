@@ -14,6 +14,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -830,7 +831,6 @@ func TestAppMobStatusCheck(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
 
-	
 	//if !certEnabled && !veleroEnabled
 	csm2 := csmv1.ContainerStorageModule{
 		ObjectMeta: metav1.ObjectMeta{
@@ -864,8 +864,6 @@ func TestAppMobStatusCheck(t *testing.T) {
 	status, err = appMobStatusCheck(ctx, &csm2, &fakeReconcile, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
-
-
 
 	// Test 3: cert-manager is disabled, velero is enabled
 	csm3 := csmv1.ContainerStorageModule{
@@ -1290,6 +1288,67 @@ func TestSetStatus(t *testing.T) {
 	assert.Equal(t, newStatus, instance.GetCSMStatus())
 }
 
+func TestHandleValidationError(t *testing.T) {
+
+	type args struct {
+		ctx             context.Context
+		instance        *csmv1.ContainerStorageModule
+		r               ReconcileCSM
+		validationError error
+	}
+
+	tests := []struct {
+		name           string
+		args           args
+		expectedResult reconcile.Result
+		wantErr        bool
+	}{
+		{
+			name: "Test HandleValidationError ",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSMWithStatus("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil, csmv1.ContainerStorageModuleStatus{State: constants.Creating}),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-node",
+							Namespace: "powerflex",
+						},
+					}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+				validationError: fmt.Errorf("validation error"),
+			},
+			expectedResult: reconcile.Result{Requeue: false},
+			wantErr:        true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := HandleValidationError(test.args.ctx, test.args.instance, test.args.r, test.args.validationError)
+			if (err != nil) != test.wantErr {
+				t.Errorf("HandleValidationError() error = %v, wantErr %v", err, test.wantErr)
+				return
+			}
+			assert.Equal(t, test.expectedResult, result)
+			assert.Equal(t, constants.Failed, test.args.instance.GetCSMStatus().State)
+		})
+	}
+}
+
 func TestHandleSuccess(t *testing.T) {
 
 	type args struct {
@@ -1394,26 +1453,6 @@ func TestHandleSuccess(t *testing.T) {
 			assert.Equal(t, test.want, requeue)
 		})
 	}
-
-	// ctx := context.Background()
-	// instance := createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil)
-	// newStatus := csmv1.ContainerStorageModuleStatus{
-	// 	State: constants.Succeeded,
-	// 	NodeStatus: csmv1.PodStatus{
-	// 		Available: "1",
-	// 		Failed:    "0",
-	// 		Desired:   "1",
-	// 	},
-	// 	ControllerStatus: csmv1.PodStatus{
-	// 		Available: "1",
-	// 		Failed:    "0",
-	// 		Desired:   "1",
-	// 	},
-	// }
-	// fakeReconcile := FakeReconcileCSM{
-	// 	Client:    ctrlClientFake.NewClientBuilder().Build(),
-	// 	K8sClient: fake.NewSimpleClientset(),
-	// }
 }
 
 // helpers
@@ -1455,3 +1494,24 @@ func createCSM(name string, namespace string, driverType csmv1.DriverType, modul
 	}
 }
 
+func createCSMWithStatus(name string, namespace string, driverType csmv1.DriverType, moduleType csmv1.ModuleType, moduleEnabled bool, components []csmv1.ContainerTemplate, status csmv1.ContainerStorageModuleStatus) *csmv1.ContainerStorageModule {
+	return &csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: driverType,
+			},
+			Modules: []csmv1.Module{
+				{
+					Name:       moduleType,
+					Enabled:    moduleEnabled,
+					Components: components,
+				},
+			},
+		},
+		Status: status,
+	}
+}
