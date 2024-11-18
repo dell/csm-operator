@@ -15,6 +15,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"k8s.io/client-go/kubernetes/scheme"
 	"reflect"
 	"testing"
 	"time"
@@ -1514,4 +1515,70 @@ func createCSMWithStatus(name string, namespace string, driverType csmv1.DriverT
 		},
 		Status: status,
 	}
+}
+
+func TestUpdateStatus(t *testing.T) {
+	ctx := context.TODO()
+
+	// Define the initial ContainerStorageModule instance
+	instance := &csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Status: csmv1.ContainerStorageModuleStatus{
+			State: "oldState",
+			ControllerStatus: csmv1.PodStatus{
+				Available: "1",
+				Failed:    "0",
+				Desired:   "1",
+			},
+			NodeStatus: csmv1.PodStatus{
+				Available: "1",
+				Failed:    "0",
+				Desired:   "1",
+			},
+		},
+	}
+
+	// Define the new status for the update
+	newStatus := &csmv1.ContainerStorageModuleStatus{
+		State: constants.Succeeded,
+		NodeStatus: csmv1.PodStatus{
+			Available: "1",
+			Failed:    "0",
+			Desired:   "1",
+		},
+		ControllerStatus: csmv1.PodStatus{
+			Available: "1",
+			Failed:    "0",
+			Desired:   "1",
+		},
+	}
+
+	// Register the CRD with the scheme
+	s := scheme.Scheme
+	if err := csmv1.AddToScheme(s); err != nil {
+		t.Fatalf("Unable to add csmv1 scheme: %v", err)
+	}
+
+	// Create a fake client with the initial instance
+	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).WithObjects(instance).Build()
+
+	// Mock the FakeReconcileCSM to simulate GetUpdateCount
+	r := &FakeReconcileCSM{
+		Client:    fakeClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	// UpdateStatus function to be tested
+	UpdateStatus(ctx, instance, r, newStatus)
+
+	// Check if the status is updated as expected
+	assert.Equal(t, newStatus.State, instance.Status.State)
+	assert.Equal(t, newStatus.ControllerStatus, instance.Status.ControllerStatus)
+	assert.Equal(t, newStatus.NodeStatus, instance.Status.NodeStatus)
+
+	// Ensure the update count is incremented
+	r.IncrUpdateCount() // Make sure the count is incremented as per your logic
+	assert.Equal(t, int32(1), r.GetUpdateCount())
 }
