@@ -795,7 +795,6 @@ func TestUpdateSideCarApply(t *testing.T) {
 		WithImage("old-image").
 		WithImagePullPolicy("old-image-pull-policy").
 		WithEnv(&acorev1.EnvVarApplyConfiguration{
-
 			Name:  &sc1env1,
 			Value: &oldenv1val,
 		},
@@ -1001,7 +1000,6 @@ func TestGetCTRLObject(t *testing.T) {
 	expected := []crclient.Object{}
 
 	result, err := GetCTRLObject(ctrlBuf)
-
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}
@@ -1075,7 +1073,6 @@ func TestGetCTRLObjectClusterRole(t *testing.T) {
 	expected := []crclient.Object{}
 
 	result, err := GetCTRLObject(ctrlBuf)
-
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}
@@ -1124,7 +1121,6 @@ func TestGetCTRLObjectClusterRoleBinding(t *testing.T) {
 	expected := []crclient.Object{}
 
 	result, err := GetCTRLObject(ctrlBuf)
-
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}
@@ -1157,7 +1153,6 @@ rules:
 
 	assert.Nil(t, err)
 	assert.Equal(t, result, expected)
-
 }
 
 func TestGetCTRLObjectConfigMap(t *testing.T) {
@@ -1166,7 +1161,6 @@ func TestGetCTRLObjectConfigMap(t *testing.T) {
 	expected := []crclient.Object{}
 
 	result, err := GetCTRLObject(ctrlBuf)
-
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}
@@ -1200,8 +1194,8 @@ data:
 
 	assert.Nil(t, err)
 	assert.Equal(t, result, expected)
-
 }
+
 func TestGetCTRLObjectDeployment(t *testing.T) {
 	// Test case: empty input
 	ctrlBuf := []byte{}
@@ -1276,7 +1270,6 @@ spec:
 
 	assert.Nil(t, err)
 	assert.Equal(t, result, expected)
-
 }
 
 // TODO: Cover more object types:
@@ -1585,206 +1578,106 @@ spec:
 	}
 
 	for _, obj := range ctrlObjects {
-		switch obj.(type) {
+		switch v := obj.(type) {
 		case *corev1.Service:
-			sv, ok := obj.(*corev1.Service)
-			if !ok {
-				t.Errorf("Expected Service object, got %T", obj)
-			}
-			if sv.Name != "my-service" {
-				t.Errorf("Expected service name 'my-service', got %s", sv.Name)
+			if v.Name != "my-service" {
+				t.Errorf("Expected service name 'my-service', got %s", v.Name)
 			}
 		case *rbacv1.ClusterRole:
-			cr, ok := obj.(*rbacv1.ClusterRole)
-			if !ok {
-				t.Errorf("Expected ClusterRole object, got %T", obj)
-			}
-			if cr.Name != "my-cluster-role" {
-				t.Errorf("Expected cluster role name 'my-cluster-role', got %s", cr.Name)
+			if v.Name != "my-cluster-role" {
+				t.Errorf("Expected cluster role name 'my-cluster-role', got %s", v.Name)
 			}
 		case *corev1.ConfigMap:
-			cm, ok := obj.(*corev1.ConfigMap)
-			if !ok {
-				t.Errorf("Expected ConfigMap object, got %T", obj)
-			}
-			if cm.Name != "my-config" {
-				t.Errorf("Expected config map name 'my-config', got %s", cm.Name)
+			if v.Name != "my-config" {
+				t.Errorf("Expected config map name 'my-config', got %s", v.Name)
 			}
 		case *appsv1.Deployment:
-			dp, ok := obj.(*appsv1.Deployment)
-			if !ok {
-				t.Errorf("Expected Deployment object, got %T", obj)
-			}
-			if dp.Name != "my-deployment" {
-				t.Errorf("Expected deployment name 'my-deployment', got %s", dp.Name)
+			if v.Name != "my-deployment" {
+				t.Errorf("Expected deployment name 'my-deployment', got %s", v.Name)
 			}
 		case *apiextv1.CustomResourceDefinition:
-			crd, ok := obj.(*apiextv1.CustomResourceDefinition)
-			if !ok {
-				t.Errorf("Expected CustomResourceDefinition object, got %T", obj)
-			}
-			if crd.Name != "my-crd" {
-				t.Errorf("Expected custom resource definition name 'my-crd', got %s", crd.Name)
+			if v.Name != "my-crd" {
+				t.Errorf("Expected custom resource definition name 'my-crd', got %s", v.Name)
 			}
 		case *corev1.ServiceAccount:
-			sa, ok := obj.(*corev1.ServiceAccount)
-			if !ok {
-				t.Errorf("Expected ServiceAccount object, got %T", obj)
-			}
-			if sa.Name != "my-sa" {
-				t.Errorf("Expected service account name 'my-service-account', got %s", sa.Name)
+			if v.Name != "my-sa" {
+				t.Errorf("Expected service account name 'my-service-account', got %s", v.Name)
 			}
 		case *rbacv1.ClusterRoleBinding:
-			crb, ok := obj.(*rbacv1.ClusterRoleBinding)
-			if !ok {
-				t.Errorf("Expected ClusterRoleBinding object, got %T", obj)
-			}
-			if crb.Name != "my-crb" {
-				t.Errorf("Expected cluster role binding name 'my-crb', got %s", crb.Name)
+			if v.Name != "my-crb" {
+				t.Errorf("Expected cluster role binding name 'my-crb', got %s", v.Name)
 			}
 		case *rbacv1.Role:
-			role, ok := obj.(*rbacv1.Role)
-			if !ok {
-				t.Errorf("Expected Role object, got %T", obj)
-			}
-			if role.Name != "my-role" {
-				t.Errorf("Expected role name 'my-role', got %s", role.Name)
+			if v.Name != "my-role" {
+				t.Errorf("Expected role name 'my-role', got %s", v.Name)
 			}
 		case *rbacv1.RoleBinding:
-			rb, ok := obj.(*rbacv1.RoleBinding)
-			if !ok {
-				t.Errorf("Expected RoleBinding object, got %T", obj)
-			}
-			if rb.Name != "my-role-binding" {
-				t.Errorf("Expected role binding name 'my-role-binding', got %s", rb.Name)
+			if v.Name != "my-role-binding" {
+				t.Errorf("Expected role binding name 'my-role-binding', got %s", v.Name)
 			}
 		case *corev1.PersistentVolumeClaim:
-			pvc, ok := obj.(*corev1.PersistentVolumeClaim)
-			if !ok {
-				t.Errorf("Expected PersistentVolumeClaim object, got %T", obj)
-			}
-			if pvc.Name != "my-pvc" {
-				t.Errorf("Expected persistent volume claim name 'my-pvc', got %s", pvc.Name)
+			if v.Name != "my-pvc" {
+				t.Errorf("Expected persistent volume claim name 'my-pvc', got %s", v.Name)
 			}
 		case *batchv1.Job:
-			job, ok := obj.(*batchv1.Job)
-			if !ok {
-				t.Errorf("Expected Job object, got %T", obj)
-			}
-			if job.Name != "my-job" {
-				t.Errorf("Expected job name 'my-job', got %s", job.Name)
+			if v.Name != "my-job" {
+				t.Errorf("Expected job name 'my-job', got %s", v.Name)
 			}
 		case *networking.Ingress:
-			ing, ok := obj.(*networking.Ingress)
-			if !ok {
-				t.Errorf("Expected Ingress object, got %T", obj)
-			}
-			if ing.Name != "my-ingress" {
-				t.Errorf("Expected ingress name 'my-ingress', got %s", ing.Name)
+			if v.Name != "my-ingress" {
+				t.Errorf("Expected ingress name 'my-ingress', got %s", v.Name)
 			}
 		case *admissionregistration.ValidatingWebhookConfiguration:
-			vwc, ok := obj.(*admissionregistration.ValidatingWebhookConfiguration)
-			if !ok {
-				t.Errorf("Expected ValidatingWebhookConfiguration object, got %T", obj)
-			}
-			if vwc.Name != "my-vwc" {
-				t.Errorf("Expected validating webhook configuration name 'my-vwc', got %s", vwc.Name)
+			if v.Name != "my-vwc" {
+				t.Errorf("Expected validating webhook configuration name 'my-vwc', got %s", v.Name)
 			}
 		case *admissionregistration.MutatingWebhookConfiguration:
-			mwc, ok := obj.(*admissionregistration.MutatingWebhookConfiguration)
-			if !ok {
-				t.Errorf("Expected MutatingWebhookConfiguration object, got %T", obj)
-			}
-			if mwc.Name != "my-mwc" {
-				t.Errorf("Expected mutating webhook configuration name 'my-mwc', got %s", mwc.Name)
+			if v.Name != "my-mwc" {
+				t.Errorf("Expected mutating webhook configuration name 'my-mwc', got %s", v.Name)
 			}
 		case *corev1.Secret:
-			secret, ok := obj.(*corev1.Secret)
-			if !ok {
-				t.Errorf("Expected Secret object, got %T", obj)
-			}
-			if secret.Name != "my-secret" {
-				t.Errorf("Expected secret name 'my-secret', got %s", secret.Name)
+			if v.Name != "my-secret" {
+				t.Errorf("Expected secret name 'my-secret', got %s", v.Name)
 			}
 		case *appsv1.DaemonSet:
-			ds, ok := obj.(*appsv1.DaemonSet)
-			if !ok {
-				t.Errorf("Expected DaemonSet object, got %T", obj)
-			}
-			if ds.Name != "my-daemonset" {
-				t.Errorf("Expected daemon set name 'my-daemonset', got %s", ds.Name)
+			if v.Name != "my-daemonset" {
+				t.Errorf("Expected daemon set name 'my-daemonset', got %s", v.Name)
 			}
 		case *velerov1.BackupStorageLocation:
-			bsl, ok := obj.(*velerov1.BackupStorageLocation)
-			if !ok {
-				t.Errorf("Expected BackupStorageLocation object, got %T", obj)
-			}
-			if bsl.Name != "my-bsl" {
-				t.Errorf("Expected backup storage location name 'my-bsl', got %s", bsl.Name)
+			if v.Name != "my-bsl" {
+				t.Errorf("Expected backup storage location name 'my-bsl', got %s", v.Name)
 			}
 		case *velerov1.VolumeSnapshotLocation:
-			vsl, ok := obj.(*velerov1.VolumeSnapshotLocation)
-			if !ok {
-				t.Errorf("Expected VolumeSnapshotLocation object, got %T", obj)
-			}
-			if vsl.Name != "my-vsl" {
-				t.Errorf("Expected volume snapshot location name 'my-vsl', got %s", vsl.Name)
+			if v.Name != "my-vsl" {
+				t.Errorf("Expected volume snapshot location name 'my-vsl', got %s", v.Name)
 			}
 		case *certmanagerv1.Issuer:
-			issuer, ok := obj.(*certmanagerv1.Issuer)
-			if !ok {
-				t.Errorf("Expected Issuer object, got %T", obj)
-			}
-			if issuer.Name != "my-issuer" {
-				t.Errorf("Expected issuer name 'my-issuer', got %s", issuer.Name)
+			if v.Name != "my-issuer" {
+				t.Errorf("Expected issuer name 'my-issuer', got %s", v.Name)
 			}
 		case *certmanagerv1.Certificate:
-			cert, ok := obj.(*certmanagerv1.Certificate)
-			if !ok {
-				t.Errorf("Expected Certificate object, got %T", obj)
-			}
-			if cert.Name != "my-certificate" {
-				t.Errorf("Expected certificate name 'my-cert', got %s", cert.Name)
+			if v.Name != "my-certificate" {
+				t.Errorf("Expected certificate name 'my-cert', got %s", v.Name)
 			}
 		case *appsv1.StatefulSet:
-			sts, ok := obj.(*appsv1.StatefulSet)
-			if !ok {
-				t.Errorf("Expected StatefulSet object, got %T", obj)
-			}
-			if sts.Name != "my-sts" {
-				t.Errorf("Expected stateful set name 'my-sts', got %s", sts.Name)
+			if v.Name != "my-sts" {
+				t.Errorf("Expected stateful set name 'my-sts', got %s", v.Name)
 			}
 		case *storagev1.StorageClass:
-			sc, ok := obj.(*storagev1.StorageClass)
-			if !ok {
-				t.Errorf("Expected StorageClass object, got %T", obj)
-			}
-			if sc.Name != "my-sc" {
-				t.Errorf("Expected storage class name 'my-sc', got %s", sc.Name)
+			if v.Name != "my-sc" {
+				t.Errorf("Expected storage class name 'my-sc', got %s", v.Name)
 			}
 		case *corev1.PersistentVolume:
-			pv, ok := obj.(*corev1.PersistentVolume)
-			if !ok {
-				t.Errorf("Expected PersistentVolume object, got %T", obj)
-			}
-			if pv.Name != "my-pv" {
-				t.Errorf("Expected persistent volume name 'my-pv', got %s", pv.Name)
+			if v.Name != "my-pv" {
+				t.Errorf("Expected persistent volume name 'my-pv', got %s", v.Name)
 			}
 		case *corev1.Namespace:
-			ns, ok := obj.(*corev1.Namespace)
-			if !ok {
-				t.Errorf("Expected Namespace object, got %T", obj)
-			}
-			if ns.Name != "my-ns" {
-				t.Errorf("Expected namespace name 'my-ns', got %s", ns.Name)
+			if v.Name != "my-ns" {
+				t.Errorf("Expected namespace name 'my-ns', got %s", v.Name)
 			}
 		case *networking.IngressClass:
-			ic, ok := obj.(*networking.IngressClass)
-			if !ok {
-				t.Errorf("Expected IngressClass object, got %T", obj)
-			}
-			if ic.Name != "my-ic" {
-				t.Errorf("Expected ingress class name 'my-ic', got %s", ic.Name)
+			if v.Name != "my-ic" {
+				t.Errorf("Expected ingress class name 'my-ic', got %s", v.Name)
 			}
 		default:
 			t.Errorf("Unexpected object type: %T", obj)
@@ -2488,7 +2381,6 @@ func TestGetNamespaces(t *testing.T) {
 
 	// Call the function
 	namespaces, err := GetNamespaces(ctx, ctrlClient)
-
 	// Assert the expected result
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)

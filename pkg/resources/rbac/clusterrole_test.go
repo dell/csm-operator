@@ -77,7 +77,6 @@ func TestSyncClusterRole(t *testing.T) {
 		err := SyncClusterRole(ctx, clusterRole, client)
 		assert.Error(t, err)
 		assert.Equal(t, "create error", err.Error())
-
 	})
 
 	t.Run("Handle error on getting creating clusterRole", func(t *testing.T) {
@@ -93,7 +92,6 @@ func TestSyncClusterRole(t *testing.T) {
 		err := SyncClusterRole(ctx, clusterRole, client)
 		assert.Error(t, err)
 		assert.Equal(t, "clusterrole.rbac.authorization.k8s.io \"my-cluster-role\" not found", err.Error())
-
 	})
 
 	t.Run("Handle existing clusterRole", func(t *testing.T) {
