@@ -813,7 +813,6 @@ func ApplyCTRLObject(ctx context.Context, obj crclient.Object, ctrlClient crclie
 // LogEndReconcile - Print the 'ending reconcile' message
 func LogEndReconcile() {
 	fmt.Println("################End Reconcile##############")
-	return
 }
 
 // GetModuleDefaultVersion -

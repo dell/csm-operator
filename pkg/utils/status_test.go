@@ -15,10 +15,11 @@ package utils
 import (
 	"context"
 	"fmt"
-	"k8s.io/client-go/kubernetes/scheme"
 	"reflect"
 	"testing"
 	"time"
+
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/stretchr/testify/assert"
 
@@ -730,7 +731,9 @@ func TestAppMobStatusCheck(t *testing.T) {
 	}
 
 	// add the CSM object to the client
-	ctrlClient.Create(ctx, &csm1)
+	err := ctrlClient.Create(ctx, &csm1)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
 	i32One := int32(1)
 
 	// add fake deployments and fake daemonsets to the client
@@ -794,11 +797,17 @@ func TestAppMobStatusCheck(t *testing.T) {
 			Replicas: &i32One,
 		},
 	}
-	ctrlClient.Create(ctx, &deployment1)
-	ctrlClient.Create(ctx, &deployment2)
-	ctrlClient.Create(ctx, &deployment3)
-	ctrlClient.Create(ctx, &deployment4)
-	ctrlClient.Create(ctx, &deployment5)
+
+	err = ctrlClient.Create(ctx, &deployment1)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment2)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment3)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment4)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment5)
+	assert.NoError(t, err, "failed to create client object during test setup")
 
 	// create a fake running pod
 	pod := corev1.Pod{
@@ -819,7 +828,8 @@ func TestAppMobStatusCheck(t *testing.T) {
 			},
 		},
 	}
-	err := ctrlClient.Create(ctx, &pod)
+	err = ctrlClient.Create(ctx, &pod)
+	assert.NoError(t, err, "failed to create client object during test setup")
 
 	// Create a fake instance of ReconcileCSM
 	fakeReconcile := FakeReconcileCSM{
@@ -861,7 +871,8 @@ func TestAppMobStatusCheck(t *testing.T) {
 			},
 		},
 	}
-	ctrlClient.Create(ctx, &csm2)
+	err = ctrlClient.Create(ctx, &csm2)
+	assert.NoError(t, err, "failed to create client object during test setup")
 	status, err = appMobStatusCheck(ctx, &csm2, &fakeReconcile, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
@@ -895,7 +906,8 @@ func TestAppMobStatusCheck(t *testing.T) {
 			},
 		},
 	}
-	ctrlClient.Create(ctx, &csm3)
+	err = ctrlClient.Create(ctx, &csm3)
+	assert.NoError(t, err, "failed to create client object during test setup")
 	status, err = appMobStatusCheck(ctx, &csm3, &fakeReconcile, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
@@ -929,7 +941,8 @@ func TestAppMobStatusCheck(t *testing.T) {
 			},
 		},
 	}
-	ctrlClient.Create(ctx, &csm4)
+	err = ctrlClient.Create(ctx, &csm4)
+	assert.NoError(t, err, "failed to create client object during test setup")
 	status, err = appMobStatusCheck(ctx, &csm4, &fakeReconcile, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
@@ -978,7 +991,8 @@ func TestObservabilityStatusCheck(t *testing.T) {
 	}
 
 	// add the CSM object to the client
-	ctrlClient.Create(ctx, &csm1)
+	err := ctrlClient.Create(ctx, &csm1)
+	assert.NoError(t, err, "failed to create client object during test setup")
 	i32One := int32(1)
 
 	// add fake deployments to the client
@@ -1019,9 +1033,12 @@ func TestObservabilityStatusCheck(t *testing.T) {
 			Replicas: &i32One,
 		},
 	}
-	ctrlClient.Create(ctx, &deployment1)
-	ctrlClient.Create(ctx, &deployment2)
-	ctrlClient.Create(ctx, &deployment3)
+	err = ctrlClient.Create(ctx, &deployment1)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment2)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment3)
+	assert.NoError(t, err, "failed to create client object during test setup")
 
 	// second set of deployments: cert manager
 	// same namespace as CSM object
@@ -1061,9 +1078,12 @@ func TestObservabilityStatusCheck(t *testing.T) {
 			Replicas: &i32One,
 		},
 	}
-	ctrlClient.Create(ctx, &deployment4)
-	ctrlClient.Create(ctx, &deployment5)
-	ctrlClient.Create(ctx, &deployment6)
+	err = ctrlClient.Create(ctx, &deployment4)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment5)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment6)
+	assert.NoError(t, err, "failed to create client object during test setup")
 
 	// Create a fake instance of ReconcileCSM
 	fakeReconcile := FakeReconcileCSM{
@@ -1115,7 +1135,8 @@ func TestAuthProxyStatusCheck(t *testing.T) {
 	}
 
 	// add the CSM object to the client
-	ctrlClient.Create(ctx, &csm1)
+	err := ctrlClient.Create(ctx, &csm1)
+	assert.NoError(t, err, "failed to create client object during test setup")
 	i32One := int32(1)
 
 	// add fake deployments to the client
@@ -1240,16 +1261,26 @@ func TestAuthProxyStatusCheck(t *testing.T) {
 			Replicas: &i32One,
 		},
 	}
-	ctrlClient.Create(ctx, &deployment1)
-	ctrlClient.Create(ctx, &deployment2)
-	ctrlClient.Create(ctx, &deployment3)
-	ctrlClient.Create(ctx, &deployment4)
-	ctrlClient.Create(ctx, &deployment5)
-	ctrlClient.Create(ctx, &deployment6)
-	ctrlClient.Create(ctx, &deployment7)
-	ctrlClient.Create(ctx, &deployment8)
-	ctrlClient.Create(ctx, &deployment9)
-	ctrlClient.Create(ctx, &deployment10)
+	err = ctrlClient.Create(ctx, &deployment1)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment2)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment3)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment4)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment5)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment6)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment7)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment8)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment9)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment10)
+	assert.NoError(t, err, "failed to create client object during test setup")
 
 	// Create a fake instance of ReconcileCSM
 	fakeReconcile := FakeReconcileCSM{
@@ -1570,8 +1601,10 @@ func TestUpdateStatus(t *testing.T) {
 		K8sClient: fake.NewSimpleClientset(),
 	}
 
-	// UpdateStatus function to be tested
-	UpdateStatus(ctx, instance, r, newStatus)
+	// UpdateStatus function to be tested.
+	// TODO: determine if we need to check the error. The function is
+	// not clear wrt what to expect. Current test has error being returned
+	_ = UpdateStatus(ctx, instance, r, newStatus)
 
 	// Check if the status is updated as expected
 	assert.Equal(t, newStatus.State, instance.Status.State)

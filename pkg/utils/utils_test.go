@@ -67,7 +67,7 @@ func captureOutput(f func()) string {
 	go func() {
 		var buf bytes.Buffer
 		wg.Done()
-		io.Copy(&buf, reader)
+		_, _ = io.Copy(&buf, reader)
 		out <- buf.String()
 	}()
 	wg.Wait()
@@ -80,8 +80,8 @@ func captureOutput(f func()) string {
 func fullFakeClient() crclient.WithWatch {
 	// CSM types must be registered with the scheme
 	scheme := runtime.NewScheme()
-	csmv1.AddToScheme(scheme)  // for CSM objects
-	corev1.AddToScheme(scheme) // for namespaces
+	_ = csmv1.AddToScheme(scheme)  // for CSM objects
+	_ = corev1.AddToScheme(scheme) // for namespaces
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(velerov1.AddToScheme(scheme))
 
@@ -195,14 +195,13 @@ spec:
 
 	// Test case: Empty YAML
 	yamlString = ""
-	expectedResult = [][]byte{}
 	result, err = SplitYaml([]byte(yamlString))
 	assert.Nil(t, err)
 	assert.Nil(t, result)
 
 	// Test case: YAML with null byte
 	yamlString = "\x00"
-	result, err = SplitYaml([]byte(yamlString))
+	_, err = SplitYaml([]byte(yamlString))
 	assert.NotNil(t, err)
 }
 
@@ -1843,7 +1842,7 @@ spec:
 						- containerPort: 8080
 					`)
 
-	ctrlObjects, err = GetModuleComponentObj(invalidYamlString)
+	_, err = GetModuleComponentObj(invalidYamlString)
 	assert.NotNil(t, err)
 }
 
@@ -2045,8 +2044,9 @@ func TestDeleteObject(t *testing.T) {
 		},
 	}
 
-	ctrlClient.Create(ctx, obj)
-	err := DeleteObject(ctx, obj, ctrlClient)
+	err := ctrlClient.Create(ctx, obj)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = DeleteObject(ctx, obj, ctrlClient)
 	assert.Nil(t, err)
 
 	// Test case: Object not found
@@ -2068,8 +2068,9 @@ func TestApplyCTRLObject(t *testing.T) {
 			Namespace: "my-namespace",
 		},
 	}
-	ctrlClient.Create(ctx, obj)
-	err := ApplyCTRLObject(ctx, obj, ctrlClient)
+	err := ctrlClient.Create(ctx, obj)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ApplyCTRLObject(ctx, obj, ctrlClient)
 	assert.Nil(t, err)
 
 	if err := ApplyCTRLObject(ctx, obj, ctrlClient); err != nil {
@@ -2446,8 +2447,8 @@ func TestGetNamespaces(t *testing.T) {
 
 	// CSM types must be registered with the scheme
 	scheme := runtime.NewScheme()
-	csmv1.AddToScheme(scheme)  // for CSM objects
-	corev1.AddToScheme(scheme) // for namespaces
+	_ = csmv1.AddToScheme(scheme)  // for CSM objects
+	_ = corev1.AddToScheme(scheme) // for namespaces
 
 	// Create a fake ctrlClient
 	ctrlClient := fake.NewClientBuilder().
@@ -2734,7 +2735,7 @@ func TestGetSecret(t *testing.T) {
 	}
 
 	// Call the function
-	found, err = GetSecret(ctx, "test-secret", "test-namespace", ctrlClient)
+	_, err = GetSecret(ctx, "test-secret", "test-namespace", ctrlClient)
 
 	// Assert the expected result
 	assert.NotNil(t, err)
@@ -2884,8 +2885,8 @@ func TestGetClusterCtrlClient(t *testing.T) {
 
 	// CSM types must be registered with the scheme
 	scheme := runtime.NewScheme()
-	csmv1.AddToScheme(scheme)  // for CSM objects
-	corev1.AddToScheme(scheme) // for namespaces
+	_ = csmv1.AddToScheme(scheme)  // for CSM objects
+	_ = corev1.AddToScheme(scheme) // for namespaces
 
 	// Create a fake ctrlClient
 	ctrlClient := fake.NewClientBuilder().
@@ -2925,8 +2926,8 @@ func TestGetClusterK8SClient(t *testing.T) {
 
 	// CSM types must be registered with the scheme
 	scheme := runtime.NewScheme()
-	csmv1.AddToScheme(scheme)  // for CSM objects
-	corev1.AddToScheme(scheme) // for namespaces
+	_ = csmv1.AddToScheme(scheme)  // for CSM objects
+	_ = corev1.AddToScheme(scheme) // for namespaces
 
 	// Create a fake ctrlClient
 	ctrlClient := fake.NewClientBuilder().
