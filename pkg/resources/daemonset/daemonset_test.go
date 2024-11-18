@@ -15,11 +15,8 @@ package daemonset
 import (
 	"context"
 	"fmt"
-
-	// "errors"
 	"testing"
 
-	// "github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
