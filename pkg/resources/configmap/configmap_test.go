@@ -19,12 +19,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 func TestSyncConfigMap(t *testing.T) {
@@ -135,7 +135,7 @@ type MockClient struct {
 
 func (m *MockClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	if m.GetFunc != nil {
-		return m.GetFunc(ctx, key, obj, opts ...)
+		return m.GetFunc(ctx, key, obj, opts...)
 	}
 	return nil
 }
