@@ -2877,3 +2877,85 @@ func TestGetClusterCtrlClient(t *testing.T) {
 	assert.NotNil(t, clusterCtrlClient)
 }
 */
+
+func TestGetClusterCtrlClient(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+
+	// CSM types must be registered with the scheme
+	scheme := runtime.NewScheme()
+	csmv1.AddToScheme(scheme)  // for CSM objects
+	corev1.AddToScheme(scheme) // for namespaces
+
+	// Create a fake ctrlClient
+	ctrlClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+
+	// Create a fake clusterID
+	clusterID := "test-cluster"
+
+	// Create a fake secret
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterID,
+			Namespace: ReplicationControllerNameSpace,
+		},
+		Data: map[string][]byte{
+			"data": []byte("test-data"),
+		},
+	}
+
+	// Add the secret to the ctrlClient
+	if err := ctrlClient.Create(ctx, secret); err != nil {
+		t.Fatalf("failed to create secret: %v", err)
+	}
+
+	// Call the function
+	clusterCtrlClient, err := getClusterCtrlClient(ctx, clusterID, ctrlClient)
+
+	// Assert the expected result
+	assert.Error(t, err)
+	assert.Nil(t, clusterCtrlClient)
+}
+
+func TestGetClusterK8SClient(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+
+	// CSM types must be registered with the scheme
+	scheme := runtime.NewScheme()
+	csmv1.AddToScheme(scheme)  // for CSM objects
+	corev1.AddToScheme(scheme) // for namespaces
+
+	// Create a fake ctrlClient
+	ctrlClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+
+	// Create a fake clusterID
+	clusterID := "test-cluster"
+
+	// Create a fake secret
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterID,
+			Namespace: ReplicationControllerNameSpace,
+		},
+		Data: map[string][]byte{
+			"data": []byte("test-data"),
+		},
+	}
+
+	// Add the secret to the ctrlClient
+	if err := ctrlClient.Create(ctx, secret); err != nil {
+		t.Fatalf("failed to create secret: %v", err)
+	}
+
+	// Call the function
+	clusterCtrlClient, err := getClusterK8SClient(ctx, clusterID, ctrlClient)
+
+	// Assert the expected result
+	assert.Error(t, err)
+	assert.Nil(t, clusterCtrlClient)
+}
