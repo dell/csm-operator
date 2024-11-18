@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -27,100 +28,67 @@ import (
 )
 
 func TestSyncClusterRole(t *testing.T) {
-	// Create a fake context.Context
-	ctx := context.Background()
-
-	// Create a new instance of the ClusterRole
-	cr := &rbacv1.ClusterRole{
+	ctx := context.TODO()
+	clusterRole := rbacv1.ClusterRole{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ClusterRole",
+		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-name",
-			Namespace: "test-namespace",
+			Name: "my-cluster-role",
 		},
 	}
 
-	t.Run("Get ClusterRole", func(t *testing.T) {
+	t.Run("Create new ClusterRole", func(t *testing.T) {
+		// fake client
 		client := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
 
-		err := SyncClusterRole(ctx, *cr, client)
+		err := SyncClusterRole(ctx, clusterRole, client)
 		assert.NoError(t, err)
 
-		// Get the updated ClusterRole from the fake client
-		updated := &rbacv1.ClusterRole{}
-		err = client.Get(context.TODO(), types.NamespacedName{Name: cr.Name, Namespace: cr.Namespace}, updated)
-		if err != nil {
-			t.Fatalf("Failed to get updated ClusterRole: %v", err)
-		}
-
-		// Assert that the ClusterRole has been updated correctly
-		if updated.Name != cr.Name {
-			t.Errorf("Expected Name to be %s, got %s", cr.Name, updated.Name)
-		}
-		if updated.Namespace != cr.Namespace {
-			t.Errorf("Expected Namespace to be %s, got %s", cr.Namespace, updated.Namespace)
-		}
+		// check that the cluster role was created
+		foundClusterRole := &rbacv1.ClusterRole{}
+		err = client.Get(ctx, types.NamespacedName{Name: clusterRole.Name, Namespace: clusterRole.Namespace}, foundClusterRole)
+		assert.NoError(t, err)
 	})
 
-	t.Run("Handle error on getting ClusterRole", func(t *testing.T) {
+	t.Run("Handle error on getting clusterRole", func(t *testing.T) {
 		client := &MockClient{
 			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 				return errors.New("get error")
 			},
 		}
-		err := SyncClusterRole(ctx, *cr, client)
+
+		err := SyncClusterRole(ctx, clusterRole, client)
 		assert.Error(t, err)
 		assert.Equal(t, "get error", err.Error())
 	})
 
-	t.Run("Create new ClusterRole", func(t *testing.T) {
-		// fake client
-		client := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
-		err := SyncClusterRole(ctx, *cr, client)
-		assert.NoError(t, err)
-		// check that the clusterrole was created
-		foundClusterRole := &rbacv1.ClusterRole{}
-		err = client.Get(ctx, types.NamespacedName{Name: cr.Name, Namespace: cr.Namespace}, foundClusterRole)
-		assert.NoError(t, err)
-		assert.Equal(t, cr.Name, foundClusterRole.Name)
-		// Check that the clusterrole has the correct data
-		if foundClusterRole.Name != cr.Name {
-			t.Errorf("ClusterRole has incorrect data: expected %s, got %s", cr.Name, foundClusterRole.Name)
-		}
-	})
-
-	//broken sub-test case
-	// t.Run("Update ClusterRole", func(t *testing.T) {
-	// 	// fake client
-	// 	client := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
-
-	// 	updatedClusterRole := cr.DeepCopy()
-	// 	updatedClusterRole.Name = "new-name"
-
-	// 	err := SyncClusterRole(ctx, *updatedClusterRole, client)
-	// 	assert.NoError(t, err)
-
-	// 	// check that the ClusterRole was updated
-	// 	foundClusterRole := &rbacv1.ClusterRole{}
-	// 	err = client.Get(ctx, types.NamespacedName{Name: cr.Name, Namespace: cr.Namespace}, foundClusterRole)
-	// 	assert.NoError(t, err)
-	// 	assert.Equal(t, updatedClusterRole.Name, foundClusterRole.Name)
-	// 	// Check that the ClusterRole has the correct data
-	// 	if foundClusterRole.Name != updatedClusterRole.Name {
-	// 		t.Errorf("ClusterRole has incorrect data: expected %s, got %s", updatedClusterRole.Name, foundClusterRole.Name)
-	// 	}
-	// })
-
-	t.Run("Handle error on creating ClusterRole", func(t *testing.T) {
+	t.Run("Handle error on creating clusterRole", func(t *testing.T) {
 		client := &MockClient{
 			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-				return errors.New("get error")
+				return apierrors.NewNotFound(rbacv1.Resource("clusterrole"), key.Name)
 			},
 			CreateFunc: func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 				return errors.New("create error")
 			},
 		}
-		err := SyncClusterRole(ctx, *cr, client)
+
+		err := SyncClusterRole(ctx, clusterRole, client)
 		assert.Error(t, err)
-		assert.Equal(t, "get error", err.Error())
+		assert.Equal(t, "create error", err.Error())
+
+	})
+
+	t.Run("Handle existing clusterRole", func(t *testing.T) {
+		client := &MockClient{
+			GetFunc: func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+				return nil
+			},
+		}
+
+		err := SyncClusterRole(ctx, clusterRole, client)
+		assert.NoError(t, err)
 	})
 }
 
