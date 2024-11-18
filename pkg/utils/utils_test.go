@@ -795,7 +795,6 @@ func TestUpdateSideCarApply(t *testing.T) {
 		WithImage("old-image").
 		WithImagePullPolicy("old-image-pull-policy").
 		WithEnv(&acorev1.EnvVarApplyConfiguration{
-
 			Name:  &sc1env1,
 			Value: &oldenv1val,
 		},
@@ -1001,7 +1000,6 @@ func TestGetCTRLObject(t *testing.T) {
 	expected := []crclient.Object{}
 
 	result, err := GetCTRLObject(ctrlBuf)
-
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}
@@ -1075,7 +1073,6 @@ func TestGetCTRLObjectClusterRole(t *testing.T) {
 	expected := []crclient.Object{}
 
 	result, err := GetCTRLObject(ctrlBuf)
-
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}
@@ -1124,7 +1121,6 @@ func TestGetCTRLObjectClusterRoleBinding(t *testing.T) {
 	expected := []crclient.Object{}
 
 	result, err := GetCTRLObject(ctrlBuf)
-
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}
@@ -1157,7 +1153,6 @@ rules:
 
 	assert.Nil(t, err)
 	assert.Equal(t, result, expected)
-
 }
 
 func TestGetCTRLObjectConfigMap(t *testing.T) {
@@ -1166,7 +1161,6 @@ func TestGetCTRLObjectConfigMap(t *testing.T) {
 	expected := []crclient.Object{}
 
 	result, err := GetCTRLObject(ctrlBuf)
-
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}
@@ -1200,8 +1194,8 @@ data:
 
 	assert.Nil(t, err)
 	assert.Equal(t, result, expected)
-
 }
+
 func TestGetCTRLObjectDeployment(t *testing.T) {
 	// Test case: empty input
 	ctrlBuf := []byte{}
@@ -1276,7 +1270,6 @@ spec:
 
 	assert.Nil(t, err)
 	assert.Equal(t, result, expected)
-
 }
 
 // TODO: Cover more object types:
@@ -2388,7 +2381,6 @@ func TestGetNamespaces(t *testing.T) {
 
 	// Call the function
 	namespaces, err := GetNamespaces(ctx, ctrlClient)
-
 	// Assert the expected result
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)

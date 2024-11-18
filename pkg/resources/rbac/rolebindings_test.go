@@ -24,7 +24,6 @@ import (
 )
 
 func TestSyncClusterRoleBindings(t *testing.T) {
-
 	type args struct {
 		ctx    context.Context
 		rb     rbacv1.ClusterRoleBinding

@@ -77,7 +77,6 @@ func TestSyncServiceAccountp(t *testing.T) {
 		err := SyncServiceAccount(ctx, serviceAccount, client)
 		assert.Error(t, err)
 		assert.Equal(t, "creating serviceaccount: create error", err.Error())
-
 	})
 
 	t.Run("Handle existing ServiceAccount", func(t *testing.T) {

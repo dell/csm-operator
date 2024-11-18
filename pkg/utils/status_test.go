@@ -34,7 +34,6 @@ import (
 )
 
 func TestGetDeploymentStatus(t *testing.T) {
-
 	ns := "default"
 	licenseCred := getSecret(ns, "dls-license")
 	ivLicense := getSecret(ns, "iv")
@@ -128,7 +127,6 @@ func TestGetDeploymentStatus(t *testing.T) {
 }
 
 func TestGetDaemonSetStatus(t *testing.T) {
-
 	type args struct {
 		ctx      context.Context
 		instance *csmv1.ContainerStorageModule
@@ -482,7 +480,8 @@ func TestGetDaemonSetStatus(t *testing.T) {
 										State: corev1.ContainerState{
 											Running: &corev1.ContainerStateRunning{
 												StartedAt: metav1.Time{Time: time.Now()},
-											}},
+											},
+										},
 									},
 								},
 							},
@@ -544,7 +543,8 @@ func TestGetDaemonSetStatus(t *testing.T) {
 										State: corev1.ContainerState{
 											Running: &corev1.ContainerStateRunning{
 												StartedAt: metav1.Time{Time: time.Now()},
-											}},
+											},
+										},
 									},
 								},
 							},
@@ -692,7 +692,6 @@ func TestWaitForNginxController(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestAppMobStatusCheck(t *testing.T) {
@@ -842,7 +841,7 @@ func TestAppMobStatusCheck(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
 
-	//if !certEnabled && !veleroEnabled
+	// if !certEnabled && !veleroEnabled
 	csm2 := csmv1.ContainerStorageModule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-name-2",
@@ -1321,7 +1320,6 @@ func TestSetStatus(t *testing.T) {
 }
 
 func TestHandleValidationError(t *testing.T) {
-
 	type args struct {
 		ctx             context.Context
 		instance        *csmv1.ContainerStorageModule
@@ -1382,7 +1380,6 @@ func TestHandleValidationError(t *testing.T) {
 }
 
 func TestHandleSuccess(t *testing.T) {
-
 	type args struct {
 		ctx       context.Context
 		instance  *csmv1.ContainerStorageModule
