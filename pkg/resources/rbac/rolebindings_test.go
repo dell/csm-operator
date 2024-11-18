@@ -36,7 +36,7 @@ func TestSyncClusterRoleBindings(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Test SyncClusterRoleBindings when name is empty",
+			name: "Test SyncClusterRoleBindings with known errror",
 			args: args{
 				ctx:    context.Background(),
 				rb:     *MockClusterRoleBinding("", "test", "test"),
