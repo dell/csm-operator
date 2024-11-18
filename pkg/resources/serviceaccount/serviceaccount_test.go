@@ -97,7 +97,6 @@ type MockClient struct {
 	client.Client
 	GetFunc    func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
 	CreateFunc func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
-	UpdateFunc func(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error
 }
 
 func (m *MockClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
