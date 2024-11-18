@@ -399,7 +399,7 @@ spec:
             # Allowed values: ture, false
             # Default value: true
             - name: "ISICLIENT_AUTH_TYPE"
-              value: "0"
+              value: "1"
             # ISICLIENT_VERBOSE: set 0/1/2 decide High/Medium/Low content of the OneFS REST API message should be logged in debug level logs
             # Allowed values: 0,1,2
             # Default value: 0
