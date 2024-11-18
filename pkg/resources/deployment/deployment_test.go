@@ -89,7 +89,7 @@ func TestSyncDeployment(t *testing.T) {
 		k8sClient := fake.NewSimpleClientset()
 
 		// error getting deployment
-		k8sClient.PrependReactor("get", "deployments", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
+		k8sClient.PrependReactor("get", "deployments", func(_ k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
 			return true, nil, apierrors.NewInternalError(fmt.Errorf("internal error"))
 		})
 
@@ -103,7 +103,7 @@ func TestSyncDeployment(t *testing.T) {
 		k8sClient := fake.NewSimpleClientset()
 
 		// deployment not found
-		k8sClient.PrependReactor("get", "deployments", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
+		k8sClient.PrependReactor("get", "deployments", func(_ k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
 			return true, nil, apierrors.NewNotFound(schema.GroupResource{Group: "apps", Resource: "deployments"}, "test-deployment")
 		})
 

@@ -117,7 +117,7 @@ type MockClient struct {
 	UpdateFunc func(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error
 }
 
-func (m *MockClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+func (m *MockClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, _ ...client.GetOption) error {
 	if m.GetFunc != nil {
 		return m.GetFunc(ctx, key, obj)
 	}
