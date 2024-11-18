@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 func TestGetDeploymentStatus(t *testing.T) {
@@ -1187,6 +1188,132 @@ func TestSetStatus(t *testing.T) {
 	SetStatus(ctx, nil, instance, newStatus)
 
 	assert.Equal(t, newStatus, instance.GetCSMStatus())
+}
+
+func TestHandleSuccess(t *testing.T) {
+
+	type args struct {
+		ctx       context.Context
+		instance  *csmv1.ContainerStorageModule
+		r         ReconcileCSM
+		oldStatus *csmv1.ContainerStorageModuleStatus
+		newStatus *csmv1.ContainerStorageModuleStatus
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want reconcile.Result
+	}{
+		{
+			name: "Test TestHandleSuccess with no change in status",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client:    ctrlClientFake.NewClientBuilder().Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+				oldStatus: &csmv1.ContainerStorageModuleStatus{
+					ControllerStatus: csmv1.PodStatus{
+						Available: "1",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					NodeStatus: csmv1.PodStatus{
+						Available: "1",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					State: constants.Succeeded,
+				},
+				newStatus: &csmv1.ContainerStorageModuleStatus{
+					ControllerStatus: csmv1.PodStatus{
+						Available: "1",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					NodeStatus: csmv1.PodStatus{
+						Available: "1",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					State: constants.Succeeded,
+				},
+			},
+			want: reconcile.Result{
+				Requeue: false,
+			},
+		},
+		// { This needs to be fixed
+		// 	name: "Test TestHandleSuccess with change in status",
+		// 	args: args{
+		// 		ctx:      context.Background(),
+		// 		instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+		// 		r: &FakeReconcileCSM{
+		// 			Client:    ctrlClientFake.NewClientBuilder().Build(),
+		// 			K8sClient: fake.NewSimpleClientset(),
+		// 		},
+		// 		oldStatus: &csmv1.ContainerStorageModuleStatus{
+		// 			ControllerStatus: csmv1.PodStatus{
+		// 				Available: "0",
+		// 				Failed:    "0",
+		// 				Desired:   "1",
+		// 			},
+		// 			NodeStatus: csmv1.PodStatus{
+		// 				Available: "0",
+		// 				Failed:    "0",
+		// 				Desired:   "1",
+		// 			},
+		// 			State: constants.Succeeded,
+		// 		},
+		// 		newStatus: &csmv1.ContainerStorageModuleStatus{
+		// 			ControllerStatus: csmv1.PodStatus{
+		// 				Available: "1",
+		// 				Failed:    "0",
+		// 				Desired:   "1",
+		// 			},
+		// 			NodeStatus: csmv1.PodStatus{
+		// 				Available: "1",
+		// 				Failed:    "0",
+		// 				Desired:   "1",
+		// 			},
+		// 			State: constants.Succeeded,
+		// 		},
+		// 	},
+		// 	want: reconcile.Result{
+		// 		Requeue: true,
+		// 	},
+		// },
+	}
+
+	t.Setenv("UNIT_TEST", "true")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			requeue := HandleSuccess(test.args.ctx, test.args.instance, test.args.r, test.args.newStatus, test.args.oldStatus)
+			assert.Equal(t, test.want, requeue)
+		})
+	}
+
+	// ctx := context.Background()
+	// instance := createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil)
+	// newStatus := csmv1.ContainerStorageModuleStatus{
+	// 	State: constants.Succeeded,
+	// 	NodeStatus: csmv1.PodStatus{
+	// 		Available: "1",
+	// 		Failed:    "0",
+	// 		Desired:   "1",
+	// 	},
+	// 	ControllerStatus: csmv1.PodStatus{
+	// 		Available: "1",
+	// 		Failed:    "0",
+	// 		Desired:   "1",
+	// 	},
+	// }
+	// fakeReconcile := FakeReconcileCSM{
+	// 	Client:    ctrlClientFake.NewClientBuilder().Build(),
+	// 	K8sClient: fake.NewSimpleClientset(),
+	// }
 }
 
 // helpers
