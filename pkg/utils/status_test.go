@@ -830,10 +830,110 @@ func TestAppMobStatusCheck(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
 
-	// TODO: Other test scenarios:
+	
 	//if !certEnabled && !veleroEnabled
-	//if !certEnabled && veleroEnabled
-	//if certEnabled && !veleroEnabled
+	csm2 := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name-2",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.ApplicationMobility,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "application-mobility-controller-manager",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "cert-manager",
+							Enabled: &[]bool{false}[0],
+						},
+						{
+							Name:    "velero",
+							Enabled: &[]bool{false}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+	ctrlClient.Create(ctx, &csm2)
+	status, err = appMobStatusCheck(ctx, &csm2, &fakeReconcile, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, true, status)
+
+
+
+	// Test 3: cert-manager is disabled, velero is enabled
+	csm3 := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name-3",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.ApplicationMobility,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "application-mobility-controller-manager",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "cert-manager",
+							Enabled: &[]bool{false}[0],
+						},
+						{
+							Name:    "velero",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+	ctrlClient.Create(ctx, &csm3)
+	status, err = appMobStatusCheck(ctx, &csm3, &fakeReconcile, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, true, status)
+
+	// Test 4: cert-manager is enabled, velero is disabled
+	csm4 := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name-4",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.ApplicationMobility,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "application-mobility-controller-manager",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "cert-manager",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "velero",
+							Enabled: &[]bool{false}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+	ctrlClient.Create(ctx, &csm4)
+	status, err = appMobStatusCheck(ctx, &csm4, &fakeReconcile, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, true, status)
 }
 
 func TestObservabilityStatusCheck(t *testing.T) {
@@ -1354,3 +1454,4 @@ func createCSM(name string, namespace string, driverType csmv1.DriverType, modul
 		},
 	}
 }
+
