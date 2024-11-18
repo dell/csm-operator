@@ -1220,11 +1220,8 @@ func getUpgradeInfo[T CSMComponentType](ctx context.Context, operatorConfig Oper
 	return upgradePath.MinUpgradePath, nil
 }
 
-// GetNamespaces returns the list of namespaces in the cluster
-// DISCUSS: That description is inaccurate-- it only lists the namespaces that
-// contain a CSM CRD. Should we rename the function and update the description, or
-// should we change the function to list all namespaces to match its current name/desc?
-func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
+// GetCSMNamespaces returns the list of namespaces in the cluster that currently contain a CSM object
+func GetCSMNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
 	// Set to store unique namespaces
 	namespaceMap := make(map[string]struct{})
 

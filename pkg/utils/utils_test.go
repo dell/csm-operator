@@ -2277,7 +2277,7 @@ func TestGetConfigData(t *testing.T) {
 	// TODO: Add a test case for checking for a secret that isn't there
 }
 
-func TestGetNamespaces(t *testing.T) {
+func TestGetCSMNamespaces(t *testing.T) {
 	// Create a fake context.Context
 	ctx := context.Background()
 
@@ -2323,7 +2323,7 @@ func TestGetNamespaces(t *testing.T) {
 	}
 
 	// Call the function
-	namespaces, err := GetNamespaces(ctx, ctrlClient)
+	namespaces, err := GetCSMNamespaces(ctx, ctrlClient)
 	// Assert the expected result
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
