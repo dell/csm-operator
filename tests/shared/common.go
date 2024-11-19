@@ -172,7 +172,7 @@ func MakeConfigMap(name, ns, _ string) *corev1.ConfigMap {
 
 // MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
-	configJSON, _ := os.ReadFile(configFile)
+	configJSON, _ := os.ReadFile(configFile) // #nosec G304
 	data := map[string][]byte{
 		"config": configJSON,
 	}

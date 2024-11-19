@@ -1271,6 +1271,8 @@ func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerSt
 			authHostname = component.Hostname
 			authCertificate = component.Certificate
 			authPrivateKey = component.PrivateKey
+
+			log.Infof("Authorization hostname: %s", authHostname)
 		}
 	}
 

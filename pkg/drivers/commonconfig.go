@@ -314,7 +314,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	for i := range initcontainers {
 		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
-		utils.UpdateinitContainerApply(cr.Spec.Driver.InitContainers, &initcontainers[i])
+		utils.UpdateInitContainerApply(cr.Spec.Driver.InitContainers, &initcontainers[i])
 	}
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers = initcontainers

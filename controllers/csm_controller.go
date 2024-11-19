@@ -352,10 +352,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		err = utils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil && !unitTestRun {
 			log.Error(err, "Failed to update CR status")
-			return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
+			utils.LogEndReconcile()
+			return reconcile.Result{Requeue: true}, err
 		}
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", csm.Name)
-		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
+		utils.LogEndReconcile()
+		return reconcile.Result{}, nil
 	}
 
 	// syncErr can be nil, even if CSM state = failed
@@ -366,7 +368,8 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	// Failed deployment
 	r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", syncErr.Error())
 
-	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, syncErr)
+	utils.LogEndReconcile()
+	return reconcile.Result{Requeue: true}, syncErr
 }
 
 func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Predicate {
