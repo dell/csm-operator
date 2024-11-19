@@ -226,7 +226,7 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case csmv1.Externalhealthmonitor:
 		*c.Image = img.Images.Externalhealthmonitor
 	case csmv1.Sdc:
-		*c.Image = img.Images.Sdcmonitor
+		*c.Image = img.Images.Sdcmonitor //driverconfig-default.yaml has only sdcmonitor entry which points to sdc image.
 	case csmv1.Sdcmonitor:
 		*c.Image = img.Images.Sdcmonitor
 	case string(csmv1.Resiliency):
