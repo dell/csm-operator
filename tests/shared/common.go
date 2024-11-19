@@ -174,7 +174,7 @@ func MakeConfigMap(name, ns, _ string) *corev1.ConfigMap {
 
 // MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
-	configJSON, err := os.ReadFile(filepath.Clean(configFile))
+	configJSON, err := os.ReadFile(filepath.Clean(configFile)) // #nosec G304
 	if err != nil {
 		log.Fatalf("failed to read testdata: %v", err)
 	}
