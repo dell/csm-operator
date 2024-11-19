@@ -1399,7 +1399,55 @@ func TestHandleSuccess(t *testing.T) {
 				ctx:      context.Background(),
 				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
 				r: &FakeReconcileCSM{
-					Client:    ctrlClientFake.NewClientBuilder().Build(),
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-node",
+							Namespace: "powerflex",
+						},
+						Status: appsv1.DaemonSetStatus{
+							DesiredNumberScheduled: 1,
+						},
+					}).WithObjects(
+						&corev1.Pod{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "Pod",
+								APIVersion: "v1",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "powerflex-driver",
+								Namespace: "powerflex",
+								Labels: map[string]string{
+									"app": "powerflex-node",
+								},
+							},
+							Status: corev1.PodStatus{
+								Phase: corev1.PodRunning,
+								Conditions: []corev1.PodCondition{
+									{Type: corev1.PodReady, Status: corev1.ConditionTrue},
+								},
+								ContainerStatuses: []corev1.ContainerStatus{
+									{
+										State: corev1.ContainerState{
+											Running: &corev1.ContainerStateRunning{
+												StartedAt: metav1.Time{Time: time.Now()},
+											},
+										},
+									},
+								},
+							},
+						}).Build(),
 					K8sClient: fake.NewSimpleClientset(),
 				},
 				oldStatus: &csmv1.ContainerStorageModuleStatus{
@@ -1433,49 +1481,65 @@ func TestHandleSuccess(t *testing.T) {
 				Requeue: false,
 			},
 		},
-		// { This needs to be fixed
-		// 	name: "Test TestHandleSuccess with change in status",
-		// 	args: args{
-		// 		ctx:      context.Background(),
-		// 		instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
-		// 		r: &FakeReconcileCSM{
-		// 			Client:    ctrlClientFake.NewClientBuilder().Build(),
-		// 			K8sClient: fake.NewSimpleClientset(),
-		// 		},
-		// 		oldStatus: &csmv1.ContainerStorageModuleStatus{
-		// 			ControllerStatus: csmv1.PodStatus{
-		// 				Available: "0",
-		// 				Failed:    "0",
-		// 				Desired:   "1",
-		// 			},
-		// 			NodeStatus: csmv1.PodStatus{
-		// 				Available: "0",
-		// 				Failed:    "0",
-		// 				Desired:   "1",
-		// 			},
-		// 			State: constants.Succeeded,
-		// 		},
-		// 		newStatus: &csmv1.ContainerStorageModuleStatus{
-		// 			ControllerStatus: csmv1.PodStatus{
-		// 				Available: "1",
-		// 				Failed:    "0",
-		// 				Desired:   "1",
-		// 			},
-		// 			NodeStatus: csmv1.PodStatus{
-		// 				Available: "1",
-		// 				Failed:    "0",
-		// 				Desired:   "1",
-		// 			},
-		// 			State: constants.Succeeded,
-		// 		},
-		// 	},
-		// 	want: reconcile.Result{
-		// 		Requeue: true,
-		// 	},
-		// },
+		{
+			name: "Test TestHandleSuccess with change in status",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-controller",
+							Namespace: "powerflex",
+						},
+					}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+				oldStatus: &csmv1.ContainerStorageModuleStatus{
+					ControllerStatus: csmv1.PodStatus{
+						Available: "0",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					NodeStatus: csmv1.PodStatus{
+						Available: "0",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					State: constants.Succeeded,
+				},
+				newStatus: &csmv1.ContainerStorageModuleStatus{
+					ControllerStatus: csmv1.PodStatus{
+						Available: "1",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					NodeStatus: csmv1.PodStatus{
+						Available: "1",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					State: constants.Succeeded,
+				},
+			},
+			want: reconcile.Result{
+				Requeue: true,
+			},
+		},
 	}
 
-	t.Setenv("UNIT_TEST", "true")
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			requeue := HandleSuccess(test.args.ctx, test.args.instance, test.args.r, test.args.newStatus, test.args.oldStatus)
