@@ -42,7 +42,6 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
 	"k8s.io/client-go/kubernetes"
@@ -189,17 +188,24 @@ func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 
 // UpdateSideCarApply -
 func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	for _, side := range sideCars {
-		if *c.Name == side.Name {
-			if side.Image != "" {
-				*c.Image = string(side.Image)
+	UpdateContainerApply(sideCars, c)
+}
+
+// TODO: It seems like this function only acts on envs that are shared between
+// the new and the old, with any that aren't on the new being left alone (instead of deleted)
+// and any that aren't on the old being ignored (instead of added). Unknown if this is intentional.
+func UpdateContainerApply(toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
+	for _, ctr := range toBeApplied {
+		if *c.Name == ctr.Name {
+			if ctr.Image != "" {
+				*c.Image = string(ctr.Image)
 			}
-			if side.ImagePullPolicy != "" {
-				*c.ImagePullPolicy = side.ImagePullPolicy
+			if ctr.ImagePullPolicy != "" {
+				*c.ImagePullPolicy = ctr.ImagePullPolicy
 			}
 			emptyEnv := make([]corev1.EnvVar, 0)
-			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, side.Envs)
-			c.Args = ReplaceAllArgs(c.Args, side.Args)
+			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, ctr.Envs)
+			c.Args = ReplaceAllArgs(c.Args, ctr.Args)
 		}
 	}
 }
@@ -220,7 +226,7 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case csmv1.Externalhealthmonitor:
 		*c.Image = img.Images.Externalhealthmonitor
 	case csmv1.Sdc:
-		*c.Image = img.Images.Sdcmonitor
+		*c.Image = img.Images.Sdcmonitor // driverconfig-default.yaml has only sdcmonitor entry which points to sdc image.
 	case csmv1.Sdcmonitor:
 		*c.Image = img.Images.Sdcmonitor
 	case string(csmv1.Resiliency):
@@ -228,31 +234,23 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	}
 }
 
-// UpdateinitContainerApply -
-func UpdateinitContainerApply(initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	for _, init := range initContainers {
-		if *c.Name == init.Name {
-			if init.Image != "" {
-				*c.Image = string(init.Image)
-			}
-			if init.ImagePullPolicy != "" {
-				*c.ImagePullPolicy = init.ImagePullPolicy
-			}
-			emptyEnv := make([]corev1.EnvVar, 0)
-			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, init.Envs)
-			c.Args = ReplaceAllArgs(c.Args, init.Args)
-
-		}
-	}
+// UpdateInitContainerApply -
+func UpdateInitContainerApply(initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
+	UpdateContainerApply(initContainers, c)
 }
 
 // ReplaceAllApplyCustomEnvs -
+// TODO: It seems like this function only acts on envs that are shared between
+// the new and the old, with any that aren't on the new being left alone (instead of deleted)
+// and any that aren't on the old being ignored (instead of added). Unknown if this is intentional.
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 	commonEnv []corev1.EnvVar,
 	nrEnv []corev1.EnvVar,
 ) []acorev1.EnvVarApplyConfiguration {
 	newEnv := make([]acorev1.EnvVarApplyConfiguration, 0)
 	temp := make(map[string]string)
+
+	// get the name and value of the new env and store it in a map using name as key
 	for _, update := range commonEnv {
 		if update.Value == "" {
 			update.Value = "NA"
@@ -266,6 +264,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 		temp[update.Name] = update.Value
 	}
 	for _, old := range driverEnv {
+		// Update the value for an existing name
 		if temp[*old.Name] != "" {
 			val := temp[*old.Name]
 			if val == "NA" {
@@ -278,6 +277,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 			}
 			newEnv = append(newEnv, e)
 		} else {
+			// if new config does not have a value for the existing name...
 			e := acorev1.EnvVarApplyConfiguration{
 				Name: old.Name,
 			}
@@ -690,18 +690,6 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 		}
 	}
 
-	if kind == "StatefulSet" {
-		var ss confv1.StatefulSetApplyConfiguration
-		err := yaml.Unmarshal(podBuf, &ss)
-		if err != nil {
-			return nil, err
-		}
-		return StatefulControllerYAML{
-			StatefulSet: ss,
-			Rbac:        rbac,
-		}, nil
-	}
-
 	if kind == "Deployment" {
 		var dp confv1.DeploymentApplyConfiguration
 		err := yaml.Unmarshal(podBuf, &dp)
@@ -792,6 +780,7 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 }
 
 // ApplyCTRLObject -
+// TODO: Refactor to make use of ApplyObject. There's no need for so much repeated code.
 func ApplyCTRLObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 
@@ -821,10 +810,9 @@ func ApplyCTRLObject(ctx context.Context, obj crclient.Object, ctrlClient crclie
 	return nil
 }
 
-// LogBannerAndReturn -
-func LogBannerAndReturn(result reconcile.Result, err error) (reconcile.Result, error) {
+// LogEndReconcile - Print the 'ending reconcile' message
+func LogEndReconcile() {
 	fmt.Println("################End Reconcile##############")
-	return result, err
 }
 
 // GetModuleDefaultVersion -
@@ -1232,52 +1220,8 @@ func getUpgradeInfo[T CSMComponentType](ctx context.Context, operatorConfig Oper
 	return upgradePath.MinUpgradePath, nil
 }
 
-// BrownfieldOnboard will onboard the brownfield cluster
-func BrownfieldOnboard(ctx context.Context, path string, clientNameSpace string, ctrlClient crclient.Client, isDeleting bool) error {
-	logInstance := logger.GetLogger(ctx)
-
-	namespaces, err := GetNamespaces(ctx, ctrlClient)
-	if err != nil {
-		logInstance.Error(err, "Failed to get namespaces")
-		return err
-	}
-
-	manifestFile, err := os.ReadFile(filepath.Clean(path))
-	if err != nil {
-		logInstance.Error(err, "Failed to read manifest file")
-		return err
-	}
-
-	yamlFile := string(manifestFile)
-
-	for _, ns := range namespaces {
-
-		yamlFile := strings.ReplaceAll(yamlFile, ExistingNamespace, ns)
-		yamlFile = strings.ReplaceAll(yamlFile, ClientNamespace, clientNameSpace)
-
-		deployObjects, err := GetModuleComponentObj([]byte(yamlFile))
-		if err != nil {
-			return err
-		}
-		for _, ctrlObj := range deployObjects {
-			if isDeleting {
-				err := DeleteObject(ctx, ctrlObj, ctrlClient)
-				if err != nil {
-					return err
-				}
-			} else {
-				err := ApplyObject(ctx, ctrlObj, ctrlClient)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
-}
-
-// GetNamespaces returns the list of namespaces in the cluster
-func GetNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
+// GetCSMNamespaces returns the list of namespaces in the cluster that currently contain a CSM object
+func GetCSMNamespaces(ctx context.Context, ctrlClient crclient.Client) ([]string, error) {
 	// Set to store unique namespaces
 	namespaceMap := make(map[string]struct{})
 
