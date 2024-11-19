@@ -52,11 +52,6 @@ func TestSyncConfigMap(t *testing.T) {
 		err = client.Get(ctx, types.NamespacedName{Name: configMap.Name, Namespace: configMap.Namespace}, foundConfigMap)
 		assert.NoError(t, err)
 		assert.Equal(t, configMap.Data, foundConfigMap.Data)
-
-		// Check that the ConfigMap has the correct data
-		if foundConfigMap.Data["key"] != configMap.Data["key"] {
-			t.Errorf("ConfigMap has incorrect data: expected %s, got %s", configMap.Data["key"], foundConfigMap.Data["key"])
-		}
 	})
 
 	t.Run("Update existing ConfigMap", func(t *testing.T) {
@@ -74,11 +69,6 @@ func TestSyncConfigMap(t *testing.T) {
 		err = client.Get(ctx, types.NamespacedName{Name: configMap.Name, Namespace: configMap.Namespace}, foundConfigMap)
 		assert.NoError(t, err)
 		assert.Equal(t, updatedConfigMap.Data, foundConfigMap.Data)
-
-		// Check that the ConfigMap has the correct data
-		if foundConfigMap.Data["key"] != updatedConfigMap.Data["key"] {
-			t.Errorf("ConfigMap has incorrect data: expected %s, got %s", updatedConfigMap.Data["key"], foundConfigMap.Data["key"])
-		}
 	})
 
 	t.Run("Handle error on getting ConfigMap", func(t *testing.T) {
