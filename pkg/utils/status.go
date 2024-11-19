@@ -66,7 +66,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	}
 
 	for _, cluster := range clusterClients {
-		log.Infof("deployment status for cluster: %s", cluster.ClusterID)
+		log.Infof("getting deployment status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
 		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) || instance.GetName() == string(csmv1.ApplicationMobility) {
@@ -258,12 +258,12 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		log.Infof("deployment or daemonset did not have enough available pods")
 		log.Infof("deployment controllerStatus.Desired [%s]", controllerStatus.Desired)
 		log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
-		log.Infof("daemonset healthy: ", nodeStatusGood)
+		log.Infof("daemonset healthy: [%v]", nodeStatusGood)
 		running = false
 		newStatus.State = constants.Failed
 	}
 
-	log.Infof("setting status to ", "newStatus", newStatus)
+	log.Infof("setting new status to [%v]", newStatus)
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err
 }
