@@ -245,8 +245,6 @@ spec:
               value: /var/run/csi/csi.sock
             - name: X_CSI_MANAGED_ARRAYS
               value: "<X_CSI_MANAGED_ARRAY>"
-            - name: X_CSI_POWERMAX_ENDPOINT
-              value: ""
             - name: X_CSI_K8S_CLUSTER_PREFIX
               value: "CSM"
             - name: X_CSI_MODE
