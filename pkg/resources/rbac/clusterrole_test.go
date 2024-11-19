@@ -80,9 +80,9 @@ func TestSyncClusterRole(t *testing.T) {
 		assert.Equal(t, "create error", err.Error())
 	})
 
-	t.Run("Handle error on getting creating clusterRole", func(t *testing.T) {
+	t.Run("Handle error on getting created clusterRole", func(t *testing.T) {
 		client := &common.MockClient{
-			CreateFunc: func(_ context.Context, _ client.Object, _ ...client.CreateOption) error {
+			CreateFunc: func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 				return nil
 			},
 			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {

@@ -1799,6 +1799,12 @@ spec:
 	myContainer := "my-container"
 	myImage := "my-image"
 	port8080 := int32(8080)
+	desiredReplicas := int32(3)
+	desiredNumberScheduled := int32(3)
+	currentNumberScheduled := int32(3)
+	numberReady := int32(3)
+	numberAvailable := int32(3)
+
 	// TODO: This object will need to be built precisely to match the input spec.
 	expected := NodeYAML{
 		DaemonSetApplyConfig: confv1.DaemonSetApplyConfiguration{
@@ -1836,6 +1842,10 @@ spec:
 			},
 			Status: &confv1.DaemonSetStatusApplyConfiguration{
 				// Status configuration
+				DesiredNumberScheduled: &desiredNumberScheduled,
+				CurrentNumberScheduled: &currentNumberScheduled,
+				NumberReady:            &numberReady,
+				NumberAvailable:        &numberAvailable,
 			},
 		},
 		Rbac: RbacYAML{
@@ -1858,12 +1868,17 @@ spec:
 		},
 	}
 
+	nodeYaml := ctrlObject.(NodeYAML)
 	assert.Nil(t, err)
 	// TODO: Proper comparison here once the
 	// expected object has been ironed out
 	assert.NotNil(t, ctrlObject)
 	assert.NotNil(t, expected)
-	// assert.Equal(t, ctrlObject, expected)
+	assert.Equal(t, nodeYaml.DaemonSetApplyConfig.Name, expected.DaemonSetApplyConfig.Name)
+	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.DesiredNumberScheduled)
+	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.CurrentNumberScheduled)
+	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.NumberAvailable)
+	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.NumberReady)
 
 	// Test case: valid YAML - deployment
 	// TODO: Reuse and edit the above input/expected outputs with modificatons for Deployment obj
