@@ -15,11 +15,13 @@ package utils
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/stretchr/testify/assert"
 
