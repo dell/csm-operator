@@ -14,6 +14,7 @@ package serviceaccount
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/dell/csm-operator/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
@@ -32,7 +33,7 @@ func SyncServiceAccount(ctx context.Context, sa corev1.ServiceAccount, client cl
 		log.Infow("Creating a new ServiceAccount", "Namespace", sa.Namespace, "Name", sa.Name)
 		err = client.Create(ctx, &sa)
 		if err != nil {
-			return err
+			return fmt.Errorf("creating serviceaccount: %v", err)
 		}
 
 		return nil
