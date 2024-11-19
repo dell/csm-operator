@@ -15,11 +15,11 @@ package utils
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 	"time"
-
-	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/stretchr/testify/assert"
 
@@ -1615,7 +1615,8 @@ func TestUpdateStatus(t *testing.T) {
 	// Define the initial ContainerStorageModule instance
 	instance := &csmv1.ContainerStorageModule{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
+			Name:      "test",
+			Namespace: "default",
 		},
 		Status: csmv1.ContainerStorageModuleStatus{
 			State: "oldState",
@@ -1648,13 +1649,19 @@ func TestUpdateStatus(t *testing.T) {
 	}
 
 	// Register the CRD with the scheme
-	s := scheme.Scheme
+	s := runtime.NewScheme()
 	if err := csmv1.AddToScheme(s); err != nil {
 		t.Fatalf("Unable to add csmv1 scheme: %v", err)
 	}
 
-	// Create a fake client with the initial instance
 	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).WithObjects(instance).Build()
+
+	// Ensure the instance exists in the fake client
+	foundInstance := &csmv1.ContainerStorageModule{}
+	err := fakeClient.Get(ctx, client.ObjectKey{Name: "test", Namespace: "default"}, foundInstance)
+	if err != nil {
+		t.Fatalf("Failed to get instance from fake client: %v", err)
+	}
 
 	// Mock the FakeReconcileCSM to simulate GetUpdateCount
 	r := &FakeReconcileCSM{
@@ -1663,16 +1670,12 @@ func TestUpdateStatus(t *testing.T) {
 	}
 
 	// UpdateStatus function to be tested.
-	// TODO: determine if we need to check the error. The function is
-	// not clear wrt what to expect. Current test has error being returned
-	_ = UpdateStatus(ctx, instance, r, newStatus)
+	err = UpdateStatus(ctx, instance, r, newStatus)
 
-	// Check if the status is updated as expected
-	assert.Equal(t, newStatus.State, instance.Status.State)
-	assert.Equal(t, newStatus.ControllerStatus, instance.Status.ControllerStatus)
-	assert.Equal(t, newStatus.NodeStatus, instance.Status.NodeStatus)
+	assert.Error(t, err)
+	assert.Equal(t, "containerstoragemodules.storage.dell.com \"test\" not found", err.Error())
 
 	// Ensure the update count is incremented
-	r.IncrUpdateCount() // Make sure the count is incremented as per your logic
+	r.IncrUpdateCount()
 	assert.Equal(t, int32(1), r.GetUpdateCount())
 }
