@@ -197,7 +197,7 @@ spec:
       components:
         - name: karavi-authorization-proxy
           # Use image: dellemc/csm-authorization-sidecar:v2.0.0-alpha for PowerFlex Tech-Preview v2.0.0-alpha
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
