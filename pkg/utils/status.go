@@ -66,7 +66,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	}
 
 	for _, cluster := range clusterClients {
-		log.Infof("deployment status for cluster: %s", cluster.ClusterID)
+		log.Infof("getting deployment status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
 		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) || instance.GetName() == string(csmv1.ApplicationMobility) {
@@ -117,16 +117,17 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 
 	for _, cluster := range clusterClients {
 		totalRunning = 0
-		log.Infof("\ndaemonset status for cluster: %s", cluster.ClusterID)
+		log.Infof("\ngetting daemonset status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
 		ds := &appsv1.DaemonSet{}
 
 		nodeName := instance.GetNodeName()
-		log.Infof("nodeName is %s", nodeName)
+		namespace := instance.GetNamespace()
+		log.Infof("nodeName: %s, namespace: %s ", nodeName, namespace)
 		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
 			Name:      nodeName,
-			Namespace: instance.GetNamespace(),
+			Namespace: namespace,
 		}, ds)
 		if err != nil {
 			return 0, csmv1.PodStatus{}, err
@@ -135,7 +136,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		podList := &corev1.PodList{}
 		label := instance.GetName() + "-node"
 		opts := []client.ListOption{
-			client.InNamespace(instance.GetNamespace()),
+			client.InNamespace(namespace),
 			client.MatchingLabels{"app": label},
 		}
 
@@ -191,7 +192,6 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 		totalAvialable += totalRunning
 		totalDesired += ds.Status.DesiredNumberScheduled
 		totalFailedCount += failedCount
-
 	}
 
 	if totalFailedCount > 0 {
@@ -258,12 +258,12 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		log.Infof("deployment or daemonset did not have enough available pods")
 		log.Infof("deployment controllerStatus.Desired [%s]", controllerStatus.Desired)
 		log.Infof("deployment controllerStatus.Available [%s]", controllerStatus.Available)
-		log.Infof("daemonset healthy: ", nodeStatusGood)
+		log.Infof("daemonset healthy: [%v]", nodeStatusGood)
 		running = false
 		newStatus.State = constants.Failed
 	}
 
-	log.Infof("setting status to ", "newStatus", newStatus)
+	log.Infof("setting new status to [%v]", newStatus)
 	SetStatus(ctx, r, instance, newStatus)
 	return running, err
 }
@@ -347,7 +347,8 @@ func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorage
 	}
 	log.Error(validationError, fmt.Sprintf(" *************Create/Update %s failed ********",
 		instance.GetDriverType()))
-	return LogBannerAndReturn(reconcile.Result{Requeue: false}, validationError)
+	LogEndReconcile()
+	return reconcile.Result{Requeue: false}, validationError
 }
 
 // HandleSuccess for csm
@@ -387,12 +388,11 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 		}
 		return requeue
 	}
-	requeue, _ = LogBannerAndReturn(requeue, nil)
+	LogEndReconcile()
 	return requeue
 }
 
-// GetNginxControllerStatus - gets deployment status of the NGINX ingress controller
-func GetNginxControllerStatus(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) wait.ConditionWithContextFunc {
+func getNginxControllerStatus(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) wait.ConditionWithContextFunc {
 	return func(context.Context) (bool, error) {
 		deployment := &appsv1.Deployment{}
 		labelKey := "app.kubernetes.io/name"
@@ -436,7 +436,7 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 	log := logger.GetLogger(ctx)
 	log.Infow("Polling status of NGINX ingress controller")
 
-	return wait.PollUntilContextTimeout(ctx, time.Second, timeout, true, GetNginxControllerStatus(ctx, instance, r))
+	return wait.PollUntilContextTimeout(ctx, time.Second, timeout, true, getNginxControllerStatus(ctx, instance, r))
 }
 
 // statusForAppMob - calculate success state for application-mobility module
