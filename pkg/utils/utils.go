@@ -226,7 +226,7 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case csmv1.Externalhealthmonitor:
 		*c.Image = img.Images.Externalhealthmonitor
 	case csmv1.Sdc:
-		*c.Image = img.Images.Sdc // DISCUSS: Why does this point to Sdcmonitor and not Sdc?
+		*c.Image = img.Images.Sdcmonitor
 	case csmv1.Sdcmonitor:
 		*c.Image = img.Images.Sdcmonitor
 	case string(csmv1.Resiliency):
