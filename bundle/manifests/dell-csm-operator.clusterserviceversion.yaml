@@ -33,7 +33,7 @@ metadata:
                     "leaderElection": true,
                     "name": "proxy-server",
                     "opa": "docker.io/openpolicyagent/opa:latest",
-                    "opaKubeMgmt": "docker.io/openpolicyagent/kube-mgmt:8.5.7",
+                    "opaKubeMgmt": "docker.io/openpolicyagent/kube-mgmt:8.5.10",
                     "openTelemetryCollectorAddress": "",
                     "privateKey": "",
                     "proxyServerIngress": [
@@ -55,7 +55,7 @@ metadata:
                   {
                     "commander": "docker.io/rediscommander/redis-commander:latest",
                     "name": "redis",
-                    "redis": "docker.io/redis:7.4.0-alpine",
+                    "redis": "docker.io/redis:7.4.1-alpine",
                     "redisCommander": "rediscommander",
                     "redisName": "redis-csm",
                     "redisReplicas": 5,
