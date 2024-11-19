@@ -852,7 +852,7 @@ func TestReplaceAllContainerImageApply(t *testing.T) {
 			Registrar:             "new-registrar-image",
 			Resizer:               "new-resizer-image",
 			Externalhealthmonitor: "new-externalhealthmonitor-image",
-			Sdc:                   "new-sdc-image",
+			Sdc:                   "new-sdcmonitor-image",
 			Sdcmonitor:            "new-sdcmonitor-image",
 			Podmon:                "new-podmon-image",
 		},
