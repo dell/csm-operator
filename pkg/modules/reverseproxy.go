@@ -298,6 +298,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	if err != nil {
 		return secretVolumes, err
 	}
+	log.Infof("secret volumes to be added to reverseproxy:\n%+v", secretVolumes)
 
 	YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseNamespace, proxyNamespace)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyPort, proxyPort)
@@ -314,12 +315,14 @@ func getSecretVolumes(op utils.OperatorConfig, revProxy csmv1.Module) (string, e
 
 	secretVolumesBuilder := strings.Builder{}
 	for idx, authSecret := range revProxy.AuthSecrets {
+		log.Infof("reading in %dth authsecret %+v", idx, authSecret)
 		secretVolume := string(buf)
 		if err != nil {
 			return secretVolume, err
 		}
 		secretVolume = strings.ReplaceAll(secretVolume, SecretName, authSecret)
 		secretVolume = strings.ReplaceAll(secretVolume, SecretNumber, strconv.Itoa(idx+1))
+		log.Infof("adding secretVolume to secretVolumes:\n%+v", secretVolume)
 		secretVolumesBuilder.WriteString(secretVolume)
 	}
 
