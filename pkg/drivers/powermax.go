@@ -164,6 +164,17 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	storageCapacity := "true"
 	maxVolumesPerNode := ""
 
+	// regardless of Node/Controller filetype, we need to check if auth is enabled
+	// if auth is enabled, then the standard array secret is ignored and the fields
+	// for username and password should be optional
+	authEnabled := "false"
+	modules := cr.Spec.Modules
+	for _, module := range modules {
+		if module.Name == csmv1.Authorization && module.Enabled {
+			authEnabled = "true"
+		}
+	}
+
 	// #nosec G101 - False positives
 	switch fileType {
 	case "Node":
@@ -239,6 +250,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHost, vsphereHost)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
 		yamlString = strings.ReplaceAll(yamlString, CsiPmaxMaxVolumesPerNode, maxVolumesPerNode)
+		yamlString = strings.ReplaceAll(yamlString, utils.AuthEnabled, authEnabled)
 	case "Controller":
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "X_CSI_MANAGED_ARRAYS" {
@@ -298,6 +310,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHostname, vsphereHostname)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHost, vsphereHost)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
+		yamlString = strings.ReplaceAll(yamlString, utils.AuthEnabled, authEnabled)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

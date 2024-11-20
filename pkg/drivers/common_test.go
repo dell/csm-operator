@@ -240,6 +240,12 @@ func csmWithPowermax(driver csmv1.DriverType, version string) csmv1.ContainerSto
 	return res
 }
 
+func csmAddAuth(csm csmv1.ContainerStorageModule, authConfigVers string) csmv1.ContainerStorageModule {
+	res := csm
+	res.Spec.Modules = append(res.Spec.Modules, csmv1.Module{Name: csmv1.Authorization, Enabled: true, ConfigVersion: authConfigVers})
+	return res
+}
+
 func getPmaxCommonEnvs() []corev1.EnvVar {
 	return []corev1.EnvVar{
 		{

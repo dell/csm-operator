@@ -131,6 +131,8 @@ const (
 	DefaultImagePullPolicy = "IfNotPresent"
 	// KubeletConfigDir path
 	KubeletConfigDir = "<KUBELET_CONFIG_DIR>"
+	// AuthEnabled - search-and-replace string for if authorization is enabled in driver YAMLs
+	AuthEnabled = "<AuthEnabled>"
 	// ReplicationControllerNameSpace -
 	ReplicationControllerNameSpace = "dell-replication-controller"
 	// ReplicationControllerManager -

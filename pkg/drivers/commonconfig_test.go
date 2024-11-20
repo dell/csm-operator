@@ -30,6 +30,7 @@ var (
 	unityCSM             = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, false)
 	unityCSMCertProvided = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, true)
 	pmaxCSM              = csmWithPowermax(csmv1.PowerMax, shared.PmaxConfigVersion)
+	pmaxCSMAuth          = csmAddAuth(csmWithPowermax(csmv1.PowerMax, shared.PmaxConfigVersion), shared.AuthServerConfigVersion)
 
 	fakeDriver csmv1.DriverType = "fakeDriver"
 	badDriver  csmv1.DriverType = "badDriver"
@@ -56,6 +57,7 @@ var (
 		{"file does not exist", csm, fakeDriver, "NonExist.yaml", "no such file or directory"},
 		{"pmax happy path", pmaxCSM, csmv1.PowerMax, "node.yaml", ""},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
+		{"pmax + auth happy path", pmaxCSMAuth, csmv1.PowerMax, "node.yaml", ""},
 	}
 )
 
