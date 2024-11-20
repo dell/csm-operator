@@ -294,7 +294,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 		}
 	}
 
-	secretVolumes := getSecretVolumes
+	secretVolumes := getSecretVolumes(op, revProxy)
 
 	YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseNamespace, proxyNamespace)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyPort, proxyPort)
