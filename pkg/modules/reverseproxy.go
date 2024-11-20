@@ -128,7 +128,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 		log.Infof("exiting ReverseProxyServer...\n")
 		return nil
 	}
-	YamlString, err := getReverseProxyDeployment(op, cr, csmv1.Module{})
+	YamlString, err := getReverseProxyDeployment(ctx, op, cr, csmv1.Module{})
 	if err != nil {
 		return err
 	}
@@ -226,7 +226,8 @@ func getReverseProxyService(op utils.OperatorConfig, cr csmv1.ContainerStorageMo
 }
 
 // getReverseProxyDeployment - updates deployment manifest with reverseproxy CRD values
-func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, revProxy csmv1.Module) (string, error) {
+func getReverseProxyDeployment(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, revProxy csmv1.Module) (string, error) {
+	log := logger.GetLogger(ctx)
 	YamlString := ""
 	revProxy, err := getReverseProxyModule(cr)
 	if err != nil {
@@ -294,7 +295,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 		}
 	}
 
-	secretVolumes, err := getSecretVolumes(op, revProxy)
+	secretVolumes, err := getSecretVolumes(ctx, op, revProxy)
 	if err != nil {
 		return secretVolumes, err
 	}
@@ -309,7 +310,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	return YamlString, nil
 }
 
-func getSecretVolumes(op utils.OperatorConfig, revProxy csmv1.Module) (string, error) {
+func getSecretVolumes(ctx context.Context, op utils.OperatorConfig, revProxy csmv1.Module) (string, error) {
 	log := logger.GetLogger(ctx)
 	secretVolumePath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, revProxy.ConfigVersion, ReverseProxySecrets)
 	buf, err := os.ReadFile(filepath.Clean(secretVolumePath))
