@@ -41,6 +41,7 @@ const (
 	ReverseProxyDeployment      = "controller.yaml"
 	ReverseProxySidecar         = "container.yaml"
 	ReverseProxyService         = "service.yaml"
+	ReverseProxySecrets         = "secret-volume-entry.yaml"
 	ReverseProxyImage           = "<REVERSEPROXY_PROXY_SERVER_IMAGE>"
 	ReverseProxyTLSSecret       = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
 	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
@@ -56,6 +57,9 @@ var (
 	RevProxyServiceName        = "csipowermax-reverseproxy"
 	RevProxyConfigMapVolName   = "configmap-volume"
 	RevProxyTLSSecretVolName   = "tls-secret"
+	SecretNumber               = "<SecretNumber>"
+	SecretName                 = "<PowerMaxSecretName>"
+	SecretVolumes              = "<UnisphereSecretVolumes>"
 )
 
 // ReverseproxySupportedDrivers is a map containing the CSI Drivers supported by CSM Reverseproxy. The key is driver name and the value is the driver plugin identifier
@@ -290,12 +294,33 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 		}
 	}
 
+	secretVolumes := getSecretVolumes
+
 	YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseNamespace, proxyNamespace)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyPort, proxyPort)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, proxyConfig)
+	YamlString = strings.ReplaceAll(YamlString, SecretVolumes, secretVolumes)
 
 	return YamlString, nil
+}
+
+func getSecretVolumes(op utils.OperatorConfig, revProxy csmv1.Module) (string, error) {
+	secretVolumePath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, revProxy.ConfigVersion, ReverseProxySecrets)
+	buf, err := os.ReadFile(filepath.Clean(secretVolumePath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	secretVolumesBuilder := strings.Builder{}
+	for idx, authSecret := range revProxy.AuthSecrets {
+		secretVolume := string(buf)
+		secretVolume = strings.ReplaceAll(secretVolume, SecretName, authSecret)
+		secretVolume = strings.ReplaceAll(secretVolume, SecretNumber, strconv.Itoa(idx+1))
+		secretVolumesBuilder.WriteString(secretVolume)
+	}
+
+	return secretVolumesBuilder.String(), nil
 }
 
 // ReverseProxyInjectDeployment injects reverseproxy container as sidecar into controller
