@@ -283,6 +283,11 @@ func (in *Module) DeepCopyInto(out *Module) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.AuthSecrets != nil {
+		in, out := &in.AuthSecrets, &out.AuthSecrets
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.InitContainer != nil {
 		in, out := &in.InitContainer, &out.InitContainer
 		*out = make([]ContainerTemplate, len(*in))
