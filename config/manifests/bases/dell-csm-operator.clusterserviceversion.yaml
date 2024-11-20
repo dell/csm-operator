@@ -1753,8 +1753,18 @@ spec:
       name: csi-vxflexos
     - image: docker.io/dellemc/sdc:4.5.2.1
       name: sdc
-    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0
       name: karavi-authorization-proxy
+    - image: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.0.0
+      name: csm-authorization-proxy
+    - image: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.0.0
+      name: csm-authorization-tenant
+    - image: quay.io/dell/container-storage-modules/csm-authorization-role:v2.0.0
+      name: csm-authorization-role
+    - image: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.0.0
+      name: csm-authorization-storage
+    - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.0.0
+      name: csm-authorization-controller
     - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.10.0
       name: dell-csi-replicator
     - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.10.0

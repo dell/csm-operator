@@ -22,6 +22,6 @@ data:
     # Choose which transport protocol to use (ISCSI, FC, NVMETCP, auto or None) defaults to auto if nothing is specified
     X_CSI_TRANSPORT_PROTOCOL: "REPLACE_PROTOCOL"
     # IP address of the Unisphere for PowerMax (Required), Defaults to https://0.0.0.0:8443
-    X_CSI_POWERMAX_ENDPOINT: "https://REPLACE_AUTH_ENDPOINT:9400"
+    X_CSI_POWERMAX_ENDPOINT: "https://REPLACE_ENDPOINT"
     # List of comma-separated array ID(s) which will be managed by the driver (Required)
     X_CSI_MANAGED_ARRAYS: "REPLACE_ARRAYS"
