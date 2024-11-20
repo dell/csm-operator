@@ -13,7 +13,6 @@
 package shared
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 
@@ -174,10 +173,7 @@ func MakeConfigMap(name, ns, _ string) *corev1.ConfigMap {
 
 // MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
-	configJSON, err := os.ReadFile(filepath.Clean(configFile)) // #nosec G304
-	if err != nil {
-		log.Fatalf("failed to read testdata: %v", err)
-	}
+	configJSON, _ := os.ReadFile(filepath.Clean(configFile)) // #nosec G304
 	data := map[string][]byte{
 		"config": configJSON,
 	}
