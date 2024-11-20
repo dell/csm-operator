@@ -98,7 +98,7 @@ spec:
           configMap:
             name: <X_CSI_CONFIG_MAP_NAME>
             optional: true
-<UNISPHERE_SECRET_ENTRIES> # A variable number of secret volumes will be inserted here, depending on user input
+<UnisphereSecretVolumes> # A variable number of secret volumes will be inserted here, depending on user input
         - name: tls-secret
           secret:
             secretName: <X_CSI_REVPROXY_TLS_SECRET>
