@@ -151,6 +151,10 @@ type Module struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule components specification"
 	Components []ContainerTemplate `json:"components,omitempty" yaml:"components,omitempty"`
 
+	// AuthSecrets is a map of array IDs to associated secrets
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule authsecrets specification"
+	AuthSecrets [string]string `json:"authSecrets,omitempty" yaml:"authSecrets,omitempty"`
+
 	// ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Module"
 	ForceRemoveModule bool `json:"forceRemoveModule,omitempty" yaml:"forceRemoveModule"`
