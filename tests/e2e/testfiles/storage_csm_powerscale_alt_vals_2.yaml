@@ -152,6 +152,10 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
+        # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
     node:
       envs:
         # X_CSI_MAX_VOLUMES_PER_NODE: Specify default value for maximum number of volumes that controller can publish to the node.
@@ -196,19 +200,23 @@ spec:
       # tolerations: Define tolerations for the node daemonset, if required.
       # Default value: None
       tolerations:
-      # - key: "node.kubernetes.io/memory-pressure"
-      #   operator: "Exists"
-      #   effect: "NoExecute"
-      # - key: "node.kubernetes.io/disk-pressure"
-      #   operator: "Exists"
-      #   effect: "NoExecute"
-      # - key: "node.kubernetes.io/network-unavailable"
-      #   operator: "Exists"
-      #   effect: "NoExecute"
+        - key: "node.kubernetes.io/memory-pressure"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node.kubernetes.io/disk-pressure"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node.kubernetes.io/network-unavailable"
+          operator: "Exists"
+          effect: "NoExecute"
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      # - key: "node-role.kubernetes.io/control-plane"
-      #  operator: "Exists"
-      #  effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
     sideCars:
       - name: provisioner
         args: ["--volume-name-prefix=csipscale"]
