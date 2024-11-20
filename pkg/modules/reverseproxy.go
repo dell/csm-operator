@@ -308,13 +308,13 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 func getSecretVolumes(op utils.OperatorConfig, revProxy csmv1.Module) (string, error) {
 	secretVolumePath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, revProxy.ConfigVersion, ReverseProxySecrets)
 	buf, err := os.ReadFile(filepath.Clean(secretVolumePath))
-	if err != nil {
-		return YamlString, err
-	}
 
 	secretVolumesBuilder := strings.Builder{}
 	for idx, authSecret := range revProxy.AuthSecrets {
 		secretVolume := string(buf)
+		if err != nil {
+			return secretVolume, err
+		}
 		secretVolume = strings.ReplaceAll(secretVolume, SecretName, authSecret)
 		secretVolume = strings.ReplaceAll(secretVolume, SecretNumber, strconv.Itoa(idx+1))
 		secretVolumesBuilder.WriteString(secretVolume)
