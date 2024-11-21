@@ -96,10 +96,6 @@ spec:
               value: csi-powermax.dellemc.com
             - name: CSI_ENDPOINT
               value: unix://<KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com/csi_sock
-            - name: X_CSI_MANAGED_ARRAYS
-              value: "<X_CSI_MANAGED_ARRAY>"
-            - name: X_CSI_POWERMAX_ENDPOINT
-              value: "<X_CSI_POWERMAX_ENDPOINT>"
             - name: X_CSI_K8S_CLUSTER_PREFIX
               value: "CSM"
             - name: X_CSI_MODE
@@ -131,8 +127,6 @@ spec:
               value: noderoot
             - name: X_CSI_GRPC_MAX_THREADS
               value: "50"
-            - name: X_CSI_TRANSPORT_PROTOCOL
-              value: "<X_CSI_TRANSPORT_PROTOCOL>"
             - name: SSL_CERT_DIR
               value: /certs
             - name: X_CSI_POWERMAX_CONFIG_PATH
@@ -145,8 +139,6 @@ spec:
               value: "<X_CSI_IG_NODENAME_TEMPLATE>"
             - name: X_CSI_IG_MODIFY_HOSTNAME
               value: "<X_CSI_IG_MODIFY_HOSTNAME>"
-            - name: X_CSI_POWERMAX_PORTGROUPS
-              value: "<X_CSI_POWERMAX_PORTGROUPS>"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
             - name: X_CSI_MAX_VOLUMES_PER_NODE
