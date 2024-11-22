@@ -319,6 +319,10 @@ spec:
         - name: powermax-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
+        - name: csi-revproxy-creds
+          secret:
+            secretName: <DriverDefaultReleaseName>-creds
+            optional: true
         - name: powermax-array-config
           configMap:
             name: powermax-array-config
