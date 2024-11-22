@@ -353,7 +353,7 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
 		YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
 	}
-	path := ""
+	path := "/var/lib/kubelet"
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "KUBELET_CONFIG_DIR" {
 			path = env.Value
