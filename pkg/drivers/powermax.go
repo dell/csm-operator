@@ -63,9 +63,11 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	log := logger.GetLogger(ctx)
 	// Check for default secret only
 	// Array specific will be authenticated in csireverseproxy
+	credType := "default"
 	cred := cr.Name + "-creds"
 	if cr.Spec.Driver.AuthSecret != "" {
 		cred = cr.Spec.Driver.AuthSecret
+		credType = "authorization"
 	}
 
 	// Check if driver version is supported by doing a stat on a config file
@@ -81,7 +83,7 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		if err != nil {
 			log.Error(err, "Failed query for secret ", cred)
 			if errors.IsNotFound(err) {
-				return fmt.Errorf("failed to find secret %s", cred)
+				return fmt.Errorf("failed to find %s secret %s", credType, cred)
 			}
 		}
 	}
