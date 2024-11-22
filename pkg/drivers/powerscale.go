@@ -58,7 +58,6 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 	// check if skip validation is enabled:
 	skipCertValid := false
 	certCount := 1
-	kubeletConfigDirFound := false
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION" {
 			b, err := strconv.ParseBool(env.Value)
@@ -74,15 +73,6 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 			}
 			certCount = int(d)
 		}
-		if env.Name == "KUBELET_CONFIG_DIR" {
-			kubeletConfigDirFound = true
-		}
-	}
-	if !kubeletConfigDirFound {
-		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
-			Name:  "KUBELET_CONFIG_DIR",
-			Value: "/var/lib/kubelet",
-		})
 	}
 
 	secrets := []string{config}
