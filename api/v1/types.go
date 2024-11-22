@@ -185,6 +185,7 @@ type Driver struct {
 
 	// Replicas is the count of controllers for Controller plugin
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Controller count"
+	// +kubebuilder:default=2
 	Replicas int32 `json:"replicas" yaml:"replicas"`
 
 	// DNSPolicy is the dnsPolicy of the daemonset for Node plugin
