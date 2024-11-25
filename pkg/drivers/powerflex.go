@@ -76,9 +76,11 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 	}
 	var newmdm corev1.EnvVar
 	sdcEnabled := true
-	for _, env := range cr.Spec.Driver.Node.Envs {
-		if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
-			sdcEnabled = false
+	if cr.Spec.Driver.Node != nil {
+		for _, env := range cr.Spec.Driver.Node.Envs {
+			if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
+				sdcEnabled = false
+			}
 		}
 	}
 
@@ -277,15 +279,17 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	// nolint:gosec
 	switch fileType {
 	case "Controller":
-		for _, env := range cr.Spec.Driver.Controller.Envs {
-			if env.Name == "X_CSI_POWERFLEX_EXTERNAL_ACCESS" {
-				powerflexExternalAccess = env.Value
-			}
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorController = env.Value
-			}
-			if env.Name == "X_CSI_DEBUG" {
-				csiDebug = env.Value
+		if cr.Spec.Driver.Controller != nil {
+			for _, env := range cr.Spec.Driver.Controller.Envs {
+				if env.Name == "X_CSI_POWERFLEX_EXTERNAL_ACCESS" {
+					powerflexExternalAccess = env.Value
+				}
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorController = env.Value
+				}
+				if env.Name == "X_CSI_DEBUG" {
+					csiDebug = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
@@ -293,27 +297,29 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 
 	case "Node":
-		for _, env := range cr.Spec.Driver.Node.Envs {
-			if env.Name == "X_CSI_SDC_ENABLED" {
-				sdcEnabled = env.Value
-			}
-			if env.Name == "X_CSI_APPROVE_SDC_ENABLED" {
-				approveSdcEnabled = env.Value
-			}
-			if env.Name == "X_CSI_RENAME_SDC_ENABLED" {
-				renameSdcEnabled = env.Value
-			}
-			if env.Name == "X_CSI_RENAME_SDC_PREFIX" {
-				renameSdcPrefix = env.Value
-			}
-			if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
-				maxVolumesPerNode = env.Value
-			}
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorNode = env.Value
-			}
-			if env.Name == "X_CSI_DEBUG" {
-				csiDebug = env.Value
+		if cr.Spec.Driver.Node != nil {
+			for _, env := range cr.Spec.Driver.Node.Envs {
+				if env.Name == "X_CSI_SDC_ENABLED" {
+					sdcEnabled = env.Value
+				}
+				if env.Name == "X_CSI_APPROVE_SDC_ENABLED" {
+					approveSdcEnabled = env.Value
+				}
+				if env.Name == "X_CSI_RENAME_SDC_ENABLED" {
+					renameSdcEnabled = env.Value
+				}
+				if env.Name == "X_CSI_RENAME_SDC_PREFIX" {
+					renameSdcPrefix = env.Value
+				}
+				if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
+					maxVolumesPerNode = env.Value
+				}
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorNode = env.Value
+				}
+				if env.Name == "X_CSI_DEBUG" {
+					csiDebug = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiSdcEnabled, sdcEnabled)
@@ -325,7 +331,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 
 	case "CSIDriverSpec":
-		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)

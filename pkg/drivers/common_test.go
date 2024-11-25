@@ -37,57 +37,60 @@ var (
 func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
-	// Add tolerations to controller and node
-	res.Spec.Driver.Node.Tolerations = []corev1.Toleration{
-		{
-			Key:               "notNil",
-			Value:             "123",
-			TolerationSeconds: new(int64),
-		},
-		{
-			Key:               "nil",
-			Value:             "123",
-			TolerationSeconds: nil,
-		},
+	// Add tolerations, node selector to controller and node
+	if res.Spec.Driver.Node != nil {
+		res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+		res.Spec.Driver.Node.Tolerations = []corev1.Toleration{
+			{
+				Key:               "notNil",
+				Value:             "123",
+				TolerationSeconds: new(int64),
+			},
+			{
+				Key:               "nil",
+				Value:             "123",
+				TolerationSeconds: nil,
+			},
+		}
 	}
-	res.Spec.Driver.Controller.Tolerations = []corev1.Toleration{
-		{
-			Key:               "notNil",
-			Value:             "123",
-			TolerationSeconds: new(int64),
-		},
-		{
-			Key:               "nil",
-			Value:             "123",
-			TolerationSeconds: nil,
-		},
+	if res.Spec.Driver.Controller != nil {
+		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+		res.Spec.Driver.Controller.Tolerations = []corev1.Toleration{
+			{
+				Key:               "notNil",
+				Value:             "123",
+				TolerationSeconds: new(int64),
+			},
+			{
+				Key:               "nil",
+				Value:             "123",
+				TolerationSeconds: nil,
+			},
+		}
 	}
 
 	// Add FSGroupPolicy
-	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
-
-	// Add FSGroupPolicy
-	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "ReadWriteOnceWithFSType"
+	if res.Spec.Driver.CSIDriverSpec != nil {
+		res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+		res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "ReadWriteOnceWithFSType"
+	}
 
 	// Add DNS Policy for GetNode test
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
 
 	// Add image name
-	res.Spec.Driver.Common.Image = "thisIsAnImage"
+	if res.Spec.Driver.Common != nil {
+		res.Spec.Driver.Common.Image = "thisIsAnImage"
+		// Add CSI_LOG_LEVEL environment variables
+		envVar := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
+		res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar}
+	}
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = version
 
 	// Add pscale driver type
 	res.Spec.Driver.CSIDriverType = driver
-
-	// Add NodeSelector to node and controller
-	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-
-	// Add CSI_LOG_LEVEL environment variables
-	envVar := corev1.EnvVar{Name: "CSI_LOG_LEVEL"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar}
 
 	// Add sidecars to trigger code in controller
 	sideCarObjEnabledNil := csmv1.ContainerTemplate{
@@ -143,7 +146,7 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 	// Add pflex driver version
 	res.Spec.Driver.ConfigVersion = shared.PFlexConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerFlex
-	if customCSMName == "no-sdc" {
+	if customCSMName == "no-sdc" && res.Spec.Driver.Node != nil && res.Spec.Driver.Common != nil {
 		res.Spec.Driver.Node.Envs = append(res.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSI_SDC_ENABLED", Value: "false"})
 		res.Spec.Driver.Common.Envs = append(res.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "INTERFACE_NAMES", Value: "worker1: \"interface1\",worker2: \"interface2\""})
 	}
@@ -155,8 +158,9 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add FSGroupPolicy
-	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
-
+	if res.Spec.Driver.CSIDriverSpec != nil {
+		res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+	}
 	// Add DNS Policy for GetNode test
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
 
@@ -169,10 +173,6 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	// Add pstore driver type
 	res.Spec.Driver.CSIDriverType = driver
 
-	// Add NodeSelector to node and controller
-	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-
 	// Add node name prefix to cover some code in GetNode
 	nodeNamePrefix := corev1.EnvVar{Name: "X_CSI_POWERSTORE_NODE_NAME_PREFIX"}
 
@@ -184,14 +184,23 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	enableChap := corev1.EnvVar{Name: "X_CSI_POWERSTORE_ENABLE_CHAP", Value: "true"}
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
 	maxVolumesPerNode := corev1.EnvVar{Name: "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE", Value: "0"}
-	res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, maxVolumesPerNode}
+	// Add NodeSelector to node and controller
+	if res.Spec.Driver.Node != nil {
+		res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+		res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, maxVolumesPerNode}
+	}
 
 	// Add controller fields specific
 	nfsAclsParam := corev1.EnvVar{Name: "X_CSI_NFS_ACLS"}
 	externalAccess := corev1.EnvVar{Name: "X_CSI_POWERSTORE_EXTERNAL_ACCESS"}
-	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{nfsAclsParam, healthMonitor, externalAccess}
+	if res.Spec.Driver.Controller != nil {
+		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{nfsAclsParam, healthMonitor, externalAccess}
+	}
 
-	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	if res.Spec.Driver.CSIDriverSpec != nil {
+		res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	}
 
 	return res
 }
@@ -200,7 +209,9 @@ func csmWithPowermax(driver csmv1.DriverType, version string) csmv1.ContainerSto
 	res := shared.MakeCSM("csm", "driver-test", version)
 
 	// Add FSGroupPolicy
-	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "ReadWriteOnceWithFSType"
+	if res.Spec.Driver.CSIDriverSpec != nil {
+		res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "ReadWriteOnceWithFSType"
+	}
 
 	// Add DNS Policy for GetNode test
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
@@ -215,24 +226,36 @@ func csmWithPowermax(driver csmv1.DriverType, version string) csmv1.ContainerSto
 	res.Spec.Driver.CSIDriverType = driver
 
 	// Add NodeSelector to node and controller
-	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	if res.Spec.Driver.Node != nil {
+		res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	}
+	if res.Spec.Driver.Controller != nil {
+		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	}
 
 	// Add common envs
 	commonEnvs := getPmaxCommonEnvs()
-	res.Spec.Driver.Common.Envs = commonEnvs
+	if res.Spec.Driver.Common != nil {
+		res.Spec.Driver.Common.Envs = commonEnvs
+	}
 
 	// Add node fields specific to powermax
 	enableChap := corev1.EnvVar{Name: "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP", Value: "true"}
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
 	nodeTopology := corev1.EnvVar{Name: "X_CSI_TOPOLOGY_CONTROL_ENABLED", Value: "true"}
-	res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, nodeTopology}
+	if res.Spec.Driver.Node != nil {
+		res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, nodeTopology}
+	}
 
 	// Add controller fields specific to powermax
-	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
+	if res.Spec.Driver.Controller != nil {
+		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
+	}
 
 	// Add CSI Driver specific fields
-	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	if res.Spec.Driver.CSIDriverSpec != nil {
+		res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	}
 
 	// Add reverseproxy module
 	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
@@ -305,7 +328,9 @@ func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerS
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add FSGroupPolicy
-	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+	if res.Spec.Driver.CSIDriverSpec != nil {
+		res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+	}
 
 	// Add DNS Policy for GetNode test
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
@@ -319,30 +344,38 @@ func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerS
 	// Add pscale driver type
 	res.Spec.Driver.CSIDriverType = driver
 
-	// Add NodeSelector to node and controller
-	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-
 	// Add node name prefix to cover some code in GetNode
 	nodeNamePrefix := corev1.EnvVar{Name: "X_CSI_POWERSTORE_NODE_NAME_PREFIX"}
 
 	// Add FC port filter
 	fcFilterPath := corev1.EnvVar{Name: "X_CSI_FC_PORTS_FILTER_FILE_PATH"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{nodeNamePrefix, fcFilterPath}
+
+	if res.Spec.Driver.Common != nil {
+		res.Spec.Driver.Common.Envs = []corev1.EnvVar{nodeNamePrefix, fcFilterPath}
+	}
 
 	// Add environment variable
 	csiLogLevel := corev1.EnvVar{Name: "CSI_LOG_LEVEL", Value: "debug"}
 
-	res.Spec.Driver.Node.Envs = []corev1.EnvVar{csiLogLevel}
-
 	// Add node fields specific to powerstore
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
-	res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor}
+
+	// Add node fields specific
+	if res.Spec.Driver.Node != nil {
+		res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+		res.Spec.Driver.Node.Envs = []corev1.EnvVar{csiLogLevel}
+		res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor}
+	}
 
 	// Add controller fields specific
-	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
+	if res.Spec.Driver.Controller != nil {
+		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{csiLogLevel}
+	}
 
-	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	if res.Spec.Driver.CSIDriverSpec != nil {
+		res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	}
 
 	// Add sidecars to trigger code in controller
 	sideCarObjEnabledNil := csmv1.ContainerTemplate{
@@ -369,7 +402,9 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add FSGroupPolicy
-	res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+	if res.Spec.Driver.CSIDriverSpec != nil {
+		res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
+	}
 
 	// Add DNS Policy for GetNode test
 	res.Spec.Driver.DNSPolicy = "ThisIsADNSPolicy"
@@ -384,8 +419,12 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 	res.Spec.Driver.CSIDriverType = driver
 
 	// Add NodeSelector to node and controller
-	res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-	res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	if res.Spec.Driver.Node != nil {
+		res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	}
+	if res.Spec.Driver.Controller != nil {
+		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
+	}
 
 	// Add environment variables
 	envVar1 := corev1.EnvVar{Name: "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS", Value: "false"}
@@ -402,11 +441,17 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 
 	// Add node fields specific to unity
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
-	res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor}
+	if res.Spec.Driver.Node != nil {
+		res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor}
+	}
 
 	// Add controller fields specific
-	res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
-	res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	if res.Spec.Driver.Controller != nil {
+		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
+	}
+	if res.Spec.Driver.CSIDriverSpec != nil {
+		res.Spec.Driver.CSIDriverSpec.StorageCapacity = true
+	}
 
 	return res
 }

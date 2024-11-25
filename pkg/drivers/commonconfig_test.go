@@ -66,15 +66,17 @@ func TestGetCsiDriver(t *testing.T) {
 			csiDriver, err := GetCSIDriver(ctx, tt.csm, config, tt.driverName)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
-				switch tt.csm.Spec.Driver.CSIDriverSpec.FSGroupPolicy {
-				case "":
-					assert.Equal(t, storagev1.ReadWriteOnceWithFSTypeFSGroupPolicy, *csiDriver.Spec.FSGroupPolicy)
-				case "ReadWriteOnceWithFSType":
-					assert.Equal(t, storagev1.ReadWriteOnceWithFSTypeFSGroupPolicy, *csiDriver.Spec.FSGroupPolicy)
-				case "File":
-					assert.Equal(t, storagev1.FileFSGroupPolicy, *csiDriver.Spec.FSGroupPolicy)
-				default:
-					assert.Equal(t, storagev1.NoneFSGroupPolicy, *csiDriver.Spec.FSGroupPolicy)
+				if tt.csm.Spec.Driver.CSIDriverSpec != nil {
+					switch tt.csm.Spec.Driver.CSIDriverSpec.FSGroupPolicy {
+					case "":
+						assert.Equal(t, storagev1.ReadWriteOnceWithFSTypeFSGroupPolicy, *csiDriver.Spec.FSGroupPolicy)
+					case "ReadWriteOnceWithFSType":
+						assert.Equal(t, storagev1.ReadWriteOnceWithFSTypeFSGroupPolicy, *csiDriver.Spec.FSGroupPolicy)
+					case "File":
+						assert.Equal(t, storagev1.FileFSGroupPolicy, *csiDriver.Spec.FSGroupPolicy)
+					default:
+						assert.Equal(t, storagev1.NoneFSGroupPolicy, *csiDriver.Spec.FSGroupPolicy)
+					}
 				}
 			} else {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)

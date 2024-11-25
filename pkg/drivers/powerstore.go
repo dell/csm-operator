@@ -106,23 +106,27 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 
 	switch fileType {
 	case "Node":
-		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "X_CSI_POWERSTORE_NODE_NAME_PREFIX" {
-				nodePrefix = env.Value
-			}
-			if env.Name == "X_CSI_FC_PORTS_FILTER_FILE_PATH" {
-				fcPortFilter = env.Value
+		if cr.Spec.Driver.Common != nil {
+			for _, env := range cr.Spec.Driver.Common.Envs {
+				if env.Name == "X_CSI_POWERSTORE_NODE_NAME_PREFIX" {
+					nodePrefix = env.Value
+				}
+				if env.Name == "X_CSI_FC_PORTS_FILTER_FILE_PATH" {
+					fcPortFilter = env.Value
+				}
 			}
 		}
-		for _, env := range cr.Spec.Driver.Node.Envs {
-			if env.Name == "X_CSI_POWERSTORE_ENABLE_CHAP" {
-				chap = env.Value
-			}
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorNode = env.Value
-			}
-			if env.Name == "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE" {
-				maxVolumesPerNode = env.Value
+		if cr.Spec.Driver.Node != nil {
+			for _, env := range cr.Spec.Driver.Node.Envs {
+				if env.Name == "X_CSI_POWERSTORE_ENABLE_CHAP" {
+					chap = env.Value
+				}
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorNode = env.Value
+				}
+				if env.Name == "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE" {
+					maxVolumesPerNode = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreNodeNamePrefix, nodePrefix)
@@ -131,22 +135,24 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreMaxVolumesPerNode, maxVolumesPerNode)
 	case "Controller":
-		for _, env := range cr.Spec.Driver.Controller.Envs {
-			if env.Name == "X_CSI_NFS_ACLS" {
-				nfsAcls = env.Value
-			}
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorController = env.Value
-			}
-			if env.Name == "X_CSI_POWERSTORE_EXTERNAL_ACCESS" {
-				powerstoreExternalAccess = env.Value
+		if cr.Spec.Driver.Controller != nil {
+			for _, env := range cr.Spec.Driver.Controller.Envs {
+				if env.Name == "X_CSI_NFS_ACLS" {
+					nfsAcls = env.Value
+				}
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorController = env.Value
+				}
+				if env.Name == "X_CSI_POWERSTORE_EXTERNAL_ACCESS" {
+					powerstoreExternalAccess = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
 	case "CSIDriverSpec":
-		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)

@@ -82,7 +82,7 @@ var (
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
-						Controller: csmv1.ContainerTemplate{
+						Controller: &csmv1.ContainerTemplate{
 							Envs: []corev1.EnvVar{
 								{Name: "X_CSI_POWERFLEX_EXTERNAL_ACCESS", Value: "NEW_POWERFLEX_ACCESS"},
 								{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "NEW_HEALTH_MONITOR"},
@@ -101,7 +101,7 @@ var (
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
-						Node: csmv1.ContainerTemplate{
+						Node: &csmv1.ContainerTemplate{
 							Envs: []corev1.EnvVar{
 								{Name: "X_CSI_SDC_ENABLED", Value: "NEW_SDC_ENABLED"},
 								{Name: "X_CSI_APPROVE_SDC_ENABLED", Value: "NEW_APPROVE_SDC"},
@@ -124,7 +124,7 @@ var (
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
-						CSIDriverSpec: csmv1.CSIDriverSpec{
+						CSIDriverSpec: &csmv1.CSIDriverSpec{
 							StorageCapacity: true,
 						},
 					},
@@ -139,7 +139,7 @@ var (
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
-						CSIDriverSpec: csmv1.CSIDriverSpec{
+						CSIDriverSpec: &csmv1.CSIDriverSpec{
 							StorageCapacity: false,
 						},
 					},

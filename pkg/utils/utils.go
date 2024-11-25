@@ -352,14 +352,16 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	if cr.Namespace != "" {
 		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseNamespace, cr.Namespace)
 	}
-	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
-		YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
-	}
 	path := DefaultKubeletConfigDir
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "KUBELET_CONFIG_DIR" {
-			path = env.Value
-			break
+	if cr.Spec.Driver.Common != nil {
+		if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
+			YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
+		}
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "KUBELET_CONFIG_DIR" {
+				path = env.Value
+				break
+			}
 		}
 	}
 	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
