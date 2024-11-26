@@ -206,9 +206,6 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      # enabled: Always set to true
-      enabled: true
-      forceRemoveModule: true
       configVersion: v2.11.0
       components:
         - name: csipowermax-reverseproxy
