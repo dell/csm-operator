@@ -22,7 +22,6 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -83,45 +82,33 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 			}
 		}
 	}
-
 	newInitContainers := make([]csmv1.ContainerTemplate, 0)
 	for _, initcontainer := range cr.Spec.Driver.InitContainers {
 		if initcontainer.Name != "sdc" {
 			newInitContainers = append(newInitContainers, initcontainer)
-		} else if initcontainer.Name == "sdc" && sdcEnabled {
+			continue
+		}
+
+		if sdcEnabled {
+			for i := range initcontainer.Envs {
+				if initcontainer.Envs[i].Name == "MDM" {
+					initcontainer.Envs[i].Value = mdmVar
+					break
+				}
+			}
 			newInitContainers = append(newInitContainers, initcontainer)
 		}
 	}
 	cr.Spec.Driver.InitContainers = newInitContainers
-	if len(cr.Spec.Driver.InitContainers) == 0 && sdcEnabled {
-		cr.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{
-			{
-				Name: "sdc",
-			},
-		}
-	}
 
 	for _, sidecar := range cr.Spec.Driver.SideCars {
 		if sidecar.Name == "sdc-monitor" {
-			sidenv := sidecar.Envs
-			var updatenv corev1.EnvVar
-			j := 0
-			for c, env := range sidenv {
-				if env.Name == "MDM" {
-					env.Value = mdmVar
-					updatenv = env
-					j = c
+			for i := range sidecar.Envs {
+				if sidecar.Envs[i].Name == "MDM" {
+					sidecar.Envs[i].Value = mdmVar
 					break
 				}
 			}
-			sidenv[j] = updatenv
-		}
-	}
-	if cr.Spec.Driver.SideCars == nil {
-		cr.Spec.Driver.SideCars = []csmv1.ContainerTemplate{
-			{
-				Name: "sdc-monitor",
-			},
 		}
 	}
 
