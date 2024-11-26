@@ -99,9 +99,11 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	}
 
 	foundRevProxy := false
-	for _, mod := range cr.Spec.Modules {
+	for i, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.ReverseProxy {
 			foundRevProxy = true
+			cr.Spec.Modules[i].Enabled = true
+			cr.Spec.Modules[i].ForceRemoveModule = true
 			break
 		}
 	}
