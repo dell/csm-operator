@@ -146,6 +146,8 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 	// Add pflex driver version
 	res.Spec.Driver.ConfigVersion = shared.PFlexConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+	res.Spec.Driver.Node = &csmv1.ContainerTemplate{}
+	res.Spec.Driver.Common = &csmv1.ContainerTemplate{}
 	if customCSMName == "no-sdc" && res.Spec.Driver.Node != nil && res.Spec.Driver.Common != nil {
 		res.Spec.Driver.Node.Envs = append(res.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSI_SDC_ENABLED", Value: "false"})
 		res.Spec.Driver.Common.Envs = append(res.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "INTERFACE_NAMES", Value: "worker1: \"interface1\",worker2: \"interface2\""})
