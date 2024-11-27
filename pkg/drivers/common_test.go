@@ -247,7 +247,7 @@ func csmWithPowermax(driver csmv1.DriverType, version string) csmv1.ContainerSto
 	maxVolumes := corev1.EnvVar{Name: "X_CSI_MAX_VOLUMES_PER_NODE", Value: "true"}
 	
 	if res.Spec.Driver.Node != nil {
-		res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, nodeTopology}
+		res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, nodeTopology, maxVolumes}
 	}
 
 	// Add controller fields specific to powermax
