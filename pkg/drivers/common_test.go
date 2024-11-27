@@ -332,8 +332,7 @@ func getPmaxCommonEnvs() []corev1.EnvVar {
 
 func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
-	res.Spec.Driver.CSIDriverSpec=&csmv1.CSIDriverSpec{	
-	}
+	res.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{}
 
 	// Add FSGroupPolicy
 	if res.Spec.Driver.CSIDriverSpec != nil {

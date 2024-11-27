@@ -79,7 +79,7 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 	return nil
 }
 
-func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) (csmv1.ContainerStorageModule, error) {
+func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, ct client.Client) (csmv1.ContainerStorageModule, error) {
 	mdmVar, _ := GetMDMFromSecret(ctx, &cr, ct)
 
 	// Check if SDC is enabled

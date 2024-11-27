@@ -306,7 +306,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = newcontainers
 
-	updatedCr, err := SetSDCinitContainers(ctx, cr, operatorConfig, ct)
+	updatedCr, err := SetSDCinitContainers(ctx, cr, ct)
 	if err != nil {
 		log.Errorw("Failed to set SDC init container", "Error", err.Error())
 		return nil, err
