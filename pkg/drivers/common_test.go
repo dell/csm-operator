@@ -240,14 +240,18 @@ func csmWithPowermax(driver csmv1.DriverType, version string) csmv1.ContainerSto
 	}
 
 	// Add node fields specific to powermax
+	res.Spec.Driver.Node = &csmv1.ContainerTemplate{}
 	enableChap := corev1.EnvVar{Name: "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP", Value: "true"}
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
 	nodeTopology := corev1.EnvVar{Name: "X_CSI_TOPOLOGY_CONTROL_ENABLED", Value: "true"}
+	maxVolumes := corev1.EnvVar{Name: "X_CSI_MAX_VOLUMES_PER_NODE", Value: "true"}
+	
 	if res.Spec.Driver.Node != nil {
 		res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, nodeTopology}
 	}
 
 	// Add controller fields specific to powermax
+	res.Spec.Driver.Controller = &csmv1.ContainerTemplate{}
 	if res.Spec.Driver.Controller != nil {
 		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
 	}
