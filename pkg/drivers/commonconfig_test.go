@@ -20,6 +20,7 @@ import (
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/stretchr/testify/assert"
 	storagev1 "k8s.io/api/storage/v1"
+	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var (
@@ -131,7 +132,7 @@ func TestGetNode(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename)
+			_, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build())
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {

@@ -745,7 +745,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig)
+	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig, ctrlClient)
 	if err != nil {
 		return err
 	}
@@ -1101,6 +1101,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
 	operatorConfig utils.OperatorConfig,
+	ctrlClient client.Client,
 ) (*DriverConfig, error) {
 	var (
 		err        error
@@ -1135,7 +1136,7 @@ func getDriverConfig(ctx context.Context,
 		return nil, fmt.Errorf("getting %s CSIDriver: %v", driverType, err)
 	}
 
-	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml)
+	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml, ctrlClient)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s node: %v", driverType, err)
 	}
@@ -1250,7 +1251,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig)
+	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig, r.Client)
 	if err != nil {
 		log.Error("error in getDriverConfig")
 		return err

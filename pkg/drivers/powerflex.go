@@ -22,6 +22,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -69,50 +70,79 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, cr.Spec.Driver.ConfigVersion)
 	}
 
-	mdmVar, err := GetMDMFromSecret(ctx, cr, ct)
+	// Check if MDM is set in the secret
+	_, err := GetMDMFromSecret(ctx, cr, ct)
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) (csmv1.ContainerStorageModule, error) {
+	mdmVar, _ := GetMDMFromSecret(ctx, &cr, ct)
+
+	// Check if SDC is enabled
 	sdcEnabled := true
 	if cr.Spec.Driver.Node != nil {
 		for _, env := range cr.Spec.Driver.Node.Envs {
 			if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
 				sdcEnabled = false
+				break
 			}
 		}
 	}
-	newInitContainers := make([]csmv1.ContainerTemplate, 0)
-	for _, initcontainer := range cr.Spec.Driver.InitContainers {
-		if initcontainer.Name != "sdc" {
-			newInitContainers = append(newInitContainers, initcontainer)
-			continue
-		}
 
-		if sdcEnabled {
-			for i := range initcontainer.Envs {
-				if initcontainer.Envs[i].Name == "MDM" {
+	// Update init containers
+	var newInitContainers []csmv1.ContainerTemplate
+	for _, initcontainer := range cr.Spec.Driver.InitContainers {
+		if initcontainer.Name == "sdc" && sdcEnabled {
+			// Update MDM env variable for "sdc" container
+			for i, env := range initcontainer.Envs {
+				if env.Name == "MDM" {
 					initcontainer.Envs[i].Value = mdmVar
 					break
 				}
 			}
+		}
+		if initcontainer.Name != "sdc" || sdcEnabled {
 			newInitContainers = append(newInitContainers, initcontainer)
 		}
 	}
+
+	// If no init containers left and SDC is enabled, add a new one
+	if len(newInitContainers) == 0 && sdcEnabled {
+		newInitContainers = append(newInitContainers, csmv1.ContainerTemplate{
+			Name: "sdc",
+			Envs: []corev1.EnvVar{{Name: "MDM", Value: mdmVar}},
+		})
+	}
 	cr.Spec.Driver.InitContainers = newInitContainers
 
-	for _, sidecar := range cr.Spec.Driver.SideCars {
-		if sidecar.Name == "sdc-monitor" {
-			for i := range sidecar.Envs {
-				if sidecar.Envs[i].Name == "MDM" {
-					sidecar.Envs[i].Value = mdmVar
+	// Update sidecar containers
+	for i := range cr.Spec.Driver.SideCars {
+		if cr.Spec.Driver.SideCars[i].Name == "sdc-monitor" {
+			// Update MDM env variable for "sdc-monitor" sidecar container
+			for j, env := range cr.Spec.Driver.SideCars[i].Envs {
+				if env.Name == "MDM" {
+					cr.Spec.Driver.SideCars[i].Envs[j].Value = mdmVar
 					break
 				}
 			}
 		}
 	}
 
-	return nil
+	// If no sidecars, add a new "sdc-monitor" sidecar with MDM
+	if len(cr.Spec.Driver.SideCars) == 0 {
+		cr.Spec.Driver.SideCars = []csmv1.ContainerTemplate{
+			{
+				Name: "sdc-monitor",
+				Envs: []corev1.EnvVar{{Name: "MDM", Value: mdmVar}},
+			},
+		}
+	}
+
+	return cr, nil
 }
 
 // GetMDMFromSecret - Get MDM value from secret

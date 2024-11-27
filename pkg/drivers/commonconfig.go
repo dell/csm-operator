@@ -27,6 +27,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	metacv1 "k8s.io/client-go/applyconfigurations/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -192,7 +193,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 }
 
 // GetNode get node yaml
-func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string) (*utils.NodeYAML, error) {
+func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string, ct client.Client) (*utils.NodeYAML, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
 	log.Debugw("GetNode", "configMapPath", configMapPath)
@@ -305,10 +306,16 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = newcontainers
 
+	updatedCr, err := SetSDCinitContainers(ctx, cr, operatorConfig, ct)
+	if err != nil {
+		log.Errorw("Failed to set SDC init container", "Error", err.Error())
+		return nil, err
+	}
+
 	initcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	sdcEnabled := true
-	if cr.Spec.Driver.Node != nil {
-		for _, env := range cr.Spec.Driver.Node.Envs {
+	if updatedCr.Spec.Driver.Node != nil {
+		for _, env := range updatedCr.Spec.Driver.Node.Envs {
 			if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
 				sdcEnabled = false
 			}
@@ -322,7 +329,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	for i := range initcontainers {
 		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
-		utils.UpdateInitContainerApply(cr.Spec.Driver.InitContainers, &initcontainers[i])
+		utils.UpdateInitContainerApply(updatedCr.Spec.Driver.InitContainers, &initcontainers[i])
 	}
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers = initcontainers
