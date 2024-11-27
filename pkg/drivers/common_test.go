@@ -326,6 +326,8 @@ func getPmaxCommonEnvs() []corev1.EnvVar {
 
 func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+	res.Spec.Driver.CSIDriverSpec=&csmv1.CSIDriverSpec{	
+	}
 
 	// Add FSGroupPolicy
 	if res.Spec.Driver.CSIDriverSpec != nil {
@@ -361,6 +363,7 @@ func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerS
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
 
 	// Add node fields specific
+	res.Spec.Driver.Node = &csmv1.ContainerTemplate{}
 	if res.Spec.Driver.Node != nil {
 		res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 		res.Spec.Driver.Node.Envs = []corev1.EnvVar{csiLogLevel}
@@ -368,9 +371,11 @@ func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerS
 	}
 
 	// Add controller fields specific
+	res.Spec.Driver.Controller = &csmv1.ContainerTemplate{}
 	if res.Spec.Driver.Controller != nil {
 		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{csiLogLevel}
+		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{healthMonitor}
 	}
 
 	if res.Spec.Driver.CSIDriverSpec != nil {
