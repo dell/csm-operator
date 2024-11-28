@@ -464,9 +464,9 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 
 	// Add node fields specific to unity
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
-	allowedNetworks:= corev1.EnvVar{Name: "X_CSI_ALLOWED_NETWORKS", Value: "true"}
+	allowedNetworks := corev1.EnvVar{Name: "X_CSI_ALLOWED_NETWORKS", Value: "true"}
 	if res.Spec.Driver.Node != nil {
-		res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor,allowedNetworks}
+		res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor, allowedNetworks}
 	}
 
 	// Add controller fields specific
@@ -482,7 +482,7 @@ func csmWithUnity(driver csmv1.DriverType, version string, certProvided bool) cs
 
 func csmWithUnityInvalidValue(driver csmv1.DriverType, version string, certProvided bool) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
-	res.Spec.Driver.Common=nil
+	res.Spec.Driver.Common = nil
 	// Add FSGroupPolicy
 	res.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{}
 	if res.Spec.Driver.CSIDriverSpec != nil {
@@ -510,10 +510,10 @@ func csmWithUnityInvalidValue(driver csmv1.DriverType, version string, certProvi
 
 	// Add node fields specific to unity
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
-	allowedNetworks:= corev1.EnvVar{Name: "X_CSI_ALLOWED_NETWORKS", Value: "true"}
+	allowedNetworks := corev1.EnvVar{Name: "X_CSI_ALLOWED_NETWORKS", Value: "true"}
 	
 	if res.Spec.Driver.Node != nil {
-		res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor,allowedNetworks}
+		res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor, allowedNetworks}
 	}
 
 	// Add controller fields specific
