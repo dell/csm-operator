@@ -38,6 +38,7 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add tolerations, node selector to controller and node
+	res.Spec.Driver.Node = &csmv1.ContainerTemplate{}
 	if res.Spec.Driver.Node != nil {
 		res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 		res.Spec.Driver.Node.Tolerations = []corev1.Toleration{
@@ -53,6 +54,7 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 			},
 		}
 	}
+	res.Spec.Driver.Controller = &csmv1.ContainerTemplate{}
 	if res.Spec.Driver.Controller != nil {
 		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 		res.Spec.Driver.Controller.Tolerations = []corev1.Toleration{
