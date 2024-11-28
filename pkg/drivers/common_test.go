@@ -160,6 +160,7 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add FSGroupPolicy
+	res.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{}
 	if res.Spec.Driver.CSIDriverSpec != nil {
 		res.Spec.Driver.CSIDriverSpec.FSGroupPolicy = "File"
 	}
@@ -187,6 +188,7 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
 	maxVolumesPerNode := corev1.EnvVar{Name: "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE", Value: "0"}
 	// Add NodeSelector to node and controller
+	res.Spec.Driver.Node = &csmv1.ContainerTemplate{}
 	if res.Spec.Driver.Node != nil {
 		res.Spec.Driver.Node.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 		res.Spec.Driver.Node.Envs = []corev1.EnvVar{enableChap, healthMonitor, maxVolumesPerNode}
@@ -195,6 +197,7 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	// Add controller fields specific
 	nfsAclsParam := corev1.EnvVar{Name: "X_CSI_NFS_ACLS"}
 	externalAccess := corev1.EnvVar{Name: "X_CSI_POWERSTORE_EXTERNAL_ACCESS"}
+	res.Spec.Driver.Controller = &csmv1.ContainerTemplate{}
 	if res.Spec.Driver.Controller != nil {
 		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
 		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{nfsAclsParam, healthMonitor, externalAccess}
