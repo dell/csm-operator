@@ -410,9 +410,9 @@ func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerS
 	}
 	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
 	res.Spec.Driver.SideCars = sideCarList
-	res.Spec.Modules = []csmv1.Module{csmv1.Module{
-		Name:          csmv1.Resiliency,
-		Enabled:       true,
+        res.Spec.Modules = []csmv1.Module{{
+                Name:    csmv1.Resiliency,
+                Enabled: true,
 	}}
 	return res
 }
