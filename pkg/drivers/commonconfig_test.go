@@ -30,7 +30,7 @@ var (
 	pScaleCSM            = csmWithPowerScale(csmv1.PowerScale, shared.PScaleConfigVersion)
 	unityCSM             = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, false)
 	unityCSMCertProvided = csmWithUnity(csmv1.Unity, shared.UnityConfigVersion, true)
-	unityCSMInvalidValue = csmWithUnityInvalidValue(csmv1.Unity, shared.UnityConfigVersion, true)
+	unityCSMInvalidValue = csmWithUnityInvalidValue(csmv1.Unity, shared.UnityConfigVersion)
 	pmaxCSM              = csmWithPowermax(csmv1.PowerMax, shared.PmaxConfigVersion)
 
 	fakeDriver csmv1.DriverType = "fakeDriver"
