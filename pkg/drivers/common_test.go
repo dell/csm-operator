@@ -410,7 +410,7 @@ func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerS
 	}
 	sideCarList := []csmv1.ContainerTemplate{sideCarObjEnabledNil, sideCarObjEnabledFalse, sideCarObjEnabledTrue}
 	res.Spec.Driver.SideCars = sideCarList
-        res.Spec.Modules = []csmv1.Module{{
+	res.Spec.Modules = []csmv1.Module{{
                 Name:    csmv1.Resiliency,
                 Enabled: true,
 	}}
@@ -510,8 +510,7 @@ func csmWithUnityInvalidValue(driver csmv1.DriverType, version string, certProvi
 
 	// Add node fields specific to unity
 	healthMonitor := corev1.EnvVar{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "true"}
-	allowedNetworks := corev1.EnvVar{Name: "X_CSI_ALLOWED_NETWORKS", Value: "true"}
-	
+	allowedNetworks := corev1.EnvVar{Name: "X_CSI_ALLOWED_NETWORKS", Value: "true"}	
 	if res.Spec.Driver.Node != nil {
 		res.Spec.Driver.Node.Envs = []corev1.EnvVar{healthMonitor, allowedNetworks}
 	}
