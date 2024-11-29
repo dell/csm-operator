@@ -1163,7 +1163,7 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 		panic(err)
 	}
 
-	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
+	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
 	err = suite.createReconciler().SetupWithManager(mgr, expRateLimiter, 1)
 	if err != nil {
 		panic(err)
