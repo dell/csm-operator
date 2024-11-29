@@ -26,6 +26,8 @@ import (
 
 	"encoding/json"
 
+	"path/filepath"
+
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -39,7 +41,6 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"k8s.io/utils/pointer"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -321,6 +322,49 @@ func (step *Step) validateDriverInstalled(res Resource, driverName string, crNum
 	crNum, _ := strconv.Atoi(crNumStr)
 	time.Sleep(20 * time.Second)
 	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
+}
+
+func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	found := new(csmv1.ContainerStorageModule)
+	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("CSM resource '%s' not found in namespace '%s'", cr.Name, cr.Namespace)
+		}
+		return fmt.Errorf("failed to get CSM resource '%s/%s': %w", cr.Namespace, cr.Name, err)
+	}
+	driver := found.Spec.Driver
+	if driver.ConfigVersion == "" {
+		return fmt.Errorf("configVersion is missing")
+	}
+	if driver.CSIDriverType == "" {
+		return fmt.Errorf("csiDriverType is missing")
+	}
+	if driver.Replicas == 0 {
+		return fmt.Errorf("replicas should have a non-zero value")
+	}
+
+	// Ensure all other fields are empty or nil
+	if len(driver.SideCars) > 0 ||
+		len(driver.InitContainers) > 0 ||
+		len(driver.SnapshotClass) > 0 ||
+		driver.Controller != nil ||
+		driver.Node != nil ||
+		driver.CSIDriverSpec != nil ||
+		driver.DNSPolicy != "" ||
+		driver.Common != nil ||
+		driver.AuthSecret != "" ||
+		driver.TLSCertSecret != "" ||
+		driver.ForceUpdate {
+		return fmt.Errorf("unexpected fields found in Driver spec: %+v", driver)
+	}
+
+	return nil
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
