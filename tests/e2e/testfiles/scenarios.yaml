@@ -1939,3 +1939,29 @@
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+
+- scenario: "Install PowerFlex Driver (Standalone) With Node Zoning"
+  paths:
+    - "testfiles/storage_csm_powerflex.yaml"
+  tags:
+    - "powerflex"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    # TODO: retrieve node labels from k8s, apply zoning to each of them via custom test (like cert-csi tests)
+    - "Run custom test"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up secret with template [testfiles/powerflex-templates/powerflex-zoning-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-zoning-secret-template.yaml] for [pflex]"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    # TODO: I don't think have any examples of multiple custom tests, and we're going to want to run cert csi for proper e2e
+    # We may need to enhance the e2e suite for this
+    - "Run second custom test (this will fail)"
+  customTest:
+    name: Apply Node Labels
+    run:
+      - echo "TODO"
