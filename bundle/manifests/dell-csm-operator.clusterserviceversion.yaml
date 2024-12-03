@@ -323,7 +323,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.10.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.11.0",
                     "name": "topology",
                     "privateKey": ""
                   },
@@ -723,7 +723,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.10.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.11.0",
                     "name": "topology",
                     "privateKey": ""
                   },
@@ -1328,7 +1328,7 @@ metadata:
                         "value": "INFO"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.10.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.11.0",
                     "name": "topology",
                     "privateKey": ""
                   },
@@ -4386,7 +4386,7 @@ spec:
                       - name: RELATED_IMAGE_dell-replication-controller-manager
                         value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.10.0
                       - name: RELATED_IMAGE_topology
-                        value: quay.io/dell/container-storage-modules/csm-topology:v1.10.0
+                        value: quay.io/dell/container-storage-modules/csm-topology:v1.11.0
                       - name: RELATED_IMAGE_otel-collector
                         value: docker.io/otel/opentelemetry-collector:0.42.0
                       - name: RELATED_IMAGE_metrics-powerscale
@@ -4506,7 +4506,7 @@ spec:
       name: dell-csi-replicator
     - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.10.0
       name: dell-replication-controller-manager
-    - image: quay.io/dell/container-storage-modules/csm-topology:v1.10.0
+    - image: quay.io/dell/container-storage-modules/csm-topology:v1.11.0
       name: topology
     - image: docker.io/otel/opentelemetry-collector:0.42.0
       name: otel-collector

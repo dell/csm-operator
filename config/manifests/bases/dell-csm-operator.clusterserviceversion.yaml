@@ -1769,7 +1769,7 @@ spec:
       name: dell-csi-replicator
     - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.10.0
       name: dell-replication-controller-manager
-    - image: quay.io/dell/container-storage-modules/csm-topology:v1.10.0
+    - image: quay.io/dell/container-storage-modules/csm-topology:v1.11.0
       name: topology
     - image: docker.io/otel/opentelemetry-collector:0.42.0
       name: otel-collector

@@ -330,7 +330,7 @@ spec:
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-topology:v1.10.0
+          image: quay.io/dell/container-storage-modules/csm-topology:v1.11.0
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
