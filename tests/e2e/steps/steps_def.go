@@ -25,6 +25,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
 	"encoding/json"
+	"path/filepath"
 
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
@@ -39,7 +40,6 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"k8s.io/utils/pointer"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -856,8 +856,11 @@ func (step *Step) runCustomTest(res Resource) error {
 		stderr string
 		err    error
 	)
+	if len(res.Scenario.CustomTest) != 1 {
+		return fmt.Errorf("'customTest' must be a single element array")
+	}
 
-	for testNum, customTest := range res.Scenario.CustomTest.Run {
+	for testNum, customTest := range res.Scenario.CustomTest[0].Run {
 		args := strings.Split(customTest, " ")
 		if len(args) == 1 {
 			stdout, stderr, err = framework.RunCmd(args[0])
@@ -871,6 +874,45 @@ func (step *Step) runCustomTest(res Resource) error {
 	}
 
 	return nil
+}
+
+func (step *Step) runCustomTestSelector(res Resource, testName string) error {
+	var (
+		stdout string
+		stderr string
+		err    error
+	)
+
+	// retrieve the appropriate test from the list of tests
+	var selectedTest CustomTest
+	foundTest := false
+	for _, test := range res.Scenario.CustomTest {
+		if test.Name == testName {
+			selectedTest = test
+			foundTest = true
+			break
+		}
+	}
+
+	if !foundTest {
+		return fmt.Errorf("custom test '%s' not found", testName)
+	}
+
+	for testNum, customTest := range selectedTest.Run {
+		args := strings.Split(customTest, " ")
+		if len(args) == 1 {
+			stdout, stderr, err = framework.RunCmd(args[0])
+		} else {
+			stdout, stderr, err = framework.RunCmd(args[0], args[1:]...)
+		}
+
+		if err != nil {
+			return fmt.Errorf("error running custom test #%d. Error: %v \n stdout: %s \n stderr: %s", testNum, err, stdout, stderr)
+		}
+	}
+
+	return nil
+
 }
 
 func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile string, crType string) error {

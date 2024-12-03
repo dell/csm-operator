@@ -49,7 +49,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is not installed$`, step.validateDriverNotInstalled)
 
-	runner.addStep(`^Run custom test$`, step.runCustomTest)
+	runner.addStep(`^Run custom test$`, step.runCustomTest)         // legacy support - original e2e was designed only to run ONE custom test
+	runner.addStep(`^Run \[([^"]*)\]$`, step.runCustomTestSelector) // support for multiple custom tests
 	runner.addStep(`^Enable forceRemoveDriver on CR \[(\d+)\]$`, step.enableForceRemoveDriver)
 	runner.addStep(`^Enable forceRemoveModule on CR \[(\d+)\]$`, step.enableForceRemoveModule)
 	runner.addStep(`^Delete custom resource \[(\d+)\]$`, step.deleteCustomResource)
