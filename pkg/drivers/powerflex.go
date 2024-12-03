@@ -347,6 +347,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	return yamlString
 }
 
+// ExtractZonesFromSecret - Reads the array config secret and returns the zone label information
 func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace string, secret string) (map[string]string, error) {
 	log := logger.GetLogger(ctx)
 
