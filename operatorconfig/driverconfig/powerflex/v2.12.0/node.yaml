@@ -205,7 +205,7 @@ spec:
             - "-c"
             - |
                echo "Inside mdm-container"
-               echo "test-MDMs" > /data/node_mdms.txt
+               echo "MDM=test-MDMs" > /data/node_mdms.txt
                cat /data/node_mdms.txt
           volumeMounts:
           - name: mdm-dir
@@ -219,7 +219,8 @@ spec:
             - "-c"
             - |
                echo "Inside sdc init-container"
-               cat /data/node_mdms.txt
+               source /data/node_mdms.txt
+               env
                /files/scripts/init.sh 
           imagePullPolicy: IfNotPresent
           env:
