@@ -286,7 +286,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 
-
 	if csm.IsBeingDeleted() {
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
 
