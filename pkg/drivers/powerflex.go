@@ -346,3 +346,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	}
 	return yamlString
 }
+
+func ExtractZonesFromSecret(kube client.Client, namespace string, secret string) (map[string]string, error) {
+	return nil, nil
+}
