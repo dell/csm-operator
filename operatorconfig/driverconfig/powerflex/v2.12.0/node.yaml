@@ -207,12 +207,18 @@ spec:
                echo "test-MDMs" > /data/node_mdms.txt
                cat /data/node_mdms.txt
           volumeMounts:
-          - name: labels-dir
+          - name: mdm-dir
             mountPath: /data
         - name: sdc
           securityContext:
             privileged: true
           image: dellemc/sdc:4.5.2.1
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+               echo "Inside sdc init-container"
+               cat /data/node_mdms.txt
           imagePullPolicy: IfNotPresent
           env:
             - name: NODENAME
@@ -241,7 +247,7 @@ spec:
               mountPath: /host_drv_cfg_path
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
-            - name: labels-dir
+            - name: mdm-dir
               mountPath: /data
       volumes:
         - name: registration-dir
@@ -310,7 +316,7 @@ spec:
           hostPath:
             path: /var/run
             type: Directory
-        - name: labels-dir
+        - name: mdm-dir
           emptyDir: {}
         - name: certs
           projected:
