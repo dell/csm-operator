@@ -286,10 +286,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		return utils.HandleValidationError(ctx, csm, r, err)
 	}
 
-	// Set default replica count if not specified
-	if csm.Spec.Driver.Replicas == 0 {
-		csm.Spec.Driver.Replicas = 2
-	}
 
 	if csm.IsBeingDeleted() {
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
