@@ -192,6 +192,7 @@ spec:
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
       initContainers:
+      # This init container will be replaced by the driver running in init mode, for now it will just write to a volume
         - name: mdm-container
           image: bitnami/kubectl:latest
           env:
@@ -219,6 +220,7 @@ spec:
             - |
                echo "Inside sdc init-container"
                cat /data/node_mdms.txt
+            - /files/scripts/init.sh 
           imagePullPolicy: IfNotPresent
           env:
             - name: NODENAME
