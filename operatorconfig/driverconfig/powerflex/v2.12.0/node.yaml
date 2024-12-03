@@ -192,6 +192,27 @@ spec:
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
       initContainers:
+        - name: labels-container
+          image: bitnami/kubectl:latest
+          env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+               echo "Inside labels-container"
+               echo "Installing jq"
+               apk add --no-cache jq && sleep 15
+               kubectl get node $NODE_NAME -o json  > /data/node_labels.json
+               jq -r '.metadata.labels["zone.csi-vxflexos.dellemc.com"]' /data/node_labels.json > /data/node_labels.txt
+               # cat /data/node_labels.json
+               sleep 5  # Repeat every 60 seconds
+          volumeMounts:
+          - name: labels-dir
+            mountPath: /data
         - name: sdc
           securityContext:
             privileged: true
@@ -224,6 +245,8 @@ spec:
               mountPath: /host_drv_cfg_path
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
+            - name: labels-dir
+              mountPath: /data
       volumes:
         - name: registration-dir
           hostPath:
@@ -291,6 +314,8 @@ spec:
           hostPath:
             path: /var/run
             type: Directory
+        - name: labels-dir
+          emptyDir: {}
         - name: certs
           projected:
             sources:
