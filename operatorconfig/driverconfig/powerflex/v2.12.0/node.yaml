@@ -192,7 +192,7 @@ spec:
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
       initContainers:
-        - name: labels-container
+        - name: mdm-container
           image: bitnami/kubectl:latest
           env:
           - name: NODE_NAME
@@ -203,13 +203,9 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-               echo "Inside labels-container"
-               echo "Installing jq"
-               apk add --no-cache jq && sleep 15
-               kubectl get node $NODE_NAME -o json  > /data/node_labels.json
-               jq -r '.metadata.labels["zone.csi-vxflexos.dellemc.com"]' /data/node_labels.json > /data/node_labels.txt
-               # cat /data/node_labels.json
-               sleep 5  # Repeat every 60 seconds
+               echo "Inside mdm-container"
+               echo "test-MDMs" > /data/node_mdms.txt
+               cat /data/node_mdms.txt
           volumeMounts:
           - name: labels-dir
             mountPath: /data
