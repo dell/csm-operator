@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     authSecret: isilon-creds-auth
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet

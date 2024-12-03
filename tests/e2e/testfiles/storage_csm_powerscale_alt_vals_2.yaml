@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "None"
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     authSecret: csm-creds
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
@@ -209,11 +209,11 @@ spec:
         - key: "node.kubernetes.io/network-unavailable"
           operator: "Exists"
           effect: "NoExecute"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+          # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
-       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+          # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
         - key: "node-role.kubernetes.io/master"
           operator: "Exists"
           effect: "NoSchedule"

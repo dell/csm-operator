@@ -141,10 +141,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-isilon:v2.12.0",
+                "image": "quay.io/dell/container-storage-modules/csi-isilon:v2.13.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.12.0",
+              "configVersion": "v2.13.0",
               "controller": {
                 "envs": [
                   {
@@ -514,10 +514,10 @@ metadata:
                     "value": "TEXT"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-powermax:v2.12.0",
+                "image": "quay.io/dell/container-storage-modules/csi-powermax:v2.13.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.12.0",
+              "configVersion": "v2.13.0",
               "controller": {
                 "envs": [
                   {
@@ -870,10 +870,10 @@ metadata:
                     "value": "debug"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-powerstore:v2.12.0",
+                "image": "quay.io/dell/container-storage-modules/csi-powerstore:v2.13.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.12.0",
+              "configVersion": "v2.13.0",
               "controller": {
                 "envs": [
                   {
@@ -1059,10 +1059,10 @@ metadata:
                     "value": "true"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-unity:v2.12.0",
+                "image": "quay.io/dell/container-storage-modules/csi-unity:v2.13.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.12.0",
+              "configVersion": "v2.13.0",
               "controller": {
                 "envs": [
                   {
@@ -1172,10 +1172,10 @@ metadata:
                     "value": "false"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-vxflexos:v2.12.0",
+                "image": "quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.12.0",
+              "configVersion": "v2.13.0",
               "controller": {
                 "envs": [
                   {
@@ -4356,17 +4356,17 @@ spec:
                       - name: RELATED_IMAGE_dell-csm-operator
                         value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.8.0
                       - name: RELATED_IMAGE_csi-isilon
-                        value: quay.io/dell/container-storage-modules/csi-isilon:v2.12.0
+                  value: quay.io/dell/container-storage-modules/csi-isilon:v2.13.0
                       - name: RELATED_IMAGE_csi-powermax
-                        value: quay.io/dell/container-storage-modules/csi-powermax:v2.12.0
+                  value: quay.io/dell/container-storage-modules/csi-powermax:v2.13.0
                       - name: RELATED_IMAGE_csipowermax-reverseproxy
                         value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.11.0
                       - name: RELATED_IMAGE_csi-powerstore
-                        value: quay.io/dell/container-storage-modules/csi-powerstore:v2.12.0
+                  value: quay.io/dell/container-storage-modules/csi-powerstore:v2.13.0
                       - name: RELATED_IMAGE_csi-unity
-                        value: quay.io/dell/container-storage-modules/csi-unity:v2.12.0
+                  value: quay.io/dell/container-storage-modules/csi-unity:v2.13.0
                       - name: RELATED_IMAGE_csi-vxflexos
-                        value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.12.0
+                  value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0
                       - name: RELATED_IMAGE_sdc
                         value: docker.io/dellemc/sdc:4.5.2.1
                       - name: RELATED_IMAGE_karavi-authorization-proxy
@@ -4476,17 +4476,17 @@ spec:
   relatedImages:
     - image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.8.0
       name: dell-csm-operator
-    - image: quay.io/dell/container-storage-modules/csi-isilon:v2.12.0
+  - image: quay.io/dell/container-storage-modules/csi-isilon:v2.13.0
       name: csi-isilon
-    - image: quay.io/dell/container-storage-modules/csi-powermax:v2.12.0
+  - image: quay.io/dell/container-storage-modules/csi-powermax:v2.13.0
       name: csi-powermax
     - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.11.0
       name: csipowermax-reverseproxy
-    - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.12.0
+  - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.13.0
       name: csi-powerstore
-    - image: quay.io/dell/container-storage-modules/csi-unity:v2.12.0
+  - image: quay.io/dell/container-storage-modules/csi-unity:v2.13.0
       name: csi-unity
-    - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.12.0
+  - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0
       name: csi-vxflexos
     - image: docker.io/dellemc/sdc:4.5.2.1
       name: sdc

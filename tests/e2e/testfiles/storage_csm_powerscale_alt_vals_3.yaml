@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     authSecret: csm-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
@@ -149,11 +149,11 @@ spec:
       # tolerations: Define tolerations for the controller deployment, if required.
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+        # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+          # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
         - key: "node-role.kubernetes.io/master"
           operator: "Exists"
           effect: "NoSchedule"

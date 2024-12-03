@@ -18,11 +18,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     authSecret: test-powermax-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.12.0"
+      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.13.0"
       imagePullPolicy: IfNotPresent
   modules:
     - name: replication
