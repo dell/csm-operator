@@ -277,13 +277,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		return ctrl.Result{}, err
 	}
 
-	nodeList, err := GetMatchingNodes(ctx, r, "topology.kubernetes.io/zone", "US-EAST")
+	nodeList, err := r.GetMatchingNodes(ctx, "topology.kubernetes.io/zone", "US-EAST")
 	if err != nil {
 		log.Errorw("Failed to retrieve list of nodes for label",
 				"topology.kubernetes.io/zone")
 	}
 	log.Infow("nodeList with labels", "csm", nodeList)
-
 
 	// perform prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
@@ -1526,7 +1525,7 @@ func (r *ContainerStorageModuleReconciler) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
 }
 
-func GetMatchingNodes(ctx context.Context, r *ContainerStorageModuleReconciler, labelKey string, labelValue string) (*corev1.NodeList, error) {
+func (r *ContainerStorageModuleReconciler) GetMatchingNodes(ctx context.Context, labelKey string, labelValue string) (*corev1.NodeList, error) {
 	nodeList := &corev1.NodeList{}
 	opts := []client.ListOption{
 		client.MatchingLabels{labelKey: labelValue},
