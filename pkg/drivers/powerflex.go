@@ -347,6 +347,54 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	return yamlString
 }
 
-func ExtractZonesFromSecret(kube client.Client, namespace string, secret string) (map[string]string, error) {
-	return nil, nil
+func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace string, secret string) (map[string]string, error) {
+	log := logger.GetLogger(ctx)
+
+	arraySecret, err := utils.GetSecret(ctx, secret, namespace, kube)
+	if err != nil {
+		return nil, fmt.Errorf("reading secret [%s] error [%s]", secret, err)
+	}
+
+	type StorageArrayConfig struct {
+		Username                  string `json:"username"`
+		Password                  string `json:"password"`
+		SystemID                  string `json:"systemId"`
+		Endpoint                  string `json:"endpoint"`
+		SkipCertificateValidation bool   `json:"skipCertificateValidation,omitempty"`
+		IsDefault                 bool   `json:"isDefault,omitempty"`
+		MDM                       string `json:"mdm"`
+		Zone                      struct {
+			Label string `json:"label"`
+		} `json:"zone"`
+	}
+
+	data := arraySecret.Data
+	configBytes := data["config"]
+	zonesMapData := make(map[string]string)
+
+	if string(configBytes) != "" {
+		yamlConfig := make([]StorageArrayConfig, 0)
+		configs, err := yaml.JSONToYAML(configBytes)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse multi-array configuration[%v]", err)
+		}
+		_ = yaml.Unmarshal(configs, &yamlConfig)
+
+		for _, configParam := range yamlConfig {
+			if configParam.Zone.Label != "" {
+				keyVal := strings.Split(configParam.Zone.Label, "=")
+				if len(keyVal) == 2 {
+					zonesMapData[keyVal[0]] = keyVal[1]
+					log.Infof("Zoning information configured for systemID %s: %v ", configParam.SystemID, zonesMapData)
+				}
+			} else {
+				log.Info("Zoning information not found in the array config. Continue with topology-unaware driver installation mode")
+				return zonesMapData, nil
+			}
+		}
+	} else {
+		return nil, fmt.Errorf("Array details are not provided in vxflexos-config secret")
+	}
+
+	return zonesMapData, nil
 }

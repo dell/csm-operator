@@ -198,6 +198,7 @@ func TestModifyPowerflexCR(t *testing.T) {
 }
 
 func TestExtractZonesFromSecret(t *testing.T) {
+	emptySecret := ``
 	dataWithZone := `
 - username: "admin"
   password: "password"
@@ -206,7 +207,7 @@ func TestExtractZonesFromSecret(t *testing.T) {
   skipCertificateValidation: true
   mdm: "10.0.0.3,10.0.0.4"
   zone:
-    label: topology.kubernetes.io/zone:"US-EAST"
+    label: topology.kubernetes.io/zone=US-EAST
 `
 	dataWithoutZone := `
 - username: "admin"
@@ -216,7 +217,7 @@ func TestExtractZonesFromSecret(t *testing.T) {
   skipCertificateValidation: true
   mdm: "10.0.0.3,10.0.0.4"
 `
-
+	ctx := context.Background()
 	tests := map[string]func() (client.WithWatch, map[string]string, string, bool){
 		"success with zone": func() (client.WithWatch, map[string]string, string, bool) {
 			secret := &corev1.Secret{
@@ -230,7 +231,7 @@ func TestExtractZonesFromSecret(t *testing.T) {
 			}
 
 			client := fake.NewClientBuilder().WithObjects(secret).Build()
-			return client, map[string]string{"topology.kubernetes.io/zone": "devops"}, "vxflexos-config", false
+			return client, map[string]string{"topology.kubernetes.io/zone": "US-EAST"}, "vxflexos-config", false
 		},
 		"success no zone": func() (client.WithWatch, map[string]string, string, bool) {
 			secret := &corev1.Secret{
@@ -250,12 +251,26 @@ func TestExtractZonesFromSecret(t *testing.T) {
 			client := fake.NewClientBuilder().Build()
 			return client, nil, "vxflexos-not-found", true
 		},
+		"error parsing empty secret": func() (client.WithWatch, map[string]string, string, bool) {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vxflexos-config",
+					Namespace: "vxflexos",
+				},
+				Data: map[string][]byte{
+					"config": []byte(emptySecret),
+				},
+			}
+
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			return client, nil, "vxflexos-config", true
+		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client, wantZones, secret, wantErr := tc()
-			zones, err := ExtractZonesFromSecret(client, "vxflexos", secret)
+			zones, err := ExtractZonesFromSecret(ctx, client, "vxflexos", secret)
 			if wantErr {
 				assert.NotNil(t, err)
 			} else {
