@@ -198,12 +198,12 @@ func TestModifyPowerflexCR(t *testing.T) {
 }
 
 func TestExtractZonesFromSecret(t *testing.T) {
-	emptySecret := ``
-	invalidSecret := `
+	emptyConfigData := ``
+	invalidConfigData := `
 - username: "admin"
 	-
 `
-	secretWithNoSystemID := `
+	dataWithNoSystemID := `
 - username: "admin"
   password: "password"
   endpoint: "https://127.0.0.2"
@@ -269,7 +269,7 @@ func TestExtractZonesFromSecret(t *testing.T) {
 					Namespace: "vxflexos",
 				},
 				Data: map[string][]byte{
-					"config": []byte(emptySecret),
+					"config": []byte(emptyConfigData),
 				},
 			}
 
@@ -283,7 +283,7 @@ func TestExtractZonesFromSecret(t *testing.T) {
 					Namespace: "vxflexos",
 				},
 				Data: map[string][]byte{
-					"config": []byte(secretWithNoSystemID),
+					"config": []byte(dataWithNoSystemID),
 				},
 			}
 
@@ -297,7 +297,7 @@ func TestExtractZonesFromSecret(t *testing.T) {
 					Namespace: "vxflexos",
 				},
 				Data: map[string][]byte{
-					"config": []byte(invalidSecret),
+					"config": []byte(invalidConfigData),
 				},
 			}
 
