@@ -220,7 +220,7 @@ spec:
             - |
                echo "Inside sdc init-container"
                cat /data/node_mdms.txt
-            - /files/scripts/init.sh 
+               /files/scripts/init.sh 
           imagePullPolicy: IfNotPresent
           env:
             - name: NODENAME
