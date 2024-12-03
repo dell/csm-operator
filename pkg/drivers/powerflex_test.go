@@ -199,6 +199,17 @@ func TestModifyPowerflexCR(t *testing.T) {
 
 func TestExtractZonesFromSecret(t *testing.T) {
 	emptySecret := ``
+	invalidSecret := `
+- username: "admin"
+	-
+`
+	secretWithNoSystemID := `
+- username: "admin"
+  password: "password"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+`
 	dataWithZone := `
 - username: "admin"
   password: "password"
@@ -259,6 +270,34 @@ func TestExtractZonesFromSecret(t *testing.T) {
 				},
 				Data: map[string][]byte{
 					"config": []byte(emptySecret),
+				},
+			}
+
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			return client, nil, "vxflexos-config", true
+		},
+		"error with no system id": func() (client.WithWatch, map[string]string, string, bool) {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vxflexos-config",
+					Namespace: "vxflexos",
+				},
+				Data: map[string][]byte{
+					"config": []byte(secretWithNoSystemID),
+				},
+			}
+
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			return client, nil, "vxflexos-config", true
+		},
+		"error unmarshaling config": func() (client.WithWatch, map[string]string, string, bool) {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vxflexos-config",
+					Namespace: "vxflexos",
+				},
+				Data: map[string][]byte{
+					"config": []byte(invalidSecret),
 				},
 			}
 

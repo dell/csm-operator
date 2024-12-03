@@ -356,14 +356,8 @@ func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace s
 	}
 
 	type StorageArrayConfig struct {
-		Username                  string `json:"username"`
-		Password                  string `json:"password"`
-		SystemID                  string `json:"systemId"`
-		Endpoint                  string `json:"endpoint"`
-		SkipCertificateValidation bool   `json:"skipCertificateValidation,omitempty"`
-		IsDefault                 bool   `json:"isDefault,omitempty"`
-		MDM                       string `json:"mdm"`
-		Zone                      struct {
+		SystemID string `json:"systemId"`
+		Zone     struct {
 			Label string `json:"label"`
 		} `json:"zone"`
 	}
@@ -378,9 +372,15 @@ func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace s
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse multi-array configuration[%v]", err)
 		}
-		_ = yaml.Unmarshal(configs, &yamlConfig)
+		err = yaml.Unmarshal(configs, &yamlConfig)
+		if err != nil {
+			return nil, fmt.Errorf("unable to unmarshal multi-array configuration[%v]", err)
+		}
 
 		for _, configParam := range yamlConfig {
+			if configParam.SystemID == "" {
+				return nil, fmt.Errorf("invalid value for SystemID")
+			}
 			if configParam.Zone.Label != "" {
 				keyVal := strings.Split(configParam.Zone.Label, "=")
 				if len(keyVal) == 2 {
