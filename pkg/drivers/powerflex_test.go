@@ -56,6 +56,7 @@ var (
 	}{
 		{"missing secret", powerFlexCSM, powerFlexClient, fakeSecret, "no secrets found"},
 		{"happy path", powerFlexCSM, powerFlexClient, powerFlexSecret, ""},
+		{"happy path with initContainers but no MDM", csmForPowerFlex("no-mdm"), powerFlexClient, shared.MakeSecretWithJSON("no-mdm-config", pFlexNS, configJSONFileGood), ""},
 		{"happy path without sdc", csmForPowerFlex("no-sdc"), powerFlexClient, shared.MakeSecretWithJSON("no-sdc-config", pFlexNS, configJSONFileGood), ""},
 		{"bad version", powerFlexCSMBadVersion, powerFlexClient, powerFlexSecret, "not supported"},
 		{"bad username", csmForPowerFlex("bad-user"), powerFlexClient, shared.MakeSecretWithJSON("bad-user-config", pFlexNS, configJSONFileBadUser), "invalid value for Username"},
