@@ -2382,3 +2382,58 @@ func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string,
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
 }
+
+func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
+	// TBD: crclient/client.go needs to be augmented to filter on labels during
+	// the List return for a viable thorough test. Since this functionality is 
+	// missing, this test is quite elementary as a result.
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Annotations[configVersionKey] = configVersion
+
+	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+	err := suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	err = suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
+
+	reconciler := suite.createReconciler()
+
+	// create node object, add to fakeclient, reconcile.GetMatchingNodes
+	node := shared.MakeNode("node1", suite.namespace)
+	node.Labels["topology.kubernetes.io/zone"] = "US-EAST"
+
+	err = suite.fakeClient.Create(ctx, &node)
+	assert.Nil(suite.T(), err)
+
+	nodeList := &corev1.NodeList{}
+	err = suite.fakeClient.List(ctx, nodeList, nil)
+	assert.Nil(suite.T(), err)
+
+	nodeListMatching, err := reconciler.GetMatchingNodes(ctx, "topology.kubernetes.io/zone", "US-EAST")
+	ctrl.Log.Info("node list response (1)", "number of nodes is: ", len(nodeListMatching.Items))
+
+	// Check the len to be 1 else fail
+	if len(nodeListMatching.Items) != 1 {
+		ctrl.Log.Error(err, "Unexpected length on node list.","length",len(nodeListMatching.Items))
+		panic(err)
+	}
+
+	for _, node := range nodeListMatching.Items {
+		ctrl.Log.Info("Matching node item", "name ", node.ObjectMeta.GetName())
+	}
+	if node.ObjectMeta.GetName() != "node1" {
+		ctrl.Log.Error(err, "Unmatched label on node.")
+		panic(err)
+	}
+	assert.Nil(suite.T(), err)
+
+}
