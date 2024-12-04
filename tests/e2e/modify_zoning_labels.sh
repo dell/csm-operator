@@ -16,7 +16,7 @@
 # add and remove zone labels for an e2e scenario.
 #
 # To add a zone label:
-# ./modify_zoning_labels.sh add <zone>
+# ./modify_zoning_labels.sh add <zone1> <zone2> ...
 # To remove a zone label:
 # ./modify_zoning_labels.sh remove <label>
 # To remove all zone labels:
@@ -29,10 +29,18 @@ get_worker_nodes() {
 
 # add zone label to all worker nodes
 add_zone_label() {
-  local zone=$1
+  local zones=("$@")
+  local index=0
   for node in $(get_worker_nodes); do
+    local zone=${zones[$index]}
     kubectl label nodes $node zone=$zone --overwrite
     echo "Added zone label '$zone' to $node"
+
+    index=$((index + 1))
+    # reset the index if we reach the end of the zones array
+    if [ $index -ge ${#zones[@]} ]; then
+        index=0
+    fi
   done
 }
 
@@ -49,6 +57,7 @@ remove_zone_label() {
 remove_all_zone_labels() {
   for node in $(get_worker_nodes); do
     labels=$(kubectl get node $node -o jsonpath='{.metadata.labels}' | jq -r 'keys[]')
+
     for label in $labels; do
     // TODO: might have to adjust this based on the actual zone label name
     // this will remove all labels that start with "zone"
@@ -61,27 +70,27 @@ remove_all_zone_labels() {
 }
 
 if [ "$#" -lt 1 ]; then
-  echo "Usage: $0 add <zone> | remove <label> | remove-all-zones"
+  echo "Usage: $0 add <zone1> <zone2> ... | remove <label> | remove-all-zones"
   exit 1
 fi
 
 action=$1
+shift
 
 case $action in
   add)
-    if [ "$#" -ne 2 ]; then
-      echo "Usage: $0 add <zone>"
+    if [ "$#" -lt 1 ]; then
+      echo "Usage: $0 add <zone1> <zone2> ..."
       exit 1
     fi
-    zone=$2
-    add_zone_label $zone
+    add_zone_label "$@"
     ;;
   remove)
-    if [ "$#" -ne 2 ]; then
+    if [ "$#" -ne 1 ]; then
       echo "Usage: $0 remove <label>"
       exit 1
     fi
-    label=$2
+    label=$1
     remove_zone_label $label
     ;;
   remove-all-zones)
@@ -89,7 +98,7 @@ case $action in
     ;;
   *)
     echo "Invalid action: $action"
-    echo "Usage: $0 add <zone> | remove <label> | remove-all-zones"
+    echo "Usage: $0 add <zone1> <zone2> ... | remove <label> | remove-all-zones"
     exit 1
     ;;
 esac
