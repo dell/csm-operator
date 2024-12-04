@@ -18,7 +18,7 @@
 # To add a zone label:
 # ./modify_zoning_labels.sh add <zone1> <zone2> ...
 # To remove a zone label:
-# ./modify_zoning_labels.sh remove <label>
+# ./modify_zoning_labels.sh remove <zone-key>
 # To remove all zone labels:
 # ./modify_zoning_labels.sh remove-all-zones
 
@@ -33,8 +33,11 @@ add_zone_label() {
   local index=0
   for node in $(get_worker_nodes); do
     local zone=${zones[$index]}
-    kubectl label nodes $node zone=$zone --overwrite
-    echo "Added zone label '$zone' to $node"
+    if kubectl label nodes $node $zone; then
+      echo "Added zone label '$zone' to $node"
+    else
+      echo "Failed to add zone label '$zone' to $node"
+    fi
 
     index=$((index + 1))
     # reset the index if we reach the end of the zones array
@@ -44,26 +47,38 @@ add_zone_label() {
   done
 }
 
-# remove zone label from worker nodes
+# remove a specific zone label from worker nodes
 remove_zone_label() {
-  local label=$1
+  local zone=$1
+  nodes=$(kubectl get nodes -l $zone -o name)
+  if [ -z "$nodes" ]; then
+    echo "No nodes found with zone '$zone'"
+    return
+  fi
+
   for node in $(get_worker_nodes); do
-    kubectl label nodes $node $label-
-    echo "Removed label '$label' from $node"
+    if kubectl label nodes $node $zone-; then
+      echo "Removed label '$zone' from $node"
+    else
+      echo "Failed to remove label '$zone' from $node"
+    fi
   done
 }
 
-# remove all labels from worker nodes
+# remove all labels from worker nodes starting with zone
 remove_all_zone_labels() {
   for node in $(get_worker_nodes); do
     labels=$(kubectl get node $node -o jsonpath='{.metadata.labels}' | jq -r 'keys[]')
 
     for label in $labels; do
-    // TODO: might have to adjust this based on the actual zone label name
-    // this will remove all labels that start with "zone"
+    # TODO: might have to adjust this based on the actual zone label name
+    # this will remove all labels that start with "zone"
     if [[ $label == zone* ]]; then
-        kubectl label nodes $node $label-
-        echo "Removed label '$label' from $node"
+        if kubectl label nodes $node $label-; then
+          echo "Removed label '$label' from $node"
+        else
+          echo "Failed to remove label '$label' from $node"
+        fi
     fi
     done
   done
@@ -87,11 +102,11 @@ case $action in
     ;;
   remove)
     if [ "$#" -ne 1 ]; then
-      echo "Usage: $0 remove <label>"
+      echo "Usage: $0 remove <zone>"
       exit 1
     fi
-    label=$1
-    remove_zone_label $label
+    zone=$1
+    remove_zone_label $zone
     ;;
   remove-all-zones)
     remove_all_zone_labels
