@@ -97,20 +97,27 @@ func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, 
 	var newInitContainers []csmv1.ContainerTemplate
 	for _, initcontainer := range cr.Spec.Driver.InitContainers {
 		if initcontainer.Name == "sdc" && sdcEnabled {
-			// Update MDM env variable for "sdc" container
+			// Ensure MDM env variable is set
+			mdmUpdated := false
 			for i, env := range initcontainer.Envs {
 				if env.Name == "MDM" {
 					initcontainer.Envs[i].Value = mdmVar
+					mdmUpdated = true
 					break
 				}
 			}
+			// If MDM not found, update it from secret
+			if !mdmUpdated {
+				initcontainer.Envs = append(initcontainer.Envs, corev1.EnvVar{
+					Name:  "MDM",
+					Value: mdmVar,
+				})
+			}
 		}
-		if initcontainer.Name != "sdc" || sdcEnabled {
-			newInitContainers = append(newInitContainers, initcontainer)
-		}
+		newInitContainers = append(newInitContainers, initcontainer)
 	}
 
-	// If no init containers left and SDC is enabled, add a new one
+	// If there is no init containers and SDC is enabled, add a sdc init container
 	if len(newInitContainers) == 0 && sdcEnabled {
 		newInitContainers = append(newInitContainers, csmv1.ContainerTemplate{
 			Name: "sdc",
@@ -122,17 +129,26 @@ func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, 
 	// Update sidecar containers
 	for i := range cr.Spec.Driver.SideCars {
 		if cr.Spec.Driver.SideCars[i].Name == "sdc-monitor" {
-			// Update MDM env variable for "sdc-monitor" sidecar container
+			// Ensure MDM env variable is set
+			mdmUpdated := false
 			for j, env := range cr.Spec.Driver.SideCars[i].Envs {
 				if env.Name == "MDM" {
 					cr.Spec.Driver.SideCars[i].Envs[j].Value = mdmVar
+					mdmUpdated = true
 					break
 				}
+			}
+			// If MDM not found, update it from secret
+			if !mdmUpdated {
+				cr.Spec.Driver.SideCars[i].Envs = append(cr.Spec.Driver.SideCars[i].Envs, corev1.EnvVar{
+					Name:  "MDM",
+					Value: mdmVar,
+				})
 			}
 		}
 	}
 
-	// If no sidecars, add a new "sdc-monitor" sidecar with MDM
+	// If no sidecars are present, add a new "sdc-monitor" sidecar with MDM
 	if len(cr.Spec.Driver.SideCars) == 0 {
 		cr.Spec.Driver.SideCars = []csmv1.ContainerTemplate{
 			{

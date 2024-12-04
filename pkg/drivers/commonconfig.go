@@ -302,10 +302,13 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = newcontainers
 
-	updatedCr, err := SetSDCinitContainers(ctx, cr, ct)
-	if err != nil {
-		log.Errorw("Failed to set SDC init container", "Error", err.Error())
-		return nil, err
+	var updatedCr csmv1.ContainerStorageModule
+	if cr.Spec.Driver.CSIDriverType == "powerflex" {
+		updatedCr, err = SetSDCinitContainers(ctx, cr, ct)
+		if err != nil {
+			log.Errorw("Failed to set SDC init container", "Error", err.Error())
+			return nil, err
+		}
 	}
 
 	initcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
