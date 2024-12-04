@@ -28,8 +28,8 @@ export PFLEX_ZONING_PASS="zoningPassword"
 export PFLEX_ZONING_SYSTEMID="zoningSystemID"
 export PFLEX_ZONING_ENDPOINT="10.1.1.2"
 export PFLEX_ZONING_MDM="10.0.0.3,10.0.0.4"
-export PFLEX_ZONING_NAS="zoning-none"
-export PFLEX_ZONING_POOL="zoning-pool1"
+export PFLEX_ZONING_NAS="none"
+export PFLEX_ZONING_POOL="pool1"
 
 # The following are Authorization Proxy Server specific for powerflex:
 export PFLEX_POOL="pool1"

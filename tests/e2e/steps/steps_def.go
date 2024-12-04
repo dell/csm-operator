@@ -721,6 +721,9 @@ func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, cr
 	return nil
 }
 
+// TODO: Tech debt.
+// We should refactor all of our template usages over time to use temporary files instead of editing in-line.
+// Once that's done, this method can be removed.
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
 	// find which map to use for secret values
 	mapValues, err := determineMap(crType)
@@ -748,6 +751,54 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
 		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
+	}
+
+	return nil
+}
+
+func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, crType string) error {
+	// find which map to use for secret values
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	// copy template file so we aren't editing it in-place
+	tempTemplateFile := filepath.Join(filepath.Dir(templateFile), "temp-secret.yaml")
+	copyFile := exec.Command("cp", templateFile, tempTemplateFile)
+	b, err := copyFile.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to copy template file: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	// replace all of the fields in the temporary template file
+	for key := range mapValues {
+		err := replaceInFile(key, os.Getenv(mapValues[key]), tempTemplateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	// if secret exists- delete it
+	if secretExists(namespace, name) {
+		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
+		if err != nil {
+			return fmt.Errorf("failed to delete secret: %s", err.Error())
+		}
+	}
+
+	// create new secret
+	fileArg := "--from-file=config=" + tempTemplateFile
+	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	if err != nil {
+		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
+	}
+
+	// delete the temporary secret
+	deleteFile := exec.Command("rm", "-f", tempTemplateFile)
+	_, err = deleteFile.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to delete temporary file: %v\nErrMessage:\n%s", tempTemplateFile, err)
 	}
 
 	return nil
