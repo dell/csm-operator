@@ -22,7 +22,9 @@ import (
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var (
@@ -191,6 +193,130 @@ func TestModifyPowerflexCR(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ModifyPowerflexCR(tt.yamlString, tt.cr, tt.fileType)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestExtractZonesFromSecret(t *testing.T) {
+	emptyConfigData := ``
+	invalidConfigData := `
+- username: "admin"
+	-
+`
+	dataWithNoSystemID := `
+- username: "admin"
+  password: "password"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+`
+	dataWithZone := `
+- username: "admin"
+  password: "password"
+  systemID: "2b11bb111111bb1b"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+  zone:
+    name: "US-EAST"
+    labelKey: "zone.csi-vxflexos.dellemc.com"
+`
+	dataWithoutZone := `
+- username: "admin"
+  password: "password"
+  systemID: "2b11bb111111bb1b"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+`
+	ctx := context.Background()
+	tests := map[string]func() (client.WithWatch, map[string]string, string, bool){
+		"success with zone": func() (client.WithWatch, map[string]string, string, bool) {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vxflexos-config",
+					Namespace: "vxflexos",
+				},
+				Data: map[string][]byte{
+					"config": []byte(dataWithZone),
+				},
+			}
+
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			return client, map[string]string{"zone.csi-vxflexos.dellemc.com": "US-EAST"}, "vxflexos-config", false
+		},
+		"success no zone": func() (client.WithWatch, map[string]string, string, bool) {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vxflexos-config",
+					Namespace: "vxflexos",
+				},
+				Data: map[string][]byte{
+					"config": []byte(dataWithoutZone),
+				},
+			}
+
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			return client, map[string]string{}, "vxflexos-config", false
+		},
+		"error getting secret": func() (client.WithWatch, map[string]string, string, bool) {
+			client := fake.NewClientBuilder().Build()
+			return client, nil, "vxflexos-not-found", true
+		},
+		"error parsing empty secret": func() (client.WithWatch, map[string]string, string, bool) {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vxflexos-config",
+					Namespace: "vxflexos",
+				},
+				Data: map[string][]byte{
+					"config": []byte(emptyConfigData),
+				},
+			}
+
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			return client, nil, "vxflexos-config", true
+		},
+		"error with no system id": func() (client.WithWatch, map[string]string, string, bool) {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vxflexos-config",
+					Namespace: "vxflexos",
+				},
+				Data: map[string][]byte{
+					"config": []byte(dataWithNoSystemID),
+				},
+			}
+
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			return client, nil, "vxflexos-config", true
+		},
+		"error unmarshaling config": func() (client.WithWatch, map[string]string, string, bool) {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vxflexos-config",
+					Namespace: "vxflexos",
+				},
+				Data: map[string][]byte{
+					"config": []byte(invalidConfigData),
+				},
+			}
+
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			return client, nil, "vxflexos-config", true
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client, wantZones, secret, wantErr := tc()
+			zones, err := ExtractZonesFromSecret(ctx, client, "vxflexos", secret)
+			if wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, wantZones, zones)
+			}
 		})
 	}
 }
