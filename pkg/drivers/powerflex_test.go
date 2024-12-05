@@ -218,7 +218,8 @@ func TestExtractZonesFromSecret(t *testing.T) {
   skipCertificateValidation: true
   mdm: "10.0.0.3,10.0.0.4"
   zone:
-    label: topology.kubernetes.io/zone=US-EAST
+    name: "US-EAST"
+    labelKey: "zone.csi-vxflexos.dellemc.com"
 `
 	dataWithoutZone := `
 - username: "admin"
@@ -242,7 +243,7 @@ func TestExtractZonesFromSecret(t *testing.T) {
 			}
 
 			client := fake.NewClientBuilder().WithObjects(secret).Build()
-			return client, map[string]string{"topology.kubernetes.io/zone": "US-EAST"}, "vxflexos-config", false
+			return client, map[string]string{"zone.csi-vxflexos.dellemc.com": "US-EAST"}, "vxflexos-config", false
 		},
 		"success no zone": func() (client.WithWatch, map[string]string, string, bool) {
 			secret := &corev1.Secret{

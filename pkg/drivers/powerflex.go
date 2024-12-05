@@ -359,7 +359,8 @@ func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace s
 	type StorageArrayConfig struct {
 		SystemID string `json:"systemId"`
 		Zone     struct {
-			Label string `json:"label"`
+			Name     string `json:"name"`
+			LabelKey string `json:"labelKey"`
 		} `json:"zone"`
 	}
 
@@ -382,10 +383,9 @@ func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace s
 			if configParam.SystemID == "" {
 				return nil, fmt.Errorf("invalid value for SystemID")
 			}
-			if configParam.Zone.Label != "" {
-				keyVal := strings.Split(configParam.Zone.Label, "=")
-				if len(keyVal) == 2 {
-					zonesMapData[keyVal[0]] = keyVal[1]
+			if configParam.Zone.LabelKey != "" {
+				if configParam.Zone.Name != "" {
+					zonesMapData[configParam.Zone.LabelKey] = configParam.Zone.Name
 					log.Infof("Zoning information configured for systemID %s: %v ", configParam.SystemID, zonesMapData)
 				}
 			} else {
