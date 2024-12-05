@@ -1,20 +1,20 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: powermax
-  namespace: powermax
+  name: isilon
+  namespace: isilon
 spec:
   driver:
-    csiDriverType: "powermax"
+    csiDriverType: "isilon"
     configVersion: v2.12.0
     forceRemoveDriver: true
-  # These are the modules which are optional and can be enabled by specifying to enable/disable.
   modules:
+    # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
       # For Auth 2.0, use v2.0.0 as configVersion
-      configVersion: v1.13.0
+      configVersion: v1.12.0
       components:
         - name: karavi-authorization-proxy
           envs:
@@ -22,6 +22,11 @@ spec:
             - name: "PROXY_HOST"
               value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
     - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
       enabled: false
     - name: replication
       enabled: false
@@ -40,5 +45,5 @@ spec:
           #   false: disable deployment of cert-manager only if it's already deployed
           # Default value: false
           enabled: false
-        - name: metrics-powermax
+        - name: metrics-powerscale
           enabled: true
