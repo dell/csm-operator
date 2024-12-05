@@ -1779,7 +1779,7 @@ spec:
       name: metrics-powermax
     - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.11.0
       name: metrics-powerflex
-    - image: quay.io/dell/container-storage-modules/podmon:v1.11.0
+    - image: quay.io/dell/container-storage-modules/podmon:v1.12.0
       name: podmon-node
     - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
       name: kube-rbac-proxy
