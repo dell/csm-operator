@@ -205,10 +205,6 @@ spec:
             #  value: unix://<KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/csi_sock
             - name: X_CSI_MODE
               value: MDM-Info
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
           volumeMounts:
             #- name: driver-path
             #  mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
