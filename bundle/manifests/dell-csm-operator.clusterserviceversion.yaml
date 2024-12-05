@@ -400,7 +400,7 @@ metadata:
                     "name": "metrics-powerscale"
                   }
                 ],
-                "configVersion": "v1.10.0",
+                "configVersion": "v1.11.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -635,7 +635,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.11.0",
+                    "image": "quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0",
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
@@ -788,7 +788,7 @@ metadata:
                     "name": "metrics-powermax"
                   }
                 ],
-                "configVersion": "v1.10.0",
+                "configVersion": "v1.11.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -1397,7 +1397,7 @@ metadata:
                     "name": "metrics-powerflex"
                   }
                 ],
-                "configVersion": "v1.10.0",
+                "configVersion": "v1.11.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -1444,7 +1444,7 @@ metadata:
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.10.0",
+                "configVersion": "v1.11.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -4360,7 +4360,7 @@ spec:
                       - name: RELATED_IMAGE_csi-powermax
                         value: quay.io/dell/container-storage-modules/csi-powermax:v2.13.0
                       - name: RELATED_IMAGE_csipowermax-reverseproxy
-                        value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.11.0
+                        value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0
                       - name: RELATED_IMAGE_csi-powerstore
                         value: quay.io/dell/container-storage-modules/csi-powerstore:v2.13.0
                       - name: RELATED_IMAGE_csi-unity
@@ -4480,7 +4480,7 @@ spec:
       name: csi-isilon
     - image: quay.io/dell/container-storage-modules/csi-powermax:v2.13.0
       name: csi-powermax
-    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.11.0
+    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0
       name: csipowermax-reverseproxy
     - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.13.0
       name: csi-powerstore
@@ -4535,5 +4535,5 @@ spec:
     - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
       name: metadataretriever
   skips:
-    - dell-csm-operator.v1.7.0
+    - dell-csm-operator.v1.8.0
   version: 1.8.0
