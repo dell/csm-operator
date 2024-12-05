@@ -127,7 +127,10 @@ func (f Client) listPodList(list *corev1.PodList) error {
 func (f Client) listNodeList(list *corev1.NodeList) error {
 	for k, v := range f.Objects {
 		if k.Kind == "Node" {
-			list.Items = append(list.Items, *v.(*corev1.Node))
+			node, ok := v.(*corev1.Node)
+			if ok {
+				list.Items = append(list.Items, *node)
+			}
 		}
 	}
 	return nil
