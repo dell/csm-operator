@@ -2385,7 +2385,7 @@ func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string,
 
 func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
 	// TBD: crclient/client.go needs to be augmented to filter on labels during
-	// the List return for a viable thorough test. Since this functionality is 
+	// the List return for a viable thorough test. Since this functionality is
 	// missing, this test is quite elementary as a result.
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -2423,7 +2423,7 @@ func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
 
 	// Check the len to be 1 else fail
 	if len(nodeListMatching.Items) != 1 {
-		ctrl.Log.Error(err, "Unexpected length on node list.","length",len(nodeListMatching.Items))
+		ctrl.Log.Error(err, "Unexpected length on node list.", "length", len(nodeListMatching.Items))
 		panic(err)
 	}
 
