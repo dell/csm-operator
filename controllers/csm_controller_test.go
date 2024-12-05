@@ -2435,5 +2435,4 @@ func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
 		panic(err)
 	}
 	assert.Nil(suite.T(), err)
-
 }
