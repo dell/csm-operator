@@ -48,7 +48,7 @@ spec:
           enabled: true
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.7.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.8.0
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int

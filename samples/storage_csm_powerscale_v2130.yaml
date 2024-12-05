@@ -285,7 +285,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.10.0
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.11.0
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -300,7 +300,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.10.0
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.11.0
           envs:
             # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
             # Set the value to "self" in case of stretched/single cluster configuration
@@ -384,7 +384,7 @@ spec:
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.7.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.8.0
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int
