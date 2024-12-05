@@ -277,13 +277,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		return ctrl.Result{}, err
 	}
 
-	nodeList, err := r.GetMatchingNodes(ctx, "topology.kubernetes.io/zone", "US-EAST")
-	if err != nil {
-		log.Errorw("Failed to retrieve list of nodes for label",
-			"topology.kubernetes.io/zone")
-	}
-	log.Infow("nodeList with labels", "csm", nodeList)
-
 	// perform prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
