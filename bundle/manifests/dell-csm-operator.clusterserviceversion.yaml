@@ -230,7 +230,7 @@ metadata:
                   "name": "snapshotter"
                 },
                 {
-                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0",
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0",
                   "name": "csi-metadata-retriever"
                 },
                 {
@@ -261,7 +261,7 @@ metadata:
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.12.0",
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -446,7 +446,7 @@ metadata:
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.11.0",
+                "configVersion": "v1.12.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -600,7 +600,7 @@ metadata:
                   "name": "snapshotter"
                 },
                 {
-                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0",
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0",
                   "name": "csi-metadata-retriever"
                 },
                 {
@@ -661,7 +661,7 @@ metadata:
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.12.0",
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -834,7 +834,7 @@ metadata:
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.11.0",
+                "configVersion": "v1.12.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -944,7 +944,7 @@ metadata:
                   "name": "snapshotter"
                 },
                 {
-                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0",
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0",
                   "name": "csi-metadata-retriever"
                 },
                 {
@@ -1000,7 +1000,7 @@ metadata:
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.11.0",
+                "configVersion": "v1.12.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -1121,7 +1121,7 @@ metadata:
                   "name": "snapshotter"
                 },
                 {
-                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0",
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0",
                   "name": "csi-metadata-retriever"
                 },
                 {
@@ -1267,7 +1267,7 @@ metadata:
                   "name": "snapshotter"
                 },
                 {
-                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0",
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0",
                   "name": "csi-metadata-retriever"
                 },
                 {
@@ -1313,7 +1313,7 @@ metadata:
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v1.12.0",
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -1488,7 +1488,7 @@ metadata:
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.11.0",
+                "configVersion": "v1.12.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -4412,7 +4412,7 @@ spec:
                       - name: RELATED_IMAGE_externalhealthmonitorcontroller
                         value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
                       - name: RELATED_IMAGE_metadataretriever
-                        value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
+                        value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
                     image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.8.0
                     imagePullPolicy: Always
                     livenessProbe:
@@ -4532,7 +4532,7 @@ spec:
       name: resizer
     - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
       name: externalhealthmonitorcontroller
-    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
+    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       name: metadataretriever
   skips:
     - dell-csm-operator.v1.8.0
