@@ -1743,7 +1743,7 @@ spec:
       name: csi-isilon
     - image: quay.io/dell/container-storage-modules/csi-powermax:v2.13.0
       name: csi-powermax
-    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.11.0
+    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0
       name: csipowermax-reverseproxy
     - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.13.0
       name: csi-powerstore
@@ -1765,19 +1765,19 @@ spec:
       name: csm-authorization-storage
     - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.0.0
       name: csm-authorization-controller
-    - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.10.0
+    - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.11.0
       name: dell-csi-replicator
-    - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.10.0
+    - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.11.0
       name: dell-replication-controller-manager
     - image: quay.io/dell/container-storage-modules/csm-topology:v1.11.0
       name: topology
     - image: docker.io/otel/opentelemetry-collector:0.42.0
       name: otel-collector
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.7.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.8.0
       name: metrics-powerscale
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.5.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.6.0
       name: metrics-powermax
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.10.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.11.0
       name: metrics-powerflex
     - image: quay.io/dell/container-storage-modules/podmon:v1.11.0
       name: podmon-node
@@ -1795,7 +1795,7 @@ spec:
       name: resizer
     - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
       name: externalhealthmonitorcontroller
-    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
+    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       name: metadataretriever
   skips:
     - dell-csm-operator.v1.7.0
