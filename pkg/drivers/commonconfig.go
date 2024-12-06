@@ -171,7 +171,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	crUID := cr.GetUID()
 	bController := true
-	bOwnerDeletion := !cr.Spec.Driver.ForceRemoveDriver
+	bOwnerDeletion := cr.Spec.Driver.ForceRemoveDriver != nil || !*cr.Spec.Driver.ForceRemoveDriver
 	kind := cr.Kind
 	v1 := "apps/v1"
 	controllerYAML.Deployment.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
