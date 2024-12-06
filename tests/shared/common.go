@@ -195,6 +195,19 @@ func MakePod(name, ns string) corev1.Pod {
 	return podObj
 }
 
+// MakeNode returns a node object
+func MakeNode(name, ns string) corev1.Node {
+	nodeObj := corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+			Labels:    map[string]string{},
+		},
+	}
+
+	return nodeObj
+}
+
 // MakeReverseProxyModule returns a csireverseproxy object
 func MakeReverseProxyModule(_ string) csmv1.Module {
 	revproxy := csmv1.Module{
