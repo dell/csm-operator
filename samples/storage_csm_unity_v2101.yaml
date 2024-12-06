@@ -22,7 +22,6 @@ spec:
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       # Image for CSI Unity driver v2.10.1

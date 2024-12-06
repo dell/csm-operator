@@ -20,7 +20,6 @@ spec:
     configVersion: v2.11.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "docker.io/dellemc/csi-vxflexos:v2.11.0"

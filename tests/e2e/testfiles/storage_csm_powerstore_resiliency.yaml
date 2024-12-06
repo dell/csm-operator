@@ -33,7 +33,6 @@ spec:
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: true
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"

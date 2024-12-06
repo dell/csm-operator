@@ -42,7 +42,6 @@ spec:
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       # Image for CSI PowerMax driver v2.10.1
