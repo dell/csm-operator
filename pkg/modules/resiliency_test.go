@@ -313,7 +313,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml")
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
@@ -325,7 +325,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml")
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
@@ -341,7 +341,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml")
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
