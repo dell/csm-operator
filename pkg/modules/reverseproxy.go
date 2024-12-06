@@ -49,7 +49,7 @@ const (
 
 // var used in deploying reverseproxy
 var (
-	deployAsSidecar            bool
+	deployAsSidecar            = true
 	CSIPmaxRevProxyServiceName = "X_CSI_POWERMAX_PROXY_SERVICE_NAME"
 	CSIPmaxRevProxyPort        = "X_CSI_POWERMAX_SIDECAR_PROXY_PORT"
 	RevProxyDefaultPort        = "2222"
@@ -118,9 +118,9 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 // ReverseProxyServer - apply/delete deployment objects
 func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
-	log.Infof("Checking if DeployAsSidar is false...\n")
+	log.Infof("Checking if DeployAsSidecar is false...\n")
 	if deployAsSidecar {
-		log.Infof("DeployAsSidar is true...csi-reverseproxy will be installed as sidecar\n")
+		log.Infof("DeployAsSidecar is true...csi-reverseproxy will be installed as sidecar\n")
 		log.Infof("exiting ReverseProxyServer...\n")
 		return nil
 	}
@@ -204,7 +204,7 @@ func getReverseProxyService(op utils.OperatorConfig, cr csmv1.ContainerStorageMo
 	}
 
 	yamlString = string(buf)
-	var proxyPort string
+	proxyPort := "2222"
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
 			for _, env := range component.Envs {
@@ -319,6 +319,25 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	revProxyModule, containerPtr, err := getRevproxyApplyCR(cr, op)
 	if err != nil {
 		return nil, err
+	}
+	if revProxyModule.Components == nil {
+		revProxyModule = &csmv1.Module{
+			Name:              csmv1.ReverseProxy,
+			ForceRemoveModule: true,
+			Enabled:           true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Image: csmv1.ImageType(op.K8sVersion.Images.CSIRevProxy),
+					Name:  "csipowermax-reverseproxy",
+					Envs: []corev1.EnvVar{
+						{Name: "X_CSI_REVPROXY_TLS_SECRET", Value: "csirevproxy-tls-secret"},
+						{Name: "X_CSI_REVPROXY_PORT", Value: "2222"},
+						{Name: "X_CSI_CONFIG_MAP_NAME", Value: "powermax-reverseproxy-config"},
+						{Name: "DeployAsSidecar", Value: "true"},
+					},
+				},
+			},
+		}
 	}
 	container := *containerPtr
 	// update the image
