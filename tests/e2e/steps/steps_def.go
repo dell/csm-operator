@@ -763,20 +763,19 @@ func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, c
 		return err
 	}
 
-	// copy template file so we aren't editing it in-place
-	tempTemplateFile := filepath.Join(filepath.Dir(templateFile), "temp-secret.yaml")
-	copyFile := exec.Command("cp", templateFile, tempTemplateFile)
-	b, err := copyFile.CombinedOutput()
+	// read the template into memory
+	fileContent, err := os.ReadFile(templateFile)
 	if err != nil {
-		return fmt.Errorf("failed to copy template file: %v\nErrMessage:\n%s", err, string(b))
+		fmt.Println("Error reading file:", err)
+		return err
 	}
 
-	// replace all of the fields in the temporary template file
+	// Convert the file content to a string
+	fileString := string(fileContent)
+
+	// Replace all fields in temporary (in memory) string
 	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), tempTemplateFile)
-		if err != nil {
-			return err
-		}
+		fileString = strings.ReplaceAll(fileString, key, os.Getenv(mapValues[key]))
 	}
 
 	// if secret exists- delete it
@@ -788,17 +787,10 @@ func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, c
 	}
 
 	// create new secret
-	fileArg := "--from-file=config=" + tempTemplateFile
+	fileArg := "--from-literal=config=" + fileString
 	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
 		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
-	}
-
-	// delete the temporary secret
-	deleteFile := exec.Command("rm", "-f", tempTemplateFile)
-	_, err = deleteFile.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to delete temporary file: %v\nErrMessage:\n%s", tempTemplateFile, err)
 	}
 
 	return nil
