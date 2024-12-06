@@ -39,6 +39,8 @@ spec:
     # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
     authSecret: powerstore-config
     # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: None
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
