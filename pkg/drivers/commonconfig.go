@@ -315,6 +315,13 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	for i := range initcontainers {
 		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
 		utils.UpdateInitContainerApply(cr.Spec.Driver.InitContainers, &initcontainers[i])
+		//mdm-container is exclusive to powerflex driver deamonset, will use the driver image as an init container
+		if *initcontainers[i].Name == "mdm-container" {
+			if string(cr.Spec.Driver.Common.Image) != "" {
+				image := string(cr.Spec.Driver.Common.Image)
+				initcontainers[i].Image = &image
+			}
+		}
 	}
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers = initcontainers
