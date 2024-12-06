@@ -11,8 +11,8 @@ spec:
   modules:
     - name: authorization
       enabled: false
-      # For Auth 2.0, use v2.0.0 as configVersion
-      configVersion: v1.11.0
+      # For Auth 2.0, use v2.1.0 as configVersion
+      configVersion: v1.13.0
     - name: resiliency
       enabled: false
     - name: replication

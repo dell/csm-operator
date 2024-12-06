@@ -226,7 +226,7 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.11.0
+      configVersion: v2.12.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy

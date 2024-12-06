@@ -24,7 +24,7 @@ metadata:
                     "name": "cert-manager"
                   },
                   {
-                    "authorizationController": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.0.0",
+                    "authorizationController": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.1.0",
                     "authorizationControllerReplicas": 1,
                     "certificate": "",
                     "controllerReconcileInterval": "5m",
@@ -43,13 +43,13 @@ metadata:
                         "ingressClassName": "nginx"
                       }
                     ],
-                    "proxyService": "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.0.0",
+                    "proxyService": "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.1.0",
                     "proxyServiceReplicas": 1,
-                    "roleService": "quay.io/dell/container-storage-modules/csm-authorization-role:v2.0.0",
+                    "roleService": "quay.io/dell/container-storage-modules/csm-authorization-role:v2.1.0",
                     "roleServiceReplicas": 1,
-                    "storageService": "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.0.0",
+                    "storageService": "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.1.0",
                     "storageServiceReplicas": 1,
-                    "tenantService": "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.0.0",
+                    "tenantService": "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.1.0",
                     "tenantServiceReplicas": 1
                   },
                   {
@@ -76,7 +76,7 @@ metadata:
                     ]
                   }
                 ],
-                "configVersion": "v2.0.0",
+                "configVersion": "v2.1.0",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "authorization-proxy-server"
@@ -257,7 +257,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
@@ -657,7 +657,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
@@ -1309,7 +1309,7 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
@@ -4370,17 +4370,17 @@ spec:
                       - name: RELATED_IMAGE_sdc
                         value: docker.io/dellemc/sdc:4.5.2.1
                       - name: RELATED_IMAGE_karavi-authorization-proxy
-                        value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
                       - name: RELATED_IMAGE_csm-authorization-proxy
-                        value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.0.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.1.0
                       - name: RELATED_IMAGE_csm-authorization-tenant
-                        value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.0.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.1.0
                       - name: RELATED_IMAGE_csm-authorization-role
-                        value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.0.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.1.0
                       - name: RELATED_IMAGE_csm-authorization-storage
-                        value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.0.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.1.0
                       - name: RELATED_IMAGE_csm-authorization-controller
-                        value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.0.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.1.0
                       - name: RELATED_IMAGE_dell-csi-replicator
                         value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.11.0
                       - name: RELATED_IMAGE_dell-replication-controller-manager
@@ -4490,17 +4490,17 @@ spec:
       name: csi-vxflexos
     - image: docker.io/dellemc/sdc:4.5.2.1
       name: sdc
-    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
       name: karavi-authorization-proxy
-    - image: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.0.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.1.0
       name: csm-authorization-proxy
-    - image: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.0.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.1.0
       name: csm-authorization-tenant
-    - image: quay.io/dell/container-storage-modules/csm-authorization-role:v2.0.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-role:v2.1.0
       name: csm-authorization-role
-    - image: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.0.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.1.0
       name: csm-authorization-storage
-    - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.0.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.1.0
       name: csm-authorization-controller
     - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.11.0
       name: dell-csi-replicator
