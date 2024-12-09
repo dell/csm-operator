@@ -35,6 +35,7 @@ spec:
     configVersion: v2.12.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
+    # Controller count
     # Allowed values: n, where n > 0
     # Default value: None
     replicas: 2
@@ -202,6 +203,7 @@ spec:
       # 'pmax' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
+        # Default volume-name-prefix: pmax
         args: ["--volume-name-prefix=pmax"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
@@ -214,6 +216,7 @@ spec:
       - name: csi-metadata-retriever
         image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Default monitor-interval: 60s
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -251,6 +254,7 @@ spec:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enabled: Enable/Disable csm-authorization
+      # Default value: false
       enabled: false
       configVersion: v1.12.0
       components:
@@ -258,9 +262,11 @@ spec:
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
           envs:
             # proxyHost: hostname of the csm-authorization server
+            # Default value: none
             - name: "PROXY_HOST"
               value: "csm-authorization.com"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"
     # Replication: allows configuring replication module
@@ -322,11 +328,13 @@ spec:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
+      # Default value: false
       enabled: false
       configVersion: v1.10.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
+          # Default value: false
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
@@ -347,6 +355,7 @@ spec:
               value: "INFO"
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
+          # Default value: false
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
@@ -374,6 +383,7 @@ spec:
           enabled: false
         - name: metrics-powermax
           # enabled: Enable/Disable PowerMax metrics
+          # Default value: false
           enabled: false
           # image: Defines PowerMax metrics image. This shouldn't be changed
           image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.5.0
