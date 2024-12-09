@@ -20,7 +20,7 @@ spec:
     configVersion: v2.11.0
     # Controller count
     # Allowed values: n, where n > 0
-    # Default value: None
+    # Default value: 1
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
