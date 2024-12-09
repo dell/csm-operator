@@ -20,7 +20,6 @@ spec:
     configVersion: v2.12.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "registry.connect.redhat.com/dell-emc/dell-csm-powerflex@sha256:7d0d92fb2ddcdf4eae6244acfe8469d64683986a558cd500ee601af3a9f3b7be"

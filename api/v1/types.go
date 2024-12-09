@@ -216,10 +216,6 @@ type Driver struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Snapshot Classes"
 	SnapshotClass []SnapshotClass `json:"snapshotClass,omitempty" yaml:"snapshotClass"`
 
-	// ForceUpdate is the boolean flag used to force an update of the driver instance
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force update"
-	ForceUpdate bool `json:"forceUpdate,omitempty" yaml:"forceUpdate"`
-
 	// AuthSecret is the name of the credentials secret for the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Auth Secret"
 	AuthSecret string `json:"authSecret,omitempty" yaml:"authSecret"`

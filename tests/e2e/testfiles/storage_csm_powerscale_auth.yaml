@@ -15,7 +15,6 @@ spec:
     authSecret: isilon-creds-auth
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent

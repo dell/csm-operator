@@ -41,7 +41,6 @@ spec:
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: registry.connect.redhat.com/dell-emc/dell-csm-powermax@sha256:2b550fcf51f8d011e6b9e5de9199df550dcf1439bef110ae72dc9c30e1e3a709
