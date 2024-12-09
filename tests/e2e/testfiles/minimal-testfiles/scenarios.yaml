@@ -165,7 +165,6 @@
     - "Run custom test"
     - "Delete custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
-    
     # cleanup
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -192,7 +191,6 @@
     - "Validate [1] CSM has forceRemoveDriver set to true"
     - "Validate [unity] driver from CR [1] is installed"
     - "Run custom test"
-    
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -241,7 +239,6 @@
     - "Validate [1] CSM has forceRemoveDriver set to true"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Run custom test"
-    
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -269,7 +266,6 @@
     - "Run custom test"
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
-    
     # cleanup
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -508,7 +504,6 @@
     - "Run custom test"
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
-
     # cleanup
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -889,7 +884,6 @@
     - "Run custom test"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-
     # cleanup
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
