@@ -226,6 +226,13 @@ spec:
                env
                /files/scripts/init.sh 
           imagePullPolicy: IfNotPresent
+          env:
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: HOST_DRV_CFG_PATH
+              value: /opt/emc/scaleio/sdc/bin
           volumeMounts:
             - name: dev
               mountPath: /dev
