@@ -203,6 +203,10 @@ spec:
           env:
             - name: X_CSI_MODE
               value: mdm-info
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           volumeMounts:
             - name: vxflexos-config
               mountPath: /vxflexos-config
