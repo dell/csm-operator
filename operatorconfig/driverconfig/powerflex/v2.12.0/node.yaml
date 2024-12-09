@@ -194,7 +194,7 @@ spec:
       initContainers:
       # This image will need to be replaced by a driver image that supports init mode
         - name: mdm-container
-          image: http://quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
           imagePullPolicy: Always
           command: ["/csi-vxflexos.sh"]
           args:
@@ -202,7 +202,7 @@ spec:
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
           env:
             - name: X_CSI_MODE
-              value: MDM-Info
+              value: mdm-info
           volumeMounts:
             - name: vxflexos-config
               mountPath: /vxflexos-config
@@ -226,20 +226,6 @@ spec:
                env
                /files/scripts/init.sh 
           imagePullPolicy: IfNotPresent
-          env:
-            - name: NODENAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: MODE
-              value: "config"
-            - name: MDM
-              valueFrom:
-                secretKeyRef:
-                  name: <DriverDefaultReleaseName>-config
-                  key: MDM
-            - name: HOST_DRV_CFG_PATH
-              value: /opt/emc/scaleio/sdc/bin
           volumeMounts:
             - name: dev
               mountPath: /dev
