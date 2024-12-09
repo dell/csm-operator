@@ -42,7 +42,6 @@ spec:
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: docker.io/dellemc/csi-powermax:v2.11.0

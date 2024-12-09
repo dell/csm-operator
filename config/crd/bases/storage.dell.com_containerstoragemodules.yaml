@@ -991,11 +991,6 @@ spec:
                         ForceRemoveDriver is the boolean flag used to remove
                         driver deployment when CR is deleted
                       type: boolean
-                    forceUpdate:
-                      description:
-                        ForceUpdate is the boolean flag used to force an
-                        update of the driver instance
-                      type: boolean
                     initContainers:
                       description: InitContainers is the specification for Driver InitContainers
                       items:
