@@ -194,33 +194,16 @@ spec:
       initContainers:
       # This image will need to be replaced by a driver image that supports init mode
         - name: mdm-container
-          image: REPLACE-IMAGE
+          image: http://quay.io/dell/container-storage-modules/csi-vxflexos:nightly
           imagePullPolicy: Always
           command: ["/csi-vxflexos.sh"]
           args:
             - "--array-config=/vxflexos-config/config"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
           env:
-            #- name: CSI_ENDPOINT
-            #  value: unix://<KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/csi_sock
             - name: X_CSI_MODE
               value: MDM-Info
           volumeMounts:
-            #- name: driver-path
-            #  mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
-            #- name: disks-path
-            #  mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/disks
-            #  mountPropagation: "Bidirectional"
-            #- name: volumedevices-path
-            #  mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
-            #  mountPropagation: "Bidirectional"
-            #- name: pods-path
-            #  mountPath: <KUBELET_CONFIG_DIR>/pods
-            #  mountPropagation: "Bidirectional"
-            #- name: noderoot
-            #  mountPath: /noderoot
-            #- name: dev
-            #  mountPath: /dev
             - name: vxflexos-config
               mountPath: /vxflexos-config
             - name: vxflexos-config-params
@@ -230,23 +213,6 @@ spec:
               readOnly: true
             - name: mdm-dir
               mountPath: /data
-              
-          #image: bitnami/kubectl:latest
-          #env:
-          #- name: NODE_NAME
-          #  valueFrom:
-          #    fieldRef:
-          #      fieldPath: spec.nodeName
-          #command:
-          #  - "/bin/sh"
-          #  - "-c"
-          #  - |
-          #     echo "Inside mdm-container"
-          #     echo "MDM=test-MDMs" > /data/node_mdms.txt
-          #     cat /data/node_mdms.txt
-          #volumeMounts:
-          #- name: mdm-dir
-          #  mountPath: /data
         - name: sdc
           securityContext:
             privileged: true
