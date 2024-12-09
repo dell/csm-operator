@@ -21,6 +21,8 @@
 # ./modify_zoning_labels.sh remove <zone-key>
 # To remove all zone labels:
 # ./modify_zoning_labels.sh remove-all-zones
+# To validate the zone labels:
+# ./modify_zoning_labels.sh validate-zoning
 
 # get all worker node names in the cluster
 get_worker_nodes() {
@@ -84,8 +86,80 @@ remove_all_zone_labels() {
   done
 }
 
+# validation part of script
+
+# read the Kubernetes secret and extract zone information
+read_secret() {
+  secret_name=$1
+  driverNamespace=$2
+  secret_data=$(kubectl get secret $secret_name -n $driverNamespace -o jsonpath='{.data.config}')
+  echo $secret_data | base64 --decode
+}
+
+# validating zoning is configured on the cluster
+validate_zoning() {
+  # read the secret and extract zone information
+  secret_name="vxflexos-config-test"
+  namespace="vxflexos"
+  secret_content=$(read_secret $secret_name $namespace)
+
+  # parse the secret content to extract zones
+  local zones=()
+  while IFS= read -r line; do
+    if [[ $line =~ name: ]]; then
+      zone=$(echo "${line##* }" | tr -d '"')
+      zones+=("$zone")
+    fi
+  done <<< "$(echo "$secret_content" | grep -A 1 'zone:' | grep 'name:')"
+  echo "$secret_content" | grep -A 1 'zone:' | grep 'name:'
+
+  echo "Configured zones in secret: ${zones[@]}"
+
+  # list all pods in the driver namespace
+  pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+
+  # create a map of pods and the nodes they're running on
+  declare -A pod_node_map
+  for pod in $pods; do
+    # check for running pods
+    status=$(kubectl get pod $pod -n $namespace -o jsonpath='{.status.phase}')
+    if [ "$status" == "Running" ]; then
+      # get the node name
+      node=$(kubectl get pod $pod -n $namespace -o jsonpath='{.spec.nodeName}')
+      pod_node_map[$pod]=$node
+    else
+      echo "Pod $pod is not running. Status: $status"
+      exit 1
+    fi
+  done
+
+  # query the nodes to ensure they have zone labels
+  for node in "${pod_node_map[@]}"; do
+    echo "Checking node: $node"
+    getLabel=$(kubectl get node $node -o jsonpath="{.metadata.labels}")
+    zone_label=$(echo "$getLabel" | jq -r '.["zone.csi-vxflexos.dellemc.com"]')
+
+    echo "Node $node zone label: $zone_label"
+
+    match_found=false
+    for zone in "${zones[@]}"; do
+      echo "Comparing node zone label '$zone_label' with expected zone '$zone'"
+      if [ "$zone" == "$zone_label" ]; then
+        match_found=true
+        echo "Node $node has a matching zone label: $zone_label"
+        break
+      fi
+    done
+
+    if [ "$match_found" == false ]; then
+      echo "Node $node does not have a matching zone label: $zone_label"
+      exit 1
+    fi
+  done
+}
+
 if [ "$#" -lt 1 ]; then
-  echo "Usage: $0 add <zone1> <zone2> ... | remove <label> | remove-all-zones"
+  echo "Usage: $0 add <zone1> <zone2> ... | remove <label> | remove-all-zones | validate-zoning"
   exit 1
 fi
 
@@ -111,9 +185,12 @@ case $action in
   remove-all-zones)
     remove_all_zone_labels
     ;;
+  validate-zoning)
+    validate_zoning
+    ;;
   *)
     echo "Invalid action: $action"
-    echo "Usage: $0 add <zone1> <zone2> ... | remove <label> | remove-all-zones"
+    echo "Usage: $0 add <zone1> <zone2> ... | remove <label> | remove-all-zones | validate-zoning"
     exit 1
     ;;
 esac
