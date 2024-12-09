@@ -42,7 +42,6 @@ spec:
     # Default value: 2
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "docker.io/dellemc/csi-powerstore:v2.11.0"

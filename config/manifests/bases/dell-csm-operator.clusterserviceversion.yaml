@@ -502,11 +502,6 @@ spec:
               when CR is deleted
             displayName: Force Remove Driver
             path: driver.forceRemoveDriver
-          - description:
-              ForceUpdate is the boolean flag used to force an update of the
-              driver instance
-            displayName: Force update
-            path: driver.forceUpdate
           - description: Args is the set of arguments for the container
             displayName: Container Arguments
             path: driver.initContainers[0].args
