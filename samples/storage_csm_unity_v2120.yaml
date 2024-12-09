@@ -19,6 +19,8 @@ spec:
       storageCapacity: true
     configVersion: v2.12.0
     # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: 2
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceUpdate: false
@@ -86,6 +88,7 @@ spec:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
+        # Default volume-name-prefix: csivol
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
@@ -98,6 +101,7 @@ spec:
       - name: csi-metadata-retriever
         image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Default monitor-interval: 60s
       - name: external-health-monitor
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure when the storageCapacity is set as "true"

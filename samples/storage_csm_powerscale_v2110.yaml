@@ -19,6 +19,9 @@ spec:
       storageCapacity: true
     configVersion: v2.11.0
     authSecret: isilon-creds
+    # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: 2
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
@@ -233,6 +236,7 @@ spec:
     sideCars:
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
+        # Default volume-name-prefix: k8s
         args: ["--volume-name-prefix=csipscale"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
@@ -245,6 +249,7 @@ spec:
       - name: csi-metadata-retriever
         image: docker.io/dellemc/csi-metadata-retriever:v1.8.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Default monitor-interval: 60s
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -258,6 +263,7 @@ spec:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
+      # Default value: false
       enabled: false
       configVersion: v1.11.0
       components:
@@ -265,9 +271,11 @@ spec:
           image: docker.io/dellemc/csm-authorization-sidecar:v1.11.0
           envs:
             # proxyHost: hostname of the csm-authorization server
+            # Default value: none
             - name: "PROXY_HOST"
               value: "csm-authorization.com"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"
     # replication: allows to configure replication
@@ -329,11 +337,13 @@ spec:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
+      # Default value: false
       enabled: false
       configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
+          # Default value: false
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
@@ -354,6 +364,7 @@ spec:
               value: "INFO"
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
+          # Default value: false
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
@@ -381,6 +392,7 @@ spec:
           enabled: false
         - name: metrics-powerscale
           # enabled: Enable/Disable PowerScale metrics
+          # Default value: false
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
