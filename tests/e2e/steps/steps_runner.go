@@ -44,6 +44,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Install \[([^"]*)\]$`, step.installThirdPartyModule)
 	runner.addStep(`^Uninstall \[([^"]*)\]$`, step.uninstallThirdPartyModule)
 	runner.addStep(`^Apply custom resource \[(\d+)\]$`, step.applyCustomResource)
+	runner.addStep(`^Validate \[(\d+)\] CSM has forceRemoveDriver set to true$`, step.validateForceRemoveDriverEnabled)
+	runner.addStep(`^Validate \[(\d+)\] CSM has forceRemoveDriver set to false$`, step.validateForceRemoveDriverDisabled)
 	runner.addStep(`^Upgrade from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResource)
 	runner.addStep(`^Validate custom resource \[(\d+)\]$`, step.validateCustomResourceStatus)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
