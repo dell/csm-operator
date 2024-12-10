@@ -73,7 +73,6 @@ remove_all_zone_labels() {
     labels=$(kubectl get node $node -o jsonpath='{.metadata.labels}' | jq -r 'keys[]')
 
     for label in $labels; do
-    # TODO: might have to adjust this based on the actual zone label name
     # this will remove all labels that start with "zone"
     if [[ $label == zone* ]]; then
         if kubectl label nodes $node $label-; then
@@ -99,7 +98,7 @@ read_secret() {
 # validating zoning is configured on the cluster
 validate_zoning() {
   # read the secret and extract zone information
-  secret_name="vxflexos-config-test"
+  secret_name="test-vxflexos-config"
   namespace="vxflexos"
   secret_content=$(read_secret $secret_name $namespace)
 
