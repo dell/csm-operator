@@ -48,11 +48,11 @@ type CustomTest struct {
 
 // Scenario -
 type Scenario struct {
-	Scenario   string     `json:"scenario" yaml:"scenario"`
-	Paths      []string   `json:"paths" yaml:"paths"`
-	Tags       []string   `json:"tags" yaml:"tags"`
-	Steps      []string   `json:"steps" yaml:"steps"`
-	CustomTest CustomTest `json:"customTest,omitempty" yaml:"customTest"`
+	Scenario   string       `json:"scenario" yaml:"scenario"`
+	Paths      []string     `json:"paths" yaml:"paths"`
+	Tags       []string     `json:"tags" yaml:"tags"`
+	Steps      []string     `json:"steps" yaml:"steps"`
+	CustomTest []CustomTest `json:"customTest,omitempty" yaml:"customTest"`
 }
 
 // Resource -

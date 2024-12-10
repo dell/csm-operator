@@ -64,6 +64,8 @@ go get github.com/onsi/gomega/...
 
 For PowerFlex, Unity, PowerScale, PowerStore, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.sh so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
 
+In the case of end-to-end tests that involve PowerFlex zoning functionality, a second PowerFlex array will be necessary with its credentials provided in e2e/array-info.sh.
+
 Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
 
 ### Application Mobility Prerequisites
@@ -138,15 +140,15 @@ An e2e test scenarios file is a yaml file that defines all e2e test scenarios to
     - "Enable forceRemoveDriver on CR"
     - "Delete resources"
   customTest:
-    # name of custom test to run
-    name: Cert CSI
-    # Provide command-line argument to run. Ginkgo will run the command and return output
-    # The command should be accessible from e2e_tes repo.
-    # Example:
-    #   ./hello_world.sh
-    #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-    run:
-      - cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
+
+    - name: Cert CSI # name of custom test to run
+      # Provide command-line argument to run. Ginkgo will run the command and return output
+      # The command should be accessible from e2e_tes repo.
+      # Example:
+      #   ./hello_world.sh
+      #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
+      run:
+        - cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
 ```
 
 Each test has:
@@ -155,7 +157,11 @@ Each test has:
 - `path`: The path to the custom resources yaml file that has the specific configuration you want to test.
 - `tags`: Each test can belong to one or more groups of tests, specified by tags. To see a list of currently available tags, run `./run-e2e-test.sh -h`.
 - `steps`: Steps to take for the specific scenearios. Please note that all steps above and the ones in this sample file `tests/e2e/testfiles/values.yaml` already have a backend implementation. If you desire to use a different step, see [Develop](#develop) for how to add new E2E Test
-- `customTest`: An entrypoint for users to run custom test against their environment. You must have `"Run custom test"` as part of your `steps` above for this custom test to run. This object has the following parameter.
+- `customTest`: An array of entrypoints for users to run custom tests against their environment. There are two methods of running custom tests.
+  - You may have `"Run custom test"` as part of your `steps` above if there is *only one custom test in the array of tests*.
+  - You may have `"Run [Test Name]"`as part of your `steps` above to *select a custom test from the array by its name*
+
+  An object in this array has the following parameters:
   - `name`: Name of your custom test
   - `run`: A list of command line arguments that will be run by the e2e test.
 
