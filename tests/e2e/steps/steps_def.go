@@ -25,6 +25,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
 	"encoding/json"
+	"path/filepath"
 
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
@@ -39,7 +40,6 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"k8s.io/utils/pointer"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -51,10 +51,11 @@ const (
 )
 
 var (
-	authString               = "karavi-authorization-proxy"
-	operatorNamespace        = "dell-csm-operator"
-	quotaLimit               = "100000000"
-	pflexSecretMap           = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS"}
+	authString        = "karavi-authorization-proxy"
+	operatorNamespace = "dell-csm-operator"
+	quotaLimit        = "100000000"
+	pflexSecretMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS",
+		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS"}
 	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -720,6 +721,9 @@ func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, cr
 	return nil
 }
 
+// TODO: Tech debt.
+// We should refactor all of our template usages over time to use temporary files instead of editing in-line.
+// Once that's done, this method can be removed.
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
 	// find which map to use for secret values
 	mapValues, err := determineMap(crType)
@@ -744,6 +748,46 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 
 	// create new secret
 	fileArg := "--from-file=config=" + templateFile
+	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	if err != nil {
+		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
+	}
+
+	return nil
+}
+
+func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, crType string) error {
+	// find which map to use for secret values
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	// read the template into memory
+	fileContent, err := os.ReadFile(templateFile)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return err
+	}
+
+	// Convert the file content to a string
+	fileString := string(fileContent)
+
+	// Replace all fields in temporary (in memory) string
+	for key := range mapValues {
+		fileString = strings.ReplaceAll(fileString, key, os.Getenv(mapValues[key]))
+	}
+
+	// if secret exists- delete it
+	if secretExists(namespace, name) {
+		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
+		if err != nil {
+			return fmt.Errorf("failed to delete secret: %s", err.Error())
+		}
+	}
+
+	// create new secret
+	fileArg := "--from-literal=config=" + fileString
 	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
 		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
@@ -856,8 +900,11 @@ func (step *Step) runCustomTest(res Resource) error {
 		stderr string
 		err    error
 	)
+	if len(res.Scenario.CustomTest) != 1 {
+		return fmt.Errorf("'customTest' must be a single element array")
+	}
 
-	for testNum, customTest := range res.Scenario.CustomTest.Run {
+	for testNum, customTest := range res.Scenario.CustomTest[0].Run {
 		args := strings.Split(customTest, " ")
 		if len(args) == 1 {
 			stdout, stderr, err = framework.RunCmd(args[0])
@@ -871,6 +918,45 @@ func (step *Step) runCustomTest(res Resource) error {
 	}
 
 	return nil
+}
+
+func (step *Step) runCustomTestSelector(res Resource, testName string) error {
+	var (
+		stdout string
+		stderr string
+		err    error
+	)
+
+	// retrieve the appropriate test from the list of tests
+	var selectedTest CustomTest
+	foundTest := false
+	for _, test := range res.Scenario.CustomTest {
+		if test.Name == testName {
+			selectedTest = test
+			foundTest = true
+			break
+		}
+	}
+
+	if !foundTest {
+		return fmt.Errorf("custom test '%s' not found", testName)
+	}
+
+	for testNum, customTest := range selectedTest.Run {
+		args := strings.Split(customTest, " ")
+		if len(args) == 1 {
+			stdout, stderr, err = framework.RunCmd(args[0])
+		} else {
+			stdout, stderr, err = framework.RunCmd(args[0], args[1:]...)
+		}
+
+		if err != nil {
+			return fmt.Errorf("error running custom test #%d. Error: %v \n stdout: %s \n stderr: %s", testNum, err, stdout, stderr)
+		}
+	}
+
+	return nil
+
 }
 
 func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile string, crType string) error {
