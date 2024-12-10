@@ -10,7 +10,7 @@ spec:
       # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
-      # Default value: ReadWriteOnceWithFSType
+      # Default value: File
       fSGroupPolicy: "File"
       # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
       # Allowed values:
