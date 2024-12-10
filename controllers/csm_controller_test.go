@@ -585,7 +585,8 @@ func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
 	if err != nil {
 		panic(err)
 	}
-	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	//sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
 		panic(err)
@@ -653,7 +654,8 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradeSkipVersion() {
 	if err != nil {
 		panic(err)
 	}
-	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	//sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
 		panic(err)
@@ -1030,32 +1032,32 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 
 	// error in Authorization
 	csm.Spec.Modules = getAuthModule()
-	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error in Authorization Proxy Server
 	csm.Spec.Modules = getAuthProxyServer()
-	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error in App-Mobility
 	csm.Spec.Modules = getAppMob()
-	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
-	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error in Resiliency
 	csm.Spec.Modules = getResiliencyModule()
-	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error in Observability
 	csm.Spec.Modules = getObservabilityModule()
-	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error unsupported module
@@ -1065,7 +1067,7 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 			Enabled: true,
 		},
 	}
-	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig, "")
 	assert.NotNil(suite.T(), err)
 }
 
@@ -1091,31 +1093,31 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	// error in Authorization
 	csm.Spec.Modules = getAuthModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
-	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error in Authorization Proxy Server
 	csm.Spec.Modules = getAuthProxyServer()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
-	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
-	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error in Resiliency
 	csm.Spec.Modules = getResiliencyModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
-	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error in Observability
 	csm.Spec.Modules = getObservabilityModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
-	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig, "")
 	assert.NotNil(suite.T(), err)
 
 	// error unsupported module
@@ -1125,7 +1127,7 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 			Enabled: true,
 		},
 	}
-	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig, "")
 	assert.NotNil(suite.T(), err)
 }
 

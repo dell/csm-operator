@@ -347,6 +347,13 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	return yamlString
 }
 
+func ExtractZones(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client, namespace string) (map[string]string, error) {
+
+	secretName := cr.Name + "-config"
+	zonesMapData, err := ExtractZonesFromSecret(ctx, ct, namespace, secretName)
+	return zonesMapData, err
+}
+
 // ExtractZonesFromSecret - Reads the array config secret and returns the zone label information
 func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace string, secret string) (map[string]string, error) {
 	log := logger.GetLogger(ctx)
@@ -376,7 +383,7 @@ func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace s
 		}
 		err = yaml.Unmarshal(configs, &yamlConfig)
 		if err != nil {
-			return nil, fmt.Errorf("unable to unmarshal multi-array configuration[%v]", err)
+			return nil, fmt.Errorf("unable to unmarshal no Zone or Name or LabelKey found multi-array configuration[%v]", err)
 		}
 
 		for _, configParam := range yamlConfig {

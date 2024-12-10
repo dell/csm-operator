@@ -278,7 +278,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	}
 
 	// perform prechecks
-	err = r.PreChecks(ctx, csm, *operatorConfig)
+	err = r.PreChecks(ctx, csm, *operatorConfig, req.Namespace)
 	if err != nil {
 		csm.GetCSMStatus().State = constants.InvalidConfig
 		r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
@@ -1314,7 +1314,7 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 }
 
 // PreChecks - validate input values
-func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, namespace string) error {
 	log := logger.GetLogger(ctx)
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
@@ -1327,6 +1327,14 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		err := drivers.PrecheckPowerFlex(ctx, cr, operatorConfig, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed powerflex validation: %v", err)
+		}
+		// zoning initially applies only to pflex
+		zonesAreValid, err := r.ZoneValidation(ctx, cr, namespace)
+		if err != nil {
+			return fmt.Errorf("error during zone validation: %v", err)
+		}
+		if zonesAreValid == false {
+			return fmt.Errorf("failed zone validation.")
 		}
 	case csmv1.PowerStore:
 		err := drivers.PrecheckPowerStore(ctx, cr, operatorConfig, r.GetClient())
@@ -1526,4 +1534,33 @@ func (r *ContainerStorageModuleReconciler) GetMatchingNodes(ctx context.Context,
 	err := r.List(ctx, nodeList, opts...)
 
 	return nodeList, err
+}
+
+func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule, namespace string) (bool, error) {
+	log := logger.GetLogger(ctx)
+	validZoneConfiguration := true
+	nodeList := &corev1.NodeList{}
+	log.Infof(" nodeList len %d", len(nodeList.Items))
+	for _, node := range nodeList.Items {
+		log.Infof(" nodeList name %s", node.Name)
+	}
+	zones, err := drivers.ExtractZones(ctx, cr, r.Client, namespace)
+	if err != nil {
+		log.Infof("ZoneValidation failed with error: %v", err)
+		return false, err
+	}
+
+	log.Infof("ZoneValidation zones returned from ExtractZones: %v", zones)
+	// TBD: make sure all zone keys are the same, if not fail
+	// extract first key from first node
+	// zoneKeyLabelRow := zones[nodeList[0].name]
+	// zoneKey := zoneKeyLabelRow[0][0]
+	// The labelKey, GetMatchingNodes with labelKey, value="", verify that the list
+	// returned is the same size as the current number of nodes on the cluster
+	// i.e. all nodes must have this zoning label key. if the number of nodes returned
+	// does not match the number of nodes on the cluster, then fail, otherwise return
+	// true
+	//GetMatchingNodes(ctx, labelKey, labelValue);
+
+	return validZoneConfiguration, err
 }

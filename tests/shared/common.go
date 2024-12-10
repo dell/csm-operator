@@ -145,6 +145,47 @@ func MakeModule(configVersion string) csmv1.Module {
 }
 
 // MakeSecret  returns a driver pre-req secret array-config
+func MakeSecretPowerFlex(name, ns, _ string) *corev1.Secret {
+	//	data := map[string][]byte{
+	//		"config": []byte("csm"),
+	//	}
+	//	object := metav1.ObjectMeta{Name: name, Namespace: ns}
+	//	secret := &corev1.Secret{Data: data, ObjectMeta: object}
+	/*
+	   	dataWithZone := `
+	   - username: "admin"
+	     password: "password"
+	     systemID: "2b11bb111111bb1b"
+	     endpoint: "https://127.0.0.2"
+	     skipCertificateValidation: true
+	     mdm: "10.0.0.3,10.0.0.4"
+	     zone:
+	       name: "US-EAST"
+	       labelKey: "zone.csi-vxflexos.dellemc.com"
+	   `
+	*/
+	dataWithoutZone := `
+- username: "admin"
+  password: "password"
+  systemID: "2b11bb111111bb1b"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+`
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+		Data: map[string][]byte{
+			"config": []byte(dataWithoutZone),
+		},
+	}
+	return secret
+}
+
+// MakeSecret  returns a driver pre-req secret array-config
 func MakeSecret(name, ns, _ string) *corev1.Secret {
 	data := map[string][]byte{
 		"config": []byte("csm"),
