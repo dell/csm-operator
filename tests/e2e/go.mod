@@ -7,7 +7,7 @@ toolchain go1.23.2
 require (
 	github.com/dell/csm-operator v0.0.0
 	github.com/onsi/ginkgo/v2 v2.22.0
-	github.com/onsi/gomega v1.34.2
+	github.com/onsi/gomega v1.36.0
 	golang.org/x/mod v0.22.0
 	k8s.io/api v0.31.3
 	k8s.io/apimachinery v0.31.3

@@ -26,7 +26,7 @@
 
 # get all worker node names in the cluster
 get_worker_nodes() {
-  kubectl get nodes -A | grep -v -E 'mast.r|control-plane'  | grep -v NAME | awk '{ print $1 }'
+  kubectl get nodes -A | grep -v -E 'master|control-plane'  | grep -v NAME | awk '{ print $1 }'
 }
 
 # add zone label to all worker nodes

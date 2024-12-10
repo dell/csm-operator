@@ -1961,12 +1961,12 @@
     - name: Apply Node Labels
       run:
         - kubectl get nodes --show-labels
-        - /bin/bash modify-zoning_labels.sh add zone.csi-vxflexos.dellemc.com=zoneA zone.csi-vxflexos.dellemc.com=zoneB
+        - /bin/bash modify_zoning_labels.sh add zone.csi-vxflexos.dellemc.com=zoneA zone.csi-vxflexos.dellemc.com=zoneB
         - kubectl get nodes --show-labels
     - name: Validate Node Labels
       run:
-        - /bin/bash/modify_zoning_labels.sh validate-zoning
+        - /bin/bash modify_zoning_labels.sh validate-zoning
     - name: Remove Node Labels
       run:
-        - /bin/bash modify-zoning_labels.sh remove-all-zones
+        - /bin/bash modify_zoning_labels.sh remove-all-zones
         - kubectl get nodes --show-labels
