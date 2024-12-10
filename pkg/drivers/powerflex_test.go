@@ -221,6 +221,26 @@ func TestExtractZonesFromSecret(t *testing.T) {
     name: "US-EAST"
     labelKey: "zone.csi-vxflexos.dellemc.com"
 `
+	zoneDataWithMultiArray := `
+- username: "admin"
+  password: "password"
+  systemID: "2b11bb111111bb1b"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+  zone:
+    name: "ZONE-1"
+    labelKey: "zone.csi-vxflexos.dellemc.com"
+- username: "admin"
+  password: "password"
+  systemID: "1a99aa999999aa9a"
+  endpoint: "https://127.0.0.1"
+  skipCertificateValidation: true
+  mdm: "10.0.0.5,10.0.0.6"
+  zone:
+    name: "ZONE-2"
+    labelKey: "zone.csi-vxflexos.dellemc.com"
+`
 	dataWithoutZone := `
 - username: "admin"
   password: "password"
@@ -243,7 +263,21 @@ func TestExtractZonesFromSecret(t *testing.T) {
 			}
 
 			client := fake.NewClientBuilder().WithObjects(secret).Build()
-			return client, map[string]string{"zone.csi-vxflexos.dellemc.com": "US-EAST"}, "vxflexos-config", false
+			return client, map[string]string{"2b11bb111111bb1b": "US-EAST"}, "vxflexos-config", false
+		},
+		"success with zone and multi array": func() (client.WithWatch, map[string]string, string, bool) {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vxflexos-config",
+					Namespace: "vxflexos",
+				},
+				Data: map[string][]byte{
+					"config": []byte(zoneDataWithMultiArray),
+				},
+			}
+
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			return client, map[string]string{"2b11bb111111bb1b": "ZONE-1", "1a99aa999999aa9a": "ZONE-2"}, "vxflexos-config", false
 		},
 		"success no zone": func() (client.WithWatch, map[string]string, string, bool) {
 			secret := &corev1.Secret{
