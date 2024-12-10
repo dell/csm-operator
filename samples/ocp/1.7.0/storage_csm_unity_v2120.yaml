@@ -19,13 +19,11 @@ spec:
       storageCapacity: true
     configVersion: v2.12.0
     # Controller count
-    # Allowed values: n, where n > 0
-    # Default value: 2
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-unity:v2.12.0"
+      image: "registry.connect.redhat.com/dell-emc/dell-csm-unity@sha256:969b8c40628c7c46e2fdec84ab2310c48f2dee9c75d106380da88cf6821ad97b"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
@@ -86,21 +84,19 @@ spec:
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
-        # Default volume-name-prefix: csivol
+        image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
+        image: registry.k8s.io/sig-storage/csi-attacher@sha256:6e54dae32284f60a2de1645c527715e4c934e5ce7899560c0d845bac957118dc
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:0d23a6fd60c421054deec5e6d0405dc3498095a5a597e175236c0692f4adee0f
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
+        image: registry.k8s.io/sig-storage/csi-resizer@sha256:ab774734705a906561e15b67f6a96538f3ad520335d636f793aaafe87a3b5200
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:b3e90b33781670ac050c22c9e88b9e876493dca248966b9da6f7a90cc412ab86
       - name: csi-metadata-retriever
-        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
+        image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:3a8f2f0311b68e7f208ce67c9fd4c52d6fed7a025aa4dd745d7a09c5d0b9168a
       # health monitor is disabled by default, refer to driver documentation before enabling it
-      # Default monitor-interval: 60s
       - name: external-health-monitor
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure when the storageCapacity is set as "true"
@@ -110,7 +106,7 @@ spec:
 
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:160f1906b49914e544a68d96a97eaa71107b600cee883b60ce1ab9c71d02ae63
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.

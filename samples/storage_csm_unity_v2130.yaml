@@ -19,9 +19,10 @@ spec:
       storageCapacity: true
     configVersion: v2.13.0
     # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: 2
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-unity:v2.13.0"
@@ -98,6 +99,7 @@ spec:
       - name: csi-metadata-retriever
         image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Default monitor-interval: 60s
       - name: external-health-monitor
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure when the storageCapacity is set as "true"

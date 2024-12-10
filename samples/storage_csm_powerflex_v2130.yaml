@@ -20,7 +20,6 @@ spec:
     configVersion: v2.13.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0"
@@ -74,6 +73,7 @@ spec:
             value: "10.xx.xx.xx,10.xx.xx.xx" # do not add mdm value here if it is present in secret
             # health monitor is disabled by default, refer to driver documentation before enabling it
             # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+            # Default monitor-interval: 60s
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -214,19 +214,23 @@ spec:
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.13.0
           envs:
             # proxyHost: hostname of the csm-authorization server
+            # Default value: none
             - name: "PROXY_HOST"
               value: "csm-authorization.com"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
+      # Default value: false
       enabled: false
       configVersion: v1.11.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
+          # Default value: false
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
@@ -247,6 +251,7 @@ spec:
               value: "INFO"
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
+          # Default value: false
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
@@ -274,6 +279,7 @@ spec:
           enabled: false
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
+          # Default value: false
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
           image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.11.0

@@ -19,7 +19,6 @@ spec:
     configVersion: v2.13.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "dellemc/csi-vxflexos:v2.11.0"

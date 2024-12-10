@@ -14,7 +14,6 @@ spec:
     configVersion: v2.13.0
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: true
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
