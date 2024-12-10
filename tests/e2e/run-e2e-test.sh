@@ -30,6 +30,7 @@ export REPLICATION=false
 export OBSERVABILITY=false
 export RESILIENCY=false
 export APPLICATIONMOBILITY=false
+export ZONING=false
 
 set -o errexit
 set -o nounset
@@ -169,6 +170,7 @@ function usage() {
   echo "  --pstore                                     use to run e2e powerstore suite"
   echo "  --unity                                      use to run e2e unity suite"
   echo "  --pmax                                       use to run e2e powermax suite"
+  echo "  --zoning                                     use to run powerflex zoning tests (requires multiple storage systems)"
   echo "  --minimal                                    use minimal testfiles scenarios"
   echo
 
@@ -215,6 +217,8 @@ while getopts ":hv-:" optchar; do
       export UNITY=true ;;
     pmax)
       export POWERMAX=true ;;
+    zoning)
+      export ZONING=true ;;
     cert-csi)
       CERT_CSI="${!OPTIND}"
       OPTIND=$((OPTIND + 1))
