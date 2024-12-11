@@ -22,6 +22,15 @@ export PFLEX_ENDPOINT="10.1.1.1"
 export PFLEX_MDM="10.0.0.1,10.0.0.2"
 export PFLEX_NAS="none"
 export PFLEX_AUTH_ENDPOINT="localhost:9401"
+# an additional PFlex array is necessary for zoning tests
+export PFLEX_ZONING_USER="zoningUsername"
+export PFLEX_ZONING_PASS="zoningPassword"
+export PFLEX_ZONING_SYSTEMID="zoningSystemID"
+export PFLEX_ZONING_ENDPOINT="10.1.1.2"
+export PFLEX_ZONING_MDM="10.0.0.3,10.0.0.4"
+export PFLEX_ZONING_NAS="none"
+export PFLEX_ZONING_POOL="pool1"
+
 # The following are Authorization Proxy Server specific for powerflex:
 export PFLEX_POOL="pool1"
 export PFLEX_STORAGE="powerflex"
