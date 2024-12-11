@@ -1536,3 +1536,13 @@ func (r *ContainerStorageModuleReconciler) GetUpdateCount() int32 {
 func (r *ContainerStorageModuleReconciler) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
 }
+
+func (r *ContainerStorageModuleReconciler) GetMatchingNodes(ctx context.Context, labelKey string, labelValue string) (*corev1.NodeList, error) {
+	nodeList := &corev1.NodeList{}
+	opts := []client.ListOption{
+		client.MatchingLabels{labelKey: labelValue},
+	}
+	err := r.List(ctx, nodeList, opts...)
+
+	return nodeList, err
+}

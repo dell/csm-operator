@@ -40,7 +40,6 @@ spec:
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "registry.connect.redhat.com/dell-emc/csi-powerstore@sha256:e26eb114d74bcd3935f252d179fc777e122ad089b3dbc29f16d7a642648608d8"

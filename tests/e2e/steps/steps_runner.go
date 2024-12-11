@@ -50,7 +50,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Validate \[([^"]*)\] driver spec from CR \[(\d+)\]$`, step.validateMinimalCSMDriverSpec)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is not installed$`, step.validateDriverNotInstalled)
 
-	runner.addStep(`^Run custom test$`, step.runCustomTest)
+	runner.addStep(`^Run custom test$`, step.runCustomTest)         // legacy support - original e2e was designed only to run ONE custom test
+	runner.addStep(`^Run \[([^"]*)\]$`, step.runCustomTestSelector) // support for multiple custom tests
 	runner.addStep(`^Enable forceRemoveDriver on CR \[(\d+)\]$`, step.enableForceRemoveDriver)
 	runner.addStep(`^Enable forceRemoveModule on CR \[(\d+)\]$`, step.enableForceRemoveModule)
 	runner.addStep(`^Delete custom resource \[(\d+)\]$`, step.deleteCustomResource)
@@ -67,6 +68,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up secret from \[([^"]*)\] in namespace \[([^"]*)\]`, step.setupSecretFromFile)
 	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
 	runner.addStep(`^Set up secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
+	runner.addStep(`^Set up temporary secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpTempSecret)
 	runner.addStep(`^Set up configMap with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpConfigMap)
 	runner.addStep(`^Set up creds with template \[([^"]*)\] for \[([^"]*)\]`, step.setUpPowermaxCreds)
 	runner.addStep(`^Restore template \[([^"]*)\] for \[([^"]*)\]`, step.restoreTemplate)

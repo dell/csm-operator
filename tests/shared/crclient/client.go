@@ -106,6 +106,8 @@ func (f Client) List(ctx context.Context, list client.ObjectList, _ ...client.Li
 	switch l := list.(type) {
 	case *corev1.PodList:
 		return f.listPodList(l)
+	case *corev1.NodeList:
+		return f.listNodeList(l)
 	case *appsv1.DeploymentList:
 		return f.listDeploymentList(ctx, &appsv1.DeploymentList{})
 	default:
@@ -117,6 +119,18 @@ func (f Client) listPodList(list *corev1.PodList) error {
 	for k, v := range f.Objects {
 		if k.Kind == "Pod" {
 			list.Items = append(list.Items, *v.(*corev1.Pod))
+		}
+	}
+	return nil
+}
+
+func (f Client) listNodeList(list *corev1.NodeList) error {
+	for k, v := range f.Objects {
+		if k.Kind == "Node" {
+			node, ok := v.(*corev1.Node)
+			if ok {
+				list.Items = append(list.Items, *node)
+			}
 		}
 	}
 	return nil

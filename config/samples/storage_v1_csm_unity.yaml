@@ -21,7 +21,6 @@ spec:
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-unity:v2.12.0"
