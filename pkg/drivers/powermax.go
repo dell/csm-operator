@@ -86,22 +86,12 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		}
 	}
 
-	foundRevProxy := false
 	for i, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.ReverseProxy {
-			foundRevProxy = true
 			cr.Spec.Modules[i].Enabled = true
 			cr.Spec.Modules[i].ForceRemoveModule = true
 			break
 		}
-	}
-	if !foundRevProxy {
-		// if we are here then it's minimal yaml
-		log.Infof("Reverse proxy module not found adding it")
-		cr.Spec.Modules = append(cr.Spec.Modules, csmv1.Module{
-			Name:    csmv1.ReverseProxy,
-			Enabled: true,
-		})
 	}
 
 	log.Debugw("preCheck", "secrets", cred)

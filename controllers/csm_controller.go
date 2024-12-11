@@ -759,6 +759,25 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	node := driverConfig.Node
 	controller := driverConfig.Controller
 
+	if cr.GetDriverType() == csmv1.PowerMax {
+		if !modules.IsReverseProxySidecar() {
+			log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployement\n")
+			log.Infof("adding proxy service name...\n")
+			modules.AddReverseProxyServiceName(&controller.Deployment)
+		} else {
+			log.Info("Starting CSI ReverseProxy Service")
+			if err := modules.ReverseProxyStartService(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
+			}
+			log.Info("Injecting CSI ReverseProxy")
+			dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
+			if err != nil {
+				return fmt.Errorf("injecting replication into deployment: %v", err)
+			}
+			controller.Deployment = *dp
+		}
+	}
+
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)
 	if err != nil {
 		return err
@@ -827,13 +846,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
-			case csmv1.ReverseProxy:
-				log.Info("Injecting CSI ReverseProxy")
-				dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
-				if err != nil {
-					return fmt.Errorf("injecting replication into deployment: %v", err)
-				}
-				controller.Deployment = *dp
 			}
 		}
 	}
@@ -1260,6 +1272,12 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return err
 	}
 	for _, cluster := range clusterClients {
+		if instance.GetDriverType() == csmv1.PowerMax && modules.IsReverseProxySidecar() {
+			log.Info("Removing CSI ReverseProxy Service")
+			if err := modules.ReverseProxyStartService(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
+				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
+			}
+		}
 		if err = removeDriverReplicaCluster(ctx, cluster, driverConfig); err != nil {
 			return err
 		}

@@ -49,13 +49,15 @@ const (
 
 // var used in deploying reverseproxy
 var (
-	deployAsSidecar            = true
-	CSIPmaxRevProxyServiceName = "X_CSI_POWERMAX_PROXY_SERVICE_NAME"
-	CSIPmaxRevProxyPort        = "X_CSI_POWERMAX_SIDECAR_PROXY_PORT"
-	RevProxyDefaultPort        = "2222"
-	RevProxyServiceName        = "csipowermax-reverseproxy"
-	RevProxyConfigMapVolName   = "configmap-volume"
-	RevProxyTLSSecretVolName   = "tls-secret"
+	deployAsSidecar              = true
+	CSIPmaxRevProxyServiceName   = "X_CSI_POWERMAX_PROXY_SERVICE_NAME"
+	CSIPmaxRevProxyPort          = "X_CSI_POWERMAX_SIDECAR_PROXY_PORT"
+	RevProxyDefaultPort          = "2222"
+	RevProxyServiceName          = "csipowermax-reverseproxy"
+	RevProxyConfigMapVolName     = "configmap-volume"
+	RevProxyConfigMapDeafultName = "powermax-reverseproxy-config"
+	RevProxyTLSSecretVolName     = "tls-secret"
+	RevProxyTLSSecretDefaultName = "csirevproxy-tls-secret"
 )
 
 // ReverseproxySupportedDrivers is a map containing the CSI Drivers supported by CSM Reverseproxy. The key is driver name and the value is the driver plugin identifier
@@ -152,10 +154,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 // ReverseProxyStartService starts reverseproxy service for node to connect to revserseproxy sidecar
 func ReverseProxyStartService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
-	if !deployAsSidecar {
-		log.Infof("DeployAsSidar is false...csi-reverseproxy service is part of deployement already\n")
-		return nil
-	}
+
 	YamlString, err := getReverseProxyService(op, cr)
 	if err != nil {
 		return err
@@ -193,9 +192,10 @@ func getReverseProxyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error
 // getReverseProxyService - gets the reverseproxy service manifest
 func getReverseProxyService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
-	revProxy, err := getReverseProxyModule(cr)
-	if err != nil {
-		return yamlString, err
+	revProxy := cr.GetModule(csmv1.ReverseProxy)
+	// This is necessary for the minimal manifest, where the reverse proxy will not be included in the CSM CR.
+	if len(revProxy.Name) == 0 {
+		revProxy.Name = csmv1.ReverseProxy
 	}
 
 	buf, err := readConfigFile(revProxy, cr, op, ReverseProxyService)
@@ -300,45 +300,11 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 
 // ReverseProxyInjectDeployment injects reverseproxy container as sidecar into controller
 func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*v1.DeploymentApplyConfiguration, error) {
-	log := logger.GetLogger(context.Background())
-
-	if !deployAsSidecar {
-		log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployement\n")
-		log.Infof("adding proxy service name...\n")
-		for i, cnt := range dp.Spec.Template.Spec.Containers {
-			if *cnt.Name == "driver" {
-				dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
-					acorev1.EnvVarApplyConfiguration{Name: &CSIPmaxRevProxyServiceName, Value: &RevProxyServiceName},
-				)
-				break
-			}
-		}
-		return &dp, nil
-	}
-
 	revProxyModule, containerPtr, err := getRevproxyApplyCR(cr, op)
 	if err != nil {
 		return nil, err
 	}
-	if revProxyModule.Components == nil {
-		revProxyModule = &csmv1.Module{
-			Name:              csmv1.ReverseProxy,
-			ForceRemoveModule: true,
-			Enabled:           true,
-			Components: []csmv1.ContainerTemplate{
-				{
-					Image: csmv1.ImageType(op.K8sVersion.Images.CSIRevProxy),
-					Name:  "csipowermax-reverseproxy",
-					Envs: []corev1.EnvVar{
-						{Name: "X_CSI_REVPROXY_TLS_SECRET", Value: "csirevproxy-tls-secret"},
-						{Name: "X_CSI_REVPROXY_PORT", Value: "2222"},
-						{Name: "X_CSI_CONFIG_MAP_NAME", Value: "powermax-reverseproxy-config"},
-						{Name: "DeployAsSidecar", Value: "true"},
-					},
-				},
-			},
-		}
-	}
+
 	container := *containerPtr
 	// update the image
 	for _, side := range revProxyModule.Components {
@@ -382,7 +348,7 @@ func getRevProxyPort(revProxyModule csmv1.Module) string {
 }
 
 func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyConfiguration {
-	var revProxyConfigMap, revProxyTLSSecret string
+	var revProxyConfigMap, revProxyTLSSecret = RevProxyConfigMapDeafultName, RevProxyTLSSecretDefaultName
 	for _, component := range revProxyModule.Components {
 		if component.Name == ReverseProxyServerComponent {
 			for _, env := range component.Envs {
@@ -422,9 +388,10 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 // returns revproxy module and container
 func getRevproxyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
-	revProxyModule, err := getReverseProxyModule(cr)
-	if err != nil {
-		return nil, nil, err
+	revProxyModule := cr.GetModule(csmv1.ReverseProxy)
+	// This is necessary for the minimal manifest, where the reverse proxy will not be included in the CSM CR.
+	if len(revProxyModule.Name) == 0 {
+		revProxyModule.Name = csmv1.ReverseProxy
 	}
 
 	buf, err := readConfigFile(revProxyModule, cr, op, ReverseProxySidecar)
@@ -439,4 +406,19 @@ func getRevproxyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig
 		return nil, nil, err
 	}
 	return &revProxyModule, &container, nil
+}
+
+func AddReverseProxyServiceName(dp *v1.DeploymentApplyConfiguration) {
+	for i, cnt := range dp.Spec.Template.Spec.Containers {
+		if *cnt.Name == "driver" {
+			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
+				acorev1.EnvVarApplyConfiguration{Name: &CSIPmaxRevProxyServiceName, Value: &RevProxyServiceName},
+			)
+			break
+		}
+	}
+}
+
+func IsReverseProxySidecar() bool {
+	return deployAsSidecar
 }
