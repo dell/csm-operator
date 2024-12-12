@@ -120,13 +120,7 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 // ReverseProxyServer - apply/delete deployment objects
 func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
-	log.Infof("Checking if DeployAsSidecar is false...\n")
-	if deployAsSidecar {
-		log.Infof("DeployAsSidecar is true...csi-reverseproxy will be installed as sidecar\n")
-		log.Infof("exiting ReverseProxyServer...\n")
-		return nil
-	}
-	YamlString, err := getReverseProxyDeployment(op, cr, csmv1.Module{})
+	YamlString, err := getReverseProxyDeployment(op, cr)
 	if err != nil {
 		return err
 	}
@@ -222,7 +216,7 @@ func getReverseProxyService(op utils.OperatorConfig, cr csmv1.ContainerStorageMo
 }
 
 // getReverseProxyDeployment - updates deployment manifest with reverseproxy CRD values
-func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule, revProxy csmv1.Module) (string, error) {
+func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 	revProxy, err := getReverseProxyModule(cr)
 	if err != nil {
@@ -237,42 +231,16 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 
 	YamlString = string(buf)
 	proxyNamespace := cr.Namespace
-	var proxyTLSSecret, proxyPort, proxyConfig string
-
-	// we will populate default values for environment variables, if nothing is given (minimal yaml)
-	if revProxy.Components == nil {
-		components := make([]csmv1.ContainerTemplate, 0)
-		components = append(components, csmv1.ContainerTemplate{
-			Name: "csipowermax-reverseproxy",
-		})
-		revProxy.Components = components
-
-		revProxy.Components[0].Envs = append(revProxy.Components[0].Envs, corev1.EnvVar{
-			Name:  "X_CSI_REVPROXY_TLS_SECRET",
-			Value: "csirevproxy-tls-secret",
-		})
-		revProxy.Components[0].Envs = append(revProxy.Components[0].Envs, corev1.EnvVar{
-			Name:  "X_CSI_REVPROXY_PORT",
-			Value: "2222",
-		})
-		revProxy.Components[0].Envs = append(revProxy.Components[0].Envs, corev1.EnvVar{
-			Name:  "X_CSI_CONFIG_MAP_NAME",
-			Value: "powermax-reverseproxy-config",
-		})
-		revProxy.Components[0].Envs = append(revProxy.Components[0].Envs, corev1.EnvVar{
-			Name:  "DeployAsSidecar",
-			Value: "true",
-		})
-
-	}
+	proxyTLSSecret := RevProxyTLSSecretDefaultName
+	proxyPort := RevProxyDefaultPort
+	proxyConfig := RevProxyConfigMapDeafultName
+	image := op.K8sVersion.Images.CSIRevProxy
 
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
-			image := op.K8sVersion.Images.CSIRevProxy
 			if string(component.Image) != "" {
 				image = string(component.Image)
 			}
-			YamlString = strings.ReplaceAll(YamlString, ReverseProxyImage, image)
 			for _, env := range component.Envs {
 				if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
 					proxyTLSSecret = env.Value
@@ -283,13 +251,11 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
 					proxyConfig = env.Value
 				}
-				if env.Name == "DeployAsSidecar" {
-					deployAsSidecar, _ = strconv.ParseBool(env.Value)
-				}
 			}
 		}
 	}
 
+	YamlString = strings.ReplaceAll(YamlString, ReverseProxyImage, image)
 	YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseNamespace, proxyNamespace)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyPort, proxyPort)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)

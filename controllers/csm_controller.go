@@ -731,9 +731,9 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update Reverseproxy Server
-	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled {
+	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled && !modules.IsReverseProxySidecar() {
 		log.Infow("Trying Create/Update reverseproxy...")
-		if err := r.reconcileReverseProxy(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+		if err := r.reconcileReverseProxyServer(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy reverseproxy proxy server: %v", err)
 		}
 	}
@@ -1160,15 +1160,12 @@ func getDriverConfig(ctx context.Context,
 	}, nil
 }
 
-// reconcileReverseProxy - deploy reverse proxy server
-func (r *ContainerStorageModuleReconciler) reconcileReverseProxy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+// reconcileReverseProxyServer - deploy reverse proxy server
+func (r *ContainerStorageModuleReconciler) reconcileReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 	log.Infow("Reconcile reverseproxy proxy")
 	if err := modules.ReverseProxyServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 		return fmt.Errorf("unable to reconcile reverse-proxy server: %v", err)
-	}
-	if err := modules.ReverseProxyStartService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-		return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
 	}
 	return nil
 }
@@ -1272,12 +1269,6 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return err
 	}
 	for _, cluster := range clusterClients {
-		if instance.GetDriverType() == csmv1.PowerMax && modules.IsReverseProxySidecar() {
-			log.Info("Removing CSI ReverseProxy Service")
-			if err := modules.ReverseProxyStartService(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
-				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
-			}
-		}
 		if err = removeDriverReplicaCluster(ctx, cluster, driverConfig); err != nil {
 			return err
 		}
@@ -1300,6 +1291,12 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 			}
 		}
 
+		if instance.GetDriverType() == csmv1.PowerMax && modules.IsReverseProxySidecar() {
+			log.Info("Removing CSI ReverseProxy Service")
+			if err := modules.ReverseProxyStartService(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
+				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
+			}
+		}
 	}
 
 	return nil
@@ -1322,9 +1319,9 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 			return err
 		}
 	}
-	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled {
+	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled && !modules.IsReverseProxySidecar() {
 		log.Infow("Deleting ReverseProxy")
-		if err := r.reconcileReverseProxy(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+		if err := r.reconcileReverseProxyServer(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
 			return err
 		}
 	}

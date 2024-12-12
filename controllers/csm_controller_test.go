@@ -287,7 +287,7 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyError() {
 	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
 	csm.Spec.Modules = getReverseProxyModule()
 	reconciler := suite.createReconciler()
-	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileReverseProxyServer(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 }
 
@@ -300,7 +300,7 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyServiceError() {
 	reconciler := suite.createReconciler()
 	_ = modules.ReverseProxyPrecheck(ctx, operatorConfig, revProxy[0], csm, reconciler)
 	revProxy[0].ConfigVersion = ""
-	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileReverseProxyServer(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 }
 
