@@ -11,4 +11,4 @@ kind: Kustomization
 images:
   - name: controller
     newName: quay.io/dell/container-storage-modules/dell-csm-operator
-    newTag: v1.7.0
+    newTag: v1.8.0
