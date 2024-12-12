@@ -129,9 +129,15 @@ func TestGetNode(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename)
+			node, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
+				initcontainers := node.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers
+				for i := range initcontainers {
+					if *initcontainers[i].Name == "mdm-container" {
+						assert.Equal(t, string(tt.csm.Spec.Driver.Common.Image), *initcontainers[i].Image)
+					}
+				}
 			} else {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
