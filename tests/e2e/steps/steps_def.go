@@ -1026,7 +1026,7 @@ func (step *Step) validateForceRemoveDriverDisabled(res Resource, crNumStr strin
 	if found.Spec.Driver.ForceRemoveDriver != nil && !*found.Spec.Driver.ForceRemoveDriver {
 		return nil
 	}
-	return fmt.Errorf("forceRemoveDriver is not set to true")
+	return fmt.Errorf("forceRemoveDriver is not set to false")
 }
 
 func (step *Step) enableForceRemoveModule(res Resource, crNumStr string) error {
