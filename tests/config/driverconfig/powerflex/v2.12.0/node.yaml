@@ -183,6 +183,30 @@ spec:
             - name: udev-d
               mountPath: /rules.d
       initContainers:
+        - name: mdm-container
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+          imagePullPolicy: Always
+          command: ["/csi-vxflexos.sh"]
+          args:
+            - "--array-config=/vxflexos-config/config"
+            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+          env:
+            - name: X_CSI_MODE
+              value: mdm-info
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: vxflexos-config
+              mountPath: /vxflexos-config
+            - name: vxflexos-config-params
+              mountPath: /vxflexos-config-params
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            - name: mdm-dir
+              mountPath: /data
         - name: sdc
           securityContext:
             privileged: true
