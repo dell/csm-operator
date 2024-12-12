@@ -1782,7 +1782,7 @@ spec:
       name: attacher
     - image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
       name: provisioner
-    - image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
+    - image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
       name: snapshotter
     - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
       name: registrar

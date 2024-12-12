@@ -79,7 +79,7 @@ spec:
               name: RELATED_IMAGE_attacher
             - value: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
               name: RELATED_IMAGE_provisioner
-            - value: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
+            - value: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
               name: RELATED_IMAGE_snapshotter
             - value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
               name: RELATED_IMAGE_registrar
