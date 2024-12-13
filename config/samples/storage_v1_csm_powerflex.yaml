@@ -206,11 +206,11 @@ spec:
       enabled: false
       # For PowerFlex Tech-Preview v2.0.0-alpha use v1.11.0 as configVersion.
       # Do not change the configVersion to v2.0.0-alpha
-      configVersion: v1.12.0
+      configVersion: v2.1.0
       components:
         - name: karavi-authorization-proxy
           # Use image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0 for Authorization v2.1.0
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.13.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
