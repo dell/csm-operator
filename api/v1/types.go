@@ -226,7 +226,7 @@ type Driver struct {
 
 	// ForceRemoveDriver is the boolean flag used to remove driver deployment when CR is deleted
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Driver"
-	ForceRemoveDriver bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
+	ForceRemoveDriver *bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
 }
 
 // ContainerTemplate template
