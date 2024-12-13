@@ -271,6 +271,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		ConfigDirectory: r.Config.ConfigDirectory,
 	}
 
+	// Set default value for forceRemoveDriver to true if not specified by the user
+	if csm.Spec.Driver.ForceRemoveDriver == nil {
+		truebool := true
+		csm.Spec.Driver.ForceRemoveDriver = &truebool
+	}
+
 	// Set default components if using miminal manifest (without components)
 	err = utils.LoadDefaultComponents(ctx, csm, *operatorConfig)
 	if err != nil {
@@ -289,7 +295,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
 
 		// check for force cleanup
-		if csm.Spec.Driver.ForceRemoveDriver {
+		if *csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resources deployed from CR by operator
 			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))
