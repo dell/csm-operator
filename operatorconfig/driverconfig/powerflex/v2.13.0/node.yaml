@@ -226,7 +226,7 @@ spec:
             - "-c"
             - |
                source /data/node_mdms.txt
-               /files/scripts/init.sh 
+               /files/scripts/init.sh
           env:
             - name: NODENAME
               valueFrom:

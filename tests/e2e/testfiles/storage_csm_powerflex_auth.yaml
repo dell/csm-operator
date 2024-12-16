@@ -43,7 +43,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.x.x.x,10.x.x.x" # provide MDM value
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -122,7 +122,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.x.x.x,10.x.x.x" # provide MDM value
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -131,7 +131,7 @@ spec:
       configVersion: v1.13.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1-nightly	
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1-nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
