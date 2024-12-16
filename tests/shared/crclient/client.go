@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/tests/shared"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -97,7 +98,9 @@ func (f Client) Get(_ context.Context, key client.ObjectKey, obj client.Object, 
 }
 
 // List implements client.Client.
-func (f Client) List(ctx context.Context, list client.ObjectList, _ ...client.ListOption) error {
+func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	_, log := logger.GetNewContextWithLogger("0")
+
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("List", list); err != nil {
 			return err
@@ -107,7 +110,27 @@ func (f Client) List(ctx context.Context, list client.ObjectList, _ ...client.Li
 	case *corev1.PodList:
 		return f.listPodList(l)
 	case *corev1.NodeList:
-		return f.listNodeList(l)
+
+		var labelValue string = ""
+		// Initialize ListOptions
+		listOpts := &client.ListOptions{}
+		// Apply each ListOption to listOpts
+		if opts != nil {
+			for _, opt := range opts {
+				if opt != nil {
+					opt.ApplyToList(listOpts)
+					//log.Infof("\t client.go List 2 opt %v %s\n", opt, opt)
+					//log.Infof("\t client.go List 2 listOpts %v\n", listOpts)
+				}
+			}
+		}
+		s := listOpts.LabelSelector
+		if s != nil {
+			log.Infof("\t client.go labelValue is non null set to '%s'\n", s.String())
+			labelValue = s.String()
+		}
+
+		return f.listNodeList(l, labelValue, "")
 	case *appsv1.DeploymentList:
 		return f.listDeploymentList(ctx, &appsv1.DeploymentList{})
 	default:
@@ -124,13 +147,28 @@ func (f Client) listPodList(list *corev1.PodList) error {
 	return nil
 }
 
-func (f Client) listNodeList(list *corev1.NodeList) error {
+func (f Client) listNodeList(list *corev1.NodeList, label string, value string) error {
+	_, log := logger.GetNewContextWithLogger("0")
 	for k, v := range f.Objects {
 		if k.Kind == "Node" {
-			node, ok := v.(*corev1.Node)
-			if ok {
-				list.Items = append(list.Items, *node)
+			node := *v.(*corev1.Node)
+			for key, value := range node.ObjectMeta.Labels {
+				//log.Infof("\tnode key:%v value:%v\n", key, value)
+				//log.Infof("\t%v \n", client.ListOption.labelKey)
+				// if key == client.ListOption.labelKey
+				if label != "" {
+					if label == key {
+						log.Infof("\tMatching node found. node key:%v incoming label:%v value:%v\n",
+							key, label, value)
+						list.Items = append(list.Items, *v.(*corev1.Node))
+					} else {
+						log.Infof("\tnon-matching node found. node key:%v incoming label:%v\n", key, label)
+					}
+				} else {
+					list.Items = append(list.Items, *v.(*corev1.Node))
+				}
 			}
+
 		}
 	}
 	return nil

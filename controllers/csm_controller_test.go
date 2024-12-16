@@ -2386,9 +2386,6 @@ func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string,
 }
 
 func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
-	// TBD: crclient/client.go needs to be augmented to filter on labels during
-	// the List return for a viable thorough test. Since this functionality is
-	// missing, this test is quite elementary as a result.
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
@@ -2416,12 +2413,19 @@ func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
 	err = suite.fakeClient.Create(ctx, &node)
 	assert.Nil(suite.T(), err)
 
+	// create node object, add to fakeclient, reconcile.GetMatchingNodes
+	node2 := shared.MakeNode("node2", suite.namespace)
+	//	node2.Labels["topology.kubernetes.io/zone"] = "US-EAST"
+
+	err = suite.fakeClient.Create(ctx, &node2)
+	assert.Nil(suite.T(), err)
+
 	nodeList := &corev1.NodeList{}
 	err = suite.fakeClient.List(ctx, nodeList, nil)
 	assert.Nil(suite.T(), err)
 
 	nodeListMatching, err := reconciler.GetMatchingNodes(ctx, "topology.kubernetes.io/zone", "US-EAST")
-	ctrl.Log.Info("node list response (1)", "number of nodes is: ", len(nodeListMatching.Items))
+	ctrl.Log.Info("node list response expecting (1)", "number of nodes matching is: ", len(nodeListMatching.Items))
 
 	// Check the len to be 1 else fail
 	if len(nodeListMatching.Items) != 1 {
@@ -2436,5 +2440,65 @@ func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
 		ctrl.Log.Error(err, "Unmatched label on node.")
 		panic(err)
 	}
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestZoneValidation() {
+
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Annotations[configVersionKey] = configVersion
+
+	/*
+		sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
+		err := suite.fakeClient.Create(ctx, sec)
+		if err != nil {
+			panic(err)
+		}
+	*/
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
+
+	reconciler := suite.createReconciler()
+
+	// create node object, add to fakeclient, reconcile.GetMatchingNodes
+	node := shared.MakeNode("node1", suite.namespace)
+	node.Labels["topology.kubernetes.io/zone"] = "US-EAST"
+
+	err = suite.fakeClient.Create(ctx, &node)
+	assert.Nil(suite.T(), err)
+
+	// create node object, add to fakeclient, reconcile.GetMatchingNodes
+	node2 := shared.MakeNode("node2", suite.namespace)
+	//	node2.Labels["topology.kubernetes.io/zone"] = "US-EAST"
+
+	err = suite.fakeClient.Create(ctx, &node2)
+	assert.Nil(suite.T(), err)
+
+	nodeList := &corev1.NodeList{}
+	err = suite.fakeClient.List(ctx, nodeList, nil)
+	assert.Nil(suite.T(), err)
+
+	// add secret with NO zone to the namespace
+	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
+
+	zoneConfigValid, err := reconciler.ZoneValidation(ctx, &csm, suite.namespace)
+	if err != nil {
+		panic(err)
+	}
+	if zoneConfigValid != true {
+		// fail
+		panic(err)
+	}
+
 	assert.Nil(suite.T(), err)
 }
