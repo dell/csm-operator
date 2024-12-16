@@ -17,13 +17,13 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-unity:v2.12.0"
+      image: "quay.io/dell/container-storage-modules/csi-unity:v2.13.0"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
@@ -93,9 +93,9 @@ spec:
       - name: resizer
         image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
       - name: csi-metadata-retriever
-        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.9.0
+        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
@@ -161,6 +161,13 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
+# Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
+#  - key: "offline.unity.storage.dell.com"
+#    operator: "Exists"
+#    effect: "NoSchedule"
+# - key: "unity.podmon.storage.dell.com"
+#   operator: "Exists"
+#   effect: "NoSchedule"
 # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
 # - key: "node-role.kubernetes.io/control-plane"
 #   operator: "Exists"
