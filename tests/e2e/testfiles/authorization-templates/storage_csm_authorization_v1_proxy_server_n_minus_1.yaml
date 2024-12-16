@@ -35,7 +35,7 @@ spec:
           roleService: dellemc/csm-authorization-role:v1.12.0
           storageService: dellemc/csm-authorization-storage:v1.12.0
           opa: openpolicyagent/opa
-          opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
+          opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.7
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
           # for self-signed certs, leave empty string
           # Allowed values: string
