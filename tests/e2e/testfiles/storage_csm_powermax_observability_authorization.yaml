@@ -32,7 +32,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
@@ -198,7 +198,7 @@ spec:
       - name: resizer
         image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
       - name: csi-metadata-retriever
         image: dellemc/csi-metadata-retriever:v1.8.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
@@ -243,7 +243,7 @@ spec:
     - name: authorization
       # enabled: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.11.0
+      configVersion: v2.1.0
       components:
         - name: karavi-authorization-proxy
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
@@ -258,7 +258,7 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.10.0
+      configVersion: v1.11.0
       components:
         - name: topology
           # enabled: Enable/Disable topology

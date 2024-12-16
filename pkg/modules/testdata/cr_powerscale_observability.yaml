@@ -6,25 +6,25 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     authSecret: isilon-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.12.0"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.13.0"
       imagePullPolicy: IfNotPresent
   modules:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.10.0
+      configVersion: v1.11.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-topology:v1.10.0
+          image: quay.io/dell/container-storage-modules/csm-topology:v1.11.0
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -48,7 +48,7 @@ spec:
           enabled: true
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.7.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.8.0
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int
@@ -114,7 +114,7 @@ spec:
       enabled: false
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

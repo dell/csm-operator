@@ -157,13 +157,13 @@ spec:
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: true
-      configVersion: v1.0.3
+      configVersion: v1.1.0
       forceRemoveModule: true
       components:
         - name: application-mobility-controller-manager
           # enable: Enable/Disable application mobility controller-manager
           enabled: true
-          image: dellemc/csm-application-mobility-controller:v1.0.3
+          image: quay.io/dell/container-storage-modules/csm-application-mobility-controller:v1.1.0
           imagePullPolicy: IfNotPresent
           envs:
             # Replica count for application mobility
