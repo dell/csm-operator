@@ -56,10 +56,10 @@ spec:
         # all resources created in the Array
         # This should be unique per K8s/CSI deployment
         # maximum length of this value is 3 characters
-        # Default value: None
+        # Default value: "CSM"
         # Examples: "XYZ", "EMC"
         - name: X_CSI_K8S_CLUSTER_PREFIX
-          value: "XYZ"
+          value: "CSM"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
         # Default value: /var/lib/kubelet
