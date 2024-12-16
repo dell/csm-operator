@@ -225,9 +225,7 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-               echo "Inside sdc init-container"
                source /data/node_mdms.txt
-               env
                /files/scripts/init.sh 
           env:
             - name: NODENAME
