@@ -1098,7 +1098,6 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Run custom test"
 - scenario: "Install Powerflex Driver (With Replication)"
   paths:
     - "testfiles/storage_csm_powerflex_replica.yaml"
