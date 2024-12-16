@@ -26,9 +26,6 @@ import (
 
 	"encoding/json"
 	"path/filepath"
-
-	"path/filepath"
-
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
