@@ -111,7 +111,7 @@ func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client
 		return f.listPodList(l)
 	case *corev1.NodeList:
 
-		var labelValue string = ""
+		var labelKey string
 		// Initialize ListOptions
 		listOpts := &client.ListOptions{}
 		// Apply each ListOption to listOpts
@@ -119,18 +119,15 @@ func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client
 			for _, opt := range opts {
 				if opt != nil {
 					opt.ApplyToList(listOpts)
-					//log.Infof("\t client.go List 2 opt %v %s\n", opt, opt)
-					//log.Infof("\t client.go List 2 listOpts %v\n", listOpts)
 				}
 			}
 		}
 		s := listOpts.LabelSelector
 		if s != nil {
-			log.Infof("\t client.go labelValue is non null set to '%s'\n", s.String())
-			labelValue = s.String()
+			labelKey = s.String()
 		}
 
-		return f.listNodeList(l, labelValue, "")
+		return f.listNodeList(l, labelKey)
 	case *appsv1.DeploymentList:
 		return f.listDeploymentList(ctx, &appsv1.DeploymentList{})
 	default:
