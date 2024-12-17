@@ -18,6 +18,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -25,9 +26,6 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
 	"encoding/json"
-	"path/filepath"
-
-	"path/filepath"
 
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
@@ -361,8 +359,7 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 		driver.DNSPolicy != "" ||
 		driver.Common != nil ||
 		driver.AuthSecret != "" ||
-		driver.TLSCertSecret != "" ||
-		driver.ForceUpdate {
+		driver.TLSCertSecret != "" {
 		return fmt.Errorf("unexpected fields found in Driver spec: %+v", driver)
 	}
 
