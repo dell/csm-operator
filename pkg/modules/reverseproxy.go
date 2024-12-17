@@ -385,6 +385,6 @@ func AddReverseProxyServiceName(dp *v1.DeploymentApplyConfiguration) {
 	}
 }
 
-func IsReverseProxySidecar() bool {
+var IsReverseProxySidecar = func() bool {
 	return deployAsSidecar
 }

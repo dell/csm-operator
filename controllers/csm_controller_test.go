@@ -861,6 +861,9 @@ func (suite *CSMControllerTestSuite) TestRemoveModule() {
 				}
 				*tt.errorInjector = true
 			}
+			if tt.csm.HasModule(csmv1.ReverseProxy) {
+				modules.IsReverseProxySidecar = func() bool { return false }
+			}
 			err := r.removeModule(ctx, tt.csm, operatorConfig, r.Client)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
