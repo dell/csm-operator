@@ -2506,7 +2506,6 @@ func (suite *CSMControllerTestSuite) TestZoneValidation2() {
 	err = suite.fakeClient.Create(ctx, &node3)
 	assert.Nil(suite.T(), err)
 
-
 	// add secret with zone to the namespace
 	secretZone := shared.MakeSecretPowerFlexWithZone(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, secretZone)

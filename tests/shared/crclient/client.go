@@ -148,7 +148,7 @@ func (f Client) listNodeList(list *corev1.NodeList, label string) error {
 		if k.Kind == "Node" {
 			node := *v.(*corev1.Node)
 			if label != "" {
-				for key, _ := range node.ObjectMeta.Labels {
+				for key := range node.ObjectMeta.Labels {
 					if label == key {
 						log.Infof("\tadding node name:%v to list matching label key \n", node.Name)
 						list.Items = append(list.Items, *v.(*corev1.Node))

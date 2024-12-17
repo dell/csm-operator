@@ -1538,7 +1538,7 @@ func (r *ContainerStorageModuleReconciler) GetMatchingNodes(ctx context.Context,
 // 2. Array secret has zone label A, but one of the nodes has zone label B, or no label
 // 3. Some of the nodes have a zone label, but arrays have no zone labels.
 // 4. All of the arrays have a zone label, but nodes have no zone label.
-func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule, namespace string) (error) {
+func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule, namespace string) error {
 	log := logger.GetLogger(ctx)
 	nodeList := &corev1.NodeList{}
 
