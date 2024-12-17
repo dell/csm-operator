@@ -26,7 +26,6 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
 	"encoding/json"
-
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -40,6 +39,7 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"k8s.io/utils/pointer"
+	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -1115,8 +1115,45 @@ func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
 		return err
 	}
 
-	found.Spec.Driver.ForceRemoveDriver = true
+	truebool := true
+	found.Spec.Driver.ForceRemoveDriver = &truebool
 	return step.ctrlClient.Update(context.TODO(), found)
+}
+
+func (step *Step) validateForceRemoveDriverEnabled(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found,
+	); err != nil {
+		return err
+	}
+
+	if found.Spec.Driver.ForceRemoveDriver != nil && *found.Spec.Driver.ForceRemoveDriver {
+		return nil
+	}
+	return fmt.Errorf("forceRemoveDriver is not set to true")
+}
+
+func (step *Step) validateForceRemoveDriverDisabled(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found,
+	); err != nil {
+		return err
+	}
+
+	if found.Spec.Driver.ForceRemoveDriver != nil && !*found.Spec.Driver.ForceRemoveDriver {
+		return nil
+	}
+	return fmt.Errorf("forceRemoveDriver is not set to false")
 }
 
 func (step *Step) enableForceRemoveModule(res Resource, crNumStr string) error {

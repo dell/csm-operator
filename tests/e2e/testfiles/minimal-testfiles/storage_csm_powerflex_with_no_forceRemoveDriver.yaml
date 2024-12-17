@@ -1,0 +1,9 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: test-vxflexos
+  namespace: test-vxflexos
+spec:
+  driver:
+    csiDriverType: "powerflex"
+    configVersion: v2.12.0

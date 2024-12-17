@@ -2071,7 +2071,7 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	}
 	// remove driver when deleting csm
-	csm.Spec.Driver.ForceRemoveDriver = true
+	csm.Spec.Driver.ForceRemoveDriver = &truebool
 	csm.Annotations[configVersionKey] = configVersion
 
 	csm.Spec.Modules = modules
@@ -2105,7 +2105,7 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	}
 	// remove driver when deleting csm
-	csm.Spec.Driver.ForceRemoveDriver = true
+	csm.Spec.Driver.ForceRemoveDriver = &truebool
 	csm.Annotations[configVersionKey] = configVersion
 
 	csm.Spec.Modules = modules
@@ -2377,7 +2377,7 @@ func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string,
 		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	}
 	// remove driver when deleting csm
-	csm.Spec.Driver.ForceRemoveDriver = true
+	csm.Spec.Driver.ForceRemoveDriver = &trueBool
 	csm.Spec.Modules = modules
 	out, _ := json.Marshal(&csm)
 	csm.Annotations[previouslyAppliedCustomResource] = string(out)
