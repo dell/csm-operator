@@ -99,8 +99,6 @@ func (f Client) Get(_ context.Context, key client.ObjectKey, obj client.Object, 
 
 // List implements client.Client.
 func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
-	_, log := logger.GetNewContextWithLogger("0")
-
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("List", list); err != nil {
 			return err
@@ -151,15 +149,15 @@ func (f Client) listNodeList(list *corev1.NodeList, label string) error {
 			node := *v.(*corev1.Node)
 			if label != "" {
 				for key, _ := range node.ObjectMeta.Labels {
-						if label == key {
-							log.Infof("\tadding node name:%v to list matching label key \n", node.Name)
-							list.Items = append(list.Items, *v.(*corev1.Node))
-						} else {
-							log.Infof("\tnon-matching node found. node key:%v incoming label:%v\n", key, label)
-						}
+					if label == key {
+						log.Infof("\tadding node name:%v to list matching label key \n", node.Name)
+						list.Items = append(list.Items, *v.(*corev1.Node))
+					} else {
+						log.Infof("\tnon-matching node found. node key:%v incoming label:%v\n", key, label)
+					}
 				}
 			} else {
-					list.Items = append(list.Items, *v.(*corev1.Node))
+				list.Items = append(list.Items, *v.(*corev1.Node))
 			}
 		}
 	}
