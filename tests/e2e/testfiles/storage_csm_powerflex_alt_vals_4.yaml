@@ -17,7 +17,7 @@ spec:
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
-      imagePullPolicy: Never
+      imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
           value: "false"
@@ -145,7 +145,7 @@ spec:
       #   effect: "NoSchedule"
     initContainers:
       - image: dellemc/sdc:4.5.2.1
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         name: sdc
         envs:
           - name: MDM

@@ -22,7 +22,7 @@ spec:
     forceRemoveDriver: true
     common:
       image: "dellemc/csi-vxflexos:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
           value: "false"

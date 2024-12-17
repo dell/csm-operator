@@ -17,7 +17,7 @@ spec:
     forceRemoveDriver: false
     common:
       image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
           value: "false"
