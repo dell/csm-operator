@@ -1555,7 +1555,7 @@ func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, c
 
 	// Make sure all zone keys are the same, if not fail
 	var firstKeyLabel string
-	for key, _ := range zones {
+	for key := range zones {
 		if firstKeyLabel == "" {
 			firstKeyLabel = key
 			//log.Infof("firstKeyLabel %s\n", firstKeyLabel)
