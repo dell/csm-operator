@@ -265,3 +265,8 @@ build-base-image: download-csm-common
 .PHONY: download-csm-common
 download-csm-common:
 	curl -O -L https://raw.githubusercontent.com/dell/csm/main/config/csm-common.mk
+
+# build catalog image with File based catalog file
+.PHONY: catalog-build-fbc
+catalog-build-fbc:
+	podman build . -f catalog.Dockerfile -t quay.io/community-operator-pipeline-prod/dell-csm-operator-catalog:latest
