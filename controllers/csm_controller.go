@@ -1329,12 +1329,9 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			return fmt.Errorf("failed powerflex validation: %v", err)
 		}
 		// zoning initially applies only to pflex
-		zonesAreValid, err := r.ZoneValidation(ctx, cr, namespace)
+		err = r.ZoneValidation(ctx, cr, namespace)
 		if err != nil {
 			return fmt.Errorf("error during zone validation: %v", err)
-		}
-		if zonesAreValid == false {
-			return fmt.Errorf("failed zone validation.")
 		}
 	case csmv1.PowerStore:
 		err := drivers.PrecheckPowerStore(ctx, cr, operatorConfig, r.GetClient())
@@ -1526,7 +1523,7 @@ func (r *ContainerStorageModuleReconciler) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
 }
 
-func (r *ContainerStorageModuleReconciler) GetMatchingNodes(ctx context.Context, labelKey string, labelValue string) (*corev1.NodeList, error) {
+func (r *ContainerStorageModuleReconciler) GetMatchingNodes(ctx context.Context, labelKey string) (*corev1.NodeList, error) {
 	nodeList := &corev1.NodeList{}
 	opts := []client.ListOption{
 		client.HasLabels{labelKey},
@@ -1541,63 +1538,55 @@ func (r *ContainerStorageModuleReconciler) GetMatchingNodes(ctx context.Context,
 // 2. Array secret has zone label A, but one of the nodes has zone label B, or no label
 // 3. Some of the nodes have a zone label, but arrays have no zone labels.
 // 4. All of the arrays have a zone label, but nodes have no zone label.
-func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule, namespace string) (bool, error) {
+func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule, namespace string) (error) {
 	log := logger.GetLogger(ctx)
-	validZoneConfiguration := true
 	nodeList := &corev1.NodeList{}
-	log.Infof(" nodeList len %d", len(nodeList.Items))
-	var numberOfNodes = len(nodeList.Items)
 
-	for _, node := range nodeList.Items {
-		log.Infof(" nodeList name %s", node.Name)
+	err := r.Client.List(ctx, nodeList)
+	if err != nil {
+		return fmt.Errorf("error listing nodes %v", err)
 	}
+	numberOfNodes := len(nodeList.Items)
+
 	zones, err := drivers.ExtractZones(ctx, cr, r.Client, namespace)
 	if err != nil {
-		log.Infof("ZoneValidation failed with error: %v", err)
-		return false, err
+		return fmt.Errorf("ZoneValidation failed with error: %v", err)
 	}
 
-	log.Infof("ZoneValidation zones returned from ExtractZones: %v", zones)
 	// Make sure all zone keys are the same, if not fail
-	i := 0
-	var firstKeyLabel string = ""
-	for key, value := range zones {
-		if i == 0 {
+	var firstKeyLabel string
+	for key, _ := range zones {
+		if firstKeyLabel == "" {
 			firstKeyLabel = key
-			log.Infof("firstKeyLabel %s\n", firstKeyLabel)
-			i = i + 1
+			//log.Infof("firstKeyLabel %s\n", firstKeyLabel)
 			continue
 		}
 		if key != firstKeyLabel {
-			log.Infof("mismatch Keys\n")
-			break
+			return fmt.Errorf("detected mismatched Keys in zones")
 		}
-		log.Infof("Zones Key: %s, Value: %s\n", key, value)
+		//log.Infof("Zones Key: %s, Value: %s\n", key, value)
 	}
 	// TBD: also check if there any arrays specified in the secret that do not have
 	// a zone label. this constitutes a zone configuration failure.
 	// Determine how many arrays are configured and match that with the len(map)
 
-	// The labelKey, GetMatchingNodes with labelKey, value="", verify that the list
+	// The labelKey, GetMatchingNodes with labelKey, verify that the list
 	// returned is the same size as the current number of nodes on the cluster
 	// i.e. all nodes must have this zoning label key. if the number of nodes
 	// returned does not match the number of nodes on the cluster, then fail,
 	// otherwise return true
 	if firstKeyLabel != "" {
-		matchingNodeList, err := r.GetMatchingNodes(ctx, firstKeyLabel, "")
+		matchingNodeList, err := r.GetMatchingNodes(ctx, firstKeyLabel)
 		if err != nil {
-			log.Errorw("Failed to retrieve list of nodes for label", firstKeyLabel)
-			return validZoneConfiguration, err
+			return fmt.Errorf("Failed to retrieve list of nodes for label: %s", firstKeyLabel)
 		}
-		log.Infof(" number of nodes with this label %d", len(matchingNodeList.Items))
 		for _, node := range matchingNodeList.Items {
 			log.Infof(" matching node found with node name %s", node.Name)
 		}
 		if len(matchingNodeList.Items) != numberOfNodes {
-			validZoneConfiguration = false
-			log.Errorw("Zone configuration mismatch ", len(matchingNodeList.Items))
+			return fmt.Errorf("zone and node configuration mismatch %d", len(matchingNodeList.Items))
 		}
 	}
 
-	return validZoneConfiguration, err
+	return err
 }

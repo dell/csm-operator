@@ -147,28 +147,23 @@ func (f Client) listPodList(list *corev1.PodList) error {
 	return nil
 }
 
-func (f Client) listNodeList(list *corev1.NodeList, label string, value string) error {
+func (f Client) listNodeList(list *corev1.NodeList, label string) error {
 	_, log := logger.GetNewContextWithLogger("0")
 	for k, v := range f.Objects {
 		if k.Kind == "Node" {
 			node := *v.(*corev1.Node)
-			for key, value := range node.ObjectMeta.Labels {
-				//log.Infof("\tnode key:%v value:%v\n", key, value)
-				//log.Infof("\t%v \n", client.ListOption.labelKey)
-				// if key == client.ListOption.labelKey
-				if label != "" {
-					if label == key {
-						log.Infof("\tMatching node found. node key:%v incoming label:%v value:%v\n",
-							key, label, value)
-						list.Items = append(list.Items, *v.(*corev1.Node))
-					} else {
-						log.Infof("\tnon-matching node found. node key:%v incoming label:%v\n", key, label)
-					}
-				} else {
-					list.Items = append(list.Items, *v.(*corev1.Node))
+			if label != "" {
+				for key, _ := range node.ObjectMeta.Labels {
+						if label == key {
+							log.Infof("\tadding node name:%v to list matching label key \n", node.Name)
+							list.Items = append(list.Items, *v.(*corev1.Node))
+						} else {
+							log.Infof("\tnon-matching node found. node key:%v incoming label:%v\n", key, label)
+						}
 				}
+			} else {
+					list.Items = append(list.Items, *v.(*corev1.Node))
 			}
-
 		}
 	}
 	return nil
