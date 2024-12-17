@@ -1558,13 +1558,11 @@ func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, c
 	for key := range zones {
 		if firstKeyLabel == "" {
 			firstKeyLabel = key
-			//log.Infof("firstKeyLabel %s\n", firstKeyLabel)
 			continue
 		}
 		if key != firstKeyLabel {
 			return fmt.Errorf("detected mismatched Keys in zones")
 		}
-		//log.Infof("Zones Key: %s, Value: %s\n", key, value)
 	}
 	// TBD: also check if there any arrays specified in the secret that do not have
 	// a zone label. this constitutes a zone configuration failure.

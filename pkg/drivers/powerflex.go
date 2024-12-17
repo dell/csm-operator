@@ -348,7 +348,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 }
 
 func ExtractZones(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client, namespace string) (map[string]string, error) {
-
 	secretName := cr.Name + "-config"
 	zonesMapData, err := ExtractZonesFromSecret(ctx, ct, namespace, secretName)
 	return zonesMapData, err

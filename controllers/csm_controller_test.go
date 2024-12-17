@@ -585,7 +585,7 @@ func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
 	if err != nil {
 		panic(err)
 	}
-	//sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	// sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
@@ -654,7 +654,7 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradeSkipVersion() {
 	if err != nil {
 		panic(err)
 	}
-	//sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	// sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
@@ -2386,7 +2386,6 @@ func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string,
 }
 
 func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
 	csm.Spec.Driver.Common.Image = "image"
@@ -2438,7 +2437,6 @@ func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
 }
 
 func (suite *CSMControllerTestSuite) TestZoneValidation() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 	csm.Spec.Driver.Common.Image = "image"
@@ -2477,7 +2475,6 @@ func (suite *CSMControllerTestSuite) TestZoneValidation() {
 }
 
 func (suite *CSMControllerTestSuite) TestZoneValidation2() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 	csm.Spec.Driver.Common.Image = "image"
@@ -2531,7 +2528,6 @@ func (suite *CSMControllerTestSuite) TestZoneValidation2() {
 }
 
 func (suite *CSMControllerTestSuite) TestZoneValidation3() {
-
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 	csm.Spec.Driver.Common.Image = "image"
