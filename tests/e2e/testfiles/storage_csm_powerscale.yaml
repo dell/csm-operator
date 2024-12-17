@@ -13,7 +13,7 @@ spec:
       fSGroupPolicy: "ReadWriteOnceWithFSType"
     configVersion: v2.13.0
     authSecret: isilon-creds
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true

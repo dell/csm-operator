@@ -31,7 +31,7 @@ spec:
     configVersion: v2.13.0
     authSecret: powerstore-config
     # Controller count
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
