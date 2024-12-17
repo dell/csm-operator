@@ -738,7 +738,8 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
-	csm.Spec.Driver.CSIDriverType = "powerscale"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
+	modules.IsReverseProxySidecar = func() bool { return true }
 
 	removeDriverTests := []struct {
 		name          string
