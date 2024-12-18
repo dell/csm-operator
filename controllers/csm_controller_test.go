@@ -273,6 +273,17 @@ func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
 	suite.runFakeCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestReverseProxySidecarReconcile() {
+	revProxy := getReverseProxyModule()
+	deploAsSidecar := corev1.EnvVar{Name: "DeployAsSidecar", Value: "true"}
+	revProxy[0].Components[0].Envs = append(revProxy[0].Components[0].Envs, deploAsSidecar)
+	modules.IsReverseProxySidecar = func() bool { return true }
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, revProxy, string(v1.PowerMax))
+	suite.runFakeCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeCSMManager("", true)
+}
+
 func (suite *CSMControllerTestSuite) TestReverseProxyPreCheckError() {
 	suite.makeFakeRevProxyCSM(csmName, suite.namespace, false, getReverseProxyModule(), "badVersion")
 	reconciler := suite.createReconciler()
@@ -287,7 +298,7 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyError() {
 	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
 	csm.Spec.Modules = getReverseProxyModule()
 	reconciler := suite.createReconciler()
-	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileReverseProxyServer(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 }
 
@@ -300,7 +311,7 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyServiceError() {
 	reconciler := suite.createReconciler()
 	_ = modules.ReverseProxyPrecheck(ctx, operatorConfig, revProxy[0], csm, reconciler)
 	revProxy[0].ConfigVersion = ""
-	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileReverseProxyServer(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 }
 
@@ -738,7 +749,8 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
-	csm.Spec.Driver.CSIDriverType = "powerscale"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
+	modules.IsReverseProxySidecar = func() bool { return true }
 
 	removeDriverTests := []struct {
 		name          string
@@ -801,6 +813,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	appMobCSM.Spec.Modules = getAppMob()
 	reverseProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
+	modules.IsReverseProxySidecar = func() bool { return false }
 
 	syncCSMTests := []struct {
 		name        string
@@ -860,6 +873,9 @@ func (suite *CSMControllerTestSuite) TestRemoveModule() {
 					panic(err)
 				}
 				*tt.errorInjector = true
+			}
+			if tt.csm.HasModule(csmv1.ReverseProxy) {
+				modules.IsReverseProxySidecar = func() bool { return false }
 			}
 			err := r.removeModule(ctx, tt.csm, operatorConfig, r.Client)
 			if tt.expectedErr == "" {
@@ -926,7 +942,7 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			if errorInjector != nil {
 				*errorInjector = true
 			}
-			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig)
+			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig, r.Client)
 			err := r.oldStandAloneModuleCleanup(ctx, csm, operatorConfig, driverConfig)
 
 			if expectedErr == "" {
