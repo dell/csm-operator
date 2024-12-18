@@ -314,7 +314,7 @@ func getRevProxyPort(revProxyModule csmv1.Module) string {
 }
 
 func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyConfiguration {
-	var revProxyConfigMap, revProxyTLSSecret = RevProxyConfigMapDeafultName, RevProxyTLSSecretDefaultName
+	revProxyConfigMap, revProxyTLSSecret := RevProxyConfigMapDeafultName, RevProxyTLSSecretDefaultName
 	for _, component := range revProxyModule.Components {
 		if component.Name == ReverseProxyServerComponent {
 			for _, env := range component.Envs {
