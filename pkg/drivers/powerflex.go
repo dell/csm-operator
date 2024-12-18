@@ -365,8 +365,7 @@ func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace s
 	type StorageArrayConfig struct {
 		SystemID string `json:"systemId"`
 		Zone     struct {
-			Name     string `json:"name"`
-			LabelKey string `json:"labelKey"`
+			Name string `json:"name"`
 		} `json:"zone"`
 	}
 
@@ -389,11 +388,9 @@ func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace s
 			if configParam.SystemID == "" {
 				return nil, fmt.Errorf("invalid value for SystemID")
 			}
-			if configParam.Zone.LabelKey != "" {
-				if configParam.Zone.Name != "" {
-					zonesMapData[configParam.Zone.LabelKey] = configParam.Zone.Name
-					log.Infof("Zoning information configured for systemID %s: %v ", configParam.SystemID, zonesMapData)
-				}
+			if configParam.Zone.Name != "" {
+				zonesMapData[configParam.SystemID] = configParam.Zone.Name
+				log.Infof("Zoning information configured for systemID %s: %v ", configParam.SystemID, zonesMapData)
 			} else {
 				log.Info("Zoning information not found in the array config. Continue with topology-unaware driver installation mode")
 				return zonesMapData, nil

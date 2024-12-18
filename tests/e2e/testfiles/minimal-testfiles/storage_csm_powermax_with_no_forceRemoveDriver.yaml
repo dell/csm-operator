@@ -1,0 +1,9 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powermax
+  namespace: powermax
+spec:
+  driver:
+    csiDriverType: "powermax"
+    configVersion: v2.12.0
