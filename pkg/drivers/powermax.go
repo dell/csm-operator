@@ -126,7 +126,6 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		})
 	}
 
-	log.Debugw("preCheck", "secrets", cred)
 	return nil
 }
 
