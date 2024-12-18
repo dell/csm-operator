@@ -273,6 +273,17 @@ func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
 	suite.runFakeCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestReverseProxySidecarReconcile() {
+	revProxy := getReverseProxyModule()
+	deploAsSidecar := corev1.EnvVar{Name: "DeployAsSidecar", Value: "true"}
+	revProxy[0].Components[0].Envs = append(revProxy[0].Components[0].Envs, deploAsSidecar)
+	modules.IsReverseProxySidecar = func() bool { return true }
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, revProxy, string(v1.PowerMax))
+	suite.runFakeCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeCSMManager("", true)
+}
+
 func (suite *CSMControllerTestSuite) TestReverseProxyPreCheckError() {
 	suite.makeFakeRevProxyCSM(csmName, suite.namespace, false, getReverseProxyModule(), "badVersion")
 	reconciler := suite.createReconciler()
@@ -802,6 +813,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	appMobCSM.Spec.Modules = getAppMob()
 	reverseProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
+	modules.IsReverseProxySidecar = func() bool { return false }
 
 	syncCSMTests := []struct {
 		name        string
