@@ -57,7 +57,7 @@ const (
 )
 
 // PrecheckPowerMax do input validation
-func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) error {
+func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, _ client.Client) error {
 	log := logger.GetLogger(ctx)
 	// Check for default secret only
 	// Array specific will be authenticated in csireverseproxy
