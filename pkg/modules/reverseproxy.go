@@ -57,7 +57,7 @@ var (
 	RevProxyConfigMapVolName     = "configmap-volume"
 	RevProxyConfigMapDeafultName = "powermax-reverseproxy-config"
 	RevProxyTLSSecretVolName     = "tls-secret"
-	RevProxyTLSSecretDefaultName = "csirevproxy-tls-secret"
+	RevProxyTLSSecretDefaultName = "csirevproxy-tls-secret" // #nosec G101
 )
 
 // ReverseproxySupportedDrivers is a map containing the CSI Drivers supported by CSM Reverseproxy. The key is driver name and the value is the driver plugin identifier

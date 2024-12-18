@@ -26,6 +26,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 
 	"encoding/json"
+
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -39,7 +40,6 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	fpod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"k8s.io/utils/pointer"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
