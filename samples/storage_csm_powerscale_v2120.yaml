@@ -236,8 +236,8 @@ spec:
     sideCars:
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
-        # Default volume-name-prefix: k8s
-        args: ["--volume-name-prefix=csipscale"]
+        # Default volume-name-prefix: csivol
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
       - name: registrar

@@ -233,8 +233,8 @@ spec:
       # 'pmax' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
-        # Default volume-name-prefix: pmax
-        args: ["--volume-name-prefix=pmax"]
+        # Default volume-name-prefix: csivol
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
       - name: registrar
