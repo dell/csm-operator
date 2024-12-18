@@ -394,7 +394,6 @@ func TestAddReverseProxyServiceName(t *testing.T) {
 						if strings.EqualFold(*env.Name, CSIPmaxRevProxyServiceName) && strings.EqualFold(*env.Value, RevProxyServiceName) {
 							isEnvFound = true
 						}
-
 					}
 				}
 			}
