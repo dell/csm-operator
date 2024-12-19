@@ -144,6 +144,86 @@ func MakeModule(configVersion string) csmv1.Module {
 	return moduleObj
 }
 
+// MakeSecretPowerFlexWithZone  returns a driver pre-req secret with zoning specified
+func MakeSecretPowerFlexWithZone(name, ns, _ string) *corev1.Secret {
+	dataWithZone := `
+- username: "admin"
+  password: "password"
+  systemID: "2b11bb111111bb1b"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+  zone:
+    name: "US-EAST"
+    labelKey: "zone.csi-vxflexos.dellemc.com"
+`
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+		Data: map[string][]byte{
+			"config": []byte(dataWithZone),
+		},
+	}
+	return secret
+}
+
+// MakeSecretPowerFlex  returns a pflex driver pre-req secret
+func MakeSecretPowerFlex(name, ns, _ string) *corev1.Secret {
+	dataWithoutZone := `
+- username: "admin"
+  password: "password"
+  systemID: "2b11bb111111bb1b"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+`
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+		Data: map[string][]byte{
+			"config": []byte(dataWithoutZone),
+		},
+	}
+	return secret
+}
+
+// MakeSecretPowerFlexMultiZoneInvalid  returns a pflex driver pre-req secret with invalid zone config
+func MakeSecretPowerFlexMultiZoneInvalid(name, ns, _ string) *corev1.Secret {
+	dataWithInvalidZone := `
+- username: "admin"
+  password: "password"
+  systemID: "2b11bb111111bb1b"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+- username: "admin"
+  password: "password"
+  systemID: "2b11bb111111bb1b"
+  endpoint: "https://127.0.0.2"
+  skipCertificateValidation: true
+  mdm: "10.0.0.3,10.0.0.4"
+  zone:
+    name: "US-EAST"
+    labelKey: "myzone.csi-vxflexos.dellemc.com"
+`
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+		Data: map[string][]byte{
+			"config": []byte(dataWithInvalidZone),
+		},
+	}
+	return secret
+}
+
 // MakeSecret  returns a driver pre-req secret array-config
 func MakeSecret(name, ns, _ string) *corev1.Secret {
 	data := map[string][]byte{
