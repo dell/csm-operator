@@ -2385,57 +2385,6 @@ func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string,
 	assert.Nil(suite.T(), err)
 }
 
-func (suite *CSMControllerTestSuite) TestGetNodeLabels() {
-	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
-	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
-	csm.Spec.Driver.Common.Image = "image"
-	csm.Annotations[configVersionKey] = configVersion
-
-	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, configVersion)
-	err := suite.fakeClient.Create(ctx, sec)
-	if err != nil {
-		panic(err)
-	}
-
-	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
-	err = suite.fakeClient.Create(ctx, &csm)
-	if err != nil {
-		panic(err)
-	}
-
-	reconciler := suite.createReconciler()
-
-	// create node object, add to fakeclient, reconcile.GetMatchingNodes
-	node := shared.MakeNode("node1", suite.namespace)
-	node.Labels["topology.kubernetes.io/zone"] = "US-EAST"
-
-	err = suite.fakeClient.Create(ctx, &node)
-	assert.Nil(suite.T(), err)
-
-	node2 := shared.MakeNode("node2", suite.namespace)
-
-	err = suite.fakeClient.Create(ctx, &node2)
-	assert.Nil(suite.T(), err)
-
-	nodeListMatching, err := reconciler.GetMatchingNodes(ctx, "topology.kubernetes.io/zone")
-	ctrl.Log.Info("node list response expecting (1)", "number of nodes matching is: ", len(nodeListMatching.Items))
-
-	// Check the len to be 1 else fail
-	if len(nodeListMatching.Items) != 1 {
-		ctrl.Log.Error(err, "Unexpected length on node list.", "length", len(nodeListMatching.Items))
-		panic(err)
-	}
-
-	for _, node := range nodeListMatching.Items {
-		ctrl.Log.Info("Matching node item", "name ", node.ObjectMeta.GetName())
-	}
-	if node.ObjectMeta.GetName() != "node1" {
-		ctrl.Log.Error(err, "Unmatched label on node.")
-		panic(err)
-	}
-	assert.Nil(suite.T(), err)
-}
-
 func (suite *CSMControllerTestSuite) TestZoneValidation() {
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
@@ -2444,34 +2393,17 @@ func (suite *CSMControllerTestSuite) TestZoneValidation() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	err := suite.fakeClient.Create(ctx, &csm)
-	if err != nil {
-		panic(err)
-	}
+	assert.Nil(suite.T(), err)
 
 	reconciler := suite.createReconciler()
-
-	node := shared.MakeNode("node1", suite.namespace)
-	node.Labels["topology.kubernetes.io/zone"] = "US-EAST"
-
-	err = suite.fakeClient.Create(ctx, &node)
-	assert.Nil(suite.T(), err)
-
-	node2 := shared.MakeNode("node2", suite.namespace)
-
-	err = suite.fakeClient.Create(ctx, &node2)
-	assert.Nil(suite.T(), err)
 
 	// add secret with NO zone to the namespace
 	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
-	if err != nil {
-		panic(err)
-	}
+	assert.Nil(suite.T(), err)
 
 	err = reconciler.ZoneValidation(ctx, &csm, suite.namespace)
-	if err != nil {
-		panic(err)
-	}
+	assert.Nil(suite.T(), err)
 }
 
 func (suite *CSMControllerTestSuite) TestZoneValidation2() {
@@ -2482,86 +2414,15 @@ func (suite *CSMControllerTestSuite) TestZoneValidation2() {
 
 	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	err := suite.fakeClient.Create(ctx, &csm)
-	if err != nil {
-		panic(err)
-	}
+	assert.Nil(suite.T(), err)
 
 	reconciler := suite.createReconciler()
 
-	node := shared.MakeNode("node1", suite.namespace)
-	node.Labels["zone.csi-vxflexos.dellemc.com"] = "US-WEST"
-	err = suite.fakeClient.Create(ctx, &node)
-	assert.Nil(suite.T(), err)
-
-	node2 := shared.MakeNode("node2", suite.namespace)
-	node2.Labels["zone.csi-vxflexos.dellemc.com"] = "US-EAST"
-	err = suite.fakeClient.Create(ctx, &node2)
-	assert.Nil(suite.T(), err)
-
-	node3 := shared.MakeNode("node3", suite.namespace)
-	node3.Labels["zone.csi-vxflexos.dellemc.com"] = "US-SOUTH"
-	err = suite.fakeClient.Create(ctx, &node3)
-	assert.Nil(suite.T(), err)
-
-	// add secret with zone to the namespace
-	secretZone := shared.MakeSecretPowerFlexWithZone(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	// add secret with an invalid multi zone to the namespace
+	secretZone := shared.MakeSecretPowerFlexMultiZoneInvalid(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, secretZone)
-	if err != nil {
-		panic(err)
-	}
-
-	err = reconciler.ZoneValidation(ctx, &csm, suite.namespace)
-	if err != nil {
-		panic(err)
-	}
-
-	// Add node4 that has a different zone label, and zone validate should fail
-	node4 := shared.MakeNode("node4", suite.namespace)
-	node4.Labels["my-special-zone-label"] = "mydrzone"
-	err = suite.fakeClient.Create(ctx, &node4)
 	assert.Nil(suite.T(), err)
 
 	err = reconciler.ZoneValidation(ctx, &csm, suite.namespace)
-	if err == nil {
-		panic(err)
-	}
-}
-
-func (suite *CSMControllerTestSuite) TestZoneValidation3() {
-	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
-	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
-	csm.Spec.Driver.Common.Image = "image"
-	csm.Annotations[configVersionKey] = configVersion
-
-	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
-	err := suite.fakeClient.Create(ctx, &csm)
-	if err != nil {
-		panic(err)
-	}
-
-	reconciler := suite.createReconciler()
-
-	node := shared.MakeNode("node1", suite.namespace)
-	node.Labels["zone.csi-vxflexos.dellemc.com"] = "US-SOUTH"
-
-	err = suite.fakeClient.Create(ctx, &node)
-	assert.Nil(suite.T(), err)
-
-	node2 := shared.MakeNode("node2", suite.namespace)
-	node2.Labels["zone.csi-vxflexos.dellemc.com"] = "US-SOUTH"
-
-	err = suite.fakeClient.Create(ctx, &node2)
-	assert.Nil(suite.T(), err)
-
-	// add secret with invalid Multi zone to the namespace
-	sec := shared.MakeSecretPowerFlexMultiZone(csmName+"-config", suite.namespace, pFlexConfigVersion)
-	err = suite.fakeClient.Create(ctx, sec)
-	if err != nil {
-		panic(err)
-	}
-
-	err = reconciler.ZoneValidation(ctx, &csm, suite.namespace)
-	if err == nil {
-		panic(err)
-	}
+	assert.NotNil(suite.T(), err)
 }

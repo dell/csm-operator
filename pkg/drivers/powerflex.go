@@ -347,25 +347,25 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	return yamlString
 }
 
-func ExtractZones(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client, namespace string) (map[string]string, error) {
+func ValidateZones(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client, namespace string) error {
 	secretName := cr.Name + "-config"
-	zonesMapData, err := ExtractZonesFromSecret(ctx, ct, namespace, secretName)
-	return zonesMapData, err
+	err := ValidateZonesInSecret(ctx, ct, cr.Namespace, secretName)
+	return err
 }
 
-// ExtractZonesFromSecret - Reads the array config secret and returns the zone label information
-func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace string, secret string) (map[string]string, error) {
+func ValidateZonesInSecret(ctx context.Context, kube client.Client, namespace string, secret string) error {
 	log := logger.GetLogger(ctx)
 
 	arraySecret, err := utils.GetSecret(ctx, secret, namespace, kube)
 	if err != nil {
-		return nil, fmt.Errorf("reading secret [%s] error [%s]", secret, err)
+		return fmt.Errorf("reading secret [%s] error [%s]", secret, err)
 	}
 
 	type StorageArrayConfig struct {
-		SystemID string `json:"systemId"`
+		SystemID string `json:"systemID"`
 		Zone     struct {
-			Name string `json:"name"`
+			Name     string `json:"name"`
+			LabelKey string `json:"labelKey"`
 		} `json:"zone"`
 	}
 
@@ -377,28 +377,41 @@ func ExtractZonesFromSecret(ctx context.Context, kube client.Client, namespace s
 		yamlConfig := make([]StorageArrayConfig, 0)
 		configs, err := yaml.JSONToYAML(configBytes)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse multi-array configuration[%v]", err)
+			return fmt.Errorf("unable to parse multi-array configuration %v", err)
 		}
 		err = yaml.Unmarshal(configs, &yamlConfig)
 		if err != nil {
-			return nil, fmt.Errorf("unable to unmarshal no Zone or Name or LabelKey found multi-array configuration[%v]", err)
+			return fmt.Errorf("unable to unmarshal multi-array configuration %v", err)
 		}
 
+		var labelKey string
+		var numArrays, numArraysWithZone int
+		numArrays = len(yamlConfig)
 		for _, configParam := range yamlConfig {
 			if configParam.SystemID == "" {
-				return nil, fmt.Errorf("invalid value for SystemID")
+				return fmt.Errorf("invalid value for SystemID")
+			}
+			if labelKey == "" {
+				labelKey = configParam.Zone.LabelKey
+			} else {
+				if labelKey != configParam.Zone.LabelKey {
+					return fmt.Errorf("labelKey not consistent across all arrays")
+				}
 			}
 			if configParam.Zone.Name != "" {
+				numArraysWithZone++
 				zonesMapData[configParam.SystemID] = configParam.Zone.Name
 				log.Infof("Zoning information configured for systemID %s: %v ", configParam.SystemID, zonesMapData)
-			} else {
-				log.Info("Zoning information not found in the array config. Continue with topology-unaware driver installation mode")
-				return zonesMapData, nil
 			}
 		}
+		if numArraysWithZone > 0 && numArrays != numArraysWithZone {
+			return fmt.Errorf("not all arrays have zoning configured. Check the array info secret, zone key should be the same for all arrays.")
+		} else if numArraysWithZone == 0 {
+			log.Info("Zoning information not found in the array config. Continue with topology-unaware driver installation mode")
+		}
 	} else {
-		return nil, fmt.Errorf("Array details are not provided in vxflexos-config secret")
+		return fmt.Errorf("array details are not provided in vxflexos-config secret")
 	}
 
-	return zonesMapData, nil
+	return nil
 }
