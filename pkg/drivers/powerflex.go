@@ -405,7 +405,7 @@ func ValidateZonesInSecret(ctx context.Context, kube client.Client, namespace st
 			}
 		}
 		if numArraysWithZone > 0 && numArrays != numArraysWithZone {
-			return fmt.Errorf("not all arrays have zoning configured. Check the array info secret, zone key should be the same for all arrays.")
+			return fmt.Errorf("not all arrays have zoning configured. Check the array info secret, zone key should be the same for all arrays")
 		} else if numArraysWithZone == 0 {
 			log.Info("Zoning information not found in the array config. Continue with topology-unaware driver installation mode")
 		}
