@@ -24,8 +24,6 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -59,14 +57,10 @@ const (
 )
 
 // PrecheckPowerMax do input validation
-func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) error {
+func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, _ client.Client) error {
 	log := logger.GetLogger(ctx)
 	// Check for default secret only
 	// Array specific will be authenticated in csireverseproxy
-	cred := cr.Name + "-creds"
-	if cr.Spec.Driver.AuthSecret != "" {
-		cred = cr.Spec.Driver.AuthSecret
-	}
 
 	// Check if driver version is supported by doing a stat on a config file
 	configFilePath := fmt.Sprintf("%s/driverconfig/powermax/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
@@ -75,16 +69,6 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		return fmt.Errorf("%s %s not supported", csmv1.PowerMax, cr.Spec.Driver.ConfigVersion)
 	}
 
-	if cred != "" {
-		found := &corev1.Secret{}
-		err := ct.Get(ctx, types.NamespacedName{Name: cred, Namespace: cr.GetNamespace()}, found)
-		if err != nil {
-			log.Error(err, "Failed query for secret ", cred)
-			if errors.IsNotFound(err) {
-				return fmt.Errorf("failed to find secret %s", cred)
-			}
-		}
-	}
 	kubeletConfigDirFound := false
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == "KUBELET_CONFIG_DIR" {
@@ -140,7 +124,6 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		})
 	}
 
-	log.Debugw("preCheck", "secrets", cred)
 	return nil
 }
 
