@@ -347,7 +347,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	return yamlString
 }
 
-func ValidateZones(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client, namespace string) error {
+func ValidateZones(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) error {
 	secretName := cr.Name + "-config"
 	err := ValidateZonesInSecret(ctx, ct, cr.Namespace, secretName)
 	return err

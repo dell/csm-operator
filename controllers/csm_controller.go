@@ -1335,7 +1335,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 			return fmt.Errorf("failed powerflex validation: %v", err)
 		}
 		// zoning initially applies only to pflex
-		err = r.ZoneValidation(ctx, cr, namespace)
+		err = r.ZoneValidation(ctx, cr)
 		if err != nil {
 			return fmt.Errorf("error during zone validation: %v", err)
 		}
@@ -1529,9 +1529,9 @@ func (r *ContainerStorageModuleReconciler) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
 }
 
-func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule, namespace string) error {
+func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule) error {
 
-	err := drivers.ValidateZones(ctx, cr, r.Client, namespace)
+	err := drivers.ValidateZones(ctx, cr, r.Client)
 	if err != nil {
 		return fmt.Errorf("ZoneValidation failed with error: %v", err)
 	}
