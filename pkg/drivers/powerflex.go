@@ -347,12 +347,14 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	return yamlString
 }
 
+// ValidateZones - zone validation for topology aware clusters
 func ValidateZones(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) error {
 	secretName := cr.Name + "-config"
 	err := ValidateZonesInSecret(ctx, ct, cr.Namespace, secretName)
 	return err
 }
 
+// ValidateZonesInSecret - inspects incoming secret for zone validity
 func ValidateZonesInSecret(ctx context.Context, kube client.Client, namespace string, secret string) error {
 	log := logger.GetLogger(ctx)
 

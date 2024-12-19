@@ -1529,10 +1529,11 @@ func (r *ContainerStorageModuleReconciler) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
 }
 
+// ZoneValidation - If zones are configured performs validation and returns an error if the zone validation fails
 func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule) error {
 	err := drivers.ValidateZones(ctx, cr, r.Client)
 	if err != nil {
-		return fmt.Errorf("ZoneValidation failed with error: %v", err)
+		return fmt.Errorf("zone validation failed with error: %v", err)
 	}
 
 	return err

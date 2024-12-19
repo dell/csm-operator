@@ -144,6 +144,7 @@ func MakeModule(configVersion string) csmv1.Module {
 	return moduleObj
 }
 
+// MakeSecretPowerFlexWithZone  returns a driver pre-req secret with zoning specified
 func MakeSecretPowerFlexWithZone(name, ns, _ string) *corev1.Secret {
 	dataWithZone := `
 - username: "admin"
@@ -168,7 +169,7 @@ func MakeSecretPowerFlexWithZone(name, ns, _ string) *corev1.Secret {
 	return secret
 }
 
-// MakeSecret  returns a driver pre-req secret array-config
+// MakeSecretPowerFlex  returns a pflex driver pre-req secret
 func MakeSecretPowerFlex(name, ns, _ string) *corev1.Secret {
 	dataWithoutZone := `
 - username: "admin"
@@ -191,6 +192,7 @@ func MakeSecretPowerFlex(name, ns, _ string) *corev1.Secret {
 	return secret
 }
 
+// MakeSecretPowerFlexMultiZoneInvalid  returns a pflex driver pre-req secret with invalid zone config
 func MakeSecretPowerFlexMultiZoneInvalid(name, ns, _ string) *corev1.Secret {
 	dataWithInvalidZone := `
 - username: "admin"

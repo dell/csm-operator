@@ -585,7 +585,6 @@ func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
 	if err != nil {
 		panic(err)
 	}
-	// sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
@@ -654,7 +653,6 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradeSkipVersion() {
 	if err != nil {
 		panic(err)
 	}
-	// sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
