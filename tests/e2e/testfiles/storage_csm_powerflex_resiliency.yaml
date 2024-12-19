@@ -28,12 +28,12 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
     configVersion: v2.13.0
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
           value: "false"
@@ -182,7 +182,7 @@ spec:
       components:
         - name: podmon-controller
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
             - "--labelvalue=csi-vxflexos"
@@ -193,7 +193,7 @@ spec:
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
             # Allowed values: Any valid and free port (string)
