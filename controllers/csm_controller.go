@@ -284,7 +284,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	}
 
 	// perform prechecks
-	err = r.PreChecks(ctx, csm, *operatorConfig, req.Namespace)
+	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
 		csm.GetCSMStatus().State = constants.InvalidConfig
 		r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
@@ -1320,7 +1320,7 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 }
 
 // PreChecks - validate input values
-func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, namespace string) error {
+func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
