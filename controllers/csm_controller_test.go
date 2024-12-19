@@ -2402,7 +2402,7 @@ func (suite *CSMControllerTestSuite) TestZoneValidation() {
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	err = reconciler.ZoneValidation(ctx, &csm, suite.namespace)
+	err = reconciler.ZoneValidation(ctx, &csm)
 	assert.Nil(suite.T(), err)
 }
 
@@ -2423,6 +2423,6 @@ func (suite *CSMControllerTestSuite) TestZoneValidation2() {
 	err = suite.fakeClient.Create(ctx, secretZone)
 	assert.Nil(suite.T(), err)
 
-	err = reconciler.ZoneValidation(ctx, &csm, suite.namespace)
+	err = reconciler.ZoneValidation(ctx, &csm)
 	assert.NotNil(suite.T(), err)
 }
