@@ -40,7 +40,7 @@ spec:
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
     sideCars:
-      # 'k8s' represents a string prepended to each volume created by the CSI driver
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         args: ["--volume-name-prefix=csivol"]
         # sdc-monitor is disabled by default, due to high CPU usage

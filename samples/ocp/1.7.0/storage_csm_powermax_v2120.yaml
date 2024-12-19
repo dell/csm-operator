@@ -198,7 +198,7 @@ spec:
     #    operator: "Exists"
     #    effect: "NoSchedule"
     sideCars:
-      # 'pmax' represents a string prepended to each volume created by the CSI driver
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
         args: ["--volume-name-prefix=csivol"]
