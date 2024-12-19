@@ -396,11 +396,11 @@ func ValidateZonesInSecret(ctx context.Context, kube client.Client, namespace st
 				return fmt.Errorf("invalid value for SystemID")
 			}
 			if reflect.DeepEqual(configParam.Zone, Zone{}) {
-				log.Infof("Zone is not specified for SystemID:", configParam.SystemID)
+				log.Infof("Zone is not specified for SystemID: %s", configParam.SystemID)
 			} else {
-				log.Infof("Zone is specified for SystemID:", configParam.SystemID)
+				log.Infof("Zone is specified for SystemID: %s", configParam.SystemID)
 				if configParam.Zone.LabelKey == "" {
-					return fmt.Errorf("Zone LabelKey is empty or not specified for SystemID: %s",
+					return fmt.Errorf("zone LabelKey is empty or not specified for SystemID: %s",
 						configParam.SystemID)
 				}
 
@@ -413,7 +413,7 @@ func ValidateZonesInSecret(ctx context.Context, kube client.Client, namespace st
 				}
 
 				if configParam.Zone.Name == "" {
-					return fmt.Errorf("Zone name is empty or not specified for SystemID: %s",
+					return fmt.Errorf("zone name is empty or not specified for SystemID: %s",
 						configParam.SystemID)
 				}
 				numArraysWithZone++
