@@ -30,6 +30,9 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch", "update"]
   - apiGroups: ["security.openshift.io"]
     resourceNames: ["privileged"]
     resources: ["securitycontextconstraints"]
@@ -192,11 +195,41 @@ spec:
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
       initContainers:
+        - name: mdm-container
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+          imagePullPolicy: Always
+          command: ["/csi-vxflexos.sh"]
+          args:
+            - "--array-config=/vxflexos-config/config"
+            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+          env:
+            - name: X_CSI_MODE
+              value: mdm-info
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: vxflexos-config
+              mountPath: /vxflexos-config
+            - name: vxflexos-config-params
+              mountPath: /vxflexos-config-params
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            - name: mdm-dir
+              mountPath: /data
         - name: sdc
           securityContext:
             privileged: true
           image: dellemc/sdc:4.5.2.1
           imagePullPolicy: IfNotPresent
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+               source /data/node_mdms.txt
+               /files/scripts/init.sh
           env:
             - name: NODENAME
               valueFrom:
@@ -204,11 +237,6 @@ spec:
                   fieldPath: spec.nodeName
             - name: MODE
               value: "config"
-            - name: MDM
-              valueFrom:
-                secretKeyRef:
-                  name: <DriverDefaultReleaseName>-config
-                  key: MDM
             - name: HOST_DRV_CFG_PATH
               value: /opt/emc/scaleio/sdc/bin
           volumeMounts:
@@ -224,6 +252,8 @@ spec:
               mountPath: /host_drv_cfg_path
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
+            - name: mdm-dir
+              mountPath: /data
       volumes:
         - name: registration-dir
           hostPath:
@@ -291,6 +321,8 @@ spec:
           hostPath:
             path: /var/run
             type: Directory
+        - name: mdm-dir
+          emptyDir: {}
         - name: certs
           projected:
             sources:
