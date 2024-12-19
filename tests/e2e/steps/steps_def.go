@@ -363,6 +363,10 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 		return fmt.Errorf("unexpected fields found in Driver spec: %+v", driver)
 	}
 
+	if driver.CSIDriverType == csmv1.PowerMax && found.HasModule(csmv1.ReverseProxy) {
+		return fmt.Errorf("csm resource '%s' contains reverse proxy module", cr.Name)
+	}
+
 	return nil
 }
 
