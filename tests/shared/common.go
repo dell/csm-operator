@@ -191,7 +191,7 @@ func MakeSecretPowerFlex(name, ns, _ string) *corev1.Secret {
 	return secret
 }
 
-func MakeSecretPowerFlexMultiZone(name, ns, _ string) *corev1.Secret {
+func MakeSecretPowerFlexMultiZoneInvalid(name, ns, _ string) *corev1.Secret {
 	dataWithInvalidZone := `
 - username: "admin"
   password: "password"
@@ -199,9 +199,6 @@ func MakeSecretPowerFlexMultiZone(name, ns, _ string) *corev1.Secret {
   endpoint: "https://127.0.0.2"
   skipCertificateValidation: true
   mdm: "10.0.0.3,10.0.0.4"
-  zone:
-    name: "US-EAST"
-    labelKey: "zone.csi-vxflexos.dellemc.com"
 - username: "admin"
   password: "password"
   systemID: "2b11bb111111bb1b"

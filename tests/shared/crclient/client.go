@@ -19,7 +19,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/tests/shared"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -113,11 +112,9 @@ func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client
 		// Initialize ListOptions
 		listOpts := &client.ListOptions{}
 		// Apply each ListOption to listOpts
-		if opts != nil {
-			for _, opt := range opts {
-				if opt != nil {
-					opt.ApplyToList(listOpts)
-				}
+		for _, opt := range opts {
+			if opt != nil {
+				opt.ApplyToList(listOpts)
 			}
 		}
 		s := listOpts.LabelSelector
@@ -143,21 +140,19 @@ func (f Client) listPodList(list *corev1.PodList) error {
 }
 
 func (f Client) listNodeList(list *corev1.NodeList, label string) error {
-	_, log := logger.GetNewContextWithLogger("0")
 	for k, v := range f.Objects {
 		if k.Kind == "Node" {
-			node := *v.(*corev1.Node)
-			if label != "" {
-				for key := range node.ObjectMeta.Labels {
-					if label == key {
-						log.Infof("\tadding node name:%v to list matching label key \n", node.Name)
-						list.Items = append(list.Items, *v.(*corev1.Node))
-					} else {
-						log.Infof("\tnon-matching node found. node key:%v incoming label:%v\n", key, label)
+			node, ok := v.(*corev1.Node)
+			if ok {
+				if label != "" {
+					for key := range (*node).ObjectMeta.Labels {
+						if label == key {
+							list.Items = append(list.Items, *node)
+						}
 					}
+				} else {
+					list.Items = append(list.Items, *node)
 				}
-			} else {
-				list.Items = append(list.Items, *v.(*corev1.Node))
 			}
 		}
 	}
