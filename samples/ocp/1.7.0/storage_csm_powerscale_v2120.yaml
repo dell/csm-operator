@@ -103,7 +103,7 @@ spec:
         # Allowed values: "error", "warn"/"warning", "info", "debug"
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
-          value: "debug"
+          value: "info"
     controller:
       envs:
         # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota
@@ -233,7 +233,7 @@ spec:
     sideCars:
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
-        args: ["--volume-name-prefix=csipscale"]
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher@sha256:6e54dae32284f60a2de1645c527715e4c934e5ce7899560c0d845bac957118dc
       - name: registrar
