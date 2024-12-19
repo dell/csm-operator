@@ -1334,6 +1334,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powerflex validation: %v", err)
 		}
+		// zoning initially applies only to pflex
+		err = r.ZoneValidation(ctx, cr)
+		if err != nil {
+			return fmt.Errorf("error during zone validation: %v", err)
+		}
 	case csmv1.PowerStore:
 		err := drivers.PrecheckPowerStore(ctx, cr, operatorConfig, r.GetClient())
 		if err != nil {
@@ -1524,12 +1529,12 @@ func (r *ContainerStorageModuleReconciler) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
 }
 
-func (r *ContainerStorageModuleReconciler) GetMatchingNodes(ctx context.Context, labelKey string, labelValue string) (*corev1.NodeList, error) {
-	nodeList := &corev1.NodeList{}
-	opts := []client.ListOption{
-		client.MatchingLabels{labelKey: labelValue},
+// ZoneValidation - If zones are configured performs validation and returns an error if the zone validation fails
+func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule) error {
+	err := drivers.ValidateZones(ctx, cr, r.Client)
+	if err != nil {
+		return fmt.Errorf("zone validation failed with error: %v", err)
 	}
-	err := r.List(ctx, nodeList, opts...)
 
-	return nodeList, err
+	return err
 }
