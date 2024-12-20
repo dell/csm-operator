@@ -132,11 +132,23 @@ func TestGetController(t *testing.T) {
 
 func TestGetNode(t *testing.T) {
 	ctx := context.Background()
+	foundInitMdm := false
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build())
+			node, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build())
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
+				initcontainers := node.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers
+				for i := range initcontainers {
+					if *initcontainers[i].Name == "mdm-container" {
+						foundInitMdm = true
+						assert.Equal(t, string(tt.csm.Spec.Driver.Common.Image), *initcontainers[i].Image)
+					}
+				}
+				// if driver is powerflex, then check that mdm-container is present
+				if tt.driverName == "powerflex" {
+					assert.Equal(t, true, foundInitMdm)
+				}
 			} else {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
