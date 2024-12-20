@@ -121,9 +121,6 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM(customCSMName, pFlexNS, shared.PFlexConfigVersion)
 
-	// Add driver common image
-	res.Spec.Driver.Common.Image = "driverimage"
-
 	// Add sdc initcontainer
 	res.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{{
 		Name:            "sdc",
@@ -157,6 +154,9 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 		res.Spec.Driver.Node.Envs = append(res.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSI_SDC_ENABLED", Value: "false"})
 		res.Spec.Driver.Common.Envs = append(res.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "INTERFACE_NAMES", Value: "worker1: \"interface1\",worker2: \"interface2\""})
 	}
+
+	// Add driver common image
+	res.Spec.Driver.Common.Image = "driverimage"
 
 	return res
 }
