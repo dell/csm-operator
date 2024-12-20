@@ -28,6 +28,7 @@ import (
 
 var (
 	powerScaleCSM            = csmForPowerScale()
+	powerScaleCSMEmptyEnv    = csmForPowerScaleWithEmptyEnv()
 	powerScaleCSMBadSkipCert = csmForPowerScaleBadSkipCert()
 	powerScaleCSMBadCertCnt  = csmForPowerScaleBadCertCnt()
 	powerScaleCSMBadVersion  = csmForPowerScaleBadVersion()
@@ -65,6 +66,7 @@ var (
 	}{
 		{"missing secret", powerScaleCSM, powerScaleClient, powerScaleSecret, "failed to find secret"},
 		{"bad version", powerScaleCSMBadVersion, powerScaleClient, powerScaleSecret, "not supported"},
+		{"missing envs", powerScaleCSMEmptyEnv, powerScaleClient, powerScaleSecret, "failed to find secret"},
 	}
 )
 
@@ -129,6 +131,19 @@ func csmForPowerScale() csmv1.ContainerStorageModule {
 	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "0"}
 	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+
+	// Add pscale driver version
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	return res
+}
+
+func csmForPowerScaleWithEmptyEnv() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 
 	// Add pscale driver version
