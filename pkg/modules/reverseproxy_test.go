@@ -14,6 +14,7 @@ package modules
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/dell/csm-operator/pkg/drivers"
@@ -362,6 +363,115 @@ func TestReverseProxyStartService(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestAddReverseProxyServiceName(t *testing.T) {
+	tests := map[string]func(t *testing.T) applyv1.DeploymentApplyConfiguration{
+		"Add env var to driver container": func(*testing.T) applyv1.DeploymentApplyConfiguration {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+			return controllerYAML.Deployment
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			dp := tc(t)
+			AddReverseProxyServiceName(&dp)
+			isEnvFound := false
+			for i, cnt := range dp.Spec.Template.Spec.Containers {
+				if *cnt.Name == "driver" {
+					for _, env := range dp.Spec.Template.Spec.Containers[i].Env {
+						if strings.EqualFold(*env.Name, CSIPmaxRevProxyServiceName) && strings.EqualFold(*env.Value, RevProxyServiceName) {
+							isEnvFound = true
+						}
+					}
+				}
+			}
+			if !isEnvFound {
+				t.Errorf("Expected env vars: %v with value %v, but not found", CSIPmaxRevProxyServiceName, RevProxyServiceName)
+			}
+		})
+	}
+}
+
+func TestIsReverseProxySidecar(t *testing.T) {
+	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
+		"Reverse proxy is configured as sidecar": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy_sidecar.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			proxySecret := getSecret(customResource.Namespace, "csirevproxy-tls-secret")
+			proxyConfigMap := getConfigMap(customResource.Namespace, "powermax-reverseproxy-config")
+
+			tmpCR := customResource
+			reverseProxy := tmpCR.Spec.Modules[0]
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
+				return clusterClient, nil
+			}
+
+			return true, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"Reverse proxy is not configured as sidecar": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			proxySecret := getSecret(customResource.Namespace, "csirevproxy-tls-secret")
+			proxyConfigMap := getConfigMap(customResource.Namespace, "powermax-reverseproxy-config")
+
+			tmpCR := customResource
+			reverseProxy := tmpCR.Spec.Modules[0]
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret, proxyConfigMap).Build()
+				return clusterClient, nil
+			}
+
+			return false, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			defer func() {
+				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+			}()
+
+			isSideCar, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
+			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			utils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
+				return nil, nil
+			}
+
+			fakeReconcile := utils.FakeReconcileCSM{
+				Client:    sourceClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+
+			ReverseProxyPrecheck(ctx, operatorConfig, reverseProxy, tmpCR, &fakeReconcile)
+			if isSideCar != IsReverseProxySidecar() {
+				t.Errorf("Expected %v but got %v", isSideCar, IsReverseProxySidecar())
 			}
 		})
 	}

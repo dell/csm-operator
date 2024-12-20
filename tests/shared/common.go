@@ -116,7 +116,7 @@ func MakeModuleCSM(name, ns, configVersion string) csmv1.ContainerStorageModule 
 func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 	driverObj := csmv1.Driver{
 		ConfigVersion: configVersion,
-		Common: csmv1.ContainerTemplate{
+		Common: &csmv1.ContainerTemplate{
 			Envs: []corev1.EnvVar{
 				{
 					Name:  "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION",
