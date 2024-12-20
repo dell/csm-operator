@@ -71,96 +71,95 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, cr.Spec.Driver.ConfigVersion)
 	}
 
-	mdmVar, err := GetMDMFromSecret(ctx, cr, ct)
+	// Check if MDM is set in the secret
+	_, err := GetMDMFromSecret(ctx, cr, ct)
 	if err != nil {
 		return err
 	}
-	var newmdm corev1.EnvVar
+
+	return nil
+}
+
+func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, ct client.Client) (csmv1.ContainerStorageModule, error) {
+	mdmVar, _ := GetMDMFromSecret(ctx, &cr, ct)
+
+	// Check if SDC is enabled
 	sdcEnabled := true
-	for _, env := range cr.Spec.Driver.Node.Envs {
-		if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
-			sdcEnabled = false
+	if cr.Spec.Driver.Node != nil {
+		for _, env := range cr.Spec.Driver.Node.Envs {
+			if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
+				sdcEnabled = false
+				break
+			}
 		}
 	}
 
-	newInitContainers := make([]csmv1.ContainerTemplate, 0)
+	// Update init containers
+	var newInitContainers []csmv1.ContainerTemplate
 	for _, initcontainer := range cr.Spec.Driver.InitContainers {
-		if initcontainer.Name != "sdc" {
-			newInitContainers = append(newInitContainers, initcontainer)
-		} else if initcontainer.Name == "sdc" && sdcEnabled {
-			k := 0
-			initenv := initcontainer.Envs
-			for c, env := range initenv {
+		if initcontainer.Name == "sdc" && sdcEnabled {
+			// Ensure MDM env variable is set
+			mdmUpdated := false
+			for i, env := range initcontainer.Envs {
 				if env.Name == "MDM" {
-					env.Value = mdmVar
-					newmdm = env
-					k = c
+					initcontainer.Envs[i].Value = mdmVar
+					mdmUpdated = true
 					break
 				}
 			}
-			initenv[k] = newmdm
-			newInitContainers = append(newInitContainers, initcontainer)
+			// If MDM not found, update it from secret
+			if !mdmUpdated {
+				initcontainer.Envs = append(initcontainer.Envs, corev1.EnvVar{
+					Name:  "MDM",
+					Value: mdmVar,
+				})
+			}
 		}
+		newInitContainers = append(newInitContainers, initcontainer)
+	}
+
+	// If there is no init containers and SDC is enabled, add a sdc init container
+	if len(newInitContainers) == 0 && sdcEnabled {
+		newInitContainers = append(newInitContainers, csmv1.ContainerTemplate{
+			Name: "sdc",
+			Envs: []corev1.EnvVar{{Name: "MDM", Value: mdmVar}},
+		})
 	}
 	cr.Spec.Driver.InitContainers = newInitContainers
-	if len(cr.Spec.Driver.InitContainers) == 0 && sdcEnabled {
-		cr.Spec.Driver.InitContainers = []csmv1.ContainerTemplate{
-			{
-				Name: "sdc",
-				Envs: []corev1.EnvVar{
-					{
-						Name:  "MDM",
-						Value: mdmVar,
-					},
-				},
-			},
-		}
-	}
 
-	for _, sidecar := range cr.Spec.Driver.SideCars {
-		if sidecar.Name == "sdc-monitor" {
-			sidenv := sidecar.Envs
-			var updatenv corev1.EnvVar
-			j := 0
-			for c, env := range sidenv {
+	// Update sidecar containers
+	for i := range cr.Spec.Driver.SideCars {
+		if cr.Spec.Driver.SideCars[i].Name == "sdc-monitor" {
+			// Ensure MDM env variable is set
+			mdmUpdated := false
+			for j, env := range cr.Spec.Driver.SideCars[i].Envs {
 				if env.Name == "MDM" {
-					env.Value = mdmVar
-					updatenv = env
-					j = c
+					cr.Spec.Driver.SideCars[i].Envs[j].Value = mdmVar
+					mdmUpdated = true
 					break
 				}
 			}
-			sidenv[j] = updatenv
+			// If MDM not found, update it from secret
+			if !mdmUpdated {
+				cr.Spec.Driver.SideCars[i].Envs = append(cr.Spec.Driver.SideCars[i].Envs, corev1.EnvVar{
+					Name:  "MDM",
+					Value: mdmVar,
+				})
+			}
 		}
 	}
-	if cr.Spec.Driver.SideCars == nil {
+
+	// If no sidecars are present, add a new "sdc-monitor" sidecar with MDM
+	if len(cr.Spec.Driver.SideCars) == 0 {
 		cr.Spec.Driver.SideCars = []csmv1.ContainerTemplate{
 			{
 				Name: "sdc-monitor",
-				Envs: []corev1.EnvVar{
-					{
-						Name:  "MDM",
-						Value: mdmVar,
-					},
-				},
+				Envs: []corev1.EnvVar{{Name: "MDM", Value: mdmVar}},
 			},
 		}
 	}
 
-	kubeletConfigDirFound := false
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "KUBELET_CONFIG_DIR" {
-			kubeletConfigDirFound = true
-		}
-	}
-	if !kubeletConfigDirFound {
-		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
-			Name:  "KUBELET_CONFIG_DIR",
-			Value: "/var/lib/kubelet",
-		})
-	}
-
-	return nil
+	return cr, nil
 }
 
 // GetMDMFromSecret - Get MDM value from secret
@@ -291,15 +290,17 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	// nolint:gosec
 	switch fileType {
 	case "Controller":
-		for _, env := range cr.Spec.Driver.Controller.Envs {
-			if env.Name == "X_CSI_POWERFLEX_EXTERNAL_ACCESS" {
-				powerflexExternalAccess = env.Value
-			}
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorController = env.Value
-			}
-			if env.Name == "X_CSI_DEBUG" {
-				csiDebug = env.Value
+		if cr.Spec.Driver.Controller != nil {
+			for _, env := range cr.Spec.Driver.Controller.Envs {
+				if env.Name == "X_CSI_POWERFLEX_EXTERNAL_ACCESS" {
+					powerflexExternalAccess = env.Value
+				}
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorController = env.Value
+				}
+				if env.Name == "X_CSI_DEBUG" {
+					csiDebug = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
@@ -307,27 +308,29 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 
 	case "Node":
-		for _, env := range cr.Spec.Driver.Node.Envs {
-			if env.Name == "X_CSI_SDC_ENABLED" {
-				sdcEnabled = env.Value
-			}
-			if env.Name == "X_CSI_APPROVE_SDC_ENABLED" {
-				approveSdcEnabled = env.Value
-			}
-			if env.Name == "X_CSI_RENAME_SDC_ENABLED" {
-				renameSdcEnabled = env.Value
-			}
-			if env.Name == "X_CSI_RENAME_SDC_PREFIX" {
-				renameSdcPrefix = env.Value
-			}
-			if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
-				maxVolumesPerNode = env.Value
-			}
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorNode = env.Value
-			}
-			if env.Name == "X_CSI_DEBUG" {
-				csiDebug = env.Value
+		if cr.Spec.Driver.Node != nil {
+			for _, env := range cr.Spec.Driver.Node.Envs {
+				if env.Name == "X_CSI_SDC_ENABLED" {
+					sdcEnabled = env.Value
+				}
+				if env.Name == "X_CSI_APPROVE_SDC_ENABLED" {
+					approveSdcEnabled = env.Value
+				}
+				if env.Name == "X_CSI_RENAME_SDC_ENABLED" {
+					renameSdcEnabled = env.Value
+				}
+				if env.Name == "X_CSI_RENAME_SDC_PREFIX" {
+					renameSdcPrefix = env.Value
+				}
+				if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
+					maxVolumesPerNode = env.Value
+				}
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorNode = env.Value
+				}
+				if env.Name == "X_CSI_DEBUG" {
+					csiDebug = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiSdcEnabled, sdcEnabled)
@@ -339,7 +342,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 
 	case "CSIDriverSpec":
-		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)

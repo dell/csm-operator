@@ -159,6 +159,8 @@ const (
 	ClientNamespace = "<ClientNameSpace>"
 	// BrownfieldManifest - brownfield-onboard.yaml
 	BrownfieldManifest = "brownfield-onboard.yaml"
+	// DefaultKubeletConfigDir - default kubelet config directory
+	DefaultKubeletConfigDir = "/var/lib/kubelet"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -350,14 +352,16 @@ func ModifyCommonCR(YamlString string, cr csmv1.ContainerStorageModule) string {
 	if cr.Namespace != "" {
 		YamlString = strings.ReplaceAll(YamlString, DefaultReleaseNamespace, cr.Namespace)
 	}
-	if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
-		YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
-	}
-	path := ""
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "KUBELET_CONFIG_DIR" {
-			path = env.Value
-			break
+	path := DefaultKubeletConfigDir
+	if cr.Spec.Driver.Common != nil {
+		if string(cr.Spec.Driver.Common.ImagePullPolicy) != "" {
+			YamlString = strings.ReplaceAll(YamlString, DefaultImagePullPolicy, string(cr.Spec.Driver.Common.ImagePullPolicy))
+		}
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "KUBELET_CONFIG_DIR" {
+				path = env.Value
+				break
+			}
 		}
 	}
 	YamlString = strings.ReplaceAll(YamlString, KubeletConfigDir, path)
