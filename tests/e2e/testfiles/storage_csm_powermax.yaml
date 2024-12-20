@@ -37,7 +37,7 @@ spec:
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
     # Default value: None
-    replicas: 1
+    replicas: 2
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
     dnsPolicy: ClusterFirstWithHostNet
@@ -239,7 +239,7 @@ spec:
       components:
         - name: podmon-controller
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           args:
             - "--labelvalue=csi-powermax"
             - "--arrayConnectivityPollRate=60"
@@ -254,7 +254,7 @@ spec:
             - "--driverPath=csi-powermax.dellemc.com"
         - name: podmon-node
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
             # Allowed values: Any valid and free port (string)
