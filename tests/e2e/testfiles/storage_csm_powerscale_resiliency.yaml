@@ -34,7 +34,7 @@ spec:
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
         # Allowed Values:
@@ -263,7 +263,7 @@ spec:
       components:
         - name: podmon-controller
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
             - "--labelvalue=csi-isilon"
@@ -276,7 +276,7 @@ spec:
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
             # Allowed values: Any valid and free port (string)
