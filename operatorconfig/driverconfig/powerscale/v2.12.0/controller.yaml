@@ -191,7 +191,7 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
-            - "--volume-name-prefix=k8s"
+            - "--volume-name-prefix=csivol"
             - "--volume-name-uuid-length=10"
             - "--worker-threads=5"
             - "--timeout=120s"
