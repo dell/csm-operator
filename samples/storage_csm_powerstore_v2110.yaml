@@ -57,7 +57,7 @@ spec:
         - name: KUBELET_CONFIG_DIR
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
-          value: debug
+          value: info
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
