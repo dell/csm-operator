@@ -238,6 +238,7 @@ ifneq ($(origin CATALOG_BASE_IMG), undefined)
 FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMG)
 endif
 
+# NOTE: Please use `make catalog-build-fbc` instead as we are moving to File based Catalogs
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
@@ -265,3 +266,8 @@ build-base-image: download-csm-common
 .PHONY: download-csm-common
 download-csm-common:
 	curl -O -L https://raw.githubusercontent.com/dell/csm/main/config/csm-common.mk
+
+# build catalog image with File based catalog file
+.PHONY: catalog-build-fbc
+catalog-build-fbc:
+	podman build . -f catalog.Dockerfile -t quay.io/community-operator-pipeline-prod/dell-csm-operator-catalog:latest
