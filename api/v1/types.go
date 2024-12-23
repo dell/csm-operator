@@ -177,7 +177,7 @@ type Driver struct {
 
 	// CSIDriverSpec is the specification for CSIDriver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Spec"
-	CSIDriverSpec CSIDriverSpec `json:"csiDriverSpec" yaml:"csiDriverSpec"`
+	CSIDriverSpec *CSIDriverSpec `json:"csiDriverSpec" yaml:"csiDriverSpec"`
 
 	// ConfigVersion is the configuration version of the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Version"
@@ -185,6 +185,7 @@ type Driver struct {
 
 	// Replicas is the count of controllers for Controller plugin
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Controller count"
+	// +kubebuilder:default=2
 	Replicas int32 `json:"replicas" yaml:"replicas"`
 
 	// DNSPolicy is the dnsPolicy of the daemonset for Node plugin
@@ -193,15 +194,15 @@ type Driver struct {
 
 	// Common is the common specification for both controller and node plugins
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Common specification"
-	Common ContainerTemplate `json:"common" yaml:"common"`
+	Common *ContainerTemplate `json:"common" yaml:"common"`
 
 	// Controller is the specification for Controller plugin only
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Controller Specification"
-	Controller ContainerTemplate `json:"controller,omitempty" yaml:"controller"`
+	Controller *ContainerTemplate `json:"controller,omitempty" yaml:"controller"`
 
 	// Node is the specification for Node plugin only
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Node specification"
-	Node ContainerTemplate `json:"node,omitempty" yaml:"node"`
+	Node *ContainerTemplate `json:"node,omitempty" yaml:"node"`
 
 	// SideCars is the specification for CSI sidecar containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI SideCars specification"

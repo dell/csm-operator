@@ -933,7 +933,7 @@ func TestModifyCommonCR(t *testing.T) {
 		},
 		Spec: csmv1.ContainerStorageModuleSpec{
 			Driver: csmv1.Driver{
-				Common: csmv1.ContainerTemplate{
+				Common: &csmv1.ContainerTemplate{
 					ImagePullPolicy: corev1.PullPolicy("Always"),
 				},
 			},

@@ -183,11 +183,43 @@ spec:
             - name: udev-d
               mountPath: /rules.d
       initContainers:
+        - name: mdm-container
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+          imagePullPolicy: Always
+          command: ["/csi-vxflexos.sh"]
+          args:
+            - "--array-config=/vxflexos-config/config"
+            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+          env:
+            - name: X_CSI_MODE
+              value: mdm-info
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: vxflexos-config
+              mountPath: /vxflexos-config
+            - name: vxflexos-config-params
+              mountPath: /vxflexos-config-params
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            - name: mdm-dir
+              mountPath: /data
         - name: sdc
           securityContext:
             privileged: true
           image: dellemc/sdc:4.5.2.1
           imagePullPolicy: IfNotPresent
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+               echo "Inside sdc init-container"
+               source /data/node_mdms.txt
+               env
+               /files/scripts/init.sh
           env:
             - name: NODENAME
               valueFrom:
@@ -195,11 +227,6 @@ spec:
                   fieldPath: spec.nodeName
             - name: MODE
               value: "config"
-            - name: MDM
-              valueFrom:
-                secretKeyRef:
-                  name: <DriverDefaultReleaseName>-config
-                  key: MDM
             - name: HOST_DRV_CFG_PATH
               value: /opt/emc/scaleio/sdc/bin
           volumeMounts:

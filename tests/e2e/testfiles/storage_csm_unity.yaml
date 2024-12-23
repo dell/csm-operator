@@ -18,12 +18,12 @@ spec:
       storageCapacity: true
     configVersion: v2.13.0
     # Controller count
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-unity:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
           value: "false"

@@ -737,15 +737,15 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update Reverseproxy Server
-	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled {
+	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled && !modules.IsReverseProxySidecar() {
 		log.Infow("Trying Create/Update reverseproxy...")
-		if err := r.reconcileReverseProxy(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+		if err := r.reconcileReverseProxyServer(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy reverseproxy proxy server: %v", err)
 		}
 	}
 
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig)
+	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig, ctrlClient)
 	if err != nil {
 		return err
 	}
@@ -764,6 +764,25 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	configMap := driverConfig.ConfigMap
 	node := driverConfig.Node
 	controller := driverConfig.Controller
+
+	if cr.GetDriverType() == csmv1.PowerMax {
+		if !modules.IsReverseProxySidecar() {
+			log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployement\n")
+			log.Infof("adding proxy service name...\n")
+			modules.AddReverseProxyServiceName(&controller.Deployment)
+		} else {
+			log.Info("Starting CSI ReverseProxy Service")
+			if err := modules.ReverseProxyStartService(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
+			}
+			log.Info("Injecting CSI ReverseProxy")
+			dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
+			if err != nil {
+				return fmt.Errorf("injecting replication into deployment: %v", err)
+			}
+			controller.Deployment = *dp
+		}
+	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)
 	if err != nil {
@@ -833,13 +852,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
-			case csmv1.ReverseProxy:
-				log.Info("Injecting CSI ReverseProxy")
-				dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
-				if err != nil {
-					return fmt.Errorf("injecting replication into deployment: %v", err)
-				}
-				controller.Deployment = *dp
 			}
 		}
 	}
@@ -1101,6 +1113,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
 	operatorConfig utils.OperatorConfig,
+	ctrlClient client.Client,
 ) (*DriverConfig, error) {
 	var (
 		err        error
@@ -1135,7 +1148,7 @@ func getDriverConfig(ctx context.Context,
 		return nil, fmt.Errorf("getting %s CSIDriver: %v", driverType, err)
 	}
 
-	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml)
+	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml, ctrlClient)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s node: %v", driverType, err)
 	}
@@ -1153,15 +1166,12 @@ func getDriverConfig(ctx context.Context,
 	}, nil
 }
 
-// reconcileReverseProxy - deploy reverse proxy server
-func (r *ContainerStorageModuleReconciler) reconcileReverseProxy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+// reconcileReverseProxyServer - deploy reverse proxy server
+func (r *ContainerStorageModuleReconciler) reconcileReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 	log.Infow("Reconcile reverseproxy proxy")
 	if err := modules.ReverseProxyServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 		return fmt.Errorf("unable to reconcile reverse-proxy server: %v", err)
-	}
-	if err := modules.ReverseProxyStartService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-		return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
 	}
 	return nil
 }
@@ -1250,7 +1260,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig)
+	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig, r.Client)
 	if err != nil {
 		log.Error("error in getDriverConfig")
 		return err
@@ -1287,6 +1297,12 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 			}
 		}
 
+		if instance.GetDriverType() == csmv1.PowerMax && modules.IsReverseProxySidecar() {
+			log.Info("Removing CSI ReverseProxy Service")
+			if err := modules.ReverseProxyStartService(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
+				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
+			}
+		}
 	}
 
 	return nil
@@ -1309,9 +1325,9 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 			return err
 		}
 	}
-	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled {
+	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled && !modules.IsReverseProxySidecar() {
 		log.Infow("Deleting ReverseProxy")
-		if err := r.reconcileReverseProxy(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+		if err := r.reconcileReverseProxyServer(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
 			return err
 		}
 	}
@@ -1333,6 +1349,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		err := drivers.PrecheckPowerFlex(ctx, cr, operatorConfig, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed powerflex validation: %v", err)
+		}
+		// zoning initially applies only to pflex
+		err = r.ZoneValidation(ctx, cr)
+		if err != nil {
+			return fmt.Errorf("error during zone validation: %v", err)
 		}
 	case csmv1.PowerStore:
 		err := drivers.PrecheckPowerStore(ctx, cr, operatorConfig, r.GetClient())
@@ -1524,12 +1545,12 @@ func (r *ContainerStorageModuleReconciler) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
 }
 
-func (r *ContainerStorageModuleReconciler) GetMatchingNodes(ctx context.Context, labelKey string, labelValue string) (*corev1.NodeList, error) {
-	nodeList := &corev1.NodeList{}
-	opts := []client.ListOption{
-		client.MatchingLabels{labelKey: labelValue},
+// ZoneValidation - If zones are configured performs validation and returns an error if the zone validation fails
+func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule) error {
+	err := drivers.ValidateZones(ctx, cr, r.Client)
+	if err != nil {
+		return fmt.Errorf("zone validation failed with error: %v", err)
 	}
-	err := r.List(ctx, nodeList, opts...)
 
-	return nodeList, err
+	return err
 }

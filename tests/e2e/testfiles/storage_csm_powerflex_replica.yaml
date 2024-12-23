@@ -17,11 +17,11 @@ spec:
       #   false: disable storage capacity tracking
       storageCapacity: true
     configVersion: v2.13.0
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "dellemc/csi-vxflexos:v2.11.0"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -50,7 +50,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.x.x.x,10.x.x.x" # provide MDM value
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -160,7 +160,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.x.x.x,10.x.x.x" # provide MDM value
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
   modules:
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
@@ -177,7 +177,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: dellemc/dell-csi-replicator:v1.9.0
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string

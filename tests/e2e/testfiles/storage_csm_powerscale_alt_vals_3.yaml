@@ -19,7 +19,7 @@ spec:
     forceRemoveDriver: false
     common:
       image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
         # Allowed Values:
@@ -153,7 +153,7 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
-          # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+        # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
         - key: "node-role.kubernetes.io/master"
           operator: "Exists"
           effect: "NoSchedule"

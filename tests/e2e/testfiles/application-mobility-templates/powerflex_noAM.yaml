@@ -17,12 +17,12 @@ spec:
       #   false: disable storage capacity tracking
       storageCapacity: true
     configVersion: v2.13.0
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
       image: "dellemc/csi-vxflexos:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
           value: "false"
@@ -164,7 +164,7 @@ spec:
           # enable: Enable/Disable application mobility controller-manager
           enabled: true
           image: REPLACE_CONTROLLER_IMAGE
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envs:
             # Replica count for application mobility
             # Allowed values: string
