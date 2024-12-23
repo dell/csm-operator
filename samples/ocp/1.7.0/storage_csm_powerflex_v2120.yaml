@@ -48,10 +48,10 @@ spec:
         - name: INTERFACE_NAMES
           value:
     sideCars:
-      # 'k8s' represents a string prepended to each volume created by the CSI driver
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
-        args: ["--volume-name-prefix=k8s"]
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher@sha256:6e54dae32284f60a2de1645c527715e4c934e5ce7899560c0d845bac957118dc
       - name: registrar
