@@ -173,7 +173,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	bController := true
 	bOwnerDeletion := cr.Spec.Driver.ForceRemoveDriver != nil && !*cr.Spec.Driver.ForceRemoveDriver
 	kind := cr.Kind
-	v1 := "apps/v1"
+	v1 := "storage.dell.com/v1"
 	controllerYAML.Deployment.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
 		{
 			APIVersion:         &v1,
