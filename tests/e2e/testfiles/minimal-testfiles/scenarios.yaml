@@ -17,6 +17,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
   customTest:
@@ -42,6 +43,8 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
+    - "Validate [resiliency] module from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
   customTest:
@@ -72,6 +75,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
 
@@ -92,6 +96,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
   customTest:
@@ -120,6 +125,7 @@
     - "Validate custom resource [1]"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
   customTest:
@@ -144,6 +150,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [unity] driver from CR [1] is not installed"
     - "Restore template [testfiles/unity-templates/unity-secret-template.yaml] for [unity]"
     - "Restore template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
   customTest:
@@ -172,6 +179,7 @@
     - "Validate custom resource [1]"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [unity] driver from CR [1] is not installed"
     - "Restore template [testfiles/unity-templates/unity-secret-template.yaml] for [unity]"
     - "Restore template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
   customTest:
@@ -196,6 +204,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [unity] driver from CR [1] is not installed"
     - "Restore template [testfiles/unity-templates/unity-secret-template.yaml] for [unity]"
     - "Restore template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
   customTest:
@@ -221,6 +230,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
@@ -245,6 +255,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
@@ -257,7 +268,6 @@
     - "testfiles/minimal-testfiles/storage_csm_powerflex_with_false_forceRemoveDriver.yaml"
   tags:
     - "powerflex"
-
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
@@ -300,6 +310,8 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is not installed"
+    - "Validate [resiliency] module from CR [1] is not installed"
   customTest:
     - name: CustomTest
       run:
@@ -327,6 +339,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is not installed"
 - scenario: "Install PowerFlex Driver (Minimal, With Authorization V2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
