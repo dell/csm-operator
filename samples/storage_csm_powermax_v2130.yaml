@@ -242,8 +242,8 @@ spec:
               value: "csirevproxy-tls-secret"
             - name: X_CSI_REVPROXY_PORT
               value: "2222"
-            - name: X_CSI_CONFIG_MAP_NAME
-              value: "powermax-reverseproxy-config"
+            - name: X_CSI_REVPROXY_SECRET
+              value: "powermax-reverseproxy-secret"
             # deployAsSidecar defines the way reversproxy is installed with the driver
             # set it true, if csm-auth is enabled / you want it as a sidecar container
             # set it false, if you want it as a deployment
