@@ -43,7 +43,7 @@ const (
 	ReverseProxyService         = "service.yaml"
 	ReverseProxyImage           = "<REVERSEPROXY_PROXY_SERVER_IMAGE>"
 	ReverseProxyTLSSecret       = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
-	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
+	ReverseProxySecret          = "<X_CSI_REVPROXY_SECRET>"
 	ReverseProxyPort            = "<X_CSI_REVPROXY_PORT>"
 )
 
@@ -55,7 +55,7 @@ var (
 	RevProxyDefaultPort          = "2222"
 	RevProxyServiceName          = "csipowermax-reverseproxy"
 	RevProxyConfigMapVolName     = "configmap-volume"
-	RevProxyConfigMapDeafultName = "powermax-reverseproxy-config"
+	RevProxySecretName           = "powermax-reverseproxy-secret"
 	RevProxyTLSSecretVolName     = "tls-secret"
 	RevProxyTLSSecretDefaultName = "csirevproxy-tls-secret" // #nosec G101
 )
@@ -85,14 +85,14 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 	}
 	// Check for secrets
 	proxyServerSecret := "csirevproxy-tls-secret" // #nosec G101
-	proxyConfigMap := "powermax-reverseproxy-config"
+	proxySecret := "powermax-reverseproxy-secret"
 	if revproxy.Components != nil {
 		for _, env := range revproxy.Components[0].Envs {
 			if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
 				proxyServerSecret = env.Value
 			}
-			if env.Name == "X_CSI_CONFIG_MAP_NAME" {
-				proxyConfigMap = env.Value
+			if env.Name == "X_CSI_REVPROXY_SECRET" {
+				proxSecret = env.Value
 			}
 			if env.Name == "DeployAsSidecar" {
 				deployAsSidecar, _ = strconv.ParseBool(env.Value)
@@ -107,10 +107,10 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 		}
 	}
 
-	err = r.GetClient().Get(ctx, types.NamespacedName{Name: proxyConfigMap, Namespace: cr.GetNamespace()}, &corev1.ConfigMap{})
+	err = r.GetClient().Get(ctx, types.NamespacedName{Name: proxySecret, Namespace: cr.GetNamespace()}, &corev1.ConfigMap{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return fmt.Errorf("failed to find configmap %s", proxyConfigMap)
+			return fmt.Errorf("failed to find configmap %s", proxySecret)
 		}
 	}
 	log.Infof("\nperformed pre checks for: %s", revproxy.Name)
@@ -233,7 +233,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	proxyNamespace := cr.Namespace
 	proxyTLSSecret := RevProxyTLSSecretDefaultName
 	proxyPort := RevProxyDefaultPort
-	proxyConfig := RevProxyConfigMapDeafultName
+	proxySecret := RevProxySecret
 	image := op.K8sVersion.Images.CSIRevProxy
 
 	for _, component := range revProxy.Components {
@@ -248,8 +248,8 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 				if env.Name == "X_CSI_REVPROXY_PORT" {
 					proxyPort = env.Value
 				}
-				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
-					proxyConfig = env.Value
+				if env.Name == "X_CSI_REVPROXY_SECRET" {
+					proxySecret = env.Value
 				}
 			}
 		}
@@ -259,7 +259,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseNamespace, proxyNamespace)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyPort, proxyPort)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
-	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, proxyConfig)
+	YamlString = strings.ReplaceAll(YamlString, ReverseProxySecret, proxySecret)
 
 	return YamlString, nil
 }
@@ -318,7 +318,7 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 	for _, component := range revProxyModule.Components {
 		if component.Name == ReverseProxyServerComponent {
 			for _, env := range component.Envs {
-				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
+				if env.Name == "X_CSI_REVPROXY_SECRET" {
 					revProxyConfigMap = env.Value
 				}
 				if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
