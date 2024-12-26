@@ -54,7 +54,7 @@ var (
 	CSIPmaxRevProxyPort          = "X_CSI_POWERMAX_SIDECAR_PROXY_PORT"
 	RevProxyDefaultPort          = "2222"
 	RevProxyServiceName          = "csipowermax-reverseproxy"
-	RevProxyConfigMapVolName     = "configmap-volume"
+	#RevProxyConfigMapVolName     = "configmap-volume"
 	RevProxySecretName           = "powermax-reverseproxy-secret"
 	RevProxyTLSSecretVolName     = "tls-secret"
 	RevProxyTLSSecretDefaultName = "csirevproxy-tls-secret" // #nosec G101
@@ -107,10 +107,10 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 		}
 	}
 
-	err = r.GetClient().Get(ctx, types.NamespacedName{Name: proxySecret, Namespace: cr.GetNamespace()}, &corev1.ConfigMap{})
+	err = r.GetClient().Get(ctx, types.NamespacedName{Name: proxySecret, Namespace: cr.GetNamespace()}, &corev1.Secret{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return fmt.Errorf("failed to find configmap %s", proxySecret)
+			return fmt.Errorf("failed to find secret  %s", proxySecret)
 		}
 	}
 	log.Infof("\nperformed pre checks for: %s", revproxy.Name)
@@ -233,7 +233,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	proxyNamespace := cr.Namespace
 	proxyTLSSecret := RevProxyTLSSecretDefaultName
 	proxyPort := RevProxyDefaultPort
-	proxySecret := RevProxySecret
+	proxySecret := RevProxySecretName
 	image := op.K8sVersion.Images.CSIRevProxy
 
 	for _, component := range revProxy.Components {
@@ -259,7 +259,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseNamespace, proxyNamespace)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyPort, proxyPort)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
-	YamlString = strings.ReplaceAll(YamlString, ReverseProxySecret, proxySecret)
+        YamlString = strings.ReplaceAll(YamlString, ReverseProxySecret, proxySecret)
 
 	return YamlString, nil
 }
@@ -314,12 +314,12 @@ func getRevProxyPort(revProxyModule csmv1.Module) string {
 }
 
 func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyConfiguration {
-	revProxyConfigMap, revProxyTLSSecret := RevProxyConfigMapDeafultName, RevProxyTLSSecretDefaultName
+	revProxySecret, revProxyTLSSecret := RevProxySecretName, RevProxyTLSSecretDefaultName
 	for _, component := range revProxyModule.Components {
 		if component.Name == ReverseProxyServerComponent {
 			for _, env := range component.Envs {
 				if env.Name == "X_CSI_REVPROXY_SECRET" {
-					revProxyConfigMap = env.Value
+					revProxySecret = env.Value
 				}
 				if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
 					revProxyTLSSecret = env.Value
@@ -330,11 +330,10 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 	optional := true
 	revProxyVolumes := []acorev1.VolumeApplyConfiguration{
 		{
-			Name: &RevProxyConfigMapVolName,
+			Name: &RevProxySecretName,
 			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
-				ConfigMap: &acorev1.ConfigMapVolumeSourceApplyConfiguration{
-					LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{Name: &revProxyConfigMap},
-					Optional:                               &optional,
+				Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+					SecretName: &revProxySecret},
 				},
 			},
 		},
