@@ -54,8 +54,8 @@ var (
 	CSIPmaxRevProxyPort          = "X_CSI_POWERMAX_SIDECAR_PROXY_PORT"
 	RevProxyDefaultPort          = "2222"
 	RevProxyServiceName          = "csipowermax-reverseproxy"
-	#RevProxyConfigMapVolName     = "configmap-volume"
-	RevProxySecretName           = "powermax-reverseproxy-secret"
+	RevProxyConfigMapVolName     = "configmap-volume"
+	RevProxySecretName           = "powermax-reverseproxy-secret" // #nosec G101
 	RevProxyTLSSecretVolName     = "tls-secret"
 	RevProxyTLSSecretDefaultName = "csirevproxy-tls-secret" // #nosec G101
 )
@@ -333,7 +333,7 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 			Name: &RevProxySecretName,
 			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
 				Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
-					SecretName: &revProxySecret},
+					SecretName: &revProxySecret,
 				},
 			},
 		},
@@ -345,8 +345,7 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 				},
 			},
 		},
-	}
-
+        }
 	return revProxyVolumes
 }
 
