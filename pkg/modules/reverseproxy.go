@@ -92,7 +92,7 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 				proxyServerSecret = env.Value
 			}
 			if env.Name == "X_CSI_REVPROXY_SECRET" {
-				proxSecret = env.Value
+				proxySecret = env.Value
 			}
 			if env.Name == "DeployAsSidecar" {
 				deployAsSidecar, _ = strconv.ParseBool(env.Value)
