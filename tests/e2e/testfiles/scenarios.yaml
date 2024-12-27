@@ -118,7 +118,7 @@
     - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [2]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"    
+    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
 
 - scenario: "Install Authorization Proxy Server V1 with alternate namespace"
   paths:
