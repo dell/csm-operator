@@ -95,7 +95,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"`
+    - "Validate [powerstore] driver from CR [1] is installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
   customTest:
