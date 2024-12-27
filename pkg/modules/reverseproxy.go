@@ -42,6 +42,7 @@ const (
 	ReverseProxySidecar         = "container.yaml"
 	ReverseProxyService         = "service.yaml"
 	ReverseProxyImage           = "<REVERSEPROXY_PROXY_SERVER_IMAGE>"
+	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
 	ReverseProxyTLSSecret       = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
 	ReverseProxySecret          = "<X_CSI_REVPROXY_SECRET>"
 	ReverseProxyPort            = "<X_CSI_REVPROXY_PORT>"
@@ -327,7 +328,6 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 			}
 		}
 	}
-	optional := true
 	revProxyVolumes := []acorev1.VolumeApplyConfiguration{
 		{
 			Name: &RevProxySecretName,
