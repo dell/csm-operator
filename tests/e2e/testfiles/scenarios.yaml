@@ -1664,7 +1664,7 @@
     - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up reverse proxy tls secret namespace [powermax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up secret with template [testfiles/powermax-templates/powermax_revproxy_secret-template.yaml] name [powermax-reverseproxy-secret] in namespace [powermax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
