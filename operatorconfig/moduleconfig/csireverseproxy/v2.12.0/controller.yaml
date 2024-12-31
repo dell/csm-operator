@@ -76,10 +76,6 @@ spec:
           image: <REVERSEPROXY_PROXY_SERVER_IMAGE>
           imagePullPolicy: Always
           env:
-            - name: X_CSI_REVPROXY_CONFIG_DIR
-              value: /etc/config/configmap
-            - name: X_CSI_REVPROXY_CONFIG_FILE_NAME
-              value: config.yaml
             - name: X_CSI_REVRPOXY_IN_CLUSTER
               value: "true"
             - name: X_CSI_REVPROXY_TLS_CERT_DIR
@@ -87,17 +83,16 @@ spec:
             - name: X_CSI_REVPROXY_WATCH_NAMESPACE
               value: <DriverDefaultReleaseNamespace>  # Change this to the namespace where proxy will be installed
           volumeMounts:
-            - name: configmap-volume
-              mountPath: /etc/config/configmap
+            - name: revproxy-secret-volume
+              mountPath: /app/revproxy-secret
             - name: tls-secret
               mountPath: /app/tls
             - name: cert-dir
               mountPath: /app/certs
       volumes:
-        - name: configmap-volume
-          configMap:
-            name: <X_CSI_CONFIG_MAP_NAME>
-            optional: true
+        - name: revproxy-secret-volume
+          secret:
+            secretname: <X_CSI_REVPROXY_SECRET>
         - name: tls-secret
           secret:
             secretName: <X_CSI_REVPROXY_TLS_SECRET>
