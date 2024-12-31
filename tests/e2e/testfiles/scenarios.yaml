@@ -12,7 +12,7 @@
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
 
 # Upgrade from V1 to V2 is not supported. This test is to install a previous version of Auth V1 and upgrade to the next.
 - scenario: "Install Authorization Proxy Server V1 and upgrade"
@@ -32,7 +32,7 @@
     - "Validate custom resource [2]"
     - "Validate [authorization-proxy-server] module from CR [2] is installed"
     - "Delete custom resource [2]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
 
 - scenario: "Install Authorization Proxy Server V2"
   paths:
@@ -49,7 +49,7 @@
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
 
 - scenario: "Install Authorization CRDs for V2"
@@ -84,7 +84,7 @@
     - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [2]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
 
 - scenario: "Install Authorization CRDs for V2"
   paths:
@@ -118,7 +118,7 @@
     - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Delete Authorization CRDs [2]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
 
 - scenario: "Install Authorization Proxy Server V1 with alternate namespace"
   paths:
@@ -133,7 +133,7 @@
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
 
 - scenario: "Install Authorization Proxy Server & PowerFlex Driver (With Authorization V1), Upgrade both Authorization Proxy Server and PowerFlex Driver"
   paths:
@@ -338,7 +338,7 @@
     - "Delete custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is not installed"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
   customTest:
@@ -612,7 +612,7 @@
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [2] is not installed"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Restore template [testfiles/powerscale-templates/powerscale-secret-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
@@ -658,7 +658,7 @@
     - "Delete custom resource [2]"
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [2] is not installed"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
@@ -885,7 +885,7 @@
     - "Validate [powerflex] driver from CR [2] is not installed"
     - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
@@ -925,7 +925,7 @@
     - "Validate [powerscale] driver from CR [2] is not installed"
     - "Delete Authorization CRs for [powerscale]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
     - "Restore template [testfiles/powerscale-templates/karavi-authorization-config.json] for [pscaleAuthSidecar]"
@@ -966,7 +966,7 @@
     - "Validate [powerscale] driver from CR [2] is not installed"
     - "Delete Authorization CRs for [powerscale]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
@@ -1017,7 +1017,7 @@
     - "Validate [powerscale] driver from CR [2] is not installed"
     - "Delete Authorization CRs for [powerscale]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Restore template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] for [pscaleAuth]"
@@ -1063,7 +1063,7 @@
     - "Validate [powerflex] driver from CR [3] is not installed"
     - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [4]"
     - "Restore template [testfiles/powerflex-templates/csm-authorization-config.json] for [pflexAuthSidecar]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
@@ -1270,7 +1270,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is not installed"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
@@ -1305,7 +1305,7 @@
     - "Delete custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is not installed"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
     - name: Cert CSI
@@ -1354,7 +1354,7 @@
     - "Validate [powerflex] driver from CR [2] is not installed"
     - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [3]"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflexAuth]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
@@ -1944,7 +1944,7 @@
     - "Validate [powermax] driver from CR [3] is not installed"
     - "Delete Authorization CRs for [powermax]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
     - "Restore template [testfiles/powermax-templates/csm-authorization-config.json] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
@@ -1992,7 +1992,7 @@
     - "Validate [powermax] driver from CR [3] is not installed"
     - "Delete Authorization CRs for [powermax]"
     - "Delete custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is not installed"
+    - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
     - "Restore template [testfiles/powermax-templates/csm-authorization-config.json] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
