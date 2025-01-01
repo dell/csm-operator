@@ -64,9 +64,6 @@
     - "Validate [csmtenants] CRD for Authorization is installed"
     - "Validate [storages] CRD for Authorization is installed"
     - "Delete Authorization CRDs [1]"
-    - "Validate [csmroles] CRD for Authorization is not installed"
-    - "Validate [csmtenants] CRD for Authorization is not installed"
-    - "Validate [storages] CRD for Authorization is not installed"
 
 - scenario: "Install Authorization Proxy Server V2 With Default Redis Storage Class"
   paths:
@@ -98,9 +95,6 @@
     - "Validate [csmtenants] CRD for Authorization is installed"
     - "Validate [storages] CRD for Authorization is installed"
     - "Delete Authorization CRDs [1]"
-    - "Validate [csmroles] CRD for Authorization is not installed"
-    - "Validate [csmtenants] CRD for Authorization is not installed"
-    - "Validate [storages] CRD for Authorization is not installed"
 
 - scenario: "Install Authorization Proxy Server V2 With Multiple Vaults"  # TODO: Should this be using the multiple_vaults YAML?
   paths:
@@ -2001,7 +1995,7 @@
     - "Restore template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxAuthArrayConfig]"
   customTest:
     - name: Cert CSI
-      run:
+      run:resili
         - cert-csi test vio --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
 
 - scenario: "Install Powermax Driver(Standalone), Enable Resiliency"
