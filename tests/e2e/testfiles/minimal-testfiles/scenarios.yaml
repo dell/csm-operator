@@ -17,7 +17,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
   customTest:
@@ -43,7 +43,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
   customTest:
@@ -74,7 +74,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
 
@@ -95,7 +95,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
   customTest:
@@ -124,7 +124,7 @@
     - "Validate custom resource [1]"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
   customTest:
@@ -149,7 +149,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [unity] driver from CR [1] is installed"
+    - "Validate [unity] driver from CR [1] is not installed"
     - "Restore template [testfiles/unity-templates/unity-secret-template.yaml] for [unity]"
     - "Restore template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
   customTest:
@@ -178,7 +178,7 @@
     - "Validate custom resource [1]"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [unity] driver from CR [1] is installed"
+    - "Validate [unity] driver from CR [1] is not installed"
     - "Restore template [testfiles/unity-templates/unity-secret-template.yaml] for [unity]"
     - "Restore template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
   customTest:
@@ -203,7 +203,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [unity] driver from CR [1] is installed"
+    - "Validate [unity] driver from CR [1] is not installed"
     - "Restore template [testfiles/unity-templates/unity-secret-template.yaml] for [unity]"
     - "Restore template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
   customTest:
@@ -229,7 +229,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
@@ -254,7 +254,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
@@ -309,7 +309,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
   customTest:
     - name: CustomTest
@@ -853,7 +853,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is not installed"
     - "Restore template [testfiles/powerflex-templates/powerflex-secret-template.yaml] for [pflex]"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
@@ -878,7 +878,7 @@
     - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [powermax] driver from CR [1] is not installed"
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
@@ -904,7 +904,7 @@
     - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [powermax] driver from CR [1] is not nstalled"
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
@@ -935,7 +935,7 @@
     - "Validate custom resource [1]"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [powermax] driver from CR [1] is not installed"
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
@@ -962,7 +962,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [powermax] driver from CR [1] is not installed"
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
@@ -1095,7 +1095,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [powermax] driver from CR [1] is not installed"
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
@@ -1119,7 +1119,7 @@
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [powermax] driver from CR [1] is not installed"
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
