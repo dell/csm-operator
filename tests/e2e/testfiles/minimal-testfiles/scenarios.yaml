@@ -315,6 +315,7 @@
     - name: CustomTest
       run:
         - echo "no current test for resiliency"
+
 - scenario: "Install PowerFlex Driver (Minimal, Standalone), Enable/Disable Resiliency"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
