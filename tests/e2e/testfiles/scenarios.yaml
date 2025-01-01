@@ -1995,7 +1995,7 @@
     - "Restore template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxAuthArrayConfig]"
   customTest:
     - name: Cert CSI
-      run:resili
+      run:
         - cert-csi test vio --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
 
 - scenario: "Install Powermax Driver(Standalone), Enable Resiliency"
