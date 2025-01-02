@@ -212,6 +212,7 @@ spec:
           # Default value: None
           # Example: "csipowermax-reverseproxy:v2.9.1"
           image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+          imagePullPolicy: Always
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
