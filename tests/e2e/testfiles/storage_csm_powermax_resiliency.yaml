@@ -205,16 +205,14 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      # enabled: Always set to true
-      enabled: true
-      forceRemoveModule: true
-      configVersion: v2.10.0
+      configVersion: v2.11.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
           # Example: "csipowermax-reverseproxy:v2.9.1"
-          image: dellemc/csipowermax-reverseproxy:nightly
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+          imagePullPolicy: Always
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -230,7 +228,7 @@ spec:
             # set it true, if csm-auth is enabled / you want it as a sidecar container
             # set it false, if you want it as a deployment
             - name: "DeployAsSidecar"
-              value: "false"
+              value: "true"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:

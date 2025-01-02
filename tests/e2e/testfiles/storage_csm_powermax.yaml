@@ -212,6 +212,7 @@ spec:
           # Default value: None
           # Example: "csipowermax-reverseproxy:v2.9.1"
           image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+          imagePullPolicy: Always
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -227,7 +228,7 @@ spec:
             # set it true, if csm-auth is enabled / you want it as a sidecar container
             # set it false, if you want it as a deployment
             - name: "DeployAsSidecar"
-              value: "true"
+              value: "false"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:
