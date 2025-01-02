@@ -1814,8 +1814,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
-        
+        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1 
 - scenario: "Install PowerMax Driver(With Observability)"
   paths:
     - "testfiles/storage_csm_powermax_observability.yaml"
