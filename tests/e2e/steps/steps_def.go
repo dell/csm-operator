@@ -672,6 +672,12 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 	return nil
 }
 
+func (step *Step) validateAuthorizationPodsNotInstalled(res Resource, module string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	time.Sleep(20 * time.Second)
+	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
+}
+
 func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
 	// find which map to use for secret values
 	mapValues, err := determineMap(crType)
