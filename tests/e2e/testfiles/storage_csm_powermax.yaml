@@ -177,10 +177,10 @@ spec:
           operator: "Exists"
           effect: "NoExecute"
     sideCars:
-      # 'pmax' represents a string prepended to each volume created by the CSI driver
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
-        args: ["--volume-name-prefix=pmax"]
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
       - name: registrar
@@ -211,6 +211,7 @@ spec:
           # Default value: None
           # Example: "csipowermax-reverseproxy:v2.9.1"
           image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+          imagePullPolicy: Always
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -226,7 +227,7 @@ spec:
             # set it true, if csm-auth is enabled / you want it as a sidecar container
             # set it false, if you want it as a deployment
             - name: "DeployAsSidecar"
-              value: "true"
+              value: "false"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:

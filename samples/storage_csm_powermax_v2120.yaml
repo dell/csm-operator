@@ -95,7 +95,7 @@ spec:
         # Allowed values: "error", "warn"/"warning", "info", "debug"
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
-          value: "debug"
+          value: "info"
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
@@ -198,11 +198,11 @@ spec:
     #    operator: "Exists"
     #    effect: "NoSchedule"
     sideCars:
-      # 'pmax' represents a string prepended to each volume created by the CSI driver
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
-        # Default volume-name-prefix: pmax
-        args: ["--volume-name-prefix=pmax"]
+        # Default volume-name-prefix: csivol
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
       - name: registrar

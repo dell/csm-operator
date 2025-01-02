@@ -186,10 +186,10 @@ spec:
           operator: "Exists"
           effect: "NoExecute"
     sideCars:
-      # 'pmax' represents a string prepended to each volume created by the CSI driver
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
-        args: ["--volume-name-prefix=pmax"]
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
       - name: registrar
@@ -213,15 +213,14 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      # enabled: Always set to true
-      enabled: true
-      forceRemoveModule: true
-      configVersion: v2.10.0
+      configVersion: v2.11.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: dellemc/csipowermax-reverseproxy:nightly
+          # Example: "csipowermax-reverseproxy:v2.9.1"
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+          imagePullPolicy: Always
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
