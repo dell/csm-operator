@@ -39,7 +39,6 @@ spec:
     # Default value: None
     replicas: 2
     # Default credential secret for Powermax, if not set it to ""
-    authSecret: powermax-creds
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
