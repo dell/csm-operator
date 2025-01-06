@@ -37,6 +37,8 @@ const (
 	CommonNamespace = "<NAMESPACE>"
 	// CSMName - name
 	CSMName = "<NAME>"
+	// ComConfigCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	ComConfigCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // SupportedDriverParam -
@@ -100,6 +102,7 @@ func getCertManager(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	certNamespace := cr.Namespace
 	YamlString = strings.ReplaceAll(YamlString, CommonNamespace, certNamespace)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, ComConfigCSMNameSpace, cr.Namespace)
 
 	return YamlString, nil
 }

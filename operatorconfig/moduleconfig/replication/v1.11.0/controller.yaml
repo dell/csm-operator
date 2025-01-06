@@ -244,6 +244,7 @@ spec:
     metadata:
       labels:
         control-plane: controller-manager
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccountName: dell-replication-controller-sa
       containers:

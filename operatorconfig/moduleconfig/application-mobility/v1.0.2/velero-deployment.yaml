@@ -105,6 +105,7 @@ spec:
         csm: <NAME>
         app.kubernetes.io/name: application-mobility-velero
         app.kubernetes.io/instance: application-mobility
+        csmNamespace: <CSM_NAMESPACE>
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8085"
