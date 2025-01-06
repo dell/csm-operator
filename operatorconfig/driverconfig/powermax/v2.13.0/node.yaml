@@ -174,9 +174,6 @@ spec:
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
-            - name: csi-path
-              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
-              mountPropagation: "Bidirectional"
             - name: dev
               mountPath: /dev
             - name: sys
