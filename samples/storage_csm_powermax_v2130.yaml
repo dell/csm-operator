@@ -97,7 +97,7 @@ spec:
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
           value: "info"
-        # "X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION" determines if driver is going to skip verification
+        # X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION: It determines if driver is going to skip verification
         # of TLS certificates while connecting to Unisphere RESTAPI interface
         # If it is set to false,
         # then a secret powermax-certs has to be created with a X.509 certificate of CA
