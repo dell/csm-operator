@@ -314,15 +314,12 @@ func getRevProxyPort(revProxyModule csmv1.Module) string {
 }
 
 func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyConfiguration {
-	revProxyConfigMap, revProxyTLSSecret := RevProxyConfigMapDeafultName, RevProxyTLSSecretDefaultName
+	revProxyConfigMap := RevProxyConfigMapDeafultName
 	for _, component := range revProxyModule.Components {
 		if component.Name == ReverseProxyServerComponent {
 			for _, env := range component.Envs {
 				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
 					revProxyConfigMap = env.Value
-				}
-				if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
-					revProxyTLSSecret = env.Value
 				}
 			}
 		}
@@ -335,14 +332,6 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 				ConfigMap: &acorev1.ConfigMapVolumeSourceApplyConfiguration{
 					LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{Name: &revProxyConfigMap},
 					Optional:                               &optional,
-				},
-			},
-		},
-		{
-			Name: &RevProxyTLSSecretVolName,
-			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
-				Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
-					SecretName: &revProxyTLSSecret,
 				},
 			},
 		},
