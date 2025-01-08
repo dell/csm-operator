@@ -107,7 +107,7 @@ spec:
         #   "false" - TLS certificates will be verified
         # Default value: "true"
         - name: "X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION"
-          value: "false"  
+          value: "false"
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
