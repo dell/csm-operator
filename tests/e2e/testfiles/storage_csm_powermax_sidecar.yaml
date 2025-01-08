@@ -36,7 +36,7 @@ spec:
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
-    # Default value: None
+    # Default value: 2
     replicas: 2
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
@@ -92,6 +92,27 @@ spec:
         # Default value: "" <empty>
         - name: "X_CSI_VCENTER_HOST"
           value: ""
+        # CSI driver log level
+        # Allowed values: "error", "warn"/"warning", "info", "debug"
+        # Default value: "debug"
+        - name: "CSI_LOG_LEVEL"
+          value: "info"
+        # X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION: It determines if driver is going to skip verification
+        # of TLS certificates while connecting to Unisphere RESTAPI interface
+        # If it is set to false,
+        # then a secret powermax-certs has to be created with a X.509 certificate of CA
+        # which signed the Unisphere certificate
+        # Allowed values:
+        #   "true"  - TLS certificates verification will be skipped
+        #   "false" - TLS certificates will be verified
+        # Default value: "true"
+        - name: "X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION"
+          value: "true"
+        # CSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: "CSI_LOG_FORMAT"
+          value: "TEXT"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
@@ -205,7 +226,7 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.11.0
+      configVersion: v2.12.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
