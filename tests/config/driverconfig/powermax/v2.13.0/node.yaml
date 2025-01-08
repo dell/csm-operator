@@ -166,7 +166,7 @@ spec:
                   name: vcenter-creds
                   optional: true
             - name: X_CSI_REVPROXY_TLS_CERT_DIR
-              value: /app/tls      
+              value: /app/tls
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com
@@ -279,4 +279,4 @@ spec:
             type: Directory
         - name: tls-secret
           secret:
-            secretName: <X_CSI_REVPROXY_TLS_SECRET>    
+            secretName: <X_CSI_REVPROXY_TLS_SECRET>
