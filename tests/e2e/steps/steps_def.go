@@ -13,6 +13,7 @@
 package steps
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/rand"
@@ -2107,6 +2108,73 @@ func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
 		if err != nil {
 			return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
 		}
+	}
+
+	return nil
+}
+
+func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
+	// Create a temporary directory
+	tmpDir, err := os.MkdirTemp("", "tls-setup")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary directory: %v", err)
+	}
+	fmt.Println("Temporary directory created at:", tmpDir) // Print the path for verification
+	defer os.RemoveAll(tmpDir)                             // Clean up the temporary directory
+
+	// Paths for the key, CSR, and certificate files
+	keyPath := filepath.Join(tmpDir, "tls.key")
+	csrPath := filepath.Join(tmpDir, "tls.csr")
+	crtPath := filepath.Join(tmpDir, "tls.crt")
+	sanConfigPath := "testfiles/powermax-templates/san.cnf"
+
+	// Generate TLS key
+	cmd := exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS key: %v", err)
+	}
+
+	// Generate CSR
+	cmd = exec.Command("openssl", "req", "-new", "-key", keyPath, "-out", csrPath, "-config", sanConfigPath)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate CSR: %v", err)
+	}
+
+	// Generate TLS certificate
+	cmd = exec.Command("openssl", "x509", "-req", "-in", csrPath, "-signkey", keyPath, "-out", crtPath, "-days", "3650", "-extensions", "v3_req", "-extfile", sanConfigPath)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS certificate: %v", err)
+	}
+
+	// Create or update Kubernetes secret for revproxy-certs
+	cmd = exec.Command("kubectl", "create", "secret", "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath, "-n", namespace, "-o", "yaml", "--dry-run=client")
+	cmdOut, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to prepare revproxy-certs secret: %v", err)
+	}
+
+	cmd = exec.Command("kubectl", "apply", "-f", "-")
+	cmd.Stdin = bytes.NewReader(cmdOut)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to apply revproxy-certs secret: %v", err)
+	}
+
+	// Create or update Kubernetes secret for csirevproxy-tls-secret
+	cmd = exec.Command("kubectl", "create", "secret", "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath, "-n", namespace, "-o", "yaml", "--dry-run=client")
+	cmdOut, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to prepare csirevproxy-tls-secret: %v", err)
+	}
+
+	cmd = exec.Command("kubectl", "apply", "-f", "-")
+	cmd.Stdin = bytes.NewReader(cmdOut)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to apply csirevproxy-tls-secret: %v", err)
 	}
 
 	return nil
