@@ -32,7 +32,9 @@ import (
 // Constant to be used for powermax deployment
 const (
 	// PowerMaxPluginIdentifier used to identify powermax plugin
-	PowerMaxPluginIdentifier = "powermax"
+	PowerMaxPluginIdentifier     = "powermax"
+	ReverseProxyServerComponent  = "csipowermax-reverseproxy" // #nosec G101
+	RevProxyTLSSecretDefaultName = "csirevproxy-tls-secret"   // #nosec G101
 
 	// PowerMaxConfigParamsVolumeMount used to identify config param volume mount
 	PowerMaxConfigParamsVolumeMount = "powermax-config-params"
@@ -53,6 +55,7 @@ const (
 	CSIPmaxVsphereHostname = "<X_CSI_VSPHERE_HOSTNAME>"
 	CSIPmaxVsphereHost     = "<X_CSI_VCENTER_HOST>"
 	CSIPmaxChap            = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
+	ReverseProxyTLSSecret  = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
 
 	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
 	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
@@ -182,6 +185,17 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 			}
 		}
+		proxyTLSSecret := RevProxyTLSSecretDefaultName
+		revProxy := cr.GetModule(csmv1.ReverseProxy)
+		for _, component := range revProxy.Components {
+			if component.Name == ReverseProxyServerComponent {
+				for _, env := range component.Envs {
+					if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
+						proxyTLSSecret = env.Value
+					}
+				}
+			}
+		}
 
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxManagedArray, managedArray)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxEndpoint, endpoint)
@@ -199,6 +213,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHost, vsphereHost)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
 		yamlString = strings.ReplaceAll(yamlString, CsiPmaxMaxVolumesPerNode, maxVolumesPerNode)
+		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
+
 	case "Controller":
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {
@@ -247,6 +263,19 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 			}
 		}
+
+		proxyTLSSecret := RevProxyTLSSecretDefaultName
+		revProxy := cr.GetModule(csmv1.ReverseProxy)
+		for _, component := range revProxy.Components {
+			if component.Name == ReverseProxyServerComponent {
+				for _, env := range component.Envs {
+					if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
+						proxyTLSSecret = env.Value
+					}
+				}
+			}
+		}
+
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxManagedArray, managedArray)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxEndpoint, endpoint)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxClusterPrefix, clusterPrefix)
@@ -262,6 +291,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHostname, vsphereHostname)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHost, vsphereHost)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
+		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
+
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

@@ -299,6 +299,8 @@ spec:
                   key: password
                   name: vcenter-creds
                   optional: true
+            - name: X_CSI_REVPROXY_TLS_CERT_DIR
+              value: /app/tls
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
@@ -309,6 +311,8 @@ spec:
               mountPath: <DriverDefaultReleaseName>-config-params
             - name: powermax-array-config
               mountPath: /powermax-array-config
+            - name: tls-secret
+              mountPath: /app/tls
       volumes:
         - name: socket-dir
           emptyDir:
@@ -324,3 +328,6 @@ spec:
             name: powermax-array-config
         - name: cert-dir
           emptyDir:
+        - name: tls-secret
+          secret:
+            secretName: <X_CSI_REVPROXY_TLS_SECRET>

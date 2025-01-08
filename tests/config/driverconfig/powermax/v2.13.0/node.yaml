@@ -73,6 +73,8 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+      annotations:
+        kubectl.kubernetes.io/default-container: driver
     spec:
       serviceAccount: <DriverDefaultReleaseName>-node
       # nodeSelector:
@@ -95,7 +97,7 @@ spec:
             - name: CSI_ENDPOINT
               value: unix://<KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com/csi_sock
             - name: X_CSI_K8S_CLUSTER_PREFIX
-              value: "<X_CSI_K8S_CLUSTER_PREFIX>"
+              value: "CSM"
             - name: X_CSI_MODE
               value: node
             - name: X_CSI_PRIVATE_MOUNT_DIR
@@ -129,6 +131,8 @@ spec:
               value: /certs
             - name: X_CSI_POWERMAX_CONFIG_PATH
               value: /powermax-config-params/driver-config-params.yaml
+            - name: X_CSI_POWERMAX_ARRAY_CONFIG_PATH
+              value: /powermax-array-config/powermax-array-config.yaml
             - name: X_CSI_POWERMAX_TOPOLOGY_CONFIG_PATH
               value: /node-topology-config/topologyConfig.yaml
             - name: X_CSI_IG_NODENAME_TEMPLATE
@@ -137,6 +141,8 @@ spec:
               value: "<X_CSI_IG_MODIFY_HOSTNAME>"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_MAX_VOLUMES_PER_NODE
+              value: "<X_CSI_MAX_VOLUMES_PER_NODE>"
             - name: X_CSI_TOPOLOGY_CONTROL_ENABLED
               value: "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
             - name: X_CSI_VSPHERE_ENABLED
@@ -145,6 +151,8 @@ spec:
               value: "<X_CSI_VSPHERE_PORTGROUP>"
             - name: X_CSI_VCENTER_HOST
               value: "<X_CSI_VCENTER_HOST>"
+            - name: X_CSI_VSPHERE_HOSTNAME
+              value: "<X_CSI_VSPHERE_HOSTNAME>"
             - name: X_CSI_VCENTER_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -157,11 +165,14 @@ spec:
                   key: password
                   name: vcenter-creds
                   optional: true
+            - name: X_CSI_REVPROXY_TLS_CERT_DIR
+              value: /app/tls
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
+              mountPropagation: "Bidirectional"
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
@@ -178,8 +189,12 @@ spec:
               readOnly: true
             - name: powermax-config-params
               mountPath: /powermax-config-params
+            - name: powermax-array-config
+              mountPath: /powermax-array-config
             - name: node-topology-config
               mountPath: /node-topology-config
+            - name: tls-secret
+              mountPath: /app/tls
         - name: registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
           imagePullPolicy: IfNotPresent
@@ -213,6 +228,9 @@ spec:
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
             type: DirectoryOrCreate
+        - name: csi-path
+          hostPath:
+            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
         - name: pods-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
@@ -240,7 +258,25 @@ spec:
         - name: powermax-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
+        - name: powermax-array-config
+          configMap:
+            name: powermax-array-config
         - name: node-topology-config
           configMap:
             name: node-topology-config
             optional: true
+        - name: kubelet-pods
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+        - name: var-run
+          hostPath:
+            path: /var/run
+            type: Directory
+        - name: tls-secret
+          secret:
+            secretName: <X_CSI_REVPROXY_TLS_SECRET>

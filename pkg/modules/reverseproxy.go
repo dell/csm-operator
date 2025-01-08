@@ -338,14 +338,21 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 				},
 			},
 		},
-		{
-			Name: &RevProxyTLSSecretVolName,
-			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
-				Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
-					SecretName: &revProxyTLSSecret,
+	}
+
+	// Volume tls-secret should be added only of version is older than 2.12.0
+	isNewReverProxy, _ := utils.MinVersionCheck("v2.12.0", revProxyModule.ConfigVersion)
+	if revProxyModule.ConfigVersion != "" && !isNewReverProxy {
+		revProxyVolumes = append(revProxyVolumes, []acorev1.VolumeApplyConfiguration{
+			{
+				Name: &RevProxyTLSSecretVolName,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+					Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+						SecretName: &revProxyTLSSecret,
+					},
 				},
 			},
-		},
+		}...)
 	}
 
 	return revProxyVolumes
