@@ -1,5 +1,5 @@
 #
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ spec:
   driver:
     csiDriverType: "powermax"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
@@ -31,10 +32,10 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    # Config version for CSI PowerMax v2.13.0 driver
     configVersion: v2.13.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
+    # Controller count
     # Allowed values: n, where n > 0
     # Default value: 2
     replicas: 2
@@ -43,7 +44,6 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      # Image for CSI PowerMax driver v2.12.0
       image: quay.io/dell/container-storage-modules/csi-powermax:nightly
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
@@ -107,7 +107,7 @@ spec:
         #   "false" - TLS certificates will be verified
         # Default value: "true"
         - name: "X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION"
-          value: "true"
+          value: "false"  
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
@@ -202,7 +202,7 @@ spec:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
-        args: [ "--volume-name-prefix=csivol" ]
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
       - name: registrar
@@ -214,9 +214,10 @@ spec:
       - name: csi-metadata-retriever
         image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Default monitor-interval: 60s
       - name: external-health-monitor
         enabled: false
-        args: [ "--monitor-interval=60s" ]
+        args: ["--monitor-interval=60s"]
         image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure only when the storageCapacity is set as "true"
@@ -231,7 +232,6 @@ spec:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          # Example: "csipowermax-reverseproxy:v2.9.1"
           image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
           imagePullPolicy: Always
           envs:
