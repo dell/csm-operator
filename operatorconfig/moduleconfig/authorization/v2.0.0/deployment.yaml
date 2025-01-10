@@ -57,6 +57,7 @@ spec:
       labels:
         csm: <NAME>
         app: proxy-server
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccountName: proxy-server
       containers:
@@ -141,6 +142,7 @@ spec:
       labels:
         csm: <NAME>
         app: tenant-service
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       containers:
         - name: tenant-service
@@ -235,6 +237,7 @@ spec:
       labels:
         csm: <NAME>
         app: role-service
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccountName: role-service
       containers:
@@ -446,6 +449,7 @@ spec:
       labels:
         csm: <NAME>
         app: authorization-controller
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccountName: authorization-controller
       containers:
@@ -513,6 +517,7 @@ spec:
       labels:
         csm: <NAME>
         app: <AUTHORIZATION_REDIS_NAME>
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       initContainers:
         - name: config
@@ -595,6 +600,7 @@ spec:
         csm: <NAME>
         app: <AUTHORIZATION_REDIS_COMMANDER>
         tier: backend
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       containers:
         - name: <AUTHORIZATION_REDIS_COMMANDER>
@@ -676,6 +682,7 @@ spec:
       labels:
         csm: <NAME>
         app: <AUTHORIZATION_REDIS_SENTINEL>
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       initContainers:
         - name: config

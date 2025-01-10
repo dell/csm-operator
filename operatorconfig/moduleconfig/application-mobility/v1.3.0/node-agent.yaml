@@ -17,6 +17,7 @@ spec:
         csm: application-mobility
         app.kubernetes.io/name: application-mobility-velero
         app.kubernetes.io/instance: application-mobility
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccountName: application-mobility-velero-server-service-account
       terminationGracePeriodSeconds: 3600

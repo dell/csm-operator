@@ -1437,7 +1437,7 @@ func (suite *CSMControllerTestSuite) handleDaemonsetTest(r *ContainerStorageModu
 	daemonset := &appsv1.DaemonSet{}
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, daemonset)
 	assert.Nil(suite.T(), err)
-	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm"}
+	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm", "csmNamespace": suite.namespace}
 
 	r.handleDaemonsetUpdate(daemonset, daemonset)
 
@@ -1465,7 +1465,7 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	deployment := &appsv1.Deployment{}
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployment)
 	assert.Nil(suite.T(), err)
-	deployment.Spec.Template.Labels = map[string]string{"csm": "csm"}
+	deployment.Spec.Template.Labels = map[string]string{"csm": "csm", "csmNamespace": suite.namespace}
 
 	r.handleDeploymentUpdate(deployment, deployment)
 
@@ -1493,7 +1493,7 @@ func (suite *CSMControllerTestSuite) handleDaemonsetTestFake(r *ContainerStorage
 	daemonset := &appsv1.DaemonSet{}
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, daemonset)
 	assert.Error(suite.T(), err)
-	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm"}
+	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm", "csmNamespace": suite.namespace}
 
 	r.handleDaemonsetUpdate(daemonset, daemonset)
 
@@ -1521,7 +1521,7 @@ func (suite *CSMControllerTestSuite) handleDeploymentTestFake(r *ContainerStorag
 	deployment := &appsv1.Deployment{}
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployment)
 	assert.Error(suite.T(), err)
-	deployment.Spec.Template.Labels = map[string]string{"csm": "csm"}
+	deployment.Spec.Template.Labels = map[string]string{"csm": "csm", "csmNamespace": suite.namespace}
 
 	r.handleDeploymentUpdate(deployment, deployment)
 

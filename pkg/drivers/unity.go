@@ -53,6 +53,9 @@ const (
 
 	// AllowedNetworks - list of networks that can be used for NFS traffic
 	AllowedNetworks = "<X_CSI_ALLOWED_NETWORKS>"
+
+	// UnityCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	UnityCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // PrecheckUnity do input validation
@@ -133,6 +136,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, AllowedNetworks, allowedNetworks)
+		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -142,6 +146,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

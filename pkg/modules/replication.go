@@ -58,6 +58,8 @@ const (
 	DefaultRetryMax = "<RETRY_INTERVAL_MAX>"
 	// DefaultReplicaInitImage -
 	DefaultReplicaInitImage = "<REPLICATION_INIT_IMAGE>"
+	// ReplicationCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	ReplicationCSMNameSpace = "<CSM_NAMESPACE>"
 )
 
 var (
@@ -131,6 +133,7 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig)
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicationPrefix, replicationPrefix)
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicationContextPrefix, replicationContextPrefix)
 	YamlString = strings.ReplaceAll(YamlString, DefaultDriverConfigParamsVolumeMount, ReplicationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount)
+	YamlString = strings.ReplaceAll(YamlString, ReplicationCSMNameSpace, cr.Namespace)
 
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
@@ -387,6 +390,7 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicaInitImage, replicaInitImage)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMax, retryMax)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
+	YamlString = strings.ReplaceAll(YamlString, ReplicationCSMNameSpace, cr.Namespace)
 
 	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
