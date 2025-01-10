@@ -849,6 +849,7 @@ spec:
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/component: "cainjector"
         app.kubernetes.io/version: "v1.6.1"
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccountName: <NAMESPACE>-cert-manager-cainjector
       securityContext:
@@ -894,6 +895,7 @@ spec:
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/component: "controller"
         app.kubernetes.io/version: "v1.6.1"
+        csmNamespace: <CSM_NAMESPACE>
       annotations:
         prometheus.io/path: "/metrics"
         prometheus.io/scrape: 'true'
@@ -947,6 +949,7 @@ spec:
         app.kubernetes.io/instance: <NAMESPACE>
         app.kubernetes.io/component: "webhook"
         app.kubernetes.io/version: "v1.6.1"
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccountName: <NAMESPACE>-cert-manager-webhook
       securityContext:

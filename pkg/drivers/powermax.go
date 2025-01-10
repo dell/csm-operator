@@ -59,6 +59,9 @@ const (
 
 	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
 	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
+
+	// PowerMaxCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	PowerMaxCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // PrecheckPowerMax do input validation
@@ -214,7 +217,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
 		yamlString = strings.ReplaceAll(yamlString, CsiPmaxMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
-
+		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
 	case "Controller":
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {
@@ -292,7 +295,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHost, vsphereHost)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
-
+		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

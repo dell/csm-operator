@@ -70,6 +70,7 @@ spec:
       labels:
         app: <DriverDefaultReleaseName>-node
         driver.dellemc.com: dell-storage
+        csmNamespace: <CSM_NAMESPACE>
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:

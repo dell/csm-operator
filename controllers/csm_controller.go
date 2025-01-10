@@ -416,34 +416,34 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	log.Infow("deployment", "deployment name", d.Name, "numberUnavailable", numberUnavailable)
 
 	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
-	if ns == "" {
-		ns = d.Namespace
-	}
-	log.Debugw("csm being modified in handledeployment", "namespace", ns, "name", name)
-	namespacedName := t1.NamespacedName{
-		Name:      name,
-		Namespace: ns,
-	}
 
-	csm := new(csmv1.ContainerStorageModule)
-	err := r.Client.Get(ctx, namespacedName, csm)
-	if err != nil {
-		log.Error("deployment get csm", "error", err.Error())
-	}
+	if ns != "" {
+		log.Debugw("csm being modified in handledeployment", "namespace", ns, "name", name)
+		namespacedName := t1.NamespacedName{
+			Name:      name,
+			Namespace: ns,
+		}
 
-	newStatus := csm.GetCSMStatus()
+		csm := new(csmv1.ContainerStorageModule)
+		err := r.Client.Get(ctx, namespacedName, csm)
+		if err != nil {
+			log.Error("deployment get csm", "error", err.Error())
+		}
 
-	// Updating controller status manually as controller runtime API is not updating csm object with latest data
-	// TODO: Can remove this once the controller runtime repo has a fix for updating the object passed
-	newStatus.ControllerStatus.Available = strconv.Itoa(int(available))
-	newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
-	newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
+		newStatus := csm.GetCSMStatus()
 
-	err = utils.UpdateStatus(ctx, csm, r, newStatus)
-	if err != nil {
-		log.Debugw("deployment status ", "pods", err.Error())
-	} else {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
+		// Updating controller status manually as controller runtime API is not updating csm object with latest data
+		// TODO: Can remove this once the controller runtime repo has a fix for updating the object passed
+		newStatus.ControllerStatus.Available = strconv.Itoa(int(available))
+		newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
+		newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
+
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		if err != nil {
+			log.Debugw("deployment status ", "pods", err.Error())
+		} else {
+			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
+		}
 	}
 }
 
@@ -455,39 +455,38 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 	name := p.GetLabels()[constants.CsmLabel]
 	// if this pod is an obs. pod, namespace might not match csm namespace
 	ns := p.GetLabels()[constants.CsmNamespaceLabel]
-	if ns == "" {
-		ns = p.Namespace
-	}
 
-	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
-	ctx, log := logger.GetNewContextWithLogger(key)
+	if ns != "" {
+		key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+		ctx, log := logger.GetNewContextWithLogger(key)
 
-	if !p.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Debugw("driver delete invoked", "stopping pod with name", p.Name)
-		return
-	}
-	log.Infow("pod modified for driver", "name", p.Name)
+		if !p.ObjectMeta.DeletionTimestamp.IsZero() {
+			log.Debugw("driver delete invoked", "stopping pod with name", p.Name)
+			return
+		}
+		log.Infow("pod modified for driver", "name", p.Name)
 
-	namespacedName := t1.NamespacedName{
-		Name:      name,
-		Namespace: ns,
-	}
-	csm := new(csmv1.ContainerStorageModule)
-	err := r.Client.Get(ctx, namespacedName, csm)
-	if err != nil {
-		r.Log.Errorw("daemonset get csm", "error", err.Error())
-	}
-	log.Infow("csm prev status ", "state", csm.Status)
-	newStatus := csm.GetCSMStatus()
+		namespacedName := t1.NamespacedName{
+			Name:      name,
+			Namespace: ns,
+		}
+		csm := new(csmv1.ContainerStorageModule)
+		err := r.Client.Get(ctx, namespacedName, csm)
+		if err != nil {
+			r.Log.Errorw("daemonset get csm", "error", err.Error())
+		}
+		log.Infow("csm prev status ", "state", csm.Status)
+		newStatus := csm.GetCSMStatus()
 
-	err = utils.UpdateStatus(ctx, csm, r, newStatus)
-	state := csm.GetCSMStatus().State
-	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
-	if state != "0" && err != nil {
-		log.Infow("pod status ", "state", err.Error())
-		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
-	} else {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "%s Driver pods running OK", stamp)
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		state := csm.GetCSMStatus().State
+		stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
+		if state != "0" && err != nil {
+			log.Infow("pod status ", "state", err.Error())
+			r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
+		} else {
+			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "%s Driver pods running OK", stamp)
+		}
 	}
 }
 
@@ -516,28 +515,28 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	log.Infow("daemonset ", "numberUnavailable", numberUnavailable)
 
 	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
-	if ns == "" {
-		ns = d.Namespace
-	}
-	r.Log.Debugw("daemonset ", "ns", ns, "name", name)
-	namespacedName := t1.NamespacedName{
-		Name:      name,
-		Namespace: ns,
-	}
 
-	csm := new(csmv1.ContainerStorageModule)
-	err := r.Client.Get(ctx, namespacedName, csm)
-	if err != nil {
-		r.Log.Error("daemonset get csm", "error", err.Error())
-	}
+	if ns != "" {
+		r.Log.Debugw("daemonset ", "ns", ns, "name", name)
+		namespacedName := t1.NamespacedName{
+			Name:      name,
+			Namespace: ns,
+		}
 
-	log.Infow("csm prev status ", "state", csm.Status)
-	newStatus := csm.GetCSMStatus()
-	err = utils.UpdateStatus(ctx, csm, r, newStatus)
-	if err != nil {
-		log.Debugw("daemonset status ", "pods", err.Error())
-	} else {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver daemonset running OK")
+		csm := new(csmv1.ContainerStorageModule)
+		err := r.Client.Get(ctx, namespacedName, csm)
+		if err != nil {
+			r.Log.Error("daemonset get csm", "error", err.Error())
+		}
+
+		log.Infow("csm prev status ", "state", csm.Status)
+		newStatus := csm.GetCSMStatus()
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		if err != nil {
+			log.Debugw("daemonset status ", "pods", err.Error())
+		} else {
+			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver daemonset running OK")
+		}
 	}
 }
 
