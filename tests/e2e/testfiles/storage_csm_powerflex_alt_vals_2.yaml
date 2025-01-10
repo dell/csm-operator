@@ -12,7 +12,8 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "None"
     configVersion: v2.13.0
-    replicas: 2
+    # setting replicas to 1 since this file is using control node to install deployment on control plane node
+    replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: false
     common:
