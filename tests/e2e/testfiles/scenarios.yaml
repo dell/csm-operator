@@ -168,7 +168,6 @@
     - "Delete custom resource [4]"
     - "Validate [powerflex] driver from CR [4] is not installed"
     - "Delete custom resource [2]"
-    - "Validate [authorization-proxy-server] module from CR [2] is not installed"
     - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
   customTest:
     - name: Cert CSI

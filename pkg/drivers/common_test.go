@@ -116,7 +116,7 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 	return res
 }
 
-// JJL make a functino that uses the standard name and calls this function
+// JJL make a function that uses the standard name and calls this function
 // makes a pflex csm object
 func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM(customCSMName, pFlexNS, shared.PFlexConfigVersion)
@@ -157,6 +157,11 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 
 	// Add driver common image
 	res.Spec.Driver.Common.Image = "driverimage"
+
+	// minimal manifests will not have a common section
+	if customCSMName == "no-common-section" {
+		res.Spec.Driver.Common = nil
+	}
 
 	return res
 }
