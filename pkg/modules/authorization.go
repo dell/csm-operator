@@ -143,6 +143,9 @@ const (
 
 	// AuthCrds - name of authorization crd manifest yaml
 	AuthCrds = "authorization-crds.yaml"
+
+	// AuthCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	AuthCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 var (
@@ -292,6 +295,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 	YamlString := utils.ModifyCommonCR(string(buf), cr)
 
 	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].PluginIdentifier)
+	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
@@ -589,6 +593,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthLeaderElectionEnabled, strconv.FormatBool(component.LeaderElection))
 			YamlString = strings.ReplaceAll(YamlString, AuthControllerReconcileInterval, component.ControllerReconcileInterval)
 			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+			YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 		}
 
 		// redis component
@@ -599,6 +604,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisReplicas, strconv.Itoa(component.RedisReplicas))
+			YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 			var sentinelValues []string
 			for i := 0; i < component.RedisReplicas; i++ {
@@ -618,6 +624,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisStorageClass, redisStorageClass)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 	return YamlString, nil
 }
@@ -1201,6 +1208,7 @@ func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	authNamespace := cr.Namespace
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 	return YamlString, nil
 }
@@ -1375,6 +1383,7 @@ func getAuthCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 	yamlString = string(buf)
 
 	yamlString = strings.ReplaceAll(yamlString, AuthNamespace, cr.Namespace)
+	yamlString = strings.ReplaceAll(yamlString, AuthCSMNameSpace, cr.Namespace)
 
 	return yamlString, nil
 }

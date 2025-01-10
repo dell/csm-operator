@@ -45,6 +45,7 @@ const (
 	ReverseProxyTLSSecret       = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
 	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
 	ReverseProxyPort            = "<X_CSI_REVPROXY_PORT>"
+	ReverseProxyCSMNameSpace    = "<CSM_NAMESPACE>"
 )
 
 // var used in deploying reverseproxy
@@ -211,6 +212,7 @@ func getReverseProxyService(op utils.OperatorConfig, cr csmv1.ContainerStorageMo
 	yamlString = strings.ReplaceAll(yamlString, utils.DefaultReleaseName, cr.Name)
 	yamlString = strings.ReplaceAll(yamlString, ReverseProxyPort, proxyPort)
 	yamlString = strings.ReplaceAll(yamlString, utils.DefaultReleaseNamespace, cr.Namespace)
+	yamlString = strings.ReplaceAll(yamlString, ReverseProxyCSMNameSpace, cr.Namespace)
 
 	return yamlString, nil
 }
@@ -260,6 +262,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyPort, proxyPort)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, proxyConfig)
+	YamlString = strings.ReplaceAll(YamlString, ReverseProxyCSMNameSpace, cr.Namespace)
 
 	return YamlString, nil
 }

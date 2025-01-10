@@ -73,6 +73,7 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+        csmNamespace: <CSM_NAMESPACE>
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:
