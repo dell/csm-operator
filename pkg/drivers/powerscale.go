@@ -36,6 +36,9 @@ const (
 
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params" // #nosec G101
+
+	// PowerScaleCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	PowerScaleCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // PrecheckPowerScale do input validation
@@ -185,6 +188,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
 			for _, env := range cr.Spec.Driver.Node.Envs {
@@ -194,6 +198,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
 	}
 	return yamlString
 }
