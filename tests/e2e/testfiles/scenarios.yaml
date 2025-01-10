@@ -2140,3 +2140,28 @@
       run:
         - /bin/bash modify_zoning_labels.sh remove-all-zones
         - kubectl get nodes --show-labels
+
+- scenario: "Install PowerFlex Driver (Minimal, Standalone)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
+  tags:
+    - "powerflex"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Set up temporary secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [powerflex] driver spec from CR [1]"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is not installed"
+    - "Restore template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+  customTest:
+    - name: Cert CSI
+      run:
+        - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2

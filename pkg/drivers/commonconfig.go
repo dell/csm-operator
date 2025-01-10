@@ -71,8 +71,11 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	}
 
 	controllerYAML := driverYAML.(utils.ControllerYAML)
-	controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
 
+	// if using a minimal manifest, replicas may not be present.
+	if cr.Spec.Driver.Replicas != 0 {
+		controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
+	}
 	if cr.Spec.Driver.Controller != nil && len(cr.Spec.Driver.Controller.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Controller.Tolerations {
@@ -331,9 +334,12 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		utils.UpdateInitContainerApply(updatedCr.Spec.Driver.InitContainers, &initcontainers[i])
 		// mdm-container is exclusive to powerflex driver deamonset, will use the driver image as an init container
 		if *initcontainers[i].Name == "mdm-container" {
-			if string(cr.Spec.Driver.Common.Image) != "" {
-				image := string(cr.Spec.Driver.Common.Image)
-				initcontainers[i].Image = &image
+			// driver minimial manifest may not have common section
+			if cr.Spec.Driver.Common != nil {
+				if string(cr.Spec.Driver.Common.Image) != "" {
+					image := string(cr.Spec.Driver.Common.Image)
+					initcontainers[i].Image = &image
+				}
 			}
 		}
 	}
