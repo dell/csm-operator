@@ -117,6 +117,7 @@ spec:
     metadata:
       labels:
         name: <DriverDefaultReleaseName>-controller
+        csmNamespace: <CSM_NAMESPACE>
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:
