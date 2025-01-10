@@ -16,6 +16,7 @@ spec:
       labels:
         csm: <NAME>
         app: proxy-server
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       containers:
         - name: proxy-server
@@ -95,6 +96,7 @@ spec:
       labels:
         csm: <NAME>
         app: tenant-service
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       containers:
         - name: tenant-service
@@ -180,6 +182,7 @@ spec:
       labels:
         csm: <NAME>
         app: role-service
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccountName: role-service
       containers:
@@ -277,6 +280,7 @@ spec:
         app: redis
         role: primary
         tier: backend
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       containers:
         - name: primary
@@ -328,6 +332,7 @@ spec:
         csm: <NAME>
         app: redis-commander
         tier: backend
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       containers:
         - name: redis-commander

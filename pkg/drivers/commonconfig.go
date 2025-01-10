@@ -103,13 +103,22 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	for i, c := range containers {
 		if c.Name != nil && string(*c.Name) == "driver" {
 			// Check if Common is not nil before accessing Envs
-			if cr.Spec.Driver.Common != nil && cr.Spec.Driver.Controller != nil {
-				containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Controller.Envs)
-				c.Env = containers[i].Env
-				if string(cr.Spec.Driver.Common.Image) != "" {
+			if cr.Spec.Driver.Common != nil {
+				if cr.Spec.Driver.Common.Image != "" {
 					image := string(cr.Spec.Driver.Common.Image)
 					c.Image = &image
 				}
+			}
+			if cr.Spec.Driver.Common != nil || cr.Spec.Driver.Controller != nil {
+				var commonEnvs, controllerEnvs []corev1.EnvVar
+				if cr.Spec.Driver.Common != nil {
+					commonEnvs = cr.Spec.Driver.Common.Envs
+				}
+				if cr.Spec.Driver.Controller != nil {
+					controllerEnvs = cr.Spec.Driver.Controller.Envs
+				}
+				containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, controllerEnvs)
+				c.Env = containers[i].Env
 			}
 		}
 

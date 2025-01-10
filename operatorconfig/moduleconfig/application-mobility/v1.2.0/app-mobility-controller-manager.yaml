@@ -17,6 +17,7 @@ spec:
       labels:
         control-plane: controller-manager
         csm: <NAME>
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       containers:
         - args:
