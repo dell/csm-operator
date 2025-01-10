@@ -55,7 +55,7 @@ var (
 		{"pstore happy path", pStoreCSM, csmv1.PowerStore, "node.yaml", ""},
 		{"unity happy path", unityCSM, csmv1.Unity, "node.yaml", ""},
 		{"unity happy path when secrets with certificates provided", unityCSMCertProvided, csmv1.Unity, "node.yaml", ""},
-		// {"unity common is nil", unityCSMInvalidValue, csmv1.Unity, "node.yaml", ""},
+		{"unity common is nil", unityCSMInvalidValue, csmv1.Unity, "node.yaml", ""},
 		{"file does not exist", csm, fakeDriver, "NonExist.yaml", "no such file or directory"},
 		{"pmax happy path", pmaxCSM, csmv1.PowerMax, "node.yaml", ""},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
