@@ -51,8 +51,8 @@ var (
 		{"pscale happy path", csm, csmv1.PowerScaleName, "node.yaml", ""},
 		{"powerscale happy path", pScaleCSM, csmv1.PowerScaleName, "node.yaml", ""},
 		{"pflex happy path", pFlexCSM, csmv1.PowerFlex, "node.yaml", ""},
-		{"pflex no-sdc path", csmForPowerFlex("no-common-section"), csmv1.PowerFlex, "node.yaml", ""},
-		{"pflex with no common section", csmForPowerFlex("no-sdc"), csmv1.PowerFlex, "node.yaml", ""},
+		{"pflex no-sdc path", csmForPowerFlex("no-sdc"), csmv1.PowerFlex, "node.yaml", ""},
+		{"pflex with no common section", csmForPowerFlex("no-common-section"), csmv1.PowerFlex, "node.yaml", ""},
 		{"pstore happy path", pStoreCSM, csmv1.PowerStore, "node.yaml", ""},
 		{"unity happy path", unityCSM, csmv1.Unity, "node.yaml", ""},
 		{"unity happy path when secrets with certificates provided", unityCSMCertProvided, csmv1.Unity, "node.yaml", ""},
@@ -143,7 +143,10 @@ func TestGetNode(t *testing.T) {
 				for i := range initcontainers {
 					if *initcontainers[i].Name == "mdm-container" {
 						foundInitMdm = true
-						assert.Equal(t, string(tt.csm.Spec.Driver.Common.Image), *initcontainers[i].Image)
+						// if min manifest test case, there will be no common section
+						if tt.name != "pflex with no common section" {
+							assert.Equal(t, string(tt.csm.Spec.Driver.Common.Image), *initcontainers[i].Image)
+						}
 					}
 				}
 				// if driver is powerflex, then check that mdm-container is present
