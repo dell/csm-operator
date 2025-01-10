@@ -106,8 +106,15 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 					c.Image = &image
 				}
 			}
-			if cr.Spec.Driver.Controller != nil {
-				containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Controller.Envs)
+			if cr.Spec.Driver.Common != nil || cr.Spec.Driver.Controller != nil {
+				var commonEnvs, controllerEnvs []corev1.EnvVar
+				if cr.Spec.Driver.Common != nil {
+					commonEnvs = cr.Spec.Driver.Common.Envs
+				}
+				if cr.Spec.Driver.Controller != nil {
+					controllerEnvs = cr.Spec.Driver.Controller.Envs
+				}
+				containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, controllerEnvs)
 				c.Env = containers[i].Env
 			}
 		}
