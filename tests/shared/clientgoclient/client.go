@@ -36,7 +36,7 @@ import (
 	certificatesv1alpha1 "k8s.io/client-go/kubernetes/typed/certificates/v1alpha1"
 	certificatesv1beta1 "k8s.io/client-go/kubernetes/typed/certificates/v1beta1"
 	coordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
-	coordinationvv1alpha1 "k8s.io/client-go/kubernetes/typed/coordination/v1alpha1"
+	coordinationvv1alpha2 "k8s.io/client-go/kubernetes/typed/coordination/v1alpha2"
 	coordinationv1beta1 "k8s.io/client-go/kubernetes/typed/coordination/v1beta1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	discoveryv1 "k8s.io/client-go/kubernetes/typed/discovery/v1"
@@ -60,6 +60,7 @@ import (
 	rbacv1alpha1 "k8s.io/client-go/kubernetes/typed/rbac/v1alpha1"
 	rbacv1beta1 "k8s.io/client-go/kubernetes/typed/rbac/v1beta1"
 	resourceV1alpha3 "k8s.io/client-go/kubernetes/typed/resource/v1alpha3"
+	resourceV1beta1 "k8s.io/client-go/kubernetes/typed/resource/v1beta1"
 	schedulingv1 "k8s.io/client-go/kubernetes/typed/scheduling/v1"
 	schedulingv1alpha1 "k8s.io/client-go/kubernetes/typed/scheduling/v1alpha1"
 	schedulingv1beta1 "k8s.io/client-go/kubernetes/typed/scheduling/v1beta1"
@@ -201,8 +202,8 @@ func (c *K8sClient) CertificatesV1beta1() certificatesv1beta1.CertificatesV1beta
 	panic("implement me")
 }
 
-// CoordinationV1alpha1 retrieves the CoordinationV1alpha1Client
-func (c *K8sClient) CoordinationV1alpha1() coordinationvv1alpha1.CoordinationV1alpha1Interface {
+// CoordinationV1alpha2 retrieves the CoordinationV1alpha2Client
+func (c *K8sClient) CoordinationV1alpha2() coordinationvv1alpha2.CoordinationV1alpha2Interface {
 	panic("unimplemented")
 }
 
@@ -329,6 +330,11 @@ func (c *K8sClient) SchedulingV1() schedulingv1.SchedulingV1Interface {
 // ResourceV1alpha3 retrieves the ResourceV1alpha3Client
 func (c *K8sClient) ResourceV1alpha3() resourceV1alpha3.ResourceV1alpha3Interface {
 	panic("implement me")
+}
+
+// ResourceV1beta1 retrieves the ResourceV1beta1Client
+func (c *K8sClient) ResourceV1beta1() resourceV1beta1.ResourceV1beta1Interface {
+	panic("unimplemented")
 }
 
 // StorageV1beta1 retrieves the StorageV1beta1Client
