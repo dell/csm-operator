@@ -15,6 +15,7 @@ package modules
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -46,6 +47,7 @@ const (
 	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
 	ReverseProxyPort            = "<X_CSI_REVPROXY_PORT>"
 	ReverseProxyCSMNameSpace    = "<CSM_NAMESPACE>"
+	ReverseProxyUseSecret       = "<X_CSI_REVPROXY_USE_SECRET>"
 )
 
 // var used in deploying reverseproxy
@@ -237,6 +239,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	proxyPort := RevProxyDefaultPort
 	proxyConfig := RevProxyConfigMapDeafultName
 	image := op.K8sVersion.Images.CSIRevProxy
+	useSecret := "false"
 
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
@@ -253,9 +256,15 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
 					proxyConfig = env.Value
 				}
+				if env.Name == "X_CSI_REVPROXY_USE_SECRET" {
+					log.Printf("[FERNANDO] found use secret: %s", env.Value)
+					useSecret = env.Value
+				}
 			}
 		}
 	}
+
+	log.Printf("[FERNANDO] use secret: %s", useSecret)
 
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyImage, image)
 	YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseNamespace, proxyNamespace)
@@ -263,6 +272,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, proxyConfig)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyCSMNameSpace, cr.Namespace)
+	YamlString = strings.ReplaceAll(YamlString, ReverseProxyUseSecret, useSecret)
 
 	return YamlString, nil
 }
@@ -295,6 +305,41 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 		}
 	}
 
+	// Set useSecret environment variable
+	useSecret := getUseSecret(*revProxyModule)
+	log.Printf("[FERNANDO] ReverseProxyInjectDeployment use secret: %s", useSecret)
+	for i, cnt := range dp.Spec.Template.Spec.Containers {
+		if *cnt.Name == "reverseproxy" {
+			for j, env := range cnt.Env {
+				if *env.Name == "X_CSI_REVPROXY_USE_SECRET" {
+					dp.Spec.Template.Spec.Containers[i].Env[j].Value = &useSecret
+				}
+			}
+		}
+	}
+
+	// get revProxy secret and mount it.
+	secretName := drivers.GetReverseProxySecret(&cr)
+	if useSecret == "true" {
+		log.Println("[FERNANDO] ReverseProxyInjectDeployment Adding volume and mounting...")
+		name := "powermax-config"
+		optional := false
+
+		// Adding volume
+		dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes,
+			acorev1.VolumeApplyConfiguration{Name: &name,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{Secret: &acorev1.SecretVolumeSourceApplyConfiguration{SecretName: &secretName, Optional: &optional}}})
+
+		mountPath := "/etc/secret/powermax-config"
+		// Adding volume mount
+		for i, cnt := range dp.Spec.Template.Spec.Containers {
+			if *cnt.Name == "reverseproxy" {
+				dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
+					acorev1.VolumeMountApplyConfiguration{Name: &name, MountPath: &mountPath})
+			}
+		}
+	}
+
 	// inject revProxy volumes in driver volumes
 	revProxyVolume := getRevProxyVolumeComp(*revProxyModule)
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, revProxyVolume...)
@@ -314,6 +359,20 @@ func getRevProxyPort(revProxyModule csmv1.Module) string {
 		}
 	}
 	return revProxyPort
+}
+
+func getUseSecret(revProxyModule csmv1.Module) string {
+	useSecret := "false"
+	for _, component := range revProxyModule.Components {
+		if component.Name == ReverseProxyServerComponent {
+			for _, env := range component.Envs {
+				if env.Name == "X_CSI_REVPROXY_USE_SECRET" {
+					useSecret = env.Value
+				}
+			}
+		}
+	}
+	return useSecret
 }
 
 func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyConfiguration {
