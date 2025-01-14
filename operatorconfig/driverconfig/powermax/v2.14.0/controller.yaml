@@ -314,8 +314,6 @@ spec:
               mountPath: /powermax-array-config
             - name: tls-secret
               mountPath: /app/tls
-            - name: powermax-config
-              mountPath: /powermax-config
       volumes:
         - name: socket-dir
           emptyDir:

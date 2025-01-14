@@ -779,6 +779,9 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			if err != nil {
 				return fmt.Errorf("injecting replication into deployment: %v", err)
 			}
+
+			drivers.SetNodeSecretMounts(&node.DaemonSetApplyConfig, cr)
+
 			controller.Deployment = *dp
 		}
 	}

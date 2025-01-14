@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 
+	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -77,18 +78,16 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		return fmt.Errorf("%s %s not supported", csmv1.PowerMax, cr.Spec.Driver.ConfigVersion)
 	}
 
-	secretName := GetReverseProxySecret(cr)
-	useSecret := false
-	if secretName == "" {
-		// Check for default secret only
-		// Array specific will be authenticated in csireverseproxy
-		secretName = cr.Name + "-creds"
-		if cr.Spec.Driver.AuthSecret != "" {
-			secretName = cr.Spec.Driver.AuthSecret
-		}
-	} else {
+	secretName := cr.Name + "-creds"
+	if cr.Spec.Driver.AuthSecret != "" {
+		secretName = cr.Spec.Driver.AuthSecret
+	}
+
+	useReverseProxySecret := useReverseProxySecret(cr)
+	if useReverseProxySecret {
 		log.Infof("[FERNANDO] Using New Secret with name %s", secretName)
-		useSecret = true
+	} else {
+		log.Infof("[FERNANDO] Using Old ConfigMap Secret with name %s", secretName)
 	}
 
 	_, err := utils.GetSecret(ctx, secretName, cr.GetNamespace(), ct)
@@ -109,21 +108,26 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		}
 	}
 
-	setUsageOfReverseProxySecret(cr, useSecret)
+	setUsageOfReverseProxySecret(cr, useReverseProxySecret)
 
 	log.Debugw("preCheck", "secrets", secretName)
 	return nil
 }
 
-func GetReverseProxySecret(cr *csmv1.ContainerStorageModule) string {
-	secretName := ""
+func useReverseProxySecret(cr *csmv1.ContainerStorageModule) bool {
+	useSecret := false
 	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "X_CSI_SECRET_NAME" {
-			secretName = env.Value
+		if env.Name == "X_CSI_USE_REVPROXY_SECRET" {
+			ok, err := strconv.ParseBool(env.Value)
+			if err != nil {
+				log.Printf("Error parsing X_CSI_USE_REVPROXY_SECRET %s, using configMap", err.Error())
+				return false
+			}
+			useSecret = ok
 		}
 	}
 
-	return secretName
+	return useSecret
 }
 
 func setUsageOfReverseProxySecret(cr *csmv1.ContainerStorageModule, useSecret bool) {
@@ -359,6 +363,29 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	}
 
 	return yamlString
+}
+
+func SetNodeSecretMounts(ds *v1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule) {
+	if useReverseProxySecret(&cr) {
+		log.Println("[FERNANDO] Adding and mounting secret for node")
+		name := "powermax-config"
+		optional := false
+		mountPath := "/etc/secret/powermax-config"
+		secretName := cr.Spec.Driver.AuthSecret
+
+		// Adding volume
+		ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes,
+			acorev1.VolumeApplyConfiguration{Name: &name,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{Secret: &acorev1.SecretVolumeSourceApplyConfiguration{SecretName: &secretName, Optional: &optional}}})
+
+		// Adding volume mount for both the reverseproxy and driver
+		for i, cnt := range ds.Spec.Template.Spec.Containers {
+			if *cnt.Name == "driver" {
+				ds.Spec.Template.Spec.Containers[i].VolumeMounts = append(ds.Spec.Template.Spec.Containers[i].VolumeMounts,
+					acorev1.VolumeMountApplyConfiguration{Name: &name, MountPath: &mountPath})
+			}
+		}
+	}
 }
 
 func getApplyCertVolumePowermax(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {

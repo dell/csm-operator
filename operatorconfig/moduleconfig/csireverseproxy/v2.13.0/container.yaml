@@ -15,8 +15,6 @@ env:
   - name: X_CSI_REVPROXY_USE_SECRET
     value: <X_CSI_REVPROXY_USE_SECRET>
 volumeMounts:
-  - name: configmap-volume
-    mountPath: /etc/config/configmap
   - name: tls-secret
     mountPath: /app/tls
   - name: cert-dir

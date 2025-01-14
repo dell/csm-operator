@@ -256,9 +256,6 @@ spec:
           secret:
             secretName: <DriverDefaultReleaseName>-certs
             optional: true
-        - name: powermax-config
-          secret:
-            secretName: <DriverDefaultReleaseName>-config
         - name: powermax-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
