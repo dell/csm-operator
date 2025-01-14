@@ -228,10 +228,6 @@ type Driver struct {
 	// ForceRemoveDriver is the boolean flag used to remove driver deployment when CR is deleted
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Driver"
 	ForceRemoveDriver *bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
-
-	// ReverseProxySecret is the name of the reverse proxy credentials secret
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Reverse Proxy Secret"
-	ReverseProxySecret string `json:"reverseProxySecret,omitempty" yaml:"reverseProxySecret"`
 }
 
 // ContainerTemplate template
