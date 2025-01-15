@@ -27,6 +27,7 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	corev1 "k8s.io/api/core/v1"
@@ -90,7 +91,8 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		log.Infof("[FERNANDO] Using Old ConfigMap Secret with name %s", secretName)
 	}
 
-	_, err := utils.GetSecret(ctx, secretName, cr.GetNamespace(), ct)
+	found := &corev1.Secret{}
+	err := ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
 	if err != nil {
 		log.Error(err, "Failed query for secret ", secretName)
 		if errors.IsNotFound(err) {
@@ -138,6 +140,11 @@ func setUsageOfReverseProxySecret(cr *csmv1.ContainerStorageModule, useSecret bo
 		if mod.Name == csmv1.ReverseProxy {
 			revProxy = &mod
 		}
+	}
+
+	if revProxy == nil {
+		log.Println("[FERNANDO] setUsageOfReverseProxySecret: could not find reverse proxy")
+		return
 	}
 
 	for _, component := range revProxy.Components {

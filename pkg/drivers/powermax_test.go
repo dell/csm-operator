@@ -26,13 +26,15 @@ import (
 )
 
 var (
-	powerMaxCSM                = csmForPowerMax()
-	powerMaxCSMNoProxy         = csmForPowerMaxNOProxy()
-	powerMaxCSMBadVersion      = csmForPowerMaxBadVersion()
-	powermaxDefaultKubeletPath = getDefaultKubeletPath()
-	powerMaxClient             = crclient.NewFakeClientNoInjector(objects)
-	powerMaxSecret             = shared.MakeSecret("csm-creds", "pmax-test", shared.PmaxConfigVersion)
-	pMaxfakeSecret             = shared.MakeSecret("fake-creds", "fake-test", shared.PmaxConfigVersion)
+	powerMaxCSM                   = csmForPowerMax()
+	powerMaxReverseProxySecret    = csmWithReverseProxySecret()
+	powerMaxBadReverseProxySecret = csmWithBadReverseProxySecret()
+	powerMaxCSMNoProxy            = csmForPowerMaxNOProxy()
+	powerMaxCSMBadVersion         = csmForPowerMaxBadVersion()
+	powermaxDefaultKubeletPath    = getDefaultKubeletPath()
+	powerMaxClient                = crclient.NewFakeClientNoInjector(objects)
+	powerMaxSecret                = shared.MakeSecret("csm-creds", "pmax-test", shared.PmaxConfigVersion)
+	pMaxfakeSecret                = shared.MakeSecret("fake-creds", "fake-test", shared.PmaxConfigVersion)
 
 	powerMaxTests = []struct {
 		// every single unit test name
@@ -46,6 +48,8 @@ var (
 		expectedErr string
 	}{
 		{"happy path", powerMaxCSM, powerMaxClient, powerMaxSecret, ""},
+		{"success: use reverse proxy secret", powerMaxReverseProxySecret, powerMaxClient, powerMaxSecret, ""},
+		{"invalid reverse proxy secret, use default", powerMaxBadReverseProxySecret, powerMaxClient, powerMaxSecret, ""},
 		{"no proxy set defaults", powerMaxCSMNoProxy, powerMaxClient, powerMaxSecret, ""},
 		{"missing secret", powerMaxCSM, powerMaxClient, pMaxfakeSecret, "failed to find secret"},
 		{"bad version", powerMaxCSMBadVersion, powerMaxClient, powerMaxSecret, "not supported"},
@@ -100,6 +104,44 @@ func csmForPowerMax() csmv1.ContainerStorageModule {
 	res := csmForPowerMaxNOProxy()
 	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
 	res.Spec.Modules = append(res.Spec.Modules, revproxy)
+	return res
+}
+
+func csmWithReverseProxySecret() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "X_CSI_POWERMAX_PORTGROUPS", Value: "csi_pg"},
+		{Name: "X_CSI_TRANSPORT_PROTOCOL", Value: "FC"},
+		{Name: "X_CSI_USE_REVPROXY_SECRET", Value: "true"},
+	}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+
+	// Add pmax driver version
+	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
+	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
+	revproxy.Components[0].Envs = append(revproxy.Components[0].Envs, corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+	res.Spec.Modules = append(res.Spec.Modules, revproxy)
+
+	return res
+}
+
+func csmWithBadReverseProxySecret() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "X_CSI_POWERMAX_PORTGROUPS", Value: "csi_pg"},
+		{Name: "X_CSI_TRANSPORT_PROTOCOL", Value: "FC"},
+		{Name: "X_CSI_USE_REVPROXY_SECRET", Value: "invalid"},
+	}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+
+	// Add pmax driver version
+	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
 	return res
 }
 
