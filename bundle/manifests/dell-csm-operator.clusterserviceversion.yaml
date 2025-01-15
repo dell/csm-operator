@@ -419,7 +419,7 @@ metadata:
                       "--driverPath=csi-isilon.dellemc.com",
                       "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.12.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -441,7 +441,7 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.12.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
@@ -806,7 +806,7 @@ metadata:
                       "--driver-config-params=/powermax-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powermax.dellemc.com"
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.12.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -828,7 +828,7 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.12.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
@@ -971,7 +971,7 @@ metadata:
                       "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powerstore.dellemc.com"
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.12.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -993,7 +993,7 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.12.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
@@ -1458,7 +1458,7 @@ metadata:
                       "--mode=controller",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.12.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -1479,7 +1479,7 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.12.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
@@ -4387,7 +4387,7 @@ spec:
                       - name: RELATED_IMAGE_metrics-powerflex
                         value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.11.0
                       - name: RELATED_IMAGE_podmon-node
-                        value: quay.io/dell/container-storage-modules/podmon:v1.13.0
+                        value: quay.io/dell/container-storage-modules/podmon:v1.12.0
                       - name: RELATED_IMAGE_kube-rbac-proxy
                         value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
                       - name: RELATED_IMAGE_attacher
@@ -4507,7 +4507,7 @@ spec:
       name: metrics-powermax
     - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.11.0
       name: metrics-powerflex
-    - image: quay.io/dell/container-storage-modules/podmon:v1.13.0
+    - image: quay.io/dell/container-storage-modules/podmon:v1.12.0
       name: podmon-node
     - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
       name: kube-rbac-proxy
