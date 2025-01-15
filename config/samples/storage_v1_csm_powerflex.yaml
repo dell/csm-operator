@@ -57,7 +57,7 @@ spec:
       - name: registrar
         image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
       - name: csi-metadata-retriever
