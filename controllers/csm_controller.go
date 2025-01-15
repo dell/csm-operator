@@ -780,10 +780,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				return fmt.Errorf("injecting replication into deployment: %v", err)
 			}
 
-			drivers.SetNodeSecretMounts(&node.DaemonSetApplyConfig, cr)
-
 			controller.Deployment = *dp
 		}
+
+		// Set the secret mount for powermax node.
+		drivers.SetPowerMaxSecretMount(&node.DaemonSetApplyConfig, cr)
+
+		// Set the secret mount for powermax controller.
+		drivers.SetPowerMaxSecretMount(&controller.Deployment, cr)
 	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)

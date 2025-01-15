@@ -162,7 +162,9 @@ func setUsageOfReverseProxySecret(cr *csmv1.ContainerStorageModule, useSecret bo
 		log.Println("[FERNANDO] setUsageOfReverseProxySecret: could not find X_CSI_REVPROXY_USE_SECRET")
 		for _, component := range revProxy.Components {
 			if component.Name == ReverseProxyServerComponent {
-				revProxy.Components[0].Envs = append(revProxy.Components[0].Envs, corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: strconv.FormatBool(useSecret)})
+				revProxy.Components[0].Envs = append(revProxy.Components[0].Envs,
+					corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: strconv.FormatBool(useSecret)},
+				)
 			}
 		}
 	}
@@ -372,23 +374,37 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	return yamlString
 }
 
-func SetNodeSecretMounts(ds *v1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule) {
+func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorageModule) {
 	if useReverseProxySecret(&cr) {
-		log.Println("[FERNANDO] Adding and mounting secret for node")
 		name := "powermax-config"
 		optional := false
 		mountPath := "/etc/secret/powermax-config"
 		secretName := cr.Spec.Driver.AuthSecret
 
+		var podTemplate *acorev1.PodTemplateSpecApplyConfiguration
+		switch configuration := configuration.(type) {
+		case *v1.DeploymentApplyConfiguration:
+			dp := configuration
+			podTemplate = dp.Spec.Template
+		case *v1.DaemonSetApplyConfiguration:
+			ds := configuration
+			podTemplate = ds.Spec.Template
+		}
+
+		if podTemplate == nil {
+			log.Println("SetDeploymentSecretMounts: invalid type passed through")
+			return
+		}
+
 		// Adding volume
-		ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes,
+		podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes,
 			acorev1.VolumeApplyConfiguration{Name: &name,
 				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{Secret: &acorev1.SecretVolumeSourceApplyConfiguration{SecretName: &secretName, Optional: &optional}}})
 
 		// Adding volume mount for both the reverseproxy and driver
-		for i, cnt := range ds.Spec.Template.Spec.Containers {
+		for i, cnt := range podTemplate.Spec.Containers {
 			if *cnt.Name == "driver" {
-				ds.Spec.Template.Spec.Containers[i].VolumeMounts = append(ds.Spec.Template.Spec.Containers[i].VolumeMounts,
+				podTemplate.Spec.Containers[i].VolumeMounts = append(podTemplate.Spec.Containers[i].VolumeMounts,
 					acorev1.VolumeMountApplyConfiguration{Name: &name, MountPath: &mountPath})
 			}
 		}
