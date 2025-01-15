@@ -198,7 +198,7 @@ spec:
       initContainers:
         - name: mdm-container
           image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:
             - "--array-config=/vxflexos-config/config"
