@@ -214,7 +214,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-unity:nightly
+          image: quay.io/dell/container-storage-modules/csi-unity:v2.13.0
           args:
             - "--driver-name=csi-unity.dellemc.com"
             - "--driver-config=/unity-config/driver-config-params.yaml"
