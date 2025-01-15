@@ -1502,7 +1502,7 @@
     - name: Cert CSI
       run:
         - cert-csi test vio --sc op-e2e-pstore --chainNumber 2 --chainLength 2
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-powerstore.dellemc.com --attr testfiles/powerstore-templates/ephemeral.properties
+        - cert-csi test ephemeral-volume --pods 1 --driver csi-powerstore.dellemc.com --attr testfiles/powerstore-templates/ephemeral.properties --fs ext4
 
 - scenario: "Install PowerStore Driver(With Resiliency)"
   paths:
