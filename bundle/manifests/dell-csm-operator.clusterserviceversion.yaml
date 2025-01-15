@@ -446,7 +446,7 @@ metadata:
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.12.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -833,7 +833,7 @@ metadata:
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.12.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -998,7 +998,7 @@ metadata:
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.12.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -1484,7 +1484,7 @@ metadata:
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.12.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -4320,7 +4320,7 @@ spec:
             template:
               metadata:
                 annotations:
-                  storage.dell.com/CSMVersion: v1.13.0
+                  storage.dell.com/CSMVersion: v1.12.0
                 labels:
                   control-plane: controller-manager
               spec:
