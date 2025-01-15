@@ -89,11 +89,11 @@ spec:
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
       - name: csi-metadata-retriever
@@ -109,7 +109,7 @@ spec:
 
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
