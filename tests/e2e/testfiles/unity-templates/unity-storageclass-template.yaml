@@ -11,7 +11,7 @@ parameters:
   storagePool: REPLACE_POOL
   thinProvisioned: "true"
   tieringPolicy: "0"
-  protocol: "NFS"
+  protocol: "NFS" # If this is changed from NFS, be sure to update the ephemeral.properties file to match
   nasServer: "REPLACE_NAS"
 provisioner: csi-unity.dellemc.com
 reclaimPolicy: Delete
