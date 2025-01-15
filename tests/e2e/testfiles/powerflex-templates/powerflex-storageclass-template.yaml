@@ -10,6 +10,7 @@ allowVolumeExpansion: true
 parameters:
   storagepool: REPLACE_POOL
   systemID: REPLACE_SYSTEMID
+  # If this is changed from ext4, be sure to update the ephemeral.properties file to match
   csi.storage.k8s.io/fstype: ext4
 volumeBindingMode: WaitForFirstConsumer
 allowedTopologies:

@@ -1489,7 +1489,9 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
+    # ephemeral.properties must be set up according to the storage class created
     - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
+    # run cert-csi with the proper args for our storage class
     - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
@@ -1502,7 +1504,7 @@
     - name: Cert CSI
       run:
         - cert-csi test vio --sc op-e2e-pstore --chainNumber 2 --chainLength 2
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-powerstore.dellemc.com --attr testfiles/powerstore-templates/ephemeral.properties
+        - cert-csi test ephemeral-volume --pods 1 --driver csi-powerstore.dellemc.com --attr testfiles/powerstore-templates/ephemeral.properties --fs ext4
 
 - scenario: "Install PowerStore Driver(With Resiliency)"
   paths:
@@ -1570,7 +1572,9 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
+    # ephemeral.properties must be set up according to the storage class created
     - "Set up ephemeral volume properties [testfiles/unity-templates/ephemeral.properties] for [unityEphemeral]"
+    # run cert-csi with the proper args for our storage class
     - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
