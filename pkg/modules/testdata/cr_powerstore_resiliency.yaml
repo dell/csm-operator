@@ -14,7 +14,7 @@ spec:
       imagePullPolicy: IfNotPresent
   modules:
     - name: resiliency
-      configVersion: "v1.11.0"
+      configVersion: "v1.12.0"
       enabled: true
       components:
         - name: podmon-controller
