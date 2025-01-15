@@ -66,6 +66,8 @@ const (
 
 	// PowerMaxCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerMaxCSMNameSpace string = "<CSM_NAMESPACE>"
+
+	CSIPowerMaxUseSecret string = "X_CSI_REVPROXY_USE_SECRET"
 )
 
 // PrecheckPowerMax do input validation
@@ -119,10 +121,10 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 func useReverseProxySecret(cr *csmv1.ContainerStorageModule) bool {
 	useSecret := false
 	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "X_CSI_USE_REVPROXY_SECRET" {
+		if env.Name == CSIPowerMaxUseSecret {
 			ok, err := strconv.ParseBool(env.Value)
 			if err != nil {
-				log.Printf("Error parsing X_CSI_USE_REVPROXY_SECRET %s, using configMap", err.Error())
+				log.Printf("Error parsing %s, %s. Using configMap solution", CSIPowerMaxUseSecret, err.Error())
 				return false
 			}
 			useSecret = ok
@@ -150,7 +152,7 @@ func setUsageOfReverseProxySecret(cr *csmv1.ContainerStorageModule, useSecret bo
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
 			for i, env := range component.Envs {
-				if env.Name == "X_CSI_REVPROXY_USE_SECRET" {
+				if env.Name == CSIPowerMaxUseSecret {
 					revProxy.Components[0].Envs[i].Value = strconv.FormatBool(useSecret)
 					found = true
 				}
@@ -159,11 +161,11 @@ func setUsageOfReverseProxySecret(cr *csmv1.ContainerStorageModule, useSecret bo
 	}
 
 	if !found {
-		log.Println("[FERNANDO] setUsageOfReverseProxySecret: could not find X_CSI_REVPROXY_USE_SECRET")
+		log.Println("[FERNANDO] setUsageOfReverseProxySecret: could not find", CSIPowerMaxUseSecret)
 		for _, component := range revProxy.Components {
 			if component.Name == ReverseProxyServerComponent {
 				revProxy.Components[0].Envs = append(revProxy.Components[0].Envs,
-					corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: strconv.FormatBool(useSecret)},
+					corev1.EnvVar{Name: CSIPowerMaxUseSecret, Value: strconv.FormatBool(useSecret)},
 				)
 			}
 		}

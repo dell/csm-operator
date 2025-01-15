@@ -139,7 +139,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 
 	for _, ctrlObj := range deployObjects {
 		log.Infof("Object: %v -----\n", ctrlObj)
-		if ctrlObj.GetName() == "csipowermax-reverseproxy" && ctrlObj.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
+		if ctrlObj.GetName() == RevProxyServiceName && ctrlObj.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
 			dp := ctrlObj.(*appsv1.Deployment)
 
 			log.Infof("[FERNANDO] BEGIN: Applying reverseproxy deployment %s, %+v", dp.Name, dp.Spec.Template.Spec.Containers)
@@ -277,7 +277,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
 					proxyConfig = env.Value
 				}
-				if env.Name == "X_CSI_REVPROXY_USE_SECRET" {
+				if env.Name == drivers.CSIPowerMaxUseSecret {
 					useSecret = env.Value
 				}
 			}
@@ -329,7 +329,7 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if *cnt.Name == "reverseproxy" {
 			for j, env := range cnt.Env {
-				if *env.Name == "X_CSI_REVPROXY_USE_SECRET" {
+				if *env.Name == drivers.CSIPowerMaxUseSecret {
 					dp.Spec.Template.Spec.Containers[i].Env[j].Value = &useSecret
 				}
 			}
@@ -380,7 +380,7 @@ func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName str
 	mountPath := "/etc/secret/powermax-config"
 	// Adding volume mount for both the reverseproxy and driver
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
-		if cnt.Name == "csipowermax-reverseproxy" {
+		if cnt.Name == RevProxyServiceName {
 			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
 				corev1.VolumeMount{Name: name, MountPath: mountPath})
 		}
@@ -422,7 +422,7 @@ func deploymentSetReverseProxyConfigMapMounts(dp *appsv1.Deployment, cmName stri
 
 	// Adding volume mount
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
-		if cnt.Name == "csipowermax-reverseproxy" {
+		if cnt.Name == RevProxyServiceName {
 			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
 				corev1.VolumeMount{Name: name, MountPath: mountPath})
 		}
@@ -448,7 +448,7 @@ func getRevProxyUseSecret(revProxyModule csmv1.Module) string {
 	for _, component := range revProxyModule.Components {
 		if component.Name == ReverseProxyServerComponent {
 			for _, env := range component.Envs {
-				if env.Name == "X_CSI_REVPROXY_USE_SECRET" {
+				if env.Name == drivers.CSIPowerMaxUseSecret {
 					useSecret = env.Value
 				}
 			}

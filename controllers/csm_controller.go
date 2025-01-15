@@ -769,6 +769,9 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployement\n")
 			log.Infof("adding proxy service name...\n")
 			modules.AddReverseProxyServiceName(&controller.Deployment)
+
+			// Set the secret mount for powermax controller.
+			drivers.SetPowerMaxSecretMount(&controller.Deployment, cr)
 		} else {
 			log.Info("Starting CSI ReverseProxy Service")
 			if err := modules.ReverseProxyStartService(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
@@ -785,9 +788,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 		// Set the secret mount for powermax node.
 		drivers.SetPowerMaxSecretMount(&node.DaemonSetApplyConfig, cr)
-
-		// Set the secret mount for powermax controller.
-		drivers.SetPowerMaxSecretMount(&controller.Deployment, cr)
 	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)

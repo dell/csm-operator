@@ -113,7 +113,7 @@ func csmWithReverseProxySecret() csmv1.ContainerStorageModule {
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{
 		{Name: "X_CSI_POWERMAX_PORTGROUPS", Value: "csi_pg"},
 		{Name: "X_CSI_TRANSPORT_PROTOCOL", Value: "FC"},
-		{Name: "X_CSI_USE_REVPROXY_SECRET", Value: "true"},
+		{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"},
 	}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 
@@ -122,7 +122,7 @@ func csmWithReverseProxySecret() csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
 
 	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
-	revproxy.Components[0].Envs = append(revproxy.Components[0].Envs, corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+	revproxy.Components[0].Envs = append(revproxy.Components[0].Envs, corev1.EnvVar{Name: CSIPowerMaxUseSecret, Value: "false"})
 	res.Spec.Modules = append(res.Spec.Modules, revproxy)
 
 	return res
@@ -134,7 +134,7 @@ func csmWithBadReverseProxySecret() csmv1.ContainerStorageModule {
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{
 		{Name: "X_CSI_POWERMAX_PORTGROUPS", Value: "csi_pg"},
 		{Name: "X_CSI_TRANSPORT_PROTOCOL", Value: "FC"},
-		{Name: "X_CSI_USE_REVPROXY_SECRET", Value: "invalid"},
+		{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "invalid"},
 	}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 
