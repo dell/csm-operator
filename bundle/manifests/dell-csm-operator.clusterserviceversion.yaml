@@ -1202,7 +1202,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "docker.io/dellemc/sdc:4.5.2.1",
+                  "image": "quay.io/dell/storage/powerflex/sdc:4.5.2.1",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "sdc"
                 }
@@ -1278,7 +1278,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
-                  "image": "docker.io/dellemc/sdc:4.5.2.1",
+                  "image": "quay.io/dell/storage/powerflex/sdc:4.5.2.1",
                   "name": "sdc-monitor"
                 },
                 {
@@ -4359,7 +4359,7 @@ spec:
                       - name: RELATED_IMAGE_csi-vxflexos
                         value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0
                       - name: RELATED_IMAGE_sdc
-                        value: docker.io/dellemc/sdc:4.5.2.1
+                        value: quay.io/dell/storage/powerflex/sdc:4.5.2.1
                       - name: RELATED_IMAGE_karavi-authorization-proxy
                         value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
                       - name: RELATED_IMAGE_csm-authorization-proxy
@@ -4479,7 +4479,7 @@ spec:
       name: csi-unity
     - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0
       name: csi-vxflexos
-    - image: docker.io/dellemc/sdc:4.5.2.1
+    - image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
       name: sdc
     - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
       name: karavi-authorization-proxy
