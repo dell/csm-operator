@@ -120,6 +120,11 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 
 func useReverseProxySecret(cr *csmv1.ContainerStorageModule) bool {
 	useSecret := false
+
+	if cr.Spec.Driver.Common == nil {
+		return false
+	}
+
 	for _, env := range cr.Spec.Driver.Common.Envs {
 		if env.Name == CSIPowerMaxUseSecret {
 			ok, err := strconv.ParseBool(env.Value)
@@ -376,7 +381,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	return yamlString
 }
 
-func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorageModule) {
+func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorageModule) (bool, error) {
 	if useReverseProxySecret(&cr) {
 		name := "powermax-config"
 		optional := false
@@ -394,8 +399,7 @@ func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorage
 		}
 
 		if podTemplate == nil {
-			log.Println("SetDeploymentSecretMounts: invalid type passed through")
-			return
+			return false, fmt.Errorf("invalid type passed through")
 		}
 
 		// Adding volume
@@ -410,7 +414,11 @@ func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorage
 					acorev1.VolumeMountApplyConfiguration{Name: &name, MountPath: &mountPath})
 			}
 		}
+
+		return true, nil
 	}
+
+	return false, nil
 }
 
 func getApplyCertVolumePowermax(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {

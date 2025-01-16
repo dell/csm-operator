@@ -14,6 +14,7 @@ package drivers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -22,6 +23,8 @@ import (
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -79,6 +82,126 @@ func TestPrecheckPowerMax(t *testing.T) {
 		if err != nil {
 			assert.Nil(t, err)
 		}
+	}
+}
+
+func TestSetPowerMaxSecretMount(t *testing.T) {
+	containerName := "driver"
+	volumeName := "myVolume"
+	tests := []struct {
+		name          string
+		configuration interface{}
+		cr            csmv1.ContainerStorageModule
+		expectedErr   error
+	}{
+		{
+			name: "success: pass through deployment configuration",
+			configuration: &v1.DeploymentApplyConfiguration{
+				Spec: &v1.DeploymentSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{
+							Volumes: []acorev1.VolumeApplyConfiguration{
+								{
+									Name: &volumeName,
+								},
+							},
+							Containers: []acorev1.ContainerApplyConfiguration{
+								{
+									Name: &containerName,
+									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+										{
+											Name: &volumeName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"}},
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "success: pass through daemonset configuration",
+			configuration: &v1.DaemonSetApplyConfiguration{
+				Spec: &v1.DaemonSetSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"}},
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "success: empty envs",
+			configuration: &v1.ReplicaSetApplyConfiguration{
+				Spec: &v1.ReplicaSetSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "error: invalid type passed through",
+			configuration: &v1.ReplicaSetApplyConfiguration{
+				Spec: &v1.ReplicaSetSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"}},
+						},
+					},
+				},
+			},
+			expectedErr: errors.New("invalid type passed through"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := SetPowerMaxSecretMount(tt.configuration, tt.cr)
+			if tt.expectedErr == nil {
+				assert.Nil(t, err)
+			} else {
+				assert.EqualError(t, err, tt.expectedErr.Error())
+			}
+		})
 	}
 }
 
