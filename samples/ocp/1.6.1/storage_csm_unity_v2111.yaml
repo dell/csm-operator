@@ -21,7 +21,6 @@ spec:
     # Controller count
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "registry.connect.redhat.com/dell-emc/csi-unity@sha256:7f2abaf2c6dd92abc2824f4adc0aac929844452692e9c99cd7cdb99df1f7e129"
@@ -55,7 +54,7 @@ spec:
         # Allowed values: "error", "warn"/"warning", "info", "debug"
         # Default value: "info"
         - name: CSI_LOG_LEVEL
-          value: debug
+          value: info
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"

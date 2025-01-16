@@ -36,6 +36,9 @@ const (
 
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params" // #nosec G101
+
+	// PowerScaleCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	PowerScaleCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // PrecheckPowerScale do input validation
@@ -58,31 +61,23 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 	// check if skip validation is enabled:
 	skipCertValid := false
 	certCount := 1
-	kubeletConfigDirFound := false
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION" {
-			b, err := strconv.ParseBool(env.Value)
-			if err != nil {
-				return fmt.Errorf("%s is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION" {
+				b, err := strconv.ParseBool(env.Value)
+				if err != nil {
+					return fmt.Errorf("%s is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+				}
+				skipCertValid = b
 			}
-			skipCertValid = b
-		}
-		if env.Name == "CERT_SECRET_COUNT" {
-			d, err := strconv.ParseInt(env.Value, 0, 8)
-			if err != nil {
-				return fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+			if env.Name == "CERT_SECRET_COUNT" {
+				d, err := strconv.ParseInt(env.Value, 0, 8)
+				if err != nil {
+					return fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+				}
+				certCount = int(d)
 			}
-			certCount = int(d)
 		}
-		if env.Name == "KUBELET_CONFIG_DIR" {
-			kubeletConfigDirFound = true
-		}
-	}
-	if !kubeletConfigDirFound {
-		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
-			Name:  "KUBELET_CONFIG_DIR",
-			Value: "/var/lib/kubelet",
-		})
 	}
 
 	secrets := []string{config}
@@ -113,26 +108,31 @@ func getApplyCertVolume(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyCo
 	skipCertValid := false
 	certCount := 1
 
-	if len(cr.Spec.Driver.Common.Envs) == 0 ||
-		(len(cr.Spec.Driver.Common.Envs) == 1 && cr.Spec.Driver.Common.Envs[0].Name != "CERT_SECRET_COUNT") {
-		certCount = 0
-	}
+	if cr.Spec.Driver.Common != nil {
+		if len(cr.Spec.Driver.Common.Envs) == 0 ||
+			(len(cr.Spec.Driver.Common.Envs) == 1 && cr.Spec.Driver.Common.Envs[0].Name != "CERT_SECRET_COUNT") {
+			certCount = 0
+		}
 
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION" {
-			b, err := strconv.ParseBool(env.Value)
-			if err != nil {
-				return nil, fmt.Errorf("%s is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION" {
+				b, err := strconv.ParseBool(env.Value)
+				if err != nil {
+					return nil, fmt.Errorf("%s is an invalid value for X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+				}
+				skipCertValid = b
 			}
-			skipCertValid = b
-		}
-		if env.Name == "CERT_SECRET_COUNT" {
-			d, err := strconv.ParseInt(env.Value, 0, 8)
-			if err != nil {
-				return nil, fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+			if env.Name == "CERT_SECRET_COUNT" {
+				d, err := strconv.ParseInt(env.Value, 0, 8)
+				if err != nil {
+					return nil, fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+				}
+				certCount = int(d)
 			}
-			certCount = int(d)
 		}
+	} else {
+		certCount = 0
+		skipCertValid = true
 	}
 
 	name := "certs"
@@ -175,24 +175,30 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 
 	switch fileType {
 	case "CSIDriverSpec":
-		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
 	case "Controller":
-		for _, env := range cr.Spec.Driver.Controller.Envs {
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorController = env.Value
+		if cr.Spec.Driver.Controller != nil {
+			for _, env := range cr.Spec.Driver.Controller.Envs {
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorController = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
 	case "Node":
-		for _, env := range cr.Spec.Driver.Node.Envs {
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorNode = env.Value
+		if cr.Spec.Driver.Node != nil {
+			for _, env := range cr.Spec.Driver.Node.Envs {
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorNode = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
 	}
 	return yamlString
 }

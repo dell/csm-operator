@@ -273,6 +273,17 @@ func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
 	suite.runFakeCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestReverseProxySidecarReconcile() {
+	revProxy := getReverseProxyModule()
+	deploAsSidecar := corev1.EnvVar{Name: "DeployAsSidecar", Value: "true"}
+	revProxy[0].Components[0].Envs = append(revProxy[0].Components[0].Envs, deploAsSidecar)
+	modules.IsReverseProxySidecar = func() bool { return true }
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, revProxy, string(v1.PowerMax))
+	suite.runFakeCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeCSMManager("", true)
+}
+
 func (suite *CSMControllerTestSuite) TestReverseProxyPreCheckError() {
 	suite.makeFakeRevProxyCSM(csmName, suite.namespace, false, getReverseProxyModule(), "badVersion")
 	reconciler := suite.createReconciler()
@@ -287,7 +298,7 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyError() {
 	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
 	csm.Spec.Modules = getReverseProxyModule()
 	reconciler := suite.createReconciler()
-	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileReverseProxyServer(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 }
 
@@ -300,7 +311,7 @@ func (suite *CSMControllerTestSuite) TestReconcileReverseProxyServiceError() {
 	reconciler := suite.createReconciler()
 	_ = modules.ReverseProxyPrecheck(ctx, operatorConfig, revProxy[0], csm, reconciler)
 	revProxy[0].ConfigVersion = ""
-	err := reconciler.reconcileReverseProxy(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileReverseProxyServer(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 }
 
@@ -585,7 +596,7 @@ func (suite *CSMControllerTestSuite) TestCsmDowngrade() {
 	if err != nil {
 		panic(err)
 	}
-	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
 		panic(err)
@@ -653,7 +664,7 @@ func (suite *CSMControllerTestSuite) TestCsmDowngradeSkipVersion() {
 	if err != nil {
 		panic(err)
 	}
-	sec := shared.MakeSecret(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
 		panic(err)
@@ -738,7 +749,8 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
-	csm.Spec.Driver.CSIDriverType = "powerscale"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
+	modules.IsReverseProxySidecar = func() bool { return true }
 
 	removeDriverTests := []struct {
 		name          string
@@ -801,6 +813,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	appMobCSM.Spec.Modules = getAppMob()
 	reverseProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
+	modules.IsReverseProxySidecar = func() bool { return false }
 
 	syncCSMTests := []struct {
 		name        string
@@ -860,6 +873,9 @@ func (suite *CSMControllerTestSuite) TestRemoveModule() {
 					panic(err)
 				}
 				*tt.errorInjector = true
+			}
+			if tt.csm.HasModule(csmv1.ReverseProxy) {
+				modules.IsReverseProxySidecar = func() bool { return false }
 			}
 			err := r.removeModule(ctx, tt.csm, operatorConfig, r.Client)
 			if tt.expectedErr == "" {
@@ -926,7 +942,7 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			if errorInjector != nil {
 				*errorInjector = true
 			}
-			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig)
+			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig, r.Client)
 			err := r.oldStandAloneModuleCleanup(ctx, csm, operatorConfig, driverConfig)
 
 			if expectedErr == "" {
@@ -1163,7 +1179,7 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 		panic(err)
 	}
 
-	expRateLimiter := workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 120*time.Second)
+	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
 	err = suite.createReconciler().SetupWithManager(mgr, expRateLimiter, 1)
 	if err != nil {
 		panic(err)
@@ -1421,7 +1437,7 @@ func (suite *CSMControllerTestSuite) handleDaemonsetTest(r *ContainerStorageModu
 	daemonset := &appsv1.DaemonSet{}
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, daemonset)
 	assert.Nil(suite.T(), err)
-	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm"}
+	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm", "csmNamespace": suite.namespace}
 
 	r.handleDaemonsetUpdate(daemonset, daemonset)
 
@@ -1449,7 +1465,7 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	deployment := &appsv1.Deployment{}
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployment)
 	assert.Nil(suite.T(), err)
-	deployment.Spec.Template.Labels = map[string]string{"csm": "csm"}
+	deployment.Spec.Template.Labels = map[string]string{"csm": "csm", "csmNamespace": suite.namespace}
 
 	r.handleDeploymentUpdate(deployment, deployment)
 
@@ -1477,7 +1493,7 @@ func (suite *CSMControllerTestSuite) handleDaemonsetTestFake(r *ContainerStorage
 	daemonset := &appsv1.DaemonSet{}
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, daemonset)
 	assert.Error(suite.T(), err)
-	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm"}
+	daemonset.Spec.Template.Labels = map[string]string{"csm": "csm", "csmNamespace": suite.namespace}
 
 	r.handleDaemonsetUpdate(daemonset, daemonset)
 
@@ -1505,7 +1521,7 @@ func (suite *CSMControllerTestSuite) handleDeploymentTestFake(r *ContainerStorag
 	deployment := &appsv1.Deployment{}
 	err := suite.fakeClient.Get(ctx, client.ObjectKey{Namespace: suite.namespace, Name: name}, deployment)
 	assert.Error(suite.T(), err)
-	deployment.Spec.Template.Labels = map[string]string{"csm": "csm"}
+	deployment.Spec.Template.Labels = map[string]string{"csm": "csm", "csmNamespace": suite.namespace}
 
 	r.handleDeploymentUpdate(deployment, deployment)
 
@@ -2068,7 +2084,7 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	}
 	// remove driver when deleting csm
-	csm.Spec.Driver.ForceRemoveDriver = true
+	csm.Spec.Driver.ForceRemoveDriver = &truebool
 	csm.Annotations[configVersionKey] = configVersion
 
 	csm.Spec.Modules = modules
@@ -2102,7 +2118,7 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	}
 	// remove driver when deleting csm
-	csm.Spec.Driver.ForceRemoveDriver = true
+	csm.Spec.Driver.ForceRemoveDriver = &truebool
 	csm.Annotations[configVersionKey] = configVersion
 
 	csm.Spec.Modules = modules
@@ -2374,11 +2390,53 @@ func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string,
 		csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
 	}
 	// remove driver when deleting csm
-	csm.Spec.Driver.ForceRemoveDriver = true
+	csm.Spec.Driver.ForceRemoveDriver = &trueBool
 	csm.Spec.Modules = modules
 	out, _ := json.Marshal(&csm)
 	csm.Annotations[previouslyAppliedCustomResource] = string(out)
 
 	err = suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestZoneValidation() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Annotations[configVersionKey] = configVersion
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	err := suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+
+	reconciler := suite.createReconciler()
+
+	// add secret with NO zone to the namespace
+	sec := shared.MakeSecretPowerFlex(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	assert.Nil(suite.T(), err)
+
+	err = reconciler.ZoneValidation(ctx, &csm)
+	assert.Nil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestZoneValidation2() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Annotations[configVersionKey] = configVersion
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	err := suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+
+	reconciler := suite.createReconciler()
+
+	// add secret with an invalid multi zone to the namespace
+	secretZone := shared.MakeSecretPowerFlexMultiZoneInvalid(csmName+"-config", suite.namespace, pFlexConfigVersion)
+	err = suite.fakeClient.Create(ctx, secretZone)
+	assert.Nil(suite.T(), err)
+
+	err = reconciler.ZoneValidation(ctx, &csm)
+	assert.NotNil(suite.T(), err)
 }

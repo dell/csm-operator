@@ -13,11 +13,13 @@
 package steps
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -50,10 +52,11 @@ const (
 )
 
 var (
-	authString               = "karavi-authorization-proxy"
-	operatorNamespace        = "dell-csm-operator"
-	quotaLimit               = "100000000"
-	pflexSecretMap           = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS"}
+	authString        = "karavi-authorization-proxy"
+	operatorNamespace = "dell-csm-operator"
+	quotaLimit        = "100000000"
+	pflexSecretMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS",
+		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS"}
 	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -67,7 +70,8 @@ var (
 	pmaxReverseProxyMap      = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap   = map[string]string{}
 	amConfigMap              = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
-	pmaxArrayConfigMap       = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
+	pmaxArrayConfigMap       = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_ENDPOINT"}
+	pmaxAuthArrayConfigMap   = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	// Auth V2
 	pflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
 	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
@@ -76,7 +80,7 @@ var (
 	pstoreSecretMap          = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT"}
 	pstoreEphemeralVolumeMap = map[string]string{"REPLACE_GLOBALID": "PSTORE_GLOBALID"}
 	unitySecretMap           = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
-	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL"}
+	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
@@ -319,6 +323,52 @@ func (step *Step) validateDriverInstalled(res Resource, driverName string, crNum
 	crNum, _ := strconv.Atoi(crNumStr)
 	time.Sleep(20 * time.Second)
 	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
+}
+
+func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	found := new(csmv1.ContainerStorageModule)
+	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("CSM resource '%s' not found in namespace '%s'", cr.Name, cr.Namespace)
+		}
+		return fmt.Errorf("failed to get CSM resource '%s/%s': %w", cr.Namespace, cr.Name, err)
+	}
+	driver := found.Spec.Driver
+	if driver.ConfigVersion == "" {
+		return fmt.Errorf("configVersion is missing")
+	}
+	if driver.CSIDriverType == "" {
+		return fmt.Errorf("csiDriverType is missing")
+	}
+	if driver.Replicas == 0 {
+		return fmt.Errorf("replicas should have a non-zero value")
+	}
+
+	// Ensure all other fields are empty or nil
+	if len(driver.SideCars) > 0 ||
+		len(driver.InitContainers) > 0 ||
+		len(driver.SnapshotClass) > 0 ||
+		driver.Controller != nil ||
+		driver.Node != nil ||
+		driver.CSIDriverSpec != nil ||
+		driver.DNSPolicy != "" ||
+		driver.Common != nil ||
+		driver.AuthSecret != "" ||
+		driver.TLSCertSecret != "" {
+		return fmt.Errorf("unexpected fields found in Driver spec: %+v", driver)
+	}
+
+	if driver.CSIDriverType == csmv1.PowerMax && found.HasModule(csmv1.ReverseProxy) {
+		return fmt.Errorf("csm resource '%s' contains reverse proxy module", cr.Name)
+	}
+
+	return nil
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
@@ -623,6 +673,12 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 	return nil
 }
 
+func (step *Step) validateAuthorizationPodsNotInstalled(res Resource, module string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	time.Sleep(20 * time.Second)
+	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
+}
+
 func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
 	// find which map to use for secret values
 	mapValues, err := determineMap(crType)
@@ -718,6 +774,9 @@ func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, cr
 	return nil
 }
 
+// TODO: Tech debt.
+// We should refactor all of our template usages over time to use temporary files instead of editing in-line.
+// Once that's done, this method can be removed.
 func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
 	// find which map to use for secret values
 	mapValues, err := determineMap(crType)
@@ -742,6 +801,46 @@ func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crTyp
 
 	// create new secret
 	fileArg := "--from-file=config=" + templateFile
+	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	if err != nil {
+		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
+	}
+
+	return nil
+}
+
+func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, crType string) error {
+	// find which map to use for secret values
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	// read the template into memory
+	fileContent, err := os.ReadFile(templateFile)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return err
+	}
+
+	// Convert the file content to a string
+	fileString := string(fileContent)
+
+	// Replace all fields in temporary (in memory) string
+	for key := range mapValues {
+		fileString = strings.ReplaceAll(fileString, key, os.Getenv(mapValues[key]))
+	}
+
+	// if secret exists- delete it
+	if secretExists(namespace, name) {
+		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
+		if err != nil {
+			return fmt.Errorf("failed to delete secret: %s", err.Error())
+		}
+	}
+
+	// create new secret
+	fileArg := "--from-literal=config=" + fileString
 	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
 		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
@@ -793,6 +892,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pmaxReverseProxyMap
 	} else if crType == "pmaxArrayConfig" {
 		mapValues = pmaxArrayConfigMap
+	} else if crType == "pmaxAuthArrayConfig" {
+		mapValues = pmaxAuthArrayConfigMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
 	} else if crType == "application-mobility" {
@@ -852,8 +953,11 @@ func (step *Step) runCustomTest(res Resource) error {
 		stderr string
 		err    error
 	)
+	if len(res.Scenario.CustomTest) != 1 {
+		return fmt.Errorf("'customTest' must be a single element array")
+	}
 
-	for testNum, customTest := range res.Scenario.CustomTest.Run {
+	for testNum, customTest := range res.Scenario.CustomTest[0].Run {
 		args := strings.Split(customTest, " ")
 		if len(args) == 1 {
 			stdout, stderr, err = framework.RunCmd(args[0])
@@ -867,6 +971,45 @@ func (step *Step) runCustomTest(res Resource) error {
 	}
 
 	return nil
+}
+
+func (step *Step) runCustomTestSelector(res Resource, testName string) error {
+	var (
+		stdout string
+		stderr string
+		err    error
+	)
+
+	// retrieve the appropriate test from the list of tests
+	var selectedTest CustomTest
+	foundTest := false
+	for _, test := range res.Scenario.CustomTest {
+		if test.Name == testName {
+			selectedTest = test
+			foundTest = true
+			break
+		}
+	}
+
+	if !foundTest {
+		return fmt.Errorf("custom test '%s' not found", testName)
+	}
+
+	for testNum, customTest := range selectedTest.Run {
+		args := strings.Split(customTest, " ")
+		if len(args) == 1 {
+			stdout, stderr, err = framework.RunCmd(args[0])
+		} else {
+			stdout, stderr, err = framework.RunCmd(args[0], args[1:]...)
+		}
+
+		if err != nil {
+			return fmt.Errorf("error running custom test #%d. Error: %v \n stdout: %s \n stderr: %s", testNum, err, stdout, stderr)
+		}
+	}
+
+	return nil
+
 }
 
 func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile string, crType string) error {
@@ -983,8 +1126,45 @@ func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
 		return err
 	}
 
-	found.Spec.Driver.ForceRemoveDriver = true
+	truebool := true
+	found.Spec.Driver.ForceRemoveDriver = &truebool
 	return step.ctrlClient.Update(context.TODO(), found)
+}
+
+func (step *Step) validateForceRemoveDriverEnabled(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found,
+	); err != nil {
+		return err
+	}
+
+	if found.Spec.Driver.ForceRemoveDriver != nil && *found.Spec.Driver.ForceRemoveDriver {
+		return nil
+	}
+	return fmt.Errorf("forceRemoveDriver is not set to true")
+}
+
+func (step *Step) validateForceRemoveDriverDisabled(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found,
+	); err != nil {
+		return err
+	}
+
+	if found.Spec.Driver.ForceRemoveDriver != nil && !*found.Spec.Driver.ForceRemoveDriver {
+		return nil
+	}
+	return fmt.Errorf("forceRemoveDriver is not set to false")
 }
 
 func (step *Step) enableForceRemoveModule(res Resource, crNumStr string) error {
@@ -1847,5 +2027,155 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 	if err != nil {
 		return fmt.Errorf("csm authorization crds uninstall failed: %v", err)
 	}
+	return nil
+}
+
+func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
+	// Check if the revproxy-certs secret exists
+	revproxyExists := false
+	cmd := exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace)
+	err := cmd.Run()
+	if err == nil {
+		fmt.Println("revproxy-certs secret already exists, skipping creation.")
+		revproxyExists = true
+	}
+
+	// Check if the csirevproxy-tls-secret exists
+	csirevproxyExists := false
+	cmd = exec.Command("kubectl", "get", "secret", "csirevproxy-tls-secret", "-n", namespace)
+	err = cmd.Run()
+	if err == nil {
+		fmt.Println("csirevproxy-tls-secret already exists, skipping creation.")
+		csirevproxyExists = true
+	}
+
+	// If both secrets exist, no need to generate TLS key and certificate
+	if revproxyExists && csirevproxyExists {
+		return nil
+	}
+
+	// Create a temporary directory in the current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %v", err)
+	}
+
+	tmpDir, err := os.MkdirTemp(cwd, "tls-setup")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary directory: %v", err)
+	}
+	fmt.Println("Temporary directory created at:", tmpDir) // Print the path for verification
+	defer os.RemoveAll(tmpDir)                             // Clean up the temporary directory
+
+	// Paths for the key and certificate files
+	keyPath := filepath.Join(tmpDir, "tls.key")
+	crtPath := filepath.Join(tmpDir, "tls.crt")
+
+	// Generate TLS key
+	cmd = exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS key: %v", err)
+	}
+
+	// Generate TLS certificate
+	cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", keyPath, "-out", crtPath, "-days", "3650", "-subj", "/CN=US")
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS certificate: %v", err)
+	}
+
+	if _, err := os.Stat(keyPath); os.IsNotExist(err) {
+		return fmt.Errorf("key file does not exist: %v", keyPath)
+	}
+	if _, err := os.Stat(crtPath); os.IsNotExist(err) {
+		return fmt.Errorf("cert file does not exist: %v", crtPath)
+	}
+
+	// Create Kubernetes secret for revproxy-certs if it does not exist
+	if !revproxyExists {
+		cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath)
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to create revproxy-certs secret: %v", err)
+		}
+	}
+
+	// Create Kubernetes secret for csirevproxy-tls-secret if it does not exist
+	if !csirevproxyExists {
+		cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath)
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
+	// Create a temporary directory
+	tmpDir, err := os.MkdirTemp("", "tls-setup")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary directory: %v", err)
+	}
+	fmt.Println("Temporary directory created at:", tmpDir) // Print the path for verification
+	defer os.RemoveAll(tmpDir)                             // Clean up the temporary directory
+
+	// Paths for the key, CSR, and certificate files
+	keyPath := filepath.Join(tmpDir, "tls.key")
+	csrPath := filepath.Join(tmpDir, "tls.csr")
+	crtPath := filepath.Join(tmpDir, "tls.crt")
+	sanConfigPath := "testfiles/powermax-templates/san.cnf"
+
+	// Generate TLS key
+	cmd := exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS key: %v", err)
+	}
+
+	// Generate CSR
+	cmd = exec.Command("openssl", "req", "-new", "-key", keyPath, "-out", csrPath, "-config", sanConfigPath)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate CSR: %v", err)
+	}
+
+	// Generate TLS certificate
+	cmd = exec.Command("openssl", "x509", "-req", "-in", csrPath, "-signkey", keyPath, "-out", crtPath, "-days", "3650", "-extensions", "v3_req", "-extfile", sanConfigPath)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS certificate: %v", err)
+	}
+
+	// Create or update Kubernetes secret for revproxy-certs
+	cmd = exec.Command("kubectl", "create", "secret", "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath, "-n", namespace, "-o", "yaml", "--dry-run=client")
+	cmdOut, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to prepare revproxy-certs secret: %v", err)
+	}
+
+	cmd = exec.Command("kubectl", "apply", "-f", "-")
+	cmd.Stdin = bytes.NewReader(cmdOut)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to apply revproxy-certs secret: %v", err)
+	}
+
+	// Create or update Kubernetes secret for csirevproxy-tls-secret
+	cmd = exec.Command("kubectl", "create", "secret", "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath, "-n", namespace, "-o", "yaml", "--dry-run=client")
+	cmdOut, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to prepare csirevproxy-tls-secret: %v", err)
+	}
+
+	cmd = exec.Command("kubectl", "apply", "-f", "-")
+	cmd.Stdin = bytes.NewReader(cmdOut)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to apply csirevproxy-tls-secret: %v", err)
+	}
+
 	return nil
 }

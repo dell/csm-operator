@@ -27,6 +27,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	metacv1 "k8s.io/client-go/applyconfigurations/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -70,13 +71,12 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	}
 
 	controllerYAML := driverYAML.(utils.ControllerYAML)
-	controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
-	var defaultReplicas int32 = 2
-	if *(controllerYAML.Deployment.Spec.Replicas) == 0 {
-		controllerYAML.Deployment.Spec.Replicas = &defaultReplicas
-	}
 
-	if len(cr.Spec.Driver.Controller.Tolerations) != 0 {
+	// if using a minimal manifest, replicas may not be present.
+	if cr.Spec.Driver.Replicas != 0 {
+		controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
+	}
+	if cr.Spec.Driver.Controller != nil && len(cr.Spec.Driver.Controller.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Controller.Tolerations {
 			log.Debugw("Adding toleration", "t", t)
@@ -94,19 +94,31 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		controllerYAML.Deployment.Spec.Template.Spec.Tolerations = tols
 	}
 
-	if cr.Spec.Driver.Controller.NodeSelector != nil {
+	if cr.Spec.Driver.Controller != nil && cr.Spec.Driver.Controller.NodeSelector != nil {
 		controllerYAML.Deployment.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Controller.NodeSelector
 	}
 
 	containers := controllerYAML.Deployment.Spec.Template.Spec.Containers
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
-		if string(*c.Name) == "driver" {
-			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Controller.Envs)
-			c.Env = containers[i].Env
-			if string(cr.Spec.Driver.Common.Image) != "" {
-				image := string(cr.Spec.Driver.Common.Image)
-				c.Image = &image
+		if c.Name != nil && string(*c.Name) == "driver" {
+			// Check if Common is not nil before accessing Envs
+			if cr.Spec.Driver.Common != nil {
+				if cr.Spec.Driver.Common.Image != "" {
+					image := string(cr.Spec.Driver.Common.Image)
+					c.Image = &image
+				}
+			}
+			if cr.Spec.Driver.Common != nil || cr.Spec.Driver.Controller != nil {
+				var commonEnvs, controllerEnvs []corev1.EnvVar
+				if cr.Spec.Driver.Common != nil {
+					commonEnvs = cr.Spec.Driver.Common.Envs
+				}
+				if cr.Spec.Driver.Controller != nil {
+					controllerEnvs = cr.Spec.Driver.Controller.Envs
+				}
+				containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, controllerEnvs)
+				c.Env = containers[i].Env
 			}
 		}
 
@@ -171,9 +183,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	crUID := cr.GetUID()
 	bController := true
-	bOwnerDeletion := !cr.Spec.Driver.ForceRemoveDriver
+	bOwnerDeletion := cr.Spec.Driver.ForceRemoveDriver != nil && !*cr.Spec.Driver.ForceRemoveDriver
 	kind := cr.Kind
-	v1 := "apps/v1"
+	v1 := "storage.dell.com/v1"
 	controllerYAML.Deployment.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
 		{
 			APIVersion:         &v1,
@@ -189,7 +201,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 }
 
 // GetNode get node yaml
-func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string) (*utils.NodeYAML, error) {
+func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string, ct client.Client) (*utils.NodeYAML, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
 	log.Debugw("GetNode", "configMapPath", configMapPath)
@@ -233,7 +245,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &defaultDNSPolicy
 	}
 
-	if len(cr.Spec.Driver.Node.Tolerations) != 0 {
+	if cr.Spec.Driver.Node != nil && len(cr.Spec.Driver.Node.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Node.Tolerations {
 			fmt.Printf("[BRUH] toleration t: %+v\n", t)
@@ -251,19 +263,22 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Tolerations = tols
 	}
 
-	if cr.Spec.Driver.Node.NodeSelector != nil {
+	if cr.Spec.Driver.Node != nil && cr.Spec.Driver.Node.NodeSelector != nil {
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Node.NodeSelector
 	}
 
 	containers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
-		if string(*c.Name) == "driver" {
-			containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
-			c.Env = containers[i].Env
-			if string(cr.Spec.Driver.Common.Image) != "" {
-				image := string(cr.Spec.Driver.Common.Image)
-				c.Image = &image
+		if c.Name != nil && string(*c.Name) == "driver" {
+			// Check if Common is not nil before accessing its fields
+			if cr.Spec.Driver.Common != nil && cr.Spec.Driver.Node != nil {
+				containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
+				c.Env = containers[i].Env
+				if string(cr.Spec.Driver.Common.Image) != "" {
+					image := string(cr.Spec.Driver.Common.Image)
+					c.Image = &image
+				}
 			}
 		}
 		removeContainer := false
@@ -299,11 +314,22 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers = newcontainers
 
+	var updatedCr csmv1.ContainerStorageModule
+	if cr.Spec.Driver.CSIDriverType == "powerflex" {
+		updatedCr, err = SetSDCinitContainers(ctx, cr, ct)
+		if err != nil {
+			log.Errorw("Failed to set SDC init container", "Error", err.Error())
+			return nil, err
+		}
+	}
+
 	initcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	sdcEnabled := true
-	for _, env := range cr.Spec.Driver.Node.Envs {
-		if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
-			sdcEnabled = false
+	if updatedCr.Spec.Driver.Node != nil {
+		for _, env := range updatedCr.Spec.Driver.Node.Envs {
+			if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
+				sdcEnabled = false
+			}
 		}
 	}
 	for _, ic := range nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers {
@@ -314,7 +340,17 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	for i := range initcontainers {
 		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
-		utils.UpdateinitContainerApply(cr.Spec.Driver.InitContainers, &initcontainers[i])
+		utils.UpdateInitContainerApply(updatedCr.Spec.Driver.InitContainers, &initcontainers[i])
+		// mdm-container is exclusive to powerflex driver deamonset, will use the driver image as an init container
+		if *initcontainers[i].Name == "mdm-container" {
+			// driver minimial manifest may not have common section
+			if cr.Spec.Driver.Common != nil {
+				if string(cr.Spec.Driver.Common.Image) != "" {
+					image := string(cr.Spec.Driver.Common.Image)
+					initcontainers[i].Image = &image
+				}
+			}
+		}
 	}
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers = initcontainers
@@ -395,14 +431,16 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		return nil, err
 	}
 
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "CSI_LOG_LEVEL" {
-			cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
-			podmanLogLevel = env.Value
-		}
-		if env.Name == "CSI_LOG_FORMAT" {
-			cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
-			podmanLogFormat = env.Value
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "CSI_LOG_LEVEL" {
+				cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
+				podmanLogLevel = env.Value
+			}
+			if env.Name == "CSI_LOG_FORMAT" {
+				cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
+				podmanLogFormat = env.Value
+			}
 		}
 	}
 
@@ -418,11 +456,13 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	}
 
 	if cr.Spec.Driver.CSIDriverType == "powerflex" {
-		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "INTERFACE_NAMES" {
-				cmValue += fmt.Sprintf("\n%s: ", "interfaceNames")
-				for _, v := range strings.Split(env.Value, ",") {
-					cmValue += fmt.Sprintf("\n  %s ", v)
+		if cr.Spec.Driver.Common != nil {
+			for _, env := range cr.Spec.Driver.Common.Envs {
+				if env.Name == "INTERFACE_NAMES" {
+					cmValue += fmt.Sprintf("\n%s: ", "interfaceNames")
+					for _, v := range strings.Split(env.Value, ",") {
+						cmValue += fmt.Sprintf("\n  %s ", v)
+					}
 				}
 			}
 		}
@@ -471,11 +511,12 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		return nil, err
 	}
 	// overriding default FSGroupPolicy if this was provided in manifest
-	if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy != "" {
+	if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy != "" {
 		fsGroupPolicy := storagev1.NoneFSGroupPolicy
-		if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "ReadWriteOnceWithFSType" {
+		switch cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy {
+		case "ReadWriteOnceWithFSType":
 			fsGroupPolicy = storagev1.ReadWriteOnceWithFSTypeFSGroupPolicy
-		} else if cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "File" {
+		case "File":
 			fsGroupPolicy = storagev1.FileFSGroupPolicy
 		}
 		csidriver.Spec.FSGroupPolicy = &fsGroupPolicy

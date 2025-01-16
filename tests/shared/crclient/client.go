@@ -97,7 +97,7 @@ func (f Client) Get(_ context.Context, key client.ObjectKey, obj client.Object, 
 }
 
 // List implements client.Client.
-func (f Client) List(ctx context.Context, list client.ObjectList, _ ...client.ListOption) error {
+func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("List", list); err != nil {
 			return err
@@ -106,6 +106,23 @@ func (f Client) List(ctx context.Context, list client.ObjectList, _ ...client.Li
 	switch l := list.(type) {
 	case *corev1.PodList:
 		return f.listPodList(l)
+	case *corev1.NodeList:
+
+		var labelKey string
+		// Initialize ListOptions
+		listOpts := &client.ListOptions{}
+		// Apply each ListOption to listOpts
+		for _, opt := range opts {
+			if opt != nil {
+				opt.ApplyToList(listOpts)
+			}
+		}
+		s := listOpts.LabelSelector
+		if s != nil {
+			labelKey = s.String()
+		}
+
+		return f.listNodeList(l, labelKey)
 	case *appsv1.DeploymentList:
 		return f.listDeploymentList(ctx, &appsv1.DeploymentList{})
 	default:
@@ -117,6 +134,26 @@ func (f Client) listPodList(list *corev1.PodList) error {
 	for k, v := range f.Objects {
 		if k.Kind == "Pod" {
 			list.Items = append(list.Items, *v.(*corev1.Pod))
+		}
+	}
+	return nil
+}
+
+func (f Client) listNodeList(list *corev1.NodeList, label string) error {
+	for k, v := range f.Objects {
+		if k.Kind == "Node" {
+			node, ok := v.(*corev1.Node)
+			if ok {
+				if label != "" {
+					for key := range (*node).ObjectMeta.Labels {
+						if label == key {
+							list.Items = append(list.Items, *node)
+						}
+					}
+				} else {
+					list.Items = append(list.Items, *node)
+				}
+			}
 		}
 	}
 	return nil

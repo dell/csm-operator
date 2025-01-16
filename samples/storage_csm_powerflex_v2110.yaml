@@ -10,7 +10,7 @@ spec:
       # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
-      # Default value: ReadWriteOnceWithFSType
+      # Default value: File
       fSGroupPolicy: "File"
       # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
       # Allowed values:
@@ -18,9 +18,11 @@ spec:
       #   false: disable storage capacity tracking
       storageCapacity: true
     configVersion: v2.11.0
+    # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: 1
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "docker.io/dellemc/csi-vxflexos:v2.11.0"
@@ -42,10 +44,11 @@ spec:
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
     sideCars:
-      # 'k8s' represents a string prepended to each volume created by the CSI driver
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.1
-        args: ["--volume-name-prefix=k8s"]
+        # Default volume-name-prefix: csivol
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
       - name: registrar
@@ -67,6 +70,7 @@ spec:
             value: "10.xx.xx.xx,10.xx.xx.xx"  # do not add mdm value here if it is present in secret
             # health monitor is disabled by default, refer to driver documentation before enabling it
             # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+            # Default monitor-interval: 60s
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -190,6 +194,7 @@ spec:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
+      # Default value: false
       enabled: false
       # For PowerFlex Tech-Preview v2.0.0-alpha use v1.11.0 as configVersion.
       # Do not change the configVersion to v2.0.0-alpha
@@ -200,19 +205,23 @@ spec:
           image: docker.io/dellemc/csm-authorization-sidecar:v1.11.0
           envs:
             # proxyHost: hostname of the csm-authorization server
+            # Default value: none
             - name: "PROXY_HOST"
               value: "csm-authorization.com"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
+      # Default value: false
       enabled: false
       configVersion: v1.9.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
+          # Default value: false
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
@@ -233,6 +242,7 @@ spec:
               value: "INFO"
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
+          # Default value: false
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
@@ -260,6 +270,7 @@ spec:
           enabled: false
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
+          # Default value: false
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
           image: docker.io/dellemc/csm-metrics-powerflex:v1.9.0

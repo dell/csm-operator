@@ -13,6 +13,7 @@
 package utils
 
 import (
+	"context"
 	"sync/atomic"
 
 	"k8s.io/client-go/kubernetes"
@@ -39,6 +40,14 @@ type FakeReconcileCSM struct {
 	updateCount int32
 }
 
+// MockClient is a mock implementation of the client.Client interface for testing purposes.
+type MockClient struct {
+	crclient.Client
+	GetFunc    func(ctx context.Context, key crclient.ObjectKey, obj crclient.Object, opts ...crclient.GetOption) error
+	CreateFunc func(ctx context.Context, obj crclient.Object, opts ...crclient.CreateOption) error
+	UpdateFunc func(ctx context.Context, obj crclient.Object, opts ...crclient.UpdateOption) error
+}
+
 // GetClient -
 func (r *FakeReconcileCSM) GetClient() crclient.Client {
 	return r.Client
@@ -57,4 +66,25 @@ func (r *FakeReconcileCSM) GetUpdateCount() int32 {
 // GetK8sClient - Returns the current update count
 func (r *FakeReconcileCSM) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
+}
+
+func (m *MockClient) Get(ctx context.Context, key crclient.ObjectKey, obj crclient.Object, opts ...crclient.GetOption) error {
+	if m.GetFunc != nil {
+		return m.GetFunc(ctx, key, obj, opts...)
+	}
+	return nil
+}
+
+func (m *MockClient) Create(ctx context.Context, obj crclient.Object, opts ...crclient.CreateOption) error {
+	if m.CreateFunc != nil {
+		return m.CreateFunc(ctx, obj, opts...)
+	}
+	return nil
+}
+
+func (m *MockClient) Update(ctx context.Context, obj crclient.Object, opts ...crclient.UpdateOption) error {
+	if m.UpdateFunc != nil {
+		return m.UpdateFunc(ctx, obj, opts...)
+	}
+	return nil
 }

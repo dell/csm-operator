@@ -111,6 +111,9 @@ const (
 	AppMobCertManagerComponent = "cert-manager"
 	// AppMobVeleroComponent - velero component
 	AppMobVeleroComponent = "velero"
+
+	// AppMobilityCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	AppMobilityCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // ApplicationMobilityOldVersion - old version of application-mobility, will be filled in checkUpgrade
@@ -185,6 +188,7 @@ func getAppMobCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule
 	yamlString = string(buf)
 
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
+	yamlString = strings.ReplaceAll(yamlString, AppMobilityCSMNameSpace, cr.Namespace)
 
 	return yamlString, nil
 }
@@ -261,6 +265,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 	yamlString = strings.ReplaceAll(yamlString, ControllerImg, controllerImage)
 	yamlString = strings.ReplaceAll(yamlString, ControllerImagePullPolicy, controllerImagePullPolicy)
 	yamlString = strings.ReplaceAll(yamlString, AppMobReplicaCount, replicaCount)
+	yamlString = strings.ReplaceAll(yamlString, AppMobilityCSMNameSpace, cr.Namespace)
 
 	return yamlString, nil
 }
@@ -490,6 +495,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageLocation, backupStorageLocationName)
 	yamlString = strings.ReplaceAll(yamlString, AKeyID, accessID)
 	yamlString = strings.ReplaceAll(yamlString, AKey, access)
+	yamlString = strings.ReplaceAll(yamlString, AppMobilityCSMNameSpace, cr.Namespace)
 
 	return yamlString, nil
 }
@@ -671,6 +677,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 	yamlString = strings.ReplaceAll(yamlString, AWSInitContainerImage, veleroAWSInitContainerImage)
 	yamlString = strings.ReplaceAll(yamlString, DELLInitContainerName, veleroDELLInitContainerName)
 	yamlString = strings.ReplaceAll(yamlString, DELLInitContainerImage, veleroDELLInitContainerImage)
+	yamlString = strings.ReplaceAll(yamlString, AppMobilityCSMNameSpace, cr.Namespace)
 
 	return yamlString, nil
 }
@@ -719,6 +726,7 @@ func getUseVolumeSnapshot(_ context.Context, op utils.OperatorConfig, cr csmv1.C
 	yamlString = strings.ReplaceAll(yamlString, VolSnapshotlocation, volSnapshotLocationName)
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageRegion, backupRegion)
+	yamlString = strings.ReplaceAll(yamlString, AppMobilityCSMNameSpace, cr.Namespace)
 
 	return volSnapshotLocationName, yamlString, nil
 }
@@ -782,6 +790,7 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 	yamlString = strings.ReplaceAll(yamlString, ConfigProvider, provider)
 	yamlString = strings.ReplaceAll(yamlString, BackupStorageRegion, backupRegion)
 	yamlString = strings.ReplaceAll(yamlString, VeleroCaCert, bucketCacert)
+	yamlString = strings.ReplaceAll(yamlString, AppMobilityCSMNameSpace, cr.Namespace)
 
 	return backupStorageLocationName, yamlString, nil
 }
@@ -860,6 +869,7 @@ func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (str
 	yamlString = strings.ReplaceAll(yamlString, VeleroImage, veleroImg)
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, VeleroImagePullPolicy, veleroImgPullPolicy)
+	yamlString = strings.ReplaceAll(yamlString, AppMobilityCSMNameSpace, cr.Namespace)
 	return yamlString, nil
 }
 
@@ -898,5 +908,6 @@ func RemoveOldDaemonset(ctx context.Context, op utils.OperatorConfig, oldVersion
 	}
 	yamlString := string(buf)
 	yamlString = strings.ReplaceAll(yamlString, AppMobNamespace, cr.Namespace)
+	yamlString = strings.ReplaceAll(yamlString, AppMobilityCSMNameSpace, cr.Namespace)
 	return applyDeleteObjects(context.Background(), ctrlClient, yamlString, true)
 }

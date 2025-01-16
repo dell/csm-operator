@@ -56,6 +56,9 @@ const (
 	CsiPowerstoreExternalAccess = "<X_CSI_POWERSTORE_EXTERNAL_ACCESS>"
 	// CsiStorageCapacityEnabled - Storage capacity flag
 	CsiStorageCapacityEnabled = "false"
+
+	// PowerStoreCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	PowerStoreCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // PrecheckPowerStore do input validation
@@ -66,19 +69,6 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 
 	if cr.Spec.Driver.AuthSecret != "" {
 		config = cr.Spec.Driver.AuthSecret
-	}
-
-	kubeletConfigDirFound := false
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "KUBELET_CONFIG_DIR" {
-			kubeletConfigDirFound = true
-		}
-	}
-	if !kubeletConfigDirFound {
-		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
-			Name:  "KUBELET_CONFIG_DIR",
-			Value: "/var/lib/kubelet",
-		})
 	}
 
 	// Check if driver version is supported by doing a stat on a config file
@@ -119,23 +109,27 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 
 	switch fileType {
 	case "Node":
-		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "X_CSI_POWERSTORE_NODE_NAME_PREFIX" {
-				nodePrefix = env.Value
-			}
-			if env.Name == "X_CSI_FC_PORTS_FILTER_FILE_PATH" {
-				fcPortFilter = env.Value
+		if cr.Spec.Driver.Common != nil {
+			for _, env := range cr.Spec.Driver.Common.Envs {
+				if env.Name == "X_CSI_POWERSTORE_NODE_NAME_PREFIX" {
+					nodePrefix = env.Value
+				}
+				if env.Name == "X_CSI_FC_PORTS_FILTER_FILE_PATH" {
+					fcPortFilter = env.Value
+				}
 			}
 		}
-		for _, env := range cr.Spec.Driver.Node.Envs {
-			if env.Name == "X_CSI_POWERSTORE_ENABLE_CHAP" {
-				chap = env.Value
-			}
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorNode = env.Value
-			}
-			if env.Name == "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE" {
-				maxVolumesPerNode = env.Value
+		if cr.Spec.Driver.Node != nil {
+			for _, env := range cr.Spec.Driver.Node.Envs {
+				if env.Name == "X_CSI_POWERSTORE_ENABLE_CHAP" {
+					chap = env.Value
+				}
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorNode = env.Value
+				}
+				if env.Name == "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE" {
+					maxVolumesPerNode = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreNodeNamePrefix, nodePrefix)
@@ -143,23 +137,27 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreEnableChap, chap)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreMaxVolumesPerNode, maxVolumesPerNode)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
 	case "Controller":
-		for _, env := range cr.Spec.Driver.Controller.Envs {
-			if env.Name == "X_CSI_NFS_ACLS" {
-				nfsAcls = env.Value
-			}
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorController = env.Value
-			}
-			if env.Name == "X_CSI_POWERSTORE_EXTERNAL_ACCESS" {
-				powerstoreExternalAccess = env.Value
+		if cr.Spec.Driver.Controller != nil {
+			for _, env := range cr.Spec.Driver.Controller.Envs {
+				if env.Name == "X_CSI_NFS_ACLS" {
+					nfsAcls = env.Value
+				}
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorController = env.Value
+				}
+				if env.Name == "X_CSI_POWERSTORE_EXTERNAL_ACCESS" {
+					powerstoreExternalAccess = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
 	case "CSIDriverSpec":
-		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)

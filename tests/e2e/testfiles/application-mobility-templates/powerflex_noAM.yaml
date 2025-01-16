@@ -16,14 +16,13 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.12.0
-    replicas: 1
+    configVersion: v2.13.0
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "dellemc/csi-vxflexos:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
           value: "false"
@@ -158,14 +157,14 @@ spec:
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: false
-      configVersion: v1.2.0
+      configVersion: v1.3.0
       forceRemoveModule: true
       components:
         - name: application-mobility-controller-manager
           # enable: Enable/Disable application mobility controller-manager
           enabled: true
           image: REPLACE_CONTROLLER_IMAGE
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envs:
             # Replica count for application mobility
             # Allowed values: string

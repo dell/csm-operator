@@ -68,6 +68,7 @@ spec:
     metadata:
       labels:
         name: csipowermax-reverseproxy
+        csmNamespace: <CSM_NAMESPACE>
     spec:
       serviceAccountName: csipowermax-reverseproxy
       containers:

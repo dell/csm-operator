@@ -26,7 +26,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     authSecret: isilon-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
@@ -34,7 +34,7 @@ spec:
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
         # Allowed Values:
@@ -246,7 +246,7 @@ spec:
       #   effect: "NoSchedule"
     sideCars:
       - name: provisioner
-        args: ["--volume-name-prefix=csipscale"]
+        args: ["--volume-name-prefix=csivol"]
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -259,11 +259,11 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: true
-      configVersion: v1.11.0
+      configVersion: v1.12.0
       components:
         - name: podmon-controller
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
             - "--labelvalue=csi-isilon"
@@ -276,7 +276,7 @@ spec:
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
             # Allowed values: Any valid and free port (string)

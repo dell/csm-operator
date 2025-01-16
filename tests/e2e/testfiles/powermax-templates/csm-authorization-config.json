@@ -2,7 +2,7 @@
     "username":"_",
     "password":"_",
     "intendedEndpoint":"https://REPLACE_ENDPOINT",
-    "endpoint":"https://REPLACE_AUTH_ENDPOINT:9400",
+    "endpoint":"https://REPLACE_AUTH_ENDPOINT",
     "systemID":"REPLACE_SYSTEMID",
     "skipCertificateValidation":true,
     "isDefault":true

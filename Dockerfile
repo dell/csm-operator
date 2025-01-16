@@ -1,5 +1,5 @@
 # Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -42,11 +42,13 @@ ENV USER_UID=1001 \
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY operatorconfig/ /etc/config/dell-csm-operator
-LABEL vendor="Dell Inc." \
+LABEL vendor="Dell Technologies" \
+    maintainer="Dell Technologies" \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
     description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
-    version="1.7.0" \
+    release="1.13.0" \
+    version="1.8.0" \
     license="Dell CSM Operator Apache License"
 
 # copy the licenses folder

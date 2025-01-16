@@ -11,14 +11,13 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     authSecret: isilon-creds-auth
-    replicas: 1
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
         # Allowed Values:
@@ -211,7 +210,7 @@ spec:
       #   effect: "NoSchedule"
     sideCars:
       - name: provisioner
-        args: ["--volume-name-prefix=csipscale"]
+        args: ["--volume-name-prefix=csivol"]
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
@@ -221,7 +220,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.12.0
+      configVersion: v2.1.0
       components:
         - name: karavi-authorization-proxy
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly

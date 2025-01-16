@@ -41,22 +41,21 @@ import (
 	"github.com/dell/csm-operator/pkg/utils"
 	"go.uber.org/zap"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	t1 "k8s.io/apimachinery/pkg/types"
 	sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/ratelimiter"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	storagev1 "k8s.io/api/storage/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -94,7 +93,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.12.0"
+	CSMVersion = "v1.13.0"
 )
 
 var (
@@ -272,6 +271,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		ConfigDirectory: r.Config.ConfigDirectory,
 	}
 
+	// Set default value for forceRemoveDriver to true if not specified by the user
+	if csm.Spec.Driver.ForceRemoveDriver == nil {
+		truebool := true
+		csm.Spec.Driver.ForceRemoveDriver = &truebool
+	}
+
 	// Set default components if using miminal manifest (without components)
 	err = utils.LoadDefaultComponents(ctx, csm, *operatorConfig)
 	if err != nil {
@@ -290,7 +295,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		log.Infow("Delete request", "csm", req.Namespace, "Name", req.Name)
 
 		// check for force cleanup
-		if csm.Spec.Driver.ForceRemoveDriver {
+		if *csm.Spec.Driver.ForceRemoveDriver {
 			// remove all resources deployed from CR by operator
 			if err := r.removeDriver(ctx, *csm, *operatorConfig); err != nil {
 				r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove driver: %s", err))
@@ -352,10 +357,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		err = utils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil && !unitTestRun {
 			log.Error(err, "Failed to update CR status")
-			return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, err)
+			utils.LogEndReconcile()
+			return reconcile.Result{Requeue: true}, err
 		}
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", csm.Name)
-		return utils.LogBannerAndReturn(reconcile.Result{}, nil)
+		utils.LogEndReconcile()
+		return reconcile.Result{}, nil
 	}
 
 	// syncErr can be nil, even if CSM state = failed
@@ -366,7 +373,8 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	// Failed deployment
 	r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", syncErr.Error())
 
-	return utils.LogBannerAndReturn(reconcile.Result{Requeue: true}, syncErr)
+	utils.LogEndReconcile()
+	return reconcile.Result{Requeue: true}, syncErr
 }
 
 func (r *ContainerStorageModuleReconciler) ignoreUpdatePredicate() predicate.Predicate {
@@ -408,34 +416,34 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	log.Infow("deployment", "deployment name", d.Name, "numberUnavailable", numberUnavailable)
 
 	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
-	if ns == "" {
-		ns = d.Namespace
-	}
-	log.Debugw("csm being modified in handledeployment", "namespace", ns, "name", name)
-	namespacedName := t1.NamespacedName{
-		Name:      name,
-		Namespace: ns,
-	}
 
-	csm := new(csmv1.ContainerStorageModule)
-	err := r.Client.Get(ctx, namespacedName, csm)
-	if err != nil {
-		log.Error("deployment get csm", "error", err.Error())
-	}
+	if ns != "" {
+		log.Debugw("csm being modified in handledeployment", "namespace", ns, "name", name)
+		namespacedName := t1.NamespacedName{
+			Name:      name,
+			Namespace: ns,
+		}
 
-	newStatus := csm.GetCSMStatus()
+		csm := new(csmv1.ContainerStorageModule)
+		err := r.Client.Get(ctx, namespacedName, csm)
+		if err != nil {
+			log.Error("deployment get csm", "error", err.Error())
+		}
 
-	// Updating controller status manually as controller runtime API is not updating csm object with latest data
-	// TODO: Can remove this once the controller runtime repo has a fix for updating the object passed
-	newStatus.ControllerStatus.Available = strconv.Itoa(int(available))
-	newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
-	newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
+		newStatus := csm.GetCSMStatus()
 
-	err = utils.UpdateStatus(ctx, csm, r, newStatus)
-	if err != nil {
-		log.Debugw("deployment status ", "pods", err.Error())
-	} else {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
+		// Updating controller status manually as controller runtime API is not updating csm object with latest data
+		// TODO: Can remove this once the controller runtime repo has a fix for updating the object passed
+		newStatus.ControllerStatus.Available = strconv.Itoa(int(available))
+		newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
+		newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
+
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		if err != nil {
+			log.Debugw("deployment status ", "pods", err.Error())
+		} else {
+			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
+		}
 	}
 }
 
@@ -447,39 +455,38 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 	name := p.GetLabels()[constants.CsmLabel]
 	// if this pod is an obs. pod, namespace might not match csm namespace
 	ns := p.GetLabels()[constants.CsmNamespaceLabel]
-	if ns == "" {
-		ns = p.Namespace
-	}
 
-	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
-	ctx, log := logger.GetNewContextWithLogger(key)
+	if ns != "" {
+		key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+		ctx, log := logger.GetNewContextWithLogger(key)
 
-	if !p.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Debugw("driver delete invoked", "stopping pod with name", p.Name)
-		return
-	}
-	log.Infow("pod modified for driver", "name", p.Name)
+		if !p.ObjectMeta.DeletionTimestamp.IsZero() {
+			log.Debugw("driver delete invoked", "stopping pod with name", p.Name)
+			return
+		}
+		log.Infow("pod modified for driver", "name", p.Name)
 
-	namespacedName := t1.NamespacedName{
-		Name:      name,
-		Namespace: ns,
-	}
-	csm := new(csmv1.ContainerStorageModule)
-	err := r.Client.Get(ctx, namespacedName, csm)
-	if err != nil {
-		r.Log.Errorw("daemonset get csm", "error", err.Error())
-	}
-	log.Infow("csm prev status ", "state", csm.Status)
-	newStatus := csm.GetCSMStatus()
+		namespacedName := t1.NamespacedName{
+			Name:      name,
+			Namespace: ns,
+		}
+		csm := new(csmv1.ContainerStorageModule)
+		err := r.Client.Get(ctx, namespacedName, csm)
+		if err != nil {
+			r.Log.Errorw("daemonset get csm", "error", err.Error())
+		}
+		log.Infow("csm prev status ", "state", csm.Status)
+		newStatus := csm.GetCSMStatus()
 
-	err = utils.UpdateStatus(ctx, csm, r, newStatus)
-	state := csm.GetCSMStatus().State
-	stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
-	if state != "0" && err != nil {
-		log.Infow("pod status ", "state", err.Error())
-		r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
-	} else {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "%s Driver pods running OK", stamp)
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		state := csm.GetCSMStatus().State
+		stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
+		if state != "0" && err != nil {
+			log.Infow("pod status ", "state", err.Error())
+			r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
+		} else {
+			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "%s Driver pods running OK", stamp)
+		}
 	}
 }
 
@@ -508,28 +515,28 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	log.Infow("daemonset ", "numberUnavailable", numberUnavailable)
 
 	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
-	if ns == "" {
-		ns = d.Namespace
-	}
-	r.Log.Debugw("daemonset ", "ns", ns, "name", name)
-	namespacedName := t1.NamespacedName{
-		Name:      name,
-		Namespace: ns,
-	}
 
-	csm := new(csmv1.ContainerStorageModule)
-	err := r.Client.Get(ctx, namespacedName, csm)
-	if err != nil {
-		r.Log.Error("daemonset get csm", "error", err.Error())
-	}
+	if ns != "" {
+		r.Log.Debugw("daemonset ", "ns", ns, "name", name)
+		namespacedName := t1.NamespacedName{
+			Name:      name,
+			Namespace: ns,
+		}
 
-	log.Infow("csm prev status ", "state", csm.Status)
-	newStatus := csm.GetCSMStatus()
-	err = utils.UpdateStatus(ctx, csm, r, newStatus)
-	if err != nil {
-		log.Debugw("daemonset status ", "pods", err.Error())
-	} else {
-		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver daemonset running OK")
+		csm := new(csmv1.ContainerStorageModule)
+		err := r.Client.Get(ctx, namespacedName, csm)
+		if err != nil {
+			r.Log.Error("daemonset get csm", "error", err.Error())
+		}
+
+		log.Infow("csm prev status ", "state", csm.Status)
+		newStatus := csm.GetCSMStatus()
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		if err != nil {
+			log.Debugw("daemonset status ", "pods", err.Error())
+		} else {
+			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver daemonset running OK")
+		}
 	}
 }
 
@@ -566,7 +573,7 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter ratelimiter.RateLimiter, maxReconcilers int) error {
+func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter workqueue.TypedRateLimiter[reconcile.Request], maxReconcilers int) error {
 	go func() {
 		err := r.ContentWatch()
 		if err != nil {
@@ -729,15 +736,15 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update Reverseproxy Server
-	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled {
+	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled && !modules.IsReverseProxySidecar() {
 		log.Infow("Trying Create/Update reverseproxy...")
-		if err := r.reconcileReverseProxy(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+		if err := r.reconcileReverseProxyServer(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy reverseproxy proxy server: %v", err)
 		}
 	}
 
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig)
+	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig, ctrlClient)
 	if err != nil {
 		return err
 	}
@@ -756,6 +763,25 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	configMap := driverConfig.ConfigMap
 	node := driverConfig.Node
 	controller := driverConfig.Controller
+
+	if cr.GetDriverType() == csmv1.PowerMax {
+		if !modules.IsReverseProxySidecar() {
+			log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployement\n")
+			log.Infof("adding proxy service name...\n")
+			modules.AddReverseProxyServiceName(&controller.Deployment)
+		} else {
+			log.Info("Starting CSI ReverseProxy Service")
+			if err := modules.ReverseProxyStartService(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
+			}
+			log.Info("Injecting CSI ReverseProxy")
+			dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
+			if err != nil {
+				return fmt.Errorf("injecting replication into deployment: %v", err)
+			}
+			controller.Deployment = *dp
+		}
+	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)
 	if err != nil {
@@ -825,13 +851,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
-			case csmv1.ReverseProxy:
-				log.Info("Injecting CSI ReverseProxy")
-				dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
-				if err != nil {
-					return fmt.Errorf("injecting replication into deployment: %v", err)
-				}
-				controller.Deployment = *dp
 			}
 		}
 	}
@@ -1093,6 +1112,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
 	operatorConfig utils.OperatorConfig,
+	ctrlClient client.Client,
 ) (*DriverConfig, error) {
 	var (
 		err        error
@@ -1127,7 +1147,7 @@ func getDriverConfig(ctx context.Context,
 		return nil, fmt.Errorf("getting %s CSIDriver: %v", driverType, err)
 	}
 
-	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml)
+	node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml, ctrlClient)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s node: %v", driverType, err)
 	}
@@ -1145,15 +1165,12 @@ func getDriverConfig(ctx context.Context,
 	}, nil
 }
 
-// reconcileReverseProxy - deploy reverse proxy server
-func (r *ContainerStorageModuleReconciler) reconcileReverseProxy(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+// reconcileReverseProxyServer - deploy reverse proxy server
+func (r *ContainerStorageModuleReconciler) reconcileReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 	log.Infow("Reconcile reverseproxy proxy")
 	if err := modules.ReverseProxyServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 		return fmt.Errorf("unable to reconcile reverse-proxy server: %v", err)
-	}
-	if err := modules.ReverseProxyStartService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-		return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
 	}
 	return nil
 }
@@ -1242,7 +1259,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig)
+	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig, r.Client)
 	if err != nil {
 		log.Error("error in getDriverConfig")
 		return err
@@ -1279,6 +1296,12 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 			}
 		}
 
+		if instance.GetDriverType() == csmv1.PowerMax && modules.IsReverseProxySidecar() {
+			log.Info("Removing CSI ReverseProxy Service")
+			if err := modules.ReverseProxyStartService(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
+				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
+			}
+		}
 	}
 
 	return nil
@@ -1301,9 +1324,9 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 			return err
 		}
 	}
-	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled {
+	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled && !modules.IsReverseProxySidecar() {
 		log.Infow("Deleting ReverseProxy")
-		if err := r.reconcileReverseProxy(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+		if err := r.reconcileReverseProxyServer(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
 			return err
 		}
 	}
@@ -1325,6 +1348,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		err := drivers.PrecheckPowerFlex(ctx, cr, operatorConfig, r.GetClient())
 		if err != nil {
 			return fmt.Errorf("failed powerflex validation: %v", err)
+		}
+		// zoning initially applies only to pflex
+		err = r.ZoneValidation(ctx, cr)
+		if err != nil {
+			return fmt.Errorf("error during zone validation: %v", err)
 		}
 	case csmv1.PowerStore:
 		err := drivers.PrecheckPowerStore(ctx, cr, operatorConfig, r.GetClient())
@@ -1514,4 +1542,14 @@ func (r *ContainerStorageModuleReconciler) GetUpdateCount() int32 {
 // GetK8sClient - Returns the current update count
 func (r *ContainerStorageModuleReconciler) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
+}
+
+// ZoneValidation - If zones are configured performs validation and returns an error if the zone validation fails
+func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, cr *csmv1.ContainerStorageModule) error {
+	err := drivers.ValidateZones(ctx, cr, r.Client)
+	if err != nil {
+		return fmt.Errorf("zone validation failed with error: %v", err)
+	}
+
+	return err
 }

@@ -117,6 +117,7 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-controller
+        csmNamespace: <CSM_NAMESPACE>
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:
@@ -191,7 +192,7 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
-            - "--volume-name-prefix=k8s"
+            - "--volume-name-prefix=csivol"
             - "--volume-name-uuid-length=10"
             - "--worker-threads=5"
             - "--timeout=120s"

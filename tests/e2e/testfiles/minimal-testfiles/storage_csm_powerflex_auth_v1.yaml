@@ -6,14 +6,14 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerflex"
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     forceRemoveDriver: true
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v1.12.0
+      configVersion: v1.13.0
       components:
         - name: karavi-authorization-proxy
           envs:

@@ -32,7 +32,9 @@ import (
 // Constant to be used for powermax deployment
 const (
 	// PowerMaxPluginIdentifier used to identify powermax plugin
-	PowerMaxPluginIdentifier = "powermax"
+	PowerMaxPluginIdentifier     = "powermax"
+	ReverseProxyServerComponent  = "csipowermax-reverseproxy" // #nosec G101
+	RevProxyTLSSecretDefaultName = "csirevproxy-tls-secret"   // #nosec G101
 
 	// PowerMaxConfigParamsVolumeMount used to identify config param volume mount
 	PowerMaxConfigParamsVolumeMount = "powermax-config-params"
@@ -53,9 +55,13 @@ const (
 	CSIPmaxVsphereHostname = "<X_CSI_VSPHERE_HOSTNAME>"
 	CSIPmaxVsphereHost     = "<X_CSI_VCENTER_HOST>"
 	CSIPmaxChap            = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
+	ReverseProxyTLSSecret  = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
 
 	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
 	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
+
+	// PowerMaxCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	PowerMaxCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // PrecheckPowerMax do input validation
@@ -85,57 +91,13 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 			}
 		}
 	}
-	kubeletConfigDirFound := false
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "KUBELET_CONFIG_DIR" {
-			kubeletConfigDirFound = true
-		}
-	}
-	if !kubeletConfigDirFound {
-		cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{
-			Name:  "KUBELET_CONFIG_DIR",
-			Value: "/var/lib/kubelet",
-		})
-	}
 
-	foundRevProxy := false
-	for _, mod := range cr.Spec.Modules {
+	for i, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.ReverseProxy {
-			foundRevProxy = true
+			cr.Spec.Modules[i].Enabled = true
+			cr.Spec.Modules[i].ForceRemoveModule = true
 			break
 		}
-	}
-	if !foundRevProxy {
-		// if we are here then it's minimal yaml
-		log.Infof("Reverse proxy module not found adding it with default config")
-		components := make([]csmv1.ContainerTemplate, 0)
-		components = append(components, csmv1.ContainerTemplate{
-			Name: "csipowermax-reverseproxy",
-		})
-
-		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
-			Name:  "X_CSI_REVPROXY_TLS_SECRET",
-			Value: "csirevproxy-tls-secret",
-		})
-		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
-			Name:  "X_CSI_REVPROXY_PORT",
-			Value: "2222",
-		})
-		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
-			Name:  "X_CSI_CONFIG_MAP_NAME",
-			Value: "powermax-reverseproxy-config",
-		})
-		components[0].Envs = append(components[0].Envs, corev1.EnvVar{
-			Name:  "DeployAsSidecar",
-			Value: "true",
-		})
-
-		cr.Spec.Modules = append(cr.Spec.Modules, csmv1.Module{
-			Name:              csmv1.ReverseProxy,
-			Enabled:           true,
-			ForceRemoveModule: true,
-			Components:        components,
-		})
 	}
 
 	log.Debugw("preCheck", "secrets", cred)
@@ -167,59 +129,74 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	// #nosec G101 - False positives
 	switch fileType {
 	case "Node":
-		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "X_CSI_MANAGED_ARRAYS" {
-				managedArray = env.Value
-			}
-			if env.Name == "X_CSI_POWERMAX_ENDPOINT" {
-				endpoint = env.Value
-			}
-			if env.Name == "X_CSI_K8S_CLUSTER_PREFIX" {
-				clusterPrefix = env.Value
-			}
-			if env.Name == "X_CSI_POWERMAX_DEBUG" {
-				debug = env.Value
-			}
-			if env.Name == "X_CSI_POWERMAX_PORTGROUPS" {
-				portGroup = env.Value
-			}
-			if env.Name == "X_CSI_TRANSPORT_PROTOCOL" {
-				protocol = env.Value
-			}
-			if env.Name == "X_CSI_VSPHERE_ENABLED" {
-				vsphereEnabled = env.Value
-			}
-			if env.Name == "X_CSI_VSPHERE_PORTGROUP" {
-				vspherePG = env.Value
-			}
-			if env.Name == "X_CSI_VSPHERE_HOSTNAME" {
-				vsphereHostname = env.Value
-			}
-			if env.Name == "X_CSI_VCENTER_HOST" {
-				vsphereHost = env.Value
-			}
-			if env.Name == "X_CSI_VSPHERE_ENABLED" {
-				vsphereEnabled = env.Value
-			}
-			if env.Name == "X_CSI_IG_MODIFY_HOSTNAME" {
-				modifyHostname = env.Value
-			}
-			if env.Name == "X_CSI_IG_NODENAME_TEMPLATE" {
-				nodeTemplate = env.Value
+		if cr.Spec.Driver.Common != nil {
+			for _, env := range cr.Spec.Driver.Common.Envs {
+				if env.Name == "X_CSI_MANAGED_ARRAYS" {
+					managedArray = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_ENDPOINT" {
+					endpoint = env.Value
+				}
+				if env.Name == "X_CSI_K8S_CLUSTER_PREFIX" {
+					clusterPrefix = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_DEBUG" {
+					debug = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_PORTGROUPS" {
+					portGroup = env.Value
+				}
+				if env.Name == "X_CSI_TRANSPORT_PROTOCOL" {
+					protocol = env.Value
+				}
+				if env.Name == "X_CSI_VSPHERE_ENABLED" {
+					vsphereEnabled = env.Value
+				}
+				if env.Name == "X_CSI_VSPHERE_PORTGROUP" {
+					vspherePG = env.Value
+				}
+				if env.Name == "X_CSI_VSPHERE_HOSTNAME" {
+					vsphereHostname = env.Value
+				}
+				if env.Name == "X_CSI_VCENTER_HOST" {
+					vsphereHost = env.Value
+				}
+				if env.Name == "X_CSI_VSPHERE_ENABLED" {
+					vsphereEnabled = env.Value
+				}
+				if env.Name == "X_CSI_IG_MODIFY_HOSTNAME" {
+					modifyHostname = env.Value
+				}
+				if env.Name == "X_CSI_IG_NODENAME_TEMPLATE" {
+					nodeTemplate = env.Value
+				}
 			}
 		}
-		for _, env := range cr.Spec.Driver.Node.Envs {
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				nodeHealthMonitor = env.Value
+		if cr.Spec.Driver.Node != nil {
+			for _, env := range cr.Spec.Driver.Node.Envs {
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					nodeHealthMonitor = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP" {
+					nodeChap = env.Value
+				}
+				if env.Name == "X_CSI_TOPOLOGY_CONTROL_ENABLED" {
+					nodeTopology = env.Value
+				}
+				if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
+					maxVolumesPerNode = env.Value
+				}
 			}
-			if env.Name == "X_CSI_POWERMAX_ISCSI_ENABLE_CHAP" {
-				nodeChap = env.Value
-			}
-			if env.Name == "X_CSI_TOPOLOGY_CONTROL_ENABLED" {
-				nodeTopology = env.Value
-			}
-			if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
-				maxVolumesPerNode = env.Value
+		}
+		proxyTLSSecret := RevProxyTLSSecretDefaultName
+		revProxy := cr.GetModule(csmv1.ReverseProxy)
+		for _, component := range revProxy.Components {
+			if component.Name == ReverseProxyServerComponent {
+				for _, env := range component.Envs {
+					if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
+						proxyTLSSecret = env.Value
+					}
+				}
 			}
 		}
 
@@ -239,50 +216,69 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHost, vsphereHost)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
 		yamlString = strings.ReplaceAll(yamlString, CsiPmaxMaxVolumesPerNode, maxVolumesPerNode)
+		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
+		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
 	case "Controller":
-		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "X_CSI_MANAGED_ARRAYS" {
-				managedArray = env.Value
-			}
-			if env.Name == "X_CSI_POWERMAX_ENDPOINT" {
-				endpoint = env.Value
-			}
-			if env.Name == "X_CSI_K8S_CLUSTER_PREFIX" {
-				clusterPrefix = env.Value
-			}
-			if env.Name == "X_CSI_POWERMAX_DEBUG" {
-				debug = env.Value
-			}
-			if env.Name == "X_CSI_POWERMAX_PORTGROUPS" {
-				portGroup = env.Value
-			}
-			if env.Name == "X_CSI_TRANSPORT_PROTOCOL" {
-				protocol = env.Value
-			}
-			if env.Name == "X_CSI_VSPHERE_ENABLED" {
-				vsphereEnabled = env.Value
-			}
-			if env.Name == "X_CSI_VSPHERE_PORTGROUP" {
-				vspherePG = env.Value
-			}
-			if env.Name == "X_CSI_VSPHERE_HOSTNAME" {
-				vsphereHostname = env.Value
-			}
-			if env.Name == "X_CSI_VCENTER_HOST" {
-				vsphereHost = env.Value
-			}
-			if env.Name == "X_CSI_IG_MODIFY_HOSTNAME" {
-				modifyHostname = env.Value
-			}
-			if env.Name == "X_CSI_IG_NODENAME_TEMPLATE" {
-				nodeTemplate = env.Value
-			}
-		}
-		for _, env := range cr.Spec.Driver.Controller.Envs {
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				ctrlHealthMonitor = env.Value
+		if cr.Spec.Driver.Common != nil {
+			for _, env := range cr.Spec.Driver.Common.Envs {
+				if env.Name == "X_CSI_MANAGED_ARRAYS" {
+					managedArray = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_ENDPOINT" {
+					endpoint = env.Value
+				}
+				if env.Name == "X_CSI_K8S_CLUSTER_PREFIX" {
+					clusterPrefix = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_DEBUG" {
+					debug = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_PORTGROUPS" {
+					portGroup = env.Value
+				}
+				if env.Name == "X_CSI_TRANSPORT_PROTOCOL" {
+					protocol = env.Value
+				}
+				if env.Name == "X_CSI_VSPHERE_ENABLED" {
+					vsphereEnabled = env.Value
+				}
+				if env.Name == "X_CSI_VSPHERE_PORTGROUP" {
+					vspherePG = env.Value
+				}
+				if env.Name == "X_CSI_VSPHERE_HOSTNAME" {
+					vsphereHostname = env.Value
+				}
+				if env.Name == "X_CSI_VCENTER_HOST" {
+					vsphereHost = env.Value
+				}
+				if env.Name == "X_CSI_IG_MODIFY_HOSTNAME" {
+					modifyHostname = env.Value
+				}
+				if env.Name == "X_CSI_IG_NODENAME_TEMPLATE" {
+					nodeTemplate = env.Value
+				}
 			}
 		}
+		if cr.Spec.Driver.Controller != nil {
+			for _, env := range cr.Spec.Driver.Controller.Envs {
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					ctrlHealthMonitor = env.Value
+				}
+			}
+		}
+
+		proxyTLSSecret := RevProxyTLSSecretDefaultName
+		revProxy := cr.GetModule(csmv1.ReverseProxy)
+		for _, component := range revProxy.Components {
+			if component.Name == ReverseProxyServerComponent {
+				for _, env := range component.Envs {
+					if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
+						proxyTLSSecret = env.Value
+					}
+				}
+			}
+		}
+
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxManagedArray, managedArray)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxEndpoint, endpoint)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxClusterPrefix, clusterPrefix)
@@ -298,8 +294,10 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHostname, vsphereHostname)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHost, vsphereHost)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
+		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
+		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
 	case "CSIDriverSpec":
-		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)

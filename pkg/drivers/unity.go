@@ -53,6 +53,9 @@ const (
 
 	// AllowedNetworks - list of networks that can be used for NFS traffic
 	AllowedNetworks = "<X_CSI_ALLOWED_NETWORKS>"
+
+	// UnityCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	UnityCSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // PrecheckUnity do input validation
@@ -70,20 +73,22 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 
 	skipCertValid := true
 	certCount := 1
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION" {
-			b, err := strconv.ParseBool(env.Value)
-			if err != nil {
-				return fmt.Errorf("%s is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION" {
+				b, err := strconv.ParseBool(env.Value)
+				if err != nil {
+					return fmt.Errorf("%s is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+				}
+				skipCertValid = b
 			}
-			skipCertValid = b
-		}
-		if env.Name == "CERT_SECRET_COUNT" {
-			d, err := strconv.ParseInt(env.Value, 0, 8)
-			if err != nil {
-				return fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+			if env.Name == "CERT_SECRET_COUNT" {
+				d, err := strconv.ParseInt(env.Value, 0, 8)
+				if err != nil {
+					return fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+				}
+				certCount = int(d)
 			}
-			certCount = int(d)
 		}
 	}
 
@@ -119,25 +124,31 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 
 	switch fileType {
 	case "Node":
-		for _, env := range cr.Spec.Driver.Node.Envs {
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorNode = env.Value
-			}
-			if env.Name == "X_CSI_ALLOWED_NETWORKS" {
-				allowedNetworks = env.Value
+		if cr.Spec.Driver.Node != nil {
+			for _, env := range cr.Spec.Driver.Node.Envs {
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorNode = env.Value
+				}
+				if env.Name == "X_CSI_ALLOWED_NETWORKS" {
+					allowedNetworks = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, AllowedNetworks, allowedNetworks)
+		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
 	case "Controller":
-		for _, env := range cr.Spec.Driver.Controller.Envs {
-			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
-				healthMonitorController = env.Value
+		if cr.Spec.Driver.Controller != nil {
+			for _, env := range cr.Spec.Driver.Controller.Envs {
+				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+					healthMonitorController = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
+		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
 	case "CSIDriverSpec":
-		if cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
@@ -150,22 +161,24 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 func ModifyUnityConfigMap(_ context.Context, cr csmv1.ContainerStorageModule) map[string]string {
 	keyValue := ""
 	var configMapData map[string]string
-	for _, env := range cr.Spec.Driver.Common.Envs {
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
 
-		if env.Name == "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS" {
-			keyValue += fmt.Sprintf("\n %s: %s", "ALLOW_MULTI_POD_ACCESS", env.Value)
-		}
-		if env.Name == "MAX_UNITY_VOLUMES_PER_NODE" {
-			keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
-		}
-		if env.Name == "X_CSI_UNITY_SYNC_NODEINFO_INTERVAL" {
-			keyValue += fmt.Sprintf("\n %s: %s", "SYNC_NODE_INFO_TIME_INTERVAL", env.Value)
-		}
-		if env.Name == "TENANT_NAME" {
-			keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
-		}
-		if env.Name == "CSI_LOG_LEVEL" {
-			keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
+			if env.Name == "X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS" {
+				keyValue += fmt.Sprintf("\n %s: %s", "ALLOW_MULTI_POD_ACCESS", env.Value)
+			}
+			if env.Name == "MAX_UNITY_VOLUMES_PER_NODE" {
+				keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
+			}
+			if env.Name == "X_CSI_UNITY_SYNC_NODEINFO_INTERVAL" {
+				keyValue += fmt.Sprintf("\n %s: %s", "SYNC_NODE_INFO_TIME_INTERVAL", env.Value)
+			}
+			if env.Name == "TENANT_NAME" {
+				keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
+			}
+			if env.Name == "CSI_LOG_LEVEL" {
+				keyValue += fmt.Sprintf("\n %s: %s", env.Name, env.Value)
+			}
 		}
 	}
 	configMapData = map[string]string{
@@ -178,21 +191,26 @@ func ModifyUnityConfigMap(_ context.Context, cr csmv1.ContainerStorageModule) ma
 func getApplyCertVolumeUnity(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {
 	skipCertValid := true
 	certCount := 1
-	for _, env := range cr.Spec.Driver.Common.Envs {
-		if env.Name == "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION" {
-			b, err := strconv.ParseBool(env.Value)
-			if err != nil {
-				return nil, fmt.Errorf("%s is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION" {
+				b, err := strconv.ParseBool(env.Value)
+				if err != nil {
+					return nil, fmt.Errorf("%s is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+				}
+				skipCertValid = b
 			}
-			skipCertValid = b
-		}
-		if env.Name == "CERT_SECRET_COUNT" {
-			d, err := strconv.ParseInt(env.Value, 0, 8)
-			if err != nil {
-				return nil, fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+			if env.Name == "CERT_SECRET_COUNT" {
+				d, err := strconv.ParseInt(env.Value, 0, 8)
+				if err != nil {
+					return nil, fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+				}
+				certCount = int(d)
 			}
-			certCount = int(d)
 		}
+	} else {
+		skipCertValid = true
+		certCount = 0
 	}
 
 	name := "certs"

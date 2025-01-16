@@ -112,6 +112,7 @@ spec:
     metadata:
       labels:
         name: <DriverDefaultReleaseName>-controller
+        csmNamespace: <CSM_NAMESPACE>
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:
@@ -147,7 +148,7 @@ spec:
           args:
             - "--csi-address=$(ADDRESS)"
             - "--feature-gates=Topology=true"
-            - "--volume-name-prefix=k8s"
+            - "--volume-name-prefix=csivol"
             - "--volume-name-uuid-length=10"
             - "--leader-election=true"
             - "--timeout=120s"

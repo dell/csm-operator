@@ -38,9 +38,10 @@ spec:
     # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
     authSecret: powerstore-config
     # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: 2
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
-    forceUpdate: false
     forceRemoveDriver: true
     common:
       image: "docker.io/dellemc/csi-powerstore:v2.11.0"
@@ -56,7 +57,7 @@ spec:
         - name: KUBELET_CONFIG_DIR
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
-          value: debug
+          value: info
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
