@@ -90,17 +90,11 @@ spec:
             - name: X_CSI_REVPROXY_USE_SECRET
               value: <X_CSI_REVPROXY_USE_SECRET>
           volumeMounts:
-            - name: configmap-volume
-              mountPath: /etc/config/configmap
             - name: tls-secret
               mountPath: /app/tls
             - name: cert-dir
               mountPath: /app/certs
       volumes:
-        - name: configmap-volume
-          configMap:
-            name: <X_CSI_CONFIG_MAP_NAME>
-            optional: true
         - name: tls-secret
           secret:
             secretName: <X_CSI_REVPROXY_TLS_SECRET>
