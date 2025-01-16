@@ -90,8 +90,8 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: quay.io/dell/container-storage-modules/csi-powermax:nightly
-          imagePullPolicy: Always
+          image: quay.io/dell/container-storage-modules/csi-powermax:v2.13.0
+          imagePullPolicy: IfNotPresent
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
               value: csi-powermax.dellemc.com
