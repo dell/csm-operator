@@ -18,6 +18,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -62,6 +63,7 @@ var (
 	RevProxyConfigMapDeafultName = "powermax-reverseproxy-config"
 	RevProxyTLSSecretVolName     = "tls-secret"
 	RevProxyTLSSecretDefaultName = "csirevproxy-tls-secret" // #nosec G101
+	RevProxyConfigMapMountPath   = "/etc/config/configmap"
 )
 
 // ReverseproxySupportedDrivers is a map containing the CSI Drivers supported by CSM Reverseproxy. The key is driver name and the value is the driver plugin identifier
@@ -142,18 +144,17 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 		if ctrlObj.GetName() == RevProxyServiceName && ctrlObj.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
 			dp := ctrlObj.(*appsv1.Deployment)
 
-			log.Infof("[FERNANDO] BEGIN: Applying reverseproxy deployment %s, %+v", dp.Name, dp.Spec.Template.Spec.Containers)
 			revProxyModule, _, _ := getRevproxyApplyCR(cr, op)
-			useSecret := getRevProxyUseSecret(*revProxyModule)
-			cm := getRevProxyEnvVariable(*revProxyModule, "X_CSI_CONFIG_MAP_NAME")
-			secretName := cr.Spec.Driver.AuthSecret
-			if useSecret == "true" {
-				deploymentSetReverseProxySecretMounts(dp, secretName)
-			} else {
-				deploymentSetReverseProxyConfigMapMounts(dp, cm)
+			secretSupported, _ := utils.MinVersionCheck("v2.13.0", revProxyModule.ConfigVersion)
+			if secretSupported {
+				if getRevProxyUseSecret(*revProxyModule) == "true" {
+					secretName := cr.Spec.Driver.AuthSecret
+					deploymentSetReverseProxySecretMounts(dp, secretName)
+				} else {
+					cm := getRevProxyEnvVariable(*revProxyModule, "X_CSI_CONFIG_MAP_NAME")
+					deploymentSetReverseProxyConfigMapMounts(dp, cm)
+				}
 			}
-
-			log.Infof("[FERNANDO] COMPLETE: Applying reverseproxy deployment %s, %+v", ctrlObj.GetName(), ctrlObj)
 		}
 		if isDeleting {
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
@@ -323,108 +324,117 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 		}
 	}
 
-	// Set useSecret environment variable
+	// Dynamic secret/configMap mounting is only supported in v2.13.0 and above
+	secretSupported, _ := utils.MinVersionCheck("v2.13.0", revProxyModule.ConfigVersion)
 	useSecret := getRevProxyUseSecret(*revProxyModule)
-	log.Printf("[FERNANDO] ReverseProxyInjectDeployment use secret: %s", useSecret)
-	for i, cnt := range dp.Spec.Template.Spec.Containers {
-		if *cnt.Name == "reverseproxy" {
-			for j, env := range cnt.Env {
-				if *env.Name == drivers.CSIPowerMaxUseSecret {
-					dp.Spec.Template.Spec.Containers[i].Env[j].Value = &useSecret
+	if secretSupported {
+		for i, cnt := range dp.Spec.Template.Spec.Containers {
+			if *cnt.Name == "reverseproxy" {
+				for j, env := range cnt.Env {
+					if *env.Name == drivers.CSIPowerMaxUseSecret {
+						dp.Spec.Template.Spec.Containers[i].Env[j].Value = &useSecret
+					}
 				}
 			}
 		}
 	}
 
-	// get revProxy secret and mount it.
-	secretName := cr.Spec.Driver.AuthSecret
 	if useSecret == "true" {
-		setReverseProxySecretMounts(&dp, secretName)
+		setReverseProxySecretMounts(&dp, cr.Spec.Driver.AuthSecret)
 	} else {
-		setReverseProxyConfigMapMounts(&dp, *revProxyModule)
+		setReverseProxyConfigMapMounts(&dp, *revProxyModule, secretSupported)
 	}
 
 	return &dp, nil
 }
 
 func setReverseProxySecretMounts(dp *v1.DeploymentApplyConfiguration, secretName string) {
-	log.Println("[FERNANDO] ReverseProxyInjectDeployment Adding volume and mounting...")
-	name := "powermax-config"
 	optional := false
 
 	// Adding volume
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes,
-		acorev1.VolumeApplyConfiguration{Name: &name,
-			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{Secret: &acorev1.SecretVolumeSourceApplyConfiguration{SecretName: &secretName, Optional: &optional}}})
+		acorev1.VolumeApplyConfiguration{Name: &secretName,
+			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+				Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+					SecretName: &secretName, Optional: &optional},
+			},
+		})
 
-	mountPath := "/etc/secret/powermax-config"
+	mountPath := drivers.CSIPowerMaxSecretMountPath + secretName
 	// Adding volume mount for both the reverseproxy and driver
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if *cnt.Name == "reverseproxy" || *cnt.Name == "driver" {
 			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
-				acorev1.VolumeMountApplyConfiguration{Name: &name, MountPath: &mountPath})
+				acorev1.VolumeMountApplyConfiguration{Name: &secretName, MountPath: &mountPath})
 		}
 	}
 }
 
 func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName string) {
-	log.Println("[FERNANDO] ReverseProxyInjectDeployment Adding volume and mounting...")
-	name := "powermax-config"
 	optional := false
 
 	// Adding volume
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes,
-		corev1.Volume{Name: name,
+		corev1.Volume{Name: secretName,
 			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName, Optional: &optional}}})
 
-	mountPath := "/etc/secret/powermax-config"
+	mountPath := drivers.CSIPowerMaxSecretMountPath + secretName
 	// Adding volume mount for both the reverseproxy and driver
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if cnt.Name == RevProxyServiceName {
 			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
-				corev1.VolumeMount{Name: name, MountPath: mountPath})
+				corev1.VolumeMount{Name: secretName, MountPath: mountPath})
 		}
 	}
 }
 
-func setReverseProxyConfigMapMounts(dp *v1.DeploymentApplyConfiguration, revProxyModule csmv1.Module) {
-	log.Println("[FERNANDO] ReverseProxyInjectDeployment NOT using secret")
-	mountPath := "/etc/config/configmap"
-	name := "configmap-volume"
-
+func setReverseProxyConfigMapMounts(dp *v1.DeploymentApplyConfiguration, revProxyModule csmv1.Module, mountVolume bool) {
 	// inject revProxy volumes in driver volumes
 	revProxyVolume := getRevProxyVolumeComp(revProxyModule)
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, revProxyVolume...)
+
+	if !mountVolume {
+		log.Printf("[FERNANDO] Using older reverseProxy. Volume already mounted. Skipping reverseProxy injection")
+		return
+	}
 
 	// Adding volume mount
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if *cnt.Name == "reverseproxy" {
 			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
-				acorev1.VolumeMountApplyConfiguration{Name: &name, MountPath: &mountPath})
+				acorev1.VolumeMountApplyConfiguration{Name: &RevProxyConfigMapVolName, MountPath: &RevProxyConfigMapMountPath})
 		}
 	}
 }
 
 func deploymentSetReverseProxyConfigMapMounts(dp *appsv1.Deployment, cmName string) {
-	log.Println("[FERNANDO] deploymentSetReverseProxyConfigMapMounts name: ", cmName)
-	mountPath := "/etc/config/configmap"
-	name := "configmap-volume"
 	optional := true
-
-	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, corev1.Volume{Name: name,
+	volume := corev1.Volume{Name: RevProxyConfigMapVolName,
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: cmName},
 				Optional: &optional},
 		},
-	})
+	}
+	volumeMount := corev1.VolumeMount{Name: RevProxyConfigMapVolName, MountPath: RevProxyConfigMapMountPath}
+
+	contains := slices.ContainsFunc(dp.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool { return v.Name == volume.Name })
+	if !contains {
+		dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, volume)
+	}
 
 	// Adding volume mount
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if cnt.Name == RevProxyServiceName {
-			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
-				corev1.VolumeMount{Name: name, MountPath: mountPath})
+			contains := slices.ContainsFunc(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
+				func(v corev1.VolumeMount) bool { return v.Name == volumeMount.Name },
+			)
+			if !contains {
+				dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts, volumeMount)
+			}
+
+			break
 		}
 	}
 }
