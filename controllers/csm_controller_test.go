@@ -273,6 +273,18 @@ func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
 	suite.runFakeCSMManager("", true)
 }
 
+func (suite *CSMControllerTestSuite) TestReverseProxyWithSecretReconcile() {
+	// suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModuleWithSecret(), string(v1.PowerMax))
+	csm := suite.buildFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModuleWithSecret(), string(v1.PowerMax))
+	csm.Spec.Driver.Common.Envs = append(csm.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
+	err := suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+
+	suite.runFakeCSMManager("", false)
+	suite.deleteCSM(csmName)
+	suite.runFakeCSMManager("", true)
+}
+
 func (suite *CSMControllerTestSuite) TestReverseProxySidecarReconcile() {
 	revProxy := getReverseProxyModule()
 	deploAsSidecar := corev1.EnvVar{Name: "DeployAsSidecar", Value: "true"}
@@ -815,6 +827,10 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
 	modules.IsReverseProxySidecar = func() bool { return false }
 
+	reverseProxyWithSecret := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	reverseProxyWithSecret.Spec.Modules = getReverseProxyModuleWithSecret()
+	reverseProxyServerCSM.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
 	syncCSMTests := []struct {
 		name        string
 		csm         csmv1.ContainerStorageModule
@@ -827,6 +843,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"reverse proxy server bad op conf", reverseProxyServerCSM, badOperatorConfig, "failed to deploy reverseproxy proxy server"},
 		{"getDriverConfig bad op config", csm, badOperatorConfig, ""},
 		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},
+		{"success: deployAsSidecar with secret", reverseProxyWithSecret, operatorConfig, ""},
 	}
 
 	for _, tt := range syncCSMTests {
@@ -1844,6 +1861,45 @@ func getReverseProxyModule() []csmv1.Module {
 	}
 }
 
+func getReverseProxyModuleWithSecret() []csmv1.Module {
+	return []csmv1.Module{
+		{
+			Name:          csmv1.ReverseProxy,
+			Enabled:       true,
+			ConfigVersion: "v2.13.0",
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:    string(csmv1.ReverseProxyServer),
+					Enabled: &[]bool{true}[0],
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "X_CSI_REVPROXY_TLS_SECRET",
+							Value: "csirevproxy-tls-secret",
+						},
+						{
+							Name:  "X_CSI_REVPROXY_PORT",
+							Value: "2222",
+						},
+						{
+							Name:  "X_CSI_CONFIG_MAP_NAME",
+							Value: "powermax-reverseproxy-config",
+						},
+						{
+							Name:  "DeployAsSidecar",
+							Value: "true",
+						},
+						{
+							Name:  "X_CSI_REVPROXY_USE_SECRET",
+							Value: "true",
+						},
+					},
+				},
+			},
+			ForceRemoveModule: true,
+		},
+	}
+}
+
 func (suite *CSMControllerTestSuite) TestDeleteErrorReconcile() {
 	suite.makeFakeCSM(csmName, suite.namespace, true, append(getAuthModule(), getObservabilityModule()...))
 	suite.runFakeCSMManager("", false)
@@ -2353,7 +2409,7 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 	return nil
 }
 
-func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) {
+func (suite *CSMControllerTestSuite) buildFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) v1.ContainerStorageModule {
 	// Create secrets and config map for Reconcile
 	sec := shared.MakeSecret("csirevproxy-tls-secret", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
@@ -2395,7 +2451,13 @@ func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string,
 	out, _ := json.Marshal(&csm)
 	csm.Annotations[previouslyAppliedCustomResource] = string(out)
 
-	err = suite.fakeClient.Create(ctx, &csm)
+	return csm
+}
+
+func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) {
+	csm := suite.buildFakeRevProxyCSM(name, ns, withFinalizer, modules, driverType)
+
+	err := suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
 }
 
