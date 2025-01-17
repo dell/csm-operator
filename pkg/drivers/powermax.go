@@ -40,22 +40,24 @@ const (
 	PowerMaxConfigParamsVolumeMount = "powermax-config-params"
 
 	// CSIPmaxManagedArray and following  used for replacing user values in config files
-	CSIPmaxManagedArray    = "<X_CSI_MANAGED_ARRAY>"
-	CSIPmaxEndpoint        = "<X_CSI_POWERMAX_ENDPOINT>"
-	CSIPmaxClusterPrefix   = "<X_CSI_K8S_CLUSTER_PREFIX>"
-	CSIPmaxDebug           = "<X_CSI_POWERMAX_DEBUG>"
-	CSIPmaxPortGroup       = "<X_CSI_POWERMAX_PORTGROUPS>"
-	CSIPmaxProtocol        = "<X_CSI_TRANSPORT_PROTOCOL>"
-	CSIPmaxNodeTemplate    = "<X_CSI_IG_NODENAME_TEMPLATE>"
-	CSIPmaxModifyHostname  = "<X_CSI_IG_MODIFY_HOSTNAME>"
-	CSIPmaxHealthMonitor   = "<X_CSI_HEALTH_MONITOR_ENABLED>"
-	CSIPmaxTopology        = "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
-	CSIPmaxVsphere         = "<X_CSI_VSPHERE_ENABLED>"
-	CSIPmaxVspherePG       = "<X_CSI_VSPHERE_PORTGROUP>"
-	CSIPmaxVsphereHostname = "<X_CSI_VSPHERE_HOSTNAME>"
-	CSIPmaxVsphereHost     = "<X_CSI_VCENTER_HOST>"
-	CSIPmaxChap            = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
-	ReverseProxyTLSSecret  = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
+	CSIPmaxManagedArray             = "<X_CSI_MANAGED_ARRAY>"
+	CSIPmaxEndpoint                 = "<X_CSI_POWERMAX_ENDPOINT>"
+	CSIPmaxClusterPrefix            = "<X_CSI_K8S_CLUSTER_PREFIX>"
+	CSIPmaxDebug                    = "<X_CSI_POWERMAX_DEBUG>"
+	CSIPmaxPortGroup                = "<X_CSI_POWERMAX_PORTGROUPS>"
+	CSIPmaxProtocol                 = "<X_CSI_TRANSPORT_PROTOCOL>"
+	CSIPmaxNodeTemplate             = "<X_CSI_IG_NODENAME_TEMPLATE>"
+	CSIPmaxModifyHostname           = "<X_CSI_IG_MODIFY_HOSTNAME>"
+	CSIPmaxReplicationContextPrefix = "<X_CSI_REPLICATION_CONTEXT_PREFIX>"
+	CSIPmaxReplicationPrefix        = "<X_CSI_REPLICATION_PREFIX>"
+	CSIPmaxHealthMonitor            = "<X_CSI_HEALTH_MONITOR_ENABLED>"
+	CSIPmaxTopology                 = "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
+	CSIPmaxVsphere                  = "<X_CSI_VSPHERE_ENABLED>"
+	CSIPmaxVspherePG                = "<X_CSI_VSPHERE_PORTGROUP>"
+	CSIPmaxVsphereHostname          = "<X_CSI_VSPHERE_HOSTNAME>"
+	CSIPmaxVsphereHost              = "<X_CSI_VCENTER_HOST>"
+	CSIPmaxChap                     = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
+	ReverseProxyTLSSecret           = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
 
 	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
 	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
@@ -115,6 +117,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	protocol := ""
 	nodeTemplate := ""
 	modifyHostname := "false"
+	replicationContextPrefix := "powermax"
+	replicationPrefix := "replication.storage.dell.com"
 	nodeTopology := "false"
 	vsphereEnabled := "false"
 	vspherePG := ""
@@ -254,6 +258,12 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				if env.Name == "X_CSI_IG_MODIFY_HOSTNAME" {
 					modifyHostname = env.Value
 				}
+				if env.Name == "X_CSI_REPLICATION_CONTEXT_PREFIX" {
+					replicationContextPrefix = env.Value
+				}
+				if env.Name == "X_CSI_REPLICATION_PREFIX" {
+					replicationContextPrefix = env.Value
+				}
 				if env.Name == "X_CSI_IG_NODENAME_TEMPLATE" {
 					nodeTemplate = env.Value
 				}
@@ -287,6 +297,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxProtocol, protocol)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxNodeTemplate, nodeTemplate)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxModifyHostname, modifyHostname)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxReplicationContextPrefix, replicationContextPrefix)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxReplicationPrefix, replicationPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxHealthMonitor, ctrlHealthMonitor)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxTopology, nodeTopology)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphere, vsphereEnabled)
