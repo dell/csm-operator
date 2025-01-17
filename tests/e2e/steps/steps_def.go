@@ -65,6 +65,7 @@ var (
 	pflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_VOLUME": "PFLEX_VOLUME"}
 	pflexAuthSidecarMap      = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	pmaxCredMap              = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
+	pmaxSecretMap            = map[string]string{"REPLACE_USERNAME": "PMAX_USER", "REPLACE_PASSWORD": "PMAX_USER", "REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT"}
 	pmaxAuthSidecarMap       = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	pmaxStorageMap           = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_RESOURCE_POOL": "PMAX_POOL_V1", "REPLACE_SERVICE_LEVEL": "PMAX_SERVICE_LEVEL"}
 	pmaxReverseProxyMap      = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
@@ -888,6 +889,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pmaxAuthSidecarMap
 	} else if crType == "pmaxCreds" {
 		mapValues = pmaxCredMap
+	} else if crType == "pmaxUseSecret" {
+		mapValues = pmaxSecretMap
 	} else if crType == "pmaxReverseProxy" {
 		mapValues = pmaxReverseProxyMap
 	} else if crType == "pmaxArrayConfig" {
