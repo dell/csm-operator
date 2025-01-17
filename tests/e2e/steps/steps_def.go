@@ -15,6 +15,7 @@ package steps
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -25,8 +26,6 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-
-	"encoding/json"
 
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
@@ -55,8 +54,10 @@ var (
 	authString        = "karavi-authorization-proxy"
 	operatorNamespace = "dell-csm-operator"
 	quotaLimit        = "100000000"
-	pflexSecretMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS",
-		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS"}
+	pflexSecretMap    = map[string]string{
+		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS",
+		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
+	}
 	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -1012,7 +1013,6 @@ func (step *Step) runCustomTestSelector(res Resource, testName string) error {
 	}
 
 	return nil
-
 }
 
 func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile string, crType string) error {
@@ -1561,7 +1561,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 
-	//by default, assume we will create storage
+	// by default, assume we will create storage
 	skipStorage := false
 
 	fmt.Println("=== Checking Storage === \n", cmd.String())
@@ -1621,7 +1621,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
 
-	//By default, assume a role will be created
+	// By default, assume a role will be created
 	skipCreateRole := false
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
@@ -1932,7 +1932,6 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 // Normally, this service account is created by Operator, but we create it here
 // in advance to set imagePullSecrets.
 func setupAMImagePullSecret() error {
-
 	if os.Getenv("RH_REGISTRY_USERNAME") == "" || os.Getenv("RH_REGISTRY_PASSWORD") == "" {
 		return fmt.Errorf("env variable RH_REGISTRY_USERNAME or RH_REGISTRY_PASSWORD is not set," +
 			" set it in array-info.sh before continuing")

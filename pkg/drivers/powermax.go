@@ -403,8 +403,10 @@ func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorage
 
 		// Adding volume
 		podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes,
-			acorev1.VolumeApplyConfiguration{Name: &secretName,
-				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{Secret: &acorev1.SecretVolumeSourceApplyConfiguration{SecretName: &secretName, Optional: &optional}}})
+			acorev1.VolumeApplyConfiguration{
+				Name:                           &secretName,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{Secret: &acorev1.SecretVolumeSourceApplyConfiguration{SecretName: &secretName, Optional: &optional}},
+			})
 
 		// Adding volume mount for both the reverseproxy and driver
 		for i, cnt := range podTemplate.Spec.Containers {

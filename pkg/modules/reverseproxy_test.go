@@ -190,9 +190,8 @@ func TestReverseProxyPrecheck(t *testing.T) {
 				panic(err)
 			}
 
-			customResource.Spec.Modules[0].Components[0].Envs =
-				append(customResource.Spec.Modules[0].Components[0].Envs,
-					corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 
 			proxySecret := getSecret(customResource.Namespace, "csirevproxy-tls-secret")
 
@@ -301,9 +300,8 @@ func TestReverseProxyServer(t *testing.T) {
 				panic(err)
 			}
 
-			tmpCR.Spec.Modules[0].Components[0].Envs =
-				append(tmpCR.Spec.Modules[0].Components[0].Envs,
-					corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
+			tmpCR.Spec.Modules[0].Components[0].Envs = append(tmpCR.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 
 			deployAsSidecar = true
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
@@ -315,9 +313,8 @@ func TestReverseProxyServer(t *testing.T) {
 				panic(err)
 			}
 
-			tmpCR.Spec.Modules[0].Components[0].Envs =
-				append(tmpCR.Spec.Modules[0].Components[0].Envs,
-					corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+			tmpCR.Spec.Modules[0].Components[0].Envs = append(tmpCR.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
 
 			deployAsSidecar = true
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
@@ -368,9 +365,8 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 
-			customResource.Spec.Modules[0].Components[0].Envs =
-				append(customResource.Spec.Modules[0].Components[0].Envs,
-					corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 
 			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
 			if err != nil {
@@ -386,9 +382,8 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 
-			customResource.Spec.Modules[0].Components[0].Envs =
-				append(customResource.Spec.Modules[0].Components[0].Envs,
-					corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
 
 			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
 			if err != nil {

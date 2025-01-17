@@ -353,10 +353,12 @@ func setReverseProxySecretMounts(dp *v1.DeploymentApplyConfiguration, secretName
 
 	// Adding volume
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes,
-		acorev1.VolumeApplyConfiguration{Name: &secretName,
+		acorev1.VolumeApplyConfiguration{
+			Name: &secretName,
 			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
 				Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
-					SecretName: &secretName, Optional: &optional},
+					SecretName: &secretName, Optional: &optional,
+				},
 			},
 		})
 
@@ -375,8 +377,10 @@ func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName str
 
 	// Adding volume
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes,
-		corev1.Volume{Name: secretName,
-			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName, Optional: &optional}}})
+		corev1.Volume{
+			Name:         secretName,
+			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName, Optional: &optional}},
+		})
 
 	mountPath := drivers.CSIPowerMaxSecretMountPath + secretName
 	// Adding volume mount for both the reverseproxy and driver
@@ -409,12 +413,15 @@ func setReverseProxyConfigMapMounts(dp *v1.DeploymentApplyConfiguration, revProx
 
 func deploymentSetReverseProxyConfigMapMounts(dp *appsv1.Deployment, cmName string) {
 	optional := true
-	volume := corev1.Volume{Name: RevProxyConfigMapVolName,
+	volume := corev1.Volume{
+		Name: RevProxyConfigMapVolName,
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: cmName},
-				Optional: &optional},
+					Name: cmName,
+				},
+				Optional: &optional,
+			},
 		},
 	}
 	volumeMount := corev1.VolumeMount{Name: RevProxyConfigMapVolName, MountPath: RevProxyConfigMapMountPath}
