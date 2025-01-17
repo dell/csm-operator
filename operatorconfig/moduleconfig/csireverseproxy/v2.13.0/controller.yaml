@@ -87,8 +87,6 @@ spec:
               value: /app/tls
             - name: X_CSI_REVPROXY_WATCH_NAMESPACE
               value: <DriverDefaultReleaseNamespace>  # Change this to the namespace where proxy will be installed
-            - name: X_CSI_REVPROXY_USE_SECRET
-              value: <X_CSI_REVPROXY_USE_SECRET>
           volumeMounts:
             - name: tls-secret
               mountPath: /app/tls

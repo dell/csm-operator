@@ -67,11 +67,12 @@ const (
 	// PowerMaxCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerMaxCSMNameSpace string = "<CSM_NAMESPACE>"
 
-	CSIPowerMaxUseSecret       string = "X_CSI_REVPROXY_USE_SECRET" // #nosec G101
-	CSIPowerMaxSecretMountPath string = "/etc/powermax/"            // #nosec G101
+	CSIPowerMaxUseSecret       string = "X_CSI_REVPROXY_USE_SECRET"      // #nosec G101
+	CSIPowerMaxSecretFilePath  string = "X_CSI_REVPROXY_SECRET_FILEPATH" // #nosec G101
+	CSIPowerMaxSecretMountPath string = "/etc/powermax"                  // #nosec G101
 
-	// To be used.
-	CSIPowerMaxSecretName string = "powermax-config" // #nosec G101
+	CSIPowerMaxSecretName       string = "config"                       // #nosec G101
+	CSIPowerMaxSecretVolumeName string = "powermax-reverseproxy-secret" // #nosec G101
 )
 
 // PrecheckPowerMax do input validation
@@ -92,9 +93,9 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 
 	useReverseProxySecret := useReverseProxySecret(cr)
 	if useReverseProxySecret {
-		log.Infof("[FERNANDO] Using New Secret with name %s", secretName)
+		log.Infof("[PrecheckPowerMax] Using Secret: %s", secretName)
 	} else {
-		log.Infof("[FERNANDO] Using Old ConfigMap Secret with name %s", secretName)
+		log.Infof("[PrecheckPowerMax] Using ConfigMap: %s", secretName)
 	}
 
 	found := &corev1.Secret{}
@@ -104,8 +105,6 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("failed to find secret %s", secretName)
 		}
-	} else {
-		log.Infof("[FERNANDO] Secret %s found", secretName)
 	}
 
 	for i, mod := range cr.Spec.Modules {
@@ -154,7 +153,7 @@ func setUsageOfReverseProxySecret(cr *csmv1.ContainerStorageModule, useSecret bo
 	}
 
 	if revProxy == nil {
-		log.Println("[FERNANDO] setUsageOfReverseProxySecret: could not find reverse proxy")
+		log.Println("setUsageOfReverseProxySecret: could not find reverse proxy")
 		return
 	}
 
@@ -170,13 +169,15 @@ func setUsageOfReverseProxySecret(cr *csmv1.ContainerStorageModule, useSecret bo
 	}
 
 	if !found {
-		log.Println("[FERNANDO] setUsageOfReverseProxySecret: could not find", CSIPowerMaxUseSecret)
+		log.Println("setUsageOfReverseProxySecret: could not find, adding")
 		revProxy.Components[0].Envs = append(revProxy.Components[0].Envs,
 			corev1.EnvVar{Name: CSIPowerMaxUseSecret, Value: strconv.FormatBool(useSecret)},
+			corev1.EnvVar{Name: CSIPowerMaxSecretFilePath, Value: CSIPowerMaxSecretMountPath + "/" + CSIPowerMaxSecretName},
 		)
+
 	}
 
-	log.Printf("[FERNANDO] set usage of reverse proxy secret to %t", useSecret)
+	log.Printf("setUsageOfReverseProxySecret: set usage of reverse proxy secret to %t", useSecret)
 }
 
 // ModifyPowermaxCR -
@@ -384,8 +385,9 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorageModule) (bool, error) {
 	if useReverseProxySecret(&cr) {
 		secretName := cr.Spec.Driver.AuthSecret
+		volumeName := CSIPowerMaxSecretVolumeName
 		optional := false
-		mountPath := CSIPowerMaxSecretMountPath + secretName
+		mountPath := CSIPowerMaxSecretMountPath
 
 		var podTemplate *acorev1.PodTemplateSpecApplyConfiguration
 		switch configuration := configuration.(type) {
@@ -404,15 +406,14 @@ func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorage
 		// Adding volume
 		podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes,
 			acorev1.VolumeApplyConfiguration{
-				Name:                           &secretName,
+				Name:                           &volumeName,
 				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{Secret: &acorev1.SecretVolumeSourceApplyConfiguration{SecretName: &secretName, Optional: &optional}},
 			})
 
 		// Adding volume mount for both the reverseproxy and driver
 		for i, cnt := range podTemplate.Spec.Containers {
-			if *cnt.Name == "driver" {
-				podTemplate.Spec.Containers[i].VolumeMounts = append(podTemplate.Spec.Containers[i].VolumeMounts,
-					acorev1.VolumeMountApplyConfiguration{Name: &secretName, MountPath: &mountPath})
+			if *cnt.Name == "driver" || *cnt.Name == "reverseproxy" {
+				SetPowerMaxSecretVariables(&podTemplate.Spec.Containers[i], volumeName, mountPath)
 			}
 		}
 
@@ -420,6 +421,19 @@ func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorage
 	}
 
 	return false, nil
+}
+
+func SetPowerMaxSecretVariables(ct *acorev1.ContainerApplyConfiguration, mN, mP string) {
+	ct.VolumeMounts = append(ct.VolumeMounts, acorev1.VolumeMountApplyConfiguration{Name: &mN, MountPath: &mP})
+
+	volumeName := CSIPowerMaxSecretFilePath
+	mountPath := CSIPowerMaxSecretMountPath + "/" + CSIPowerMaxSecretName
+
+	useSecretEnv := CSIPowerMaxUseSecret
+	useSecretValue := "true"
+	ct.Env = append(ct.Env,
+		acorev1.EnvVarApplyConfiguration{Name: &volumeName, Value: &mountPath},
+		acorev1.EnvVarApplyConfiguration{Name: &useSecretEnv, Value: &useSecretValue})
 }
 
 func getApplyCertVolumePowermax(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {

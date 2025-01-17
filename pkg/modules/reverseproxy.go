@@ -327,49 +327,15 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	// Dynamic secret/configMap mounting is only supported in v2.13.0 and above
 	secretSupported, _ := utils.MinVersionCheck("v2.13.0", revProxyModule.ConfigVersion)
 	useSecret := getRevProxyUseSecret(*revProxyModule)
-	if secretSupported {
-		for i, cnt := range dp.Spec.Template.Spec.Containers {
-			if *cnt.Name == "reverseproxy" {
-				for j, env := range cnt.Env {
-					if *env.Name == drivers.CSIPowerMaxUseSecret {
-						dp.Spec.Template.Spec.Containers[i].Env[j].Value = &useSecret
-					}
-				}
-			}
-		}
+	if secretSupported && useSecret == "true" {
+		drivers.SetPowerMaxSecretMount(&dp, cr)
 	}
 
-	if useSecret == "true" {
-		setReverseProxySecretMounts(&dp, cr.Spec.Driver.AuthSecret)
-	} else {
+	if useSecret == "false" {
 		setReverseProxyConfigMapMounts(&dp, *revProxyModule, secretSupported)
 	}
 
 	return &dp, nil
-}
-
-func setReverseProxySecretMounts(dp *v1.DeploymentApplyConfiguration, secretName string) {
-	optional := false
-
-	// Adding volume
-	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes,
-		acorev1.VolumeApplyConfiguration{
-			Name: &secretName,
-			VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
-				Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
-					SecretName: &secretName, Optional: &optional,
-				},
-			},
-		})
-
-	mountPath := drivers.CSIPowerMaxSecretMountPath + secretName
-	// Adding volume mount for both the reverseproxy and driver
-	for i, cnt := range dp.Spec.Template.Spec.Containers {
-		if *cnt.Name == "reverseproxy" || *cnt.Name == "driver" {
-			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
-				acorev1.VolumeMountApplyConfiguration{Name: &secretName, MountPath: &mountPath})
-		}
-	}
 }
 
 func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName string) {
@@ -382,7 +348,7 @@ func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName str
 			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName, Optional: &optional}},
 		})
 
-	mountPath := drivers.CSIPowerMaxSecretMountPath + secretName
+	mountPath := drivers.CSIPowerMaxSecretMountPath
 	// Adding volume mount for both the reverseproxy and driver
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if cnt.Name == RevProxyServiceName {
@@ -398,7 +364,7 @@ func setReverseProxyConfigMapMounts(dp *v1.DeploymentApplyConfiguration, revProx
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, revProxyVolume...)
 
 	if !mountVolume {
-		log.Printf("[FERNANDO] Using older reverseProxy. Volume already mounted. Skipping reverseProxy injection")
+		log.Printf("[setReverseProxyConfigMapMounts] Using older reverseProxy. Volume already mounted. Skipping reverseProxy injection")
 		return
 	}
 
