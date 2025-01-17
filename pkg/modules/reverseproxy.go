@@ -328,7 +328,10 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	secretSupported, _ := utils.MinVersionCheck("v2.13.0", revProxyModule.ConfigVersion)
 	useSecret := getRevProxyUseSecret(*revProxyModule)
 	if secretSupported && useSecret == "true" {
-		drivers.SetPowerMaxSecretMount(&dp, cr)
+		_, err = drivers.SetPowerMaxSecretMount(&dp, cr)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if useSecret == "false" {
