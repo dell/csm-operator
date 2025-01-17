@@ -1,6 +1,5 @@
 include docker.mk
 
-
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
@@ -114,18 +113,19 @@ build: gen-semver fmt vet ## Build manager binary.
 run: generate gen-semver fmt vet static-manifests ## Run a controller from your host.
 	go run ./main.go
 
-podman-build: gen-semver build-base-image ## Build podman image with the manager.
-	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+podman-build: gen-semver download-csm-common ## Build podman image with the manager.
+	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
-podman-build-no-cache: gen-semver build-base-image ## Build podman image with the manager.
-	podman build --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+podman-build-no-cache: gen-semver download-csm-common ## Build podman image with the manager.
+	podman build --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 podman-push: podman-build ## Builds, tags and pushes docker image with the manager.
 	podman tag ${DEFAULT_IMG} ${IMG}
 	podman push ${IMG}
 
-docker-build: gen-semver build-base-image ## Build docker image with the manager.
-	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+docker-build: gen-semver download-csm-common ## Build docker image with the manager.
+	$(eval include csm-common.mk)
+	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}
@@ -204,8 +204,8 @@ bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and m
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build
-bundle-build: gen-semver build-base-image ## Build the bundle image.
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(BASEIMAGE) .
+bundle-build: gen-semver download-csm-common ## Build the bundle image.
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(CSM_BASEIMAGE) .
 
 
 .PHONY: bundle-push
@@ -256,16 +256,11 @@ catalog-push: gen-semver ## Push a catalog image.
 lint: build
 	golangci-lint run --fix
 
-.PHONY: build-base-image
-build-base-image: download-csm-common
-	$(eval include csm-common.mk)
-	sh ./scripts/build-ubi-micro.sh $(DEFAULT_BASEIMAGE)
-	$(eval BASEIMAGE=csm-operator-ubimicro:latest)
-
 # Download common CSM configuration file used for builds
 .PHONY: download-csm-common
 download-csm-common:
-	curl -O -L https://raw.githubusercontent.com/dell/csm/main/config/csm-common.mk
+	curl -O -L https://raw.githubusercontent.com/dell/csm/base-image-improvements/config/csm-common.mk
+	$(eval include csm-common.mk)
 
 # build catalog image with File based catalog file
 .PHONY: catalog-build-fbc
