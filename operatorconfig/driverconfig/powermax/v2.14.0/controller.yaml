@@ -332,4 +332,3 @@ spec:
         - name: tls-secret
           secret:
             secretName: <X_CSI_REVPROXY_TLS_SECRET>
-

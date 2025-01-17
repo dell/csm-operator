@@ -67,11 +67,11 @@ const (
 	// PowerMaxCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerMaxCSMNameSpace string = "<CSM_NAMESPACE>"
 
-	CSIPowerMaxUseSecret       string = "X_CSI_REVPROXY_USE_SECRET"
-	CSIPowerMaxSecretMountPath string = "/etc/powermax/"
+	CSIPowerMaxUseSecret       string = "X_CSI_REVPROXY_USE_SECRET" // #nosec G101
+	CSIPowerMaxSecretMountPath string = "/etc/powermax/"            // #nosec G101
 
 	// To be used.
-	CSIPowerMaxSecretName string = "powermax-config"
+	CSIPowerMaxSecretName string = "powermax-config" // #nosec G101
 )
 
 // PrecheckPowerMax do input validation

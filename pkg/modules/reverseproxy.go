@@ -49,7 +49,7 @@ const (
 	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
 	ReverseProxyPort            = "<X_CSI_REVPROXY_PORT>"
 	ReverseProxyCSMNameSpace    = "<CSM_NAMESPACE>"
-	ReverseProxyUseSecret       = "<X_CSI_REVPROXY_USE_SECRET>"
+	ReverseProxyUseSecret       = "<X_CSI_REVPROXY_USE_SECRET>" // #nosec G101
 )
 
 // var used in deploying reverseproxy

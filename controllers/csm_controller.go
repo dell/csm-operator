@@ -771,7 +771,10 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			modules.AddReverseProxyServiceName(&controller.Deployment)
 
 			// Set the secret mount for powermax controller.
-			drivers.SetPowerMaxSecretMount(&controller.Deployment, cr)
+			_, err := drivers.SetPowerMaxSecretMount(&controller.Deployment, cr)
+			if err != nil {
+				return err
+			}
 		} else {
 			log.Info("Starting CSI ReverseProxy Service")
 			if err := modules.ReverseProxyStartService(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
@@ -787,7 +790,10 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 		// Set the secret mount for powermax node.
-		drivers.SetPowerMaxSecretMount(&node.DaemonSetApplyConfig, cr)
+		_, err := drivers.SetPowerMaxSecretMount(&node.DaemonSetApplyConfig, cr)
+		if err != nil {
+			return err
+		}
 	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)
