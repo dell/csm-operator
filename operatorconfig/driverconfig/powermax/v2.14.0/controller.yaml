@@ -250,6 +250,16 @@ spec:
               value: controller
             - name: X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION
               value: "true"
+            - name: X_CSI_POWERMAX_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: powermax-creds
+            - name: X_CSI_POWERMAX_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: powermax-creds
             - name: X_CSI_POWERMAX_DEBUG
               value: "<X_CSI_POWERMAX_DEBUG>"
             - name: X_CSI_GRPC_MAX_THREADS

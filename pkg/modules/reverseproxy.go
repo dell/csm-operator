@@ -48,6 +48,7 @@ const (
 	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
 	ReverseProxyPort            = "<X_CSI_REVPROXY_PORT>"
 	ReverseProxyCSMNameSpace    = "<CSM_NAMESPACE>"
+	ReverseProxyUseSecret       = "<X_CSI_REVPROXY_USE_SECRET>" // #nosec G101
 )
 
 // var used in deploying reverseproxy
@@ -274,6 +275,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	proxyPort := RevProxyDefaultPort
 	proxyConfig := RevProxyConfigMapDeafultName
 	image := op.K8sVersion.Images.CSIRevProxy
+	useSecret := "false"
 
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
@@ -290,6 +292,9 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
 					proxyConfig = env.Value
 				}
+				if env.Name == drivers.CSIPowerMaxUseSecret {
+					useSecret = env.Value
+				}
 			}
 		}
 	}
@@ -300,6 +305,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, proxyConfig)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyCSMNameSpace, cr.Namespace)
+	YamlString = strings.ReplaceAll(YamlString, ReverseProxyUseSecret, useSecret)
 
 	return YamlString, nil
 }
