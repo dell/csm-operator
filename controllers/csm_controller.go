@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -769,6 +769,12 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployement\n")
 			log.Infof("adding proxy service name...\n")
 			modules.AddReverseProxyServiceName(&controller.Deployment)
+
+			// Set the secret mount for powermax controller.
+			_, err := drivers.SetPowerMaxSecretMount(&controller.Deployment, cr)
+			if err != nil {
+				return err
+			}
 		} else {
 			log.Info("Starting CSI ReverseProxy Service")
 			if err := modules.ReverseProxyStartService(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
@@ -779,7 +785,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			if err != nil {
 				return fmt.Errorf("injecting replication into deployment: %v", err)
 			}
+
 			controller.Deployment = *dp
+		}
+
+		// Set the secret mount for powermax node.
+		_, err := drivers.SetPowerMaxSecretMount(&node.DaemonSetApplyConfig, cr)
+		if err != nil {
+			return err
 		}
 	}
 

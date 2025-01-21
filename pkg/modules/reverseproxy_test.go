@@ -1,4 +1,4 @@
-//  Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2023-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ import (
 	"testing"
 
 	"github.com/dell/csm-operator/pkg/drivers"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -184,6 +184,28 @@ func TestReverseProxyPrecheck(t *testing.T) {
 
 			return true, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
+		"success - use reverse proxy secret": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
+
+			proxySecret := getSecret(customResource.Namespace, "csirevproxy-tls-secret")
+
+			tmpCR := customResource
+			reverseProxy := tmpCR.Spec.Modules[0]
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret).Build()
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(proxySecret).Build()
+				return clusterClient, nil
+			}
+
+			return true, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -272,6 +294,32 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
+		"success - use reverse proxy secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR.Spec.Modules[0].Components[0].Envs = append(tmpCR.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
+
+			deployAsSidecar = true
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - dynamically mount configMap": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR.Spec.Modules[0].Components[0].Envs = append(tmpCR.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			deployAsSidecar = true
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -309,6 +357,40 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 			deployAsSidecar = true
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+		"success - dynamically mount secret": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
+
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+		"success - dynamically mount configMap": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
 	}
