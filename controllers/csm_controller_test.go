@@ -1,4 +1,4 @@
-//  Copyright © 2022 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -274,7 +274,6 @@ func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
 }
 
 func (suite *CSMControllerTestSuite) TestReverseProxyWithSecretReconcile() {
-	// suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModuleWithSecret(), string(v1.PowerMax))
 	csm := suite.buildFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModuleWithSecret(), string(v1.PowerMax))
 	csm.Spec.Driver.Common.Envs = append(csm.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 	err := suite.fakeClient.Create(ctx, &csm)
