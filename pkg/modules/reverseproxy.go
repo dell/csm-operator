@@ -357,6 +357,16 @@ func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName str
 		if cnt.Name == RevProxyServiceName {
 			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
 				corev1.VolumeMount{Name: secretName, MountPath: mountPath})
+
+			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
+				Name:  drivers.CSIPowerMaxSecretFilePath,
+				Value: drivers.CSIPowerMaxSecretMountPath + "/" + drivers.CSIPowerMaxSecretName,
+			})
+			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
+				Name:  drivers.CSIPowerMaxUseSecret,
+				Value: "true",
+			})
+			break
 		}
 	}
 }

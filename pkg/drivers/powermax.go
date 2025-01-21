@@ -101,7 +101,7 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	found := &corev1.Secret{}
 	err := ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
 	if err != nil {
-		log.Error(err, "Failed query for secret ", secretName)
+		log.Error(err, "Failed query for secret", secretName)
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("failed to find secret %s", secretName)
 		}
