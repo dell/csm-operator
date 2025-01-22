@@ -190,6 +190,8 @@ func TestReverseProxyPrecheck(t *testing.T) {
 				panic(err)
 			}
 
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
 				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 
@@ -300,6 +302,8 @@ func TestReverseProxyServer(t *testing.T) {
 				panic(err)
 			}
 
+			tmpCR.Spec.Driver.Common.Envs = append(tmpCR.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 			tmpCR.Spec.Modules[0].Components[0].Envs = append(tmpCR.Spec.Modules[0].Components[0].Envs,
 				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 
@@ -312,6 +316,9 @@ func TestReverseProxyServer(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
+
+			tmpCR.Spec.Driver.Common.Envs = append(tmpCR.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
 
 			tmpCR.Spec.Modules[0].Components[0].Envs = append(tmpCR.Spec.Modules[0].Components[0].Envs,
 				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
@@ -365,6 +372,8 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
 				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 
@@ -382,6 +391,8 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
 			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
 				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
 
