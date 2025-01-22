@@ -771,7 +771,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			modules.AddReverseProxyServiceName(&controller.Deployment)
 
 			// Set the secret mount for powermax controller.
-			_, err := drivers.SetPowerMaxSecretMount(&controller.Deployment, cr)
+			_, err := drivers.DynamicallyMountPowermaxContent(&controller.Deployment, cr)
 			if err != nil {
 				return err
 			}
@@ -790,7 +790,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 		// Set the secret mount for powermax node.
-		_, err := drivers.SetPowerMaxSecretMount(&node.DaemonSetApplyConfig, cr)
+		_, err := drivers.DynamicallyMountPowermaxContent(&node.DaemonSetApplyConfig, cr)
 		if err != nil {
 			return err
 		}

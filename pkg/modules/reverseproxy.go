@@ -303,6 +303,9 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 		return nil, err
 	}
 
+	log.Printf("[ReverseProxyInjectDeployment] Injecting reverseProxy into driver deployment %+v", revProxyModule)
+	log.Printf("[ReverseProxyInjectDeployment] Container: %+v", *containerPtr)
+
 	container := *containerPtr
 	// update the image
 	for _, side := range revProxyModule.Components {
@@ -324,18 +327,24 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 		}
 	}
 
+	// powerMaxVersion := cr.Spec.Driver.ConfigVersion
+
 	// Dynamic secret/configMap mounting is only supported in v2.13.0 and above
-	secretSupported, _ := utils.MinVersionCheck("v2.13.0", revProxyModule.ConfigVersion)
-	useSecret := getRevProxyUseSecret(*revProxyModule)
-	if secretSupported && useSecret == "true" {
-		_, err = drivers.SetPowerMaxSecretMount(&dp, cr)
+	secretSupported, _ := utils.MinVersionCheck("v2.14.0", cr.Spec.Driver.ConfigVersion)
+	useSecret := drivers.UseReverseProxySecret(&cr)
+
+	log.Printf("[ReverseProxyInjectDeployment] Using secret: %t, supported: %t, version: %s", useSecret, secretSupported, cr.Spec.Driver.ConfigVersion)
+	if secretSupported && useSecret {
+		_, err = drivers.DynamicallyMountPowermaxContent(&dp, cr)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if useSecret == "false" {
-		setReverseProxyConfigMapMounts(&dp, *revProxyModule, secretSupported)
+	log.Println("[FERNANDO] ReverseProxyInjectDeployment using secret, version: " + revProxyModule.ConfigVersion)
+
+	if !useSecret {
+		setReverseProxyConfigMapMounts(&dp, *revProxyModule, cr)
 	}
 
 	return &dp, nil
@@ -371,21 +380,34 @@ func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName str
 	}
 }
 
-func setReverseProxyConfigMapMounts(dp *v1.DeploymentApplyConfiguration, revProxyModule csmv1.Module, mountVolume bool) {
+func setReverseProxyConfigMapMounts(dp *v1.DeploymentApplyConfiguration, revProxyModule csmv1.Module, cr csmv1.ContainerStorageModule) {
 	// inject revProxy volumes in driver volumes
 	revProxyVolume := getRevProxyVolumeComp(revProxyModule)
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, revProxyVolume...)
+	volumeMount := acorev1.VolumeMountApplyConfiguration{Name: &RevProxyConfigMapVolName, MountPath: &RevProxyConfigMapMountPath}
 
-	if !mountVolume {
-		log.Printf("[setReverseProxyConfigMapMounts] Using older reverseProxy. Volume already mounted. Skipping reverseProxy injection")
-		return
+	secretName := cr.Name + "-creds"
+	if cr.Spec.Driver.AuthSecret != "" {
+		secretName = cr.Spec.Driver.AuthSecret
 	}
 
 	// Adding volume mount
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if *cnt.Name == "reverseproxy" {
-			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
-				acorev1.VolumeMountApplyConfiguration{Name: &RevProxyConfigMapVolName, MountPath: &RevProxyConfigMapMountPath})
+			contains := slices.ContainsFunc(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
+				func(v acorev1.VolumeMountApplyConfiguration) bool {
+					// Cast to pull out value instead of comparing addresses.
+					return *(v.Name) == *(volumeMount.Name)
+				},
+			)
+
+			if !contains {
+				log.Printf("[setReverseProxyConfigMapMounts] Mounting volume: %s", RevProxyConfigMapMountPath)
+				dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
+					acorev1.VolumeMountApplyConfiguration{Name: &RevProxyConfigMapVolName, MountPath: &RevProxyConfigMapMountPath})
+			}
+		} else if *cnt.Name == "driver" {
+			drivers.SetPowermaxConfigContent(&dp.Spec.Template.Spec.Containers[i], secretName)
 		}
 	}
 }
