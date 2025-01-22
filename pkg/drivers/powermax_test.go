@@ -85,7 +85,7 @@ func TestPrecheckPowerMax(t *testing.T) {
 	}
 }
 
-func TestSetPowerMaxSecretMount(t *testing.T) {
+func TestDynamicallyMountPowermaxContent(t *testing.T) {
 	containerName := "driver"
 	volumeName := "myVolume"
 	tests := []struct {
@@ -95,7 +95,7 @@ func TestSetPowerMaxSecretMount(t *testing.T) {
 		expectedErr   error
 	}{
 		{
-			name: "success: pass through deployment configuration",
+			name: "success: dynamically mount secret for deployment",
 			configuration: &v1.DeploymentApplyConfiguration{
 				Spec: &v1.DeploymentSpecApplyConfiguration{
 					Template: &acorev1.PodTemplateSpecApplyConfiguration{
@@ -132,7 +132,44 @@ func TestSetPowerMaxSecretMount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "success: pass through daemonset configuration",
+			name: "success: dynamically mount config content for deployment",
+			configuration: &v1.DeploymentApplyConfiguration{
+				Spec: &v1.DeploymentSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{
+							Volumes: []acorev1.VolumeApplyConfiguration{
+								{
+									Name: &volumeName,
+								},
+							},
+							Containers: []acorev1.ContainerApplyConfiguration{
+								{
+									Name: &containerName,
+									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+										{
+											Name: &volumeName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"}},
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "success: dynamically mount secret for daemonset",
 			configuration: &v1.DaemonSetApplyConfiguration{
 				Spec: &v1.DaemonSetSpecApplyConfiguration{
 					Template: &acorev1.PodTemplateSpecApplyConfiguration{
@@ -154,8 +191,8 @@ func TestSetPowerMaxSecretMount(t *testing.T) {
 		},
 		{
 			name: "success: empty envs",
-			configuration: &v1.ReplicaSetApplyConfiguration{
-				Spec: &v1.ReplicaSetSpecApplyConfiguration{
+			configuration: &v1.DeploymentApplyConfiguration{
+				Spec: &v1.DeploymentSpecApplyConfiguration{
 					Template: &acorev1.PodTemplateSpecApplyConfiguration{
 						Spec: &acorev1.PodSpecApplyConfiguration{},
 					},
