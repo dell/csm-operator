@@ -232,7 +232,7 @@ func TestDynamicallyMountPowermaxContent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := DynamicallyMountPowermaxContent(tt.configuration, tt.cr)
+			err := DynamicallyMountPowermaxContent(tt.configuration, tt.cr)
 			if tt.expectedErr == nil {
 				assert.Nil(t, err)
 			} else {

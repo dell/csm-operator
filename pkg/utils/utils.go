@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -838,8 +837,6 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 	if driverType == "isilon" {
 		dType = "powerscale"
 	}
-
-	log.Printf("driverConfigVersion: %s, driverType: %s, moduleType: %s, configMapPath: %s", driverConfigVersion, dType, moduleType, configMapPath)
 
 	if driver, ok := support[dType]; ok {
 		if modules, ok := driver[driverConfigVersion]; ok {

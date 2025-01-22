@@ -383,7 +383,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	return yamlString
 }
 
-func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.ContainerStorageModule) (bool, error) {
+func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.ContainerStorageModule) error {
 	var podTemplate *acorev1.PodTemplateSpecApplyConfiguration
 	switch configuration := configuration.(type) {
 	case *v1.DeploymentApplyConfiguration:
@@ -395,7 +395,7 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 	}
 
 	if podTemplate == nil {
-		return false, fmt.Errorf("invalid type passed through")
+		return fmt.Errorf("invalid type passed through")
 	}
 
 	secretName := cr.Name + "-creds"
@@ -422,17 +422,17 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 			}
 		}
 
-		return true, nil
-	} else {
-		for i, cnt := range podTemplate.Spec.Containers {
-			if *cnt.Name == "driver" {
-				SetPowermaxConfigContent(&podTemplate.Spec.Containers[i], secretName)
-				break
-			}
+		return nil
+	}
+
+	for i, cnt := range podTemplate.Spec.Containers {
+		if *cnt.Name == "driver" {
+			SetPowermaxConfigContent(&podTemplate.Spec.Containers[i], secretName)
+			break
 		}
 	}
 
-	return false, nil
+	return nil
 }
 
 func setPowermaxMountCredentialContent(ct *acorev1.ContainerApplyConfiguration, mN, mP string) {
@@ -451,7 +451,7 @@ func setPowermaxMountCredentialContent(ct *acorev1.ContainerApplyConfiguration, 
 func SetPowermaxConfigContent(ct *acorev1.ContainerApplyConfiguration, secretName string) {
 	userNameVariable := "X_CSI_POWERMAX_USER"
 	userNameKey := "username"
-	userPasswordVariable := "X_CSI_POWERMAX_PASSWORD"
+	userPasswordVariable := "X_CSI_POWERMAX_PASSWORD" // #nosec G101
 	userPasswordKey := "password"
 	dynamicallyAddEnvironmentVariable(ct, acorev1.EnvVarApplyConfiguration{
 		Name: &userNameVariable,

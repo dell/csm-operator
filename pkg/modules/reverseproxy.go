@@ -332,7 +332,7 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	secretSupported, _ := utils.MinVersionCheck("v2.14.0", cr.Spec.Driver.ConfigVersion)
 	useSecret := drivers.UseReverseProxySecret(&cr)
 	if secretSupported && useSecret {
-		_, err = drivers.DynamicallyMountPowermaxContent(&dp, cr)
+		err = drivers.DynamicallyMountPowermaxContent(&dp, cr)
 		if err != nil {
 			return nil, err
 		}
