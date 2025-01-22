@@ -783,7 +783,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			log.Info("Injecting CSI ReverseProxy")
 			dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
 			if err != nil {
-				return fmt.Errorf("injecting replication into deployment: %v", err)
+				return fmt.Errorf("unable to inject ReverseProxy into deployment: %v", err)
 			}
 
 			controller.Deployment = *dp
@@ -1383,6 +1383,10 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powermax validation: %v", err)
 		}
+
+		// To ensure that we are handling minimal manifests correctly and consistent, we must reset DeployAsSidecar to the original value.
+		// This variable will be set correctly if the reverseproxy is found in the manifests.
+		modules.ResetDeployAsSidecar()
 	default:
 		// Go to checkUpgrade if it is standalone module i.e. app mobility or authorizatio proxy server
 		if cr.HasModule(csmv1.ApplicationMobility) || cr.HasModule(csmv1.AuthorizationServer) {
