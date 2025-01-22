@@ -408,8 +408,6 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 		optional := false
 		mountPath := CSIPowerMaxSecretMountPath
 
-		log.Printf("[FERNADO] Adding secret volume and volume mount for secret %s", secretName)
-
 		// Adding volume
 		podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes,
 			acorev1.VolumeApplyConfiguration{
@@ -426,10 +424,6 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 
 		return true, nil
 	} else {
-		// Adding volume mount for both the reverseproxy and driver
-
-		log.Printf("[FERNANDO] Using configMap solution for %+v", podTemplate.Spec.Containers)
-
 		for i, cnt := range podTemplate.Spec.Containers {
 			if *cnt.Name == "driver" {
 				SetPowermaxConfigContent(&podTemplate.Spec.Containers[i], secretName)
