@@ -124,7 +124,6 @@ podman-push: podman-build ## Builds, tags and pushes docker image with the manag
 	podman push ${IMG}
 
 docker-build: gen-semver download-csm-common ## Build docker image with the manager.
-	$(eval include csm-common.mk)
 	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
@@ -259,7 +258,7 @@ lint: build
 # Download common CSM configuration file used for builds
 .PHONY: download-csm-common
 download-csm-common:
-	curl -O -L https://raw.githubusercontent.com/dell/csm/base-image-improvements/config/csm-common.mk
+	curl -O -L https://raw.githubusercontent.com/dell/csm/main/config/csm-common.mk
 	$(eval include csm-common.mk)
 
 # build catalog image with File based catalog file
