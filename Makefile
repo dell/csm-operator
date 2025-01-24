@@ -114,9 +114,11 @@ run: generate gen-semver fmt vet static-manifests ## Run a controller from your 
 	go run ./main.go
 
 podman-build: gen-semver download-csm-common ## Build podman image with the manager.
+	$(eval include csm-common.mk)
 	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 podman-build-no-cache: gen-semver download-csm-common ## Build podman image with the manager.
+	$(eval include csm-common.mk)
 	podman build --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 podman-push: podman-build ## Builds, tags and pushes docker image with the manager.
@@ -124,6 +126,7 @@ podman-push: podman-build ## Builds, tags and pushes docker image with the manag
 	podman push ${IMG}
 
 docker-build: gen-semver download-csm-common ## Build docker image with the manager.
+	$(eval include csm-common.mk)
 	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
@@ -204,6 +207,7 @@ bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and m
 
 .PHONY: bundle-build
 bundle-build: gen-semver download-csm-common ## Build the bundle image.
+	$(eval include csm-common.mk)
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(CSM_BASEIMAGE) .
 
 
@@ -259,7 +263,6 @@ lint: build
 .PHONY: download-csm-common
 download-csm-common:
 	curl -O -L https://raw.githubusercontent.com/dell/csm/main/config/csm-common.mk
-	$(eval include csm-common.mk)
 
 # build catalog image with File based catalog file
 .PHONY: catalog-build-fbc
