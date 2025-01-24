@@ -28,5 +28,6 @@ log separator
 echo "Deleting the Operator Deployment"
 echo
 log separator
-kubectl delete -f $DEPLOYDIR/operator.yaml
+kubectl delete -f ${DEPLOYDIR}/operator.yaml
+kubectl delete -f ${DEPLOYDIR}/crds/storage.dell.com.crds.all.yaml
 echo
