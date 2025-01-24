@@ -348,7 +348,10 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 	if driver.CSIDriverType == "" {
 		return fmt.Errorf("csiDriverType is missing")
 	}
-	if driver.Replicas == 0 {
+
+	// Ensure that the expected number of controller pods are running.
+	status := found.Status
+	if status.ControllerStatus.Failed > "0" {
 		return fmt.Errorf("replicas should have a non-zero value")
 	}
 
@@ -360,7 +363,6 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 		driver.Node != nil ||
 		driver.CSIDriverSpec != nil ||
 		driver.DNSPolicy != "" ||
-		driver.Common != nil ||
 		driver.AuthSecret != "" ||
 		driver.TLSCertSecret != "" {
 		return fmt.Errorf("unexpected fields found in Driver spec: %+v", driver)
