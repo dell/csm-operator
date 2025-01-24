@@ -102,7 +102,7 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 			if env.Name == "DeployAsSidecar" {
 				das, err := strconv.ParseBool(env.Value)
 				if err != nil {
-					log.Infof("Error parsing %s, %s. Using default value", env.Name, err.Error())
+					log.Warnf("Error parsing %s, %s. Deploying reverseproxy as sidecar.", env.Name, err.Error())
 					das = true
 				}
 
