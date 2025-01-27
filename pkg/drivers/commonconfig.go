@@ -35,6 +35,10 @@ var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerScaleName: "isilon-configs",
 }
 
+const (
+	ConfigParamsFile = "driver-config-params.yaml"
+)
+
 // GetController get controller yaml
 func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)

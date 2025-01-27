@@ -345,6 +345,25 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	return &dp, nil
 }
 
+func UpdatePowerMaxConfigMap(cm *corev1.ConfigMap, cr csmv1.ContainerStorageModule) error {
+	if drivers.UseReverseProxySecret(&cr) {
+		data := cm.Data[drivers.ConfigParamsFile]
+
+		reverseProxy, err := getReverseProxyModule(cr)
+		if err != nil {
+			return err
+		}
+
+		port := getRevProxyPort(reverseProxy)
+		data += fmt.Sprintf("\n%s: %s", "CSI_POWERMAX_REVERSE_PROXY_PORT", port)
+
+		// Dynamically update the configMap with the reverse proxy port
+		cm.Data[drivers.ConfigParamsFile] = data
+	}
+
+	return nil
+}
+
 func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName string) {
 	optional := false
 
