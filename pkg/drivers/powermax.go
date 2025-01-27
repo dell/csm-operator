@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -91,7 +92,7 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		secretName = cr.Spec.Driver.AuthSecret
 	}
 
-	useReverseProxySecret := useReverseProxySecret(cr)
+	useReverseProxySecret := UseReverseProxySecret(cr)
 	if useReverseProxySecret {
 		log.Infof("[PrecheckPowerMax] Using Secret: %s", secretName)
 	} else {
@@ -121,7 +122,7 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	return nil
 }
 
-func useReverseProxySecret(cr *csmv1.ContainerStorageModule) bool {
+func UseReverseProxySecret(cr *csmv1.ContainerStorageModule) bool {
 	useSecret := false
 
 	if cr.Spec.Driver.Common == nil {
@@ -382,26 +383,30 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	return yamlString
 }
 
-func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorageModule) (bool, error) {
-	if useReverseProxySecret(&cr) {
-		secretName := cr.Spec.Driver.AuthSecret
+func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.ContainerStorageModule) error {
+	var podTemplate *acorev1.PodTemplateSpecApplyConfiguration
+	switch configuration := configuration.(type) {
+	case *v1.DeploymentApplyConfiguration:
+		dp := configuration
+		podTemplate = dp.Spec.Template
+	case *v1.DaemonSetApplyConfiguration:
+		ds := configuration
+		podTemplate = ds.Spec.Template
+	}
+
+	if podTemplate == nil {
+		return fmt.Errorf("invalid type passed through")
+	}
+
+	secretName := cr.Name + "-creds"
+	if cr.Spec.Driver.AuthSecret != "" {
+		secretName = cr.Spec.Driver.AuthSecret
+	}
+
+	if UseReverseProxySecret(&cr) {
 		volumeName := CSIPowerMaxSecretVolumeName
 		optional := false
 		mountPath := CSIPowerMaxSecretMountPath
-
-		var podTemplate *acorev1.PodTemplateSpecApplyConfiguration
-		switch configuration := configuration.(type) {
-		case *v1.DeploymentApplyConfiguration:
-			dp := configuration
-			podTemplate = dp.Spec.Template
-		case *v1.DaemonSetApplyConfiguration:
-			ds := configuration
-			podTemplate = ds.Spec.Template
-		}
-
-		if podTemplate == nil {
-			return false, fmt.Errorf("invalid type passed through")
-		}
 
 		// Adding volume
 		podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes,
@@ -413,17 +418,24 @@ func SetPowerMaxSecretMount(configuration interface{}, cr csmv1.ContainerStorage
 		// Adding volume mount for both the reverseproxy and driver
 		for i, cnt := range podTemplate.Spec.Containers {
 			if *cnt.Name == "driver" || *cnt.Name == "reverseproxy" {
-				SetPowerMaxSecretVariables(&podTemplate.Spec.Containers[i], volumeName, mountPath)
+				setPowermaxMountCredentialContent(&podTemplate.Spec.Containers[i], volumeName, mountPath)
 			}
 		}
 
-		return true, nil
+		return nil
 	}
 
-	return false, nil
+	for i, cnt := range podTemplate.Spec.Containers {
+		if *cnt.Name == "driver" {
+			SetPowermaxConfigContent(&podTemplate.Spec.Containers[i], secretName)
+			break
+		}
+	}
+
+	return nil
 }
 
-func SetPowerMaxSecretVariables(ct *acorev1.ContainerApplyConfiguration, mN, mP string) {
+func setPowermaxMountCredentialContent(ct *acorev1.ContainerApplyConfiguration, mN, mP string) {
 	ct.VolumeMounts = append(ct.VolumeMounts, acorev1.VolumeMountApplyConfiguration{Name: &mN, MountPath: &mP})
 
 	volumeName := CSIPowerMaxSecretFilePath
@@ -434,6 +446,46 @@ func SetPowerMaxSecretVariables(ct *acorev1.ContainerApplyConfiguration, mN, mP 
 	ct.Env = append(ct.Env,
 		acorev1.EnvVarApplyConfiguration{Name: &volumeName, Value: &mountPath},
 		acorev1.EnvVarApplyConfiguration{Name: &useSecretEnv, Value: &useSecretValue})
+}
+
+func SetPowermaxConfigContent(ct *acorev1.ContainerApplyConfiguration, secretName string) {
+	userNameVariable := "X_CSI_POWERMAX_USER"
+	userNameKey := "username"
+	userPasswordVariable := "X_CSI_POWERMAX_PASSWORD" // #nosec G101
+	userPasswordKey := "password"
+	dynamicallyAddEnvironmentVariable(ct, acorev1.EnvVarApplyConfiguration{
+		Name: &userNameVariable,
+		ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+			SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+				Key: &userNameKey,
+				LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{
+					Name: &secretName,
+				},
+			},
+		},
+	})
+
+	dynamicallyAddEnvironmentVariable(ct, acorev1.EnvVarApplyConfiguration{
+		Name: &userPasswordVariable,
+		ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+			SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+				Key: &userPasswordKey,
+				LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{
+					Name: &secretName,
+				},
+			},
+		},
+	})
+}
+
+func dynamicallyAddEnvironmentVariable(ct *acorev1.ContainerApplyConfiguration, envVar acorev1.EnvVarApplyConfiguration) {
+	contains := slices.ContainsFunc(ct.Env,
+		func(v acorev1.EnvVarApplyConfiguration) bool { return *(v.Name) == *(envVar.Name) },
+	)
+
+	if !contains {
+		ct.Env = append(ct.Env, envVar)
+	}
 }
 
 func getApplyCertVolumePowermax(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {

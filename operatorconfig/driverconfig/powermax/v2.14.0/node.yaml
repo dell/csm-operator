@@ -105,16 +105,6 @@ spec:
               value: "<KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com/disks"
             - name: X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION
               value: "true"
-            - name: X_CSI_POWERMAX_USER
-              valueFrom:
-                secretKeyRef:
-                  name: powermax-creds
-                  key: username
-            - name: X_CSI_POWERMAX_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: powermax-creds
-                  key: password
             - name: X_CSI_POWERMAX_NODENAME
               valueFrom:
                 fieldRef:
