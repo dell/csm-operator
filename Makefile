@@ -115,11 +115,11 @@ run: generate gen-semver fmt vet static-manifests ## Run a controller from your 
 
 podman-build: gen-semver download-csm-common ## Build podman image with the manager.
 	$(eval include csm-common.mk)
-	podman build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+	podman build --pull . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 podman-build-no-cache: gen-semver download-csm-common ## Build podman image with the manager.
 	$(eval include csm-common.mk)
-	podman build --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+	podman build --pull --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 podman-push: podman-build ## Builds, tags and pushes docker image with the manager.
 	podman tag ${DEFAULT_IMG} ${IMG}
@@ -127,7 +127,7 @@ podman-push: podman-build ## Builds, tags and pushes docker image with the manag
 
 docker-build: gen-semver download-csm-common ## Build docker image with the manager.
 	$(eval include csm-common.mk)
-	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+	docker build --pull . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
 	docker tag ${DEFAULT_IMG} ${IMG}
@@ -208,7 +208,7 @@ bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and m
 .PHONY: bundle-build
 bundle-build: gen-semver download-csm-common ## Build the bundle image.
 	$(eval include csm-common.mk)
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(CSM_BASEIMAGE) .
+	docker build --pull -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(CSM_BASEIMAGE) .
 
 
 .PHONY: bundle-push
@@ -267,4 +267,4 @@ download-csm-common:
 # build catalog image with File based catalog file
 .PHONY: catalog-build-fbc
 catalog-build-fbc:
-	podman build . -f catalog.Dockerfile -t quay.io/community-operator-pipeline-prod/dell-csm-operator-catalog:latest
+	podman build --pull . -f catalog.Dockerfile -t quay.io/community-operator-pipeline-prod/dell-csm-operator-catalog:latest
