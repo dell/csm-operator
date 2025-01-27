@@ -367,19 +367,37 @@ func UpdatePowerMaxConfigMap(cm *corev1.ConfigMap, cr csmv1.ContainerStorageModu
 func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName string) {
 	optional := false
 
-	// Adding volume
+	// Add Secret Volume for Reverse Proxy
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes,
 		corev1.Volume{
 			Name:         secretName,
 			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName, Optional: &optional}},
 		})
 
+	// Add Config Params Volume for Reverse Proxy
+	configParamsVolume := corev1.Volume{
+		Name: drivers.PowerMaxConfigParamsVolumeMount,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: drivers.PowerMaxConfigParamsVolumeMount,
+				},
+				Optional: &optional,
+			},
+		},
+	}
+	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, configParamsVolume)
+
 	mountPath := drivers.CSIPowerMaxSecretMountPath
 	// Adding volume mount for both the reverseproxy and driver
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if cnt.Name == RevProxyServiceName {
+			// Mount Secret
 			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
 				corev1.VolumeMount{Name: secretName, MountPath: mountPath})
+			// Mount Config Params
+			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
+				corev1.VolumeMount{Name: drivers.PowerMaxConfigParamsVolumeMount, MountPath: drivers.PowerMaxConfigParamsVolumeMount})
 
 			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
 				Name:  drivers.CSIPowerMaxSecretFilePath,
@@ -388,6 +406,10 @@ func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName str
 			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
 				Name:  drivers.CSIPowerMaxUseSecret,
 				Value: "true",
+			})
+			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
+				Name:  drivers.CSIPowerMaxConfigPathKey,
+				Value: drivers.CSIPowerMaxConfigPathValue,
 			})
 			break
 		}
