@@ -488,6 +488,46 @@ func dynamicallyAddEnvironmentVariable(ct *acorev1.ContainerApplyConfiguration, 
 	}
 }
 
+func SetPowermaxConfigContent(ct *acorev1.ContainerApplyConfiguration, secretName string) {
+	userNameVariable := "X_CSI_POWERMAX_USER"
+	userNameKey := "username"
+	userPasswordVariable := "X_CSI_POWERMAX_PASSWORD" // #nosec G101
+	userPasswordKey := "password"
+	dynamicallyAddEnvironmentVariable(ct, acorev1.EnvVarApplyConfiguration{
+		Name: &userNameVariable,
+		ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+			SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+				Key: &userNameKey,
+				LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{
+					Name: &secretName,
+				},
+			},
+		},
+	})
+
+	dynamicallyAddEnvironmentVariable(ct, acorev1.EnvVarApplyConfiguration{
+		Name: &userPasswordVariable,
+		ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+			SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+				Key: &userPasswordKey,
+				LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{
+					Name: &secretName,
+				},
+			},
+		},
+	})
+}
+
+func dynamicallyAddEnvironmentVariable(ct *acorev1.ContainerApplyConfiguration, envVar acorev1.EnvVarApplyConfiguration) {
+	contains := slices.ContainsFunc(ct.Env,
+		func(v acorev1.EnvVarApplyConfiguration) bool { return *(v.Name) == *(envVar.Name) },
+	)
+
+	if !contains {
+		ct.Env = append(ct.Env, envVar)
+	}
+}
+
 func getApplyCertVolumePowermax(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {
 	name := "certs"
 	secretName := fmt.Sprintf("%s-%s", cr.Name, name)
