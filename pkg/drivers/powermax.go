@@ -80,7 +80,7 @@ const (
 )
 
 var (
-	MountCredentialsEnvs map[string]string = map[string]string{
+	MountCredentialsEnvs = map[string]string{
 		CSIPowerMaxSecretFilePath: CSIPowerMaxSecretMountPath + "/" + CSIPowerMaxSecretName,
 		CSIPowerMaxUseSecret:      "true",
 		CSIPowerMaxConfigPathKey:  CSIPowerMaxConfigPathValue,
