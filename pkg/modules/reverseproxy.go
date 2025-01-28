@@ -388,29 +388,23 @@ func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName str
 	}
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, configParamsVolume)
 
-	mountPath := drivers.CSIPowerMaxSecretMountPath
 	// Adding volume mount for both the reverseproxy and driver
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if cnt.Name == RevProxyServiceName {
-			// Mount Secret
-			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
-				corev1.VolumeMount{Name: secretName, MountPath: mountPath})
-			// Mount Config Params
-			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
-				corev1.VolumeMount{Name: drivers.PowerMaxConfigParamsVolumeMount, MountPath: drivers.PowerMaxConfigParamsVolumeMount})
+			for key, val := range drivers.MountCredentialsVolumeMounts {
+				dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
+					corev1.VolumeMount{
+						Name:      key,
+						MountPath: val,
+					})
+			}
 
-			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
-				Name:  drivers.CSIPowerMaxSecretFilePath,
-				Value: drivers.CSIPowerMaxSecretMountPath + "/" + drivers.CSIPowerMaxSecretName,
-			})
-			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
-				Name:  drivers.CSIPowerMaxUseSecret,
-				Value: "true",
-			})
-			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
-				Name:  drivers.CSIPowerMaxConfigPathKey,
-				Value: drivers.CSIPowerMaxConfigPathValue,
-			})
+			for key, val := range drivers.MountCredentialsEnvs {
+				dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
+					Name:  key,
+					Value: val,
+				})
+			}
 			break
 		}
 	}

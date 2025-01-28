@@ -79,6 +79,19 @@ const (
 	CSIPowerMaxConfigPathValue string = "/powermax-config-params/driver-config-params.yaml"
 )
 
+var (
+	MountCredentialsEnvs map[string]string = map[string]string{
+		CSIPowerMaxSecretFilePath: CSIPowerMaxSecretMountPath + "/" + CSIPowerMaxSecretName,
+		CSIPowerMaxUseSecret:      "true",
+		CSIPowerMaxConfigPathKey:  CSIPowerMaxConfigPathValue,
+	}
+
+	MountCredentialsVolumeMounts = map[string]string{
+		CSIPowerMaxSecretVolumeName:     CSIPowerMaxSecretMountPath,
+		PowerMaxConfigParamsVolumeMount: PowerMaxConfigParamsVolumeMount,
+	}
+)
+
 // PrecheckPowerMax do input validation
 func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) error {
 	log := logger.GetLogger(ctx)
@@ -409,7 +422,6 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 	if UseReverseProxySecret(&cr) {
 		volumeName := CSIPowerMaxSecretVolumeName
 		optional := false
-		mountPath := CSIPowerMaxSecretMountPath
 
 		// Adding volume
 		podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes,
@@ -421,7 +433,7 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 		// Adding volume mount for both the reverseproxy and driver
 		for i, cnt := range podTemplate.Spec.Containers {
 			if *cnt.Name == "driver" || *cnt.Name == "reverseproxy" {
-				setPowermaxMountCredentialContent(&podTemplate.Spec.Containers[i], volumeName, mountPath)
+				setPowermaxMountCredentialContent(&podTemplate.Spec.Containers[i])
 			}
 		}
 
@@ -438,30 +450,20 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 	return nil
 }
 
-func setPowermaxMountCredentialContent(ct *acorev1.ContainerApplyConfiguration, mN, mP string) {
-	ct.VolumeMounts = append(ct.VolumeMounts, acorev1.VolumeMountApplyConfiguration{Name: &mN, MountPath: &mP})
+func setPowermaxMountCredentialContent(ct *acorev1.ContainerApplyConfiguration) {
+	for key, val := range MountCredentialsVolumeMounts {
+		dynamicallyMountVolume(ct, acorev1.VolumeMountApplyConfiguration{
+			Name:      &key,
+			MountPath: &val,
+		})
+	}
 
-	configParamsKey := PowerMaxConfigParamsVolumeMount
-	dynamicallyMountVolume(ct, acorev1.VolumeMountApplyConfiguration{
-		Name:      &configParamsKey,
-		MountPath: &configParamsKey,
-	})
-
-	volumeName := CSIPowerMaxSecretFilePath
-	mountPath := CSIPowerMaxSecretMountPath + "/" + CSIPowerMaxSecretName
-
-	useSecretEnv := CSIPowerMaxUseSecret
-	useSecretValue := "true"
-	ct.Env = append(ct.Env,
-		acorev1.EnvVarApplyConfiguration{Name: &volumeName, Value: &mountPath},
-		acorev1.EnvVarApplyConfiguration{Name: &useSecretEnv, Value: &useSecretValue})
-
-	configPathKey := CSIPowerMaxConfigPathKey
-	configPathVar := CSIPowerMaxConfigPathValue
-	dynamicallyAddEnvironmentVariable(ct, acorev1.EnvVarApplyConfiguration{
-		Name:  &configPathKey,
-		Value: &configPathVar,
-	})
+	for key, val := range MountCredentialsEnvs {
+		dynamicallyAddEnvironmentVariable(ct, acorev1.EnvVarApplyConfiguration{
+			Name:  &key,
+			Value: &val,
+		})
+	}
 }
 
 func dynamicallyMountVolume(ct *acorev1.ContainerApplyConfiguration, mount acorev1.VolumeMountApplyConfiguration) {
