@@ -904,7 +904,7 @@
     - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is not nstalled"
+    - "Validate [powermax] driver from CR [1] is not installed"
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
