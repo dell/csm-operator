@@ -48,7 +48,6 @@ const (
 	ReverseProxyConfigMap       = "<X_CSI_CONFIG_MAP_NAME>"
 	ReverseProxyPort            = "<X_CSI_REVPROXY_PORT>"
 	ReverseProxyCSMNameSpace    = "<CSM_NAMESPACE>"
-	ReverseProxyUseSecret       = "<X_CSI_REVPROXY_USE_SECRET>" // #nosec G101
 )
 
 // var used in deploying reverseproxy
@@ -265,7 +264,6 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	proxyPort := RevProxyDefaultPort
 	proxyConfig := RevProxyConfigMapDeafultName
 	image := op.K8sVersion.Images.CSIRevProxy
-	useSecret := "false"
 
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
@@ -282,9 +280,6 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
 					proxyConfig = env.Value
 				}
-				if env.Name == drivers.CSIPowerMaxUseSecret {
-					useSecret = env.Value
-				}
 			}
 		}
 	}
@@ -295,7 +290,6 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, proxyConfig)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyCSMNameSpace, cr.Namespace)
-	YamlString = strings.ReplaceAll(YamlString, ReverseProxyUseSecret, useSecret)
 
 	return YamlString, nil
 }
@@ -345,31 +339,65 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	return &dp, nil
 }
 
+func UpdatePowerMaxConfigMap(cm *corev1.ConfigMap, cr csmv1.ContainerStorageModule) {
+	if drivers.UseReverseProxySecret(&cr) {
+		data := cm.Data[drivers.ConfigParamsFile]
+
+		port := RevProxyDefaultPort
+		reverseProxy, err := getReverseProxyModule(cr)
+		if err == nil {
+			// Not minimal manifest, retrieve the port from the reverse proxy
+			port = getRevProxyPort(reverseProxy)
+		}
+
+		data += fmt.Sprintf("\n%s: %s", "CSI_POWERMAX_REVERSE_PROXY_PORT", port)
+
+		// Dynamically update the configMap with the reverse proxy port
+		cm.Data[drivers.ConfigParamsFile] = data
+	}
+}
+
 func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName string) {
 	optional := false
 
-	// Adding volume
+	// Add Secret Volume for Reverse Proxy
 	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes,
 		corev1.Volume{
-			Name:         secretName,
+			Name:         drivers.CSIPowerMaxSecretVolumeName,
 			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName, Optional: &optional}},
 		})
 
-	mountPath := drivers.CSIPowerMaxSecretMountPath
+	// Add Config Params Volume for Reverse Proxy
+	configParamsVolume := corev1.Volume{
+		Name: drivers.PowerMaxConfigParamsVolumeMount,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: drivers.PowerMaxConfigParamsVolumeMount,
+				},
+				Optional: &optional,
+			},
+		},
+	}
+	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, configParamsVolume)
+
 	// Adding volume mount for both the reverseproxy and driver
 	for i, cnt := range dp.Spec.Template.Spec.Containers {
 		if cnt.Name == RevProxyServiceName {
-			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
-				corev1.VolumeMount{Name: secretName, MountPath: mountPath})
+			for _, mount := range drivers.MountCredentialsVolumeMounts {
+				dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
+					corev1.VolumeMount{
+						Name:      mount.Name,
+						MountPath: mount.Value,
+					})
+			}
 
-			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
-				Name:  drivers.CSIPowerMaxSecretFilePath,
-				Value: drivers.CSIPowerMaxSecretMountPath + "/" + drivers.CSIPowerMaxSecretName,
-			})
-			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
-				Name:  drivers.CSIPowerMaxUseSecret,
-				Value: "true",
-			})
+			for _, env := range drivers.MountCredentialsEnvs {
+				dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
+					Name:  env.Name,
+					Value: env.Value,
+				})
+			}
 			break
 		}
 	}

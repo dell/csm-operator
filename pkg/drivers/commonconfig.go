@@ -35,6 +35,10 @@ var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerScaleName: "isilon-configs",
 }
 
+const (
+	ConfigParamsFile = "driver-config-params.yaml"
+)
+
 // GetController get controller yaml
 func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
@@ -76,6 +80,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if cr.Spec.Driver.Replicas != 0 {
 		controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
 	}
+
 	if cr.Spec.Driver.Controller != nil && len(cr.Spec.Driver.Controller.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Controller.Tolerations {
