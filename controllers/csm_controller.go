@@ -796,10 +796,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 		// Dynamically update the drivers config param.
-		err = modules.UpdatePowerMaxConfigMap(configMap, cr)
-		if err != nil {
-			return err
-		}
+		modules.UpdatePowerMaxConfigMap(configMap, cr)
 	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)
