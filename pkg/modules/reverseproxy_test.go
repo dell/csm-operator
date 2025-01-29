@@ -14,6 +14,7 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -566,6 +567,119 @@ func TestIsReverseProxySidecar(t *testing.T) {
 			if isSideCar != IsReverseProxySidecar() {
 				t.Errorf("Expected %v but got %v", isSideCar, IsReverseProxySidecar())
 			}
+		})
+	}
+}
+
+func TestUpdatePowerMaxConfigMap(t *testing.T) {
+	tests := map[string]func(t *testing.T) (*corev1.ConfigMap, csmv1.ContainerStorageModule, string){
+		"success: add port to config params": func(*testing.T) (*corev1.ConfigMap, csmv1.ContainerStorageModule, string) {
+			port := "2121"
+			configData := ""
+			cm := &corev1.ConfigMap{
+				Data: map[string]string{
+					drivers.ConfigParamsFile: configData,
+				},
+			}
+
+			cr := csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSI_REVPROXY_USE_SECRET",
+									Value: "true",
+								},
+							},
+						},
+					},
+					Modules: []csmv1.Module{
+						{
+							Name: csmv1.ReverseProxy,
+							Components: []csmv1.ContainerTemplate{
+								{
+									Name: ReverseProxyServerComponent,
+									Envs: []corev1.EnvVar{
+										{
+											Name:  "X_CSI_REVPROXY_PORT",
+											Value: port,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			configData += fmt.Sprintf("\n%s: %s", "CSI_POWERMAX_REVERSE_PROXY_PORT", port)
+
+			return cm, cr, configData
+		},
+		"success: not using secret": func(*testing.T) (*corev1.ConfigMap, csmv1.ContainerStorageModule, string) {
+			// Arrange
+			configData := ""
+			cm := &corev1.ConfigMap{
+				Data: map[string]string{
+					drivers.ConfigParamsFile: configData,
+				},
+			}
+
+			cr := csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSI_REVPROXY_USE_SECRET",
+									Value: "false",
+								},
+							},
+						},
+					},
+				},
+			}
+
+			return cm, cr, configData
+		},
+		"success: minimal manifest with secret": func(*testing.T) (*corev1.ConfigMap, csmv1.ContainerStorageModule, string) {
+			// Arrange
+			configData := ""
+			cm := &corev1.ConfigMap{
+				Data: map[string]string{
+					drivers.ConfigParamsFile: configData,
+				},
+			}
+
+			cr := csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSI_REVPROXY_USE_SECRET",
+									Value: "true",
+								},
+							},
+						},
+					},
+				},
+			}
+
+			// Due to minimal manifest, the default will be set.
+			configData += fmt.Sprintf("\n%s: %s", "CSI_POWERMAX_REVERSE_PROXY_PORT", "2222")
+
+			return cm, cr, configData
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			cm, cr, expectedResponse := tc(t)
+
+			UpdatePowerMaxConfigMap(cm, cr)
+			assert.Equal(t, cm.Data[drivers.ConfigParamsFile], expectedResponse)
 		})
 	}
 }
