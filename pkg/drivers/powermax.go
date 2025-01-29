@@ -79,16 +79,21 @@ const (
 	CSIPowerMaxConfigPathValue string = "/powermax-config-params/driver-config-params.yaml"
 )
 
+type CustomEnv struct {
+	Name  string
+	Value string
+}
+
 var (
-	MountCredentialsEnvs = map[string]string{
-		CSIPowerMaxSecretFilePath: CSIPowerMaxSecretMountPath + "/" + CSIPowerMaxSecretName,
-		CSIPowerMaxUseSecret:      "true",
-		CSIPowerMaxConfigPathKey:  CSIPowerMaxConfigPathValue,
+	MountCredentialsEnvs = []CustomEnv{
+		{Name: CSIPowerMaxSecretFilePath, Value: CSIPowerMaxSecretMountPath + "/" + CSIPowerMaxSecretName},
+		{Name: CSIPowerMaxUseSecret, Value: "true"},
+		{Name: CSIPowerMaxConfigPathKey, Value: CSIPowerMaxConfigPathValue},
 	}
 
-	MountCredentialsVolumeMounts = map[string]string{
-		CSIPowerMaxSecretVolumeName:     CSIPowerMaxSecretMountPath,
-		PowerMaxConfigParamsVolumeMount: PowerMaxConfigParamsVolumeMount,
+	MountCredentialsVolumeMounts = []CustomEnv{
+		{Name: CSIPowerMaxSecretVolumeName, Value: CSIPowerMaxSecretMountPath},
+		{Name: PowerMaxConfigParamsVolumeMount, Value: PowerMaxConfigParamsVolumeMount},
 	}
 )
 
@@ -132,8 +137,6 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		}
 	}
 
-	setUsageOfReverseProxySecret(cr, useReverseProxySecret)
-
 	log.Debugw("preCheck", "secrets", secretName)
 	return nil
 }
@@ -157,44 +160,6 @@ func UseReverseProxySecret(cr *csmv1.ContainerStorageModule) bool {
 	}
 
 	return useSecret
-}
-
-func setUsageOfReverseProxySecret(cr *csmv1.ContainerStorageModule, useSecret bool) {
-	found := false
-
-	var revProxy *csmv1.Module
-	for _, mod := range cr.Spec.Modules {
-		if mod.Name == csmv1.ReverseProxy {
-			revProxy = &mod
-		}
-	}
-
-	if revProxy == nil {
-		log.Println("setUsageOfReverseProxySecret: could not find reverse proxy")
-		return
-	}
-
-	for _, component := range revProxy.Components {
-		if component.Name == ReverseProxyServerComponent {
-			for i, env := range component.Envs {
-				if env.Name == CSIPowerMaxUseSecret {
-					revProxy.Components[0].Envs[i].Value = strconv.FormatBool(useSecret)
-					found = true
-				}
-			}
-		}
-	}
-
-	if !found {
-		log.Println("setUsageOfReverseProxySecret: could not find, adding")
-		revProxy.Components[0].Envs = append(revProxy.Components[0].Envs,
-			corev1.EnvVar{Name: CSIPowerMaxUseSecret, Value: strconv.FormatBool(useSecret)},
-			corev1.EnvVar{Name: CSIPowerMaxSecretFilePath, Value: CSIPowerMaxSecretMountPath + "/" + CSIPowerMaxSecretName},
-		)
-
-	}
-
-	log.Printf("setUsageOfReverseProxySecret: set usage of reverse proxy secret to %t", useSecret)
 }
 
 // ModifyPowermaxCR -
@@ -451,17 +416,17 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 }
 
 func setPowermaxMountCredentialContent(ct *acorev1.ContainerApplyConfiguration) {
-	for key, val := range MountCredentialsVolumeMounts {
+	for _, mount := range MountCredentialsVolumeMounts {
 		dynamicallyMountVolume(ct, acorev1.VolumeMountApplyConfiguration{
-			Name:      &key,
-			MountPath: &val,
+			Name:      &mount.Name,
+			MountPath: &mount.Value,
 		})
 	}
 
-	for key, val := range MountCredentialsEnvs {
+	for _, env := range MountCredentialsEnvs {
 		dynamicallyAddEnvironmentVariable(ct, acorev1.EnvVarApplyConfiguration{
-			Name:  &key,
-			Value: &val,
+			Name:  &env.Name,
+			Value: &env.Value,
 		})
 	}
 }

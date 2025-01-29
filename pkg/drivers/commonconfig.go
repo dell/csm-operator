@@ -80,6 +80,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	if cr.Spec.Driver.Replicas != 0 {
 		controllerYAML.Deployment.Spec.Replicas = &cr.Spec.Driver.Replicas
 	}
+
 	if cr.Spec.Driver.Controller != nil && len(cr.Spec.Driver.Controller.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Controller.Tolerations {
