@@ -397,7 +397,7 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 
 		// Adding volume mount for both the reverseproxy and driver
 		for i, cnt := range podTemplate.Spec.Containers {
-			if *cnt.Name == "driver" || *cnt.Name == "reverseproxy" {
+			if *cnt.Name == "driver" || *cnt.Name == "reverseproxy" || *cnt.Name == "karavi-metrics-powermax" {
 				setPowermaxMountCredentialContent(&podTemplate.Spec.Containers[i])
 			}
 		}
