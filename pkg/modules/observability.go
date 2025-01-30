@@ -904,10 +904,7 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	useSecret := drivers.UseReverseProxySecret(&cr)
 	if secretSupported && useSecret {
 		// Append config map or mount cred secret.
-		err = drivers.DynamicallyMountPowermaxContent(dpApply, cr)
-		if err != nil {
-			return err
-		}
+		_ = drivers.DynamicallyMountPowermaxContent(dpApply, cr)
 	}
 
 	if !useSecret {
@@ -956,11 +953,9 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	return nil
 }
 
-func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule) error {
-	obs, err := getObservabilityModule(cr)
-	if err != nil {
-		return err
-	}
+func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule) {
+	// Previous calls already checked existence of the observability module
+	obs, _ := getObservabilityModule(cr)
 
 	cm := "powermax-reverseproxy-config"
 	// Get the config map name from the observability module
@@ -1006,8 +1001,6 @@ func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csm
 	if !contains {
 		dp.Spec.Template.Spec.Containers[0].VolumeMounts = append(dp.Spec.Template.Spec.Containers[0].VolumeMounts, volumeMount)
 	}
-
-	return nil
 }
 
 // getPowerMaxMetricsObject - get powermax metrics yaml string
