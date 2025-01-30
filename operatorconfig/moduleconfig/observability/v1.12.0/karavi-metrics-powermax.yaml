@@ -123,8 +123,6 @@ spec:
             - name: SSL_CERT_DIR
               value: /certs
           volumeMounts:
-            # - name: <X_CSI_CONFIG_MAP_NAME>
-            #   mountPath: /etc/reverseproxy
             - name: tls-secret
               mountPath: /etc/ssl/certs
               readOnly: true
@@ -135,9 +133,6 @@ spec:
       volumes:
         - name: certs
           emptyDir: {}
-        # - name: <X_CSI_CONFIG_MAP_NAME>
-        #   configMap:
-        #     name: <X_CSI_CONFIG_MAP_NAME>
         - name: tls-secret
           secret:
             secretName: otel-collector-tls
