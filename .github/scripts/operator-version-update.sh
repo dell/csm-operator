@@ -14,6 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This script updates the operator versions in the following files
+#  1. Dockerfile
+#  2. kustomization.yaml
+#  3. controllers/csm_controller.go
+#  4. operator.yaml
+#  5. docker.mk
+#  6. dell-csm-operator.clusterserviceversion.yaml
 
 op_version="$1"
 op_skip_version="$2"
