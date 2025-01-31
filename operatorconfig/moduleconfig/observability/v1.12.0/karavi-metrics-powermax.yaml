@@ -110,6 +110,7 @@ spec:
       containers:
         - name: karavi-metrics-powermax
           image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.6.0
+          imagePullPolicy: Always
           resources: {}
           env:
             - name: POWERMAX_METRICS_ENDPOINT

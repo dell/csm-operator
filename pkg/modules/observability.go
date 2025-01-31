@@ -904,6 +904,7 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	useSecret := drivers.UseReverseProxySecret(&cr)
 	if secretSupported && useSecret {
 		// Append config map or mount cred secret.
+		// We ensure that we pass through the DeploymentApplyConfiguration.
 		_ = drivers.DynamicallyMountPowermaxContent(dpApply, cr)
 	}
 
