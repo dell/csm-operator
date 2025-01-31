@@ -1,0 +1,44 @@
+name: Update sidecar version
+# reusable workflow
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      attacher:
+        description: 'csi-attacher version, ex: v4.8.0'
+        required: true
+      provisioner:
+        description: 'csi-provisioner version, ex: v5.1.0'
+        required: true
+      snapshotter:
+        description: 'csi-snapshotter version, ex: v8.2.0'
+        required: true
+      resizer:
+        description: 'csi-resizer version, ex: v1.13.1'
+        required: true
+      registrar:
+        description: 'csi-node-driver-registrar version, ex: v2.13.0'
+        required: true
+      health-monitor:
+        description: 'csi-external-health-monitor-controller version, ex: v0.14.0'
+        required: true
+      metadata-retriever:
+        description: 'csi-metadata-retriever version, ex: v1.8.0'
+        required: true
+      sdcmonitor:
+        description: 'sdc version, ex: 4.5.1'
+        required: true
+jobs:
+  version-update:
+    uses: dell/common-github-actions/.github/workflows/sidecar-version-update.yaml@main
+    name: Sidecar version update
+    with:
+      attacher: ${{ inputs.attacher }}
+      snapshotter: ${{ inputs.snapshotter }}
+      provisioner: ${{ inputs.provisioner }}
+      registrar: ${{ inputs.registrar }}
+      health-monitor: ${{ inputs.health-monitor }}
+      metadata-retriever: ${{ inputs.metadata-retriever }}
+      resizer: ${{ inputs.resizer }}
+      sdcmonitor: ${{ inputs.sdcmonitor }}
+    secrets: inherit
