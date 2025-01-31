@@ -65,5 +65,5 @@ powermax:
     csireverseproxy: "v2.13.0"
     authorization: "v2.1.0"
     replication: "v1.11.0"
-    observability: "v1.11.0"
+    observability: "v1.12.0"
     resiliency: "v1.12.0"

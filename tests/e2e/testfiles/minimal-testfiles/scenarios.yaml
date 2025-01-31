@@ -913,6 +913,36 @@
       run:
         - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
 
+- scenario: "Install PowerMax Driver with Mount Credentials (Minimal), Enable Observability"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powermax_secret.yaml"
+  tags:
+    - "powermax"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmaxUseSecret]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Enable [observability] module from CR [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    - "Validate [powermax] driver spec from CR [1]"
+    - "Run custom test"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+    - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Restore template [testfiles/powermax-templates/powermax-use-secret-template.yaml] for [pmaxUseSecret]"
+    - "Restore template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+  customTest:
+    - name: Cert CSI
+      run:
+        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+
 - scenario: "Install PowerMax Driver (Minimal, With no forceRemoveDriver)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax_with_no_forceRemoveDriver.yaml"
