@@ -1,10 +1,4 @@
 include docker.mk
-# Check if semver.mk exists before including it.
-ifeq ($(wildcard semver.mk),)
-  # semver.mk doesn't exist yet, so do nothing for now.
-else
-  include semver.mk
-endif
 
 
 # CHANNELS define the bundle channels used in the bundle.
@@ -15,15 +9,6 @@ endif
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
 endif
-
-ifdef NOTES
-	RELNOTE="-$(NOTES)"
-else
-	RELNOTE=
-endif
-
-# Operator version tagged with build number. For e.g. - v1.8.0.001
-VERSION ?= v$(MAJOR).$(MINOR).$(PATCH)$(RELNOTE)
 
 # DEFAULT_CHANNEL defines the default channel used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g DEFAULT_CHANNEL = "stable")
@@ -83,6 +68,23 @@ gen-semver: generate
 	(cd core; rm -f core_generated.go; go generate)
 	go run core/semver/semver.go -f mk > semver.mk
 
+include semver.mk
+
+ifdef NOTES
+	RELNOTE="-$(NOTES)"
+else
+	RELNOTE=
+endif
+
+# Operator version tagged with build number. For e.g. - v1.8.0.001
+VERSION ?= v$(MAJOR).$(MINOR).$(PATCH)$(RELNOTE)
+
+ifdef VERSION
+  $(info VERSION is: $(VERSION))  # Print the version for debugging
+else
+  $(error VERSION is not defined! Check semver.mk generation.)
+endif
+
 fmt: ## Run go fmt against code.
 	go fmt ./...
 
@@ -140,7 +142,6 @@ podman-push: podman-build ## Builds, tags and pushes docker image with the manag
 	podman push ${IMG}
 
 docker-build: gen-semver build-base-image ## Build docker image with the manager.
-	@echo "MAJOR $(MAJOR) MINOR $(MINOR) PATCH $(PATCH) RELNOTE $(RELNOTE) SEMVER $(SEMVER) VERSION $(VERSION) IMG $(IMG) BUNDLE_IMG $(BUNDLE_IMG) CATALOG_IMG $(CATALOG_IMG)"
 	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
