@@ -1,5 +1,10 @@
 include docker.mk
-include semver.mk
+# Check if semver.mk exists before including it.
+ifeq ($(wildcard semver.mk),)
+  # semver.mk doesn't exist yet, so do nothing for now.
+else
+  include semver.mk
+endif
 
 
 # CHANNELS define the bundle channels used in the bundle.
