@@ -1,4 +1,5 @@
 include docker.mk
+include semver.mk
 
 
 # CHANNELS define the bundle channels used in the bundle.
@@ -9,6 +10,15 @@ include docker.mk
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
 endif
+
+ifdef NOTES
+	RELNOTE="-$(NOTES)"
+else
+	RELNOTE=
+endif
+
+# Operator version tagged with build number. For e.g. - v1.8.0.001
+VERSION ?= v$(MAJOR).$(MINOR).$(PATCH)$(RELNOTE)
 
 # DEFAULT_CHANNEL defines the default channel used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g DEFAULT_CHANNEL = "stable")
