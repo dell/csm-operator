@@ -900,7 +900,7 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	}
 
 	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
-	secretSupported, _ := utils.MinVersionCheck("v2.14.0", cr.Spec.Driver.ConfigVersion)
+	secretSupported, _ := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
 	useSecret := drivers.UseReverseProxySecret(&cr)
 	if secretSupported && useSecret {
 		// Append config map or mount cred secret.

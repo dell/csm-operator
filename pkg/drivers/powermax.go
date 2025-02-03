@@ -77,6 +77,8 @@ const (
 
 	CSIPowerMaxConfigPathKey   string = "X_CSI_POWERMAX_CONFIG_PATH"
 	CSIPowerMaxConfigPathValue string = "/powermax-config-params/driver-config-params.yaml"
+
+	PowerMaxMountCredentialMinVersion string = "v2.14.0"
 )
 
 type CustomEnv struct {
