@@ -64,11 +64,17 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 #Generate semver.mk
+.PHONY: gen-semver
 gen-semver: generate
 	(cd core; rm -f core_generated.go; go generate)
 	go run core/semver/semver.go -f mk > semver.mk
 
-include semver.mk
+-include semver.mk
+
+# Define default values for MAJOR, MINOR, PATCH if semver.mk is not included
+MAJOR ?= 0
+MINOR ?= 0
+PATCH ?= 0
 
 ifdef NOTES
 	RELNOTE="-$(NOTES)"
