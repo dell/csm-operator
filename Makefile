@@ -125,6 +125,7 @@ podman-push: podman-build ## Builds, tags and pushes docker image with the manag
 	podman push ${IMG}
 
 docker-build: gen-semver build-base-image ## Build docker image with the manager.
+	@echo "MAJOR $(MAJOR) MINOR $(MINOR) PATCH $(PATCH) RELNOTE $(RELNOTE) SEMVER $(SEMVER) VERSION $(VERSION) IMG $(IMG) BUNDLE_IMG $(BUNDLE_IMG) CATALOG_IMG $(CATALOG_IMG)"
 	docker build . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
 docker-push: docker-build ## Builds, tags and pushes docker image with the manager.

@@ -1,3 +1,5 @@
+include semver.mk
+
 # Registry for all images
 REGISTRY ?= docker.io/dellemc
 
@@ -14,8 +16,14 @@ BUNDLE_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-bundle
 # Image tag base for community catalog images
 CATALOG_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-catalog
 
+ifdef NOTES
+	RELNOTE="-$(NOTES)"
+else
+	RELNOTE=
+endif
+
 # Operator version tagged with build number. For e.g. - v1.8.0.001
-VERSION ?= v1.8.0
+VERSION ?= v$(MAJOR).$(MINOR).$(PATCH)$(RELNOTE)
 
 # Bundle Version is the semantic version(required by operator-sdk)
 BUNDLE_VERSION ?= 1.8.0
