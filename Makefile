@@ -1,4 +1,5 @@
 include docker.mk
+include overrides.mk
 
 
 # CHANNELS define the bundle channels used in the bundle.
@@ -70,11 +71,6 @@ gen-semver: generate
 	go run core/semver/semver.go -f mk > semver.mk
 
 -include semver.mk
-
-# Define default values for MAJOR, MINOR, PATCH if semver.mk is not included
-MAJOR ?= 0
-MINOR ?= 0
-PATCH ?= 0
 
 ifdef NOTES
 	RELNOTE="-$(NOTES)"
