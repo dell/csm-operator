@@ -147,13 +147,13 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 		if ctrlObj.GetName() == RevProxyServiceName && ctrlObj.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
 			dp := ctrlObj.(*appsv1.Deployment)
 
-			revProxyModule, _, _ := getRevproxyApplyCR(cr, op)
-			secretSupported, _ := utils.MinVersionCheck("v2.13.0", revProxyModule.ConfigVersion)
+			secretSupported, _ := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
 			if secretSupported {
 				if drivers.UseReverseProxySecret(&cr) {
 					secretName := cr.Spec.Driver.AuthSecret
 					deploymentSetReverseProxySecretMounts(dp, secretName)
 				} else {
+					revProxyModule, _, _ := getRevproxyApplyCR(cr, op)
 					cm := getRevProxyEnvVariable(*revProxyModule, "X_CSI_CONFIG_MAP_NAME")
 					deploymentSetReverseProxyConfigMapMounts(dp, cm)
 				}
@@ -323,7 +323,7 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	}
 
 	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
-	secretSupported, _ := utils.MinVersionCheck("v2.14.0", cr.Spec.Driver.ConfigVersion)
+	secretSupported, _ := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
 	useSecret := drivers.UseReverseProxySecret(&cr)
 	if secretSupported && useSecret {
 		err = drivers.DynamicallyMountPowermaxContent(&dp, cr)

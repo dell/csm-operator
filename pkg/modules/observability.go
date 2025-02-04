@@ -11,6 +11,7 @@ package modules
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -25,6 +26,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -897,6 +899,19 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 		return fmt.Errorf("could not find deployment obj")
 	}
 
+	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
+	secretSupported, _ := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+	useSecret := drivers.UseReverseProxySecret(&cr)
+	if secretSupported && useSecret {
+		// Append config map or mount cred secret.
+		// We ensure that we pass through the DeploymentApplyConfiguration.
+		_ = drivers.DynamicallyMountPowermaxContent(dpApply, cr)
+	}
+
+	if !useSecret {
+		setPowerMaxMetricsConfigMap(dpApply, cr)
+	}
+
 	powerMaxMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerMaxMetricsObjects, ctrlClient, k8sClient)
 	if err != nil {
 		return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
@@ -937,6 +952,56 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	}
 
 	return nil
+}
+
+func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule) {
+	// Previous calls already checked existence of the observability module
+	obs, _ := getObservabilityModule(cr)
+
+	cm := "powermax-reverseproxy-config"
+	// Get the config map name from the observability module
+	for _, component := range obs.Components {
+		if component.Name == ObservabilityMetricsPowerMaxName {
+			for _, env := range component.Envs {
+				if env.Name == "X_CSI_CONFIG_MAP_NAME" {
+					cm = env.Value
+					break
+				}
+			}
+		}
+	}
+
+	optional := false
+	vol := acorev1.VolumeApplyConfiguration{
+		Name: &cm,
+		VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+			ConfigMap: &acorev1.ConfigMapVolumeSourceApplyConfiguration{
+				LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{Name: &cm},
+				Optional:                               &optional,
+			},
+		},
+	}
+
+	// Dynamically add the volume
+	contains := slices.ContainsFunc(dp.Spec.Template.Spec.Volumes,
+		func(v acorev1.VolumeApplyConfiguration) bool { return *(v.Name) == *(vol.Name) },
+	)
+	if !contains {
+		dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, vol)
+	}
+
+	mountPath := "/etc/reverseproxy"
+	volumeMount := acorev1.VolumeMountApplyConfiguration{Name: &cm, MountPath: &mountPath}
+	contains = slices.ContainsFunc(dp.Spec.Template.Spec.Containers[0].VolumeMounts,
+		func(v acorev1.VolumeMountApplyConfiguration) bool {
+			// Cast to pull out value instead of comparing addresses.
+			return *(v.Name) == *(volumeMount.Name)
+		},
+	)
+
+	if !contains {
+		dp.Spec.Template.Spec.Containers[0].VolumeMounts = append(dp.Spec.Template.Spec.Containers[0].VolumeMounts, volumeMount)
+	}
 }
 
 // getPowerMaxMetricsObject - get powermax metrics yaml string
