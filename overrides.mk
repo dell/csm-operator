@@ -14,8 +14,30 @@
 # this file, included from the Makefile, will overlay default values with environment variables
 #
 
-# Define default values for MAJOR, MINOR, PATCH if semver.mk is not included
-MAJOR ?= 0
-MINOR ?= 0
-PATCH ?= 0
-NOTES ?=
+
+# DEFAULT values
+DEFAULT_MAJOR = 0
+DEFAULT_MINOR = 0
+DEFAULT_PATCH = 0
+DEFAULT_NOTES =
+
+# Override defaults with environment variables (version components)
+MAJOR ?= $(DEFAULT_MAJOR)
+MINOR ?= $(DEFAULT_MINOR)
+PATCH ?= $(DEFAULT_PATCH)
+NOTES ?= $(DEFAULT_NOTES)
+
+# target to print some help regarding these overrides and how to use them
+overrides-help:
+	@echo
+	@echo "The following environment variables can be set to control the build"
+	@echo
+	@echo "MAJOR   - The major version of image to be built, default is: $(DEFAULT_MAJOR)"
+	@echo "              Current setting is: $(MAJOR)"
+	@echo "MINOR   - The minor version of image to be built, default is: $(DEFAULT_MINOR)"
+	@echo "              Current setting is: $(MINOR)"
+	@echo "PATCH   - The patch version of image to be built, defaut is: $(DEFAULT_PATCH)"
+	@echo "              Current setting is: $(PATCH)"
+	@echo "NOTES   - The release notes of image to be built, default is an empty string."
+	@echo "              Current setting is: '$(NOTES)'"
+	@echo
