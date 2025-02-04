@@ -77,6 +77,8 @@ const (
 
 	CSIPowerMaxConfigPathKey   string = "X_CSI_POWERMAX_CONFIG_PATH"
 	CSIPowerMaxConfigPathValue string = "/powermax-config-params/driver-config-params.yaml"
+
+	PowerMaxMountCredentialMinVersion string = "v2.14.0"
 )
 
 type CustomEnv struct {
@@ -397,7 +399,7 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 
 		// Adding volume mount for both the reverseproxy and driver
 		for i, cnt := range podTemplate.Spec.Containers {
-			if *cnt.Name == "driver" || *cnt.Name == "reverseproxy" {
+			if *cnt.Name == "driver" || *cnt.Name == "reverseproxy" || *cnt.Name == "karavi-metrics-powermax" {
 				setPowermaxMountCredentialContent(&podTemplate.Spec.Containers[i])
 			}
 		}
