@@ -1931,7 +1931,7 @@
       run:
         - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
 
-- scenario: "Install PowerMax Driver with Mount Credentials (Sidecar), Enable Auth v1"
+- scenario: "Install PowerMax Driver with Mount Credentials (Sidecar), Enable Authorization v1"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
     - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
