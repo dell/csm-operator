@@ -270,3 +270,15 @@ func TestErrorExit(t *testing.T) {
 	// check the output is the message we logged in errorExit
 	assert.Equal(t, message, string(buf[:n]))
 }
+
+func TestString(t *testing.T) {
+	v := &semver{
+		Major: 1,
+		Minor: 8,
+		Patch: 1,
+		Dirty: true,
+	}
+
+	got := v.String()
+	assert.Equal(t, "1.8.1+dirty", got)
+}
