@@ -6,14 +6,14 @@ on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
       option:
-          description: 'Select version to release'
-          required: true
-          type: choice
-          default: 'minor'
-          options:
-            - major
-            - minor
-            - patch
+        description: 'Select version to release'
+        required: true
+        type: choice
+        default: 'minor'
+        options:
+          - major
+          - minor
+          - patch
 jobs:
   csm-release:
     uses: dell/common-github-actions/.github/workflows/csm-release-driver-module.yaml@main
