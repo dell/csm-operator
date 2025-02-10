@@ -24,12 +24,14 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/version"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -69,6 +71,22 @@ const (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+
+	isOpenShift = func() (bool, error) {
+		return k8sClient.IsOpenShift()
+	}
+
+	getKubeAPIServerVersion = func() (*version.Info, error) {
+		return k8sClient.GetKubeAPIServerVersion()
+	}
+
+	getConfigDir = func() string {
+		return ConfigDir
+	}
+
+	getk8sPathFn = func(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
+		return getk8sPath(log, kubeVersion, currentVersion, minVersion, maxVersion)
+	}
 )
 
 func init() {
@@ -94,7 +112,7 @@ func printVersion(log *zap.SugaredLogger) {
 func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	cfg := utils.OperatorConfig{}
 
-	isOpenShift, err := k8sClient.IsOpenShift()
+	isOpenShift, err := isOpenShift()
 	if err != nil {
 		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
 	}
@@ -104,7 +122,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	} else {
 		log.Infof("Kubernetes environment")
 	}
-	kubeAPIServerVersion, err := k8sClient.GetKubeAPIServerVersion()
+	kubeAPIServerVersion, err := getKubeAPIServerVersion()
 	if err != nil {
 		log.Info(fmt.Sprintf("kubeVersion err %s", kubeAPIServerVersion))
 	}
@@ -129,29 +147,19 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	if err != nil {
 		log.Infof("currentVersion is %s", kubeVersion)
 	}
-	// intialise variable
-	k8sPath := ""
-	if currentVersion < minVersion {
-		log.Infof("Installed k8s version %s is less than the minimum supported k8s version %s , hence using the default configurations", kubeVersion, K8sMinimumSupportedVersion)
-		k8sPath = "/driverconfig/common/default.yaml"
-	} else if currentVersion > maxVersion {
-		log.Infof("Installed k8s version %s is greater than the maximum supported k8s version %s , hence using the latest available configurations", kubeVersion, K8sMaximumSupportedVersion)
-		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
-	} else {
-		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
-		log.Infof("Current kubernetes version is %s which is a supported version ", kubeVersion)
-	}
 
-	_, err = os.ReadDir(filepath.Clean(ConfigDir))
+	k8sPath := getk8sPathFn(log, kubeVersion, currentVersion, minVersion, maxVersion)
+
+	_, err = os.ReadDir(filepath.Clean(getConfigDir()))
 	if err != nil {
-		log.Errorw(err.Error(), "cannot find driver config path", ConfigDir)
+		log.Errorw(err.Error(), "cannot find driver config path", getConfigDir())
 		cfg.ConfigDirectory = Operatorconfig
 		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
 		k8sPath = fmt.Sprintf("%s%s", Operatorconfig, k8sPath)
 	} else {
-		cfg.ConfigDirectory = filepath.Clean(ConfigDir)
+		cfg.ConfigDirectory = filepath.Clean(getConfigDir())
 		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
-		k8sPath = fmt.Sprintf("%s%s", ConfigDir, k8sPath)
+		k8sPath = fmt.Sprintf("%s%s", getConfigDir(), k8sPath)
 	}
 
 	buf, err := os.ReadFile(filepath.Clean(k8sPath))
@@ -168,6 +176,21 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	cfg.K8sVersion = imageConfig
 
 	return cfg
+}
+
+func getk8sPath(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
+	k8sPath := ""
+	if currentVersion < minVersion {
+		log.Infof("Installed k8s version %s is less than the minimum supported k8s version %s , hence using the default configurations", kubeVersion, K8sMinimumSupportedVersion)
+		k8sPath = "/driverconfig/common/default.yaml"
+	} else if currentVersion > maxVersion {
+		log.Infof("Installed k8s version %s is greater than the maximum supported k8s version %s , hence using the latest available configurations", kubeVersion, K8sMaximumSupportedVersion)
+		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
+	} else {
+		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
+		log.Infof("Current kubernetes version is %s which is a supported version ", kubeVersion)
+	}
+	return k8sPath
 }
 
 func main() {
