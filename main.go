@@ -27,6 +27,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,6 +37,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -71,22 +73,6 @@ const (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
-
-	isOpenShift = func() (bool, error) {
-		return k8sClient.IsOpenShift()
-	}
-
-	getKubeAPIServerVersion = func() (*version.Info, error) {
-		return k8sClient.GetKubeAPIServerVersion()
-	}
-
-	getConfigDir = func() string {
-		return ConfigDir
-	}
-
-	getk8sPathFn = func(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
-		return getk8sPath(log, kubeVersion, currentVersion, minVersion, maxVersion)
-	}
 )
 
 func init() {
@@ -108,6 +94,24 @@ func printVersion(log *zap.SugaredLogger) {
 	log.Debugf("Go Version: %s", osruntime.Version())
 	log.Debugf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH)
 }
+
+var (
+	isOpenShift = func() (bool, error) {
+		return k8sClient.IsOpenShift()
+	}
+
+	getKubeAPIServerVersion = func() (*version.Info, error) {
+		return k8sClient.GetKubeAPIServerVersion()
+	}
+
+	getConfigDir = func() string {
+		return ConfigDir
+	}
+
+	getk8sPathFn = func(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
+		return getk8sPath(log, kubeVersion, currentVersion, minVersion, maxVersion)
+	}
+)
 
 func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	cfg := utils.OperatorConfig{}
@@ -193,22 +197,56 @@ func getk8sPath(log *zap.SugaredLogger, kubeVersion string, currentVersion, minV
 	return k8sPath
 }
 
-func main() {
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8082", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	opts := crzap.Options{
-		Development: true,
+var (
+	getConfigOrDie = func() *rest.Config {
+		return ctrl.GetConfigOrDie()
 	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
 
-	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
+	newManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
+		return ctrl.NewManager(config, options)
+	}
+
+	newConfigOrDie = func(c *rest.Config) *kubernetes.Clientset {
+		return kubernetes.NewForConfigOrDie(c)
+	}
+
+	getSetupWithManagerFn = func(r *controllers.ContainerStorageModuleReconciler) func(mgr ctrl.Manager, limiter workqueue.TypedRateLimiter[reconcile.Request], maxReconcilers int) error {
+		return r.SetupWithManager
+	}
+
+	osExit = func(code int) {
+		os.Exit(code)
+	}
+
+	initFlags = func() crzap.Options {
+		flags.metricsBindAddress = flag.String("metrics-bind-address", ":8082", "The address the metric endpoint binds to.")
+		flags.healthProbeBindAddress = flag.String("health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+		flags.leaderElect = flag.Bool("leader-elect", false,
+			"Enable leader election for controller manager. "+
+				"Enabling this will ensure there is only one active controller manager.")
+		opts := initZapFlags()
+		flag.Parse()
+		return opts
+	}
+
+	initZapFlags = func() crzap.Options {
+		opts := crzap.Options{
+			Development: true,
+		}
+		opts.BindFlags(flag.CommandLine)
+		return opts
+	}
+)
+
+var flags struct {
+	metricsBindAddress     *string
+	healthProbeBindAddress *string
+	leaderElect            *bool
+	zapOpts                crzap.Options
+}
+
+func main() {
+	opts := initFlags()
 
 	_, log := logger.GetNewContextWithLogger("main")
 
@@ -216,13 +254,13 @@ func main() {
 
 	printVersion(log)
 	operatorConfig := getOperatorConfig(log)
-	restConfig := ctrl.GetConfigOrDie()
+	restConfig := getConfigOrDie()
 
-	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
+	mgr, err := newManager(restConfig, ctrl.Options{
 		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
+		Metrics:                metricsserver.Options{BindAddress: *flags.metricsBindAddress},
+		HealthProbeBindAddress: *flags.healthProbeBindAddress,
+		LeaderElection:         *flags.leaderElect,
 		LeaderElectionID:       "090cae6a.dell.com",
 		WebhookServer: webhook.NewServer(webhook.Options{ // Corrected webhook initialization
 			Port: 9443,
@@ -230,42 +268,50 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(log.Infof)
-	k8sClient := kubernetes.NewForConfigOrDie(restConfig)
+	k8sClient := newConfigOrDie(restConfig)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: k8sClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(clientgoscheme.Scheme, corev1.EventSource{Component: "csm"})
 
 	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
-	if err = (&controllers.ContainerStorageModuleReconciler{
+
+	r := &controllers.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),
 		K8sClient:     k8sClient,
 		Log:           log,
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: recorder,
 		Config:        operatorConfig,
-	}).SetupWithManager(mgr, expRateLimiter, 1); err != nil {
+	}
+
+	setupWithManager := getSetupWithManagerFn(r)
+	if err := setupWithManager(mgr, expRateLimiter, 1); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ContainerStorageModule")
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 	defer close(controllers.StopWatch)
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+		osExit(1)
 	}
 }
