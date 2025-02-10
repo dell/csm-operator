@@ -43,7 +43,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image:  registry.connect.redhat.com/dell-emc/dell-csm-powermax@sha256:f7a60079eb35d148f6ea86d42539ebf2c1334e4484b1d2436b53269da3ef6c0e
+      image: registry.connect.redhat.com/dell-emc/dell-csm-powermax@sha256:f7a60079eb35d148f6ea86d42539ebf2c1334e4484b1d2436b53269da3ef6c0e
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
