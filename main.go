@@ -13,6 +13,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -111,9 +112,21 @@ var (
 	getk8sPathFn = func(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
 		return getk8sPath(log, kubeVersion, currentVersion, minVersion, maxVersion)
 	}
+
+	getK8sMinimumSupportedVersion = func() string {
+		return K8sMaximumSupportedVersion
+	}
+
+	getK8sMaximumSupportedVersion = func() string {
+		return K8sMaximumSupportedVersion
+	}
+
+	yamlUnmarshal = func(data []byte, v interface{}, opts ...yaml.JSONOpt) error {
+		return yaml.Unmarshal(data, v)
+	}
 )
 
-func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
+func getOperatorConfig(log *zap.SugaredLogger) (utils.OperatorConfig, error) {
 	cfg := utils.OperatorConfig{}
 
 	isOpenShift, err := isOpenShift()
@@ -138,13 +151,13 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	minVersion := 0.0
 	maxVersion := 0.0
 
-	minVersion, err = strconv.ParseFloat(K8sMinimumSupportedVersion, 64)
+	minVersion, err = strconv.ParseFloat(getK8sMinimumSupportedVersion(), 64)
 	if err != nil {
-		log.Info(fmt.Sprintf("minVersion %s", K8sMinimumSupportedVersion))
+		log.Info(fmt.Sprintf("minVersion %s", getK8sMinimumSupportedVersion()))
 	}
-	maxVersion, err = strconv.ParseFloat(K8sMaximumSupportedVersion, 64)
+	maxVersion, err = strconv.ParseFloat(getK8sMaximumSupportedVersion(), 64)
 	if err != nil {
-		log.Info(fmt.Sprintf("maxVersion %s", K8sMaximumSupportedVersion))
+		log.Info(fmt.Sprintf("maxVersion %s", getK8sMaximumSupportedVersion()))
 	}
 
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
@@ -172,14 +185,14 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	}
 
 	var imageConfig utils.K8sImagesConfig
-	err = yaml.Unmarshal(buf, &imageConfig)
+	err = yamlUnmarshal(buf, &imageConfig)
 	if err != nil {
-		panic(fmt.Sprintf("unmarshalling: %v", err))
+		return cfg, fmt.Errorf("unmarshalling: %v", err)
 	}
 
 	cfg.K8sVersion = imageConfig
 
-	return cfg
+	return cfg, nil
 }
 
 func getk8sPath(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
@@ -236,6 +249,14 @@ var (
 		opts.BindFlags(flag.CommandLine)
 		return opts
 	}
+
+	getControllerWatchCh = func() chan (struct{}) {
+		return controllers.StopWatch
+	}
+
+	setupSignalHandler = func() context.Context {
+		return ctrl.SetupSignalHandler()
+	}
 )
 
 var flags struct {
@@ -253,7 +274,12 @@ func main() {
 	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
 
 	printVersion(log)
-	operatorConfig := getOperatorConfig(log)
+	operatorConfig, err := getOperatorConfig(log)
+	if err != nil {
+		setupLog.Error(err, "unable to get operator config")
+		osExit(1)
+		return
+	}
 	restConfig := getConfigOrDie()
 
 	mgr, err := newManager(restConfig, ctrl.Options{
@@ -295,7 +321,7 @@ func main() {
 		osExit(1)
 		return
 	}
-	defer close(controllers.StopWatch)
+	defer close(getControllerWatchCh())
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -310,7 +336,7 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(setupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		osExit(1)
 	}
