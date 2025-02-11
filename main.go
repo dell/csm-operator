@@ -122,7 +122,7 @@ var (
 	}
 
 	yamlUnmarshal = func(data []byte, v interface{}, opts ...yaml.JSONOpt) error {
-		return yaml.Unmarshal(data, v)
+		return yaml.Unmarshal(data, v, opts...)
 	}
 )
 
