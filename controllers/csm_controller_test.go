@@ -1536,7 +1536,7 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
 		{
 			State: corev1.ContainerState{
-				Running: &corev1.ContainerStateRunning{StartedAt: metav1.Time{time.Now()}},
+				Running: &corev1.ContainerStateRunning{StartedAt: metav1.Time{Time: time.Now()}},
 			},
 		},
 	}
