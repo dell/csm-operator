@@ -37,7 +37,6 @@ import (
 
 func TestPrintVersion(_ *testing.T) {
 	_, log := logger.GetNewContextWithLogger("main")
-	// TODO: Hook onto the output and verify that it matches the expected
 	printVersion(log)
 }
 
@@ -472,9 +471,7 @@ func TestGetk8sPath(t *testing.T) {
 	}
 }
 
-var (
-	mainCh = make(chan struct{})
-)
+var mainCh = make(chan struct{})
 
 func TestMain(_ *testing.T) {
 	originalIsOpenShift := isOpenShift
@@ -601,7 +598,7 @@ func TestMainGetOperatorConfigError(_ *testing.T) {
 	}
 
 	osExitCalled := make(chan struct{})
-	osExit = func(code int) {
+	osExit = func(_ int) {
 		osExitCalled <- struct{}{}
 		runtime.Goexit()
 	}
@@ -706,7 +703,7 @@ func TestMainNewManagerError(_ *testing.T) {
 	}
 
 	osExitCalled := make(chan struct{})
-	osExit = func(code int) {
+	osExit = func(_ int) {
 		osExitCalled <- struct{}{}
 		runtime.Goexit()
 	}
@@ -788,7 +785,7 @@ func TestMainSetupWithManagerError(_ *testing.T) {
 	}
 
 	osExitCalled := make(chan struct{})
-	osExit = func(code int) {
+	osExit = func(_ int) {
 		osExitCalled <- struct{}{}
 		runtime.Goexit()
 	}
@@ -801,7 +798,8 @@ func TestMainSetupWithManagerError(_ *testing.T) {
 
 	newManager = func(_ *rest.Config, _ manager.Options) (manager.Manager, error) {
 		return &mockManager{
-			Cluster: &mockCluster{}}, nil
+			Cluster: &mockCluster{},
+		}, nil
 	}
 
 	newConfigOrDie = func(_ *rest.Config) *kubernetes.Clientset {
@@ -864,7 +862,7 @@ func TestMainAddHealthzCheckError(_ *testing.T) {
 	}
 
 	osExitCalled := make(chan struct{})
-	osExit = func(code int) {
+	osExit = func(_ int) {
 		osExitCalled <- struct{}{}
 	}
 
@@ -945,7 +943,7 @@ func TestMainAddReadyzCheckError(_ *testing.T) {
 	}
 
 	osExitCalled := make(chan struct{})
-	osExit = func(code int) {
+	osExit = func(_ int) {
 		osExitCalled <- struct{}{}
 	}
 
@@ -963,7 +961,7 @@ func TestMainAddReadyzCheckError(_ *testing.T) {
 		return &mockManager{
 			Cluster:           &mockCluster{},
 			addHealthzCheckFn: func(_ string, _ healthz.Checker) error { return nil },
-			addReadyzCheckFn:  func(name string, check healthz.Checker) error { return errors.New("error") },
+			addReadyzCheckFn:  func(_ string, _ healthz.Checker) error { return errors.New("error") },
 		}, nil
 	}
 
@@ -1033,7 +1031,7 @@ func TestMainStartError(_ *testing.T) {
 	}
 
 	osExitCalled := make(chan struct{})
-	osExit = func(code int) {
+	osExit = func(_ int) {
 		osExitCalled <- struct{}{}
 	}
 
@@ -1051,8 +1049,8 @@ func TestMainStartError(_ *testing.T) {
 		return &mockManager{
 			Cluster:           &mockCluster{},
 			addHealthzCheckFn: func(_ string, _ healthz.Checker) error { return nil },
-			addReadyzCheckFn:  func(name string, check healthz.Checker) error { return nil },
-			startFn:           func(ctx context.Context) error { return errors.New("error") },
+			addReadyzCheckFn:  func(_ string, _ healthz.Checker) error { return nil },
+			startFn:           func(_ context.Context) error { return errors.New("error") },
 		}, nil
 	}
 
