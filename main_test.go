@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"runtime"
 	"testing"
 	"time"
 
@@ -600,7 +599,6 @@ func TestMainGetOperatorConfigError(_ *testing.T) {
 	osExitCalled := make(chan struct{})
 	osExit = func(_ int) {
 		osExitCalled <- struct{}{}
-		runtime.Goexit()
 	}
 
 	getConfigOrDie = func() *rest.Config {
@@ -705,7 +703,6 @@ func TestMainNewManagerError(_ *testing.T) {
 	osExitCalled := make(chan struct{})
 	osExit = func(_ int) {
 		osExitCalled <- struct{}{}
-		runtime.Goexit()
 	}
 
 	initZapFlags = func() crzap.Options {
@@ -787,7 +784,6 @@ func TestMainSetupWithManagerError(_ *testing.T) {
 	osExitCalled := make(chan struct{})
 	osExit = func(_ int) {
 		osExitCalled <- struct{}{}
-		runtime.Goexit()
 	}
 
 	getConfigOrDie = func() *rest.Config {
