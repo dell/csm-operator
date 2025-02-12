@@ -1,4 +1,4 @@
-//  Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -1307,7 +1307,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(ctx, t, ctrlClient, &certManagerWebhookDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &certManagerCainjectorDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1726,7 +1726,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(ctx, t, ctrlClient, &certManagerWebhookDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &certManagerCainjectorDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
