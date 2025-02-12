@@ -14,6 +14,7 @@ package k8s
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -112,6 +113,10 @@ func Test_IsOpenShift(t *testing.T) {
 				defer func() { GetClientSetWrapper = oldGetClientSetWrapper }()
 				GetClientSetWrapper = patch.getClientSetWrapper
 			}
+
+			// Create a fake kubeconfig and set the KUBECONFIG environment variable.
+			createTempKubeconfig("./fake-kubeconfig")
+			os.Setenv("KUBECONFIG", "./fake-kubeconfig")
 
 			isOpenshift, err := IsOpenShift()
 			if patch.ignoreError {
@@ -245,4 +250,22 @@ users:
 			}
 		})
 	}
+}
+
+func createTempKubeconfig(filepath string) {
+	kubeconfig := `clusters:
+- cluster:
+    server: https://some.hostname.or.ip:6443
+  name: fake-cluster
+contexts:
+- context:
+    cluster: fake-cluster
+    user: admin
+  name: admin
+current-context: admin
+preferences: {}
+users:
+- name: admin`
+
+	os.WriteFile(filepath, []byte(kubeconfig), 0o600)
 }
