@@ -1274,13 +1274,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	err = ctrlClient.Delete(ctx, &otelDeployment)
-	assert.NoError(t, err, "failed to update client object during test setup")
-
-	otelDeployment.Status.ReadyReplicas = 1
-	otelDeployment.ResourceVersion = ""
-	err = ctrlClient.Create(ctx, &otelDeployment)
-	assert.NoError(t, err, "failed to create client object during test setup")
+	recreateDeployment(t, ctx, ctrlClient, &otelDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &metricsPowerflexDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1288,13 +1282,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	err = ctrlClient.Delete(ctx, &metricsPowerflexDeployment)
-	assert.NoError(t, err, "failed to update client object during test setup")
-
-	metricsPowerflexDeployment.Status.ReadyReplicas = 1
-	metricsPowerflexDeployment.ResourceVersion = ""
-	err = ctrlClient.Create(ctx, &metricsPowerflexDeployment)
-	assert.NoError(t, err, "failed to create client object during test setup")
+	recreateDeployment(t, ctx, ctrlClient, &metricsPowerflexDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &topologyDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1302,13 +1290,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	err = ctrlClient.Delete(ctx, &topologyDeployment)
-	assert.NoError(t, err, "failed to update client object during test setup")
-
-	topologyDeployment.Status.ReadyReplicas = 1
-	topologyDeployment.ResourceVersion = ""
-	err = ctrlClient.Create(ctx, &topologyDeployment)
-	assert.NoError(t, err, "failed to create client object during test setup")
+	recreateDeployment(t, ctx, ctrlClient, &topologyDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1316,13 +1298,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	err = ctrlClient.Delete(ctx, &certManagerDeployment)
-	assert.NoError(t, err, "failed to update client object during test setup")
-
-	certManagerDeployment.Status.ReadyReplicas = 1
-	certManagerDeployment.ResourceVersion = ""
-	err = ctrlClient.Create(ctx, &certManagerDeployment)
-	assert.NoError(t, err, "failed to create client object during test setup")
+	recreateDeployment(t, ctx, ctrlClient, &certManagerDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerCainjectorDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1330,13 +1306,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	err = ctrlClient.Delete(ctx, &certManagerCainjectorDeployment)
-	assert.NoError(t, err, "failed to update client object during test setup")
-
-	certManagerCainjectorDeployment.Status.ReadyReplicas = 1
-	certManagerCainjectorDeployment.ResourceVersion = ""
-	err = ctrlClient.Create(ctx, &certManagerCainjectorDeployment)
-	assert.NoError(t, err, "failed to create client object during test setup")
+	recreateDeployment(t, ctx, ctrlClient, &certManagerCainjectorDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1344,14 +1314,18 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	err = ctrlClient.Delete(ctx, &certManagerWebhookDeployment)
+	recreateDeployment(t, ctx, ctrlClient, &certManagerWebhookDeployment, 1)
+
+}
+
+func recreateDeployment(t *testing.T, ctx context.Context, client client.WithWatch, deployment *appsv1.Deployment, readyReplicas int32) {
+	err := client.Delete(ctx, deployment)
 	assert.NoError(t, err, "failed to update client object during test setup")
 
-	certManagerWebhookDeployment.Status.ReadyReplicas = 1
-	certManagerWebhookDeployment.ResourceVersion = ""
-	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
+	deployment.Status.ReadyReplicas = 1
+	deployment.ResourceVersion = ""
+	err = client.Create(ctx, deployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
-
 }
 
 func TestAuthProxyStatusCheck(t *testing.T) {
@@ -1546,9 +1520,259 @@ func TestAuthProxyStatusCheck(t *testing.T) {
 	status, err := authProxyStatusCheck(ctx, &csm1, &fakeReconcile, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
+}
 
-	// TODO: Other test scenarios:
-	// various failing replicas for the deployments
+func TestAuthProxyStatusCheckError(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+	ctrlClient := fullFakeClient()
+
+	// Create a fake csm1 of csmv1.ContainerStorageModule
+	csm := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.AuthorizationServer,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "ingress-nginx",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "cert-manager",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// add the CSM object to the client
+	err := ctrlClient.Create(ctx, &csm)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	i32One := int32(1)
+
+	nginxDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-namespace-ingress-nginx-controller",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	certManagerDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	certManagerCainjectorDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-cainjector",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	certManagerWebhookDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-webhook",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	proxyServerDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "proxy-server",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	redisCommanderDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "redis-commander",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	redisPrimaryDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "redis-primary",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	roleServiceDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "role-service",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	storageServiceDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "storage-service",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	tenantServiceDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tenant-service",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	err = ctrlClient.Create(ctx, &nginxDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	// Create a fake instance of ReconcileCSM
+	fakeReconcile := FakeReconcileCSM{
+		Client:    ctrlClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &nginxDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &certManagerDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &certManagerDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &certManagerCainjectorDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &certManagerCainjectorDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &certManagerWebhookDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &proxyServerDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &proxyServerDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &redisCommanderDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &redisCommanderDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &redisPrimaryDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &redisPrimaryDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &roleServiceDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &roleServiceDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &storageServiceDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &storageServiceDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &tenantServiceDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(t, ctx, ctrlClient, &tenantServiceDeployment, 1)
 }
 
 func TestSetStatus(t *testing.T) {
