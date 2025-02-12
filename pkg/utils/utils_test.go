@@ -2885,7 +2885,7 @@ func TestGetClusterK8SClient(t *testing.T) {
 
 func TestReplaceAllApplyCustomEnvs(t *testing.T) {
 	test := "test"
-	new := "new"
+	newValue := "new"
 
 	tests := []struct {
 		driverEnv   []acorev1.EnvVarApplyConfiguration
@@ -2900,8 +2900,8 @@ func TestReplaceAllApplyCustomEnvs(t *testing.T) {
 					Value: &test,
 				},
 				{
-					Name:  &new,
-					Value: &new,
+					Name:  &newValue,
+					Value: &newValue,
 					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
 						SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
 							LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{
@@ -2939,7 +2939,7 @@ func TestReplaceAllApplyCustomEnvs(t *testing.T) {
 					Value: &test,
 				},
 				{
-					Name:  &new,
+					Name:  &newValue,
 					Value: nil,
 					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
 						SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
@@ -2960,8 +2960,8 @@ func TestReplaceAllApplyCustomEnvs(t *testing.T) {
 					Value: &test,
 				},
 				{
-					Name:  &new,
-					Value: &new,
+					Name:  &newValue,
+					Value: &newValue,
 					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
 						FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
 							FieldPath: &test,
@@ -2995,7 +2995,7 @@ func TestReplaceAllApplyCustomEnvs(t *testing.T) {
 					Value: &test,
 				},
 				{
-					Name:  &new,
+					Name:  &newValue,
 					Value: nil,
 					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
 						FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
