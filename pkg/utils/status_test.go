@@ -143,7 +143,8 @@ func TestGetDeploymentStatus(t *testing.T) {
 					AvailableReplicas:   1,
 					ReadyReplicas:       1,
 					UnavailableReplicas: 0,
-				}},
+				},
+			},
 			wantErr: false,
 		},
 	}
