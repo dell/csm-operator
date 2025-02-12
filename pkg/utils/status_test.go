@@ -1275,7 +1275,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &otelDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &otelDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &metricsPowerflexDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1283,7 +1283,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &metricsPowerflexDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &metricsPowerflexDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &topologyDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1291,7 +1291,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &topologyDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &topologyDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1299,7 +1299,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &certManagerDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &certManagerDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerCainjectorDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1307,7 +1307,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &certManagerCainjectorDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &certManagerWebhookDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1315,23 +1315,23 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &certManagerWebhookDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &certManagerWebhookDeployment, 1)
 
 	// cleanup
-	deleteDeployments(t, ctx, ctrlClient, &otelDeployment, &metricsPowerflexDeployment, &topologyDeployment, &certManagerDeployment, &certManagerCainjectorDeployment, &certManagerWebhookDeployment)
+	deleteDeployments(ctx, t, ctrlClient, &otelDeployment, &metricsPowerflexDeployment, &topologyDeployment, &certManagerDeployment, &certManagerCainjectorDeployment, &certManagerWebhookDeployment)
 }
 
-func recreateDeployment(t *testing.T, ctx context.Context, client client.WithWatch, deployment *appsv1.Deployment, readyReplicas int32) {
+func recreateDeployment(ctx context.Context, t *testing.T, client client.WithWatch, deployment *appsv1.Deployment, readyReplicas int32) {
 	err := client.Delete(ctx, deployment)
 	assert.NoError(t, err, "failed to update client object during test setup")
 
-	deployment.Status.ReadyReplicas = 1
+	deployment.Status.ReadyReplicas = readyReplicas
 	deployment.ResourceVersion = ""
 	err = client.Create(ctx, deployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 }
 
-func deleteDeployments(t *testing.T, ctx context.Context, client client.WithWatch, deployments ...*appsv1.Deployment) {
+func deleteDeployments(ctx context.Context, t *testing.T, client client.WithWatch, deployments ...*appsv1.Deployment) {
 	for _, deployment := range deployments {
 		err := client.Delete(ctx, deployment)
 		assert.NoError(t, err, "failed to update client object during test setup")
@@ -1710,7 +1710,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &nginxDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &nginxDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1718,7 +1718,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &certManagerDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &certManagerDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerCainjectorDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1726,7 +1726,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &certManagerCainjectorDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &certManagerWebhookDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1734,7 +1734,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &certManagerWebhookDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &certManagerWebhookDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &proxyServerDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1742,7 +1742,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &proxyServerDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &proxyServerDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &redisCommanderDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1750,7 +1750,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &redisCommanderDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &redisCommanderDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &redisPrimaryDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1758,7 +1758,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &redisPrimaryDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &redisPrimaryDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &roleServiceDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1766,7 +1766,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &roleServiceDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &roleServiceDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &storageServiceDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1774,7 +1774,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &storageServiceDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &storageServiceDeployment, 1)
 
 	err = ctrlClient.Create(ctx, &tenantServiceDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
@@ -1782,9 +1782,9 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
 	assert.Nil(t, err)
 
-	recreateDeployment(t, ctx, ctrlClient, &tenantServiceDeployment, 1)
+	recreateDeployment(ctx, t, ctrlClient, &tenantServiceDeployment, 1)
 
-	deleteDeployments(t, ctx, ctrlClient, &nginxDeployment, &certManagerDeployment, &certManagerCainjectorDeployment, &certManagerWebhookDeployment, &proxyServerDeployment, &redisCommanderDeployment, &redisPrimaryDeployment, &roleServiceDeployment, &storageServiceDeployment, &tenantServiceDeployment)
+	deleteDeployments(ctx, t, ctrlClient, &nginxDeployment, &certManagerDeployment, &certManagerCainjectorDeployment, &certManagerWebhookDeployment, &proxyServerDeployment, &redisCommanderDeployment, &redisPrimaryDeployment, &roleServiceDeployment, &storageServiceDeployment, &tenantServiceDeployment)
 }
 
 func TestSetStatus(t *testing.T) {
