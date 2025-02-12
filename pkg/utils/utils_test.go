@@ -935,6 +935,12 @@ func TestModifyCommonCR(t *testing.T) {
 			Driver: csmv1.Driver{
 				Common: &csmv1.ContainerTemplate{
 					ImagePullPolicy: corev1.PullPolicy("Always"),
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "KUBELET_CONFIG_DIR",
+							Value: "test-value",
+						},
+					},
 				},
 			},
 		},
@@ -1755,6 +1761,11 @@ spec:
       port: 80
       targetPort: 9376
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1763,6 +1774,18 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: my-service
+subjects:
+  - kind: ServiceAccount
+    name: my-service
+roleRef:
+  kind: ClusterRole
+  name: my-cluster-role
+  apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -1799,13 +1822,7 @@ spec:
 	myContainer := "my-container"
 	myImage := "my-image"
 	port8080 := int32(8080)
-	desiredReplicas := int32(3)
-	desiredNumberScheduled := int32(3)
-	currentNumberScheduled := int32(3)
-	numberReady := int32(3)
-	numberAvailable := int32(3)
 
-	// TODO: This object will need to be built precisely to match the input spec.
 	expected := NodeYAML{
 		DaemonSetApplyConfig: confv1.DaemonSetApplyConfiguration{
 			TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
@@ -1823,6 +1840,11 @@ spec:
 					},
 				},
 				Template: &confcorev1.PodTemplateSpecApplyConfiguration{
+					ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+						Labels: map[string]string{
+							"app": "MyApp",
+						},
+					},
 					// Template configuration
 					Spec: &confcorev1.PodSpecApplyConfiguration{
 						Containers: []confcorev1.ContainerApplyConfiguration{
@@ -1840,13 +1862,7 @@ spec:
 					},
 				},
 			},
-			Status: &confv1.DaemonSetStatusApplyConfiguration{
-				// Status configuration
-				DesiredNumberScheduled: &desiredNumberScheduled,
-				CurrentNumberScheduled: &currentNumberScheduled,
-				NumberReady:            &numberReady,
-				NumberAvailable:        &numberAvailable,
-			},
+			Status: nil,
 		},
 		Rbac: RbacYAML{
 			ServiceAccount: corev1.ServiceAccount{
@@ -1860,28 +1876,184 @@ spec:
 				},
 			},
 			ClusterRole: rbacv1.ClusterRole{
-				// ClusterRole configuration
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-cluster-role",
+				},
+				Rules: []rbacv1.PolicyRule{{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"get", "watch", "list"}}},
 			},
 			ClusterRoleBinding: rbacv1.ClusterRoleBinding{
-				// ClusterRoleBinding configuration
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRoleBinding",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+				Subjects: []rbacv1.Subject{{Kind: "ServiceAccount", Name: "my-service"}},
+				RoleRef:  rbacv1.RoleRef{Kind: "ClusterRole", Name: "my-cluster-role", APIGroup: "rbac.authorization.k8s.io"},
 			},
 		},
 	}
 
 	nodeYaml := ctrlObject.(NodeYAML)
 	assert.Nil(t, err)
-	// TODO: Proper comparison here once the
-	// expected object has been ironed out
-	assert.NotNil(t, ctrlObject)
-	assert.NotNil(t, expected)
-	assert.Equal(t, nodeYaml.DaemonSetApplyConfig.Name, expected.DaemonSetApplyConfig.Name)
-	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.DesiredNumberScheduled)
-	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.CurrentNumberScheduled)
-	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.NumberAvailable)
-	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.NumberReady)
+	assert.Equal(t, expected, nodeYaml)
 
-	// Test case: valid YAML - deployment
-	// TODO: Reuse and edit the above input/expected outputs with modificatons for Deployment obj
+	yamlString = `
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: my-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: my-service
+subjects:
+  - kind: ServiceAccount
+    name: my-service
+roleRef:
+  kind: ClusterRole
+  name: my-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  key: value
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-controller
+spec:
+  selector:
+    matchLabels:
+      app: MyApp
+  template:
+    metadata:
+      labels:
+        app: MyApp
+    spec:
+      containers:
+        - name: my-container
+          image: my-image
+          ports:
+          - containerPort: 8080
+    `
+
+	deployment := "Deployment"
+	myController := "my-controller"
+
+	expectedController := ControllerYAML{
+		Deployment: confv1.DeploymentApplyConfiguration{
+			TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
+				APIVersion: &appsv1,
+				Kind:       &deployment,
+			},
+			ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+				Name: &myController,
+			},
+			Spec: &confv1.DeploymentSpecApplyConfiguration{
+				// Spec configuration
+				Selector: &confmetav1.LabelSelectorApplyConfiguration{
+					MatchLabels: map[string]string{
+						"app": "MyApp",
+					},
+				},
+				Template: &confcorev1.PodTemplateSpecApplyConfiguration{
+					ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+						Labels: map[string]string{
+							"app": "MyApp",
+						},
+					},
+					// Template configuration
+					Spec: &confcorev1.PodSpecApplyConfiguration{
+						Containers: []confcorev1.ContainerApplyConfiguration{
+							{
+								// Container configuration
+								Name:  &myContainer,
+								Image: &myImage,
+								Ports: []confcorev1.ContainerPortApplyConfiguration{
+									{
+										ContainerPort: &port8080,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Status: nil,
+		},
+		Rbac: RbacYAML{
+			ServiceAccount: corev1.ServiceAccount{
+				// ServiceAccount configuration
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "ServiceAccount",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+			},
+			ClusterRole: rbacv1.ClusterRole{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-cluster-role",
+				},
+				Rules: []rbacv1.PolicyRule{{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"get", "watch", "list"}}},
+			},
+			ClusterRoleBinding: rbacv1.ClusterRoleBinding{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRoleBinding",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+				Subjects: []rbacv1.Subject{{Kind: "ServiceAccount", Name: "my-service"}},
+				RoleRef:  rbacv1.RoleRef{Kind: "ClusterRole", Name: "my-cluster-role", APIGroup: "rbac.authorization.k8s.io"},
+			},
+		},
+	}
+
+	ctrlObject, err = GetDriverYaml(yamlString, "Deployment")
+	assert.Nil(t, err)
+
+	controllerYaml := ctrlObject.(ControllerYAML)
+	assert.Nil(t, err)
+	assert.Equal(t, expectedController, controllerYaml)
 
 	// Test case: Invalid YAML
 	invalidYamlString := `
@@ -1976,9 +2148,8 @@ func TestApplyCTRLObject(t *testing.T) {
 			Namespace: "my-namespace",
 		},
 	}
-	err := ctrlClient.Create(ctx, obj)
-	assert.NoError(t, err, "failed to create client object during test setup")
-	err = ApplyCTRLObject(ctx, obj, ctrlClient)
+
+	err := ApplyCTRLObject(ctx, obj, ctrlClient)
 	assert.Nil(t, err)
 
 	if err := ApplyCTRLObject(ctx, obj, ctrlClient); err != nil {

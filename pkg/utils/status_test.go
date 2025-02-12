@@ -31,6 +31,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/kubernetes/scheme"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -39,6 +40,11 @@ func TestGetDeploymentStatus(t *testing.T) {
 	ns := "default"
 	licenseCred := getSecret(ns, "dls-license")
 	ivLicense := getSecret(ns, "iv")
+
+	err := csmv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(licenseCred).WithObjects(ivLicense).Build()
 
@@ -52,10 +58,11 @@ func TestGetDeploymentStatus(t *testing.T) {
 		r        ReconcileCSM
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    csmv1.PodStatus
-		wantErr bool
+		name      string
+		args      args
+		want      csmv1.PodStatus
+		createObj client.Object
+		wantErr   bool
 	}{
 		{
 			name: "Test getDeploymentStatus when instance name is empty",
@@ -69,7 +76,8 @@ func TestGetDeploymentStatus(t *testing.T) {
 				Desired:   "0",
 				Failed:    "0",
 			},
-			wantErr: false,
+			createObj: nil,
+			wantErr:   false,
 		},
 		{
 			name: "Test getDeploymentStatus when instance name is authorization",
@@ -83,7 +91,8 @@ func TestGetDeploymentStatus(t *testing.T) {
 				Desired:   "0",
 				Failed:    "0",
 			},
-			wantErr: false,
+			createObj: nil,
+			wantErr:   false,
 		},
 		{
 			name: "Test getDeploymentStatus when instance name is application-mobility",
@@ -97,7 +106,8 @@ func TestGetDeploymentStatus(t *testing.T) {
 				Desired:   "0",
 				Failed:    "0",
 			},
-			wantErr: false,
+			createObj: nil,
+			wantErr:   false,
 		},
 		{
 			name: "Test getDeploymentStatus when instance name is controller is not found",
@@ -111,11 +121,39 @@ func TestGetDeploymentStatus(t *testing.T) {
 				Desired:   "0",
 				Failed:    "0",
 			},
-			wantErr: true,
+			createObj: nil,
+			wantErr:   true,
+		},
+		{
+			name: "Test getDeploymentStatus when instance is driver",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM(string(csmv1.PowerFlex), "", csmv1.PowerFlex, csmv1.Replication, false, nil),
+				r:        &fakeReconcile,
+			},
+			want: csmv1.PodStatus{
+				Available: "1",
+				Desired:   "1",
+				Failed:    "0",
+			},
+			createObj: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{Name: "powerflex-controller", Namespace: ""},
+				Status: appsv1.DeploymentStatus{
+					Replicas:            1,
+					AvailableReplicas:   1,
+					ReadyReplicas:       1,
+					UnavailableReplicas: 0,
+				}},
+			wantErr: false,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			if test.args.instance.Name != "" && test.createObj != nil {
+				err := test.args.r.GetClient().Create(context.Background(), test.createObj)
+				assert.Nil(t, err)
+			}
+
 			got, err := getDeploymentStatus(test.args.ctx, test.args.instance, test.args.r)
 			if (err != nil) != test.wantErr {
 				t.Errorf("getDeploymentStatus() error = %v, wantErr %v", err, test.wantErr)
@@ -1096,9 +1134,224 @@ func TestObservabilityStatusCheck(t *testing.T) {
 	status, err := observabilityStatusCheck(ctx, &csm1, &fakeReconcile, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
+}
 
-	// TODO: Other test scenarios:
-	// various failing replicas for the deployments
+func TestObservabilityStatusCheckError(t *testing.T) {
+	// Create a fake context.Context
+	ctx := context.Background()
+	ctrlClient := fullFakeClient()
+
+	// Create a fake csm of csmv1.ContainerStorageModule
+	csm := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name-powermax",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: "powermax",
+			},
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Observability,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:    "topology",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "cert-manager",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "otel-collector",
+							Enabled: &[]bool{true}[0],
+						},
+						{
+							Name:    "metrics-powermax",
+							Enabled: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// add the CSM object to the client
+	err := ctrlClient.Create(ctx, &csm)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	i32One := int32(1)
+
+	otelDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "otel-collector",
+			Namespace: "karavi",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	metricsPowerflexDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karavi-metrics-powermax",
+			Namespace: "karavi",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	topologyDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karavi-topology",
+			Namespace: "karavi",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	certManagerDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	certManagerCainjectorDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-cainjector",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	certManagerWebhookDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cert-manager-webhook",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
+	err = ctrlClient.Create(ctx, &otelDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	// Create a fake instance of ReconcileCSM
+	fakeReconcile := FakeReconcileCSM{
+		Client:    ctrlClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	err = ctrlClient.Delete(ctx, &otelDeployment)
+	assert.NoError(t, err, "failed to update client object during test setup")
+
+	otelDeployment.Status.ReadyReplicas = 1
+	otelDeployment.ResourceVersion = ""
+	err = ctrlClient.Create(ctx, &otelDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	err = ctrlClient.Create(ctx, &metricsPowerflexDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	err = ctrlClient.Delete(ctx, &metricsPowerflexDeployment)
+	assert.NoError(t, err, "failed to update client object during test setup")
+
+	metricsPowerflexDeployment.Status.ReadyReplicas = 1
+	metricsPowerflexDeployment.ResourceVersion = ""
+	err = ctrlClient.Create(ctx, &metricsPowerflexDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	err = ctrlClient.Create(ctx, &topologyDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	err = ctrlClient.Delete(ctx, &topologyDeployment)
+	assert.NoError(t, err, "failed to update client object during test setup")
+
+	topologyDeployment.Status.ReadyReplicas = 1
+	topologyDeployment.ResourceVersion = ""
+	err = ctrlClient.Create(ctx, &topologyDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	err = ctrlClient.Create(ctx, &certManagerDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	err = ctrlClient.Delete(ctx, &certManagerDeployment)
+	assert.NoError(t, err, "failed to update client object during test setup")
+
+	certManagerDeployment.Status.ReadyReplicas = 1
+	certManagerDeployment.ResourceVersion = ""
+	err = ctrlClient.Create(ctx, &certManagerDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	err = ctrlClient.Create(ctx, &certManagerCainjectorDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	err = ctrlClient.Delete(ctx, &certManagerCainjectorDeployment)
+	assert.NoError(t, err, "failed to update client object during test setup")
+
+	certManagerCainjectorDeployment.Status.ReadyReplicas = 1
+	certManagerCainjectorDeployment.ResourceVersion = ""
+	err = ctrlClient.Create(ctx, &certManagerCainjectorDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	err = ctrlClient.Delete(ctx, &certManagerWebhookDeployment)
+	assert.NoError(t, err, "failed to update client object during test setup")
+
+	certManagerWebhookDeployment.Status.ReadyReplicas = 1
+	certManagerWebhookDeployment.ResourceVersion = ""
+	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
 }
 
 func TestAuthProxyStatusCheck(t *testing.T) {
@@ -1617,8 +1870,10 @@ func TestUpdateStatus(t *testing.T) {
 	// Define the initial ContainerStorageModule instance
 	instance := &csmv1.ContainerStorageModule{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: "default",
+			Name:            "test",
+			Namespace:       "default",
+			UID:             "test-uid",
+			ResourceVersion: "1",
 		},
 		Status: csmv1.ContainerStorageModuleStatus{
 			State: "oldState",
@@ -1632,6 +1887,20 @@ func TestUpdateStatus(t *testing.T) {
 				Failed:    "0",
 				Desired:   "1",
 			},
+		},
+	}
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-controller",
+			Namespace: "default",
+		},
+	}
+
+	daemonset := &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-node",
+			Namespace: "default",
 		},
 	}
 
@@ -1655,12 +1924,20 @@ func TestUpdateStatus(t *testing.T) {
 	if err := csmv1.AddToScheme(s); err != nil {
 		t.Fatalf("Unable to add csmv1 scheme: %v", err)
 	}
+	err := corev1.AddToScheme(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = appsv1.AddToScheme(s)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).WithObjects(instance).Build()
+	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).WithObjects(instance, deployment, daemonset).Build()
 
 	// Ensure the instance exists in the fake client
 	foundInstance := &csmv1.ContainerStorageModule{}
-	err := fakeClient.Get(ctx, client.ObjectKey{Name: "test", Namespace: "default"}, foundInstance)
+	err = fakeClient.Get(ctx, client.ObjectKey{Name: "test", Namespace: "default"}, foundInstance)
 	if err != nil {
 		t.Fatalf("Failed to get instance from fake client: %v", err)
 	}
