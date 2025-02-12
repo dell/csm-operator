@@ -751,12 +751,10 @@ func TestGetBackupStorageLocation(t *testing.T) {
 func TestUpdateSideCarApply(t *testing.T) {
 	// Test case: update sidecar with matching name
 	sc1env1 := "sidecar1-env1"
-	sc1env2 := "sidecar1-env2"
-	sc1env3 := "sidecar1-env3"
 	oldenv1val := "old-env1-value"
-	oldenv3val := "old-env3-value"
 	newenv1val := "sidecar1-env1-value"
-	newenv2val := "sidecar1-env2-value"
+	empty := "empty"
+	emptyValue := ""
 	sideCars := []csmv1.ContainerTemplate{
 		{
 			Name:            "sidecar1",
@@ -768,8 +766,8 @@ func TestUpdateSideCarApply(t *testing.T) {
 					Value: newenv1val,
 				},
 				{
-					Name:  sc1env2,
-					Value: newenv2val,
+					Name:  empty,
+					Value: emptyValue,
 				},
 			},
 		},
@@ -799,8 +797,8 @@ func TestUpdateSideCarApply(t *testing.T) {
 			Value: &oldenv1val,
 		},
 		).WithEnv(&acorev1.EnvVarApplyConfiguration{
-		Name:  &sc1env3,
-		Value: &oldenv3val,
+		Name:  &empty,
+		Value: &emptyValue,
 	},
 	)
 
@@ -810,16 +808,10 @@ func TestUpdateSideCarApply(t *testing.T) {
 		WithEnv(&acorev1.EnvVarApplyConfiguration{
 			Name:  &sc1env1,
 			Value: &newenv1val,
-		}).
-		/*WithEnv(&acorev1.EnvVarApplyConfiguration{ // IF we want to have new vars added in the Apply method, this will need to be uncommented.
-			Name:  &sc1env2,
-			Value: &newenv2val,
-		}).*/
-		WithEnv(&acorev1.EnvVarApplyConfiguration{
-			Name:  &sc1env3,
-			Value: &oldenv3val,
-		},
-		)
+		}).WithEnv(&acorev1.EnvVarApplyConfiguration{
+		Name:  &empty,
+		Value: &emptyValue,
+	})
 
 	assert.Equal(t, expectedContainer, container)
 
@@ -993,6 +985,14 @@ func TestReplaceAllArgs(t *testing.T) {
 	defaultArgs = []string{"arg1=value1", "arg2=value2", "arg3=value3"}
 	crArgs = []string{}
 	expected = []string{"arg1=value1", "arg2=value2", "arg3=value3"}
+
+	result = ReplaceAllArgs(defaultArgs, crArgs)
+	assert.Equal(t, expected, result)
+
+	// Test case: merge args
+	defaultArgs = []string{"arg1=value1", "arg2=value2", "arg3=value3"}
+	crArgs = []string{"arg4=value1", "arg5=value2", "arg6=value3"}
+	expected = []string{"arg1=value1", "arg2=value2", "arg3=value3", "arg4=value1", "arg5=value2", "arg6=value3"}
 
 	result = ReplaceAllArgs(defaultArgs, crArgs)
 	assert.Equal(t, expected, result)
@@ -2222,6 +2222,24 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 			expectedVersion:  "",
 			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
 		},
+		{
+			name:             "invalid module",
+			driverConfig:     "v2.12.0",
+			driverType:       csmv1.PowerScale,
+			moduleType:       "invalid",
+			path:             "../../operatorconfig",
+			expectedVersion:  "",
+			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
+		},
+		{
+			name:             "invalide driver",
+			driverConfig:     "v2.12.0",
+			driverType:       "invalid",
+			moduleType:       csmv1.Observability,
+			path:             "../../operatorconfig",
+			expectedVersion:  "",
+			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
+		},
 	}
 
 	for _, tt := range tests {
@@ -2328,6 +2346,13 @@ func TestMinVersionCheck(t *testing.T) {
 			version:        "v2.12",
 			expectedResult: false,
 			expectedError:  "not in correct version format",
+		},
+		{
+			name:           "major greater than minimum major",
+			minVersion:     "v2.12.0",
+			version:        "v3.12.0",
+			expectedResult: true,
+			expectedError:  "",
 		},
 	}
 
@@ -2856,4 +2881,132 @@ func TestGetClusterK8SClient(t *testing.T) {
 	// Assert the expected result
 	assert.Error(t, err)
 	assert.Nil(t, clusterCtrlClient)
+}
+
+func TestReplaceAllApplyCustomEnvs(t *testing.T) {
+	test := "test"
+	new := "new"
+
+	tests := []struct {
+		driverEnv   []acorev1.EnvVarApplyConfiguration
+		commonEnv   []corev1.EnvVar
+		nrEnv       []corev1.EnvVar
+		expectedEnv []acorev1.EnvVarApplyConfiguration
+	}{
+		{
+			driverEnv: []acorev1.EnvVarApplyConfiguration{
+				{
+					Name:  &test,
+					Value: &test,
+				},
+				{
+					Name:  &new,
+					Value: &new,
+					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+						SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+							LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{
+								Name: &test,
+							},
+							Key:      &test,
+							Optional: &[]bool{true}[0]},
+					},
+				},
+			},
+			commonEnv: []corev1.EnvVar{
+				{
+					Name:  "test",
+					Value: "test",
+				},
+				{
+					Name:  "empty",
+					Value: "",
+				},
+			},
+			nrEnv: []corev1.EnvVar{
+				{
+					Name:  "test",
+					Value: "test",
+				},
+				{
+					Name:  "empty",
+					Value: "",
+				},
+			},
+			expectedEnv: []acorev1.EnvVarApplyConfiguration{
+				{
+					Name:  &test,
+					Value: &test,
+				},
+				{
+					Name:  &new,
+					Value: nil,
+					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+						SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+							LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{
+								Name: &test,
+							},
+							Key:      &test,
+							Optional: &[]bool{true}[0]},
+					},
+				},
+			},
+		},
+		{
+			driverEnv: []acorev1.EnvVarApplyConfiguration{
+				{
+					Name:  &test,
+					Value: &test,
+				},
+				{
+					Name:  &new,
+					Value: &new,
+					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+						FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
+							FieldPath: &test,
+						},
+					},
+				},
+			},
+			commonEnv: []corev1.EnvVar{
+				{
+					Name:  "test",
+					Value: "test",
+				},
+				{
+					Name:  "empty",
+					Value: "",
+				},
+			},
+			nrEnv: []corev1.EnvVar{
+				{
+					Name:  "test",
+					Value: "test",
+				},
+				{
+					Name:  "empty",
+					Value: "",
+				},
+			},
+			expectedEnv: []acorev1.EnvVarApplyConfiguration{
+				{
+					Name:  &test,
+					Value: &test,
+				},
+				{
+					Name:  &new,
+					Value: nil,
+					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+						FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
+							FieldPath: &test,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		result := ReplaceAllApplyCustomEnvs(test.driverEnv, test.commonEnv, test.nrEnv)
+		assert.Equal(t, test.expectedEnv, result)
+	}
 }

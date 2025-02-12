@@ -1316,6 +1316,8 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 
 	recreateDeployment(t, ctx, ctrlClient, &certManagerWebhookDeployment, 1)
 
+	// cleanup
+	deleteDeployments(t, ctx, ctrlClient, &otelDeployment, &metricsPowerflexDeployment, &topologyDeployment, &certManagerDeployment, &certManagerCainjectorDeployment, &certManagerWebhookDeployment)
 }
 
 func recreateDeployment(t *testing.T, ctx context.Context, client client.WithWatch, deployment *appsv1.Deployment, readyReplicas int32) {
@@ -1326,6 +1328,13 @@ func recreateDeployment(t *testing.T, ctx context.Context, client client.WithWat
 	deployment.ResourceVersion = ""
 	err = client.Create(ctx, deployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
+}
+
+func deleteDeployments(t *testing.T, ctx context.Context, client client.WithWatch, deployments ...*appsv1.Deployment) {
+	for _, deployment := range deployments {
+		err := client.Delete(ctx, deployment)
+		assert.NoError(t, err, "failed to update client object during test setup")
+	}
 }
 
 func TestAuthProxyStatusCheck(t *testing.T) {
@@ -1773,6 +1782,8 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	assert.Nil(t, err)
 
 	recreateDeployment(t, ctx, ctrlClient, &tenantServiceDeployment, 1)
+
+	deleteDeployments(t, ctx, ctrlClient, &nginxDeployment, &certManagerDeployment, &certManagerCainjectorDeployment, &certManagerWebhookDeployment, &proxyServerDeployment, &redisCommanderDeployment, &redisPrimaryDeployment, &roleServiceDeployment, &storageServiceDeployment, &tenantServiceDeployment)
 }
 
 func TestSetStatus(t *testing.T) {
@@ -2017,6 +2028,63 @@ func TestHandleSuccess(t *testing.T) {
 				Requeue: true,
 			},
 		},
+		{
+			name: "Test TestHandleSuccess with change in status not successful",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				r: &FakeReconcileCSM{
+					Client: ctrlClientFake.NewClientBuilder().WithObjects(&corev1.Namespace{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "powerflex",
+						},
+					}).WithObjects(&appsv1.DaemonSet{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "DaemonSet",
+							APIVersion: "apps/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "powerflex-controller",
+							Namespace: "powerflex",
+						},
+					}).Build(),
+					K8sClient: fake.NewSimpleClientset(),
+				},
+				oldStatus: &csmv1.ContainerStorageModuleStatus{
+					ControllerStatus: csmv1.PodStatus{
+						Available: "0",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					NodeStatus: csmv1.PodStatus{
+						Available: "0",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					State: constants.Failed,
+				},
+				newStatus: &csmv1.ContainerStorageModuleStatus{
+					ControllerStatus: csmv1.PodStatus{
+						Available: "0",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					NodeStatus: csmv1.PodStatus{
+						Available: "0",
+						Failed:    "0",
+						Desired:   "1",
+					},
+					State: constants.Succeeded,
+				},
+			},
+			want: reconcile.Result{
+				Requeue: true,
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -2098,6 +2166,109 @@ func TestUpdateStatus(t *testing.T) {
 			Namespace:       "default",
 			UID:             "test-uid",
 			ResourceVersion: "1",
+		},
+		Status: csmv1.ContainerStorageModuleStatus{
+			State: "oldState",
+			ControllerStatus: csmv1.PodStatus{
+				Available: "1",
+				Failed:    "0",
+				Desired:   "1",
+			},
+			NodeStatus: csmv1.PodStatus{
+				Available: "1",
+				Failed:    "0",
+				Desired:   "1",
+			},
+		},
+	}
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-controller",
+			Namespace: "default",
+		},
+	}
+
+	daemonset := &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-node",
+			Namespace: "default",
+		},
+	}
+
+	// Define the new status for the update
+	newStatus := &csmv1.ContainerStorageModuleStatus{
+		State: constants.Succeeded,
+		NodeStatus: csmv1.PodStatus{
+			Available: "1",
+			Failed:    "0",
+			Desired:   "1",
+		},
+		ControllerStatus: csmv1.PodStatus{
+			Available: "1",
+			Failed:    "0",
+			Desired:   "1",
+		},
+	}
+
+	// Register the CRD with the scheme
+	s := runtime.NewScheme()
+	if err := csmv1.AddToScheme(s); err != nil {
+		t.Fatalf("Unable to add csmv1 scheme: %v", err)
+	}
+	err := corev1.AddToScheme(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = appsv1.AddToScheme(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).WithObjects(instance, deployment, daemonset).Build()
+
+	// Ensure the instance exists in the fake client
+	foundInstance := &csmv1.ContainerStorageModule{}
+	err = fakeClient.Get(ctx, client.ObjectKey{Name: "test", Namespace: "default"}, foundInstance)
+	if err != nil {
+		t.Fatalf("Failed to get instance from fake client: %v", err)
+	}
+
+	// Mock the FakeReconcileCSM to simulate GetUpdateCount
+	r := &FakeReconcileCSM{
+		Client:    fakeClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	// UpdateStatus function to be tested.
+	err = UpdateStatus(ctx, instance, r, newStatus)
+
+	assert.Error(t, err)
+	assert.Equal(t, "containerstoragemodules.storage.dell.com \"test\" not found", err.Error())
+
+	// Ensure the update count is incremented
+	r.IncrUpdateCount()
+	assert.Equal(t, int32(1), r.GetUpdateCount())
+}
+
+func TestUpdateStatusAuthorizationProxyServer(t *testing.T) {
+	ctx := context.TODO()
+
+	// Define the initial ContainerStorageModule instance
+	instance := &csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "test",
+			Namespace:       "default",
+			UID:             "test-uid",
+			ResourceVersion: "1",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.AuthorizationServer,
+					Enabled: true,
+				},
+			},
 		},
 		Status: csmv1.ContainerStorageModuleStatus{
 			State: "oldState",
