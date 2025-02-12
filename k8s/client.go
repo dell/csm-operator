@@ -46,10 +46,12 @@ func GetKubeAPIServerVersion() (*version.Info, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	sv, err := k8sClientSet.Discovery().ServerVersion()
 	if err != nil {
 		return nil, err
 	}
+
 	return sv, nil
 }
 
@@ -64,12 +66,14 @@ func IsOpenShift() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	openshiftAPIGroup := "security.openshift.io"
 	for i := 0; i < len(serverGroups); i++ {
 		if serverGroups[i].Name == openshiftAPIGroup {
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
@@ -79,6 +83,7 @@ func NewControllerRuntimeClient(data []byte) (ctrlClient.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	return ctrlClient.New(restConfig, ctrlClient.Options{Scheme: scheme})
