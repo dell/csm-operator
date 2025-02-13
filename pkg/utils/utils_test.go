@@ -1,4 +1,4 @@
-//  Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2024 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -751,12 +751,10 @@ func TestGetBackupStorageLocation(t *testing.T) {
 func TestUpdateSideCarApply(t *testing.T) {
 	// Test case: update sidecar with matching name
 	sc1env1 := "sidecar1-env1"
-	sc1env2 := "sidecar1-env2"
-	sc1env3 := "sidecar1-env3"
 	oldenv1val := "old-env1-value"
-	oldenv3val := "old-env3-value"
 	newenv1val := "sidecar1-env1-value"
-	newenv2val := "sidecar1-env2-value"
+	empty := "empty"
+	emptyValue := ""
 	sideCars := []csmv1.ContainerTemplate{
 		{
 			Name:            "sidecar1",
@@ -768,8 +766,8 @@ func TestUpdateSideCarApply(t *testing.T) {
 					Value: newenv1val,
 				},
 				{
-					Name:  sc1env2,
-					Value: newenv2val,
+					Name:  empty,
+					Value: emptyValue,
 				},
 			},
 		},
@@ -799,8 +797,8 @@ func TestUpdateSideCarApply(t *testing.T) {
 			Value: &oldenv1val,
 		},
 		).WithEnv(&acorev1.EnvVarApplyConfiguration{
-		Name:  &sc1env3,
-		Value: &oldenv3val,
+		Name:  &empty,
+		Value: &emptyValue,
 	},
 	)
 
@@ -810,16 +808,10 @@ func TestUpdateSideCarApply(t *testing.T) {
 		WithEnv(&acorev1.EnvVarApplyConfiguration{
 			Name:  &sc1env1,
 			Value: &newenv1val,
-		}).
-		/*WithEnv(&acorev1.EnvVarApplyConfiguration{ // IF we want to have new vars added in the Apply method, this will need to be uncommented.
-			Name:  &sc1env2,
-			Value: &newenv2val,
-		}).*/
-		WithEnv(&acorev1.EnvVarApplyConfiguration{
-			Name:  &sc1env3,
-			Value: &oldenv3val,
-		},
-		)
+		}).WithEnv(&acorev1.EnvVarApplyConfiguration{
+		Name:  &empty,
+		Value: &emptyValue,
+	})
 
 	assert.Equal(t, expectedContainer, container)
 
@@ -935,6 +927,12 @@ func TestModifyCommonCR(t *testing.T) {
 			Driver: csmv1.Driver{
 				Common: &csmv1.ContainerTemplate{
 					ImagePullPolicy: corev1.PullPolicy("Always"),
+					Envs: []corev1.EnvVar{
+						{
+							Name:  "KUBELET_CONFIG_DIR",
+							Value: "test-value",
+						},
+					},
 				},
 			},
 		},
@@ -987,6 +985,14 @@ func TestReplaceAllArgs(t *testing.T) {
 	defaultArgs = []string{"arg1=value1", "arg2=value2", "arg3=value3"}
 	crArgs = []string{}
 	expected = []string{"arg1=value1", "arg2=value2", "arg3=value3"}
+
+	result = ReplaceAllArgs(defaultArgs, crArgs)
+	assert.Equal(t, expected, result)
+
+	// Test case: merge args
+	defaultArgs = []string{"arg1=value1", "arg2=value2", "arg3=value3"}
+	crArgs = []string{"arg4=value1", "arg5=value2", "arg6=value3"}
+	expected = []string{"arg1=value1", "arg2=value2", "arg3=value3", "arg4=value1", "arg5=value2", "arg6=value3"}
 
 	result = ReplaceAllArgs(defaultArgs, crArgs)
 	assert.Equal(t, expected, result)
@@ -1755,6 +1761,11 @@ spec:
       port: 80
       targetPort: 9376
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1763,6 +1774,18 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: my-service
+subjects:
+  - kind: ServiceAccount
+    name: my-service
+roleRef:
+  kind: ClusterRole
+  name: my-cluster-role
+  apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -1799,13 +1822,7 @@ spec:
 	myContainer := "my-container"
 	myImage := "my-image"
 	port8080 := int32(8080)
-	desiredReplicas := int32(3)
-	desiredNumberScheduled := int32(3)
-	currentNumberScheduled := int32(3)
-	numberReady := int32(3)
-	numberAvailable := int32(3)
 
-	// TODO: This object will need to be built precisely to match the input spec.
 	expected := NodeYAML{
 		DaemonSetApplyConfig: confv1.DaemonSetApplyConfiguration{
 			TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
@@ -1823,6 +1840,11 @@ spec:
 					},
 				},
 				Template: &confcorev1.PodTemplateSpecApplyConfiguration{
+					ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+						Labels: map[string]string{
+							"app": "MyApp",
+						},
+					},
 					// Template configuration
 					Spec: &confcorev1.PodSpecApplyConfiguration{
 						Containers: []confcorev1.ContainerApplyConfiguration{
@@ -1840,13 +1862,7 @@ spec:
 					},
 				},
 			},
-			Status: &confv1.DaemonSetStatusApplyConfiguration{
-				// Status configuration
-				DesiredNumberScheduled: &desiredNumberScheduled,
-				CurrentNumberScheduled: &currentNumberScheduled,
-				NumberReady:            &numberReady,
-				NumberAvailable:        &numberAvailable,
-			},
+			Status: nil,
 		},
 		Rbac: RbacYAML{
 			ServiceAccount: corev1.ServiceAccount{
@@ -1860,28 +1876,184 @@ spec:
 				},
 			},
 			ClusterRole: rbacv1.ClusterRole{
-				// ClusterRole configuration
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-cluster-role",
+				},
+				Rules: []rbacv1.PolicyRule{{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"get", "watch", "list"}}},
 			},
 			ClusterRoleBinding: rbacv1.ClusterRoleBinding{
-				// ClusterRoleBinding configuration
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRoleBinding",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+				Subjects: []rbacv1.Subject{{Kind: "ServiceAccount", Name: "my-service"}},
+				RoleRef:  rbacv1.RoleRef{Kind: "ClusterRole", Name: "my-cluster-role", APIGroup: "rbac.authorization.k8s.io"},
 			},
 		},
 	}
 
 	nodeYaml := ctrlObject.(NodeYAML)
 	assert.Nil(t, err)
-	// TODO: Proper comparison here once the
-	// expected object has been ironed out
-	assert.NotNil(t, ctrlObject)
-	assert.NotNil(t, expected)
-	assert.Equal(t, nodeYaml.DaemonSetApplyConfig.Name, expected.DaemonSetApplyConfig.Name)
-	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.DesiredNumberScheduled)
-	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.CurrentNumberScheduled)
-	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.NumberAvailable)
-	assert.Equal(t, &desiredReplicas, expected.DaemonSetApplyConfig.Status.NumberReady)
+	assert.Equal(t, expected, nodeYaml)
 
-	// Test case: valid YAML - deployment
-	// TODO: Reuse and edit the above input/expected outputs with modificatons for Deployment obj
+	yamlString = `
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: my-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: my-service
+subjects:
+  - kind: ServiceAccount
+    name: my-service
+roleRef:
+  kind: ClusterRole
+  name: my-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  key: value
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-controller
+spec:
+  selector:
+    matchLabels:
+      app: MyApp
+  template:
+    metadata:
+      labels:
+        app: MyApp
+    spec:
+      containers:
+        - name: my-container
+          image: my-image
+          ports:
+          - containerPort: 8080
+    `
+
+	deployment := "Deployment"
+	myController := "my-controller"
+
+	expectedController := ControllerYAML{
+		Deployment: confv1.DeploymentApplyConfiguration{
+			TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
+				APIVersion: &appsv1,
+				Kind:       &deployment,
+			},
+			ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+				Name: &myController,
+			},
+			Spec: &confv1.DeploymentSpecApplyConfiguration{
+				// Spec configuration
+				Selector: &confmetav1.LabelSelectorApplyConfiguration{
+					MatchLabels: map[string]string{
+						"app": "MyApp",
+					},
+				},
+				Template: &confcorev1.PodTemplateSpecApplyConfiguration{
+					ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+						Labels: map[string]string{
+							"app": "MyApp",
+						},
+					},
+					// Template configuration
+					Spec: &confcorev1.PodSpecApplyConfiguration{
+						Containers: []confcorev1.ContainerApplyConfiguration{
+							{
+								// Container configuration
+								Name:  &myContainer,
+								Image: &myImage,
+								Ports: []confcorev1.ContainerPortApplyConfiguration{
+									{
+										ContainerPort: &port8080,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Status: nil,
+		},
+		Rbac: RbacYAML{
+			ServiceAccount: corev1.ServiceAccount{
+				// ServiceAccount configuration
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "ServiceAccount",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+			},
+			ClusterRole: rbacv1.ClusterRole{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-cluster-role",
+				},
+				Rules: []rbacv1.PolicyRule{{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"get", "watch", "list"}}},
+			},
+			ClusterRoleBinding: rbacv1.ClusterRoleBinding{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRoleBinding",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+				Subjects: []rbacv1.Subject{{Kind: "ServiceAccount", Name: "my-service"}},
+				RoleRef:  rbacv1.RoleRef{Kind: "ClusterRole", Name: "my-cluster-role", APIGroup: "rbac.authorization.k8s.io"},
+			},
+		},
+	}
+
+	ctrlObject, err = GetDriverYaml(yamlString, "Deployment")
+	assert.Nil(t, err)
+
+	controllerYaml := ctrlObject.(ControllerYAML)
+	assert.Nil(t, err)
+	assert.Equal(t, expectedController, controllerYaml)
 
 	// Test case: Invalid YAML
 	invalidYamlString := `
@@ -1976,9 +2148,8 @@ func TestApplyCTRLObject(t *testing.T) {
 			Namespace: "my-namespace",
 		},
 	}
-	err := ctrlClient.Create(ctx, obj)
-	assert.NoError(t, err, "failed to create client object during test setup")
-	err = ApplyCTRLObject(ctx, obj, ctrlClient)
+
+	err := ApplyCTRLObject(ctx, obj, ctrlClient)
 	assert.Nil(t, err)
 
 	if err := ApplyCTRLObject(ctx, obj, ctrlClient); err != nil {
@@ -2046,6 +2217,24 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 			name:             "invalid version",
 			driverConfig:     "v20.12.0",
 			driverType:       csmv1.PowerScale,
+			moduleType:       csmv1.Observability,
+			path:             "../../operatorconfig",
+			expectedVersion:  "",
+			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
+		},
+		{
+			name:             "invalid module",
+			driverConfig:     "v2.12.0",
+			driverType:       csmv1.PowerScale,
+			moduleType:       "invalid",
+			path:             "../../operatorconfig",
+			expectedVersion:  "",
+			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
+		},
+		{
+			name:             "invalide driver",
+			driverConfig:     "v2.12.0",
+			driverType:       "invalid",
 			moduleType:       csmv1.Observability,
 			path:             "../../operatorconfig",
 			expectedVersion:  "",
@@ -2157,6 +2346,13 @@ func TestMinVersionCheck(t *testing.T) {
 			version:        "v2.12",
 			expectedResult: false,
 			expectedError:  "not in correct version format",
+		},
+		{
+			name:           "major greater than minimum major",
+			minVersion:     "v2.12.0",
+			version:        "v3.12.0",
+			expectedResult: true,
+			expectedError:  "",
 		},
 	}
 
@@ -2685,4 +2881,134 @@ func TestGetClusterK8SClient(t *testing.T) {
 	// Assert the expected result
 	assert.Error(t, err)
 	assert.Nil(t, clusterCtrlClient)
+}
+
+func TestReplaceAllApplyCustomEnvs(t *testing.T) {
+	test := "test"
+	newValue := "new"
+
+	tests := []struct {
+		driverEnv   []acorev1.EnvVarApplyConfiguration
+		commonEnv   []corev1.EnvVar
+		nrEnv       []corev1.EnvVar
+		expectedEnv []acorev1.EnvVarApplyConfiguration
+	}{
+		{
+			driverEnv: []acorev1.EnvVarApplyConfiguration{
+				{
+					Name:  &test,
+					Value: &test,
+				},
+				{
+					Name:  &newValue,
+					Value: &newValue,
+					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+						SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+							LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{
+								Name: &test,
+							},
+							Key:      &test,
+							Optional: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+			commonEnv: []corev1.EnvVar{
+				{
+					Name:  "test",
+					Value: "test",
+				},
+				{
+					Name:  "empty",
+					Value: "",
+				},
+			},
+			nrEnv: []corev1.EnvVar{
+				{
+					Name:  "test",
+					Value: "test",
+				},
+				{
+					Name:  "empty",
+					Value: "",
+				},
+			},
+			expectedEnv: []acorev1.EnvVarApplyConfiguration{
+				{
+					Name:  &test,
+					Value: &test,
+				},
+				{
+					Name:  &newValue,
+					Value: nil,
+					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+						SecretKeyRef: &acorev1.SecretKeySelectorApplyConfiguration{
+							LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{
+								Name: &test,
+							},
+							Key:      &test,
+							Optional: &[]bool{true}[0],
+						},
+					},
+				},
+			},
+		},
+		{
+			driverEnv: []acorev1.EnvVarApplyConfiguration{
+				{
+					Name:  &test,
+					Value: &test,
+				},
+				{
+					Name:  &newValue,
+					Value: &newValue,
+					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+						FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
+							FieldPath: &test,
+						},
+					},
+				},
+			},
+			commonEnv: []corev1.EnvVar{
+				{
+					Name:  "test",
+					Value: "test",
+				},
+				{
+					Name:  "empty",
+					Value: "",
+				},
+			},
+			nrEnv: []corev1.EnvVar{
+				{
+					Name:  "test",
+					Value: "test",
+				},
+				{
+					Name:  "empty",
+					Value: "",
+				},
+			},
+			expectedEnv: []acorev1.EnvVarApplyConfiguration{
+				{
+					Name:  &test,
+					Value: &test,
+				},
+				{
+					Name:  &newValue,
+					Value: nil,
+					ValueFrom: &acorev1.EnvVarSourceApplyConfiguration{
+						FieldRef: &acorev1.ObjectFieldSelectorApplyConfiguration{
+							FieldPath: &test,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		result := ReplaceAllApplyCustomEnvs(test.driverEnv, test.commonEnv, test.nrEnv)
+		assert.Equal(t, test.expectedEnv, result)
+	}
 }

@@ -1,4 +1,4 @@
-//  Copyright © 2022 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -199,6 +200,12 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	os.Setenv("UNIT_TEST", "true")
 }
 
+func TestRemoveFinalizer(t *testing.T) {
+	r := &ContainerStorageModuleReconciler{}
+	err := r.removeFinalizer(context.Background(), &v1.ContainerStorageModule{})
+	assert.Nil(t, err)
+}
+
 // test a happy path scenario with deletion
 func (suite *CSMControllerTestSuite) TestReconcile() {
 	suite.makeFakeCSM(csmName, suite.namespace, true, append(getReplicaModule(), getObservabilityModule()...))
@@ -226,6 +233,18 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerReconcileOCP() {
 }
 
 func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "karavi-config-secret", Namespace: suite.namespace}}
+	err := suite.fakeClient.Create(context.Background(), secret)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		err := suite.fakeClient.Delete(context.Background(), secret)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
 	suite.makeFakeAuthServerCSMWithoutPreRequisite(csmName, suite.namespace)
 	suite.runFakeAuthCSMManager("context deadline exceeded", false, false)
 	suite.deleteCSM(csmName)
@@ -933,6 +952,16 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			csm.Spec.Modules = append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...)
 			return csm, &[]bool{false}[0], ""
 		},
+		"Fail - unmarshalling annotations": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...))
+			csm := &csmv1.ContainerStorageModule{}
+			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
+			err := suite.fakeClient.Get(ctx, key, csm)
+			assert.Nil(suite.T(), err)
+			csm.Spec.Modules = append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...)
+			csm.Annotations[previouslyAppliedCustomResource] = "invalid json"
+			return csm, &[]bool{false}[0], "error unmarshalling old annotation"
+		},
 	}
 
 	r := suite.createReconciler()
@@ -1040,6 +1069,10 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	}
 	reconciler := suite.createReconciler()
 
+	goodOperatorConfig := utils.OperatorConfig{
+		ConfigDirectory: "../operatorconfig",
+	}
+
 	badOperatorConfig := utils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
@@ -1082,6 +1115,14 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 		},
 	}
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Authorization Proxy Server
+	csm = shared.MakeCSM(csmName, suite.namespace, shared.AuthServerConfigVersion)
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Driver.CSIDriverType = ""
+	csm.Spec.Modules[0].ConfigVersion = ""
+	err = reconciler.PreChecks(ctx, &csm, goodOperatorConfig)
 	assert.NotNil(suite.T(), err)
 }
 
@@ -1472,6 +1513,7 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	// Make Pod and set pod status
 	pod := shared.MakePod(name, suite.namespace)
 	pod.Labels["csm"] = csmName
+	pod.Labels[constants.CsmNamespaceLabel] = suite.namespace
 	pod.Status.Phase = corev1.PodPending
 	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
 		{
@@ -1487,6 +1529,24 @@ func (suite *CSMControllerTestSuite) handleDeploymentTest(r *ContainerStorageMod
 	podList := &corev1.PodList{}
 	err = suite.fakeClient.List(ctx, podList, nil)
 	assert.Nil(suite.T(), err)
+
+	r.handlePodsUpdate(nil, &pod)
+
+	pod.Status.Phase = corev1.PodRunning
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: corev1.ContainerState{
+				Running: &corev1.ContainerStateRunning{StartedAt: metav1.Time{Time: time.Now()}},
+			},
+		},
+	}
+
+	pod.Labels["csm"] = "test"
+	pod.Labels[constants.CsmNamespaceLabel] = "test"
+	r.handlePodsUpdate(nil, &pod)
+
+	pod.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+	r.handlePodsUpdate(nil, &pod)
 }
 
 func (suite *CSMControllerTestSuite) handleDaemonsetTestFake(r *ContainerStorageModuleReconciler, name string) {
@@ -1691,7 +1751,7 @@ func getAuthProxyServer() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v2.0.0-alpha",
+			ConfigVersion:     "v2.1.0",
 			ForceRemoveModule: true,
 			Components: []csmv1.ContainerTemplate{
 				{
@@ -1943,6 +2003,7 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 	badOperatorConfig := utils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
+
 	err := reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 
@@ -1965,7 +2026,12 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.Nil(suite.T(), err)
 
+	csm.Spec.Modules[0] = v1.Module{}
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
 	// Restore the status
+	csm.Spec.Modules = getAuthProxyServer()
 	for _, c := range csm.Spec.Modules[0].Components {
 		c.Enabled = &[]bool{false}[0]
 	}
