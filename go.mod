@@ -2,6 +2,8 @@ module github.com/dell/csm-operator
 
 go 1.23.0
 
+toolchain go1.23.5
+
 require (
 	github.com/cert-manager/cert-manager v1.16.2
 	github.com/go-logr/logr v1.4.2

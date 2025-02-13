@@ -1,4 +1,5 @@
 include docker.mk
+include overrides.mk
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -63,9 +64,27 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 #Generate semver.mk
+.PHONY: gen-semver
 gen-semver: generate
 	(cd core; rm -f core_generated.go; go generate)
 	go run core/semver/semver.go -f mk > semver.mk
+
+-include semver.mk
+
+ifdef NOTES
+	RELNOTE="-$(NOTES)"
+else
+	RELNOTE=
+endif
+
+# Operator version tagged with build number. For e.g. - v1.8.0.001
+VERSION ?= v$(MAJOR).$(MINOR).$(PATCH)$(RELNOTE)
+
+ifdef VERSION
+  $(info VERSION is: $(VERSION))  # Print the version for debugging
+else
+  $(error VERSION is not defined! Check semver.mk generation.)
+endif
 
 fmt: ## Run go fmt against code.
 	go fmt ./...
