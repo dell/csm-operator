@@ -14,9 +14,6 @@ BUNDLE_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-bundle
 # Image tag base for community catalog images
 CATALOG_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-catalog
 
-# Operator version tagged with build number. For e.g. - v1.8.0.001
-VERSION ?= v1.8.0
-
 # Bundle Version is the semantic version(required by operator-sdk)
 BUNDLE_VERSION ?= 1.8.0
 
