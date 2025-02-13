@@ -25,10 +25,17 @@ import (
 )
 
 func TestMainFunction(t *testing.T) {
+	defaultGitDescribeFunc := gitDescribeFunc
+
+	afterEach := func() {
+		gitDescribeFunc = defaultGitDescribeFunc
+	}
+
 	tests := []struct {
 		name            string
 		format          string
 		outputFile      string
+		setup           func()
 		expectEmptyFile bool
 		readFileFunc    func(file string) ([]byte, error)
 	}{
@@ -36,36 +43,71 @@ func TestMainFunction(t *testing.T) {
 			name:       "Write mk format to file",
 			format:     "mk",
 			outputFile: "test_output.mk",
+			setup: func() {
+				gitDescribeFunc = func() ([]byte, error) {
+					return []byte("v2.13.0-notes-12-gd058795-dirty"), nil
+				}
+			},
 		},
 		{
 			name:       "Write env format to file",
 			format:     "env",
 			outputFile: "test_output.env",
+			setup: func() {
+				gitDescribeFunc = func() ([]byte, error) {
+					return []byte("v2.13.0-notes-12-gd058795-dirty"), nil
+				}
+			},
 		},
 		{
 			name:       "Write json format to file",
 			format:     "json",
 			outputFile: "test_output.json",
+			setup: func() {
+				gitDescribeFunc = func() ([]byte, error) {
+					return []byte("v2.13.0-notes-12-gd058795-dirty"), nil
+				}
+			},
 		},
 		{
 			name:       "Write ver format to file",
 			format:     "ver",
 			outputFile: "test_output.ver",
+			setup: func() {
+				gitDescribeFunc = func() ([]byte, error) {
+					return []byte("v2.13.0-notes-12-gd058795-dirty"), nil
+				}
+			},
 		},
 		{
 			name:       "Write rpm format to file",
 			format:     "rpm",
 			outputFile: "test_output.rpm",
+			setup: func() {
+				gitDescribeFunc = func() ([]byte, error) {
+					return []byte("v2.13.0-notes-12-gd058795-dirty"), nil
+				}
+			},
 		},
 		{
 			name:       "Write tpl format to file",
 			format:     "../semver.tpl",
 			outputFile: "test_output.rpm",
+			setup: func() {
+				gitDescribeFunc = func() ([]byte, error) {
+					return []byte("v2.13.0-notes-12-gd058795-dirty"), nil
+				}
+			},
 		},
 		{
 			name:       "Write tpl format to file but error reading source file",
 			format:     "../semver.tpl",
 			outputFile: "test_output.rpm",
+			setup: func() {
+				gitDescribeFunc = func() ([]byte, error) {
+					return []byte("v2.13.0-notes-12-gd058795-dirty"), nil
+				}
+			},
 			readFileFunc: func(_ string) ([]byte, error) {
 				return nil, errors.New("error reading source file")
 			},
@@ -73,8 +115,13 @@ func TestMainFunction(t *testing.T) {
 		},
 		{
 			// go format currently does not print any output, expect an empty file
-			name:            "Write go format to file",
-			format:          "go",
+			name:   "Write go format to file",
+			format: "go",
+			setup: func() {
+				gitDescribeFunc = func() ([]byte, error) {
+					return []byte("v2.13.0-notes-12-gd058795-dirty"), nil
+				}
+			},
 			outputFile:      "test_output.go",
 			expectEmptyFile: true,
 		},
@@ -82,6 +129,11 @@ func TestMainFunction(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+			defer afterEach()
+
 			osArgs := os.Args
 			os.Args = append(os.Args, "-f", tt.format)
 			os.Args = append(os.Args, "-o", tt.outputFile)

@@ -39,6 +39,10 @@ var (
 	tpl    *template.Template
 )
 
+var gitDescribeFunc = func() ([]byte, error) {
+	return doExec("git", "describe", "--long", "--dirty")
+}
+
 func init() {
 	if flag.Lookup("f") == nil {
 		flag.StringVar(
@@ -111,7 +115,7 @@ func main() {
 		}() // #nosec G20
 	}
 
-	gitdesc := chkErr(doExec("git", "describe", "--long", "--dirty"))
+	gitdesc := chkErr(gitDescribeFunc())
 	rx := regexp.MustCompile(
 		`^[^\d]*(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z].+?))?(?:-(\d+)-g(.+?)(?:-(dirty))?)?\s*$`)
 	m := rx.FindStringSubmatch(gitdesc)
