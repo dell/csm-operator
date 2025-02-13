@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -24,16 +25,20 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/version"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -91,10 +96,40 @@ func printVersion(log *zap.SugaredLogger) {
 	log.Debugf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH)
 }
 
-func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
+var (
+	isOpenShift = func() (bool, error) {
+		return k8sClient.IsOpenShift()
+	}
+
+	getKubeAPIServerVersion = func() (*version.Info, error) {
+		return k8sClient.GetKubeAPIServerVersion()
+	}
+
+	getConfigDir = func() string {
+		return ConfigDir
+	}
+
+	getk8sPathFn = func(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
+		return getk8sPath(log, kubeVersion, currentVersion, minVersion, maxVersion)
+	}
+
+	getK8sMinimumSupportedVersion = func() string {
+		return K8sMaximumSupportedVersion
+	}
+
+	getK8sMaximumSupportedVersion = func() string {
+		return K8sMaximumSupportedVersion
+	}
+
+	yamlUnmarshal = func(data []byte, v interface{}, opts ...yaml.JSONOpt) error {
+		return yaml.Unmarshal(data, v, opts...)
+	}
+)
+
+func getOperatorConfig(log *zap.SugaredLogger) (utils.OperatorConfig, error) {
 	cfg := utils.OperatorConfig{}
 
-	isOpenShift, err := k8sClient.IsOpenShift()
+	isOpenShift, err := isOpenShift()
 	if err != nil {
 		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
 	}
@@ -104,7 +139,7 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	} else {
 		log.Infof("Kubernetes environment")
 	}
-	kubeAPIServerVersion, err := k8sClient.GetKubeAPIServerVersion()
+	kubeAPIServerVersion, err := getKubeAPIServerVersion()
 	if err != nil {
 		log.Info(fmt.Sprintf("kubeVersion err %s", kubeAPIServerVersion))
 	}
@@ -116,20 +151,51 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 	minVersion := 0.0
 	maxVersion := 0.0
 
-	minVersion, err = strconv.ParseFloat(K8sMinimumSupportedVersion, 64)
+	minVersion, err = strconv.ParseFloat(getK8sMinimumSupportedVersion(), 64)
 	if err != nil {
-		log.Info(fmt.Sprintf("minVersion %s", K8sMinimumSupportedVersion))
+		log.Info(fmt.Sprintf("minVersion %s", getK8sMinimumSupportedVersion()))
 	}
-	maxVersion, err = strconv.ParseFloat(K8sMaximumSupportedVersion, 64)
+	maxVersion, err = strconv.ParseFloat(getK8sMaximumSupportedVersion(), 64)
 	if err != nil {
-		log.Info(fmt.Sprintf("maxVersion %s", K8sMaximumSupportedVersion))
+		log.Info(fmt.Sprintf("maxVersion %s", getK8sMaximumSupportedVersion()))
 	}
 
 	currentVersion, err := strconv.ParseFloat(kubeVersion, 64)
 	if err != nil {
 		log.Infof("currentVersion is %s", kubeVersion)
 	}
-	// intialise variable
+
+	k8sPath := getk8sPathFn(log, kubeVersion, currentVersion, minVersion, maxVersion)
+
+	_, err = os.ReadDir(filepath.Clean(getConfigDir()))
+	if err != nil {
+		log.Errorw(err.Error(), "cannot find driver config path", getConfigDir())
+		cfg.ConfigDirectory = Operatorconfig
+		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
+		k8sPath = fmt.Sprintf("%s%s", Operatorconfig, k8sPath)
+	} else {
+		cfg.ConfigDirectory = filepath.Clean(getConfigDir())
+		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
+		k8sPath = fmt.Sprintf("%s%s", getConfigDir(), k8sPath)
+	}
+
+	buf, err := os.ReadFile(filepath.Clean(k8sPath))
+	if err != nil {
+		log.Info(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
+	}
+
+	var imageConfig utils.K8sImagesConfig
+	err = yamlUnmarshal(buf, &imageConfig)
+	if err != nil {
+		return cfg, fmt.Errorf("unmarshalling: %v", err)
+	}
+
+	cfg.K8sVersion = imageConfig
+
+	return cfg, nil
+}
+
+func getk8sPath(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
 	k8sPath := ""
 	if currentVersion < minVersion {
 		log.Infof("Installed k8s version %s is less than the minimum supported k8s version %s , hence using the default configurations", kubeVersion, K8sMinimumSupportedVersion)
@@ -141,65 +207,86 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
 		log.Infof("Current kubernetes version is %s which is a supported version ", kubeVersion)
 	}
+	return k8sPath
+}
 
-	_, err = os.ReadDir(filepath.Clean(ConfigDir))
-	if err != nil {
-		log.Errorw(err.Error(), "cannot find driver config path", ConfigDir)
-		cfg.ConfigDirectory = Operatorconfig
-		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
-		k8sPath = fmt.Sprintf("%s%s", Operatorconfig, k8sPath)
-	} else {
-		cfg.ConfigDirectory = filepath.Clean(ConfigDir)
-		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
-		k8sPath = fmt.Sprintf("%s%s", ConfigDir, k8sPath)
+var (
+	getConfigOrDie = func() *rest.Config {
+		return ctrl.GetConfigOrDie()
 	}
 
-	buf, err := os.ReadFile(filepath.Clean(k8sPath))
-	if err != nil {
-		log.Info(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
+	newManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
+		return ctrl.NewManager(config, options)
 	}
 
-	var imageConfig utils.K8sImagesConfig
-	err = yaml.Unmarshal(buf, &imageConfig)
-	if err != nil {
-		panic(fmt.Sprintf("unmarshalling: %v", err))
+	newConfigOrDie = func(c *rest.Config) *kubernetes.Clientset {
+		return kubernetes.NewForConfigOrDie(c)
 	}
 
-	cfg.K8sVersion = imageConfig
+	getSetupWithManagerFn = func(r *controllers.ContainerStorageModuleReconciler) func(mgr ctrl.Manager, limiter workqueue.TypedRateLimiter[reconcile.Request], maxReconcilers int) error {
+		return r.SetupWithManager
+	}
 
-	return cfg
+	osExit = func(code int) {
+		os.Exit(code)
+	}
+
+	initFlags = func() crzap.Options {
+		flags.metricsBindAddress = flag.String("metrics-bind-address", ":8082", "The address the metric endpoint binds to.")
+		flags.healthProbeBindAddress = flag.String("health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+		flags.leaderElect = flag.Bool("leader-elect", false,
+			"Enable leader election for controller manager. "+
+				"Enabling this will ensure there is only one active controller manager.")
+		opts := initZapFlags()
+		flag.Parse()
+		return opts
+	}
+
+	initZapFlags = func() crzap.Options {
+		opts := crzap.Options{
+			Development: true,
+		}
+		opts.BindFlags(flag.CommandLine)
+		return opts
+	}
+
+	getControllerWatchCh = func() chan (struct{}) {
+		return controllers.StopWatch
+	}
+
+	setupSignalHandler = func() context.Context {
+		return ctrl.SetupSignalHandler()
+	}
+)
+
+var flags struct {
+	metricsBindAddress     *string
+	healthProbeBindAddress *string
+	leaderElect            *bool
+	zapOpts                crzap.Options
 }
 
 func main() {
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8082", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	opts := crzap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
-
-	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
+	opts := initFlags()
 
 	_, log := logger.GetNewContextWithLogger("main")
 
 	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
 
 	printVersion(log)
-	operatorConfig := getOperatorConfig(log)
-	restConfig := ctrl.GetConfigOrDie()
+	operatorConfig, err := getOperatorConfig(log)
+	if err != nil {
+		setupLog.Error(err, "unable to get operator config")
+		osExit(1)
+		return
+	}
+	restConfig := getConfigOrDie()
 
-	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
+	mgr, err := newManager(restConfig, ctrl.Options{
 		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
+		Metrics:                metricsserver.Options{BindAddress: *flags.metricsBindAddress},
+		HealthProbeBindAddress: *flags.healthProbeBindAddress,
+		LeaderElection:         *flags.leaderElect,
 		LeaderElectionID:       "090cae6a.dell.com",
 		WebhookServer: webhook.NewServer(webhook.Options{ // Corrected webhook initialization
 			Port: 9443,
@@ -207,42 +294,50 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(log.Infof)
-	k8sClient := kubernetes.NewForConfigOrDie(restConfig)
+	k8sClient := newConfigOrDie(restConfig)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: k8sClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(clientgoscheme.Scheme, corev1.EventSource{Component: "csm"})
 
 	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
-	if err = (&controllers.ContainerStorageModuleReconciler{
+
+	r := &controllers.ContainerStorageModuleReconciler{
 		Client:        mgr.GetClient(),
 		K8sClient:     k8sClient,
 		Log:           log,
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: recorder,
 		Config:        operatorConfig,
-	}).SetupWithManager(mgr, expRateLimiter, 1); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ContainerStorageModule")
-		os.Exit(1)
 	}
-	defer close(controllers.StopWatch)
+
+	setupWithManager := getSetupWithManagerFn(r)
+	if err := setupWithManager(mgr, expRateLimiter, 1); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ContainerStorageModule")
+		osExit(1)
+		return
+	}
+	defer close(getControllerWatchCh())
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(setupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+		osExit(1)
 	}
 }
