@@ -80,10 +80,24 @@ func TestGetDeploymentStatus(t *testing.T) {
 			wantErr:   false,
 		},
 		{
-			name: "Test getDeploymentStatus when instance name is authorization",
+			name: "Test getDeploymentStatus when instance is authorization proxy server",
 			args: args{
 				ctx:      context.Background(),
-				instance: createCSM(string(csmv1.Authorization), "", csmv1.PowerFlex, csmv1.Replication, true, nil),
+				instance: createCSM("authorization", "", "", csmv1.AuthorizationServer, true, nil),
+				r:        &fakeReconcile,
+			},
+			want: csmv1.PodStatus{
+				Available: "0",
+				Desired:   "0",
+				Failed:    "0",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Test getDeploymentStatus when instance is authorization proxy server with non-default name",
+			args: args{
+				ctx:      context.Background(),
+				instance: createCSM("csm-authorization", "", "", csmv1.AuthorizationServer, true, nil),
 				r:        &fakeReconcile,
 			},
 			want: csmv1.PodStatus{
@@ -1499,6 +1513,19 @@ func TestAuthProxyStatusCheck(t *testing.T) {
 			Replicas: &i32One,
 		},
 	}
+	deployment11 := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "authorization-controller",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
 	err = ctrlClient.Create(ctx, &deployment1)
 	assert.NoError(t, err, "failed to create client object during test setup")
 	err = ctrlClient.Create(ctx, &deployment2)
@@ -1518,6 +1545,8 @@ func TestAuthProxyStatusCheck(t *testing.T) {
 	err = ctrlClient.Create(ctx, &deployment9)
 	assert.NoError(t, err, "failed to create client object during test setup")
 	err = ctrlClient.Create(ctx, &deployment10)
+	assert.NoError(t, err, "failed to create client object during test setup")
+	err = ctrlClient.Create(ctx, &deployment11)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
 	// Create a fake instance of ReconcileCSM
@@ -1698,6 +1727,19 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 		},
 	}
 
+	authorizationControllerDeployment := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "authorization-controller",
+			Namespace: "test-namespace",
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 0,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &i32One,
+		},
+	}
+
 	err = ctrlClient.Create(ctx, &nginxDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
@@ -1783,6 +1825,14 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &tenantServiceDeployment, 1)
+
+	err = ctrlClient.Create(ctx, &authorizationControllerDeployment)
+	assert.NoError(t, err, "failed to create client object during test setup")
+
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	assert.Nil(t, err)
+
+	recreateDeployment(ctx, t, ctrlClient, &authorizationControllerDeployment, 1)
 
 	deleteDeployments(ctx, t, ctrlClient, &nginxDeployment, &certManagerDeployment, &certManagerCainjectorDeployment, &certManagerWebhookDeployment, &proxyServerDeployment, &redisCommanderDeployment, &redisPrimaryDeployment, &roleServiceDeployment, &storageServiceDeployment, &tenantServiceDeployment)
 }

@@ -69,7 +69,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		log.Infof("getting deployment status for cluster: %s", cluster.ClusterID)
 		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
 
-		if instance.GetName() == "" || instance.GetName() == string(csmv1.Authorization) || instance.GetName() == string(csmv1.ApplicationMobility) {
+		if instance.GetName() == "" || isAuthorizationProxyServer(instance) || instance.GetName() == string(csmv1.ApplicationMobility) {
 			log.Infof("Not a driver instance, will not check deploymentstatus")
 			return emptyStatus, nil
 		}
@@ -218,7 +218,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
 	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
 	log.Infof("instance.GetName() is %s", instance.GetName())
-	if instance.GetName() != "" && instance.GetName() != string(csmv1.Authorization) && instance.GetName() != string(csmv1.ApplicationMobility) {
+	if instance.GetName() != "" && !isAuthorizationProxyServer(instance) && instance.GetName() != string(csmv1.ApplicationMobility) {
 		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 		newStatus.NodeStatus = nodeStatus
 		if daemonSetErr != nil {
@@ -768,10 +768,25 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 				log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 				return false, nil
 			}
+		case "authorization-controller":
+			if !checkFn(&deployment) {
+				log.Infof("%s component not running in auth proxy deployment", deployment.Name)
+				return false, nil
+			}
 		}
+
 	}
 
 	log.Info("auth proxy deployment successful")
 
 	return true, nil
+}
+
+func isAuthorizationProxyServer(cr *csmv1.ContainerStorageModule) bool {
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.AuthorizationServer {
+			return true
+		}
+	}
+	return false
 }
