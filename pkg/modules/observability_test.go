@@ -19,6 +19,7 @@ import (
 	"github.com/dell/csm-operator/tests/shared/clientgoclient"
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -931,6 +932,34 @@ func TestPowerMaxMetrics(t *testing.T) {
 			auth.Enabled = true
 
 			return true, false, tmpCR, fakeClient, operatorConfig
+		},
+		"success - dynamically mount secret (2.14.0+)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+
+			return true, false, customResource, sourceClient, operatorConfig
+		},
+		"success - dynamically mount configMap (2.14.0+)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+
+			return true, false, customResource, sourceClient, operatorConfig
 		},
 		"Fail - no secrets in test-powermax namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
