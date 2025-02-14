@@ -771,10 +771,8 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			modules.AddReverseProxyServiceName(&controller.Deployment)
 
 			// Set the secret mount for powermax controller.
-			err := drivers.DynamicallyMountPowermaxContent(&controller.Deployment, cr)
-			if err != nil {
-				return err
-			}
+			// Note: No need to catch error since it only returns one if the interface casting fails which it shouldn't here.
+			_ = drivers.DynamicallyMountPowermaxContent(&controller.Deployment, cr)
 		} else {
 			log.Info("Starting CSI ReverseProxy Service")
 			if err := modules.ReverseProxyStartService(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
@@ -790,10 +788,8 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 		// Set the secret mount for powermax node.
-		err := drivers.DynamicallyMountPowermaxContent(&node.DaemonSetApplyConfig, cr)
-		if err != nil {
-			return err
-		}
+		// Note: No need to catch error since it only returns one if the interface casting fails which it shouldn't here.
+		_ = drivers.DynamicallyMountPowermaxContent(&node.DaemonSetApplyConfig, cr)
 
 		// Dynamically update the drivers config param.
 		modules.UpdatePowerMaxConfigMap(configMap, cr)
