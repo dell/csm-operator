@@ -32,11 +32,12 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.13.0
+    configVersion: v2.14.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
+    # Controller count
     # Allowed values: n, where n > 0
-    # Default value: None
+    # Default value: 2
     replicas: 2
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
@@ -126,7 +127,18 @@ spec:
         # Allowed values: "error", "warn"/"warning", "info", "debug"
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
-          value: "debug"
+          value: "info"
+        # X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION: It determines if driver is going to skip verification
+        # of TLS certificates while connecting to Unisphere RESTAPI interface
+        # If it is set to false,
+        # then a secret powermax-certs has to be created with a X.509 certificate of CA
+        # which signed the Unisphere certificate
+        # Allowed values:
+        #   "true"  - TLS certificates verification will be skipped
+        #   "false" - TLS certificates will be verified
+        # Default value: "true"
+        - name: "X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION"
+          value: "true"
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
@@ -217,6 +229,17 @@ spec:
         - key: "node.kubernetes.io/network-unavailable"
           operator: "Exists"
           effect: "NoExecute"
+    # Uncomment and tab if nodes you wish to use have the node-role.kubernetes.io/master taint
+    # - key: "node-role.kubernetes.io/master"
+    #   operator: "Exists"
+    #   effect: "NoSchedule"
+    # Uncomment and tab if CSM for Resiliency and CSI Driver pods monitor is enabled
+    #  - key: "offline.powermax.storage.dell.com"
+    #    operator: "Exists"
+    #    effect: "NoSchedule"
+    #  - key: "powermax.podmon.storage.dell.com"
+    #    operator: "Exists"
+    #    effect: "NoSchedule"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
@@ -231,8 +254,9 @@ spec:
       - name: snapshotter
         image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
       - name: csi-metadata-retriever
-        image: dellemc/csi-metadata-retriever:v1.8.0
+        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Default monitor-interval: 60s
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -250,9 +274,7 @@ spec:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          # Example: "csipowermax-reverseproxy:v2.9.1"
-          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
-          imagePullPolicy: Always
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -272,30 +294,91 @@ spec:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enabled: Enable/Disable csm-authorization
-      enabled: true
+      # Default value: false
+      enabled: false
       configVersion: v2.1.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
           envs:
             # proxyHost: hostname of the csm-authorization server
+            # Default value: none
             - name: "PROXY_HOST"
-              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+              value: "csm-authorization.com"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"
+    # Replication: allows configuring replication module
+    # Replication CRDs must be installed before installing driver
+    - name: replication
+      # enabled: Enable/Disable replication feature
+      # Allowed values:
+      #   true: enable replication feature(install dell-csi-replicator sidecar)
+      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.10.0
+      components:
+        - name: dell-csi-replicator
+          # image: Image to use for dell-csi-replicator. This shouldn't be changed
+          # Allowed values: string
+          # Default value: None
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.11.0
+          envs:
+            # replicationPrefix: prefix to prepend to storage classes parameters
+            # Allowed values: string
+            # Default value: replication.storage.dell.com
+            - name: "X_CSI_REPLICATION_PREFIX"
+              value: "replication.storage.dell.com"
+            # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+            # Allowed values: string
+            # Default value: powermax
+            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+              value: "powermax"
+        - name: dell-replication-controller-manager
+          # image: Defines controller image. This shouldn't be changed
+          # Allowed values: string
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.11.0
+          envs:
+            # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
+            # Set the value to "self" in case of stretched/single cluster configuration
+            # Allowed values: string
+            - name: "TARGET_CLUSTERS_IDS"
+              value: "target-cluster-1"
+            # Replication log level
+            # Allowed values: "error", "warn"/"warning", "info", "debug"
+            # Default value: "debug"
+            - name: "REPLICATION_CTRL_LOG_LEVEL"
+              value: "debug"
+            # replicas: Defines number of controller replicas
+            # Allowed values: int
+            # Default value: 1
+            - name: "REPLICATION_CTRL_REPLICAS"
+              value: "1"
+            # retryIntervalMin: Initial retry interval of failed reconcile request.
+            # It doubles with each failure, upto retry-interval-max
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MIN"
+              value: "1s"
+            # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MAX"
+              value: "5m"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
-      enabled: true
+      # Default value: false
+      enabled: false
       configVersion: v1.11.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
-          enabled: true
+          # Default value: false
+          enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/csm-topology:nightly
+          image: quay.io/dell/container-storage-modules/csm-topology:v1.11.0
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -312,10 +395,11 @@ spec:
               value: "INFO"
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: true
+          # Default value: false
+          enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.42.0
+          image: docker.io/otel/opentelemetry-collector:0.42.0
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -327,21 +411,22 @@ spec:
           envs:
             # image of nginx proxy image
             # Allowed values: string
-            # Default value: "nginxinc/nginx-unprivileged:1.27"
+            # Default value: "docker.io/nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
-              value: "nginxinc/nginx-unprivileged:1.27"
+              value: "docker.io/nginxinc/nginx-unprivileged:1.27"
         - name: cert-manager
           # enabled: Enable/Disable cert-manager
           # Allowed values:
           #   true: enable deployment of cert-manager
           #   false: disable deployment of cert-manager only if it's already deployed
           # Default value: false
-          enabled: true
+          enabled: false
         - name: metrics-powermax
           # enabled: Enable/Disable PowerMax metrics
-          enabled: true
+          # Default value: false
+          enabled: false
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: dellemc/csm-metrics-powermax:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.6.0
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int
@@ -386,3 +471,47 @@ spec:
             # configMap name which has all array/endpoint related info
             - name: "X_CSI_CONFIG_MAP_NAME"
               value: "powermax-reverseproxy-config"
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.12.0
+      components:
+        - name: podmon-controller
+          image: quay.io/dell/container-storage-modules/podmon:v1.12.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--labelvalue=csi-powermax"
+            - "--arrayConnectivityPollRate=60"
+            - "--skipArrayConnectionValidation=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityConnectionLossThreshold=3"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--mode=controller"
+            - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powermax.dellemc.com"
+        - name: podmon-node
+          image: quay.io/dell/container-storage-modules/podmon:v1.12.0
+          imagePullPolicy: IfNotPresent
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+          args:
+            - "--labelvalue=csi-powermax"
+            - "--arrayConnectivityPollRate=60"
+            - "--leaderelection=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/lib/kubelet/plugins/powermax.emc.dell.com/csi_sock"
+            - "--mode=node"
+            - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powermax.dellemc.com"
