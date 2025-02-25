@@ -1,0 +1,44 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powermax
+  namespace: powermax
+spec:
+  driver:
+    csiDriverType: "powermax"
+    configVersion: v2.14.0
+    forceRemoveDriver: true
+  # These are the modules which are optional and can be enabled by specifying to enable/disable.
+  modules:
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      # For Auth 2.0, use v2.1.0 as configVersion
+      configVersion: v2.1.0
+      components:
+        - name: karavi-authorization-proxy
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+    - name: resiliency
+      enabled: false
+    - name: replication
+      enabled: false
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
+      components:
+        - name: topology
+          enabled: true
+        - name: otel-collector
+          enabled: true
+        - name: cert-manager
+          # enabled: Enable/Disable cert-manager
+          # Allowed values:
+          #   true: enable deployment of cert-manager
+          #   false: disable deployment of cert-manager only if it's already deployed
+          # Default value: false
+          enabled: false
+        - name: metrics-powermax
+          enabled: true
