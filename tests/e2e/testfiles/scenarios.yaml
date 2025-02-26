@@ -1995,7 +1995,6 @@
     - "Validate custom resource [2]"
     - "Validate [powermax] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is not installed"
-    - "Set up secret with template [testfiles/powermax-templates/powermax-use-secret-auth-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxReverseProxy]"
     - "Enable [authorization] module from CR [2]"
     - "Validate [powermax] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
@@ -2007,9 +2006,8 @@
     - "Validate [powermax] driver from CR [2] is not installed"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/csm-authorization-config.json] for [pmaxAuthSidecar]"
-    - "Restore template [testfiles/powermax-templates/powermax-use-secret-auth-template.yaml] for [pmaxReverseProxy]"
     - "Restore template [testfiles/powermax-templates/powermax-use-secret-template.yaml] for [pmaxUseSecret]"
-    - "Restore template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] for [pmaxReverseProxy]"
   customTest:
     - name: Cert CSI
       run:
