@@ -1,4 +1,4 @@
-//  Copyright © 2022-2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@ package steps
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -25,8 +26,6 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-
-	"encoding/json"
 
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
@@ -55,8 +54,10 @@ var (
 	authString        = "karavi-authorization-proxy"
 	operatorNamespace = "dell-csm-operator"
 	quotaLimit        = "100000000"
-	pflexSecretMap    = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS",
-		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS"}
+	pflexSecretMap    = map[string]string{
+		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS",
+		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
+	}
 	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -65,6 +66,7 @@ var (
 	pflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_VOLUME": "PFLEX_VOLUME"}
 	pflexAuthSidecarMap      = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
 	pmaxCredMap              = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
+	pmaxSecretMap            = map[string]string{"REPLACE_USERNAME": "PMAX_USER", "REPLACE_PASSWORD": "PMAX_USER", "REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT"}
 	pmaxAuthSidecarMap       = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	pmaxStorageMap           = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_RESOURCE_POOL": "PMAX_POOL_V1", "REPLACE_SERVICE_LEVEL": "PMAX_SERVICE_LEVEL"}
 	pmaxReverseProxyMap      = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
@@ -346,7 +348,10 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 	if driver.CSIDriverType == "" {
 		return fmt.Errorf("csiDriverType is missing")
 	}
-	if driver.Replicas == 0 {
+
+	// Ensure that the expected number of controller pods are running.
+	status := found.Status
+	if status.ControllerStatus.Failed > "0" {
 		return fmt.Errorf("replicas should have a non-zero value")
 	}
 
@@ -358,7 +363,6 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 		driver.Node != nil ||
 		driver.CSIDriverSpec != nil ||
 		driver.DNSPolicy != "" ||
-		driver.Common != nil ||
 		driver.AuthSecret != "" ||
 		driver.TLSCertSecret != "" {
 		return fmt.Errorf("unexpected fields found in Driver spec: %+v", driver)
@@ -888,6 +892,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pmaxAuthSidecarMap
 	} else if crType == "pmaxCreds" {
 		mapValues = pmaxCredMap
+	} else if crType == "pmaxUseSecret" {
+		mapValues = pmaxSecretMap
 	} else if crType == "pmaxReverseProxy" {
 		mapValues = pmaxReverseProxyMap
 	} else if crType == "pmaxArrayConfig" {
@@ -1009,7 +1015,6 @@ func (step *Step) runCustomTestSelector(res Resource, testName string) error {
 	}
 
 	return nil
-
 }
 
 func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile string, crType string) error {
@@ -1558,7 +1563,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	)
 
-	//by default, assume we will create storage
+	// by default, assume we will create storage
 	skipStorage := false
 
 	fmt.Println("=== Checking Storage === \n", cmd.String())
@@ -1618,7 +1623,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
 	}
 
-	//By default, assume a role will be created
+	// By default, assume a role will be created
 	skipCreateRole := false
 	cmd = exec.Command("karavictl",
 		"--admin-token", "/tmp/adminToken.yaml",
@@ -1929,7 +1934,6 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 // Normally, this service account is created by Operator, but we create it here
 // in advance to set imagePullSecrets.
 func setupAMImagePullSecret() error {
-
 	if os.Getenv("RH_REGISTRY_USERNAME") == "" || os.Getenv("RH_REGISTRY_PASSWORD") == "" {
 		return fmt.Errorf("env variable RH_REGISTRY_USERNAME or RH_REGISTRY_PASSWORD is not set," +
 			" set it in array-info.sh before continuing")
