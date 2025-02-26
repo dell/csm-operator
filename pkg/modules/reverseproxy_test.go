@@ -328,6 +328,25 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"fail - invalid csm version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR.Spec.Driver.Common.Envs = append(tmpCR.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			tmpCR.Spec.Modules[0].Components[0].Envs = append(tmpCR.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			// Set config version to something invalid.
+			tmpCR.Spec.Driver.ConfigVersion = "invalid"
+
+			deployAsSidecar = true
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -404,6 +423,27 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 			deployAsSidecar = true
 
 			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+		"fail - invalid csm version": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			if err != nil {
+				panic(err)
+			}
+
+			customResource.Spec.Driver.ConfigVersion = "invalid"
+			deployAsSidecar = true
+
+			return false, controllerYAML.Deployment, operatorConfig, customResource
 		},
 	}
 	for name, tc := range tests {
@@ -680,6 +720,26 @@ func TestUpdatePowerMaxConfigMap(t *testing.T) {
 
 			UpdatePowerMaxConfigMap(cm, cr)
 			assert.Equal(t, cm.Data[drivers.ConfigParamsFile], expectedResponse)
+		})
+	}
+}
+
+func TestResetDeployAsSidecar(t *testing.T) {
+	tests := []struct {
+		name string
+		want bool
+	}{
+		{
+			name: "Test reset deploy as sidecar",
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ResetDeployAsSidecar()
+			if got := deployAsSidecar; got != tt.want {
+				t.Errorf("ResetDeployAsSidecar() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

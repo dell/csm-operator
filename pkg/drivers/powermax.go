@@ -81,9 +81,14 @@ const (
 	PowerMaxMountCredentialMinVersion string = "v2.14.0"
 )
 
+/*
+CustomEnv - Custom environment variable
+
+Usage: Contain dynamically configurable environment variables to be easily acccessible during substition.
+*/
 type CustomEnv struct {
-	Name  string
-	Value string
+	Name  string // Name of the environment variable
+	Value string // Value of the environment variable
 }
 
 var (

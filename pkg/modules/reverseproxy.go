@@ -147,13 +147,23 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 		if ctrlObj.GetName() == RevProxyServiceName && ctrlObj.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
 			dp := ctrlObj.(*appsv1.Deployment)
 
-			secretSupported, _ := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+			// Mount Credential support is only introduced in CSM v2.14.0. Prior to this version, we will not try to dynamically
+			// add the necessary fields for either approach.
+			secretSupported, err := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+			if err != nil {
+				return err
+			}
+
 			if secretSupported {
 				if drivers.UseReverseProxySecret(&cr) {
 					secretName := cr.Spec.Driver.AuthSecret
 					deploymentSetReverseProxySecretMounts(dp, secretName)
 				} else {
-					revProxyModule, _, _ := getRevproxyApplyCR(cr, op)
+					revProxyModule, _, err := getRevproxyApplyCR(cr, op)
+					if err != nil {
+						return err
+					}
+
 					cm := getRevProxyEnvVariable(*revProxyModule, "X_CSI_CONFIG_MAP_NAME")
 					deploymentSetReverseProxyConfigMapMounts(dp, cm)
 				}
@@ -323,7 +333,11 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	}
 
 	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
-	secretSupported, _ := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+	secretSupported, err := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+	if err != nil {
+		return nil, err
+	}
+
 	useSecret := drivers.UseReverseProxySecret(&cr)
 	if secretSupported && useSecret {
 		err = drivers.DynamicallyMountPowermaxContent(&dp, cr)

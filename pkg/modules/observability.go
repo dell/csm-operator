@@ -900,7 +900,11 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	}
 
 	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
-	secretSupported, _ := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+	secretSupported, err := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+	if err != nil {
+		return err
+	}
+
 	useSecret := drivers.UseReverseProxySecret(&cr)
 	if secretSupported && useSecret {
 		// Append config map or mount cred secret.
@@ -909,7 +913,10 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	}
 
 	if !useSecret {
-		setPowerMaxMetricsConfigMap(dpApply, cr)
+		err := setPowerMaxMetricsConfigMap(dpApply, cr)
+		if err != nil {
+			return err
+		}
 	}
 
 	powerMaxMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerMaxMetricsObjects, ctrlClient, k8sClient)
@@ -954,9 +961,12 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	return nil
 }
 
-func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule) {
-	// Previous calls already checked existence of the observability module
-	obs, _ := getObservabilityModule(cr)
+func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule) error {
+	obs, err := getObservabilityModule(cr)
+	if err != nil {
+		// Observability module not found
+		return err
+	}
 
 	cm := "powermax-reverseproxy-config"
 	// Get the config map name from the observability module
@@ -1002,6 +1012,8 @@ func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csm
 	if !contains {
 		dp.Spec.Template.Spec.Containers[0].VolumeMounts = append(dp.Spec.Template.Spec.Containers[0].VolumeMounts, volumeMount)
 	}
+
+	return nil
 }
 
 // getPowerMaxMetricsObject - get powermax metrics yaml string
