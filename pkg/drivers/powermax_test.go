@@ -1,4 +1,4 @@
-//  Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2023-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@ package drivers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -22,17 +23,21 @@ import (
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
-	powerMaxCSM                = csmForPowerMax()
-	powerMaxCSMNoProxy         = csmForPowerMaxNOProxy()
-	powerMaxCSMBadVersion      = csmForPowerMaxBadVersion()
-	powermaxDefaultKubeletPath = getDefaultKubeletPath()
-	powerMaxClient             = crclient.NewFakeClientNoInjector(objects)
-	powerMaxSecret             = shared.MakeSecret("csm-creds", "pmax-test", shared.PmaxConfigVersion)
-	pMaxfakeSecret             = shared.MakeSecret("fake-creds", "fake-test", shared.PmaxConfigVersion)
+	powerMaxCSM                   = csmForPowerMax()
+	powerMaxReverseProxySecret    = csmWithReverseProxySecret()
+	powerMaxBadReverseProxySecret = csmWithBadReverseProxySecret()
+	powerMaxCSMNoProxy            = csmForPowerMaxNOProxy()
+	powerMaxCSMBadVersion         = csmForPowerMaxBadVersion()
+	powermaxDefaultKubeletPath    = getDefaultKubeletPath()
+	powerMaxClient                = crclient.NewFakeClientNoInjector(objects)
+	powerMaxSecret                = shared.MakeSecret("csm-creds", "pmax-test", shared.PmaxConfigVersion)
+	pMaxfakeSecret                = shared.MakeSecret("fake-creds", "fake-test", shared.PmaxConfigVersion)
 
 	powerMaxTests = []struct {
 		// every single unit test name
@@ -46,6 +51,8 @@ var (
 		expectedErr string
 	}{
 		{"happy path", powerMaxCSM, powerMaxClient, powerMaxSecret, ""},
+		{"success: use reverse proxy secret", powerMaxReverseProxySecret, powerMaxClient, powerMaxSecret, ""},
+		{"invalid reverse proxy secret, use default", powerMaxBadReverseProxySecret, powerMaxClient, powerMaxSecret, ""},
 		{"no proxy set defaults", powerMaxCSMNoProxy, powerMaxClient, powerMaxSecret, ""},
 		{"missing secret", powerMaxCSM, powerMaxClient, pMaxfakeSecret, "failed to find secret"},
 		{"bad version", powerMaxCSMBadVersion, powerMaxClient, powerMaxSecret, "not supported"},
@@ -78,6 +85,163 @@ func TestPrecheckPowerMax(t *testing.T) {
 	}
 }
 
+func TestDynamicallyMountPowermaxContent(t *testing.T) {
+	containerName := "driver"
+	volumeName := "myVolume"
+	tests := []struct {
+		name          string
+		configuration interface{}
+		cr            csmv1.ContainerStorageModule
+		expectedErr   error
+	}{
+		{
+			name: "success: dynamically mount secret for deployment",
+			configuration: &v1.DeploymentApplyConfiguration{
+				Spec: &v1.DeploymentSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{
+							Volumes: []acorev1.VolumeApplyConfiguration{
+								{
+									Name: &volumeName,
+								},
+							},
+							Containers: []acorev1.ContainerApplyConfiguration{
+								{
+									Name: &containerName,
+									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+										{
+											Name: &volumeName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"}},
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "success: dynamically mount config content for deployment",
+			configuration: &v1.DeploymentApplyConfiguration{
+				Spec: &v1.DeploymentSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{
+							Volumes: []acorev1.VolumeApplyConfiguration{
+								{
+									Name: &volumeName,
+								},
+							},
+							Containers: []acorev1.ContainerApplyConfiguration{
+								{
+									Name: &containerName,
+									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+										{
+											Name: &volumeName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"}},
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "success: dynamically mount secret for daemonset",
+			configuration: &v1.DaemonSetApplyConfiguration{
+				Spec: &v1.DaemonSetSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"}},
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "success: empty envs",
+			configuration: &v1.DeploymentApplyConfiguration{
+				Spec: &v1.DeploymentSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "error: invalid type passed through",
+			configuration: &v1.ReplicaSetApplyConfiguration{
+				Spec: &v1.ReplicaSetSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{},
+					},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						AuthSecret: "powermax-config",
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"}},
+						},
+					},
+				},
+			},
+			expectedErr: errors.New("invalid type passed through"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := DynamicallyMountPowermaxContent(tt.configuration, tt.cr)
+			if tt.expectedErr == nil {
+				assert.Nil(t, err)
+			} else {
+				assert.EqualError(t, err, tt.expectedErr.Error())
+			}
+		})
+	}
+}
+
 // makes a csm object without proxy
 func csmForPowerMaxNOProxy() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
@@ -100,6 +264,44 @@ func csmForPowerMax() csmv1.ContainerStorageModule {
 	res := csmForPowerMaxNOProxy()
 	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
 	res.Spec.Modules = append(res.Spec.Modules, revproxy)
+	return res
+}
+
+func csmWithReverseProxySecret() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "X_CSI_POWERMAX_PORTGROUPS", Value: "csi_pg"},
+		{Name: "X_CSI_TRANSPORT_PROTOCOL", Value: "FC"},
+		{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"},
+	}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+
+	// Add pmax driver version
+	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
+	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
+	revproxy.Components[0].Envs = append(revproxy.Components[0].Envs, corev1.EnvVar{Name: CSIPowerMaxUseSecret, Value: "false"})
+	res.Spec.Modules = append(res.Spec.Modules, revproxy)
+
+	return res
+}
+
+func csmWithBadReverseProxySecret() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "X_CSI_POWERMAX_PORTGROUPS", Value: "csi_pg"},
+		{Name: "X_CSI_TRANSPORT_PROTOCOL", Value: "FC"},
+		{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "invalid"},
+	}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+
+	// Add pmax driver version
+	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
 	return res
 }
 
