@@ -1157,8 +1157,8 @@ func TestSetPowerMaxMetricsConfigMap(t *testing.T) {
 			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
 				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
 
-			secretName := "powermax-reverseproxy-config"
-			secretPath := "/etc/reverseproxy"
+			mountName := "powermax-reverseproxy-config"
+			mountPath := "/etc/reverseproxy"
 			dp := &confv1.DeploymentApplyConfiguration{
 				Spec: &confv1.DeploymentSpecApplyConfiguration{
 					Template: &acorev1.PodTemplateSpecApplyConfiguration{
@@ -1167,8 +1167,8 @@ func TestSetPowerMaxMetricsConfigMap(t *testing.T) {
 								{
 									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
 										{
-											Name:      &secretName,
-											MountPath: &secretPath,
+											Name:      &mountName,
+											MountPath: &mountPath,
 										},
 									},
 								},
