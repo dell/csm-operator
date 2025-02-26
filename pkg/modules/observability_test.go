@@ -19,9 +19,12 @@ import (
 	"github.com/dell/csm-operator/tests/shared/clientgoclient"
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -932,6 +935,50 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, false, tmpCR, fakeClient, operatorConfig
 		},
+		"success - dynamically mount secret (2.14.0+)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+
+			return true, false, customResource, sourceClient, operatorConfig
+		},
+		"success - dynamically mount configMap (2.14.0+)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+
+			return true, false, customResource, sourceClient, operatorConfig
+		},
+		"Fail - invalid config version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			customResource.Spec.Driver.ConfigVersion = "invalid-version"
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+
+			return false, false, customResource, sourceClient, operatorConfig
+		},
 		"Fail - no secrets in test-powermax namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
 			if err != nil {
@@ -1090,6 +1137,63 @@ func TestObservabilityCertIssuer(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			err := IssuerCertServiceObs(ctx, isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestSetPowerMaxMetricsConfigMap(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, *confv1.DeploymentApplyConfiguration, csmv1.ContainerStorageModule){
+		"success - dynamically mount configMap": func(*testing.T) (bool, *confv1.DeploymentApplyConfiguration, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			mountName := "powermax-reverseproxy-config"
+			mountPath := "/etc/reverseproxy"
+			dp := &confv1.DeploymentApplyConfiguration{
+				Spec: &confv1.DeploymentSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{
+							Containers: []acorev1.ContainerApplyConfiguration{
+								{
+									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+										{
+											Name:      &mountName,
+											MountPath: &mountPath,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			return true, dp, customResource
+		},
+		"Fail - wrong module name": func(*testing.T) (bool, *confv1.DeploymentApplyConfiguration, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			return false, nil, customResource
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, dp, cr := tc(t)
+			err := setPowerMaxMetricsConfigMap(dp, cr)
 			if success {
 				assert.NoError(t, err)
 			} else {
