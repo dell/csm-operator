@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -769,6 +769,10 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployement\n")
 			log.Infof("adding proxy service name...\n")
 			modules.AddReverseProxyServiceName(&controller.Deployment)
+
+			// Set the secret mount for powermax controller.
+			// Note: No need to catch error since it only returns one if the interface casting fails which it shouldn't here.
+			_ = drivers.DynamicallyMountPowermaxContent(&controller.Deployment, cr)
 		} else {
 			log.Info("Starting CSI ReverseProxy Service")
 			if err := modules.ReverseProxyStartService(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
@@ -777,10 +781,18 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			log.Info("Injecting CSI ReverseProxy")
 			dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
 			if err != nil {
-				return fmt.Errorf("injecting replication into deployment: %v", err)
+				return fmt.Errorf("unable to inject ReverseProxy into deployment: %v", err)
 			}
+
 			controller.Deployment = *dp
 		}
+
+		// Set the secret mount for powermax node.
+		// Note: No need to catch error since it only returns one if the interface casting fails which it shouldn't here.
+		_ = drivers.DynamicallyMountPowermaxContent(&node.DaemonSetApplyConfig, cr)
+
+		// Dynamically update the drivers config param.
+		modules.UpdatePowerMaxConfigMap(configMap, cr)
 	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)
@@ -1370,6 +1382,10 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powermax validation: %v", err)
 		}
+
+		// To ensure that we are handling minimal manifests correctly and consistent, we must reset DeployAsSidecar to the original value.
+		// This variable will be set correctly if the reverseproxy is found in the manifests.
+		modules.ResetDeployAsSidecar()
 	default:
 		// Go to checkUpgrade if it is standalone module i.e. app mobility or authorizatio proxy server
 		if cr.HasModule(csmv1.ApplicationMobility) || cr.HasModule(csmv1.AuthorizationServer) {
