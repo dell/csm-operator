@@ -11,11 +11,15 @@
 # limitations under the License.
 #
 apiVersion: v1
-kind: ConfigMap
+kind: Service
 metadata:
-  name: <DriverDefaultReleaseName>-config-params
+  name: csipowermax-reverseproxy
   namespace: <DriverDefaultReleaseNamespace>
-data:
-  driver-config-params.yaml: |-
-    CSI_LOG_LEVEL: "info"
-    CSI_LOG_FORMAT: "TEXT"
+spec:
+  ports:
+    - port: <X_CSI_REVPROXY_PORT>
+      protocol: TCP
+      targetPort: 2222
+  selector:
+    app: <DriverDefaultReleaseName>-controller
+  type: ClusterIP

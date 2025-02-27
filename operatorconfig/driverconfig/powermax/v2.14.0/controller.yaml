@@ -1,4 +1,4 @@
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -157,7 +157,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -172,7 +172,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: external-health-monitor
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.13.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -237,7 +237,7 @@ spec:
               mountPath: /var/run/csi
         - name: driver
           image: quay.io/dell/container-storage-modules/csi-powermax:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command: ["/csi-powermax.sh"]
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
@@ -250,16 +250,6 @@ spec:
               value: controller
             - name: X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION
               value: "true"
-            - name: X_CSI_POWERMAX_USER
-              valueFrom:
-                secretKeyRef:
-                  key: username
-                  name: powermax-creds
-            - name: X_CSI_POWERMAX_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: password
-                  name: powermax-creds
             - name: X_CSI_POWERMAX_DEBUG
               value: "<X_CSI_POWERMAX_DEBUG>"
             - name: X_CSI_GRPC_MAX_THREADS

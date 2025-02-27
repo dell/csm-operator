@@ -1,4 +1,4 @@
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ spec:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
           image: quay.io/dell/container-storage-modules/csi-powermax:nightly
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
               value: csi-powermax.dellemc.com
@@ -104,17 +104,7 @@ spec:
             - name: X_CSI_PRIVATE_MOUNT_DIR
               value: "<KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com/disks"
             - name: X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION
-              value: true
-            - name: X_CSI_POWERMAX_USER
-              valueFrom:
-                secretKeyRef:
-                  name: powermax-creds
-                  key: username
-            - name: X_CSI_POWERMAX_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: powermax-creds
-                  key: password
+              value: "true"
             - name: X_CSI_POWERMAX_NODENAME
               valueFrom:
                 fieldRef:
@@ -193,7 +183,7 @@ spec:
             - name: tls-secret
               mountPath: /app/tls
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
