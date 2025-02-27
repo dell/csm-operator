@@ -81,7 +81,7 @@ spec:
               value: /etc/config/configmap
             - name: X_CSI_REVPROXY_CONFIG_FILE_NAME
               value: config.yaml
-            - name: X_CSI_REVRPOXY_IN_CLUSTER
+            - name: X_CSI_REVPROXY_IN_CLUSTER
               value: "true"
             - name: X_CSI_REVPROXY_TLS_CERT_DIR
               value: /app/tls
