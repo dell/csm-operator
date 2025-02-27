@@ -31,6 +31,11 @@ spec:
           value: "false"
         - name: X_CSI_DEBUG
           value: "true"
+        # Log level for CSI driver, passed to logrus.
+        # Options are "PANIC", "FATAL", "ERROR", "WARN", "INFO",
+        # "DEBUG", and "TRACE".
+        - name: CSI_LOG_LEVEL
+          value: "INFO"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
         # Default value: /var/lib/kubelet
