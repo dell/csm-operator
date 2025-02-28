@@ -59,6 +59,9 @@ const (
 
 	// UnityDebug - will be used to control the GOISILON_DEBUG variable
 	UnityDebug string = "<GOUNITY_DEBUG>"
+
+	// UnityHttp - will be used to control the GOUNITY_SHOWHTTP variable
+	UnityHttp string = "<GOUNITY_SHOWHTTP>"
 )
 
 // PrecheckUnity do input validation
@@ -126,11 +129,16 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 	allowedNetworks := ""
 	// GOUNITY_DEBUG defaults to true
 	debug := "false"
+	// GOUNITY_SHOWHTTP defaults to false
+	showHttp := "false"
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "GOUNITY_DEBUG" {
 				debug = env.Value
+			}
+			if env.Name == "GOUNITY_SHOWHTTP" {
+				showHttp = env.Value
 			}
 		}
 	}
@@ -151,6 +159,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 		yamlString = strings.ReplaceAll(yamlString, AllowedNetworks, allowedNetworks)
 		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, UnityDebug, debug)
+		yamlString = strings.ReplaceAll(yamlString, UnityHttp, showHttp)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -161,6 +170,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, UnityHttp, showHttp)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

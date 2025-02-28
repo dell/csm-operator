@@ -235,6 +235,8 @@ spec:
               value: "true"
             - name: GOUNITY_DEBUG
               value: <GOUNITY_DEBUG> 
+            - name: GOUNITY_SHOWHTTP
+              value: <GOUNITY_SHOWHTTP>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
