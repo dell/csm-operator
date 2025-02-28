@@ -36,6 +36,12 @@ spec:
         # "DEBUG", and "TRACE".
         - name: CSI_LOG_LEVEL
           value: "INFO"
+        # GOSCALEIO_DEBUG: Enable/disable debug logs from goscaleio library.
+        - name: GOSCALEIO_DEBUG
+          value: "true"
+        # GOSCALEIO_SHOWHTTP: Enable/disable HTTP requests and responses from goscaleio library
+        - name: GOSCALEIO_SHOWHTTP
+          value: "false"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
         # Default value: /var/lib/kubelet
@@ -75,7 +81,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  # do not add mdm value here if it is present in secret
+            value: "10.xx.xx.xx,10.xx.xx.xx" # do not add mdm value here if it is present in secret
             # health monitor is disabled by default, refer to driver documentation before enabling it
             # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
             # Default monitor-interval: 60s
@@ -204,7 +210,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
+            value: "10.xx.xx.xx,10.xx.xx.xx" # provide MDM value
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
