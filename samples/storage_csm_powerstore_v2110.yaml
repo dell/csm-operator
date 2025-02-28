@@ -58,6 +58,9 @@ spec:
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
           value: info
+        # GOPOWERSTORE_DEBUG: Enable/disable debug logs from gopowerstore library.
+        - name: "GOPOWERSTORE_DEBUG"
+          value: "true"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner

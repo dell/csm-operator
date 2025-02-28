@@ -57,6 +57,9 @@ spec:
         # Default value: "info"
         - name: CSI_LOG_LEVEL
           value: info
+        # GOUNITY_DEBUG: Enable/disable debug logs from gounity library.
+        - name: "GOUNITY_DEBUG"
+          value: "true"
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
