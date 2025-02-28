@@ -237,7 +237,7 @@ spec:
             - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
               value: <X_CSI_POWERFLEX_EXTERNAL_ACCESS>
             - name: X_CSI_DEBUG
-              value: true
+              value: <X_CSI_DEBUG>
             - name: GOSCALEIO_DEBUG
               value: <GOSCALEIO_DEBUG>
             - name: GOSCALEIO_SHOWHTTP
