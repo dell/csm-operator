@@ -99,6 +99,8 @@ spec:
               value: "/var/lib/kubelet/plugins/kubernetes.io/csi/pv/"
             - name: X_CSI_ISCSI_CHROOT
               value: "/noderoot"
+            - name: GOUNITY_DEBUG
+              value: <GOUNITY_DEBUG> 
             - name: X_CSI_UNITY_NODENAME
               valueFrom:
                 fieldRef:

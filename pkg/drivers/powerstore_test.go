@@ -119,6 +119,8 @@ func csmForPowerStore(customCSMName string) csmv1.ContainerStorageModule {
 	// Add pstore driver version
 	res.Spec.Driver.ConfigVersion = shared.PStoreConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+	//TODO need to make sure we can check this value in UT
+	res.Spec.Driver.Common.Envs = append(res.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "GOPOWERSTORE_DEBUG", Value: "true"})
 
 	return res
 }

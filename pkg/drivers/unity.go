@@ -56,6 +56,9 @@ const (
 
 	// UnityCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	UnityCSMNameSpace string = "<CSM_NAMESPACE>"
+
+	// UnityDebug - will be used to control the GOISILON_DEBUG variable
+	UnityDebug string = "<GOUNITY_DEBUG>"
 )
 
 // PrecheckUnity do input validation
@@ -121,6 +124,16 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 	healthMonitorController := "false"
 	storageCapacity := "false"
 	allowedNetworks := ""
+	// GOUNITY_DEBUG defaults to true
+	debug := "false"
+
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "GOUNITY_DEBUG" {
+				debug = env.Value
+			}
+		}
+	}
 
 	switch fileType {
 	case "Node":
@@ -137,6 +150,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, AllowedNetworks, allowedNetworks)
 		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, UnityDebug, debug)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
