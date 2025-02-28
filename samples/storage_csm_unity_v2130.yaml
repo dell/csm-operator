@@ -60,6 +60,9 @@ spec:
         # GOUNITY_DEBUG: Enable/disable debug logs from gounity library.
         - name: "GOUNITY_DEBUG"
           value: "true"
+        # GOUNITY_SHOWHTTP: Enable/disable HTTP requests and responses from gounity library.
+        - name: "GOUNITY_SHOWHTTP"
+          value: "false"
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"

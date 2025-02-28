@@ -126,7 +126,9 @@ func csmForUnity(customCSMName string) csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.Unity
 	envVar1 := corev1.EnvVar{Name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
 	envVar2 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "1"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2}
+	envVar3 := corev1.EnvVar{Name: "GOUNITY_DEBUG", Value: "true"}
+	envVar4 := corev1.EnvVar{Name: "GOUNITY_SHOWHTTP", Value: "true"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3, envVar4}
 
 	return res
 }
