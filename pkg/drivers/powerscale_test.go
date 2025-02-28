@@ -130,7 +130,8 @@ func csmForPowerScale() csmv1.ContainerStorageModule {
 	// Add log level to cover some code in GetConfigMap
 	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "0"}
 	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
+	envVarLogLevel3 := corev1.EnvVar{Name: "GOISILON_DEBUG", Value: "true"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2, envVarLogLevel3}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 
 	// Add pscale driver version
