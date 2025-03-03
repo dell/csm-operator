@@ -127,7 +127,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 	healthMonitorController := "false"
 	storageCapacity := "false"
 	allowedNetworks := ""
-	// GOUNITY_DEBUG defaults to true
+	// GOUNITY_DEBUG defaults to false
 	debug := "false"
 	// GOUNITY_SHOWHTTP defaults to false
 	showHTTP := "false"
@@ -170,6 +170,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, UnityDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, UnityHTTP, showHTTP)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {

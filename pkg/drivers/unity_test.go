@@ -69,6 +69,53 @@ var (
 		{"missing secret", csmUnity, unityClient, fakeSecretUnity, "failed to find secret"},
 		{"should check for certs in driver namespace when X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION is false ", skipCertValidIsFalse, unityClient, fakeSecretUnity, "failed to find secret"},
 	}
+
+	unityCommonEnvTest = []struct {
+		name       string
+		yamlString string
+		csm        csmv1.ContainerStorageModule
+		ct         client.Client
+		sec        *corev1.Secret
+		fileType   string
+		expected   string
+	}{
+		{
+			name:       "update GOUNITY_DEBUG value for Controller",
+			yamlString: "<GOUNITY_DEBUG>",
+			csm:        gounityValues("true", "true"),
+			ct:         unityClient,
+			sec:        unitySecret,
+			fileType:   "Controller",
+			expected:   "true",
+		},
+		{
+			name:       "update GOUNITY_DEBUG value for Node",
+			yamlString: "<GOUNITY_DEBUG>",
+			csm:        gounityValues("true", "true"),
+			ct:         unityClient,
+			sec:        unitySecret,
+			fileType:   "Node",
+			expected:   "true",
+		},
+		{
+			name:       "update GOUNITY_SHOWHTTP value for Controller",
+			yamlString: "<GOUNITY_SHOWHTTP>",
+			csm:        gounityValues("true", "true"),
+			ct:         unityClient,
+			sec:        unitySecret,
+			fileType:   "Controller",
+			expected:   "true",
+		},
+		{
+			name:       "update GOUNITY_SHOWHTTP value for Node",
+			yamlString: "<GOUNITY_SHOWHTTP>",
+			csm:        gounityValues("true", "true"),
+			ct:         unityClient,
+			sec:        unitySecret,
+			fileType:   "Node",
+			expected:   "true",
+		},
+	}
 )
 
 func TestPrecheckUnity(t *testing.T) {
@@ -106,6 +153,17 @@ func TestPrecheckUnity(t *testing.T) {
 	}
 }
 
+func TestModifyUnityCR(t *testing.T) {
+	for _, tt := range unityCommonEnvTest {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ModifyUnityCR(tt.yamlString, tt.csm, tt.fileType)
+			if result != tt.expected {
+				t.Errorf("expected %v, but got %v", tt.expected, result)
+			}
+		})
+	}
+}
+
 // makes a csm object with a bad version
 func csmForUnityBadVersion() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.UnityConfigVersion)
@@ -126,8 +184,8 @@ func csmForUnity(customCSMName string) csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.Unity
 	envVar1 := corev1.EnvVar{Name: "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
 	envVar2 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "1"}
-	envVar3 := corev1.EnvVar{Name: "GOUNITY_DEBUG", Value: "true"}
-	envVar4 := corev1.EnvVar{Name: "GOUNITY_SHOWHTTP", Value: "true"}
+	envVar3 := corev1.EnvVar{Name: "GOUNITY_DEBUG", Value: "false"}
+	envVar4 := corev1.EnvVar{Name: "GOUNITY_SHOWHTTP", Value: "false"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3, envVar4}
 
 	return res
@@ -179,4 +237,14 @@ func csmForUnitySkipCertISFalse() csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.Unity
 
 	return res
+}
+
+func gounityValues(debug, showHTTP string) csmv1.ContainerStorageModule {
+	cr := csmForUnity("csm")
+	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "GOUNITY_DEBUG", Value: debug},
+		{Name: "GOUNITY_SHOWHTTP", Value: showHTTP},
+	}
+
+	return cr
 }

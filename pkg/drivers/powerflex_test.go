@@ -81,7 +81,7 @@ var (
 	}{
 		{
 			name:       "Controller case with values",
-			yamlString: "CSI_HEALTH_MONITOR_ENABLED=OLD CSI_POWERFLEX_EXTERNAL_ACCESS=OLD CSI_DEBUG=OLD GOSCALEIO_DEBUG=TRUE GOSCALEIO_SHOWHTTP=FALSE",
+			yamlString: "CSI_HEALTH_MONITOR_ENABLED=OLD CSI_POWERFLEX_EXTERNAL_ACCESS=OLD CSI_DEBUG=OLD",
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
@@ -90,19 +90,17 @@ var (
 								{Name: "X_CSI_POWERFLEX_EXTERNAL_ACCESS", Value: "NEW_POWERFLEX_ACCESS"},
 								{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "NEW_HEALTH_MONITOR"},
 								{Name: "X_CSI_DEBUG", Value: "NEW_DEBUG"},
-								{Name: "GOSCALEIO_DEBUG", Value: "TRUE"},
-								{Name: "GOSCALEIO_SHOWHTTP", Value: "FALSE"},
 							},
 						},
 					},
 				},
 			},
 			fileType: "Controller",
-			expected: "CSI_HEALTH_MONITOR_ENABLED=OLD CSI_POWERFLEX_EXTERNAL_ACCESS=OLD CSI_DEBUG=OLD GOSCALEIO_DEBUG=TRUE GOSCALEIO_SHOWHTTP=FALSE",
+			expected: "CSI_HEALTH_MONITOR_ENABLED=OLD CSI_POWERFLEX_EXTERNAL_ACCESS=OLD CSI_DEBUG=OLD",
 		},
 		{
 			name:       "Node case with values",
-			yamlString: "CSI_SDC_ENABLED=NEW_SDC_ENABLED CSI_APPROVE_SDC_ENABLED=NEW_APPROVE_SDC CSI_RENAME_SDC_ENABLED=NEW_RENAME_SDC CSI_PREFIX_RENAME_SDC=NEW_RENAME_PREFIX CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE=NEW_MAX_VOLUMES CSI_HEALTH_MONITOR_ENABLED=NEW_HEALTH_MONITOR_NODE CSI_DEBUG=NEW_DEBUG GOSCALEIO_DEBUG=TRUE GOSCALEIO_SHOWHTTP=FALSE",
+			yamlString: "CSI_SDC_ENABLED=NEW_SDC_ENABLED CSI_APPROVE_SDC_ENABLED=NEW_APPROVE_SDC CSI_RENAME_SDC_ENABLED=NEW_RENAME_SDC CSI_PREFIX_RENAME_SDC=NEW_RENAME_PREFIX CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE=NEW_MAX_VOLUMES CSI_HEALTH_MONITOR_ENABLED=NEW_HEALTH_MONITOR_NODE CSI_DEBUG=NEW_DEBUG",
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
@@ -115,15 +113,13 @@ var (
 								{Name: "X_CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE", Value: "NEW_MAX_VOLUMES"},
 								{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "NEW_HEALTH_MONITOR_NODE"},
 								{Name: "X_CSI_DEBUG", Value: "NEW_DEBUG"},
-								{Name: "GOSCALEIO_DEBUG", Value: "TRUE"},
-								{Name: "GOSCALEIO_SHOWHTTP", Value: "FALSE"},
 							},
 						},
 					},
 				},
 			},
 			fileType: "Node",
-			expected: "CSI_SDC_ENABLED=NEW_SDC_ENABLED CSI_APPROVE_SDC_ENABLED=NEW_APPROVE_SDC CSI_RENAME_SDC_ENABLED=NEW_RENAME_SDC CSI_PREFIX_RENAME_SDC=NEW_RENAME_PREFIX CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE=NEW_MAX_VOLUMES CSI_HEALTH_MONITOR_ENABLED=NEW_HEALTH_MONITOR_NODE CSI_DEBUG=NEW_DEBUG GOSCALEIO_DEBUG=TRUE GOSCALEIO_SHOWHTTP=FALSE",
+			expected: "CSI_SDC_ENABLED=NEW_SDC_ENABLED CSI_APPROVE_SDC_ENABLED=NEW_APPROVE_SDC CSI_RENAME_SDC_ENABLED=NEW_RENAME_SDC CSI_PREFIX_RENAME_SDC=NEW_RENAME_PREFIX CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE=NEW_MAX_VOLUMES CSI_HEALTH_MONITOR_ENABLED=NEW_HEALTH_MONITOR_NODE CSI_DEBUG=NEW_DEBUG",
 		},
 		{
 			name:       "CSIDriverSpec case with storage capacity",
@@ -154,6 +150,74 @@ var (
 			},
 			fileType: "CSIDriverSpec",
 			expected: "CSI_STORAGE_CAPACITY_ENABLED=OLD CSI_VXFLEXOS_QUOTA_ENABLED=OLD",
+		},
+		{
+			name:       "update GOSCALEIO_DEBUG value for Controller",
+			yamlString: "<GOSCALEIO_DEBUG>",
+			cr:        csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "GOSCALEIO_DEBUG", Value: "false"},
+							},
+						},
+					},
+				},
+			},
+			fileType:   "Controller",
+			expected:   "false",
+		},
+		{
+			name:       "update GOSCALEIO_DEBUG value for Node",
+			yamlString: "<GOSCALEIO_DEBUG>",
+			cr:        csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "GOSCALEIO_DEBUG", Value: "false"},
+							},
+						},
+					},
+				},
+			},
+			fileType:   "Node",
+			expected:   "false",
+		},
+		{
+			name:       "update GOSCALEIO_SHOWHTTP value for Controller",
+			yamlString: "<GOSCALEIO_SHOWHTTP>",
+			cr:        csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "GOSCALEIO_SHOWHTTP", Value: "true"},
+							},
+						},
+					},
+				},
+			},
+			fileType:   "Controller",
+			expected:   "true",
+		},
+		{
+			name:       "update GOSCALEIO_SHOWHTTP value for Node",
+			yamlString: "<GOSCALEIO_SHOWHTTP>",
+			cr:        csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "GOSCALEIO_SHOWHTTP", Value: "true"},
+							},
+						},
+					},
+				},
+			},
+			fileType:   "Node",
+			expected:   "true",
 		},
 	}
 )

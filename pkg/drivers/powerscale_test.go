@@ -68,6 +68,35 @@ var (
 		{"bad version", powerScaleCSMBadVersion, powerScaleClient, powerScaleSecret, "not supported"},
 		{"missing envs", powerScaleCSMEmptyEnv, powerScaleClient, powerScaleSecret, "failed to find secret"},
 	}
+
+	powerScaleCommonEnvTest = []struct {
+		name       string
+		yamlString string
+		csm        csmv1.ContainerStorageModule
+		ct         client.Client
+		sec        *corev1.Secret
+		fileType   string
+		expected   string
+	}{
+		{
+			name:       "update GOISILON_DEBUG value for Controller",
+			yamlString: "<GOISILON_DEBUG>",
+			csm:        goisilonDebug("true"),
+			ct:         powerScaleClient,
+			sec:        powerScaleSecret,
+			fileType:   "Controller",
+			expected:   "true",
+		},
+		{
+			name:       "update GOISILON_DEBUG value for Node",
+			yamlString: "<GOISILON_DEBUG>",
+			csm:        goisilonDebug("true"),
+			ct:         powerScaleClient,
+			sec:        powerScaleSecret,
+			fileType:   "Node",
+			expected:   "true",
+		},
+	}
 )
 
 func TestGetApplyCertVolume(t *testing.T) {
@@ -123,6 +152,17 @@ func TestPrecheckPowerScale(t *testing.T) {
 	}
 }
 
+func TestModifyPowerScaleCR(t *testing.T) {
+	for _, tt := range powerScaleCommonEnvTest {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ModifyPowerScaleCR(tt.yamlString, tt.csm, tt.fileType)
+			if result != tt.expected {
+				t.Errorf("expected %v, but got %v", tt.expected, result)
+			}
+		})
+	}
+}
+
 // makes a csm object with tolerations
 func csmForPowerScale() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
@@ -130,7 +170,7 @@ func csmForPowerScale() csmv1.ContainerStorageModule {
 	// Add log level to cover some code in GetConfigMap
 	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "0"}
 	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
-	envVarLogLevel3 := corev1.EnvVar{Name: "GOISILON_DEBUG", Value: "true"}
+	envVarLogLevel3 := corev1.EnvVar{Name: "GOISILON_DEBUG", Value: "false"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2, envVarLogLevel3}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 
@@ -195,4 +235,13 @@ func csmForPowerScaleBadVersion() csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res
+}
+
+func goisilonDebug(debug string) csmv1.ContainerStorageModule {
+	cr := csmForPowerScale()
+	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "GOISILON_DEBUG", Value: debug},
+	}
+
+	return cr
 }
