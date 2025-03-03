@@ -251,6 +251,8 @@ spec:
               value: /powerstore-config-params/driver-config-params.yaml
             - name: GOPOWERSTORE_DEBUG
               value: <GOPOWERSTORE_DEBUG>
+            - name: X_CSI_DEBUG
+              value: <X_CSI_DEBUG>
             - name: CSI_AUTO_ROUND_OFF_FILESYSTEM_SIZE
               value: true
             - name: X_CSI_HEALTH_MONITOR_ENABLED

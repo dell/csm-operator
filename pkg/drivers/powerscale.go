@@ -175,6 +175,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	storageCapacity := "false"
 	healthMonitorNode := "false"
 	healthMonitorController := "false"
+	csiDebug := "true"
 
 	// GOISILON_DEBUG defaults to false
 	debug := "false"
@@ -183,6 +184,9 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "GOISILON_DEBUG" {
 				debug = env.Value
+			}
+			if env.Name == "X_CSI_DEBUG" {
+				csiDebug = env.Value
 			}
 		}
 	}
@@ -204,6 +208,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
+		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
 			for _, env := range cr.Spec.Driver.Node.Envs {
@@ -215,6 +220,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
+		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 	}
 	return yamlString
 }

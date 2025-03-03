@@ -299,6 +299,8 @@ spec:
               value: "false"
             - name: GOISILON_DEBUG
               value: <GOISILON_DEBUG>
+            - name: X_CSI_DEBUG
+              value: <X_CSI_DEBUG>
             - name: X_CSI_NODE_NAME
               valueFrom:
                 fieldRef:
