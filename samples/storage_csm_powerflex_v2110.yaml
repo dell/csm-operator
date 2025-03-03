@@ -32,8 +32,6 @@ spec:
           value: "false"
         - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
           value: "false"
-        - name: X_CSI_DEBUG
-          value: "true"
         # Log level for CSI driver, passed to logrus.
         # Options are "PANIC", "FATAL", "ERROR", "WARN", "INFO",
         # "DEBUG", and "TRACE".
