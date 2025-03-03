@@ -234,7 +234,7 @@ spec:
             - name: X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION
               value: "true"
             - name: GOUNITY_DEBUG
-              value: <GOUNITY_DEBUG> 
+              value: <GOUNITY_DEBUG>
             - name: GOUNITY_SHOWHTTP
               value: <GOUNITY_SHOWHTTP>
           volumeMounts:

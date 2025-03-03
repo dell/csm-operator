@@ -296,7 +296,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	healthMonitorNode := "false"
 	csiDebug := "true"
 	debug := "true"
-	showHttp := "false"
+	showHTTP := "false"
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -304,7 +304,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				debug = env.Value
 			}
 			if env.Name == "GOSCALEIO_SHOWHTTP" {
-				showHttp = env.Value
+				showHTTP = env.Value
 			}
 		}
 	}
@@ -330,7 +330,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHttp, showHttp)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHttp, showHTTP)
 
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
@@ -367,7 +367,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHttp, showHttp)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHttp, showHTTP)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
