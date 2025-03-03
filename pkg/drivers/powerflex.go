@@ -56,9 +56,6 @@ const (
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
 
-	// CsiDebug -  Debug flag
-	CsiDebug = "<X_CSI_DEBUG>"
-
 	// PowerFlexCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerFlexCSMNameSpace string = "<CSM_NAMESPACE>"
 
@@ -294,7 +291,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	powerflexExternalAccess := ""
 	healthMonitorController := "false"
 	healthMonitorNode := "false"
-	csiDebug := "true"
 	debug := "true"
 	showHTTP := "false"
 
@@ -320,14 +316,10 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 					healthMonitorController = env.Value
 				}
-				if env.Name == "X_CSI_DEBUG" {
-					csiDebug = env.Value
-				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
-		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
@@ -353,9 +345,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 					healthMonitorNode = env.Value
 				}
-				if env.Name == "X_CSI_DEBUG" {
-					csiDebug = env.Value
-				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiSdcEnabled, sdcEnabled)
@@ -364,7 +353,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
-		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)

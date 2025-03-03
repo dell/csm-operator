@@ -111,15 +111,10 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	maxVolumesPerNode := ""
 	// GOPOWERSTORE_DEBUG defaults to true
 	debug := "true"
-	csiDebug := "true"
-
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "GOPOWERSTORE_DEBUG" {
 				debug = env.Value
-			}
-			if env.Name == "X_CSI_DEBUG" {
-				csiDebug = env.Value
 			}
 		}
 	}
@@ -156,7 +151,6 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
-		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -176,7 +170,6 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
-		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

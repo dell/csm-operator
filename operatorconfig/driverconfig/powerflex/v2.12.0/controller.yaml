@@ -244,8 +244,6 @@ spec:
               value: <GOSCALEIO_DEBUG>
             - name: GOSCALEIO_SHOWHTTP
               value: <GOSCALEIO_SHOWHTTP>
-            - name: X_CSI_DEBUG
-              value: <X_CSI_DEBUG>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

@@ -190,15 +190,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	nodeHealthMonitor := "false"
 	storageCapacity := "true"
 	maxVolumesPerNode := ""
-	csiDebug := "true"
 
-	if cr.Spec.Driver.Common != nil {
-		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "X_CSI_DEBUG" {
-				csiDebug = env.Value
-			}
-		}
-	}
 	// #nosec G101 - False positives
 	switch fileType {
 	case "Node":
@@ -291,7 +283,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CsiPmaxMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
-		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 	case "Controller":
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {
@@ -370,7 +361,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
-		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

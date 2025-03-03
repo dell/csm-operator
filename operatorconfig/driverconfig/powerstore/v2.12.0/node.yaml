@@ -134,8 +134,6 @@ spec:
               value: /powerstore-config-params/driver-config-params.yaml
             - name: GOPOWERSTORE_DEBUG
               value: <GOPOWERSTORE_DEBUG>
-            - name: X_CSI_DEBUG
-              value: <X_CSI_DEBUG>
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
           volumeMounts:
