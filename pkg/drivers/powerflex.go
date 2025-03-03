@@ -65,8 +65,8 @@ const (
 	// PowerFlexDebug - will be used to control the GOSCALEIO_DEBUG variable
 	PowerFlexDebug string = "<GOSCALEIO_DEBUG>"
 
-	// PowerFlexShowHttp - will be used to control the GOSCALEIO_SHOWHTTP variable
-	PowerFlexShowHttp string = "<GOSCALEIO_SHOWHTTP>"
+	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
+	PowerFlexShowHTTP string = "<GOSCALEIO_SHOWHTTP>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -330,7 +330,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHttp, showHTTP)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
@@ -367,7 +367,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHttp, showHTTP)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
