@@ -291,7 +291,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	powerflexExternalAccess := ""
 	healthMonitorController := "false"
 	healthMonitorNode := "false"
-	debug := "true"
+	debug := "false"
 	showHTTP := "false"
 
 	if cr.Spec.Driver.Common != nil {
