@@ -108,8 +108,9 @@ spec:
         - name: "CSI_LOG_LEVEL"
           value: "info"
         # GOISILON_DEBUG: Enable/disable debug logs from gopowerscale library.
+        # Default value: false
         - name: "GOISILON_DEBUG"
-          value: "true"
+          value: "false"
     controller:
       envs:
         # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota

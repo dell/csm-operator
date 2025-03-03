@@ -35,8 +35,9 @@ spec:
         - name: CSI_LOG_LEVEL
           value: "INFO"
         # GOSCALEIO_DEBUG: Enable/disable debug logs from goscaleio library.
+        # Default value: false
         - name: GOSCALEIO_DEBUG
-          value: "true"
+          value: "false"
         # GOSCALEIO_SHOWHTTP: Enable/disable HTTP requests and responses from goscaleio library
         - name: GOSCALEIO_SHOWHTTP
           value: "false"

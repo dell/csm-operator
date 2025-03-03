@@ -59,6 +59,7 @@ spec:
         - name: CSI_LOG_LEVEL
           value: info
         # GOPOWERSTORE_DEBUG: Enable/disable debug logs from gopowerstore library.
+        # Default value: true
         - name: "GOPOWERSTORE_DEBUG"
           value: "true"
     sideCars:
