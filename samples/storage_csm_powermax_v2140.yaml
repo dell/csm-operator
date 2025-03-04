@@ -58,12 +58,6 @@ spec:
         # Examples: "000000000001", "000000000002"
         - name: X_CSI_MANAGED_ARRAYS
           value: "000000000000,000000000001"
-        # X_CSI_POWERMAX_ENDPOINT: Address of the Unisphere server that is managing the PowerMax arrays
-        # In case of multi-array, provide an endpoint of locally attached array
-        # Default value: None
-        # Example: https://0.0.0.1:8443
-        - name: X_CSI_POWERMAX_ENDPOINT
-          value: "https://0.0.0.0:8443/"
         # X_CSI_K8S_CLUSTER_PREFIX: Define a prefix that is appended onto
         # all resources created in the Array
         # This should be unique per K8s/CSI deployment
@@ -269,12 +263,12 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.12.0
+      configVersion: v2.14.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
