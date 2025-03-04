@@ -39,6 +39,9 @@ const (
 
 	// PowerScaleCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerScaleCSMNameSpace string = "<CSM_NAMESPACE>"
+
+	// PowerScaleDebug - will be used to control the GOISILON_DEBUG variable
+	PowerScaleDebug string = "<GOISILON_DEBUG>"
 )
 
 // PrecheckPowerScale do input validation
@@ -172,6 +175,16 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	storageCapacity := "false"
 	healthMonitorNode := "false"
 	healthMonitorController := "false"
+	// GOISILON_DEBUG defaults to false
+	debug := "false"
+
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "GOISILON_DEBUG" {
+				debug = env.Value
+			}
+		}
+	}
 
 	switch fileType {
 	case "CSIDriverSpec":
@@ -189,6 +202,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
 			for _, env := range cr.Spec.Driver.Node.Envs {
@@ -199,6 +213,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
 	}
 	return yamlString
 }
