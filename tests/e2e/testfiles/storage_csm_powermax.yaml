@@ -269,12 +269,12 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.12.0
+      configVersion: v2.14.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
