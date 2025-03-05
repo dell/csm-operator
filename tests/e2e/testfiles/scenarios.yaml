@@ -2081,7 +2081,7 @@
     - "Set up reverse proxy tls secret with SAN namespace [powermax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Set up creds with template [testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
+    - "Set up creds with template [testfiles/storage_csm_powermax_sidecar_tls.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -2093,7 +2093,7 @@
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Restore template [testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
+    - "Restore template [testfiles/storage_csm_powermax_sidecar_tls.yaml] for [pmaxArrayConfig]"
   customTest:
     - name: Cert CSI
       run:
@@ -2111,7 +2111,7 @@
     - "Set up reverse proxy tls secret namespace [powermax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Set up creds with template [testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
+    - "Set up creds with template [testfiles/storage_csm_powermax_observability.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -2123,7 +2123,7 @@
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Restore template [testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
+    - "Restore template [testfiles/storage_csm_powermax_observability.yaml] for [pmaxArrayConfig]"
 
 - scenario: "Install PowerMax Driver (With Auth V1 module)"
   paths:

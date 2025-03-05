@@ -8,6 +8,30 @@ spec:
     csiDriverType: "powermax"
     configVersion: v2.14.0
     forceRemoveDriver: true
+    common:
+      envs:
+        - name: X_CSI_MANAGED_ARRAYS
+          value: "REPLACE_ARRAYS"
+        - name: X_CSI_POWERMAX_PORTGROUPS
+          value: "REPLACE_PORTGROUPS"
+        # "X_CSI_TRANSPORT_PROTOCOL" can be "FC" or "FIBRE" for fibrechannel,
+        # "REPLACE_PROTOCOL" for iSCSI,
+        # "NVMETCP" for NVMeTCP or "" for autoselection.
+        # Allowed values:
+        #   "FC"    - Fiber Channel protocol
+        #   "FIBER" - Fiber Channel protocol
+        #   "REPLACE_PROTOCOL" - iSCSI protocol
+        #   "NVMETCP" = NVMeTCP protocol
+        #   ""      - Automatic selection of transport protocol
+        # Default value: "" <empty>
+        - name: X_CSI_TRANSPORT_PROTOCOL
+          value: "REPLACE_PROTOCOL"
+        # VMware/vSphere virtualization support
+        # set X_CSI_VSPHERE_ENABLED to true, if you to enable VMware virtualized environment support via RDM
+        # Allowed values:
+        #   "true" - vSphere volumes are enabled
+        #   "false" - vSphere volumes are disabled
+        # Default value: "false"
   modules:
     - name: authorization
       enabled: false
