@@ -11,7 +11,7 @@
 # limitations under the License.
 #
 name: reverseproxy
-image: csm.artifactory.cec.lab.emc.com/csm-users/harshita_pandey/csipowermax-reverseproxy:mount-credentials-RC1
+image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
 imagePullPolicy: Always
 env:
   - name: X_CSI_REVPROXY_CONFIG_DIR
