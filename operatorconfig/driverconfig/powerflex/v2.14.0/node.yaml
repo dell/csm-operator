@@ -138,6 +138,9 @@ spec:
             - name: scaleio-path-bin
               mountPath: /bin/emc/scaleio/
               readOnly: true
+            - name: scaleio-path-opt
+              mountPath: /opt/emc/scaleio/sdc/bin
+              readOnly: true
             - name: dev
               mountPath: /dev
             - name: vxflexos-config
@@ -278,7 +281,7 @@ spec:
         - name: scaleio-path-bin
           hostPath:
             path: /bin/emc/scaleio/
-            type: Directory
+            type: DirectoryOrCreate
         - name: scaleio-path-opt
           hostPath:
             path: /opt/emc/scaleio/sdc/bin
