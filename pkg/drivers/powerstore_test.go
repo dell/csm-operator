@@ -63,6 +63,35 @@ var (
 	}{
 		{"missing secret", powerStoreCSM, powerStoreClient, fakeSecretPstore, "failed to find secret"},
 	}
+
+	powerStoreCommonEnvTest = []struct {
+		name       string
+		yamlString string
+		csm        csmv1.ContainerStorageModule
+		ct         client.Client
+		sec        *corev1.Secret
+		fileType   string
+		expected   string
+	}{
+		{
+			name:       "update GOPOWERSTORE_DEBUG value for Controller",
+			yamlString: "<GOPOWERSTORE_DEBUG>",
+			csm:        gopowerstoreDebug("false"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Controller",
+			expected:   "false",
+		},
+		{
+			name:       "update GOPOWERSTORE_DEBUG value for Node",
+			yamlString: "<GOPOWERSTORE_DEBUG>",
+			csm:        gopowerstoreDebug("false"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Node",
+			expected:   "false",
+		},
+	}
 )
 
 func TestPrecheckPowerStore(t *testing.T) {
@@ -100,6 +129,17 @@ func TestPrecheckPowerStore(t *testing.T) {
 	}
 }
 
+func TestModifyPowerstoreCR(t *testing.T) {
+	for _, tt := range powerStoreCommonEnvTest {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ModifyPowerstoreCR(tt.yamlString, tt.csm, tt.fileType)
+			if result != tt.expected {
+				t.Errorf("expected %v, but got %v", tt.expected, result)
+			}
+		})
+	}
+}
+
 // makes a csm object with a bad version
 func csmForPowerStoreBadVersion() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.PStoreConfigVersion)
@@ -121,4 +161,13 @@ func csmForPowerStore(customCSMName string) csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
 	return res
+}
+
+func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "GOPOWERSTORE_DEBUG", Value: debug},
+	}
+
+	return cr
 }
