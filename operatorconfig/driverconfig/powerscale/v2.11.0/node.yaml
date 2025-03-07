@@ -105,6 +105,8 @@ spec:
               value: "false"
             - name: X_CSI_ISI_AUTOPROBE
               value: "true"
+            - name: GOISILON_DEBUG
+              value: <GOISILON_DEBUG>
             - name: X_CSI_NODE_NAME
               valueFrom:
                 fieldRef:
