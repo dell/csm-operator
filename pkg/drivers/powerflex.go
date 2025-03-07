@@ -56,11 +56,14 @@ const (
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
 
-	// CsiDebug -  Debug flag
-	CsiDebug = "<X_CSI_DEBUG>"
-
 	// PowerFlexCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerFlexCSMNameSpace string = "<CSM_NAMESPACE>"
+
+	// PowerFlexDebug - will be used to control the GOSCALEIO_DEBUG variable
+	PowerFlexDebug string = "<GOSCALEIO_DEBUG>"
+
+	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
+	PowerFlexShowHTTP string = "<GOSCALEIO_SHOWHTTP>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -288,7 +291,19 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	powerflexExternalAccess := ""
 	healthMonitorController := "false"
 	healthMonitorNode := "false"
-	csiDebug := "true"
+	debug := "false"
+	showHTTP := "false"
+
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "GOSCALEIO_DEBUG" {
+				debug = env.Value
+			}
+			if env.Name == "GOSCALEIO_SHOWHTTP" {
+				showHTTP = env.Value
+			}
+		}
+	}
 
 	// nolint:gosec
 	switch fileType {
@@ -301,15 +316,13 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 					healthMonitorController = env.Value
 				}
-				if env.Name == "X_CSI_DEBUG" {
-					csiDebug = env.Value
-				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
-		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
@@ -332,9 +345,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 					healthMonitorNode = env.Value
 				}
-				if env.Name == "X_CSI_DEBUG" {
-					csiDebug = env.Value
-				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiSdcEnabled, sdcEnabled)
@@ -343,8 +353,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
-		yamlString = strings.ReplaceAll(yamlString, CsiDebug, csiDebug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {

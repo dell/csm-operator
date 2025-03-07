@@ -103,8 +103,9 @@ spec:
         - name: "CSI_LOG_FORMAT"
           value: "TEXT"
         # X_CSI_POWERMAX_DEBUG: Enable/disable debug logs from gopowermax library.
+        # Default value: false
         - name: "X_CSI_POWERMAX_DEBUG"
-          value: "true"
+          value: "false"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition

@@ -151,6 +151,74 @@ var (
 			fileType: "CSIDriverSpec",
 			expected: "CSI_STORAGE_CAPACITY_ENABLED=OLD CSI_VXFLEXOS_QUOTA_ENABLED=OLD",
 		},
+		{
+			name:       "update GOSCALEIO_SHOWHTTP value for Controller",
+			yamlString: "<GOSCALEIO_SHOWHTTP>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "GOSCALEIO_SHOWHTTP", Value: "true"},
+							},
+						},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "true",
+		},
+		{
+			name:       "update GOSCALEIO_SHOWHTTP value for Node",
+			yamlString: "<GOSCALEIO_SHOWHTTP>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "GOSCALEIO_SHOWHTTP", Value: "true"},
+							},
+						},
+					},
+				},
+			},
+			fileType: "Node",
+			expected: "true",
+		},
+		{
+			name:       "update GOSCALEIO_DEBUG value for Controller",
+			yamlString: "<GOSCALEIO_DEBUG>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "GOSCALEIO_DEBUG", Value: "false"},
+							},
+						},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "false",
+		},
+		{
+			name:       "update GOSCALEIO_DEBUG value for Node",
+			yamlString: "<GOSCALEIO_DEBUG>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "GOSCALEIO_DEBUG", Value: "false"},
+							},
+						},
+					},
+				},
+			},
+			fileType: "Node",
+			expected: "false",
+		},
 	}
 )
 
