@@ -1977,8 +1977,8 @@
     - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
     - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
   tags:
-  #   - "authorizationproxyserver"
-  #   - "authorization"
+    - "authorizationproxyserver"
+    - "authorization"
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
