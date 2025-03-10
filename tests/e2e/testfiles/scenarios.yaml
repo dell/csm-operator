@@ -1823,7 +1823,7 @@
   paths:
     - "testfiles/storage_csm_powermax_secret.yaml"
   tags:
-  #   - "powermax"
+    - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1849,7 +1849,7 @@
   paths:
     - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
   tags:
-  #   - "powermax"
+    - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1880,9 +1880,9 @@
     - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
     - "testfiles/storage_csm_powermax_secret.yaml"
   tags:
-  #   - "authorizationproxyserver"
-  #   - "authorization"
-  #   - "powermax"
+    - "authorizationproxyserver"
+    - "authorization"
+    - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
@@ -1920,7 +1920,7 @@
   paths:
     - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
   tags:
-  #   - "powermax"
+    - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1946,7 +1946,7 @@
   paths:
     - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
   tags:
-  #   - "powermax"
+    - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1979,7 +1979,7 @@
   tags:
   #   - "authorizationproxyserver"
   #   - "authorization"
-  #   - "powermax"
+    - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
