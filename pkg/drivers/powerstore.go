@@ -109,8 +109,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	powerstoreExternalAccess := ""
 	storageCapacity := "false"
 	maxVolumesPerNode := ""
-	// GOPOWERSTORE_DEBUG defaults to true
-	debug := "true"
+	debug := "false"
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "GOPOWERSTORE_DEBUG" {
