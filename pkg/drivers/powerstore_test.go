@@ -76,20 +76,20 @@ var (
 		{
 			name:       "update GOPOWERSTORE_DEBUG value for Controller",
 			yamlString: "<GOPOWERSTORE_DEBUG>",
-			csm:        gopowerstoreDebug("false"),
+			csm:        gopowerstoreDebug("true"),
 			ct:         powerStoreClient,
 			sec:        powerStoreSecret,
 			fileType:   "Controller",
-			expected:   "false",
+			expected:   "true",
 		},
 		{
 			name:       "update GOPOWERSTORE_DEBUG value for Node",
 			yamlString: "<GOPOWERSTORE_DEBUG>",
-			csm:        gopowerstoreDebug("false"),
+			csm:        gopowerstoreDebug("true"),
 			ct:         powerStoreClient,
 			sec:        powerStoreSecret,
 			fileType:   "Node",
-			expected:   "false",
+			expected:   "true",
 		},
 	}
 )
