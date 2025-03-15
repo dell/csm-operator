@@ -36,7 +36,7 @@ jobs:
           make -o gen-semver
           DEFAULT_IMG=csm-operator:latest make docker-build
       - name: Scan controller Image
-        uses: aquasecurity/trivy-action@0.29.0
+        uses: aquasecurity/trivy-action@0.30.0
         with:
           image-ref: csm-operator:latest
           severity: 'HIGH'
