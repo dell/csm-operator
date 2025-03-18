@@ -17,18 +17,20 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.12.0
+    configVersion: v2.13.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "registry.connect.redhat.com/dell-emc/dell-csm-powerflex@sha256:7d0d92fb2ddcdf4eae6244acfe8469d64683986a558cd500ee601af3a9f3b7be"
+      image: "registry.connect.redhat.com/dell-emc/dell-csm-powerflex@sha256:48daad11eaeb184b70275f8eec37ed179b3902c5574d3e17a76be8c9ecce4c64"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
           value: "false"
         - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
           value: "false"
+        - name: X_CSI_DEBUG
+          value: "true"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
         # Default value: /var/lib/kubelet
@@ -51,19 +53,19 @@ spec:
         image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher@sha256:6e54dae32284f60a2de1645c527715e4c934e5ce7899560c0d845bac957118dc
+        image: registry.k8s.io/sig-storage/csi-attacher@sha256:a399393ff5bd156277c56bae0c08389b1a1b95b7fd6ea44a316ce55e0dd559d7
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:0d23a6fd60c421054deec5e6d0405dc3498095a5a597e175236c0692f4adee0f
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:d7138bcc3aa5f267403d45ad4292c95397e421ea17a0035888850f424c7de25d
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer@sha256:ab774734705a906561e15b67f6a96538f3ad520335d636f793aaafe87a3b5200
+        image: registry.k8s.io/sig-storage/csi-resizer@sha256:2a0b297cc7c4cd376ac7413df339ff2fdaa1ec9d099aed92b5ea1f031ef7f639
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:b3e90b33781670ac050c22c9e88b9e876493dca248966b9da6f7a90cc412ab86
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:dd788d79cf4c1b8edee6d9b80b8a1ebfc51a38a365c5be656986b129be9ac784
       - name: csi-metadata-retriever
-        image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:3a8f2f0311b68e7f208ce67c9fd4c52d6fed7a025aa4dd745d7a09c5d0b9168a
+        image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:a8412f649ffca3aa72f5c9f5f2c3eb5dac5d742dfa5d3f4e0ef4bd81d72f2956
         # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: docker.io/dellemc/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
+        image: quay.io/dell/storage/powerflex/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
         envs:
           - name: HOST_PID
             value: "1"
@@ -74,7 +76,7 @@ spec:
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:160f1906b49914e544a68d96a97eaa71107b600cee883b60ce1ab9c71d02ae63
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:65d118e955cfa0827d0f727fe161a7469e0e1c6829c347a484130aeb6e45f377
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
@@ -191,7 +193,7 @@ spec:
       #    operator: "Exists"
       #    effect: "NoSchedule"
     initContainers:
-      - image: docker.io/dellemc/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
+      - image: quay.io/dell/storage/powerflex/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -204,11 +206,11 @@ spec:
       enabled: false
       # For PowerFlex Tech-Preview v2.0.0-alpha use v1.11.0 as configVersion.
       # Do not change the configVersion to v2.0.0-alpha
-      configVersion: v1.12.0
+      configVersion: v2.1.0
       components:
         - name: karavi-authorization-proxy
-          # Use image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.0.0 for Authorization v2.0.0
-          image: registry.connect.redhat.com/dell-emc/dell-csm-authorization-sidecar@sha256:94d9403a10dc93bab1818a1d642413bbc1ea90941e425d3d3253387651553da4
+          # Use image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0 for Authorization v2.1.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-authorization-sidecar@sha256:4dd2732544e6ad78182fff71cc2713346021d0ce275f0e88e6f86a1937d2c47d
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -220,14 +222,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.10.0
+      configVersion: v1.11.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: registry.connect.redhat.com/dell-emc/dell-csm-topology@sha256:6ce8da69d573fcc9572f8986a8204d84536621e141262f237e96206c55c6238d
+          image: registry.connect.redhat.com/dell-emc/dell-csm-topology@sha256:a9e757748bf56b9619584efd8740db060829cf061f9cebd02ae4597b06cd3ca5
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -261,7 +263,7 @@ spec:
             # Allowed values: string
             # Default value: "docker.io/nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
-              value: "docker.io/nginxinc/nginx-unprivileged@sha256:b8b46cac284e53e0037cff0c66ec6bec4131a5880979a5bd73169644a4b024bf"
+              value: "docker.io/nginxinc/nginx-unprivileged@sha256:6d51e4a8e10dfe334f8e2d15bb81b1ed2580ea9cb874b644acc720eda7022b54"
         # enabled: Enable/Disable cert-manager
         # Allowed values:
         #   true: enable deployment of cert-manager
@@ -273,7 +275,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powerflex@sha256:175413e00a097907f7b344f6621d9302c37527f841a334512531abc4a060e110
+          image: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powerflex@sha256:64c9b6eccc18a83fb43bf2e36a409533e68359010f0a9e73becaf76f15655fb6
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -340,7 +342,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: registry.connect.redhat.com/dell-emc/dell-csm-replicator@sha256:013043c3893ce67ffba2d4772dc6ee6bf26a6c857b587d32ae4fc839dd9f9073
+          image: registry.connect.redhat.com/dell-emc/dell-csm-replicator@sha256:bee2644d7dfb6f62f636680ba5354b700de975801e26b19bb89062f9274ac117
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -354,7 +356,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: registry.connect.redhat.com/dell-emc/dell-csm-replication-controller-manager@sha256:fd3455285cd0a8771594d7e441da0fdd77e9a843a6b75058a2d1e14326e120dd
+          image: registry.connect.redhat.com/dell-emc/dell-csm-replication-controller-manager@sha256:1dc8249ff67f6f939a97ed3e55c2398ac44ce163c52e0e8d4ca9f2a615a01905
           envs:
             # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
             # Set the value to "self" in case of stretched/single cluster configuration
@@ -387,10 +389,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.11.0
+      configVersion: v1.12.0
       components:
         - name: podmon-controller
-          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:d60446e4857f784230d906c6467805b9ae8cb8b32a148de238fcb585a4f08ed0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:6339e1a99a94d7f84aef6b22a99b287bf87aa42acece5b4fc3a06f9d2d98e72b
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-vxflexos"
@@ -404,7 +406,7 @@ spec:
             - "--mode=controller"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
         - name: podmon-node
-          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:d60446e4857f784230d906c6467805b9ae8cb8b32a148de238fcb585a4f08ed0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:6339e1a99a94d7f84aef6b22a99b287bf87aa42acece5b4fc3a06f9d2d98e72b
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

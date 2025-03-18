@@ -120,10 +120,6 @@ spec:
               value: <X_CSI_RENAME_SDC_PREFIX>
             - name: X_CSI_MAX_VOLUMES_PER_NODE
               value: <X_CSI_MAX_VOLUMES_PER_NODE>
-            - name: GOSCALEIO_DEBUG
-              value: <GOSCALEIO_DEBUG>
-            - name: GOSCALEIO_SHOWHTTP
-              value: <GOSCALEIO_SHOWHTTP>
             - name: X_CSI_POWERFLEX_KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -132,8 +128,6 @@ spec:
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
-            - name: disks-path
-              mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/disks
               mountPropagation: "Bidirectional"
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
@@ -141,8 +135,12 @@ spec:
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
-            - name: noderoot
-              mountPath: /noderoot
+            - name: scaleio-path-bin
+              mountPath: /bin/emc/scaleio/
+              readOnly: true
+            - name: scaleio-path-opt
+              mountPath: /opt/emc/scaleio/sdc/bin
+              readOnly: true
             - name: dev
               mountPath: /dev
             - name: vxflexos-config
@@ -268,10 +266,6 @@ spec:
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
             type: DirectoryOrCreate
-        - name: disks-path
-          hostPath:
-            path: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/disks
-            type: DirectoryOrCreate
         - name: volumedevices-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
@@ -280,14 +274,14 @@ spec:
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
             type: Directory
-        - name: noderoot
-          hostPath:
-            path: /
-            type: Directory
         - name: dev
           hostPath:
             path: /dev
             type: Directory
+        - name: scaleio-path-bin
+          hostPath:
+            path: /bin/emc/scaleio/
+            type: DirectoryOrCreate
         - name: scaleio-path-opt
           hostPath:
             path: /opt/emc/scaleio/sdc/bin
@@ -314,17 +308,9 @@ spec:
         - name: vxflexos-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
-        - name: usr-bin
-          hostPath:
-            path: /usr/bin
-            type: Directory
         - name: kubelet-pods
           hostPath:
             path: /var/lib/kubelet/pods
-            type: Directory
-        - name: var-run
-          hostPath:
-            path: /var/run
             type: Directory
         - name: mdm-dir
           emptyDir: {}

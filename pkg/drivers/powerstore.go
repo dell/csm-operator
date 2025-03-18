@@ -59,6 +59,9 @@ const (
 
 	// PowerStoreCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerStoreCSMNameSpace string = "<CSM_NAMESPACE>"
+
+	// PowerStoreDebug - will be used to control the GOPOWERSTORE_DEBUG variable
+	PowerStoreDebug string = "<GOPOWERSTORE_DEBUG>"
 )
 
 // PrecheckPowerStore do input validation
@@ -106,6 +109,14 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	powerstoreExternalAccess := ""
 	storageCapacity := "false"
 	maxVolumesPerNode := ""
+	debug := "false"
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "GOPOWERSTORE_DEBUG" {
+				debug = env.Value
+			}
+		}
+	}
 
 	switch fileType {
 	case "Node":
@@ -138,6 +149,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -156,6 +168,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

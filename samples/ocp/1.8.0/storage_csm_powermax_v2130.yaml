@@ -35,16 +35,15 @@ spec:
     configVersion: v2.13.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
-    # Controller count
     # Allowed values: n, where n > 0
-    # Default value: 2
+    # Default value: None
     replicas: 2
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: quay.io/dell/container-storage-modules/csi-powermax:v2.13.0
+      image: registry.connect.redhat.com/dell-emc/dell-csm-powermax@sha256:f7a60079eb35d148f6ea86d42539ebf2c1334e4484b1d2436b53269da3ef6c0e
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -97,26 +96,11 @@ spec:
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
           value: "info"
-        # X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION: It determines if driver is going to skip verification
-        # of TLS certificates while connecting to Unisphere RESTAPI interface
-        # If it is set to false,
-        # then a secret powermax-certs has to be created with a X.509 certificate of CA
-        # which signed the Unisphere certificate
-        # Allowed values:
-        #   "true"  - TLS certificates verification will be skipped
-        #   "false" - TLS certificates will be verified
-        # Default value: "true"
-        - name: "X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION"
-          value: "true"
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
         - name: "CSI_LOG_FORMAT"
           value: "TEXT"
-        # X_CSI_POWERMAX_DEBUG: Enable/disable debug logs from gopowermax library.
-        # Default value: false
-        - name: "X_CSI_POWERMAX_DEBUG"
-          value: "false"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
@@ -216,24 +200,23 @@ spec:
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
+        image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
+        image: registry.k8s.io/sig-storage/csi-attacher@sha256:a399393ff5bd156277c56bae0c08389b1a1b95b7fd6ea44a316ce55e0dd559d7
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:d7138bcc3aa5f267403d45ad4292c95397e421ea17a0035888850f424c7de25d
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
+        image: registry.k8s.io/sig-storage/csi-resizer@sha256:2a0b297cc7c4cd376ac7413df339ff2fdaa1ec9d099aed92b5ea1f031ef7f639
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:dd788d79cf4c1b8edee6d9b80b8a1ebfc51a38a365c5be656986b129be9ac784
       - name: csi-metadata-retriever
-        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
+        image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:a8412f649ffca3aa72f5c9f5f2c3eb5dac5d742dfa5d3f4e0ef4bd81d72f2956
       # health monitor is disabled by default, refer to driver documentation before enabling it
-      # Default monitor-interval: 60s
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:65d118e955cfa0827d0f727fe161a7469e0e1c6829c347a484130aeb6e45f377
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure only when the storageCapacity is set as "true"
         # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
@@ -242,12 +225,12 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.12.0
+      configVersion: v2.11.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-powermax-reverseproxy@sha256:2293bce1a75171ca2632df2ff18fe3f0ac4f7b292e5629cfd75cf86f6944bf19
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -267,19 +250,16 @@ spec:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enabled: Enable/Disable csm-authorization
-      # Default value: false
       enabled: false
       configVersion: v2.1.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-authorization-sidecar@sha256:4dd2732544e6ad78182fff71cc2713346021d0ce275f0e88e6f86a1937d2c47d
           envs:
             # proxyHost: hostname of the csm-authorization server
-            # Default value: none
             - name: "PROXY_HOST"
               value: "csm-authorization.com"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-            # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"
     # Replication: allows configuring replication module
@@ -297,7 +277,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.11.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-replicator@sha256:bee2644d7dfb6f62f636680ba5354b700de975801e26b19bb89062f9274ac117
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -312,7 +292,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.11.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-replication-controller-manager@sha256:1dc8249ff67f6f939a97ed3e55c2398ac44ce163c52e0e8d4ca9f2a615a01905
           envs:
             # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
             # Set the value to "self" in case of stretched/single cluster configuration
@@ -341,17 +321,15 @@ spec:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
-      # Default value: false
       enabled: false
       configVersion: v1.11.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
-          # Default value: false
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-topology:v1.11.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-topology@sha256:a9e757748bf56b9619584efd8740db060829cf061f9cebd02ae4597b06cd3ca5
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -368,11 +346,10 @@ spec:
               value: "INFO"
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
-          # Default value: false
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: docker.io/otel/opentelemetry-collector:0.42.0
+          image: docker.io/otel/opentelemetry-collector@sha256:cecb0904bcc2a90c823c2c044e7034934ab6c98b5ec52c337c0f6c6e57cd3cf1
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -386,7 +363,7 @@ spec:
             # Allowed values: string
             # Default value: "docker.io/nginxinc/nginx-unprivileged:1.27"
             - name: "NGINX_PROXY_IMAGE"
-              value: "docker.io/nginxinc/nginx-unprivileged:1.27"
+              value: "docker.io/nginxinc/nginx-unprivileged@sha256:6d51e4a8e10dfe334f8e2d15bb81b1ed2580ea9cb874b644acc720eda7022b54"
         - name: cert-manager
           # enabled: Enable/Disable cert-manager
           # Allowed values:
@@ -396,10 +373,9 @@ spec:
           enabled: false
         - name: metrics-powermax
           # enabled: Enable/Disable PowerMax metrics
-          # Default value: false
           enabled: false
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.6.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powermax@sha256:2d21468d647f7c2f9b38072a7a267217b95168e1b43f4fd451b1d627785589e9
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int
@@ -454,7 +430,7 @@ spec:
       configVersion: v1.12.0
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:v1.12.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:6339e1a99a94d7f84aef6b22a99b287bf87aa42acece5b4fc3a06f9d2d98e72b
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powermax"
@@ -469,7 +445,7 @@ spec:
             - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powermax.dellemc.com"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:v1.12.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:6339e1a99a94d7f84aef6b22a99b287bf87aa42acece5b4fc3a06f9d2d98e72b
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
