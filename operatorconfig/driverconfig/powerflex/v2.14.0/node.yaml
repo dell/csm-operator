@@ -125,6 +125,8 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
+            - name: RELEASE_NAME
+              value: <DriverDefaultReleaseName>
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
