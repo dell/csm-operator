@@ -199,7 +199,7 @@ spec:
               mountPath: /host_opt_emc_path
       initContainers:
         - name: mdm-container
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.1
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:
