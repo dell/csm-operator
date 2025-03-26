@@ -13,7 +13,7 @@ spec:
         - name: "X_CSI_REVPROXY_USE_SECRET"
           value: "false"
         - name: X_CSI_MANAGED_ARRAYS
-          value: "000000000001", "000000000002"
+          value: "000000000001,000000000002"
         - name: X_CSI_POWERMAX_PORTGROUPS
           value: ""
         - name: X_CSI_TRANSPORT_PROTOCOL

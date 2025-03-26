@@ -55,9 +55,9 @@ spec:
       envs:
         # X_CSI_MANAGED_ARRAYS: Serial ID of the arrays that will be used for provisioning
         # Default value: None
-        # Examples: "000000000001", "000000000002"
+        # Examples: "000000000001,000000000002"
         - name: X_CSI_MANAGED_ARRAYS
-          value: "000000000001", "000000000002"
+          value: "000000000001,000000000002"
         # X_CSI_POWERMAX_PORTGROUPS: Define the set of existing port groups that the driver will use.
         # It is a comma separated list of portgroup names.
         # Required only in case of iSCSI and NVMe/TCP only
