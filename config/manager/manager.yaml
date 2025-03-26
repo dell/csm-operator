@@ -29,7 +29,7 @@ spec:
           imagePullPolicy: Always
           name: manager
           env:
-            - value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.8.0
+            - value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.8.1
               name: RELATED_IMAGE_dell-csm-operator
             - value: quay.io/dell/container-storage-modules/csi-isilon:v2.13.0
               name: RELATED_IMAGE_csi-isilon
@@ -41,7 +41,7 @@ spec:
               name: RELATED_IMAGE_csi-powerstore
             - value: quay.io/dell/container-storage-modules/csi-unity:v2.13.0
               name: RELATED_IMAGE_csi-unity
-            - value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0
+            - value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.1
               name: RELATED_IMAGE_csi-vxflexos
             - value: quay.io/dell/storage/powerflex/sdc:4.5.2.1
               name: RELATED_IMAGE_sdc
