@@ -13,27 +13,25 @@ rules:
     resources: ["persistentvolumes"]
     verbs: ["create", "delete", "get", "list", "watch", "update"]
   - apiGroups: [""]
-    resources: ["persistentvolumeclaims"]
-    verbs: ["get", "list", "watch", "update"]
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["get", "list", "watch", "create", "update", "patch"]
-  - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["storage.k8s.io"]
-    resources: ["volumeattachments"]
-    verbs: ["get", "list", "watch", "update"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["storageclasses"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["volumeattachments"]
+    resources: ["volumeattachments", "storageclasses"]
     verbs: ["get", "list", "watch", "update"]
   - apiGroups: ["security.openshift.io"]
     resourceNames: ["privileged"]
     resources: ["securitycontextconstraints"]
     verbs: ["use"]
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims", "events"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -45,6 +43,20 @@ subjects:
     namespace: <DriverDefaultReleaseNamespace>
 roleRef:
   kind: ClusterRole
+  name: <DriverDefaultReleaseName>-node
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+subjects:
+  - kind: ServiceAccount
+    name: <DriverDefaultReleaseName>-node
+    namespace: <DriverDefaultReleaseNamespace>
+roleRef:
+  kind: Role
   name: <DriverDefaultReleaseName>-node
   apiGroup: rbac.authorization.k8s.io
 ---
