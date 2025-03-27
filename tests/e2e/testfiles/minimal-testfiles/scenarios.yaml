@@ -1113,6 +1113,32 @@
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Restore template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
 
+- scenario: "Install PowerMax Driver without powermax-array-config.yaml (Minimal, With Observability)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powermax_observability.yaml"
+  tags:
+    - "powermax"
+    - "observability"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_observability.yaml] for [pmaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+    - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
+    - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/minimal-testfiles/storage_csm_powermax_observability.yaml] for [pmaxArrayConfig]"
+
+
 - scenario: "Install PowerMax Driver (Minimal, With Auth V1 module)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
@@ -1131,6 +1157,7 @@
     - "Set up secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powermax] driver from CR [2] is installed"
@@ -1145,6 +1172,47 @@
     - "Restore template [testfiles/powermax-templates/csm-authorization-config.json] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] for [pmaxReverseProxy]"
+    - "Restore template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+  customTest:
+    - name: Cert CSI
+      run:
+        - cert-csi test vio --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+
+
+- scenario: "Install PowerMax Driver without powermax-array-config.yaml (Minimal, With Auth V1 module)"
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_v1_proxy_server.yaml"
+    - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization.yaml"
+  tags:
+    - "authorizationproxyserver"
+    - "authorization"
+    - "powermax"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Apply custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powermax] for CR [1]"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
+    - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization.yaml] for [pmaxArrayConfig]"
+    - "Apply custom resource [2]"
+    - "Validate custom resource [2]"
+    - "Validate [powermax] driver from CR [2] is installed"
+    - "Validate [authorization] module from CR [2] is installed"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [2]"
+    - "Delete custom resource [2]"
+    - "Validate [powermax] driver from CR [2] is not installed"
+    - "Delete custom resource [1]"
+    - "Validate [authorization] module pods from CR [1] is not installed"
+    - "Restore template [testfiles/powermax-templates/csm-authorization-config.json] for [pmaxAuthSidecar]"
+    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] for [pmaxReverseProxy]"
+    - "Restore template [testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization.yaml] for [pmaxArrayConfig]"
   customTest:
     - name: Cert CSI
       run:
@@ -1154,7 +1222,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
-    - "testfiles/minimal-testfiles/storage_csm_powermax_authorization.yaml"
+    - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -1195,6 +1263,50 @@
         - cert-csi test vio --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
 
 
+- scenario: "Install Powermax Driver without powermax-array-config.yaml (Minimal, With Authorization v2)"
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
+    - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
+  tags:
+    - "authorizationproxyserver"
+    - "authorization"
+    - "powermax"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [2]"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Apply custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powermax] for CR [1]"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml] for [pmaxArrayConfig]"
+    - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
+    - "Apply custom resource [3]"
+    - "Validate custom resource [3]"
+    - "Validate [powermax] driver from CR [3] is installed"
+    - "Validate [authorization] module from CR [3] is installed"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [3]"
+    - "Delete custom resource [3]"
+    - "Validate [powermax] driver from CR [3] is not installed"
+    - "Delete Authorization CRs for [powermax]"
+    - "Delete custom resource [1]"
+    - "Validate [authorization] module pods from CR [1] is not installed"
+    - "Delete Authorization CRDs [2]"
+    - "Restore template [testfiles/powermax-templates/csm-authorization-config.json] for [pmaxAuthSidecar]"
+    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] for [pmaxReverseProxy]"
+    - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Restore template [testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml] for [pmaxArrayConfig]"
+  customTest:
+    - name: Cert CSI
+      run:
+        - cert-csi test vio --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+
 - scenario: "Install Powermax Driver (Minimal, Standalone), Enable Resiliency"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax.yaml"
@@ -1206,6 +1318,7 @@
     - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1220,6 +1333,35 @@
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+
+- scenario: "Install Powermax Driver without powermax-array-config.yaml (Minimal, Standalone), Enable Resiliency"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powermax.yaml"
+  tags:
+    - "powermax"
+    - "resiliency"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is not installed"
+    - "Enable [resiliency] module from CR [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+    - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
+    - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/minimal-testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
 
 - scenario: "Install Powermax Driver (Minimal, With Resiliency), Disable Resiliency module"
   paths:
@@ -1232,6 +1374,7 @@
     - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1246,6 +1389,35 @@
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+
+- scenario: "Install Powermax Driver without powermax-array-config.yaml (Minimal, With Resiliency), Disable Resiliency module"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powermax_resiliency.yaml"
+  tags:
+    - "powermax"
+    - "resiliency"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_resiliency.yaml] for [pmaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    - "Disable [resiliency] module from CR [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is not installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+    - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
+    - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/minimal-testfiles/storage_csm_powermax_resiliency.yaml] for [pmaxArrayConfig]"
 
 - scenario: "Install Powermax Driver (Minimal, With Replication)"
   paths:
@@ -1258,6 +1430,7 @@
     - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1270,6 +1443,37 @@
     - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
     - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+  customTest:
+    - name: HelloWorld
+      run:
+        - echo "no current test implemented for replication"
+
+- scenario: "Install Powermax Driver without powermax-array-config.yaml (Minimal, With Replication)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powermax_replica.yaml"
+  tags:
+    - "powermax"
+    - "replication"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_replica.yaml] for [pmaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+    - "Restore template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] for [pmaxAuthSidecar]"
+    - "Restore template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Restore template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Restore template [testfiles/minimal-testfiles/storage_csm_powermax_replica.yaml] for [pmaxArrayConfig]"
   customTest:
     - name: HelloWorld
       run:
