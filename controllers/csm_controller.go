@@ -23,6 +23,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -780,6 +781,17 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				return fmt.Errorf("injecting replication into deployment: %v", err)
 			}
 			controller.Deployment = *dp
+		}
+	}
+
+	// if driver is powerflex and installing on openshift, we must remove the root host path, since it is read only
+	if cr.GetDriverType() == csmv1.PowerFlex {
+		isOCP, err := k8s.IsOpenShift()
+		if err != nil {
+			return fmt.Errorf("Failed to determine if cluster is OpenShift: %v", err)
+		}
+		if isOCP {
+			_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, cr, drivers.RootHostPath)
 		}
 	}
 

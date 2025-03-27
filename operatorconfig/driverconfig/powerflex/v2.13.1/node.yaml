@@ -135,6 +135,7 @@ spec:
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
+            # will be removed if installing on OpenShift
             - name: scaleio-path-bin
               mountPath: /bin/emc/scaleio/
               readOnly: true
@@ -274,6 +275,7 @@ spec:
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
             type: Directory
+         # will be removed if installing on OpenShift
         - name: scaleio-path-bin
           hostPath:
             path: /bin/emc/scaleio/
