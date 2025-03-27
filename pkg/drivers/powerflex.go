@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
-	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
@@ -447,31 +446,23 @@ func ValidateZonesInSecret(ctx context.Context, kube client.Client, namespace st
 	return nil
 }
 
-func RemoveVolume(configuration interface{}, cr csmv1.ContainerStorageModule, volumeName string) error {
-	var podTemplate *acorev1.PodTemplateSpecApplyConfiguration
-	switch configuration := configuration.(type) {
-	case *v1.DaemonSetApplyConfiguration:
-		ds := configuration
-		podTemplate = ds.Spec.Template
+func RemoveVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName string) error {
+	if configuration == nil {
+		return fmt.Errorf("RemoveVolume called with a nil daemonset")
 	}
-
-	if podTemplate == nil {
-		return fmt.Errorf("invalid type passed through")
-	}
-
+	podTemplate := configuration.Spec.Template
 	for i, vol := range podTemplate.Spec.Volumes {
 		if vol.Name != nil && *vol.Name == volumeName {
-			podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes[0:i], podTemplate.Spec.Volumes[i:]...)
+			podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes[0:i], podTemplate.Spec.Volumes[i+1:]...)
 		}
 	}
 
-	for c, _ := range podTemplate.Spec.Containers {
+	for c := range podTemplate.Spec.Containers {
 		for i, volMount := range podTemplate.Spec.Containers[c].VolumeMounts {
 			if volMount.Name != nil && *volMount.Name == volumeName {
-				podTemplate.Spec.Containers[c].VolumeMounts = append(podTemplate.Spec.Containers[c].VolumeMounts[0:i], podTemplate.Spec.Containers[c].VolumeMounts[i:]...)
+				podTemplate.Spec.Containers[c].VolumeMounts = append(podTemplate.Spec.Containers[c].VolumeMounts[0:i], podTemplate.Spec.Containers[c].VolumeMounts[i+1:]...)
 			}
 		}
 	}
-
 	return nil
 }
