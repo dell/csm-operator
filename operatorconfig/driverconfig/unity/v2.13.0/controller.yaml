@@ -15,18 +15,53 @@ rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "create", "watch", "update"]
   - apiGroups: ["storage.k8s.io"]
-    resources: ["storageclasses", "volumeattachments", "csinodes", "volumeattachments/status", "csistoragecapacities"]
-    verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments/status"]
+    verbs: ["patch"]
   - apiGroups: ["csi.storage.k8s.io"]
     resources: ["csinodeinfos"]
     verbs: ["get", "list", "watch"]
+    # below for snapshotter
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
   - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshotclasses", "volumesnapshotcontents", "volumesnapshots/status", "volumesnapshotcontents/status"]
-    verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
+    resources: ["volumesnapshotclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["create", "get", "list", "watch", "update", "delete", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots/status"]
+    verbs: ["update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments/status"]
+    verbs: ["patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list", "watch", "update"]
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["create", "list", "watch", "delete"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents/status"]
+    verbs: ["update", "patch"]
+  # Permissions for CSIStorageCapacity
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csistoragecapacities"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -41,28 +76,48 @@ roleRef:
   name: <DriverDefaultReleaseName>-controller
   apiGroup: rbac.authorization.k8s.io
 ---
+# Role for Driver-specific Permissions in a Namespace
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: <DriverDefaultReleaseName>-controller
-  namespace: <DriverDefaultReleaseNamespace>
+  name: {{ .Release.Name }}-controller
+  namespace: {{ .Release.Namespace }}
 rules:
-  - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshots"]
-    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [ "" ]
+    resources: [ "events" ]
+    verbs: [ "get", "list", "watch", "create", "update", "patch" ]
+  - apiGroups: [ "" ]
+    resources: [ "pods" ]
+    verbs: [ "get", "list", "watch", "update", "delete" ]
+  - apiGroups: [ "coordination.k8s.io" ]
+    resources: [ "leases" ]
+    verbs: [ "get", "watch", "list", "delete", "update", "create" ]
+  - apiGroups: [ "snapshot.storage.k8s.io" ]
+    resources: [ "volumesnapshots" ]
+    verbs: [ "get", "list", "watch", "update" ]
+  - apiGroups: [ "snapshot.storage.k8s.io" ]
+    resources: [ "volumesnapshots/status" ]
+    verbs: [ "update" ]
+  - apiGroups: [ "" ]
+    resources: [ "persistentvolumeclaims/status" ]
+    verbs: [ "update", "patch" ]
+  - apiGroups: [ "apps" ]
+    resources: [ "replicasets" ]
+    verbs: [ "get" ]
 ---
+# RoleBinding for Driver-specific Role
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: <DriverDefaultReleaseName>-controller
-  namespace: <DriverDefaultReleaseNamespace>
+  name: {{ .Release.Name }}-controller
+  namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
-    name: <DriverDefaultReleaseName>-controller
-    namespace: <DriverDefaultReleaseNamespace>
+    name: {{ .Release.Name }}-controller
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: Role
-  name: <DriverDefaultReleaseName>-controller
+  name: {{ .Release.Name }}-controller
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: Deployment
