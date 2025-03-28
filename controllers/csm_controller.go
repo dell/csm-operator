@@ -94,7 +94,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.13.0"
+	CSMVersion = "v1.13.1"
 )
 
 var (
@@ -791,7 +791,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			return fmt.Errorf("Failed to determine if cluster is OpenShift: %v", err)
 		}
 		if isOCP {
-			_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, drivers.RootHostPath)
+			_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, drivers.ScaleioBinPath)
 		}
 	}
 

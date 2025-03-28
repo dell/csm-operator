@@ -64,8 +64,8 @@ const (
 	// PowerFlexCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerFlexCSMNameSpace string = "<CSM_NAMESPACE>"
 
-	// RootHostPath - name of volume that is mounted by the CSI plugin when not running on OCP
-	RootHostPath = "scaleio-path-bin"
+	// ScaleioBinPath - name of volume that is mounted by the CSI plugin when not running on OCP
+	ScaleioBinPath = "scaleio-path-bin"
 )
 
 // PrecheckPowerFlex do input validation
@@ -454,13 +454,14 @@ func RemoveVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName stri
 	for i, vol := range podTemplate.Spec.Volumes {
 		if vol.Name != nil && *vol.Name == volumeName {
 			podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes[0:i], podTemplate.Spec.Volumes[i+1:]...)
+			break
 		}
 	}
-
 	for c := range podTemplate.Spec.Containers {
 		for i, volMount := range podTemplate.Spec.Containers[c].VolumeMounts {
 			if volMount.Name != nil && *volMount.Name == volumeName {
 				podTemplate.Spec.Containers[c].VolumeMounts = append(podTemplate.Spec.Containers[c].VolumeMounts[0:i], podTemplate.Spec.Containers[c].VolumeMounts[i+1:]...)
+				break
 			}
 		}
 	}

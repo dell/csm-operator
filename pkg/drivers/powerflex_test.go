@@ -17,12 +17,15 @@ import (
 	"fmt"
 	"testing"
 
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -525,6 +528,67 @@ func TestExtractZonesFromSecret(t *testing.T) {
 				assert.NotNil(t, err)
 			} else {
 				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestRemoveVolume(t *testing.T) {
+	volumeName := ScaleioBinPath
+	containerName := "driver"
+	tests := []struct {
+		name          string
+		configuration *v1.DaemonSetApplyConfiguration
+		wantErr       bool
+	}{
+		{
+			name: "Remove volume and mount",
+			configuration: &v1.DaemonSetApplyConfiguration{
+				Spec: &v1.DaemonSetSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{
+							Volumes: []acorev1.VolumeApplyConfiguration{
+								{
+									Name: &volumeName,
+								},
+							},
+							Containers: []acorev1.ContainerApplyConfiguration{
+								{
+									Name: &containerName,
+									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+										{
+											Name: &volumeName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:          "RemoveVolume called with nil daemonset",
+			configuration: nil,
+			wantErr:       true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := RemoveVolume(tt.configuration, volumeName); (err != nil) != tt.wantErr {
+				t.Errorf("RemoveVolume() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			// check that the volumes and volume mount were removed
+			if !tt.wantErr {
+				for i := range tt.configuration.Spec.Template.Spec.Volumes {
+					assert.NotEqual(t, *tt.configuration.Spec.Template.Spec.Volumes[i].Name, volumeName)
+				}
+				for c := range tt.configuration.Spec.Template.Spec.Containers {
+					for i := range tt.configuration.Spec.Template.Spec.Containers[c].VolumeMounts {
+						assert.NotEqual(t, *tt.configuration.Spec.Template.Spec.Containers[c].VolumeMounts[i].Name, volumeName)
+					}
+				}
 			}
 		})
 	}
