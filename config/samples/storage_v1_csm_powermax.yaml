@@ -1,5 +1,5 @@
 #
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,18 +32,19 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.13.0
+    configVersion: v2.14.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
+    # Controller count
     # Allowed values: n, where n > 0
-    # Default value: None
+    # Default value: 2
     replicas: 2
     # Default credential secret for Powermax, if not set it to ""
     authSecret: powermax-creds
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: quay.io/dell/container-storage-modules/csi-powermax:v2.13.0
+      image: quay.io/dell/container-storage-modules/csi-powermax:v2.14.0
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -96,11 +97,32 @@ spec:
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
           value: "info"
+        # X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION: It determines if driver is going to skip verification
+        # of TLS certificates while connecting to Unisphere RESTAPI interface
+        # If it is set to false,
+        # then a secret powermax-certs has to be created with a X.509 certificate of CA
+        # which signed the Unisphere certificate
+        # Allowed values:
+        #   "true"  - TLS certificates verification will be skipped
+        #   "false" - TLS certificates will be verified
+        # Default value: "true"
+        - name: "X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION"
+          value: "true"
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
         - name: "CSI_LOG_FORMAT"
           value: "TEXT"
+        # X_CSI_POWERMAX_DEBUG: Enable/disable debug logs from gopowermax library.
+        - name: "X_CSI_POWERMAX_DEBUG"
+          value: "true"
+        # X_CSI_REVPROXY_USE_SECRET: Define whether or not to use the new secret format for the reverse proxy.
+        # Allowed values:
+        #   "true" - Use secret format for the reverse proxy
+        #   "false" - Use configmap format for the reverse proxy
+        # Default value: "false"
+        - name: "X_CSI_REVPROXY_USE_SECRET"
+          value: "false"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
@@ -213,6 +235,7 @@ spec:
       - name: csi-metadata-retriever
         image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Default monitor-interval: 60s
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -225,12 +248,12 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.11.0
+      configVersion: v2.13.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.13.0
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -250,6 +273,7 @@ spec:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enabled: Enable/Disable csm-authorization
+      # Default value: false
       enabled: false
       configVersion: v2.1.0
       components:
@@ -257,9 +281,11 @@ spec:
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
           envs:
             # proxyHost: hostname of the csm-authorization server
+            # Default value: none
             - name: "PROXY_HOST"
               value: "csm-authorization.com"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"
     # Replication: allows configuring replication module
@@ -321,11 +347,13 @@ spec:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
+      # Default value: false
       enabled: false
-      configVersion: v1.11.0
+      configVersion: v1.12.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
+          # Default value: false
           enabled: false
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
@@ -346,6 +374,7 @@ spec:
               value: "INFO"
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
+          # Default value: false
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
@@ -373,6 +402,7 @@ spec:
           enabled: false
         - name: metrics-powermax
           # enabled: Enable/Disable PowerMax metrics
+          # Default value: false
           enabled: false
           # image: Defines PowerMax metrics image. This shouldn't be changed
           image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.6.0
