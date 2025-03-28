@@ -41,12 +41,10 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	discoveryfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
@@ -806,7 +804,7 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 // Test all edge cases in SyncCSM
 func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	r := suite.createReconciler()
-	//csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csmBadType := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	authProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -818,27 +816,10 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	modules.IsReverseProxySidecar = func() bool { return false }
 
 	// added for the powerflex on openshift case
+	r.Config.IsOpenShift = true
 	powerflexCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	powerflexCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 	suite.makeFakeCSM(csmName, suite.namespace, false, []csmv1.Module{})
-
-	//powerflexCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
-	r.Config.IsOpenShift = true
-
-	r.K8sClient = fake.NewSimpleClientset()
-	fakeDiscovery, ok := r.K8sClient.Discovery().(*discoveryfake.FakeDiscovery)
-	if !ok {
-		//suite.Fatalf("couldn't convert Discovery() to *FakeDiscovery")
-		fmt.Println("oops")
-	}
-	fakeDiscovery.Resources = []*metav1.APIResourceList{
-		{
-			APIResources: []metav1.APIResource{
-				{Name: "security.openshift.io"},
-			},
-			GroupVersion: "security.openshift.io/v1",
-		},
-	}
 
 	syncCSMTests := []struct {
 		name        string
@@ -846,13 +827,13 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		op          utils.OperatorConfig
 		expectedErr string
 	}{
-		/*{"auth proxy server bad op conf", authProxyServerCSM, badOperatorConfig, "failed to deploy authorization proxy server"},
+		{"auth proxy server bad op conf", authProxyServerCSM, badOperatorConfig, "failed to deploy authorization proxy server"},
 		{"app mobility happy path", appMobCSM, operatorConfig, ""},
-			{"app mobility bad op conf", appMobCSM, badOperatorConfig, "failed to deploy application mobility"},
-			{"reverse proxy server bad op conf", reverseProxyServerCSM, badOperatorConfig, "failed to deploy reverseproxy proxy server"},
-			{"getDriverConfig bad op config", csm, badOperatorConfig, ""},
-			{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},*/
-		{"powerflex on openshift - delete mount", powerflexCSM, operatorConfig, "Failed to determine if cluster is OpenShift:"},
+		{"app mobility bad op conf", appMobCSM, badOperatorConfig, "failed to deploy application mobility"},
+		{"reverse proxy server bad op conf", reverseProxyServerCSM, badOperatorConfig, "failed to deploy reverseproxy proxy server"},
+		{"getDriverConfig bad op config", csm, badOperatorConfig, ""},
+		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},
+		{"powerflex on openshift - delete mount", powerflexCSM, operatorConfig, ""},
 	}
 
 	for _, tt := range syncCSMTests {
