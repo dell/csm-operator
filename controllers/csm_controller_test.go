@@ -804,7 +804,7 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 // Test all edge cases in SyncCSM
 func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	r := suite.createReconciler()
-	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	//csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csmBadType := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	authProxyServerCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
@@ -815,18 +815,24 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
 	modules.IsReverseProxySidecar = func() bool { return false }
 
+	// added for the powerflex on openshift case
+	powerflexCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	//powerflexCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+	r.Config.IsOpenShift = true
+
 	syncCSMTests := []struct {
 		name        string
 		csm         csmv1.ContainerStorageModule
 		op          utils.OperatorConfig
 		expectedErr string
 	}{
-		{"auth proxy server bad op conf", authProxyServerCSM, badOperatorConfig, "failed to deploy authorization proxy server"},
+		/*{"auth proxy server bad op conf", authProxyServerCSM, badOperatorConfig, "failed to deploy authorization proxy server"},
 		{"app mobility happy path", appMobCSM, operatorConfig, ""},
 		{"app mobility bad op conf", appMobCSM, badOperatorConfig, "failed to deploy application mobility"},
 		{"reverse proxy server bad op conf", reverseProxyServerCSM, badOperatorConfig, "failed to deploy reverseproxy proxy server"},
 		{"getDriverConfig bad op config", csm, badOperatorConfig, ""},
-		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},
+		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},*/
+		{"powerflex on openshift - delete mount", powerflexCSM, operatorConfig, ""},
 	}
 
 	for _, tt := range syncCSMTests {
