@@ -399,13 +399,14 @@ func TestGetOperatorConfig(t *testing.T) {
 }
 
 func TestIsOpenshift(t *testing.T) {
-	_, err := isOpenShift()
-	assert.NotNil(t, err)
+	openshift, err := isOpenShift()
+	assert.Nil(t, err)
+	assert.Equal(t, false, openshift)
 }
 
 func TestGetKubeAPIServerVersion(t *testing.T) {
 	_, err := getKubeAPIServerVersion()
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
 }
 
 func TestGetConfigDir(t *testing.T) {

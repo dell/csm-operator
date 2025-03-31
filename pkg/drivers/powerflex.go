@@ -20,8 +20,6 @@ import (
 	"regexp"
 	"strings"
 
-	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
-
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
