@@ -13,6 +13,8 @@
 package k8s
 
 import (
+	"os"
+
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -87,4 +89,23 @@ func NewControllerRuntimeClient(data []byte) (ctrlClient.Client, error) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	return ctrlClient.New(restConfig, ctrlClient.Options{Scheme: scheme})
+}
+
+// Unit tests require a kubeconfig that is known and stable between testing environments.
+func CreateTempKubeconfig(filepath string) {
+	kubeconfig := `clusters:
+- cluster:
+    server: https://some.hostname.or.ip:6443
+  name: fake-cluster
+contexts:
+- context:
+    cluster: fake-cluster
+    user: admin
+  name: admin
+current-context: admin
+preferences: {}
+users:
+- name: admin`
+
+	os.WriteFile(filepath, []byte(kubeconfig), 0o600)
 }
