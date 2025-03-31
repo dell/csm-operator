@@ -795,6 +795,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		modules.UpdatePowerMaxConfigMap(configMap, cr)
 	}
 
+	// if driver is powerflex and installing on openshift, we must remove the root host path, since it is read only
+	if cr.GetDriverType() == csmv1.PowerFlex {
+		if r.Config.IsOpenShift {
+			_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, drivers.ScaleioBinPath)
+		}
+	}
+
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)
 	if err != nil {
 		return err
