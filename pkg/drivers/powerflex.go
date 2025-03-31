@@ -20,6 +20,8 @@ import (
 	"regexp"
 	"strings"
 
+	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
+
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -61,6 +63,9 @@ const (
 
 	// PowerFlexCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerFlexCSMNameSpace string = "<CSM_NAMESPACE>"
+
+	// ScaleioBinPath - name of volume that is mounted by the CSI plugin when not running on OCP
+	ScaleioBinPath = "scaleio-path-bin"
 )
 
 // PrecheckPowerFlex do input validation
@@ -438,5 +443,27 @@ func ValidateZonesInSecret(ctx context.Context, kube client.Client, namespace st
 		return fmt.Errorf("array details are not provided in secret")
 	}
 
+	return nil
+}
+
+func RemoveVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName string) error {
+	if configuration == nil {
+		return fmt.Errorf("RemoveVolume called with a nil daemonset")
+	}
+	podTemplate := configuration.Spec.Template
+	for i, vol := range podTemplate.Spec.Volumes {
+		if vol.Name != nil && *vol.Name == volumeName {
+			podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes[0:i], podTemplate.Spec.Volumes[i+1:]...)
+			break
+		}
+	}
+	for c := range podTemplate.Spec.Containers {
+		for i, volMount := range podTemplate.Spec.Containers[c].VolumeMounts {
+			if volMount.Name != nil && *volMount.Name == volumeName {
+				podTemplate.Spec.Containers[c].VolumeMounts = append(podTemplate.Spec.Containers[c].VolumeMounts[0:i], podTemplate.Spec.Containers[c].VolumeMounts[i+1:]...)
+				return nil
+			}
+		}
+	}
 	return nil
 }
