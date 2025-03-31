@@ -535,6 +535,7 @@ func TestExtractZonesFromSecret(t *testing.T) {
 
 func TestRemoveVolume(t *testing.T) {
 	volumeName := ScaleioBinPath
+	differentVolumeName := "different-volume-name"
 	containerName := "driver"
 	tests := []struct {
 		name          string
@@ -569,6 +570,33 @@ func TestRemoveVolume(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "RemoveVolume called with a daemonset that doesn't include the volume",
+			configuration: &v1.DaemonSetApplyConfiguration{
+				Spec: &v1.DaemonSetSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{
+							Volumes: []acorev1.VolumeApplyConfiguration{
+								{
+									Name: &differentVolumeName,
+								},
+							},
+							Containers: []acorev1.ContainerApplyConfiguration{
+								{
+									Name: &containerName,
+									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+										{
+											Name: &differentVolumeName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name:          "RemoveVolume called with nil daemonset",
 			configuration: nil,
 			wantErr:       true,
@@ -579,7 +607,7 @@ func TestRemoveVolume(t *testing.T) {
 			if err := RemoveVolume(tt.configuration, volumeName); (err != nil) != tt.wantErr {
 				t.Errorf("RemoveVolume() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			// check that the volumes and volume mount were removed
+			// check that the volume and volume mount were removed
 			if !tt.wantErr {
 				for i := range tt.configuration.Spec.Template.Spec.Volumes {
 					assert.NotEqual(t, *tt.configuration.Spec.Template.Spec.Volumes[i].Name, volumeName)

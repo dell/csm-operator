@@ -461,7 +461,7 @@ func RemoveVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName stri
 		for i, volMount := range podTemplate.Spec.Containers[c].VolumeMounts {
 			if volMount.Name != nil && *volMount.Name == volumeName {
 				podTemplate.Spec.Containers[c].VolumeMounts = append(podTemplate.Spec.Containers[c].VolumeMounts[0:i], podTemplate.Spec.Containers[c].VolumeMounts[i+1:]...)
-				break
+				return nil
 			}
 		}
 	}
