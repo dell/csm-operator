@@ -815,6 +815,12 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	reverseProxyServerCSM.Spec.Modules = getReverseProxyModule()
 	modules.IsReverseProxySidecar = func() bool { return false }
 
+	// added for the powerflex on openshift case
+	r.Config.IsOpenShift = true
+	powerflexCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	powerflexCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+	suite.makeFakeCSM(csmName, suite.namespace, false, []csmv1.Module{})
+
 	syncCSMTests := []struct {
 		name        string
 		csm         csmv1.ContainerStorageModule
@@ -827,6 +833,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"reverse proxy server bad op conf", reverseProxyServerCSM, badOperatorConfig, "failed to deploy reverseproxy proxy server"},
 		{"getDriverConfig bad op config", csm, badOperatorConfig, ""},
 		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},
+		{"powerflex on openshift - delete mount", powerflexCSM, operatorConfig, ""},
 	}
 
 	for _, tt := range syncCSMTests {
