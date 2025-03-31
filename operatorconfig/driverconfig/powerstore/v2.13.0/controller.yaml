@@ -24,12 +24,18 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: <DriverDefaultReleaseName>-controller
 rules:
+  - apiGroups: [ "" ]
+    resources: [ "events" ]
+    verbs: ["list", "watch", "create", "update", "patch" ]
+  - apiGroups: [ "" ]
+    resources: [ "pods" ]
+    verbs: [ "get", "list", "watch" ]
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
-    verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
+    verbs: ["get", "list", "create","watch", "update", "patch","create"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "update"]
@@ -38,10 +44,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
-    verbs: ["get", "list", "watch", "update", "patch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list"]
+    verbs: ["get", "list", "watch", "update"]
   - apiGroups: ["volumegroup.storage.dell.com"]
     resources: ["dellcsivolumegroupsnapshots", "dellcsivolumegroupsnapshots/status"]
     verbs: ["create", "list", "watch", "delete", "update"]
@@ -96,10 +99,10 @@ metadata:
 rules:
   - apiGroups: [ "" ]
     resources: [ "events" ]
-    verbs: [ "get", "list", "watch", "create", "update", "patch" ]
+    verbs: [ "get" ]
   - apiGroups: [ "" ]
     resources: [ "pods" ]
-    verbs: [ "get", "list", "watch", "update", "delete" ]
+    verbs: [ "create", "update", "delete" ]
   - apiGroups: [ "coordination.k8s.io" ]
     resources: [ "leases" ]
     verbs: [ "get", "watch", "list", "delete", "update", "create" ]
@@ -115,6 +118,9 @@ rules:
   - apiGroups: [ "apps" ]
     resources: [ "replicasets" ]
     verbs: [ "get" ]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]  
 ---
 # RoleBinding for Driver-specific Role
 kind: RoleBinding
