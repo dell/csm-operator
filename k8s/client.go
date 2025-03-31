@@ -92,7 +92,7 @@ func NewControllerRuntimeClient(data []byte) (ctrlClient.Client, error) {
 }
 
 // Unit tests require a kubeconfig that is known and stable between testing environments.
-func CreateTempKubeconfig(filepath string) {
+func CreateTempKubeconfig(filepath string) error {
 	kubeconfig := `clusters:
 - cluster:
     server: https://some.hostname.or.ip:6443
@@ -107,5 +107,5 @@ preferences: {}
 users:
 - name: admin`
 
-	os.WriteFile(filepath, []byte(kubeconfig), 0o600)
+	return os.WriteFile(filepath, []byte(kubeconfig), 0o600)
 }
