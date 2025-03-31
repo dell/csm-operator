@@ -16,10 +16,12 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/dell/csm-operator/controllers"
+	"github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/utils"
 	"github.com/go-logr/logr"
@@ -399,12 +401,20 @@ func TestGetOperatorConfig(t *testing.T) {
 }
 
 func TestIsOpenshift(t *testing.T) {
-	_, err := isOpenShift()
+	// Create a fake kubeconfig and set the KUBECONFIG environment variable.
+	err := k8s.CreateTempKubeconfig("./fake-kubeconfig")
+	assert.NoError(t, err)
+	os.Setenv("KUBECONFIG", "./fake-kubeconfig")
+	_, err = isOpenShift()
 	assert.NotNil(t, err)
 }
 
 func TestGetKubeAPIServerVersion(t *testing.T) {
-	_, err := getKubeAPIServerVersion()
+	// Create a fake kubeconfig and set the KUBECONFIG environment variable.
+	err := k8s.CreateTempKubeconfig("./fake-kubeconfig")
+	assert.NoError(t, err)
+	os.Setenv("KUBECONFIG", "./fake-kubeconfig")
+	_, err = getKubeAPIServerVersion()
 	assert.NotNil(t, err)
 }
 
