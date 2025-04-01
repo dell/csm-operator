@@ -44,7 +44,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: quay.io/dell/container-storage-modules/csi-powermax:nightly
+      image: quay.io/dell/container-storage-modules/csi-powermax:v2.14.0
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -253,7 +253,7 @@ spec:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.13.0
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -405,7 +405,7 @@ spec:
           # Default value: false
           enabled: false
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.6.0
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int
