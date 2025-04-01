@@ -49,8 +49,8 @@ roleRef:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ .Release.Name }}-node
-  namespace: {{ .Release.Namespace }}
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
 rules:
   - apiGroups: [ "" ]
     resources: [ "persistentvolumes" ]
@@ -69,15 +69,15 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ .Release.Name }}-node
-  namespace: {{ .Release.Namespace }}
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
 subjects:
   - kind: ServiceAccount
-    name: {{ .Release.Name }}-node
-    namespace: {{ .Release.Namespace }}
+    name: <DriverDefaultReleaseName>-node
+    namespace: <DriverDefaultReleaseNamespace>
 roleRef:
   kind: Role
-  name: {{ .Release.Name }}-node
+  name: <DriverDefaultReleaseName>-node
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: DaemonSet
