@@ -1792,4 +1792,4 @@ spec:
       name: externalhealthmonitorcontroller
     - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       name: metadataretriever
-  version: 1.8.0
+  version: 1.9.0
