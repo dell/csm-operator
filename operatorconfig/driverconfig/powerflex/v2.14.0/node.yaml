@@ -125,6 +125,8 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
+            - name: RELEASE_NAME
+              value: <DriverDefaultReleaseName>
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
@@ -135,6 +137,7 @@ spec:
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
+            # will be removed if installing on OpenShift
             - name: scaleio-path-bin
               mountPath: /bin/emc/scaleio/
               readOnly: true
@@ -278,6 +281,7 @@ spec:
           hostPath:
             path: /dev
             type: Directory
+        # will be removed if installing on OpenShift
         - name: scaleio-path-bin
           hostPath:
             path: /bin/emc/scaleio/
