@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dell-replication-controller-config
+  namespace: dell-replication-controller
+data:
+  config.yaml: |
+    clusterId: ""
+    targets: []
+    CSI_LOG_LEVEL: "debug"

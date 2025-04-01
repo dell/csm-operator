@@ -204,7 +204,7 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.12.0
+      configVersion: v2.13.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
@@ -235,7 +235,7 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: true
-      configVersion: v1.12.0
+      configVersion: v1.13.0
       components:
         - name: podmon-controller
           image: quay.io/dell/container-storage-modules/podmon:nightly
