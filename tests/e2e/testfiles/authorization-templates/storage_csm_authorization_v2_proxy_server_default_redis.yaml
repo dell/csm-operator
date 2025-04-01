@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.1.0
+      configVersion: v2.2.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
