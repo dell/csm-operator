@@ -55,6 +55,12 @@ rules:
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents/status"]
     verbs: ["update", "patch"]
+  - apiGroups: [ "apps" ]
+    resources: [ "replicasets" ]
+    verbs: [ "get" ]
+  - apiGroups: [ "coordination.k8s.io" ]
+    resources: [ "leases" ]
+    verbs: [ "get", "watch", "list", "delete", "update", "create" ]
   # below for resizer
   - apiGroups: [""]
     resources: ["persistentvolumeclaims/status"]
@@ -122,10 +128,7 @@ rules:
     verbs: ["get", "list"]
   - apiGroups: [ "coordination.k8s.io" ]
     resources: [ "leases" ]
-    verbs: [ "get", "watch", "list", "delete", "update", "create" ]
-  - apiGroups: [ "apps" ]
-    resources: [ "replicasets" ]
-    verbs: [ "get" ]
+    verbs: [ "delete", "update", "create" ]
 ---
 # RoleBinding for Driver-specific Role
 kind: RoleBinding
