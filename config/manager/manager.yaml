@@ -15,7 +15,7 @@ spec:
       labels:
         control-plane: controller-manager
       annotations:
-        storage.dell.com/CSMVersion: v1.12.0
+        storage.dell.com/CSMVersion: v1.14.0
     spec:
       serviceAccountName: manager-service-account
       securityContext:
@@ -29,13 +29,13 @@ spec:
           imagePullPolicy: Always
           name: manager
           env:
-            - value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.8.0
+            - value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.9.0
               name: RELATED_IMAGE_dell-csm-operator
             - value: quay.io/dell/container-storage-modules/csi-isilon:v2.14.0
               name: RELATED_IMAGE_csi-isilon
             - value: quay.io/dell/container-storage-modules/csi-powermax:v2.14.0
               name: RELATED_IMAGE_csi-powermax
-            - value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.12.0
+            - value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.13.0
               name: RELATED_IMAGE_csipowermax-reverseproxy
             - value: quay.io/dell/container-storage-modules/csi-powerstore:v2.14.0
               name: RELATED_IMAGE_csi-powerstore
@@ -46,32 +46,32 @@ spec:
             - value: quay.io/dell/storage/powerflex/sdc:4.5.2.1
               name: RELATED_IMAGE_sdc
             - name: RELATED_IMAGE_karavi-authorization-proxy
-              value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.1.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.2.0
             - name: RELATED_IMAGE_csm-authorization-proxy
-              value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.1.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.2.0
             - name: RELATED_IMAGE_csm-authorization-tenant
-              value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.1.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.2.0
             - name: RELATED_IMAGE_csm-authorization-role
-              value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.1.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.2.0
             - name: RELATED_IMAGE_csm-authorization-storage
-              value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.1.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.2.0
             - name: RELATED_IMAGE_csm-authorization-controller
-              value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.1.0
-            - value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.11.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.2.0
+            - value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.12.0
               name: RELATED_IMAGE_dell-csi-replicator
-            - value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.11.0
+            - value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.12.0
               name: RELATED_IMAGE_dell-replication-controller-manager
-            - value: quay.io/dell/container-storage-modules/csm-topology:v1.11.0
+            - value: quay.io/dell/container-storage-modules/csm-topology:v1.12.0
               name: RELATED_IMAGE_topology
             - value: docker.io/otel/opentelemetry-collector:0.42.0
               name: RELATED_IMAGE_otel-collector
-            - value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.8.0
+            - value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.9.0
               name: RELATED_IMAGE_metrics-powerscale
-            - value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.6.0
+            - value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.7.0
               name: RELATED_IMAGE_metrics-powermax
-            - value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.11.0
+            - value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.12.0
               name: RELATED_IMAGE_metrics-powerflex
-            - value: quay.io/dell/container-storage-modules/podmon:v1.12.0
+            - value: quay.io/dell/container-storage-modules/podmon:v1.13.0
               name: RELATED_IMAGE_podmon-node
             - value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
               name: RELATED_IMAGE_kube-rbac-proxy
