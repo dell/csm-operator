@@ -143,9 +143,6 @@ spec:
               mountPropagation: "Bidirectional"
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
-            - name: noderoot
-              mountPath: /noderoot
-              mountPropagation: "Bidirectional"
             # will be removed if installing on OpenShift
             - name: scaleio-path-bin
               mountPath: /bin/emc/scaleio/
@@ -289,10 +286,6 @@ spec:
         - name: pods-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
-            type: Directory
-        - name: noderoot
-          hostPath:
-            path: /
             type: Directory
         - name: dev
           hostPath:
