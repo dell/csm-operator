@@ -272,10 +272,6 @@ spec:
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
             type: DirectoryOrCreate
-        - name: disks-path
-          hostPath:
-            path: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/disks
-            type: DirectoryOrCreate
         - name: volumedevices-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
