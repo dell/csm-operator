@@ -135,9 +135,6 @@ spec:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
               mountPropagation: "Bidirectional"
-            - name: disks-path
-              mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/disks
-              mountPropagation: "Bidirectional"
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
               mountPropagation: "Bidirectional"
