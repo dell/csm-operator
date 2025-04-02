@@ -80,6 +80,8 @@ type RbacYAML struct {
 	ServiceAccount     corev1.ServiceAccount
 	ClusterRole        rbacv1.ClusterRole
 	ClusterRoleBinding rbacv1.ClusterRoleBinding
+	Role               rbacv1.Role
+	RoleBinding        rbacv1.RoleBinding
 }
 
 // UpgradePaths a list of versions eligible to upgrade the current version
