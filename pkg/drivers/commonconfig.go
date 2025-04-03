@@ -277,12 +277,16 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	for i, c := range containers {
 		if c.Name != nil && string(*c.Name) == "driver" {
 			// Check if Common is not nil before accessing its fields
-			if cr.Spec.Driver.Common != nil && cr.Spec.Driver.Node != nil {
-				containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
-				c.Env = containers[i].Env
-				if string(cr.Spec.Driver.Common.Image) != "" {
+			if cr.Spec.Driver.Common != nil {
+				// With minimal, this will override the node image if the driver image is overridden.
+				if cr.Spec.Driver.Common.Image != "" {
 					image := string(cr.Spec.Driver.Common.Image)
 					c.Image = &image
+				}
+
+				if cr.Spec.Driver.Node != nil {
+					containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
+					c.Env = containers[i].Env
 				}
 			}
 		}
