@@ -1559,6 +1559,31 @@
     - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
     - "Restore template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
 
+- scenario: "Install PowerStore Driver with HBNFS (Standalone)"
+  paths:
+    - "testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "hbnfs"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create storageclass with name [op-e2e-pstore-hbnfs] and template [testfiles/powerstore-templates/storage-class-hbnfs.yaml] for [pstore]"
+    - "Set up secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    # run cert-csi with the proper args for our storage class
+    - "Run custom test"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
+    - "Restore template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstore]"
+    - "Restore template [testfiles/powerstore-templates/storage-class-hbnfs.yaml] for [pstore]"
+  customTest:
+    - name: Cert CSI
+      run:
+        - cert-csi test vio --sc op-e2e-pstore-hbnfs --chainNumber 2 --chainLength 2
+
 - scenario: "Install Unity Driver(Standalone)"
   paths:
     - "testfiles/storage_csm_unity.yaml"
