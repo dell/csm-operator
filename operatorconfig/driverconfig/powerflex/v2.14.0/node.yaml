@@ -120,6 +120,10 @@ spec:
               value: <X_CSI_RENAME_SDC_PREFIX>
             - name: X_CSI_MAX_VOLUMES_PER_NODE
               value: <X_CSI_MAX_VOLUMES_PER_NODE>
+            - name: GOSCALEIO_DEBUG
+              value: <GOSCALEIO_DEBUG>
+            - name: GOSCALEIO_SHOWHTTP
+              value: <GOSCALEIO_SHOWHTTP>
             - name: X_CSI_POWERFLEX_KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -234,8 +238,8 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-              source /data/node_mdms.txt
-              /files/scripts/init.sh
+               source /data/node_mdms.txt
+               /files/scripts/init.sh
           env:
             - name: NODENAME
               valueFrom:
@@ -312,9 +316,17 @@ spec:
         - name: vxflexos-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
+        - name: usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
         - name: kubelet-pods
           hostPath:
             path: /var/lib/kubelet/pods
+            type: Directory
+        - name: var-run
+          hostPath:
+            path: /var/run
             type: Directory
         - name: mdm-dir
           emptyDir: {}
