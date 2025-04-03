@@ -84,6 +84,7 @@ export PSTORE_PASS="password"
 export PSTORE_GLOBALID="myglobalpstoreid"
 # ip only, do not include /api/rest at end
 export PSTORE_ENDPOINT="1.1.1.1"
+export PSTORE_PROTOCOL="auto"
 # The following is Unity specific:
 export UNITY_USER="username"
 export UNITY_PASS="password"
