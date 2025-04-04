@@ -62,6 +62,15 @@ const (
 
 	// PowerStoreDebug - will be used to control the GOPOWERSTORE_DEBUG variable
 	PowerStoreDebug string = "<GOPOWERSTORE_DEBUG>"
+
+	// PowerStoreNfsClientPort - NFS Client Port
+	PowerStoreNfsClientPort = "<X_CSI_NFS_CLIENT_PORT>"
+
+	// PowerStoreNfsClientPort - NFS Server Port
+	PowerStoreNfsServerPort = "<X_CSI_NFS_SERVER_PORT>"
+
+	// PowerStoreNfsExportDirectory - NFS Export Directory
+	PowerStoreNfsExportDirectory = "<X_CSI_NFS_EXPORT_DIRECTORY>"
 )
 
 // PrecheckPowerStore do input validation
@@ -109,11 +118,23 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	powerstoreExternalAccess := ""
 	storageCapacity := "false"
 	maxVolumesPerNode := ""
+	nfsClientPort := "2050"
+	nfsServerPort := "2049"
+	nfsExportDirectory := "/var/lib/dell/nfs"
 	debug := "false"
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "GOPOWERSTORE_DEBUG" {
 				debug = env.Value
+			}
+			if env.Name == "X_CSI_NFS_CLIENT_PORT" && env.Value != "" {
+				nfsClientPort = env.Value
+			}
+			if env.Name == "X_CSI_NFS_SERVER_PORT" && env.Value != "" {
+				nfsServerPort = env.Value
+			}
+			if env.Name == "X_CSI_NFS_EXPORT_DIRECTORY" && env.Value != "" {
+				nfsExportDirectory = env.Value
 			}
 		}
 	}
@@ -150,6 +171,9 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsClientPort, nfsClientPort)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -169,6 +193,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsClientPort, nfsClientPort)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
