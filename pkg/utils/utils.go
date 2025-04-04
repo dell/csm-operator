@@ -693,6 +693,23 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 				return nil, err
 			}
 			rbac.ClusterRoleBinding = crb
+
+		case "Role":
+			var crole rbacv1.Role
+			err := yaml.Unmarshal(raw, &crole)
+			if err != nil {
+				return nil, err
+			}
+			rbac.Role = crole
+
+		case "RoleBinding":
+			var rb rbacv1.RoleBinding
+			err := yaml.Unmarshal(raw, &rb)
+			if err != nil {
+				return nil, err
+			}
+			rbac.RoleBinding = rb
+
 		}
 	}
 
