@@ -21,28 +21,28 @@ check_sshpass() {
 
 # get all worker node names and IPs in the cluster
 get_worker_nodes() {
-  kubectl get nodes -A -o wide | grep -v -E 'master|control-plane' | grep -v NAME | awk '{ print $6 }'
+  kubectl get nodes -A -o wide | grep -v -E 'master|control-plane' | awk 'NR>1 { print $6 }'
 }
 
 verify_nfs_server() {
     failed=0
-    echo "Assuming that 'node_credential' contains the nodes and their credentials"
+    echo "Assuming that 'node_credential' contains the nodes and their credentials. For more information, see tests/README.md."
     nfs_server_command="systemctl status nfs-mountd.service"
 
     for node in $(get_worker_nodes); do
         sshpass -f node_credential ssh root@$node $nfs_server_command > serverFileResponse.txt
 
         if grep -q "active (running)" serverFileResponse.txt; then
-            echo "NFS Server is running on $node"
+            echo "NFS Server is running on $node."
         else
-             echo "NFS Server is not running on $node. Install it before running these tests"
-             failed=1
+            echo "NFS Server is not running on $node. Install it before running these tests."
+            failed=1
         fi
     done
 
     rm serverFileResponse.txt
 
-    echo "Finished verifying NFS server"
+    echo "Finished verifying NFS server."
     exit $failed
 }
 
