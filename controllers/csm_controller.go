@@ -93,7 +93,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.13.0"
+	CSMVersion = "v1.14.0"
 )
 
 var (
@@ -793,6 +793,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 		// Dynamically update the drivers config param.
 		modules.UpdatePowerMaxConfigMap(configMap, cr)
+	}
+
+	// if driver is powerflex and installing on openshift, we must remove the root host path, since it is read only
+	if cr.GetDriverType() == csmv1.PowerFlex {
+		if r.Config.IsOpenShift {
+			_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, drivers.ScaleioBinPath)
+		}
 	}
 
 	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)

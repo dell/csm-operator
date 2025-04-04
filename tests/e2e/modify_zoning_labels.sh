@@ -99,7 +99,7 @@ read_secret() {
 validate_zoning() {
   # read the secret and extract zone information
   secret_name="test-vxflexos-config"
-  namespace="vxflexos"
+  namespace="test-vxflexos"
   secret_content=$(read_secret $secret_name $namespace)
 
   # parse the secret content to extract zones

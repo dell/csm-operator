@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerflex"
-    configVersion: v2.13.0
+    configVersion: v2.14.0
     forceRemoveDriver: true
   modules:
     # Authorization: enable csm-authorization for RBAC
@@ -14,7 +14,7 @@ spec:
       # enable: Enable/Disable csm-authorization
       enabled: false
       # For Auth 2.0, use v2.1.0 as configVersion
-      configVersion: v1.13.0
+      configVersion: v1.14.0
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:

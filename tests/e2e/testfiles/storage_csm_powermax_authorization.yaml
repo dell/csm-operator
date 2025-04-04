@@ -239,7 +239,7 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.12.0
+      configVersion: v2.13.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
@@ -267,7 +267,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.1.0
+      configVersion: v2.2.0
       components:
         - name: karavi-authorization-proxy
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
