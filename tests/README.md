@@ -96,7 +96,7 @@ Notes:
 If running the HBNFS e2e tests, further setup must be done:
 
 - On each of the worker nodes, setup the nfs-server service and ensure that mounting with nfs4 is enabled.
-- Install the `sshpass` command on the VM which the tests are being run.
+- Install the `sshpass` command on the VM where the tests are being run.
 - Update the password within `scripts/node_credential` to the password of the worker nodes (this assumes that all nodes share the same password).
 - During e2e exection specify the `hbnfs` flag. Otherwise, the tests won't run on its own due to the above prerequisite.
 

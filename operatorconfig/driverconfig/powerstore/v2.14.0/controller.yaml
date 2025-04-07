@@ -266,6 +266,8 @@ spec:
               value: "true"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_NFS_EXPORT_DIRECTORY
+              value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
             - name: X_CSI_NFS_CLIENT_PORT
               value: <X_CSI_NFS_CLIENT_PORT>
             - name: X_CSI_NFS_SERVER_PORT

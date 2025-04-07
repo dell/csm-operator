@@ -24,26 +24,50 @@ get_worker_nodes() {
   kubectl get nodes -A -o wide | grep -v -E 'master|control-plane' | awk 'NR>1 { print $6 }'
 }
 
-verify_nfs_server() {
+check_service() {
     failed=0
-    echo "Assuming that 'node_credential' contains the nodes and their credentials. For more information, see tests/README.md."
-    nfs_server_command="systemctl status nfs-mountd.service"
+    expected_status=$1
+    service=$2
+
+    echo "Checking service status: $service"
 
     for node in $(get_worker_nodes); do
-        sshpass -f node_credential ssh root@$node $nfs_server_command > serverFileResponse.txt
+        sshpass -f node_credential ssh root@$node "systemctl status $service" > serverFileResponse.txt
 
-        if grep -q "active (running)" serverFileResponse.txt; then
-            echo "NFS Server is running on $node."
-        else
-            echo "NFS Server is not running on $node. Install it before running these tests."
+        if ! grep -q "$expected_status" serverFileResponse.txt; then
+            echo "Service $service is not running on $node. Install it before running these tests."
             failed=1
         fi
     done
 
     rm serverFileResponse.txt
 
-    echo "Finished verifying NFS server."
-    exit $failed
+    return $failed
+}
+
+verify_nfs_server() {
+    echo "Assuming that 'node_credential' contains the nodes and their credentials. For more information, see tests/README.md."
+
+    nfs_mountd_service="nfs-mountd.service"
+    nfs_mountd_response="active (running)"
+    check_service "$nfs_mountd_response" "$nfs_mountd_service"
+    ret=$?
+    if [ $ret -eq 1 ]; then
+        echo "NFS Server is not running on all nodes. Install it before running these tests."
+        exit 1
+    fi
+
+
+    nfs_server_service="nfs-server.service"
+    nfs_server_response="active"
+    check_service "$nfs_server_response" "$nfs_server_service"
+    ret=$?
+    if [ $ret -eq 1 ]; then
+        echo "NFS Server is not running on all nodes. Install it before running these tests."
+        exit 1
+    fi
+
+    echo "NFS Server is running on all nodes."
 }
 
 check_sshpass
