@@ -53,6 +53,31 @@ spec:
       # Default value: None
       imagePullPolicy: Always
       envs:
+        # X_CSI_MANAGED_ARRAYS: Serial ID of the arrays that will be used for provisioning
+        # Default value: None
+        # Examples: "000000000001,000000000002"
+        - name: X_CSI_MANAGED_ARRAYS
+          value: "REPLACE_ARRAYS"
+        # X_CSI_POWERMAX_PORTGROUPS: Define the set of existing port groups that the driver will use.
+        # It is a comma separated list of portgroup names.
+        # Required only in case of iSCSI and NVMe/TCP only
+        # Allowed values: iSCSI or NVMe/TCP Port Group names
+        # Default value: None
+        # Examples: "pg1", "pg1, pg2"
+        - name: X_CSI_POWERMAX_PORTGROUPS
+          value: "REPLACE_PORTGROUPS"
+        # "X_CSI_TRANSPORT_PROTOCOL" can be "FC" or "FIBRE" for fibrechannel,
+        # "REPLACE_PROTOCOL" for iSCSI,
+        # "NVMETCP" for NVMeTCP or "" for autoselection.
+        # Allowed values:
+        #   "FC"    - Fiber Channel protocol
+        #   "FIBER" - Fiber Channel protocol
+        #   "REPLACE_PROTOCOL" - iSCSI protocol
+        #   "NVMETCP" = NVMeTCP protocol
+        #   ""      - Automatic selection of transport protocol
+        # Default value: "" <empty> defaults to auto if nothing is specified
+        - name: X_CSI_TRANSPORT_PROTOCOL
+          value: "REPLACE_PROTOCOL"
         # X_CSI_K8S_CLUSTER_PREFIX: Define a prefix that is appended onto
         # all resources created in the Array
         # This should be unique per K8s/CSI deployment
@@ -227,7 +252,7 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.12.0
+      configVersion: v2.13.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
@@ -257,7 +282,7 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.12.0
+      configVersion: v1.13.0
       components:
         - name: podmon-controller
           image: quay.io/dell/container-storage-modules/podmon:nightly

@@ -242,7 +242,7 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.10.0
+      configVersion: v1.12.0
       components:
         - name: dell-csi-replicator
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
@@ -297,7 +297,7 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.11.0
+      configVersion: v1.12.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
@@ -420,7 +420,7 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.12.0
+      configVersion: v1.13.0
       components:
         - name: podmon-controller
           image: quay.io/dell/container-storage-modules/podmon:nightly

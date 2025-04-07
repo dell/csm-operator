@@ -50,7 +50,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.x.x.x,10.x.x.x" # provide MDM value
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -160,7 +160,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.x.x.x,10.x.x.x" # provide MDM value
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
   modules:
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
@@ -171,7 +171,7 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: true
-      configVersion: v1.10.0
+      configVersion: v1.12.0
       components:
         - name: dell-csi-replicator
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
@@ -191,7 +191,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/dell-replication-controller:v1.9.0
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
           envs:
             # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
             # Set the value to "self" in case of stretched/single cluster configuration

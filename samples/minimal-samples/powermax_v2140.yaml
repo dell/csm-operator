@@ -12,13 +12,19 @@ spec:
       envs:
         - name: "X_CSI_REVPROXY_USE_SECRET"
           value: "false"
+        - name: X_CSI_MANAGED_ARRAYS
+          value: "000000000001,000000000002"
+        - name: X_CSI_POWERMAX_PORTGROUPS
+          value: ""
+        - name: X_CSI_TRANSPORT_PROTOCOL
+          value: ""
   # These are the modules which are optional and can be enabled by specifying to enable/disable.
   modules:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      # For Auth 2.0, use v2.1.0 as configVersion
-      configVersion: v2.1.0
+      # For Auth 2.0, use v2.2.0 as configVersion
+      configVersion: v2.2.0
       components:
         - name: karavi-authorization-proxy
           envs:
