@@ -116,22 +116,22 @@ var (
 			name: "update HBNFS values for Controller",
 			yamlString: `
 			- name: X_CSI_NFS_EXPORT_DIRECTORY
-              value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
-            - name: X_CSI_NFS_CLIENT_PORT
-              value: "<X_CSI_NFS_CLIENT_PORT>"
-            - name: X_CSI_NFS_SERVER_PORT
-              value: "<X_CSI_NFS_SERVER_PORT>"`,
+			  value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
+			- name: X_CSI_NFS_CLIENT_PORT
+			  value: "<X_CSI_NFS_CLIENT_PORT>"
+			- name: X_CSI_NFS_SERVER_PORT
+			  value: "<X_CSI_NFS_SERVER_PORT>"`,
 			csm:      csmForPowerStoreWithHBNFS("csm"),
 			ct:       powerStoreClient,
 			sec:      powerStoreSecret,
 			fileType: "Controller",
 			expected: `
-		    - name: X_CSI_NFS_EXPORT_DIRECTORY
-              value: "/var/lib/dell/myNfsExport"
+			- name: X_CSI_NFS_EXPORT_DIRECTORY
+			  value: "/var/lib/dell/myNfsExport"
 			- name: X_CSI_NFS_CLIENT_PORT
-		      value: "2220"
-		    - name: X_CSI_NFS_SERVER_PORT
-		      value: "2221"`,
+			  value: "2220"
+			- name: X_CSI_NFS_SERVER_PORT
+			  value: "2221"`,
 		},
 		{
 			name: "minimal minifest - update HBNFS values for Node",
