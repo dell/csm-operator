@@ -1177,7 +1177,7 @@ metadata:
   name: dell-csm-operator-metrics-reader
 rules:
   - nonResourceURLs:
-      - /metricsmake 
+      - /metrics
     verbs:
       - get
 ---
