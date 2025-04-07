@@ -91,6 +91,48 @@ var (
 			fileType:   "Node",
 			expected:   "true",
 		},
+		{
+			name: "update HBNFS values for Node",
+			yamlString: `
+			- name: X_CSI_NFS_EXPORT_DIRECTORY
+              value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
+            - name: X_CSI_NFS_CLIENT_PORT
+              value: "<X_CSI_NFS_CLIENT_PORT>"
+            - name: X_CSI_NFS_SERVER_PORT
+              value: "<X_CSI_NFS_SERVER_PORT>"`,
+			csm:      csmForPowerStoreWithHBNFS("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+			expected: `
+			- name: X_CSI_NFS_EXPORT_DIRECTORY
+              value: "/var/lib/dell/myNfsExport"
+            - name: X_CSI_NFS_CLIENT_PORT
+              value: "2220"
+            - name: X_CSI_NFS_SERVER_PORT
+              value: "2221"`,
+		},
+		{
+			name: "update HBNFS values for Controller",
+			yamlString: `
+			- name: X_CSI_NFS_EXPORT_DIRECTORY
+              value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
+            - name: X_CSI_NFS_CLIENT_PORT
+              value: "<X_CSI_NFS_CLIENT_PORT>"
+            - name: X_CSI_NFS_SERVER_PORT
+              value: "<X_CSI_NFS_SERVER_PORT>"`,
+			csm:      csmForPowerStoreWithHBNFS("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Controller",
+			expected: `
+			- name: X_CSI_NFS_EXPORT_DIRECTORY
+              value: "/var/lib/dell/myNfsExport"
+            - name: X_CSI_NFS_CLIENT_PORT
+              value: "2220"
+            - name: X_CSI_NFS_SERVER_PORT
+              value: "2221"`,
+		},
 	}
 )
 
@@ -161,6 +203,18 @@ func csmForPowerStore(customCSMName string) csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
 	return res
+}
+
+func csmForPowerStoreWithHBNFS(customCSMName string) csmv1.ContainerStorageModule {
+	cr := csmForPowerStore(customCSMName)
+
+	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "X_CSI_NFS_CLIENT_PORT", Value: "2220"},
+		{Name: "X_CSI_NFS_SERVER_PORT", Value: "2221"},
+		{Name: "X_CSI_NFS_EXPORT_DIRECTORY", Value: "/var/lib/dell/myNfsExport"},
+	}
+
+	return cr
 }
 
 func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
