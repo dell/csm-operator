@@ -1,8 +1,9 @@
 # permissions for end users to edit containerstoragemodules.
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: containerstoragemodule-editor-role
+  namespace : dell-csm-operator
 rules:
   - apiGroups:
       - storage.dell.com
