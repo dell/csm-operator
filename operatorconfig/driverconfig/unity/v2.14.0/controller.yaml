@@ -55,9 +55,6 @@ rules:
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents/status"]
     verbs: ["update", "patch"]
-  - apiGroups: [ "apps" ]
-    resources: [ "replicasets" ]
-    verbs: [ "get" ]
   - apiGroups: [ "coordination.k8s.io" ]
     resources: [ "leases" ]
     verbs: [ "get", "watch", "list", "update" ]
@@ -102,6 +99,9 @@ rules:
   - apiGroups: [ "coordination.k8s.io" ]
     resources: [ "leases" ]
     verbs: [ "delete", "create" ]
+  - apiGroups: [ "apps" ]
+    resources: [ "replicasets" ]
+    verbs: [ "get" ]
 ---
 # RoleBinding for Driver-specific Role
 kind: RoleBinding
