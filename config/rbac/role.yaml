@@ -92,7 +92,6 @@ rules:
       - patch
       - update
       - watch
-# read more
   - apiGroups:
       - "*"
     resourceNames:
@@ -101,7 +100,6 @@ rules:
       - "*"
     verbs:
       - "*"
-# acme.cert-manager.io need to be in cluster role
   - apiGroups:
       - acme.cert-manager.io
     resources:
@@ -118,31 +116,6 @@ rules:
   - apiGroups:
       - acme.cert-manager.io
     resources:
-      - challenges
-      - challenges/status
-    verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - acme.cert-manager.io
-    resources:
-      - challenges
-      - orders
-    verbs:
-      - create
-      - delete
-      - deletecollection
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - acme.cert-manager.io
-    resources:
       - challenges/finalizers
     verbs:
       - update
@@ -155,30 +128,6 @@ rules:
       - get
       - list
       - watch
-  - apiGroups:
-      - acme.cert-manager.io
-    resources:
-      - orders
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - acme.cert-manager.io
-    resources:
-      - orders
-      - orders/status
-    verbs:
-      - patch
-      - update
-  - apiGroups:
-      - acme.cert-manager.io
-    resources:
-      - orders/finalizers
-    verbs:
-      - update
   - apiGroups:
       - admissionregistration.k8s.io
     resources:
@@ -311,18 +260,7 @@ rules:
       - signers
     verbs:
       - sign
-  - apiGroups:
-      - coordination.k8s.io
-    resources:
-      - leases
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
+
 # checked till here
   - apiGroups:
       - csi.storage.k8s.io
@@ -369,7 +307,6 @@ rules:
       - list
       - update
       - watch
-
   - apiGroups:
       - mobility.storage.dell.com
     resources:
@@ -541,18 +478,6 @@ rules:
   - apiGroups:
       - rbac.authorization.k8s.io
     resources:
-      - roles
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - rbac.authorization.k8s.io
-    resources:
       - subjectaccessreviews
     verbs:
       - create
@@ -613,35 +538,12 @@ rules:
       - patch
       - update
       - watch
-  - apiGroups:
-      - snapshot.storage.k8s.io
-    resources:
-      - volumesnapshots
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
+
   - apiGroups:
       - snapshot.storage.k8s.io
     resources:
       - volumesnapshots/status
     verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - storage.dell.com
-    resources:
-      - containerstoragemodules
-    verbs:
-      - create
-      - delete
       - get
       - list
       - patch
@@ -681,18 +583,6 @@ rules:
       - create
       - get
       - list
-      - update
-      - watch
-  - apiGroups:
-      - storage.k8s.io
-    resources:
-      - csistoragecapacities
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
       - update
       - watch
   - apiGroups:
@@ -1185,16 +1075,6 @@ rules:
   - apiGroups:
       - csm-authorization.storage.dell.com
     resources:
-      - csmtenants
-    verbs:
-      - create
-      - delete
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - csm-authorization.storage.dell.com
-    resources:
       - csmtenants/finalizers
     verbs:
       - update
@@ -1248,24 +1128,6 @@ rules:
       - list
       - watch
   - apiGroups:
-      - gateway.networking.k8s.io
-    resources:
-      - gateways/finalizers
-      - httproutes/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - gateway.networking.k8s.io
-    resources:
-      - httproutes
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - update
-      - watch
-  - apiGroups:
       - mobility.storage.dell.com
     resources:
       - backups
@@ -1277,20 +1139,6 @@ rules:
       - patch
       - update
       - watch
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - backups/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - backups/status
-    verbs:
-      - get
-      - patch
-      - update
   - apiGroups:
       - mobility.storage.dell.com
     resources:
@@ -1306,20 +1154,6 @@ rules:
   - apiGroups:
       - mobility.storage.dell.com
     resources:
-      - clusterconfigs/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - clusterconfigs/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
       - podvolumebackups
     verbs:
       - create
@@ -1332,147 +1166,7 @@ rules:
   - apiGroups:
       - mobility.storage.dell.com
     resources:
-      - podvolumebackups/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - podvolumebackups/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
       - podvolumerestores
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - podvolumerestores/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - podvolumerestores/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - restores
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - restores/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - restores/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - schedules
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - mobility.storage.dell.com
-    resources:
-      - schedules/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - monitoring.coreos.com
-    resources:
-      - servicemonitors
-    verbs:
-      - create
-      - get
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingressclasses
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - update
-      - watch
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingresses
-    verbs:
-      - "*"
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingresses/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingresses/status
-    verbs:
-      - get
-      - list
-      - update
-      - watch
-  - apiGroups:
-      - rbac.authorization.k8s.io
-    resources:
-      - clusterrolebindings
-      - clusterroles
-      - replicasets
-      - rolebindings
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - rbac.authorization.k8s.io
-    resources:
-      - clusterroles/finalizers
     verbs:
       - create
       - delete
@@ -1494,85 +1188,12 @@ rules:
       - update
       - watch
   - apiGroups:
-      - rbac.authorization.k8s.io
-    resources:
-      - subjectaccessreviews
-    verbs:
-      - create
-  - apiGroups:
-      - replication.storage.dell.com
-    resources:
-      - dellcsireplicationgroups
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - replication.storage.dell.com
-    resources:
-      - dellcsireplicationgroups/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - route.openshift.io
-    resources:
-      - routes/custom-host
-    verbs:
-      - create
-  - apiGroups:
-      - security.openshift.io
-    resourceNames:
-      - privileged
-    resources:
-      - securitycontextconstraints
-    verbs:
-      - use
-  - apiGroups:
-      - snapshot.storage.k8s.io
-    resources:
-      - volumesnapshotclasses
-      - volumesnapshotcontents
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - snapshot.storage.k8s.io
-    resources:
-      - volumesnapshotcontents/status
-    verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
       - snapshot.storage.k8s.io
     resources:
       - volumesnapshots
     verbs:
       - create
       - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - snapshot.storage.k8s.io
-    resources:
-      - volumesnapshots/status
-    verbs:
       - get
       - list
       - patch
@@ -1591,42 +1212,6 @@ rules:
       - update
       - watch
   - apiGroups:
-      - storage.dell.com
-    resources:
-      - containerstoragemodules/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - storage.dell.com
-    resources:
-      - containerstoragemodules/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - storage.k8s.io
-    resources:
-      - csidrivers
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - storage.k8s.io
-    resources:
-      - csinodes
-    verbs:
-      - create
-      - get
-      - list
-      - update
-      - watch
-  - apiGroups:
       - storage.k8s.io
     resources:
       - csistoragecapacities
@@ -1638,35 +1223,6 @@ rules:
       - patch
       - update
       - watch
-  - apiGroups:
-      - storage.k8s.io
-    resources:
-      - storageclasses
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - update
-      - watch
-  - apiGroups:
-      - storage.k8s.io
-    resources:
-      - volumeattachments
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - storage.k8s.io
-    resources:
-      - volumeattachments/status
-    verbs:
-      - patch
   - apiGroups:
       - velero.io
     resources:
@@ -1783,6 +1339,53 @@ rules:
     resources:
       - dellcsivolumegroupsnapshots
       - dellcsivolumegroupsnapshots/status
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - challenges
+      - challenges/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders
+      - orders/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
+      - acme.cert-manager.io
+    resources:
+      - orders/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
     verbs:
       - create
       - delete
