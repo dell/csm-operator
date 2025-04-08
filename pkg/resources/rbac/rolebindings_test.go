@@ -114,3 +114,94 @@ func MockClusterRoleBinding(name, namespace, roleName string) *rbacv1.ClusterRol
 		},
 	}
 }
+
+func TestSyncRoleBindings(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		rb     rbacv1.RoleBinding
+		client client.Client
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Test SyncRoleBindings with known error",
+			args: args{
+				ctx:    context.Background(),
+				rb:     *MockRoleBinding("", "test", "test"),
+				client: ctrlClientFake.NewClientBuilder().Build(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "Test SyncRoleBindings for unknown error",
+			args: args{
+				ctx: context.Background(),
+				rb:  *MockRoleBinding("test", "test", "test"),
+				client: &common.MockClient{
+					GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
+						return errors.New("unknown error")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Test SyncRoleBindings create scenario",
+			args: args{
+				ctx:    context.Background(),
+				rb:     *MockRoleBinding("test", "test", "test"),
+				client: ctrlClientFake.NewClientBuilder().Build(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "Test SyncRoleBindings update scenario",
+			args: args{
+				ctx: context.Background(),
+				rb:  *MockRoleBinding("test", "test", "test"),
+				client: &common.MockClient{
+					UpdateFunc: func(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Test SyncRoleBindings update error scenario",
+			args: args{
+				ctx: context.Background(),
+				rb:  *MockRoleBinding("test", "test", "test"),
+				client: &common.MockClient{
+					UpdateFunc: func(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
+						return errors.New("update error")
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := SyncRoleBindings(tt.args.ctx, tt.args.rb, tt.args.client); (err != nil) != tt.wantErr {
+				t.Errorf("SyncRoleBindings() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func MockRoleBinding(name, namespace, roleName string) *rbacv1.RoleBinding {
+	return &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		RoleRef: rbacv1.RoleRef{
+			Name: roleName,
+			Kind: "Role",
+		},
+	}
+}
