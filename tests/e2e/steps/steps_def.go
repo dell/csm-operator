@@ -157,10 +157,23 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 
 func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr string) error {
 	oldCrNum, _ := strconv.Atoi(oldCrNumStr)
+	// Owen
+	fmt.Println("oldCrNum:", oldCrNum)
+
 	oldCr := res.CustomResource[oldCrNum-1].(csmv1.ContainerStorageModule)
+	// Owen
+	fmt.Println("oldCr:", oldCr)
 
 	newCrNum, _ := strconv.Atoi(newCrNumStr)
+	// Owen
+	fmt.Println("newCrNum:", newCrNum)
+
 	newCr := res.CustomResource[newCrNum-1].(csmv1.ContainerStorageModule)
+	// Owen
+	fmt.Println("newCr:", newCr)
+
+	// Owen
+	fmt.Println("res.CustomResource array:", res.CustomResource)
 
 	time.Sleep(60 * time.Second)
 
