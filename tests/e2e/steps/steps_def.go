@@ -162,7 +162,14 @@ func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr s
 
 	oldCr := res.CustomResource[oldCrNum-1].(csmv1.ContainerStorageModule)
 	// Owen
-	fmt.Println("oldCr:", oldCr)
+	// fmt.Println("oldCr:", oldCr)
+	prettyJSON, err := json.MarshalIndent(oldCr, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshaling object:", err)
+		return
+	}
+	fmt.Println(string(prettyJSON))
+
 
 	newCrNum, _ := strconv.Atoi(newCrNumStr)
 	// Owen
@@ -170,7 +177,13 @@ func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr s
 
 	newCr := res.CustomResource[newCrNum-1].(csmv1.ContainerStorageModule)
 	// Owen
-	fmt.Println("newCr:", newCr)
+	// fmt.Println("newCr:", newCr)
+	prettyJSON2, err := json.MarshalIndent(newCr, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshaling object:", err)
+		return
+	}
+	fmt.Println(string(prettyJSON2))
 
 	// Owen
 	fmt.Println("res.CustomResource array:", res.CustomResource)
