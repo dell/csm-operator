@@ -42,6 +42,28 @@ roleRef:
   name: <DriverDefaultReleaseName>-node
   apiGroup: rbac.authorization.k8s.io
 ---
+# Role for Driver-specific Permissions in a Namespace
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+---
+# RoleBinding for Driver-specific Role
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+subjects:
+  - kind: ServiceAccount
+    name: <DriverDefaultReleaseName>-node
+    namespace: <DriverDefaultReleaseNamespace>
+roleRef:
+  kind: Role
+  name: <DriverDefaultReleaseName>-node
+  apiGroup: rbac.authorization.k8s.io
+---
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
