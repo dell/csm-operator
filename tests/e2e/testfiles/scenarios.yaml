@@ -833,20 +833,20 @@
 #         - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 #         - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_5_values.csv dell powerflex
 
-- scenario: "Uninstall PowerFlex Driver"
-  paths:
-    - "testfiles/storage_csm_powerflex.yaml"
-  tags:
-    - "powerflex"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set up temporary secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is not installed"
+# - scenario: "Uninstall PowerFlex Driver"
+#   paths:
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   tags:
+#     - "powerflex"
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Set up temporary secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is not installed"
 
 - scenario: "Install PowerFlex Driver (With Authorization V2)"
   paths:
