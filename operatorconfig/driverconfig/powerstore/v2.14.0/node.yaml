@@ -43,6 +43,13 @@ rules:
     resourceNames: ["privileged"]
     resources: ["securitycontextconstraints"]
     verbs: ["use"]
+  # Required for HBNFS
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -152,6 +159,14 @@ spec:
               value: <GOPOWERSTORE_DEBUG>
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_NFS_EXPORT_DIRECTORY
+              value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
+            - name: X_CSI_NFS_CLIENT_PORT
+              value: "<X_CSI_NFS_CLIENT_PORT>"
+            - name: X_CSI_NFS_SERVER_PORT
+              value: "<X_CSI_NFS_SERVER_PORT>"
+          ports:
+            - containerPort: 2050
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com
@@ -179,6 +194,9 @@ spec:
               mountPath: /powerstore-config
             - name: powerstore-config-params
               mountPath: /powerstore-config-params
+            - name: nfs-powerstore
+              mountPath: <X_CSI_NFS_EXPORT_DIRECTORY>
+              mountPropagation: "Bidirectional"
         - name: registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
           imagePullPolicy: IfNotPresent
@@ -261,3 +279,7 @@ spec:
           hostPath:
             path: /var/run
             type: Directory
+        - name: nfs-powerstore
+          hostPath:
+            path: <X_CSI_NFS_EXPORT_DIRECTORY>
+            type: DirectoryOrCreate
