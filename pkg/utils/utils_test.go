@@ -2194,6 +2194,12 @@ spec:
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}
+
+	// Test case: Invalid kind
+	_, err = GetDriverYaml(`---`, "invalid kind")
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
 }
 
 func TestDeleteObject(t *testing.T) {
