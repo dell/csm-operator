@@ -34,6 +34,7 @@ import (
 	"github.com/dell/csm-operator/tests/shared/clientgoclient"
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -984,6 +985,17 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			csm.Spec.Modules = append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...)
 			csm.Annotations[previouslyAppliedCustomResource] = "invalid json"
 			return csm, &[]bool{false}[0], "error unmarshalling old annotation"
+		},
+		"Success - Disable specific components": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...))
+			csm := &csmv1.ContainerStorageModule{}
+			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
+			err := suite.fakeClient.Get(ctx, key, csm)
+			assert.Nil(suite.T(), err)
+			obs := getObservabilityModule()
+			obs[0].Components[0].Enabled = &[]bool{false}[0]
+			csm.Spec.Modules = append(append(getReplicaModule(), obs...), getAppMob()...)
+			return csm, &[]bool{false}[0], ""
 		},
 	}
 
@@ -2573,4 +2585,94 @@ func (suite *CSMControllerTestSuite) TestZoneValidation2() {
 
 	err = reconciler.ZoneValidation(ctx, &csm)
 	assert.NotNil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestRemoveDriverReplicaCluster() {
+	ctx := context.TODO()
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Annotations[configVersionKey] = configVersion
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+	err := suite.fakeClient.Create(ctx, &csm)
+	assert.Nil(suite.T(), err)
+
+	mockClient := &utils.MockClient{}
+
+	cluster := utils.ReplicaCluster{
+		ClusterID:         "cluster-1",
+		ClusterCTRLClient: mockClient,
+	}
+
+	driverConfig, _ := getDriverConfig(ctx, csm, operatorConfig, mockClient)
+
+	// error delete node service account
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Node.Rbac.ServiceAccount, mock.Anything)
+
+	// error delete controller service account
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(nil).Once()
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Controller.Rbac.ServiceAccount, mock.Anything)
+
+	// error delete node cluster role
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(nil).Twice()
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Node.Rbac.ClusterRole, mock.Anything)
+
+	// error delete controller cluster role
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(nil).Times(3)
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Controller.Rbac.ClusterRole, mock.Anything)
+
+	// error delete node cluster role binding
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(nil).Times(4)
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Node.Rbac.ClusterRoleBinding, mock.Anything)
+
+	// error delete controller cluster role binding
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(nil).Times(5)
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Controller.Rbac.ClusterRoleBinding, mock.Anything)
+
+	// error delete node role
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(nil).Times(6)
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Node.Rbac.Role, mock.Anything)
+
+	// error delete controller role
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(nil).Times(7)
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Controller.Rbac.Role, mock.Anything)
+
+	// error delete node role binding
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(nil).Times(8)
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Node.Rbac.RoleBinding, mock.Anything)
+
+	// error delete controller role binding
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(nil).Times(9)
+	mockClient.On("Delete", ctx, mock.Anything, mock.Anything).Return(errors.New("delete error")).Once()
+	err = removeDriverReplicaCluster(ctx, cluster, driverConfig)
+	suite.Assert().Error(err)
+	mockClient.AssertCalled(suite.T(), "Delete", ctx, &driverConfig.Controller.Rbac.RoleBinding, mock.Anything)
 }
