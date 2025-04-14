@@ -12,6 +12,12 @@ spec:
       envs:
         - name: "X_CSI_REVPROXY_USE_SECRET"
           value: "false"
+        - name: X_CSI_MANAGED_ARRAYS
+          value: "000000000001,000000000002"
+        - name: X_CSI_POWERMAX_PORTGROUPS
+          value: ""
+        - name: X_CSI_TRANSPORT_PROTOCOL
+          value: ""
   # These are the modules which are optional and can be enabled by specifying to enable/disable.
   modules:
     - name: authorization

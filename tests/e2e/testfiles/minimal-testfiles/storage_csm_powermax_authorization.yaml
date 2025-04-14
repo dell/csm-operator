@@ -8,6 +8,14 @@ spec:
     csiDriverType: "powermax"
     configVersion: v2.14.0
     forceRemoveDriver: true
+    common:
+      envs:
+        - name: X_CSI_MANAGED_ARRAYS
+          value: "REPLACE_ARRAYS"
+        - name: X_CSI_POWERMAX_PORTGROUPS
+          value: "REPLACE_PORTGROUPS"
+        - name: X_CSI_TRANSPORT_PROTOCOL
+          value: "REPLACE_PROTOCOL"
   modules:
     - name: authorization
       enabled: true
