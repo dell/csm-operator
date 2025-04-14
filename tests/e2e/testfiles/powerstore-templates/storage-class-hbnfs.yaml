@@ -1,0 +1,18 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: op-e2e-pstore-hbnfs
+provisioner: "csi-powerstore.dellemc.com"
+parameters:
+  arrayID: REPLACE_GLOBALID
+  csi-nfs: RWX
+  # If this is changed from ext4, be sure to update the ephemeral.properties file to match
+  csi.storage.k8s.io/fstype: "ext4"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: "csi-powerstore.dellemc.com/REPLACE_ENDPOINT-iscsi"
+        values:
+          - "true"
