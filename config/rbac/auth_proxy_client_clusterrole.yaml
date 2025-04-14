@@ -1,8 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: metrics-reader
-  namespace: dell-csm-operator
 rules:
   - nonResourceURLs:
       - "/metrics"
