@@ -50,7 +50,7 @@ func TestGetUpdateCount(t *testing.T) {
 
 func TestMockClient_Get(t *testing.T) {
 	mockClient := new(MockClient)
-	mockClient.GetFunc = func(ctx context.Context, key crclient.ObjectKey, obj crclient.Object, opts ...crclient.GetOption) error {
+	mockClient.GetFunc = func(_ context.Context, _ crclient.ObjectKey, _ crclient.Object, _ ...crclient.GetOption) error {
 		return nil
 	}
 
@@ -64,7 +64,7 @@ func TestMockClient_Get(t *testing.T) {
 
 func TestMockClient_Create(t *testing.T) {
 	mockClient := new(MockClient)
-	mockClient.CreateFunc = func(ctx context.Context, obj crclient.Object, opts ...crclient.CreateOption) error {
+	mockClient.CreateFunc = func(_ context.Context, _ crclient.Object, _ ...crclient.CreateOption) error {
 		return nil
 	}
 
@@ -77,7 +77,7 @@ func TestMockClient_Create(t *testing.T) {
 
 func TestMockClient_Update(t *testing.T) {
 	mockClient := new(MockClient)
-	mockClient.UpdateFunc = func(ctx context.Context, obj crclient.Object, opts ...crclient.UpdateOption) error {
+	mockClient.UpdateFunc = func(_ context.Context, _ crclient.Object, _ ...crclient.UpdateOption) error {
 		return nil
 	}
 
