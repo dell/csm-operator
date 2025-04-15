@@ -121,3 +121,98 @@ func TestSyncClusterRole(t *testing.T) {
 		assert.Equal(t, "update error", err.Error())
 	})
 }
+
+func TestSyncRole(t *testing.T) {
+	ctx := context.TODO()
+	role := rbacv1.Role{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Role",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-role",
+			Namespace: "default",
+		},
+	}
+
+	t.Run("Create new Role", func(t *testing.T) {
+		// fake client
+		client := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
+
+		err := SyncRole(ctx, role, client)
+		assert.NoError(t, err)
+
+		// check that the role was created
+		foundRole := &rbacv1.Role{}
+		err = client.Get(ctx, types.NamespacedName{Name: role.Name, Namespace: role.Namespace}, foundRole)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Handle error on getting Role", func(t *testing.T) {
+		client := &common.MockClient{
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
+				return errors.New("get error")
+			},
+		}
+
+		err := SyncRole(ctx, role, client)
+		assert.Error(t, err)
+		assert.Equal(t, "get error", err.Error())
+	})
+
+	t.Run("Handle error on creating Role", func(t *testing.T) {
+		client := &common.MockClient{
+			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
+				return apierrors.NewNotFound(rbacv1.Resource("role"), key.Name)
+			},
+			CreateFunc: func(_ context.Context, _ client.Object, _ ...client.CreateOption) error {
+				return errors.New("create error")
+			},
+		}
+
+		err := SyncRole(ctx, role, client)
+		assert.Error(t, err)
+		assert.Equal(t, "create error", err.Error())
+	})
+
+	t.Run("Handle error on getting created Role", func(t *testing.T) {
+		client := &common.MockClient{
+			CreateFunc: func(_ context.Context, _ client.Object, _ ...client.CreateOption) error {
+				return nil
+			},
+			GetFunc: func(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
+				return apierrors.NewNotFound(rbacv1.Resource("role"), key.Name)
+			},
+		}
+
+		err := SyncRole(ctx, role, client)
+		assert.Error(t, err)
+		assert.Equal(t, "role.rbac.authorization.k8s.io \"my-role\" not found", err.Error())
+	})
+
+	t.Run("Handle existing Role", func(t *testing.T) {
+		client := &common.MockClient{
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
+				return nil
+			},
+		}
+
+		err := SyncRole(ctx, role, client)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Handle existing Role update error", func(t *testing.T) {
+		client := &common.MockClient{
+			GetFunc: func(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
+				return nil
+			},
+			UpdateFunc: func(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
+				return errors.New("update error")
+			},
+		}
+
+		err := SyncRole(ctx, role, client)
+		assert.Error(t, err)
+		assert.Equal(t, "update error", err.Error())
+	})
+}
