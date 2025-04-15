@@ -95,7 +95,7 @@ func ResiliencyPrecheck(ctx context.Context, op utils.OperatorConfig, resiliency
 // ResiliencyInjectClusterRole - inject resiliency into clusterrole
 func ResiliencyInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, mode string) (*rbacv1.ClusterRole, error) {
 	var err error
-	roleFileName := mode + "-roles.yaml"
+	roleFileName := mode + "-clusterroles.yaml"
 	resiliencyModule, err := getResiliencyModule(cr)
 	if err != nil {
 		return nil, err
@@ -114,6 +114,36 @@ func ResiliencyInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Contai
 
 	clusterRole.Rules = append(clusterRole.Rules, rules...)
 	return &clusterRole, nil
+}
+
+// ResiliencyInjectRole - inject resiliency into role
+func ResiliencyInjectRole(role rbacv1.Role, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, mode string) (*rbacv1.Role, error) {
+
+	// There are no roles for controller in Resliency
+	if mode == "controller" {
+		return &role, nil
+	}
+
+	var err error
+	roleFileName := mode + "-roles.yaml"
+	resiliencyModule, err := getResiliencyModule(cr)
+	if err != nil {
+		return nil, err
+	}
+	// roleFiles are under moduleConfig for node & controller mode
+	buf, err := readConfigFile(resiliencyModule, cr, op, roleFileName)
+	if err != nil {
+		return nil, err
+	}
+
+	var rules []rbacv1.PolicyRule
+	err = yaml.Unmarshal(buf, &rules)
+	if err != nil {
+		return nil, err
+	}
+
+	role.Rules = append(role.Rules, rules...)
+	return &role, nil
 }
 
 func getResiliencyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
