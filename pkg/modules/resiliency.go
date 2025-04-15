@@ -118,7 +118,6 @@ func ResiliencyInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Contai
 
 // ResiliencyInjectRole - inject resiliency into role
 func ResiliencyInjectRole(role rbacv1.Role, cr csmv1.ContainerStorageModule, op utils.OperatorConfig, mode string) (*rbacv1.Role, error) {
-
 	// There are no roles for controller in Resliency
 	if mode == "controller" {
 		return &role, nil
