@@ -11,27 +11,21 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
-    verbs: ["create", "delete", "get", "list", "watch", "update"]
+    verbs: ["create", "delete", "get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "update"]
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["get", "list", "watch", "create", "update", "patch"]
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["storageclasses"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
-    verbs: ["get", "list", "watch", "update"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["csinodes"]
     verbs: ["get", "list", "watch", "update"]
   - apiGroups: ["security.openshift.io"]
     resourceNames: ["privileged"]
@@ -39,10 +33,7 @@ rules:
     verbs: ["use"]
   - apiGroups: [""]
     resources: ["pods"]
-    verbs: ["get", "list", "watch", "update", "delete"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["get", "watch", "list", "delete", "update", "create"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["get", "update"]
@@ -57,6 +48,28 @@ subjects:
     namespace: <DriverDefaultReleaseNamespace>
 roleRef:
   kind: ClusterRole
+  name: <DriverDefaultReleaseName>-node
+  apiGroup: rbac.authorization.k8s.io
+---
+# Role for Driver-specific Permissions in a Namespace
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+---
+# RoleBinding for Driver-specific Role
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-node
+  namespace: <DriverDefaultReleaseNamespace>
+subjects:
+  - kind: ServiceAccount
+    name: <DriverDefaultReleaseName>-node
+    namespace: <DriverDefaultReleaseNamespace>
+roleRef:
+  kind: Role
   name: <DriverDefaultReleaseName>-node
   apiGroup: rbac.authorization.k8s.io
 ---
