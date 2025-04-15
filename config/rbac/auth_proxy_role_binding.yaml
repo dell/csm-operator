@@ -10,3 +10,17 @@ subjects:
   - kind: ServiceAccount
     name: default
     namespace: system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dell-csm-operator-proxy-rolebinding
+  namespace: dell-csm-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dell-csm-operator
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: dell-csm-operator
