@@ -96,7 +96,8 @@ func getOperatorConfig(log *zap.SugaredLogger) utils.OperatorConfig {
 
 	isOpenShift, err := k8sClient.IsOpenShift()
 	if err != nil {
-		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
+		log.Info(fmt.Sprintf("isOpenShift returned error: %s", err.Error()))
+		log.Info(fmt.Sprintf("isOpenShift %t", isOpenShift))
 	}
 	cfg.IsOpenShift = isOpenShift
 	if isOpenShift {
