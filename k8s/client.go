@@ -61,16 +61,16 @@ func IsOpenShift() (bool, error) {
 	}
 
 	serverGroups, _, err := k8sClientSet.Discovery().ServerGroupsAndResources()
-	if err != nil {
+	if err != nil && serverGroups == nil {
 		return false, err
 	}
 	openshiftAPIGroup := "security.openshift.io"
 	for i := 0; i < len(serverGroups); i++ {
 		if serverGroups[i].Name == openshiftAPIGroup {
-			return true, nil
+			return true, err
 		}
 	}
-	return false, nil
+	return false, err
 }
 
 // NewControllerRuntimeClient will return a new controller runtime client using config
