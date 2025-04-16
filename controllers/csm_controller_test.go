@@ -856,6 +856,10 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	powerflexCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 	suite.makeFakeCSM(csmName, suite.namespace, false, []csmv1.Module{})
 
+	resiliencyCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	resiliencyCSM.Spec.Modules = getResiliencyModule()
+	resiliencyCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
 	syncCSMTests := []struct {
 		name        string
 		csm         csmv1.ContainerStorageModule
@@ -870,6 +874,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},
 		{"success: deployAsSidecar with secret", reverseProxyWithSecret, operatorConfig, ""},
 		{"powerflex on openshift - delete mount", powerflexCSM, operatorConfig, ""},
+		{"resiliency module happy path", resiliencyCSM, operatorConfig, ""},
 	}
 
 	for _, tt := range syncCSMTests {
@@ -1750,7 +1755,7 @@ func getResiliencyModule() []csmv1.Module {
 		{
 			Name:          csmv1.Resiliency,
 			Enabled:       true,
-			ConfigVersion: "v1.11.0",
+			ConfigVersion: "v1.13.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ResiliencySideCarName,

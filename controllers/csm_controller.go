@@ -835,12 +835,21 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
+				// Injecting clusterroles
 				clusterRole, err := modules.ResiliencyInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig, "controller")
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into controller cluster role: %v", err)
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
+
+				// Injecting roles
+				role, err := modules.ResiliencyInjectRole(controller.Rbac.Role, cr, operatorConfig, "controller")
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into controller role: %v", err)
+				}
+
+				controller.Rbac.Role = *role
 
 				// for node-pod
 				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
@@ -849,12 +858,22 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				node.DaemonSetApplyConfig = *ds
 
+				// Injecting clusterroles
 				clusterRoleForNode, err := modules.ResiliencyInjectClusterRole(node.Rbac.ClusterRole, cr, operatorConfig, "node")
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into node cluster role: %v", err)
 				}
 
 				node.Rbac.ClusterRole = *clusterRoleForNode
+
+				// Injecting roles
+				roleForNode, err := modules.ResiliencyInjectRole(node.Rbac.Role, cr, operatorConfig, "node")
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into controller role: %v", err)
+				}
+
+				node.Rbac.Role = *roleForNode
+
 			case csmv1.Replication:
 				// This function adds replication sidecar to driver pods.
 				log.Info("Injecting CSM Replication")
