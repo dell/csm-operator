@@ -227,7 +227,7 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		cmd := exec.Command("kubectl", "get", "ns", "ns1") // #nosec G204
 		err := cmd.Run()
 		if err != nil {
-			cmd = exec.Command("kubectl", "create", "ns", "ns1")
+			cmd = exec.Command("kubectl", "create", "ns", "ns1") // #nosec G204
 			err = cmd.Run()
 			if err != nil {
 				return err
@@ -268,7 +268,7 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 			amNamespace = "test-vxflexos"
 		}
 
-		cmd := exec.Command("helm", "delete", "velero", "--namespace="+amNamespace)
+		cmd := exec.Command("helm", "delete", "velero", "--namespace="+amNamespace) // #nosec G204
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("uninstallation of velero %v failed", err)
@@ -701,7 +701,7 @@ func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType s
 			return err
 		}
 	}
-	cmd = exec.Command("kubectl", "create", "-f", templateFile)
+	cmd = exec.Command("kubectl", "create", "-f", templateFile) // #nosec G204
 	err = cmd.Run()
 	if err != nil {
 		return err
@@ -1340,7 +1340,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 
 	cmd = exec.Command("kubectl", "create",
 		"ns", cr.Namespace,
-	)
+	) // #nosec G204
 	b, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create authorization namespace: %v\nErrMessage:\n%s", err, string(b))
@@ -1361,7 +1361,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		"karavi-config-secret",
 		"-n", cr.Namespace,
 		"--from-file=config.yaml=testfiles/authorization-templates/storage_csm_authorization_config.yaml",
-	)
+	) // #nosec G204
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create config secret for JWT: %v\nErrMessage:\n%s", err, string(b))
@@ -1545,7 +1545,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644) // #nosec G306
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644) // #nosec G303
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1556,7 +1556,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"--admin-token", "/tmp/adminToken.yaml",
 		"storage", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	)
+	) // #nosec G204
 
 	// by default, assume we will create storage
 	skipStorage := false
@@ -1705,7 +1705,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// Apply token to CSI driver host
 	fmt.Println("\n\n=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0o644) // #nosec G306
+	err = os.WriteFile("/tmp/token.yaml", b, 0o644) // #nosec G303
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1763,7 +1763,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644) // #nosec G306
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644) // #nosec G303
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1824,7 +1824,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0o644) // #nosec G306
+	err = os.WriteFile("/tmp/token.yaml", b, 0o644) // #nosec G303
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
