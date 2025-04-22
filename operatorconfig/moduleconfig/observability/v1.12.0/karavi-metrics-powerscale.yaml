@@ -55,7 +55,7 @@ roleRef:
   kind: Role
   name: karavi-metrics-powerscale-controller
   apiGroup: rbac.authorization.k8s.io
---- 
+---
 apiVersion: v1
 kind: Service
 metadata:
