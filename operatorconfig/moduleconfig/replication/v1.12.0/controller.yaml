@@ -249,6 +249,7 @@ spec:
       serviceAccountName: dell-replication-controller-sa
       containers:
         - args:
+            - --disable-pvc-remap=false
             - --enable-leader-election
             - --prefix=replication.storage.dell.com
           command:
