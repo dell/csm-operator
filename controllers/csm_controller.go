@@ -835,12 +835,21 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
+				// Injecting clusterroles
 				clusterRole, err := modules.ResiliencyInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig, "controller")
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into controller cluster role: %v", err)
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
+
+				// Injecting roles
+				role, err := modules.ResiliencyInjectRole(controller.Rbac.Role, cr, operatorConfig, "controller")
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into controller role: %v", err)
+				}
+
+				controller.Rbac.Role = *role
 
 				// for node-pod
 				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
@@ -849,12 +858,22 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				node.DaemonSetApplyConfig = *ds
 
+				// Injecting clusterroles
 				clusterRoleForNode, err := modules.ResiliencyInjectClusterRole(node.Rbac.ClusterRole, cr, operatorConfig, "node")
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into node cluster role: %v", err)
 				}
 
 				node.Rbac.ClusterRole = *clusterRoleForNode
+
+				// Injecting roles
+				roleForNode, err := modules.ResiliencyInjectRole(node.Rbac.Role, cr, operatorConfig, "node")
+				if err != nil {
+					return fmt.Errorf("injecting resiliency into controller role: %v", err)
+				}
+
+				node.Rbac.Role = *roleForNode
+
 			case csmv1.Replication:
 				// This function adds replication sidecar to driver pods.
 				log.Info("Injecting CSM Replication")
@@ -900,6 +919,24 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 
 		if err = rbac.SyncClusterRoleBindings(ctx, controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+			return err
+		}
+
+		// Create/Update Roles
+		if err = rbac.SyncRole(ctx, node.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
+			return err
+		}
+
+		if err = rbac.SyncRole(ctx, controller.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
+			return err
+		}
+
+		// Create/Update RoleBinding
+		if err = rbac.SyncRoleBindings(ctx, node.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
+			return err
+		}
+
+		if err = rbac.SyncRoleBindings(ctx, controller.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
 			return err
 		}
 
@@ -1227,6 +1264,26 @@ func removeDriverReplicaCluster(ctx context.Context, cluster utils.ReplicaCluste
 
 	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete controller cluster role binding", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete node role", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete controller cluster role", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete node role binding", "Error", err.Error())
+		return err
+	}
+
+	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
+		log.Errorw("error delete controller role binding", "Error", err.Error())
 		return err
 	}
 
