@@ -251,7 +251,7 @@ spec:
         - args:
             - --enable-leader-election
             - --prefix=replication.storage.dell.com
-            - --add-claimref-on-target=<REPLICATION_CLAIMREF_ON_TARGET>
+            - --allow-pvc-creation-on-target=<REPLICATION_ALLOW_PVC_CREATION_ON_TARGET>
           command:
             - /dell-replication-controller
           env:

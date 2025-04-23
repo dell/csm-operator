@@ -38,5 +38,5 @@ spec:
               value: "1s"
             - name: "RETRY_INTERVAL_MAX"
               value: "5m"
-            - name: "REPLICATION_CLAIMREF_ON_TARGET"
+            - name: "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET"
               value: "false"
