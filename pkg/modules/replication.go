@@ -60,6 +60,8 @@ const (
 	DefaultReplicaInitImage = "<REPLICATION_INIT_IMAGE>"
 	// ReplicationCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	ReplicationCSMNameSpace = "<CSM_NAMESPACE>"
+	// ReplicationClaimRefOnTarget - claimref on target
+	ReplicationClaimRefOnTarget = "<REPLICATION_CLAIMREF_ON_TARGET>"
 )
 
 var (
@@ -361,7 +363,7 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	retryMax := "5m"
 	replicaImage := ""
 	replicaInitImage := ""
-
+	claimrefOnTarget := "false"
 	for _, component := range replica.Components {
 		if component.Name == utils.ReplicationControllerManager {
 			if component.Image != "" {
@@ -376,6 +378,8 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 					retryMin = env.Value
 				} else if strings.Contains(DefaultRetryMax, env.Name) && env.Value != "" {
 					retryMax = env.Value
+				} else if strings.Contains(ReplicationClaimRefOnTarget, env.Name) && env.Value != "" {
+					claimrefOnTarget = env.Value
 				}
 			}
 		} else if component.Name == utils.ReplicationControllerInit {
@@ -391,6 +395,7 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMax, retryMax)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
 	YamlString = strings.ReplaceAll(YamlString, ReplicationCSMNameSpace, cr.Namespace)
+	YamlString = strings.ReplaceAll(YamlString, ReplicationClaimRefOnTarget, claimrefOnTarget)
 
 	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {

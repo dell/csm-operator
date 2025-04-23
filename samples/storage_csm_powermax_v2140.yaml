@@ -369,6 +369,13 @@ spec:
             # Allowed values: time
             - name: "RETRY_INTERVAL_MAX"
               value: "5m"
+            # REPLICATION_CLAIMREF_ON_TARGET: It updates claimref on replicated PV in target cluster.
+            # Allowed values:
+            #   true: It creates a PVC on target cluster with replicated PV
+            #   false: simply updates claimref on replicated PV in target cluster without actually creating a PVC
+            # Default value: false
+            - name: "REPLICATION_CLAIMREF_ON_TARGET"
+              value: "false"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
