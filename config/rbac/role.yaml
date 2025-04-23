@@ -1382,4 +1382,4 @@ rules:
       - challenges/finalizers
     verbs:
       - update
-      
+
