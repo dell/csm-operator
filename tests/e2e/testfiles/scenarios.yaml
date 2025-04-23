@@ -2883,3 +2883,38 @@
       run:
         - /bin/bash modify_zoning_labels.sh remove-all-zones
         - kubectl get nodes --show-labels
+
+- scenario: "Install Powermax Driver (Standalone) With Node Zoning"
+  paths:
+    - "testfiles/storage_csm_powermax_secret.yaml"
+  tags:
+    - "zoning"
+    - "powermax"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Run [Apply Node Labels]"
+    - "Set up reverse proxy tls secret namespace [powermax]"
+    - "Set up secret with template [testfiles/powermax-templates/powermax-zoning-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
+    - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Run [Validate Node Labels]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+    - "Run [Remove Node Labels]"
+  customTest:
+    - name: Apply Node Labels
+      run:
+        - kubectl get nodes --show-labels
+        - /bin/bash modify_zoning_labels.sh add zone.csi-powermax.dellemc.com=zoneA zone.csi-powermax.dellemc.com=zoneB
+        - kubectl get nodes --show-labels
+    - name: Validate Node Labels
+      run:
+        - /bin/bash modify_zoning_labels.sh validate-zoning powermax #todo(aaron): update powerflex scenarios
+    - name: Remove Node Labels
+      run:
+        - /bin/bash modify_zoning_labels.sh remove-all-zones
+        - kubectl get nodes --show-labels
