@@ -155,7 +155,7 @@ require (
 )
 
 replace (
-	github.com/dell/csm-operator => ../../../csm-operator
+	github.com/dell/csm-operator => ../../
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.0
 	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.0
 	k8s.io/code-generator => k8s.io/code-generator v0.32.0
