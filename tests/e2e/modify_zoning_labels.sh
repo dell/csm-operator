@@ -98,17 +98,17 @@ read_secret() {
 # validating zoning is configured on the cluster - powerflex
 validate_zoning_powermax() {
   # read the secret and extract zone information
-  secret_name="powermax-creds"
+  secret_name="powermax-config"
   namespace="powermax"
   secret_content=$(read_secret $secret_name $namespace)
 
   local zones=()
   while IFS= read -r line; do
-      if [[ $line =~ zone.topology.kubernetes.io/zone: ]]; then
+      if [[ $line =~ topology.kubernetes.io/zone: ]]; then
           zone=$(echo "${line##* }" | tr -d '"')
           zones+=("$zone")
       fi
-      if [[ $line =~ zone.topology.kubernetes.io/region: ]]; then
+      if [[ $line =~ topology.kubernetes.io/region: ]]; then
           zone=$(echo "${line##* }" | tr -d '"')
           zones+=("$zone")
       fi
@@ -138,7 +138,7 @@ validate_zoning_powermax() {
   for node in "${pod_node_map[@]}"; do
     echo "Checking node: $node"
     getLabel=$(kubectl get node $node -o jsonpath="{.metadata.labels}")
-    zone_label=$(echo "$getLabel" | jq -r '.["zone.topology.kubernetes.io/zone"]')
+    zone_label=$(echo "$getLabel" | jq -r '.["topology.kubernetes.io/zone"]')
 
     echo "Node $node zone label: $zone_label"
 
@@ -159,7 +159,7 @@ validate_zoning_powermax() {
 
     # repeat for secondary label
     getLabel=$(kubectl get node $node -o jsonpath="{.metadata.labels}")
-    zone_label=$(echo "$getLabel" | jq -r '.["zone.topology.kubernetes.io/region"]')
+    zone_label=$(echo "$getLabel" | jq -r '.["topology.kubernetes.io/region"]')
 
     echo "Node $node zone label: $zone_label"
 

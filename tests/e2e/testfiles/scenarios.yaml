@@ -2909,7 +2909,8 @@
     - name: Apply Node Labels
       run:
         - kubectl get nodes --show-labels
-        - /bin/bash modify_zoning_labels.sh add zone.csi-powermax.dellemc.com=zoneA zone.csi-powermax.dellemc.com=zoneB
+        - /bin/bash modify_zoning_labels.sh add topology.kubernetes.io/zone=zoneA topology.kubernetes.io/zone=zoneB
+        - /bin/bash modify_zoning_labels.sh add topology.kubernetes.io/region=zoneC topology.kubernetes.io/region=zoneD
         - kubectl get nodes --show-labels
     - name: Validate Node Labels
       run:
