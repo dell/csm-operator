@@ -95,7 +95,7 @@ read_secret() {
   echo $secret_data | base64 --decode
 }
 
-# validating zoning is configured on the cluster - powerflex
+# validating zoning is configured on the cluster - powermax
 validate_zoning_powermax() {
   # read the secret and extract zone information
   secret_name="powermax-config"
