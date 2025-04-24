@@ -2878,7 +2878,7 @@
         - kubectl get nodes --show-labels
     - name: Validate Node Labels
       run:
-        - /bin/bash modify_zoning_labels.sh validate-zoning
+        - /bin/bash modify_zoning_labels.sh validate-zoning powerflex
     - name: Remove Node Labels
       run:
         - /bin/bash modify_zoning_labels.sh remove-all-zones
@@ -2914,7 +2914,7 @@
         - kubectl get nodes --show-labels
     - name: Validate Node Labels
       run:
-        - /bin/bash modify_zoning_labels.sh validate-zoning powermax #todo(aaron): update powerflex scenarios
+        - /bin/bash modify_zoning_labels.sh validate-zoning powermax
     - name: Remove Node Labels
       run:
         - /bin/bash modify_zoning_labels.sh remove-all-zones
