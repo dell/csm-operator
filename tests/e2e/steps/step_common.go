@@ -519,7 +519,7 @@ func getPortContainerizedAuth(namespace string) (string, error) {
 		"service", service,
 		"-n", namespace,
 		"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
-	).CombinedOutput()
+	).CombinedOutput() // #nosec G204
 	if err != nil {
 		return "", fmt.Errorf("failed to get %s-ingress-nginx-controller port in namespace: %s: %s", namespace, namespace, b)
 	}

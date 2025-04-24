@@ -369,6 +369,13 @@ spec:
             # Allowed values: time
             - name: "RETRY_INTERVAL_MAX"
               value: "5m"
+            # DISABLE_PVC_REMAP: Disable PVC remapping for replication in single cluster configuration
+            # Allowed values:
+            #   true: Disable replication feature(install dell-csi-replicator sidecar)
+            #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+            # Default value: false
+            - name: "DISABLE_PVC_REMAP"
+              value: "false"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability

@@ -28,7 +28,7 @@ func initializeFramework() {
 	// it does not fall back to defaults
 	if os.Getenv(kubeconfigEnvVar) == "" {
 		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-		os.Setenv(kubeconfigEnvVar, kubeconfig)
+		_ = os.Setenv(kubeconfigEnvVar, kubeconfig)
 	}
 	framework.AfterReadingAllFlags(&framework.TestContext)
 

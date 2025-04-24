@@ -197,7 +197,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 	suite.namespace = "test"
 
-	os.Setenv("UNIT_TEST", "true")
+	_ = os.Setenv("UNIT_TEST", "true")
 }
 
 func TestRemoveFinalizer(t *testing.T) {
@@ -1414,11 +1414,11 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(_, expectedErr 
 	createCMError = false
 
 	// test CSM object with failed state leads to requeue
-	os.Setenv("UNIT_TEST", "false")
+	_ = os.Setenv("UNIT_TEST", "false")
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), "CSM state is failed", "expected error containing %q, got %s", expectedErr, err)
-	os.Setenv("UNIT_TEST", "true")
+	_ = os.Setenv("UNIT_TEST", "true")
 
 	// create everything this time
 	_, err = reconciler.Reconcile(ctx, req)
@@ -1445,13 +1445,13 @@ func (suite *CSMControllerTestSuite) reconcileWithErrorInjection(_, expectedErr 
 	updateCMError = false
 
 	// test CSM object with failed state, cannot update CSM object
-	os.Setenv("UNIT_TEST", "false")
+	_ = os.Setenv("UNIT_TEST", "false")
 	updateCSMError = true
 	_, err = reconciler.Reconcile(ctx, req)
 	assert.Error(suite.T(), err)
 	assert.Containsf(suite.T(), err.Error(), updateCSMErrorStr, "expected error containing %q, got %s", expectedErr, err)
 	updateCSMError = false
-	os.Setenv("UNIT_TEST", "true")
+	_ = os.Setenv("UNIT_TEST", "true")
 
 	getCRBError = true
 	_, err = reconciler.Reconcile(ctx, req)

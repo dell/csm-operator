@@ -104,7 +104,7 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 
 // GetTestResources -- parse values file
 func GetTestResources(valuesFilePath string) ([]Resource, error) {
-	b, err := os.ReadFile(valuesFilePath)
+	b, err := os.ReadFile(valuesFilePath) // #nosec G304
 	if err != nil {
 		return nil, fmt.Errorf("failed to read values file: %v", err)
 	}
@@ -119,7 +119,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 	for _, scene := range scenarios {
 		var customResources []interface{}
 		for _, path := range scene.Paths {
-			b, err := os.ReadFile(path)
+			b, err := os.ReadFile(path) // #nosec G304
 			if err != nil {
 				return nil, fmt.Errorf("failed to read testdata: %v", err)
 			}
@@ -143,7 +143,7 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1])
+	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1]) // #nosec G304
 	if err != nil {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
@@ -197,37 +197,37 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 		}
 
 		// Cleanup backupstoragelocations and volumesnapshotlocation before installing velero
-		cmd := exec.Command("kubectl", "get", "backupstoragelocations.velero.io", "default", "-n", amNamespace)
+		cmd := exec.Command("kubectl", "get", "backupstoragelocations.velero.io", "default", "-n", amNamespace) // #nosec G204
 		err := cmd.Run()
 		if err == nil {
-			cmd1 = exec.Command("kubectl", "delete", "backupstoragelocations.velero.io", "default", "-n", amNamespace)
+			cmd1 = exec.Command("kubectl", "delete", "backupstoragelocations.velero.io", "default", "-n", amNamespace) // #nosec G204
 			err1 = cmd1.Run()
 			if err1 != nil {
 				return fmt.Errorf("installation of velero %v failed", err1)
 			}
 		}
 
-		cmd = exec.Command("kubectl", "get", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace)
+		cmd = exec.Command("kubectl", "get", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace) // #nosec G204
 		err = cmd.Run()
 		if err == nil {
-			cmd1 = exec.Command("kubectl", "delete", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace)
+			cmd1 = exec.Command("kubectl", "delete", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace) // #nosec G204
 			err1 = cmd1.Run()
 			if err1 != nil {
 				return fmt.Errorf("installation of velero %v failed", err1)
 			}
 		}
 
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml")
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml") // #nosec G204
 		err2 := cmd2.Run()
 		if err2 != nil {
 			return fmt.Errorf("installation of velero %v failed", err2)
 		}
 	} else if thirdPartyModule == "sample-app" {
 
-		cmd := exec.Command("kubectl", "get", "ns", "ns1")
+		cmd := exec.Command("kubectl", "get", "ns", "ns1") // #nosec G204
 		err := cmd.Run()
 		if err != nil {
-			cmd = exec.Command("kubectl", "create", "ns", "ns1")
+			cmd = exec.Command("kubectl", "create", "ns", "ns1") // #nosec G204
 			err = cmd.Run()
 			if err != nil {
 				return err
@@ -252,11 +252,11 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 
 func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule string) error {
 	if thirdPartyModule == "cert-manager" {
-		cmd := exec.Command("kubectl", "delete", "-f", "testfiles/cert-manager-crds.yaml")
+		cmd := exec.Command("kubectl", "delete", "-f", "testfiles/cert-manager-crds.yaml") // #nosec G204
 		err := cmd.Run()
 		if err != nil {
 			// Some deployments are not found since they are deleted already.
-			cmd = exec.Command("kubectl", "get", "pods", "-n", "cert-manager")
+			cmd = exec.Command("kubectl", "get", "pods", "-n", "cert-manager") // #nosec G204
 			err = cmd.Run()
 			if err != nil {
 				return fmt.Errorf("cert-manager uninstall failed: %v", err)
@@ -268,13 +268,13 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 			amNamespace = "test-vxflexos"
 		}
 
-		cmd := exec.Command("helm", "delete", "velero", "--namespace="+amNamespace)
+		cmd := exec.Command("helm", "delete", "velero", "--namespace="+amNamespace) // #nosec G204
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("uninstallation of velero %v failed", err)
 		}
 	} else if thirdPartyModule == "sample-app" {
-		cmd := exec.Command("kubectl", "delete", "-n", "ns1", "-f", "testfiles/sample-application/test-sts.yaml")
+		cmd := exec.Command("kubectl", "delete", "-n", "ns1", "-f", "testfiles/sample-application/test-sts.yaml") // #nosec G204
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("uninstallation of stateful set failed:  %v", err)
@@ -378,7 +378,7 @@ func (step *Step) validateDriverNotInstalled(res Resource, driverName string, cr
 
 func (step *Step) setNodeLabel(res Resource, label string) error {
 	if label == "control-plane" {
-		setNodeLabel(label, "node-role.kubernetes.io/control-plane", "")
+		_ = setNodeLabel(label, "node-role.kubernetes.io/control-plane", "")
 	} else {
 		return fmt.Errorf("Adding node label %s not supported, feel free to add support", label)
 	}
@@ -388,7 +388,7 @@ func (step *Step) setNodeLabel(res Resource, label string) error {
 
 func (step *Step) removeNodeLabel(res Resource, label string) error {
 	if label == "control-plane" {
-		removeNodeLabel(label, "node-role.kubernetes.io/control-plane")
+		_ = removeNodeLabel(label, "node-role.kubernetes.io/control-plane")
 	} else {
 		return fmt.Errorf("Removing node label %s not supported, feel free to add support", label)
 	}
@@ -692,16 +692,16 @@ func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType s
 		}
 	}
 
-	cmd := exec.Command("kubectl", "get", "sc", scName)
+	cmd := exec.Command("kubectl", "get", "sc", scName) // #nosec G204
 	err = cmd.Run()
 	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "sc", scName)
+		cmd = exec.Command("kubectl", "delete", "sc", scName) // #nosec G204
 		err = cmd.Run()
 		if err != nil {
 			return err
 		}
 	}
-	cmd = exec.Command("kubectl", "create", "-f", templateFile)
+	cmd = exec.Command("kubectl", "create", "-f", templateFile) // #nosec G204
 	err = cmd.Run()
 	if err != nil {
 		return err
@@ -710,7 +710,7 @@ func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType s
 }
 
 func (step *Step) setupSecretFromFile(res Resource, file, namespace string) error {
-	crBuff, err := os.ReadFile(file)
+	crBuff, err := os.ReadFile(file) // #nosec G304
 	if err != nil {
 		return fmt.Errorf("failed to read secret data: %v", err)
 	}
@@ -757,7 +757,7 @@ func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, cr
 	}
 
 	if configMapExists(namespace, name) {
-		cmd := exec.Command("kubectl", "delete", "configmap", "-n", namespace, name)
+		cmd := exec.Command("kubectl", "delete", "configmap", "-n", namespace, name) // #nosec G204
 		err := cmd.Run()
 		if err != nil {
 			return fmt.Errorf("failed to delete configmap: %s", err.Error())
@@ -765,7 +765,7 @@ func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, cr
 	}
 
 	fileArg := "--from-file=config.yaml=" + templateFile
-	cmd := exec.Command("kubectl", "create", "cm", name, "-n", namespace, fileArg)
+	cmd := exec.Command("kubectl", "create", "cm", name, "-n", namespace, fileArg) // #nosec G204
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to create configmap: %s", err.Error())
@@ -816,7 +816,7 @@ func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, c
 	}
 
 	// read the template into memory
-	fileContent, err := os.ReadFile(templateFile)
+	fileContent, err := os.ReadFile(templateFile) // #nosec G304
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return err
@@ -921,7 +921,7 @@ func determineMap(crType string) (map[string]string, error) {
 }
 
 func secretExists(namespace, name string) bool {
-	cmd := exec.Command("kubectl", "get", "secret", "-n", namespace, name)
+	cmd := exec.Command("kubectl", "get", "secret", "-n", namespace, name) // #nosec G204
 	err := cmd.Run()
 	if err != nil {
 		return false
@@ -930,7 +930,7 @@ func secretExists(namespace, name string) bool {
 }
 
 func configMapExists(namespace, name string) bool {
-	cmd := exec.Command("kubectl", "get", "configmap", "-n", namespace, name)
+	cmd := exec.Command("kubectl", "get", "configmap", "-n", namespace, name) // #nosec G204
 	err := cmd.Run()
 	if err != nil {
 		return false
@@ -940,7 +940,7 @@ func configMapExists(namespace, name string) bool {
 
 func replaceInFile(old, new, templateFile string) error {
 	cmdString := "s|" + old + "|" + new + "|g"
-	cmd := exec.Command("sed", "-i", cmdString, templateFile)
+	cmd := exec.Command("sed", "-i", cmdString, templateFile) // #nosec G204
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to substitute %s with %s in file %s: %s", old, new, templateFile, err.Error())
@@ -1019,7 +1019,7 @@ func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile stri
 	}
 
 	if crType == "pflexEphemeral" {
-		os.Setenv("PFLEX_VOLUME", fmt.Sprintf("k8s-%s", randomAlphaNumberic(10)))
+		_ = os.Setenv("PFLEX_VOLUME", fmt.Sprintf("k8s-%s", randomAlphaNumberic(10)))
 	}
 
 	for key := range mapValues {
@@ -1037,7 +1037,7 @@ func randomAlphaNumberic(length int) string {
 
 	var result []byte
 	for i := 0; i < length; i++ {
-		randomIndex := rand.Intn(len(charset))
+		randomIndex := rand.Intn(len(charset)) // #nosec G404
 		result = append(result, charset[randomIndex])
 	}
 
@@ -1320,18 +1320,18 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error {
 	fmt.Println("=== Creating Authorization Proxy Server Prerequisites ===")
 
-	cmd := exec.Command("kubectl", "get", "ns", cr.Namespace)
+	cmd := exec.Command("kubectl", "get", "ns", cr.Namespace) // #nosec G204
 	err := cmd.Run()
 	if err == nil {
 
 		fmt.Printf("\nDeleting all CSM from namespace: %s \n", cr.Namespace)
-		cmd = exec.Command("kubectl", "delete", "csm", "-n", cr.Namespace, "--all")
+		cmd = exec.Command("kubectl", "delete", "csm", "-n", cr.Namespace, "--all") // #nosec G204
 		b, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to delete all CSM from namespace: %v\nErrMessage:\n%s", err, string(b))
 		}
 
-		cmd = exec.Command("kubectl", "delete", "ns", cr.Namespace)
+		cmd = exec.Command("kubectl", "delete", "ns", cr.Namespace) // #nosec G204
 		b, err = cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to delete authorization namespace: %v\nErrMessage:\n%s", err, string(b))
@@ -1340,7 +1340,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 
 	cmd = exec.Command("kubectl", "create",
 		"ns", cr.Namespace,
-	)
+	) // #nosec G204
 	b, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create authorization namespace: %v\nErrMessage:\n%s", err, string(b))
@@ -1350,7 +1350,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		"--validate=false", "-f",
 		fmt.Sprintf("https://github.com/jetstack/cert-manager/releases/download/%s/cert-manager.crds.yaml",
 			certManagerVersion),
-	)
+	) // #nosec G204
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to apply cert-manager CRDs: %v\nErrMessage:\n%s", err, string(b))
@@ -1361,7 +1361,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		"karavi-config-secret",
 		"-n", cr.Namespace,
 		"--from-file=config.yaml=testfiles/authorization-templates/storage_csm_authorization_config.yaml",
-	)
+	) // #nosec G204
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create config secret for JWT: %v\nErrMessage:\n%s", err, string(b))
@@ -1369,16 +1369,16 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 
 	cmd = exec.Command("kubectl", "create", "-n", cr.Namespace,
 		"-f", "testfiles/authorization-templates/storage_csm_authorization_storage_secret.yaml",
-	)
+	) // #nosec G204
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create storage secret: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	cmd = exec.Command("kubectl", "get", "sc", "local-storage")
+	cmd = exec.Command("kubectl", "get", "sc", "local-storage") // #nosec G204
 	err = cmd.Run()
 	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/storage_csm_authorization_local_storage.yaml")
+		cmd = exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/storage_csm_authorization_local_storage.yaml") // #nosec G204
 		b, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to delete local storage: %v\nErrMessage:\n%s", err, string(b))
@@ -1387,7 +1387,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 
 	cmd = exec.Command("kubectl", "create",
 		"-f", "testfiles/authorization-templates/storage_csm_authorization_local_storage.yaml",
-	)
+	) // #nosec G204
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create local storage for redis: %v\nErrMessage:\n%s", err, string(b))
@@ -1413,22 +1413,22 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
 	if driver == "powerflex" {
-		os.Setenv("PFLEX_STORAGE", "powerflex")
-		os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
+		_ = os.Setenv("PFLEX_STORAGE", "powerflex")
+		_ = os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
 		storageType = os.Getenv("PFLEX_STORAGE")
 		csmTenantName = os.Getenv("PFLEX_TENANT")
 	}
 
 	if driver == "powerscale" {
-		os.Setenv("PSCALE_STORAGE", "powerscale")
-		os.Setenv("DRIVER_NAMESPACE", "isilon")
+		_ = os.Setenv("PSCALE_STORAGE", "powerscale")
+		_ = os.Setenv("DRIVER_NAMESPACE", "isilon")
 		storageType = os.Getenv("PSCALE_STORAGE")
 		csmTenantName = os.Getenv("PSCALE_TENANT")
 	}
 
 	if driver == "powermax" {
-		os.Setenv("PMAX_STORAGE", "powermax")
-		os.Setenv("DRIVER_NAMESPACE", "powermax")
+		_ = os.Setenv("PMAX_STORAGE", "powermax")
+		_ = os.Setenv("DRIVER_NAMESPACE", "powermax")
 		storageType = os.Getenv("PMAX_STORAGE")
 		csmTenantName = os.Getenv("PMAX_TENANT")
 	}
@@ -1538,14 +1538,14 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"--jwt-signing-secret", "secret",
 		"--refresh-token-expiration", fmt.Sprint(30*24*time.Hour),
 		"--access-token-expiration", fmt.Sprint(2*time.Hour),
-	)
+	) // #nosec G204
 	b, err := adminTkn.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644) // #nosec G303, G306
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1556,7 +1556,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"--admin-token", "/tmp/adminToken.yaml",
 		"storage", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	)
+	) // #nosec G204
 
 	// by default, assume we will create storage
 	skipStorage := false
@@ -1595,7 +1595,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 			"--password", password,
 			"--array-insecure",
 			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-		)
+		) // #nosec G204
 		fmt.Println("=== Storage === \n", cmd.String())
 		b, err = cmd.CombinedOutput()
 		if err != nil {
@@ -1610,7 +1610,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"--admin-token", "/tmp/adminToken.yaml",
 		"tenant", "create",
 		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	)
+	) // #nosec G204
 	b, err = cmd.CombinedOutput()
 	fmt.Println("=== Tenant === \n", cmd.String())
 
@@ -1624,7 +1624,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"--admin-token", "/tmp/adminToken.yaml",
 		"role", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	)
+	) // #nosec G204
 
 	fmt.Println("=== Checking Roles === \n", cmd.String())
 
@@ -1660,7 +1660,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 			fmt.Sprintf("--role=%s=%s=%s=%s=%s",
 				roleName, storageType, sysID, pool, quotaLimit),
 			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-		)
+		) // #nosec G204
 
 		fmt.Println("=== Role === \n", cmd.String())
 		b, err = cmd.CombinedOutput()
@@ -1680,7 +1680,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"--tenant", tenantName,
 		"--role", roleName,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	)
+	) // #nosec G204
 	fmt.Println("=== Binding Role ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1695,7 +1695,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		"--tenant", tenantName,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 		"--access-token-expiration", fmt.Sprint(2*time.Hour),
-	)
+	) // #nosec G204
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1705,7 +1705,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// Apply token to CSI driver host
 	fmt.Println("\n\n=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/token.yaml", b, 0o644) // #nosec G303, G306
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1713,7 +1713,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	cmd = exec.Command("kubectl", "apply",
 		"-f", "/tmp/token.yaml",
 		"-n", driverNamespace,
-	)
+	) // #nosec G204
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to apply token: %v\nErrMessage:\n%s", err, string(b))
@@ -1756,14 +1756,14 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 		"--jwt-signing-secret", "secret",
 		"--refresh-token-expiration", fmt.Sprint(30*24*time.Hour),
 		"--access-token-expiration", fmt.Sprint(2*time.Hour),
-	)
+	) // #nosec G204
 	b, err = adminTkn.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644) // #nosec G303, G306
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1814,7 +1814,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 		"--refresh-token-expiration", "48h",
 		"--tenant", csmTenantName,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	)
+	) // #nosec G204
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1824,7 +1824,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0o644)
+	err = os.WriteFile("/tmp/token.yaml", b, 0o644) // #nosec G303, G306
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1832,7 +1832,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	cmd = exec.Command("kubectl", "apply",
 		"-f", "/tmp/token.yaml",
 		"-n", driverNamespace,
-	)
+	) // #nosec G204
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to apply token: %v\nErrMessage:\n%s", err, string(b))
@@ -1975,7 +1975,7 @@ func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStor
 
 func (step *Step) createCustomResourceDefinition(res Resource, crdNumStr string) error {
 	crdNum, _ := strconv.Atoi(crdNumStr)
-	cmd := exec.Command("kubectl", "apply", "-f", res.Scenario.Paths[crdNum-1])
+	cmd := exec.Command("kubectl", "apply", "-f", res.Scenario.Paths[crdNum-1]) // #nosec G204
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("csm authorization crds install failed: %v", err)
@@ -1985,7 +1985,7 @@ func (step *Step) createCustomResourceDefinition(res Resource, crdNumStr string)
 }
 
 func (step *Step) validateCustomResourceDefinition(res Resource, crdName string) error {
-	cmd := exec.Command("kubectl", "get", "crd", fmt.Sprintf("%s.csm-authorization.storage.dell.com", crdName))
+	cmd := exec.Command("kubectl", "get", "crd", fmt.Sprintf("%s.csm-authorization.storage.dell.com", crdName)) // #nosec G204
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to validate csm authorization crd [%s]: %v", crdName, err)
@@ -2021,7 +2021,7 @@ func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 
 func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string) error {
 	crdNum, _ := strconv.Atoi(crdNumStr)
-	cmd := exec.Command("kubectl", "delete", "-f", res.Scenario.Paths[crdNum-1])
+	cmd := exec.Command("kubectl", "delete", "-f", res.Scenario.Paths[crdNum-1]) // #nosec G204
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("csm authorization crds uninstall failed: %v", err)
@@ -2032,7 +2032,7 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
 	// Check if the revproxy-certs secret exists
 	revproxyExists := false
-	cmd := exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace)
+	cmd := exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace) // #nosec G204
 	err := cmd.Run()
 	if err == nil {
 		fmt.Println("revproxy-certs secret already exists, skipping creation.")
@@ -2041,7 +2041,7 @@ func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
 
 	// Check if the csirevproxy-tls-secret exists
 	csirevproxyExists := false
-	cmd = exec.Command("kubectl", "get", "secret", "csirevproxy-tls-secret", "-n", namespace)
+	cmd = exec.Command("kubectl", "get", "secret", "csirevproxy-tls-secret", "-n", namespace) // #nosec G204
 	err = cmd.Run()
 	if err == nil {
 		fmt.Println("csirevproxy-tls-secret already exists, skipping creation.")
@@ -2071,14 +2071,14 @@ func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
 	crtPath := filepath.Join(tmpDir, "tls.crt")
 
 	// Generate TLS key
-	cmd = exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
+	cmd = exec.Command("openssl", "genrsa", "-out", keyPath, "2048") // #nosec G204
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to generate TLS key: %v", err)
 	}
 
 	// Generate TLS certificate
-	cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", keyPath, "-out", crtPath, "-days", "3650", "-subj", "/CN=US")
+	cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", keyPath, "-out", crtPath, "-days", "3650", "-subj", "/CN=US") // #nosec G204
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to generate TLS certificate: %v", err)
@@ -2093,7 +2093,7 @@ func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
 
 	// Create Kubernetes secret for revproxy-certs if it does not exist
 	if !revproxyExists {
-		cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath)
+		cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath) // #nosec G204
 		err = cmd.Run()
 		if err != nil {
 			return fmt.Errorf("failed to create revproxy-certs secret: %v", err)
@@ -2102,7 +2102,7 @@ func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
 
 	// Create Kubernetes secret for csirevproxy-tls-secret if it does not exist
 	if !csirevproxyExists {
-		cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath)
+		cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath) // #nosec G204
 		err = cmd.Run()
 		if err != nil {
 			return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
@@ -2128,34 +2128,34 @@ func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
 	sanConfigPath := "testfiles/powermax-templates/san.cnf"
 
 	// Generate TLS key
-	cmd := exec.Command("openssl", "genrsa", "-out", keyPath, "2048")
+	cmd := exec.Command("openssl", "genrsa", "-out", keyPath, "2048") // #nosec G204
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to generate TLS key: %v", err)
 	}
 
 	// Generate CSR
-	cmd = exec.Command("openssl", "req", "-new", "-key", keyPath, "-out", csrPath, "-config", sanConfigPath)
+	cmd = exec.Command("openssl", "req", "-new", "-key", keyPath, "-out", csrPath, "-config", sanConfigPath) // #nosec G204
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to generate CSR: %v", err)
 	}
 
 	// Generate TLS certificate
-	cmd = exec.Command("openssl", "x509", "-req", "-in", csrPath, "-signkey", keyPath, "-out", crtPath, "-days", "3650", "-extensions", "v3_req", "-extfile", sanConfigPath)
+	cmd = exec.Command("openssl", "x509", "-req", "-in", csrPath, "-signkey", keyPath, "-out", crtPath, "-days", "3650", "-extensions", "v3_req", "-extfile", sanConfigPath) // #nosec G204
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to generate TLS certificate: %v", err)
 	}
 
 	// Create or update Kubernetes secret for revproxy-certs
-	cmd = exec.Command("kubectl", "create", "secret", "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath, "-n", namespace, "-o", "yaml", "--dry-run=client")
+	cmd = exec.Command("kubectl", "create", "secret", "tls", "revproxy-certs", "--cert="+crtPath, "--key="+keyPath, "-n", namespace, "-o", "yaml", "--dry-run=client") // #nosec G204
 	cmdOut, err := cmd.Output()
 	if err != nil {
 		return fmt.Errorf("failed to prepare revproxy-certs secret: %v", err)
 	}
 
-	cmd = exec.Command("kubectl", "apply", "-f", "-")
+	cmd = exec.Command("kubectl", "apply", "-f", "-") // #nosec G204
 	cmd.Stdin = bytes.NewReader(cmdOut)
 	err = cmd.Run()
 	if err != nil {
@@ -2163,13 +2163,13 @@ func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
 	}
 
 	// Create or update Kubernetes secret for csirevproxy-tls-secret
-	cmd = exec.Command("kubectl", "create", "secret", "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath, "-n", namespace, "-o", "yaml", "--dry-run=client")
+	cmd = exec.Command("kubectl", "create", "secret", "tls", "csirevproxy-tls-secret", "--cert="+crtPath, "--key="+keyPath, "-n", namespace, "-o", "yaml", "--dry-run=client") // #nosec G204
 	cmdOut, err = cmd.Output()
 	if err != nil {
 		return fmt.Errorf("failed to prepare csirevproxy-tls-secret: %v", err)
 	}
 
-	cmd = exec.Command("kubectl", "apply", "-f", "-")
+	cmd = exec.Command("kubectl", "apply", "-f", "-") // #nosec G204
 	cmd.Stdin = bytes.NewReader(cmdOut)
 	err = cmd.Run()
 	if err != nil {
