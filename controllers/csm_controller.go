@@ -894,7 +894,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				if err != nil {
 					return fmt.Errorf("injecting replication into controller role: %v", err)
 				}
-				
+
 				controller.Rbac.Role = *role
 			}
 		}
