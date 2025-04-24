@@ -117,7 +117,7 @@ func Test_IsOpenShift(t *testing.T) {
 			// Create a fake kubeconfig and set the KUBECONFIG environment variable.
 			err := CreateTempKubeconfig("./fake-kubeconfig")
 			assert.NoError(t, err)
-			os.Setenv("KUBECONFIG", "./fake-kubeconfig")
+			_ = os.Setenv("KUBECONFIG", "./fake-kubeconfig")
 
 			isOpenshift, err := IsOpenShift()
 			if patch.ignoreError {

@@ -404,7 +404,7 @@ func TestIsOpenshift(t *testing.T) {
 	// Create a fake kubeconfig and set the KUBECONFIG environment variable.
 	err := k8s.CreateTempKubeconfig("./fake-kubeconfig")
 	assert.NoError(t, err)
-	os.Setenv("KUBECONFIG", "./fake-kubeconfig")
+	_ = os.Setenv("KUBECONFIG", "./fake-kubeconfig")
 	_, err = isOpenShift()
 	assert.NotNil(t, err)
 }
@@ -413,7 +413,7 @@ func TestGetKubeAPIServerVersion(t *testing.T) {
 	// Create a fake kubeconfig and set the KUBECONFIG environment variable.
 	err := k8s.CreateTempKubeconfig("./fake-kubeconfig")
 	assert.NoError(t, err)
-	os.Setenv("KUBECONFIG", "./fake-kubeconfig")
+	_ = os.Setenv("KUBECONFIG", "./fake-kubeconfig")
 	_, err = getKubeAPIServerVersion()
 	assert.NotNil(t, err)
 }
