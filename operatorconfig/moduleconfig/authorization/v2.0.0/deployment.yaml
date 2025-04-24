@@ -203,9 +203,6 @@ rules:
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["get", "patch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -283,15 +280,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csm-auth-storage-service
 rules:
-  - apiGroups: [""]
-    resources: ["secrets", "events"]
-    verbs: ["get", "patch", "post", create]
   - apiGroups: ["csm-authorization.storage.dell.com"]
     resources: ["storages", "csmtenants", "csmroles"]
     verbs: ["get", "list"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["create", "update", "get", "list"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -306,6 +297,33 @@ roleRef:
   name: csm-auth-storage-service
   apiGroup: rbac.authorization.k8s.io
 ---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csm-auth-storage-service
+  namespace: <NAMESPACE>
+rules:
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create", "update", "get", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: storage-service
+  namespace: <NAMESPACE>
+subjects:
+  - kind: ServiceAccount
+    name: storage-service
+    namespace: <NAMESPACE>
+roleRef:
+  kind: Role
+  name: csm-auth-storage-service
+  apiGroup: rbac.authorization.k8s.io
+--- 
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -415,9 +433,6 @@ rules:
   - apiGroups: ["csm-authorization.storage.dell.com"]
     resources: ["storages/finalizers"]
     verbs: ["update"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["create", "update", "get", "delete", "list"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -432,6 +447,30 @@ roleRef:
   name: csm-auth-authorization-controller
   apiGroup: rbac.authorization.k8s.io
 ---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create", "update", "get", "list"]
+---    
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+subjects:
+  - kind: ServiceAccount
+    name: authorization-controller
+    namespace: <NAMESPACE>
+roleRef:
+  kind: Role
+  name: authorization-controller
+  apiGroup: rbac.authorization.k8s.io
+ --- 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
