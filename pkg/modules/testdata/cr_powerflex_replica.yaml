@@ -43,3 +43,5 @@ spec:
               value: "5m"
             - name: "DISABLE_PVC_REMAP"
               value: "false"
+            - name: "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET"
+              value: "false"
