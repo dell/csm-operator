@@ -61,6 +61,7 @@ import (
 	rbacv1beta1 "k8s.io/client-go/kubernetes/typed/rbac/v1beta1"
 	resourceV1alpha3 "k8s.io/client-go/kubernetes/typed/resource/v1alpha3"
 	resourceV1beta1 "k8s.io/client-go/kubernetes/typed/resource/v1beta1"
+	resourceV1beta2 "k8s.io/client-go/kubernetes/typed/resource/v1beta2"
 	schedulingv1 "k8s.io/client-go/kubernetes/typed/scheduling/v1"
 	schedulingv1alpha1 "k8s.io/client-go/kubernetes/typed/scheduling/v1alpha1"
 	schedulingv1beta1 "k8s.io/client-go/kubernetes/typed/scheduling/v1beta1"
@@ -334,7 +335,12 @@ func (c *K8sClient) ResourceV1alpha3() resourceV1alpha3.ResourceV1alpha3Interfac
 
 // ResourceV1beta1 retrieves the ResourceV1beta1Client
 func (c *K8sClient) ResourceV1beta1() resourceV1beta1.ResourceV1beta1Interface {
-	panic("unimplemented")
+	panic("implement me")
+}
+
+// ResourceV1beta2 retrieves the ResourceV1beta2Client
+func (c *K8sClient) ResourceV1beta2() resourceV1beta2.ResourceV1beta2Interface {
+	panic("implement me")
 }
 
 // StorageV1beta1 retrieves the StorageV1beta1Client
