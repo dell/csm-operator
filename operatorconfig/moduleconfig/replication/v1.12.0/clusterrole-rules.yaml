@@ -1,6 +1,6 @@
 - apiGroups: ["replication.storage.dell.com"]
   resources: ["dellcsireplicationgroups"]
-  verbs: ["list", "update", "watch"]
+  verbs: ["list", "update", "watch", "create"]
 # - apiGroups: ["replication.storage.dell.com"]
 #   resources: ["dellcsireplicationgroups/status"]
 #   verbs: ["get", "patch", "update"]
