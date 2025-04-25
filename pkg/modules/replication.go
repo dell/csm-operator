@@ -320,6 +320,7 @@ func ReplicationInjectRole(role rbacv1.Role, cr csmv1.ContainerStorageModule, op
 	role.Rules = append(role.Rules, rules...)
 	return &role, nil
 }
+
 // ReplicationPrecheck  - runs precheck for CSM ReplicationPrecheck
 func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
