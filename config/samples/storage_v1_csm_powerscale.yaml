@@ -204,6 +204,8 @@ spec:
         # Examples: 192, 256
         - name: X_CSI_MAX_PATH_LIMIT
           value: "192"
+        - name: CSI_VOL_PREFIX
+          value: "csivol"
       # nodeSelector: Define node selection constraints for pods of node daemonset
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -240,7 +242,6 @@ spec:
     sideCars:
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
-        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
       - name: registrar

@@ -111,6 +111,8 @@ spec:
         # Default value: false
         - name: "GOISILON_DEBUG"
           value: "false"
+        - name: CSI_VOL_PREFIX
+          value: "csivol"
     controller:
       envs:
         # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota
@@ -240,7 +242,6 @@ spec:
     sideCars:
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
-        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
       - name: registrar
