@@ -62,6 +62,8 @@ const (
 	ReplicationCSMNameSpace = "<CSM_NAMESPACE>"
 	// DefaultPVCRemapState - default state of Disable PVC remap argument
 	DefaultDisablePVCRemapState = "<DISABLE_PVC_REMAP>"
+	// AllowPvcCreationOnTarget -
+	AllowPvcCreationOnTarget = "<REPLICATION_ALLOW_PVC_CREATION_ON_TARGET>"
 )
 
 var (
@@ -364,6 +366,7 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	replicaImage := ""
 	replicaInitImage := ""
 	disablePVCRemapState := "false"
+	allowPVCCreationOnTarget := "false"
 
 	for _, component := range replica.Components {
 		if component.Name == utils.ReplicationControllerManager {
@@ -381,6 +384,8 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 					retryMax = env.Value
 				} else if strings.Contains(DefaultDisablePVCRemapState, env.Name) && env.Value != "" {
 					disablePVCRemapState = env.Value
+				} else if strings.Contains(AllowPvcCreationOnTarget, env.Name) && env.Value != "" {
+					allowPVCCreationOnTarget = env.Value
 				}
 			}
 		} else if component.Name == utils.ReplicationControllerInit {
@@ -397,6 +402,7 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
 	YamlString = strings.ReplaceAll(YamlString, ReplicationCSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, DefaultDisablePVCRemapState, disablePVCRemapState)
+	YamlString = strings.ReplaceAll(YamlString, AllowPvcCreationOnTarget, allowPVCCreationOnTarget)
 
 	ctrlObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
