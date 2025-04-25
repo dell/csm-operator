@@ -69,6 +69,11 @@ export PMAX_SERVICE_LEVEL="Bronze"
 export PMAX_PORTGROUPS=""
 export PMAX_PROTOCOL=""
 export PMAX_ARRAYS="000000000000,000000000001"
+# an additional PMax array is necessary for zoning tests
+export PMAX_ZONING_USER="zoningUsername"
+export PMAX_ZONING_PASS="zoningPassword"
+export PMAX_ZONING_SYSTEMID="zoningSystemID"
+export PMAX_ZONING_ENDPOINT="10.1.1.2"
 # The following are Authorization Proxy Server specific for powermax:
 export PMAX_POOL_V1="SRP_1"
 export PMAX_POOL_V2="SRP_1"
