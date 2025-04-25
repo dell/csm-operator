@@ -1347,7 +1347,7 @@ spec:
             - name: RELATED_IMAGE_topology
               value: quay.io/dell/container-storage-modules/csm-topology:v1.12.0
             - name: RELATED_IMAGE_otel-collector
-              value: docker.io/otel/opentelemetry-collector:0.42.0
+              value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0
             - name: RELATED_IMAGE_metrics-powerscale
               value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.9.0
             - name: RELATED_IMAGE_metrics-powermax
@@ -1372,7 +1372,7 @@ spec:
               value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
             - name: RELATED_IMAGE_metadataretriever
               value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
-          image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.9.0
+          image: csm.artifactory.cec.lab.emc.com/csm-users/bahubali_jain/dell-csm-operator:otel2204
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
