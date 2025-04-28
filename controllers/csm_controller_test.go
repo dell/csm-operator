@@ -860,6 +860,10 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	resiliencyCSM.Spec.Modules = getResiliencyModule()
 	resiliencyCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 
+	replicationCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	replicationCSM.Spec.Modules = getReplicaModule()
+	replicationCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
 	syncCSMTests := []struct {
 		name        string
 		csm         csmv1.ContainerStorageModule
@@ -875,6 +879,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"success: deployAsSidecar with secret", reverseProxyWithSecret, operatorConfig, ""},
 		{"powerflex on openshift - delete mount", powerflexCSM, operatorConfig, ""},
 		{"resiliency module happy path", resiliencyCSM, operatorConfig, ""},
+		{"replication module happy path", replicationCSM, operatorConfig, ""},
 	}
 
 	for _, tt := range syncCSMTests {
@@ -1731,7 +1736,7 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.10.0",
+			ConfigVersion: "v1.12.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ReplicationSideCarName,
