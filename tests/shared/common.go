@@ -32,7 +32,7 @@ const (
 	DowngradeConfigVersion     string = "v2.13.1"
 	ConfigVersion              string = "v2.14.0"
 	UpgradeConfigVersion       string = "v2.12.0"
-	JumpUpgradeConfigVersion   string = "v2.13.1"
+	JumpUpgradeConfigVersion   string = "v2.13.0"
 	JumpDowngradeConfigVersion string = "v2.12.0"
 	OldConfigVersion           string = "v2.2.0"
 	BadConfigVersion           string = "v0"
