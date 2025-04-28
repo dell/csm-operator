@@ -48,6 +48,7 @@ rules:
       - pods
       - secrets
       - endpoints
+      - namespaces
     verbs:
       - get
       - list
