@@ -51,7 +51,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx" # do not add mdm value here if it is present in secret
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # do not add mdm value here if it is present in secret
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -164,7 +164,7 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx" # provide MDM value
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
   modules:
     # observability: allows to configure observability
     - name: observability
@@ -195,7 +195,7 @@ spec:
           enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.42.0
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
           certificate:
