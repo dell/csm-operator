@@ -104,11 +104,11 @@ validate_zoning_powermax() {
 
   local zones=()
   while IFS= read -r line; do
-      if [[ $line =~ topology.kubernetes.io/zone: ]]; then
+      if [[ $line =~ zone.topology.kubernetes.io/zone: ]]; then
           zone=$(echo "${line##* }" | tr -d '"')
           zones+=("$zone")
       fi
-      if [[ $line =~ topology.kubernetes.io/region: ]]; then
+      if [[ $line =~ zone.topology.kubernetes.io/region: ]]; then
           zone=$(echo "${line##* }" | tr -d '"')
           zones+=("$zone")
       fi
@@ -159,7 +159,7 @@ validate_zoning_powermax() {
 
     # repeat for secondary label
     getLabel=$(kubectl get node $node -o jsonpath="{.metadata.labels}")
-    zone_label=$(echo "$getLabel" | jq -r '.["topology.kubernetes.io/region"]')
+    zone_label=$(echo "$getLabel" | jq -r '.["zone.topology.kubernetes.io/region"]')
 
     echo "Node $node zone label: $zone_label"
 
