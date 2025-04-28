@@ -217,7 +217,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.0
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.13.1
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:
@@ -240,10 +240,6 @@ spec:
               value: <X_CSI_QUOTA_ENABLED>
             - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
               value: <X_CSI_POWERFLEX_EXTERNAL_ACCESS>
-            - name: GOSCALEIO_DEBUG
-              value: <GOSCALEIO_DEBUG>
-            - name: GOSCALEIO_SHOWHTTP
-              value: <GOSCALEIO_SHOWHTTP>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
