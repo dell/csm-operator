@@ -138,7 +138,7 @@ validate_zoning_powermax() {
   for node in "${pod_node_map[@]}"; do
     echo "Checking node: $node"
     getLabel=$(kubectl get node $node -o jsonpath="{.metadata.labels}")
-    zone_label=$(echo "$getLabel" | jq -r '.["topology.kubernetes.io/zone"]')
+    zone_label=$(echo "$getLabel" | jq -r '.["zone.topology.kubernetes.io/zone"]')
 
     echo "Node $node zone label: $zone_label"
 
