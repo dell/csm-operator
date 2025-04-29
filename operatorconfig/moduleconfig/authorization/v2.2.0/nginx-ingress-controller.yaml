@@ -551,6 +551,10 @@ spec:
       nodeSelector:
         kubernetes.io/os: linux
       restartPolicy: OnFailure
+      securityContext:
+        fsGroup: 2000
+        runAsNonRoot: true
+        runAsUser: 2000
       serviceAccountName: <NAMESPACE>-ingress-nginx-admission
 ---
 apiVersion: batch/v1
