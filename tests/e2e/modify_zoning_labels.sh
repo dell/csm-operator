@@ -102,17 +102,9 @@ validate_zoning_powermax() {
   namespace="powermax"
   secret_content=$(read_secret $secret_name $namespace)
 
-  # Determine the label key based on platforms
-  kubectl api-resources | grep -q openshift
-  is_ocp=$?
-
-  if [ $is_ocp -eq 0 ]; then
-    zone_label_key="zone.topology.kubernetes.io/zone"
-    region_label_key="zone.topology.kubernetes.io/region"
-  else
-    zone_label_key="topology.kubernetes.io/zone"
-    region_label_key="topology.kubernetes.io/region"
-  fi
+  # specify the zone and region label keys
+  zone_label_key="zone.topology.kubernetes.io/zone"
+  region_label_key="zone.topology.kubernetes.io/region"
 
   echo "Using label keys: $zone_label_key and $region_label_key"
 
