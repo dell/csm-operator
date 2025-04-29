@@ -1584,3 +1584,4 @@ mv "$tmp_file" "version-values.yaml"
 
 
 echo "<<< ------- Module version update complete ------- >>>"
+

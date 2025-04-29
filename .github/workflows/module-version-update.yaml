@@ -33,7 +33,7 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   version-update:
     uses: dell/common-github-actions/.github/workflows/operator-module-version-update.yaml@main
-    name: Module version update
+    name: CSM Operator Module Version Update
     with:
       csm-version: ${{ inputs.csm-version }}
       update-option: ${{ inputs.update-option}}
