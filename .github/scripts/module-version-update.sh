@@ -1582,6 +1582,6 @@ sed -i ':a;/^\n*$/{$d;N;ba;}' "$tmp_file"
 echo "$pmax_block" >> "$tmp_file"
 mv "$tmp_file" "version-values.yaml"
 
-
 echo "<<< ------- Module version update complete ------- >>>"
+
 
