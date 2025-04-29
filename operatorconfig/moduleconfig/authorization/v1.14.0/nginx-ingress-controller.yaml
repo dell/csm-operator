@@ -38,16 +38,11 @@ rules:
   - apiGroups:
       - ''
     resources:
-      - namespaces
-    verbs:
-      - get
-  - apiGroups:
-      - ''
-    resources:
       - configmaps
       - pods
       - secrets
       - endpoints
+      - namespaces
     verbs:
       - get
       - list
