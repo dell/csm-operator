@@ -29,7 +29,7 @@ import (
 // ConfigVersions used for all unit tests
 const (
 	PFlexConfigVersion         string = "v2.14.0"
-	DowngradeConfigVersion     string = "v2.13.0"
+	DowngradeConfigVersion     string = "v2.13.1"
 	ConfigVersion              string = "v2.14.0"
 	UpgradeConfigVersion       string = "v2.12.0"
 	JumpUpgradeConfigVersion   string = "v2.13.0"
