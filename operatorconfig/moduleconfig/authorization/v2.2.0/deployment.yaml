@@ -20,12 +20,15 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csm-auth-proxy-server
 rules:
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["watch"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["storages", "csmtenants"]
-    verbs: ["get", "list"]
+  - apiGroups: ['']
+    resources: ['events']
+    verbs: ['watch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['storages', 'csmtenants']
+    verbs: ['get', 'list']
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['watch', 'list']
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -73,11 +76,11 @@ spec:
                   name: redis-csm-secret
                   key: password
           args:
-            - "--redis-sentinel=$(SENTINELS)"
-            - "--redis-password=$(REDIS_PASSWORD)"
-            - "--tenant-service=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
-            - "--role-service=role-service.<NAMESPACE>.svc.cluster.local:50051"
-            - "--storage-service=storage-service.<NAMESPACE>.svc.cluster.local:50051"
+            - '--redis-sentinel=$(SENTINELS)'
+            - '--redis-password=$(REDIS_PASSWORD)'
+            - '--tenant-service=tenant-service.<NAMESPACE>.svc.cluster.local:50051'
+            - '--role-service=role-service.<NAMESPACE>.svc.cluster.local:50051'
+            - '--storage-service=storage-service.<NAMESPACE>.svc.cluster.local:50051'
           ports:
             - containerPort: 8080
           volumeMounts:
@@ -89,10 +92,10 @@ spec:
           image: <AUTHORIZATION_OPA_IMAGE>
           imagePullPolicy: IfNotPresent
           args:
-            - "run"
-            - "--ignore=."
-            - "--server"
-            - "--log-level=debug"
+            - 'run'
+            - '--ignore=.'
+            - '--server'
+            - '--log-level=debug'
           ports:
             - name: http
               containerPort: 8181
@@ -100,8 +103,8 @@ spec:
           image: <AUTHORIZATION_OPA_KUBEMGMT_IMAGE>
           imagePullPolicy: IfNotPresent
           args:
-            - "--namespaces=<NAMESPACE>"
-            - "--enable-data"
+            - '--namespaces=<NAMESPACE>'
+            - '--enable-data'
       volumes:
         - name: config-volume
           secret:
@@ -157,8 +160,8 @@ spec:
                   name: redis-csm-secret
                   key: password
           args:
-            - "--redis-sentinel=$(SENTINELS)"
-            - "--redis-password=$(REDIS_PASSWORD)"
+            - '--redis-sentinel=$(SENTINELS)'
+            - '--redis-password=$(REDIS_PASSWORD)'
           ports:
             - containerPort: 50051
               name: grpc
@@ -200,12 +203,12 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csm-auth-role-service
 rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "patch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get"]
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['get', 'patch']
+  - apiGroups: ['']
+    resources: ['secrets']
+    verbs: ['get']
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -283,15 +286,15 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csm-auth-storage-service
 rules:
-  - apiGroups: [""]
-    resources: ["secrets", "events"]
-    verbs: ["get", "patch", "post", create]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["storages", "csmtenants", "csmroles"]
-    verbs: ["get", "list"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["create", "update", "get", "list"]
+  - apiGroups: ['']
+    resources: ['secrets', 'events']
+    verbs: ['get', 'patch', 'post', create]
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['storages', 'csmtenants', 'csmroles']
+    verbs: ['get', 'list']
+  - apiGroups: ['coordination.k8s.io']
+    resources: ['leases']
+    verbs: ['create', 'update', 'get', 'list']
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -351,8 +354,8 @@ metadata:
   namespace: <NAMESPACE>
 spec:
   secretName: storage-service-selfsigned-tls
-  duration: 2160h  # 90d
-  renewBefore: 360h  # 15d
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
   subject:
     organizations:
       - dellemc
@@ -382,42 +385,42 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csm-auth-authorization-controller
 rules:
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["csmroles"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["csmroles/status"]
-    verbs: ["get", "update", "patch"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["csmroles/finalizers"]
-    verbs: ["update"]
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["csmtenants"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["csmtenants/status"]
-    verbs: ["get", "update", "patch"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["csmtenants/finalizers"]
-    verbs: ["update"]
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["create", "patch"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["storages"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["storages/status"]
-    verbs: ["get", "update", "patch"]
-  - apiGroups: ["csm-authorization.storage.dell.com"]
-    resources: ["storages/finalizers"]
-    verbs: ["update"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["create", "update", "get", "delete", "list"]
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmroles']
+    verbs: ['get', 'list', 'watch', 'create', 'update', 'patch', 'delete']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmroles/status']
+    verbs: ['get', 'update', 'patch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmroles/finalizers']
+    verbs: ['update']
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmtenants']
+    verbs: ['get', 'list', 'watch', 'create', 'update', 'patch', 'delete']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmtenants/status']
+    verbs: ['get', 'update', 'patch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmtenants/finalizers']
+    verbs: ['update']
+  - apiGroups: ['']
+    resources: ['events']
+    verbs: ['create', 'patch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['storages']
+    verbs: ['get', 'list', 'watch', 'create', 'update', 'patch', 'delete']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['storages/status']
+    verbs: ['get', 'update', 'patch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['storages/finalizers']
+    verbs: ['update']
+  - apiGroups: ['coordination.k8s.io']
+    resources: ['leases']
+    verbs: ['create', 'update', 'get', 'delete', 'list']
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -457,13 +460,13 @@ spec:
           image: <AUTHORIZATION_CONTROLLER_IMAGE>
           imagePullPolicy: Always
           args:
-            - "--authorization-namespace=<NAMESPACE>"
-            - "--health-probe-bind-address=:8081"
-            - "--leader-elect=<AUTHORIZATION_LEADER_ELECTION_ENABLED>"
-            - "--tenant-service-address=tenant-service.<NAMESPACE>.svc.cluster.local:50051"
-            - "--storage-service-address=storage-service.<NAMESPACE>.svc.cluster.local:50051"
-            - "--role-service-address=role-service.<NAMESPACE>.svc.cluster.local:50051"
-            - "--controller-reconcile-interval=<AUTHORIZATION_CONTROLLER_RECONCILE_INTERVAL>"
+            - '--authorization-namespace=<NAMESPACE>'
+            - '--health-probe-bind-address=:8081'
+            - '--leader-elect=<AUTHORIZATION_LEADER_ELECTION_ENABLED>'
+            - '--tenant-service-address=tenant-service.<NAMESPACE>.svc.cluster.local:50051'
+            - '--storage-service-address=storage-service.<NAMESPACE>.svc.cluster.local:50051'
+            - '--role-service-address=role-service.<NAMESPACE>.svc.cluster.local:50051'
+            - '--controller-reconcile-interval=<AUTHORIZATION_CONTROLLER_RECONCILE_INTERVAL>'
           env:
             - name: NAMESPACE
               value: <NAMESPACE>
@@ -528,7 +531,7 @@ spec:
                 secretKeyRef:
                   name: redis-csm-secret
                   key: password
-          command: ["sh", "-c"]
+          command: ['sh', '-c']
           args:
             - |
               cp /csm-auth-redis-cm/redis.conf /etc/redis/redis.conf
@@ -563,8 +566,8 @@ spec:
       containers:
         - name: <AUTHORIZATION_REDIS_NAME>
           image: <AUTHORIZATION_REDIS_IMAGE>
-          command: ["redis-server"]
-          args: ["/etc/redis/redis.conf"]
+          command: ['redis-server']
+          args: ['/etc/redis/redis.conf']
           ports:
             - containerPort: 6379
               name: <AUTHORIZATION_REDIS_NAME>
@@ -610,7 +613,7 @@ spec:
             - name: SENTINELS
               value: <AUTHORIZATION_REDIS_SENTINEL_VALUES>
             - name: K8S_SIGTERM
-              value: "1"
+              value: '1'
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -642,8 +645,8 @@ spec:
             timeoutSeconds: 5
           resources:
             limits:
-              cpu: "500m"
-              memory: "512M"
+              cpu: '500m'
+              memory: '512M'
           securityContext:
             runAsNonRoot: true
             readOnlyRootFilesystem: false
@@ -687,7 +690,7 @@ spec:
       initContainers:
         - name: config
           image: <AUTHORIZATION_REDIS_IMAGE>
-          command: ["sh", "-c"]
+          command: ['sh', '-c']
           env:
             - name: REDIS_PASSWORD
               valueFrom:
@@ -757,8 +760,8 @@ spec:
       containers:
         - name: <AUTHORIZATION_REDIS_SENTINEL>
           image: <AUTHORIZATION_REDIS_IMAGE>
-          command: ["redis-sentinel"]
-          args: ["/etc/redis/sentinel.conf"]
+          command: ['redis-sentinel']
+          args: ['/etc/redis/sentinel.conf']
           ports:
             - containerPort: 5000
               name: <AUTHORIZATION_REDIS_SENTINEL>
@@ -806,13 +809,13 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csm-auth-resource-reader
 rules:
-  - apiGroups: [""]
-    resources: ["secrets", "configmaps", "pods"]
-    verbs: ["get", "watch", "list", "patch", "create", "update", "delete"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    resourceNames: ["ingress-controller-leader"]
-    verbs: ["get", "update"]
+  - apiGroups: ['']
+    resources: ['secrets', 'configmaps', 'pods']
+    verbs: ['get', 'watch', 'list', 'patch', 'create', 'update', 'delete']
+  - apiGroups: ['coordination.k8s.io']
+    resources: ['leases']
+    resourceNames: ['ingress-controller-leader']
+    verbs: ['get', 'update']
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -832,9 +835,9 @@ kind: ClusterRole
 metadata:
   name: csm-auth-view
 rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['get', 'list', 'watch']
 ---
 # Grant OPA/kube-mgmt read-only access to resources. This lets kube-mgmt
 # list configmaps to be loaded into OPA as policies.
@@ -858,9 +861,9 @@ metadata:
   namespace: <NAMESPACE>
   name: configmap-modifier
 rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["update", "patch"]
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['update', 'patch']
 ---
 # Grant OPA/kube-mgmt role defined above.
 apiVersion: rbac.authorization.k8s.io/v1
