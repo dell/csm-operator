@@ -102,13 +102,27 @@ validate_zoning_powermax() {
   namespace="powermax"
   secret_content=$(read_secret $secret_name $namespace)
 
+  # Determine the label key based on platforms
+  kubectl api-resources | grep -q openshift
+  is_ocp=$?
+
+  if [ $is_ocp -eq 0 ]; then
+    zone_label_key="zone.topology.kubernetes.io/zone"
+    region_label_key="zone.topology.kubernetes.io/region"
+  else
+    zone_label_key="topology.kubernetes.io/zone"
+    region_label_key="topology.kubernetes.io/region"
+  fi
+
+  echo "Using label keys: $zone_label_key and $region_label_key"
+
   local zones=()
   while IFS= read -r line; do
-      if [[ $line =~ zone.topology.kubernetes.io/zone: ]]; then
+      if [[ $line =~ $zone_label_key: ]]; then
           zone=$(echo "${line##* }" | tr -d '"')
           zones+=("$zone")
       fi
-      if [[ $line =~ zone.topology.kubernetes.io/region: ]]; then
+      if [[ $line =~ $region_label_key: ]]; then
           zone=$(echo "${line##* }" | tr -d '"')
           zones+=("$zone")
       fi
@@ -138,7 +152,7 @@ validate_zoning_powermax() {
   for node in "${pod_node_map[@]}"; do
     echo "Checking node: $node"
     getLabel=$(kubectl get node $node -o jsonpath="{.metadata.labels}")
-    zone_label=$(echo "$getLabel" | jq -r '.["zone.topology.kubernetes.io/zone"]')
+    zone_label=$(echo "$getLabel" | jq -r ".\"$zone_label_key\"")
 
     echo "Node $node zone label: $zone_label"
 
@@ -159,7 +173,7 @@ validate_zoning_powermax() {
 
     # repeat for secondary label
     getLabel=$(kubectl get node $node -o jsonpath="{.metadata.labels}")
-    zone_label=$(echo "$getLabel" | jq -r '.["zone.topology.kubernetes.io/region"]')
+    zone_label=$(echo "$getLabel" | jq -r ".\"$region_label_key\"")
 
     echo "Node $node zone label: $zone_label"
 
