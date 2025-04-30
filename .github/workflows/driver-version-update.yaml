@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Copyright 2025 DELL Inc. or its subsidiaries.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Update driver versions in CSM-Operator
+# reusable workflow
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      csm-version:
+        description: 'CSM program version, ex: v1.12.0, v1.13.0, ...'
+        required: true
+      update-option:
+        description: 'Select the update flag, ex. "nightly" or "tag"'
+        required: true
+        type: choice
+        options:
+          - nightly
+          - tag
+jobs:
+  version-update:
+    uses: dell/common-github-actions/.github/workflows/operator-driver-version-update.yaml@main
+    name: CSM Operator Driver Version Update
+    with:
+      csm-version: ${{ inputs.csm-version }}
+      update-option: ${{ inputs.update-option}}
+    secrets: inherit
