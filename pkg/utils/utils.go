@@ -1031,9 +1031,14 @@ func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModu
 func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*corev1.Secret, error) {
 	found := &corev1.Secret{}
 	err := ctrlClient.Get(ctx, t1.NamespacedName{Name: name, Namespace: namespace}, found)
-	if err != nil && k8serror.IsNotFound(err) {
-		return nil, fmt.Errorf("no secrets found or error: %v", err)
+
+	if err != nil {
+		if k8serror.IsNotFound(err) {
+			return nil, fmt.Errorf("secret not found: %v", err)
+		}
+		return nil, err
 	}
+
 	return found, nil
 }
 
