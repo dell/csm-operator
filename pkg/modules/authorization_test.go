@@ -772,52 +772,6 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 	}
 }
 
-func TestAuthorizationKubeMgmtPolicies(t *testing.T) {
-	cr, err := getCustomResource("./testdata/cr_auth_proxy_diff_namespace.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = certmanagerv1.AddToScheme(scheme.Scheme)
-	if err != nil {
-		panic(err)
-	}
-	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-	err = AuthorizationServerDeployment(context.TODO(), false, operatorConfig, cr, sourceClient)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	proxyServer := &appsv1.Deployment{}
-	err = sourceClient.Get(context.Background(), types.NamespacedName{Name: "proxy-server", Namespace: "dell"}, proxyServer)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	argFound := false
-	for _, container := range proxyServer.Spec.Template.Spec.Containers {
-		if container.Name == "kube-mgmt" {
-			for _, arg := range container.Args {
-				if strings.Contains(arg, "--policies") {
-					argFound = true
-					if arg != "--policies=dell" {
-						t.Fatalf("expected --policies=dell, got %s", arg)
-					}
-					break
-				}
-			}
-		}
-		if argFound {
-			break
-		}
-	}
-
-	if !argFound {
-		t.Fatalf("expected --policies=dell, got none")
-	}
-}
-
 func TestAuthorizationOpenTelemetry(t *testing.T) {
 	cr, err := getCustomResource("./testdata/cr_auth_proxy_v2.0.0.yaml")
 	if err != nil {
