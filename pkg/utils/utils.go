@@ -105,8 +105,8 @@ type NodeYAML struct {
 	Rbac                 RbacYAML
 }
 
-// ReplicaCluster -
-type ReplicaCluster struct {
+// ClusterConfig -
+type ClusterConfig struct {
 	ClusterID         string
 	ClusterCTRLClient crclient.Client
 	ClusterK8sClient  kubernetes.Interface
@@ -984,47 +984,14 @@ func IsResiliencyModuleEnabled(_ context.Context, instance csmv1.ContainerStorag
 	return false
 }
 
-// GetDefaultClusters -
-func GetDefaultClusters(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) (bool, []ReplicaCluster, error) {
-	clusterClients := []ReplicaCluster{
-		{
-			ClusterCTRLClient: r.GetClient(),
-			ClusterK8sClient:  r.GetK8sClient(),
-			ClusterID:         DefaultSourceClusterID,
-		},
+// GetCluster - returns the client and ID of the cluster the operator is running on
+func GetCluster(ctx context.Context, r ReconcileCSM) ClusterConfig {
+	clusterClient := ClusterConfig{
+		ClusterCTRLClient: r.GetClient(),
+		ClusterK8sClient:  r.GetK8sClient(),
+		ClusterID:         DefaultSourceClusterID,
 	}
-
-	replicaEnabled := false
-	for _, m := range instance.Spec.Modules {
-		if m.Name == csmv1.Replication && m.Enabled {
-			replicaEnabled = true
-			clusterIDs := getClusterIDs(ctx, m)
-
-			for _, clusterID := range clusterIDs {
-				/*Hack: skip-replication-cluster-check - skips check for csm_controller unit test
-				self - skips check for stretched cluster*/
-				if clusterID == "skip-replication-cluster-check" || clusterID == "self" {
-					return replicaEnabled, clusterClients, nil
-				}
-
-				targetCtrlClient, err := getClusterCtrlClient(ctx, clusterID, r.GetClient())
-				if err != nil {
-					return replicaEnabled, clusterClients, err
-				}
-				targetK8sClient, err := getClusterK8SClient(ctx, clusterID, r.GetClient())
-				if err != nil {
-					return replicaEnabled, clusterClients, err
-				}
-
-				clusterClients = append(clusterClients, ReplicaCluster{
-					ClusterID:         clusterID,
-					ClusterCTRLClient: targetCtrlClient,
-					ClusterK8sClient:  targetK8sClient,
-				})
-			}
-		}
-	}
-	return replicaEnabled, clusterClients, nil
+	return clusterClient
 }
 
 // GetSecret - check if the secret is present

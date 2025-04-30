@@ -319,29 +319,25 @@ func ReplicationPrecheck(ctx context.Context, op utils.OperatorConfig, replica c
 		}
 	}
 
-	_, replicaClusters, err := utils.GetDefaultClusters(ctx, cr, r)
-	if err != nil {
-		return err
-	}
+	clusterClient := utils.GetCluster(ctx, r)
 
-	for _, cluster := range replicaClusters {
-		switch cr.Spec.Driver.CSIDriverType {
-		case csmv1.PowerScale:
-			tmpCR := cr
-			log.Infof("\nperforming pre checks for: %s", cluster.ClusterID)
-			err = drivers.PrecheckPowerScale(ctx, &tmpCR, op, cluster.ClusterCTRLClient)
-			if err != nil {
-				return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, cluster.ClusterID)
-			}
-		case csmv1.PowerFlex:
-			tmpCR := cr
-			log.Infof("\nperforming pre checks for: %s", cluster.ClusterID)
-			err = drivers.PrecheckPowerFlex(ctx, &tmpCR, op, cluster.ClusterCTRLClient)
-			if err != nil {
-				return fmt.Errorf("failed powerflex validation: %v for cluster %s", err, cluster.ClusterID)
-			}
+	switch cr.Spec.Driver.CSIDriverType {
+	case csmv1.PowerScale:
+		tmpCR := cr
+		log.Infof("\nperforming pre checks for: %s", clusterClient.ClusterID)
+		err := drivers.PrecheckPowerScale(ctx, &tmpCR, op, clusterClient.ClusterCTRLClient)
+		if err != nil {
+			return fmt.Errorf("failed powerscale validation: %v for cluster %s", err, clusterClient.ClusterID)
+		}
+	case csmv1.PowerFlex:
+		tmpCR := cr
+		log.Infof("\nperforming pre checks for: %s", clusterClient.ClusterID)
+		err := drivers.PrecheckPowerFlex(ctx, &tmpCR, op, clusterClient.ClusterCTRLClient)
+		if err != nil {
+			return fmt.Errorf("failed powerflex validation: %v for cluster %s", err, clusterClient.ClusterID)
 		}
 	}
+
 	return nil
 }
 
