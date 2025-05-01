@@ -51,6 +51,11 @@ import (
 	k8sClient "github.com/dell/csm-operator/k8s"
 )
 
+// wrapper for UT to allow more coverage when testing
+var yamlUnmarshal = func(data []byte, v interface{}) error {
+	return yaml.Unmarshal(data, v)
+}
+
 // K8sImagesConfig -
 type K8sImagesConfig struct {
 	K8sVersion string `json:"kubeversion" yaml:"kubeversion"`
@@ -379,21 +384,21 @@ func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 
 	for _, raw := range bufs {
 		var meta metav1.TypeMeta
-		err = yaml.Unmarshal(raw, &meta)
+		err = yamlUnmarshal(raw, &meta)
 		if err != nil {
 			return ctrlObjects, err
 		}
 		switch meta.Kind {
 		case "ClusterRole":
 			var cr rbacv1.ClusterRole
-			if err := yaml.Unmarshal(raw, &cr); err != nil {
+			if err := yamlUnmarshal(raw, &cr); err != nil {
 				return ctrlObjects, err
 			}
 			ctrlObjects = append(ctrlObjects, &cr)
 
 		case "ClusterRoleBinding":
 			var crb rbacv1.ClusterRoleBinding
-			if err := yaml.Unmarshal(raw, &crb); err != nil {
+			if err := yamlUnmarshal(raw, &crb); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -402,7 +407,7 @@ func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 		case "Service":
 
 			var sv corev1.Service
-			if err := yaml.Unmarshal(raw, &sv); err != nil {
+			if err := yamlUnmarshal(raw, &sv); err != nil {
 				return ctrlObjects, err
 			}
 			ctrlObjects = append(ctrlObjects, &sv)
@@ -410,7 +415,7 @@ func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 		case "ConfigMap":
 
 			var cm corev1.ConfigMap
-			if err := yaml.Unmarshal(raw, &cm); err != nil {
+			if err := yamlUnmarshal(raw, &cm); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -419,7 +424,7 @@ func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 		case "Deployment":
 
 			var dp appsv1.Deployment
-			if err := yaml.Unmarshal(raw, &dp); err != nil {
+			if err := yamlUnmarshal(raw, &dp); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -442,7 +447,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 	for _, raw := range bufs {
 		var meta metav1.TypeMeta
-		err = yaml.Unmarshal(raw, &meta)
+		err = yamlUnmarshal(raw, &meta)
 		if err != nil {
 			return ctrlObjects, err
 		}
@@ -450,7 +455,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "CustomResourceDefinition":
 			var crd apiextv1.CustomResourceDefinition
-			err := yaml.Unmarshal(raw, &crd)
+			err := yamlUnmarshal(raw, &crd)
 			if err != nil {
 				return ctrlObjects, err
 			}
@@ -458,7 +463,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "ServiceAccount":
 			var sa corev1.ServiceAccount
-			err := yaml.Unmarshal(raw, &sa)
+			err := yamlUnmarshal(raw, &sa)
 			if err != nil {
 				return ctrlObjects, err
 			}
@@ -466,14 +471,14 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "ClusterRole":
 			var cr rbacv1.ClusterRole
-			if err := yaml.Unmarshal(raw, &cr); err != nil {
+			if err := yamlUnmarshal(raw, &cr); err != nil {
 				return ctrlObjects, err
 			}
 			ctrlObjects = append(ctrlObjects, &cr)
 
 		case "ClusterRoleBinding":
 			var crb rbacv1.ClusterRoleBinding
-			if err := yaml.Unmarshal(raw, &crb); err != nil {
+			if err := yamlUnmarshal(raw, &crb); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -481,14 +486,14 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "Role":
 			var r rbacv1.Role
-			if err := yaml.Unmarshal(raw, &r); err != nil {
+			if err := yamlUnmarshal(raw, &r); err != nil {
 				return ctrlObjects, err
 			}
 			ctrlObjects = append(ctrlObjects, &r)
 
 		case "RoleBinding":
 			var rb rbacv1.RoleBinding
-			if err := yaml.Unmarshal(raw, &rb); err != nil {
+			if err := yamlUnmarshal(raw, &rb); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -497,14 +502,14 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 		case "Service":
 
 			var sv corev1.Service
-			if err := yaml.Unmarshal(raw, &sv); err != nil {
+			if err := yamlUnmarshal(raw, &sv); err != nil {
 				return ctrlObjects, err
 			}
 			ctrlObjects = append(ctrlObjects, &sv)
 
 		case "PersistentVolumeClaim":
 			var pvc corev1.PersistentVolumeClaim
-			err := yaml.Unmarshal(raw, &pvc)
+			err := yamlUnmarshal(raw, &pvc)
 			if err != nil {
 				return ctrlObjects, err
 			}
@@ -512,7 +517,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "Job":
 			var j batchv1.Job
-			err := yaml.Unmarshal(raw, &j)
+			err := yamlUnmarshal(raw, &j)
 			if err != nil {
 				return ctrlObjects, err
 			}
@@ -520,7 +525,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "IngressClass":
 			var ic networking.IngressClass
-			err := yaml.Unmarshal(raw, &ic)
+			err := yamlUnmarshal(raw, &ic)
 			if err != nil {
 				return ctrlObjects, err
 			}
@@ -528,7 +533,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "Ingress":
 			var i networking.Ingress
-			err := yaml.Unmarshal(raw, &i)
+			err := yamlUnmarshal(raw, &i)
 			if err != nil {
 				return ctrlObjects, err
 			}
@@ -536,7 +541,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "ValidatingWebhookConfiguration":
 			var vwc admissionregistration.ValidatingWebhookConfiguration
-			err := yaml.Unmarshal(raw, &vwc)
+			err := yamlUnmarshal(raw, &vwc)
 			if err != nil {
 				return ctrlObjects, err
 			}
@@ -544,7 +549,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "MutatingWebhookConfiguration":
 			var mwc admissionregistration.MutatingWebhookConfiguration
-			err := yaml.Unmarshal(raw, &mwc)
+			err := yamlUnmarshal(raw, &mwc)
 			if err != nil {
 				return ctrlObjects, err
 			}
@@ -552,7 +557,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "ConfigMap":
 			var cm corev1.ConfigMap
-			if err := yaml.Unmarshal(raw, &cm); err != nil {
+			if err := yamlUnmarshal(raw, &cm); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -560,7 +565,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "Secret":
 			var s corev1.Secret
-			if err := yaml.Unmarshal(raw, &s); err != nil {
+			if err := yamlUnmarshal(raw, &s); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -568,7 +573,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "Deployment":
 			var dp appsv1.Deployment
-			if err := yaml.Unmarshal(raw, &dp); err != nil {
+			if err := yamlUnmarshal(raw, &dp); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -576,7 +581,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "DaemonSet":
 			var ds appsv1.DaemonSet
-			if err := yaml.Unmarshal(raw, &ds); err != nil {
+			if err := yamlUnmarshal(raw, &ds); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -584,7 +589,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "BackupStorageLocation":
 			var bsl velerov1.BackupStorageLocation
-			if err := yaml.Unmarshal(raw, &bsl); err != nil {
+			if err := yamlUnmarshal(raw, &bsl); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -592,7 +597,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "VolumeSnapshotLocation":
 			var vs velerov1.VolumeSnapshotLocation
-			if err := yaml.Unmarshal(raw, &vs); err != nil {
+			if err := yamlUnmarshal(raw, &vs); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -600,7 +605,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "Issuer":
 			var is certmanagerv1.Issuer
-			if err := yaml.Unmarshal(raw, &is); err != nil {
+			if err := yamlUnmarshal(raw, &is); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -608,7 +613,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "Certificate":
 			var ct certmanagerv1.Certificate
-			if err := yaml.Unmarshal(raw, &ct); err != nil {
+			if err := yamlUnmarshal(raw, &ct); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -616,7 +621,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "StatefulSet":
 			var ss appsv1.StatefulSet
-			if err := yaml.Unmarshal(raw, &ss); err != nil {
+			if err := yamlUnmarshal(raw, &ss); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -624,7 +629,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "StorageClass":
 			var sc storagev1.StorageClass
-			if err := yaml.Unmarshal(raw, &sc); err != nil {
+			if err := yamlUnmarshal(raw, &sc); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -632,7 +637,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "PersistentVolume":
 			var pv corev1.PersistentVolume
-			if err := yaml.Unmarshal(raw, &pv); err != nil {
+			if err := yamlUnmarshal(raw, &pv); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -640,7 +645,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 		case "Namespace":
 			var ss corev1.Namespace
-			if err := yaml.Unmarshal(raw, &ss); err != nil {
+			if err := yamlUnmarshal(raw, &ss); err != nil {
 				return ctrlObjects, err
 			}
 
@@ -662,7 +667,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 	var podBuf []byte
 	for _, raw := range bufs {
 		var meta metav1.TypeMeta
-		err = yaml.Unmarshal(raw, &meta)
+		err = yamlUnmarshal(raw, &meta)
 		if err != nil {
 			return nil, err
 		}
@@ -671,14 +676,14 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 			podBuf = raw
 		case "ServiceAccount":
 			var sa corev1.ServiceAccount
-			err := yaml.Unmarshal(raw, &sa)
+			err := yamlUnmarshal(raw, &sa)
 			if err != nil {
 				return nil, err
 			}
 			rbac.ServiceAccount = sa
 		case "ClusterRole":
 			var cr rbacv1.ClusterRole
-			err := yaml.Unmarshal(raw, &cr)
+			err := yamlUnmarshal(raw, &cr)
 			if err != nil {
 				return nil, err
 			}
@@ -686,7 +691,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 
 		case "ClusterRoleBinding":
 			var crb rbacv1.ClusterRoleBinding
-			err := yaml.Unmarshal(raw, &crb)
+			err := yamlUnmarshal(raw, &crb)
 			if err != nil {
 				return nil, err
 			}
@@ -696,7 +701,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 
 	if kind == "Deployment" {
 		var dp confv1.DeploymentApplyConfiguration
-		err := yaml.Unmarshal(podBuf, &dp)
+		err := yamlUnmarshal(podBuf, &dp)
 		if err != nil {
 			return nil, err
 		}
@@ -707,7 +712,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 	} else if kind == "DaemonSet" {
 		var dsac confv1.DaemonSetApplyConfiguration
 
-		err := yaml.Unmarshal(podBuf, &dsac)
+		err := yamlUnmarshal(podBuf, &dsac)
 		if err != nil {
 			return nil, err
 		}
@@ -828,7 +833,7 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 	}
 
 	support := map[csmv1.DriverType]map[string]map[csmv1.ModuleType]string{}
-	err = yaml.Unmarshal(buf, &support)
+	err = yamlUnmarshal(buf, &support)
 	if err != nil {
 		return "", err
 	}
@@ -1144,7 +1149,7 @@ func getUpgradeInfo[T CSMComponentType](ctx context.Context, operatorConfig Oper
 	YamlString := string(buf)
 
 	var upgradePath UpgradePaths
-	err = yaml.Unmarshal([]byte(YamlString), &upgradePath)
+	err = yamlUnmarshal([]byte(YamlString), &upgradePath)
 	if err != nil {
 		log.Errorw("getUpgradeInfo yaml marshall failed", "Error", err.Error())
 		return "", err
@@ -1214,7 +1219,7 @@ func getDefaultComponents(driverType csmv1.DriverType, module csmv1.ModuleType, 
 	}
 
 	defaultCsm := new(csmv1.ContainerStorageModule)
-	err = yaml.Unmarshal(buf, &defaultCsm)
+	err = yamlUnmarshal(buf, &defaultCsm)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal default-components.yaml for %s: %s", module, err.Error())
 	}

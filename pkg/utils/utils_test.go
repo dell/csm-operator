@@ -15,9 +15,11 @@ package utils
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -46,6 +48,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/yaml"
 )
 
 func captureOutput(f func()) string {
@@ -1743,6 +1746,61 @@ spec:
 
 	_, err = GetModuleComponentObj(invalidYamlString)
 	assert.NotNil(t, err)
+}
+
+// This function is used to test the GetModuleComponentObj function
+// when yamlUnmarshal returns an error
+func TestGetModuleComponentObjWithErrors(t *testing.T) {
+
+	// Save the original function so we can revert after this test
+	defaultYamlUnmarshal := yamlUnmarshal
+
+	// Define the test case
+	testCases := []struct {
+		name        string
+		expectedErr string
+		kind        string
+	}{
+		{
+			name: "CustomResourceDefinition yaml returns error",
+			kind: "CustomResourceDefinition",
+		},
+		{
+			name: "ServiceAccount yaml returns error",
+			kind: "ServiceAccount",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlStr := "apiVersion: v1\nkind: " + tt.kind + "\nmetadata:\n  name: test\ndata:\n  test-key: test-value\n"
+			expectedErr := "mocking error return for " + tt.kind
+
+			// Set the yamlUnmarshal function to return an error when the kind is tt.kind
+			yamlUnmarshal = func(data []byte, v interface{}) error {
+				vType := reflect.TypeOf(v)
+				fmt.Printf("v kind is: %s \n", vType.Elem().String())
+
+				if vType.Elem().String() == "v1."+tt.kind {
+					return errors.New(expectedErr)
+				}
+				return yaml.Unmarshal(data, v)
+			}
+
+			// Call GetModuleComponentObj
+			_, err := GetModuleComponentObj([]byte(yamlStr))
+
+			if err == nil {
+				t.Errorf("Expected an error, but got nil instead")
+			}
+
+			// Check if the error message contains the expected substring
+			if !strings.Contains(err.Error(), expectedErr) {
+				t.Errorf("Expected error message to contain %s, but got '%s' instead", expectedErr, err.Error())
+			}
+
+		})
+	}
+	yamlUnmarshal = defaultYamlUnmarshal
 }
 
 func TestGetDriverYaml(t *testing.T) {
