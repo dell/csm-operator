@@ -252,16 +252,6 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica := tmpCR.Spec.Modules[0]
 			replica.ConfigVersion = "v1.9.0"
 
-			for i, component := range tmpCR.Spec.Modules[0].Components {
-				if component.Name == utils.ReplicationControllerManager {
-					for j, env := range component.Envs {
-						if env.Name == "TARGET_CLUSTERS_IDS" {
-							tmpCR.Spec.Modules[0].Components[i].Envs[j].Value = ""
-						}
-					}
-				}
-			}
-
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
