@@ -42,6 +42,9 @@ const (
 
 	// PowerScaleDebug - will be used to control the GOISILON_DEBUG variable
 	PowerScaleDebug string = "<GOISILON_DEBUG>"
+
+	// PowerScaleDebug - will be used to control the CSI_VOL_PREFIX variable
+	PowerScaleCsiVolPrefix string = "<CSI_VOL_PREFIX>"
 )
 
 // PrecheckPowerScale do input validation
@@ -177,6 +180,8 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	healthMonitorController := "false"
 	// GOISILON_DEBUG defaults to false
 	debug := "false"
+	// CSI_VOL_PREFIX defaults to false
+	csiVolPrefix := "csivol"
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -198,11 +203,15 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 					healthMonitorController = env.Value
 				}
+				if env.Name == "CSI_VOL_PREFIX" {
+					csiVolPrefix = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
+		yamlString = strings.ReplaceAll(yamlString, PowerScaleCsiVolPrefix, csiVolPrefix)
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
 			for _, env := range cr.Spec.Driver.Node.Envs {
