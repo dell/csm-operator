@@ -2569,7 +2569,6 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 				}
 			}
 			version, err := GetModuleDefaultVersion(tt.driverConfig, tt.driverType, tt.moduleType, tt.path)
-
 			// Revert to the original function
 			yamlUnmarshal = defaultYamlUnmarshal
 			if tt.expectedErrorMsg != "" {
@@ -3296,12 +3295,14 @@ func Test_getUpgradeInfo(t *testing.T) {
 	defaultYamlUnmarshal := yamlUnmarshal
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
 			if strings.Contains(tt.name, "yamlUnmarshal") {
 				yamlUnmarshal = func(data []byte, v interface{}) error {
 					return fmt.Errorf("mock yamlUnmarshal error")
 				}
 			}
 			got, err := getUpgradeInfo(tt.args.ctx, tt.args.operatorConfig, tt.args.csmCompType, tt.args.oldVersion)
+			// Revert to the original function
 			yamlUnmarshal = defaultYamlUnmarshal
 			if (err != nil) && err.Error() != tt.expectedErr {
 				t.Errorf("getUpgradeInfo() returned error = %v, but expected error to be: %v", err, tt.expectedErr)
@@ -3342,12 +3343,14 @@ func Test_getDefaultComponents(t *testing.T) {
 	defaultYamlUnmarshal := yamlUnmarshal
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
 			if strings.Contains(tt.name, "yamlUnmarshal") {
 				yamlUnmarshal = func(data []byte, v interface{}) error {
 					return fmt.Errorf("mock yamlUnmarshal error")
 				}
 			}
 			got, err := getDefaultComponents(tt.args.driverType, tt.args.module, tt.args.op)
+			// Revert to the original function
 			yamlUnmarshal = defaultYamlUnmarshal
 			if (err != nil) && err.Error() != tt.expectedErr {
 				t.Errorf("getDefaultComponents() returned error = %v, but expected error to be: %v", err, tt.expectedErr)
