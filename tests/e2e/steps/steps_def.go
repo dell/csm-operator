@@ -579,12 +579,12 @@ func (step *Step) validateReplicationInstalled(cr csmv1.ContainerStorageModule) 
 		return err
 	}
 
-	// check replication controllers in all clusters
+	// check replication controllers in cluster
 	if err := checkAllRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, clusterClient.ClusterK8sClient); err != nil {
 		return fmt.Errorf("failed to check for  replication controllers installation in %s: %v", clusterClient.ClusterID, err)
 	}
 
-	// check driver deployment in all clusters
+	// check driver deployment in cluster
 	if err := checkAllRunningPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient); err != nil {
 		return fmt.Errorf("failed while check for driver installation in %s: %v", clusterClient.ClusterID, err)
 	}
