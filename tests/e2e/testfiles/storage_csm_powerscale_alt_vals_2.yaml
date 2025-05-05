@@ -13,7 +13,8 @@ spec:
       fSGroupPolicy: "None"
     configVersion: v2.14.0
     authSecret: csm-creds
-    replicas: 2
+    # setting replicas to 1 since this file is using control node to install deployment on control plane node
+    replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
