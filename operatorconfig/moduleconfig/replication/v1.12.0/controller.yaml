@@ -89,6 +89,7 @@ rules:
       - watch
       - get
       - create
+      - delete
   - apiGroups:
       - storage.k8s.io
     resources:
@@ -190,7 +191,6 @@ rules:
     resources:
       - dellcsireplicationgroups
     verbs:
-      - delete
       - patch
   - apiGroups:
       - replication.storage.dell.com
