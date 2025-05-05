@@ -44,6 +44,8 @@ const (
 	RepctlBinary = "repctl"
 	// ReplicationPrefix -
 	ReplicationPrefix = "replication.storage.dell.com"
+	// ReplicationCrds - YAML with Replication CRDs
+	ReplicationCrds = "replicationcrds.all.yaml"
 	// DefaultReplicationContextPrefix -
 	DefaultReplicationContextPrefix = "<ReplicationContextPrefix>"
 	// DefaultReplicationPrefix -
@@ -491,4 +493,39 @@ func DeleteReplicationConfigmap(ctrlClient client.Client) error {
 	}
 
 	return nil
+}
+
+func getReplicationCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	yamlString := ""
+
+	repl, err := getReplicaModule(cr)
+	if err != nil {
+		return yamlString, err
+	}
+
+	buf, err := readConfigFile(repl, cr, op, ReplicationCrds)
+	if err != nil {
+		return yamlString, err
+	}
+
+	yamlString = string(buf)
+	return yamlString, nil
+}
+
+func ReplicationCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	yamlString, err := getReplicationCrdDeploy(op, cr)
+	if err != nil {
+		return err
+	}
+
+	return applyDeleteObjects(ctx, ctrlClient, yamlString, false)
+}
+
+func DeleteReplicationCrds(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	yamlString, err := getReplicationCrdDeploy(op, cr)
+	if err != nil {
+		return err
+	}
+
+	return applyDeleteObjects(ctx, ctrlClient, yamlString, true)
 }

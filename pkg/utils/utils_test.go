@@ -2564,7 +2564,7 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
 			if strings.Contains(tt.name, "yamlUnmarshal") {
-				yamlUnmarshal = func(data []byte, v interface{}) error {
+				yamlUnmarshal = func(_ []byte, _ interface{}) error {
 					return fmt.Errorf("mock error from yamlUnmarshal")
 				}
 			}
@@ -3297,7 +3297,7 @@ func Test_getUpgradeInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
 			if strings.Contains(tt.name, "yamlUnmarshal") {
-				yamlUnmarshal = func(data []byte, v interface{}) error {
+				yamlUnmarshal = func(_ []byte, _ interface{}) error {
 					return fmt.Errorf("mock yamlUnmarshal error")
 				}
 			}
@@ -3345,7 +3345,7 @@ func Test_getDefaultComponents(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
 			if strings.Contains(tt.name, "yamlUnmarshal") {
-				yamlUnmarshal = func(data []byte, v interface{}) error {
+				yamlUnmarshal = func(_ []byte, _ interface{}) error {
 					return fmt.Errorf("mock yamlUnmarshal error")
 				}
 			}
