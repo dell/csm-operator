@@ -1125,8 +1125,6 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 }
 
 func (r *ContainerStorageModuleReconciler) reconcileReplicationCRDS(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	log := logger.GetLogger(ctx)
-	log.Debugw("Reconcile replication CRDs")
 	if err := modules.ReplicationCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
 		return fmt.Errorf("unable to reconcile replication CRDs: %v", err)
 	}
