@@ -52,6 +52,7 @@ rules:
       - list
       - update
       - watch
+      - get
   - apiGroups:
       - ""
     resources:
@@ -163,7 +164,6 @@ rules:
     verbs:
       - create
       - delete
-      - get
       - patch
   - apiGroups:
       - ""
