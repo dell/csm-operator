@@ -470,10 +470,6 @@ func TestReplicationConfigmap(t *testing.T) {
 }
 
 func TestGetReplicationCrdDeploy(t *testing.T) {
-	// scheme := runtime.NewScheme()
-	// _ = corev1.AddToScheme(scheme)
-	// fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(scheme).Build()
-
 	realConfig := utils.OperatorConfig{
 		ConfigDirectory: "../../operatorconfig",
 	}
