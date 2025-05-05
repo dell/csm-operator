@@ -156,7 +156,9 @@ spec:
         # Examples: 192, 256
         - name: X_CSI_MAX_PATH_LIMIT
           value: "192"
-        - name: CSI_VOL_PREFIX
+        # X_CSI_VOL_PREFIX: this parameter is used for setting the maximum Path length for the given volume.
+        # Default value: csivol
+        - name: X_CSI_VOL_PREFIX
           value: "csivol"
       # nodeSelector: Define node selection constraints for pods of controller deployment.
       # For the pod to be eligible to run on a node, the node must have each

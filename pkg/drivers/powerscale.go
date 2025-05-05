@@ -203,7 +203,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 					healthMonitorController = env.Value
 				}
-				if env.Name == "CSI_VOL_PREFIX" {
+				if env.Name == "X_CSI_VOL_PREFIX" {
 					csiVolPrefix = env.Value
 				}
 			}

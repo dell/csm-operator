@@ -309,7 +309,7 @@ spec:
               value: /isilon-configs/config
             - name: X_CSI_MAX_PATH_LIMIT
               value: "192"
-            - name: CSI_VOL_PREFIX
+            - name: X_CSI_VOL_PREFIX
               value: "csivol"
           volumeMounts:
             - name: socket-dir
