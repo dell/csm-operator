@@ -953,7 +953,7 @@ func IsResiliencyModuleEnabled(_ context.Context, instance csmv1.ContainerStorag
 }
 
 // GetCluster - returns the client and ID of the cluster the operator is running on
-func GetCluster(ctx context.Context, r ReconcileCSM) ClusterConfig {
+func GetCluster(_ context.Context, r ReconcileCSM) ClusterConfig {
 	clusterClient := ClusterConfig{
 		ClusterCTRLClient: r.GetClient(),
 		ClusterK8sClient:  r.GetK8sClient(),

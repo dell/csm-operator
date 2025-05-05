@@ -468,3 +468,22 @@ func TestReplicationConfigmap(t *testing.T) {
 		t.Errorf("ConfigMap was not deleted from the fake client: %v", err)
 	}
 }
+
+func TestGetReplicationCrdDeploy(t *testing.T) {
+	// scheme := runtime.NewScheme()
+	// _ = corev1.AddToScheme(scheme)
+	// fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(scheme).Build()
+
+	realConfig := utils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
+	customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	yaml, err := getReplicationCrdDeploy(realConfig, customResource)
+	assert.NoError(t, err)
+	assert.Contains(t, yaml, "kind: CustomResourceDefinition")
+}

@@ -513,7 +513,6 @@ func getReplicationCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageM
 }
 
 func ReplicationCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-
 	yamlString, err := getReplicationCrdDeploy(op, cr)
 	if err != nil {
 		return err
