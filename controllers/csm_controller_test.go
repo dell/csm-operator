@@ -123,6 +123,8 @@ var (
 	deleteSAError    bool
 	deleteSAErrorStr = "unable to delete ServiceAccount"
 
+	apiFailFunc func(method string, obj runtime.Object) error
+
 	csmName = "csm"
 
 	configVersion              = shared.ConfigVersion
@@ -2132,6 +2134,52 @@ func (suite *CSMControllerTestSuite) TestReconcileAppMob() {
 	err := reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 
+	defer func() {
+		getCRError = false
+		apiFailFunc = nil
+	}()
+
+	apiFailFunc = func(method string, obj runtime.Object) error {
+		v, ok := obj.(*corev1.Service)
+		if ok && method == "Get" && v.Name == "application-mobility-controller-manager-metrics-service" {
+			return errors.New("emulated get Service error")
+		}
+		return nil
+	}
+	err = reconciler.reconcileAppMobility(ctx, false, goodOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
+	apiFailFunc = func(method string, obj runtime.Object) error {
+		v, ok := obj.(*corev1.Service)
+		if ok && method == "Get" && v.Name == "cert-manager" {
+			return errors.New("emulated get Service error")
+		}
+		return nil
+	}
+	err = reconciler.reconcileAppMobility(ctx, false, goodOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+	apiFailFunc = nil
+
+	apiFailFunc = func(method string, obj runtime.Object) error {
+		v, ok := obj.(*appsv1.Deployment)
+		if ok && method == "Get" && v.Name == "application-mobility-controller-manager" {
+			return errors.New("emulated get Deployment error")
+		}
+		return nil
+	}
+	err = reconciler.reconcileAppMobility(ctx, false, goodOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+	apiFailFunc = nil
+
+	apiFailFunc = func(method string, obj runtime.Object) error {
+		if method == "Create" && obj.GetObjectKind().GroupVersionKind().Kind == "BackupStorageLocation" {
+			return errors.New("emulated create BackupStorageLocation error")
+		}
+		return nil
+	}
+	err = reconciler.reconcileAppMobility(ctx, false, goodOperatorConfig, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+
 	er := reconciler.reconcileAppMobilityCRDS(ctx, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), er)
 
@@ -2385,6 +2433,10 @@ func (suite *CSMControllerTestSuite) makeFakePod(name, ns string) {
 }
 
 func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Object) error {
+	if apiFailFunc != nil {
+		return apiFailFunc(method, obj)
+	}
+
 	// Needs to implement based on need
 	switch v := obj.(type) {
 	case *csmv1.ContainerStorageModule:
