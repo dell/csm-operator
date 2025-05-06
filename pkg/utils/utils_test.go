@@ -2822,7 +2822,7 @@ func TestGetUpgradeInfo(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = os.WriteFile(fmt.Sprintf("%s/upgrade-path.yaml", configDir),
-		[]byte("not a real yaml file"), 0o644)
+		[]byte("not a real yaml file"), 0o600)
 	assert.NoError(t, err)
 
 	csmComponentType := csmv1.Authorization
