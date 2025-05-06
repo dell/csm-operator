@@ -2799,6 +2799,15 @@ func TestIsValidUpgrade(t *testing.T) {
 	isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
 	assert.Nil(t, err)
 	assert.Equal(t, isValid, expectedIsValid)
+
+	// Test case: upgrade is not valid 2
+	oldVersion = "v1.12.0"
+	newVersion = "v2.0.0"
+
+	isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
+	assert.NotNil(t, err)
+	assert.Equal(t, isValid, false)
+
 }
 
 func TestGetClusterCtrlClient(t *testing.T) {
