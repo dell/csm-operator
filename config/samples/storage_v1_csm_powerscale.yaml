@@ -156,7 +156,7 @@ spec:
         # Examples: 192, 256
         - name: X_CSI_MAX_PATH_LIMIT
           value: "192"
-        # X_CSI_VOL_PREFIX: this parameter is used for setting the maximum Path length for the given volume.
+        # X_CSI_VOL_PREFIX: this parameter specifies the volume prefix used for the names of PersistentVolumes created.
         # Default value: csivol
         - name: X_CSI_VOL_PREFIX
           value: "csivol"

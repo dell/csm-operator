@@ -43,7 +43,7 @@ const (
 	// PowerScaleDebug - will be used to control the GOISILON_DEBUG variable
 	PowerScaleDebug string = "<GOISILON_DEBUG>"
 
-	// PowerScaleDebug - will be used to control the CSI_VOL_PREFIX variable
+	// PowerScaleCsiVolPrefix - will be used to control the CSI_VOL_PREFIX variable
 	PowerScaleCsiVolPrefix string = "<CSI_VOL_PREFIX>"
 )
 
@@ -180,7 +180,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	healthMonitorController := "false"
 	// GOISILON_DEBUG defaults to false
 	debug := "false"
-	// CSI_VOL_PREFIX defaults to false
+	// CSI_VOL_PREFIX defaults to csivol
 	csiVolPrefix := "csivol"
 
 	if cr.Spec.Driver.Common != nil {
