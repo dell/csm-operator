@@ -1192,6 +1192,7 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 }
 
 func TestAuthorizationIngress(t *testing.T) {
+	isOpenShift := true
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
@@ -1402,15 +1403,26 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient
 		},
+		"fail - NGINX ingress creation failure": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			tmpCR, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			isOpenShift = false
+
+			return false, false, tmpCR, sourceClient
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			isOpenShift = true
 			success, isDeleting, cr, sourceClient := tc(t)
 			fakeReconcile := utils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
-			err := AuthorizationIngress(context.TODO(), isDeleting, true, cr, &fakeReconcile, sourceClient)
+			err := AuthorizationIngress(context.TODO(), isDeleting, isOpenShift, cr, &fakeReconcile, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {
