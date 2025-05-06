@@ -2807,7 +2807,31 @@ func TestIsValidUpgrade(t *testing.T) {
 	isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
 	assert.NotNil(t, err)
 	assert.Equal(t, isValid, false)
+}
 
+func TestGetUpgradeInfo(t *testing.T) {
+	ctx := context.Background()
+
+	// Test case: corrupted upgrade path file
+	oldVersion := "v2.1.0"
+
+	// Create a malformed upgrade path file
+	tempDir := t.TempDir()
+	configDir := fmt.Sprintf("%s/moduleconfig/authorization/%s", tempDir, oldVersion)
+	err := os.MkdirAll(configDir, 0o644)
+	assert.NoError(t, err)
+
+	err = os.WriteFile(fmt.Sprintf("%s/upgrade-path.yaml", configDir),
+		[]byte("not a real yaml file"), 0644)
+	assert.NoError(t, err)
+
+	csmComponentType := csmv1.Authorization
+	operatorConfig := OperatorConfig{
+		ConfigDirectory: tempDir,
+	}
+
+	_, err = getUpgradeInfo(ctx, operatorConfig, csmComponentType, oldVersion)
+	assert.NotNil(t, err)
 }
 
 func TestGetClusterCtrlClient(t *testing.T) {
