@@ -94,6 +94,57 @@ func TestCheckApplyContainersAuth(t *testing.T) {
 			t.Errorf("got %v, expected karavi-authorization-config to be injected", got)
 		}
 	})
+
+	t.Run("it validates env malformed variable values", func(t *testing.T) {
+		driver := "powerscale"
+		vol1Name := "karavi-authorization-config"
+		vol2Name := AuthorizationSupportedDrivers[driver].DriverConfigParamsVolumeMount
+		envName := "INSECURE"
+		envVal := "not a boolean value"
+		got := []acorev1.ContainerApplyConfiguration{
+			*acorev1.Container().WithName("karavi-authorization-proxy").
+				WithVolumeMounts(&acorev1.VolumeMountApplyConfiguration{Name: &vol1Name},
+					&acorev1.VolumeMountApplyConfiguration{Name: &vol2Name}).
+				WithEnv(&acorev1.EnvVarApplyConfiguration{Name: &envName, Value: &envVal}),
+		}
+		err := CheckApplyContainersAuth(got, driver, true)
+		assert.Error(t, err)
+	})
+
+	t.Run("it validates conflicting cert configuration", func(t *testing.T) {
+		driver := "powerscale"
+		vol1Name := "karavi-authorization-config"
+		vol2Name := AuthorizationSupportedDrivers[driver].DriverConfigParamsVolumeMount
+		envName := "INSECURE"
+		envVal := "false"
+
+		got := []acorev1.ContainerApplyConfiguration{
+			*acorev1.Container().WithName("karavi-authorization-proxy").
+				WithVolumeMounts(&acorev1.VolumeMountApplyConfiguration{Name: &vol1Name},
+					&acorev1.VolumeMountApplyConfiguration{Name: &vol2Name}).
+				WithEnv(&acorev1.EnvVarApplyConfiguration{Name: &envName, Value: &envVal}),
+		}
+		err := CheckApplyContainersAuth(got, driver, true)
+		assert.Error(t, err)
+	})
+
+	t.Run("it validates empty proxy host value", func(t *testing.T) {
+		driver := "powerscale"
+		vol1Name := "karavi-authorization-config"
+		vol2Name := AuthorizationSupportedDrivers[driver].DriverConfigParamsVolumeMount
+		envName := "PROXY_HOST"
+		envVal := ""
+
+		got := []acorev1.ContainerApplyConfiguration{
+			*acorev1.Container().WithName("karavi-authorization-proxy").
+				WithVolumeMounts(&acorev1.VolumeMountApplyConfiguration{Name: &vol1Name},
+					&acorev1.VolumeMountApplyConfiguration{Name: &vol2Name}).
+				WithEnv(&acorev1.EnvVarApplyConfiguration{Name: &envName, Value: &envVal}),
+		}
+		err := CheckApplyContainersAuth(got, driver, true)
+		assert.Error(t, err)
+	})
+
 }
 
 func TestAuthInjectDaemonset(t *testing.T) {
