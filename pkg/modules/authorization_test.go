@@ -144,7 +144,6 @@ func TestCheckApplyContainersAuth(t *testing.T) {
 		err := CheckApplyContainersAuth(got, driver, true)
 		assert.Error(t, err)
 	})
-
 }
 
 func TestAuthInjectDaemonset(t *testing.T) {
