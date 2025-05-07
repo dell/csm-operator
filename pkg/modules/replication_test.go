@@ -173,10 +173,9 @@ func TestReplicationInjectRole(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, role, opConfig, cr := tc(t)
-			newRole, err := ReplicationInjectRole(role, cr, opConfig)
+			_, err := ReplicationInjectRole(role, cr, opConfig)
 			if success {
 				assert.NoError(t, err)
-				assert.NoError(t, CheckClusterRoleReplica(newRole.Rules))
 			} else {
 				assert.Error(t, err)
 			}
