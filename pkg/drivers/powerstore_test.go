@@ -92,7 +92,7 @@ var (
 			expected:   "true",
 		},
 		{
-			name: "update HBNFS values for Node",
+			name: "update Shared NFS values for Node",
 			yamlString: `
 			- name: X_CSI_NFS_EXPORT_DIRECTORY
 		      value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
@@ -100,7 +100,7 @@ var (
 		      value: "<X_CSI_NFS_CLIENT_PORT>"
 		    - name: X_CSI_NFS_SERVER_PORT
 		      value: "<X_CSI_NFS_SERVER_PORT>"`,
-			csm:      csmForPowerStoreWithHBNFS("csm"),
+			csm:      csmForPowerStoreWithSharedNFS("csm"),
 			ct:       powerStoreClient,
 			sec:      powerStoreSecret,
 			fileType: "Node",
@@ -113,7 +113,7 @@ var (
 		      value: "2221"`,
 		},
 		{
-			name: "update HBNFS values for Controller",
+			name: "update Shared NFS values for Controller",
 			yamlString: `
 			- name: X_CSI_NFS_EXPORT_DIRECTORY
 			  value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
@@ -121,7 +121,7 @@ var (
 			  value: "<X_CSI_NFS_CLIENT_PORT>"
 			- name: X_CSI_NFS_SERVER_PORT
 			  value: "<X_CSI_NFS_SERVER_PORT>"`,
-			csm:      csmForPowerStoreWithHBNFS("csm"),
+			csm:      csmForPowerStoreWithSharedNFS("csm"),
 			ct:       powerStoreClient,
 			sec:      powerStoreSecret,
 			fileType: "Controller",
@@ -134,7 +134,7 @@ var (
 			  value: "2221"`,
 		},
 		{
-			name: "minimal minifest - update HBNFS values for Node",
+			name: "minimal minifest - update Shared NFS values for Node",
 			yamlString: `
 			- name: X_CSI_NFS_EXPORT_DIRECTORY
               value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
@@ -226,7 +226,7 @@ func csmForPowerStore(customCSMName string) csmv1.ContainerStorageModule {
 	return res
 }
 
-func csmForPowerStoreWithHBNFS(customCSMName string) csmv1.ContainerStorageModule {
+func csmForPowerStoreWithSharedNFS(customCSMName string) csmv1.ContainerStorageModule {
 	cr := csmForPowerStore(customCSMName)
 
 	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
