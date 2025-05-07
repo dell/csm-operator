@@ -31,7 +31,7 @@ export OBSERVABILITY=false
 export RESILIENCY=false
 export APPLICATIONMOBILITY=false
 export ZONING=false
-export HBNFS=false
+export SHAREDNFS=false
 
 set -o errexit
 set -o nounset
@@ -173,7 +173,7 @@ function usage() {
   echo "  --pmax                                       use to run e2e powermax suite"
   echo "  --zoning                                     use to run powerflex zoning tests (requires multiple storage systems)"
   echo "  --minimal                                    use minimal testfiles scenarios"
-  echo "  --hbnfs                                      use to run e2e hbnfs suite (pre-requisite, the nodes need to have nfs-server setup)"
+  echo "  --sharednfs                                  use to run e2e sharednfs suite (pre-requisite, the nodes need to have nfs-server setup)"
   echo
 
   exit 0
@@ -259,8 +259,8 @@ while getopts ":hv-:" optchar; do
     minimal)
       export E2E_SCENARIOS_FILE=testfiles/minimal-testfiles/scenarios.yaml
       ;;
-    hbnfs)
-      export HBNFS=true ;;
+    sharednfs)
+      export SHAREDNFS=true ;;
     *)
       echo "Unknown option -${OPTARG}"
       echo "For help, run $PROG -h"
