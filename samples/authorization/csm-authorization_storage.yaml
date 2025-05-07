@@ -11,5 +11,5 @@ spec:
     kvEngine: secret
     path: powerflex/1a99aa999999aa9a
   skipCertificateValidation: true
-  pollInterval: 10m
+  pollInterval: 30m
   isiPath: /ifs/data/csi
