@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -1501,7 +1502,9 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 	if configVersionExists {
 		if cr.HasModule(csmv1.AuthorizationServer) {
 			newVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-			if newVersion == "v2.0.0-alpha" {
+			if strings.HasPrefix(oldVersion, "v1.") && strings.HasPrefix(newVersion, "v2.") ||
+				strings.HasPrefix(oldVersion, "v2.") && strings.HasPrefix(newVersion, "v1.") {
+				log.Error("Cannot switch between Authorization v1 and v2")
 				return false, nil
 			}
 			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
