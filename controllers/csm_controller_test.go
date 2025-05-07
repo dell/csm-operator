@@ -2565,3 +2565,11 @@ func (suite *CSMControllerTestSuite) TestZoneValidation2() {
 	err = reconciler.ZoneValidation(ctx, &csm)
 	assert.NotNil(suite.T(), err)
 }
+
+func (suite *CSMControllerTestSuite) TestReconcileReplicationCRDSReturnError() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	reconciler := suite.createReconciler()
+	err := reconciler.reconcileReplicationCRDS(ctx, utils.OperatorConfig{}, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+	assert.ErrorContains(suite.T(), err, "unable to reconcile replication CRDs")
+}
