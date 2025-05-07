@@ -1690,7 +1690,7 @@
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
 
-- scenario: "Install Application Mobility v1.03 and upgrade to v1.1.0, downgrade back to v1.0.3"
+- scenario: "Install Application Mobility N-1 and upgrade to N, downgrade back to N-1"
   paths:
     - "testfiles/application-mobility-templates/csm_application_mobility_n_minus_1.yaml"
     - "testfiles/application-mobility-templates/csm_application_mobility_with_pflex.yaml"

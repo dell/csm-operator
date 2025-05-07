@@ -16,12 +16,12 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.10.0
+    configVersion: v2.11.0
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
+      image: "dellemc/csi-vxflexos:nightly"
       imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -157,14 +157,14 @@ spec:
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: true
-      configVersion: v1.1.0
+      configVersion: v1.2.0
       forceRemoveModule: true
       components:
         - name: application-mobility-controller-manager
           # enable: Enable/Disable application mobility controller-manager
           enabled: true
-          image: quay.io/dell/container-storage-modules/csm-application-mobility-controller:v1.1.0
-          imagePullPolicy: IfNotPresent
+          image: quay.io/dell/container-storage-modules/csm-application-mobility-controller:nightly
+          imagePullPolicy: Always
           envs:
             # Replica count for application mobility
             # Allowed values: string
@@ -230,7 +230,7 @@ spec:
     - initContainer:
         # initContainer image for the dell velero plugin
         - name: dell-custom-velero-plugin
-          image: quay.io/dell/container-storage-modules/csm-application-mobility-velero-plugin:nightly
+          image: dellemc/csm-application-mobility-velero-plugin:v1.0.3
           # initContainer image for the configuration provider aws
           # digest for velero/velero-plugin-for-aws:v1.6.2
         - name: velero-plugin-for-aws
