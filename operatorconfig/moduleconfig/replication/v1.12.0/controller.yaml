@@ -290,6 +290,8 @@ spec:
       serviceAccountName: dell-replication-controller-sa
       containers:
         - args:
+            - --disable-pvc-remap=<DISABLE_PVC_REMAP>
+            - --allow-pvc-creation-on-target=<REPLICATION_ALLOW_PVC_CREATION_ON_TARGET>
             - --enable-leader-election
             - --prefix=replication.storage.dell.com
           command:
@@ -313,7 +315,7 @@ spec:
               value: /app/certs
             - name: X_CSI_REPLICATION_CONFIG_FILE_NAME
               value: config
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.11.0
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.12.0
           imagePullPolicy: IfNotPresent
           name: manager
           resources:

@@ -1,4 +1,4 @@
-# Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2024-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -95,8 +95,101 @@ read_secret() {
   echo $secret_data | base64 --decode
 }
 
-# validating zoning is configured on the cluster
-validate_zoning() {
+# validating zoning is configured on the cluster - powermax
+validate_zoning_powermax() {
+  # read the secret and extract zone information
+  secret_name="powermax-config"
+  namespace="powermax"
+  secret_content=$(read_secret $secret_name $namespace)
+
+  # specify the zone and region label keys
+  zone_label_key="zone.topology.kubernetes.io/zone"
+  region_label_key="zone.topology.kubernetes.io/region"
+
+  echo "Using label keys: $zone_label_key and $region_label_key"
+
+  local zones=()
+  while IFS= read -r line; do
+      if [[ $line =~ $zone_label_key: ]]; then
+          zone=$(echo "${line##* }" | tr -d '"')
+          zones+=("$zone")
+      fi
+      if [[ $line =~ $region_label_key: ]]; then
+          zone=$(echo "${line##* }" | tr -d '"')
+          zones+=("$zone")
+      fi
+  done <<< "$(echo "$secret_content"  | grep 'zone')"
+
+  echo "Configured zones in secret: ${zones[@]}"
+
+  # list all pods in the driver namespace
+  pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+
+  # create a map of pods and the nodes they're running on
+  declare -A pod_node_map
+  for pod in $pods; do
+    # check for running pods
+    status=$(kubectl get pod $pod -n $namespace -o jsonpath='{.status.phase}')
+    if [ "$status" == "Running" ]; then
+      # get the node name
+      node=$(kubectl get pod $pod -n $namespace -o jsonpath='{.spec.nodeName}')
+      pod_node_map[$pod]=$node
+    else
+      echo "Pod $pod is not running. Status: $status"
+      exit 1
+    fi
+  done
+
+  # query the nodes to ensure they have zone labels
+  for node in "${pod_node_map[@]}"; do
+    echo "Checking node: $node"
+    getLabel=$(kubectl get node $node -o jsonpath="{.metadata.labels}")
+    zone_label=$(echo "$getLabel" | jq -r ".\"$zone_label_key\"")
+
+    echo "Node $node zone label: $zone_label"
+
+    match_found=false
+    for zone in "${zones[@]}"; do
+      echo "Comparing node zone label '$zone_label' with expected zone '$zone'"
+      if [ "$zone" == "$zone_label" ]; then
+        match_found=true
+        echo "Node $node has a matching zone label: $zone_label"
+        break
+      fi
+    done
+
+    if [ "$match_found" == false ]; then
+      echo "Node $node does not have a matching zone label: $zone_label"
+      exit 1
+    fi
+
+    # repeat for secondary label
+    getLabel=$(kubectl get node $node -o jsonpath="{.metadata.labels}")
+    zone_label=$(echo "$getLabel" | jq -r ".\"$region_label_key\"")
+
+    echo "Node $node zone label: $zone_label"
+
+    match_found=false
+    for zone in "${zones[@]}"; do
+      echo "Comparing node zone label '$zone_label' with expected zone '$zone'"
+      if [ "$zone" == "$zone_label" ]; then
+        match_found=true
+        echo "Node $node has a matching zone label: $zone_label"
+        break
+      fi
+    done
+
+    if [ "$match_found" == false ]; then
+      echo "Node $node does not have a matching zone label: $zone_label"
+      exit 1
+    fi
+  done
+
+  echo "All zones on worker nodes match expected values from secret."
+}
+
+# validating zoning is configured on the cluster - powerflex
+validate_zoning_powerflex() {
   # read the secret and extract zone information
   secret_name="test-vxflexos-config"
   namespace="test-vxflexos"
@@ -185,7 +278,23 @@ case $action in
     remove_all_zone_labels
     ;;
   validate-zoning)
-    validate_zoning
+    if [ "$#" -ne 1 ]; then
+      echo "Usage: $0 validate-zoning powermax|powerflex|powerscale|powerstore|unity"
+      exit 1
+    fi
+    driver=$1
+    shift
+    case $driver in
+      powermax)
+        validate_zoning_powermax
+        ;;
+      powerflex)
+        validate_zoning_powerflex
+        ;;
+      *)
+        echo "Unsupported driver: $driver"
+        ;;
+    esac
     ;;
   *)
     echo "Invalid action: $action"

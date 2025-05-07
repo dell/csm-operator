@@ -209,7 +209,7 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
-            - "--volume-name-prefix=csivol"
+            - "--volume-name-prefix=<CSI_VOL_PREFIX>"
             - "--volume-name-uuid-length=10"
             - "--worker-threads=5"
             - "--timeout=120s"
@@ -326,6 +326,8 @@ spec:
               value: /isilon-configs/config
             - name: X_CSI_MAX_PATH_LIMIT
               value: "192"
+            - name: X_CSI_VOL_PREFIX
+              value: "<CSI_VOL_PREFIX>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
