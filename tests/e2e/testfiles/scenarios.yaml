@@ -1423,7 +1423,7 @@
     - "testfiles/storage_csm_powerscale.yaml"
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
-    #- "powerscale"
+    - "powerscale"
     - "powerflex"
     - "sanity"
   steps:
