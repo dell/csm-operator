@@ -488,7 +488,7 @@ func TestGetReplicationCrdDeploy(t *testing.T) {
 
 func TestReplicationCrdDeployAndDelete(t *testing.T) {
 	tests := map[string]func(t *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool){
-		"success case": func(t *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
+		"success case": func(_ *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
 			operConfig := utils.OperatorConfig{
 				ConfigDirectory: "../../operatorconfig",
 			}
@@ -498,7 +498,7 @@ func TestReplicationCrdDeployAndDelete(t *testing.T) {
 			}
 			return operConfig, customResource, true
 		},
-		"failure invalid config dir": func(t *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
+		"failure invalid config dir": func(_ *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
 			operConfig := utils.OperatorConfig{
 				ConfigDirectory: "../../DIRDONTEXIST",
 			}
@@ -508,7 +508,7 @@ func TestReplicationCrdDeployAndDelete(t *testing.T) {
 			}
 			return operConfig, customResource, false
 		},
-		"failure case no repl cr": func(t *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
+		"failure case no repl cr": func(_ *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
 			operConfig := utils.OperatorConfig{
 				ConfigDirectory: "../../operatorconfig",
 			}
