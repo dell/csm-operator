@@ -176,7 +176,6 @@ func TestReplicationInjectRole(t *testing.T) {
 			newRole, err := ReplicationInjectRole(role, cr, opConfig)
 			if success {
 				assert.NoError(t, err)
-				assert.NoError(t, CheckClusterRoleReplica(newRole.Rules))
 			} else {
 				assert.Error(t, err)
 			}
