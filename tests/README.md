@@ -46,6 +46,16 @@ Any time changes made to the operator are being checked into the main branch, sa
   - (if running powermax suite) `powermax`
   - (if running powerstore suite) `powerstore` 
 - For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
+- For auth V2:
+  - Vault needs to be installed on cluster
+  - edit vaultConfiguration section of testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml to point to your vault instance. For example, if I was running the vault service on the same cluster I was running the tests, I would make the following edit:
+      ```
+        - name: vault
+           vaultConfigurations:
+             - identifier: vault0
+               address: https://vault.default.svc.cluster.local:8400
+      ```
+      where "vault" is the name of the vault service running
 - Cert-CSI needs to be installed  
   - See [here](https://dell.github.io/csm-docs/docs/support/cert-csi/#download-release-linux) for instructions 
 - Dellctl needs to be installed
