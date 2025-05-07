@@ -310,7 +310,7 @@ spec:
             - name: X_CSI_MAX_PATH_LIMIT
               value: "192"
             - name: X_CSI_VOL_PREFIX
-              value: "csivol"
+              value: "<CSI_VOL_PREFIX>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
