@@ -1198,7 +1198,7 @@ func (r *ContainerStorageModuleReconciler) reconcileReverseProxyServer(ctx conte
 	return nil
 }
 
-func removeDriverReplicaCluster(ctx context.Context, cluster utils.ClusterConfig, driverConfig *DriverConfig) error {
+func removeDriverFromCluster(ctx context.Context, cluster utils.ClusterConfig, driverConfig *DriverConfig) error {
 	log := logger.GetLogger(ctx)
 	var err error
 
@@ -1296,7 +1296,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	if err != nil {
 		return err
 	}
-	if err = removeDriverReplicaCluster(ctx, clusterClient, driverConfig); err != nil {
+	if err = removeDriverFromCluster(ctx, clusterClient, driverConfig); err != nil {
 		return err
 	}
 	replicationEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.Replication)
