@@ -91,14 +91,14 @@ Notes:
   - Authorization V2 scenarios only support PowerFlex
   - Upgrade from Authorization V1 to V2 is not supported. Only V1 to other V1 versions is allowed.
 
-### HBNFS Prerequisites
+### Shared NFS Prerequisites
 
-If running the HBNFS e2e tests, further setup must be done:
+If running the Shared NFS e2e tests, further setup must be done:
 
 - On each of the worker nodes, setup the nfs-server service and ensure that mounting with nfs4 is enabled.
 - Install the `sshpass` command on the VM where the tests are being run.
 - Update the password within `scripts/node_credential` to the password of the worker nodes (this assumes that all nodes share the same password).
-- During e2e exection specify the `hbnfs` flag. Otherwise, the tests won't run on its own due to the above prerequisite.
+- During e2e exection specify the `sharednfs` flag. Otherwise, the tests won't run on its own due to the above prerequisite.
 
 ## Run
 
