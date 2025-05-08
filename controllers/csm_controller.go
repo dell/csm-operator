@@ -659,9 +659,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 		}
 		if (oldObservabilityEnabled && !newObservabilityEnabled) || len(components) > 0 {
 			clusterClient := utils.GetCluster(ctx, r)
-			if err != nil {
-				return err
-			}
+
 			// remove module observability
 			log.Infow("Deleting observability")
 			if err = r.reconcileObservability(ctx, true, operatorConfig, *oldCR, components, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient); err != nil {
@@ -676,9 +674,6 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 
 		if oldApplicationmobilityEnabled && !newApplicationmobilityEnabled {
 			clusterClient := utils.GetCluster(ctx, r)
-			if err != nil {
-				return err
-			}
 
 			log.Infow("Deleting application mobility")
 			if err := r.reconcileAppMobility(ctx, true, operatorConfig, *oldCR, clusterClient.ClusterCTRLClient); err != nil {
