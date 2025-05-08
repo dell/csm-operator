@@ -43,7 +43,7 @@ rules:
     resourceNames: ["privileged"]
     resources: ["securitycontextconstraints"]
     verbs: ["use"]
-  # Required for HBNFS
+  # Required for Shared NFS
   - apiGroups: ["discovery.k8s.io"]
     resources: ["endpointslices"]
     verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]

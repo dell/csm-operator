@@ -16,7 +16,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.11.0
+    configVersion: v2.13.0
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
@@ -30,6 +30,8 @@ spec:
           value: "false"
         - name: X_CSI_DEBUG
           value: "true"
+        - name: X_CSI_ALLOW_RWO_MULTI_POD_ACCESS
+          value: "false"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
         # Default value: None
@@ -37,10 +39,6 @@ spec:
           value: "/var/lib/kubelet"
         - name: "CERT_SECRET_COUNT"
           value: "0"
-        - name: X_CSI_NFS_ACLS
-          value: "0777"
-        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
-          value: ""
         - name: X_CSI_QUOTA_ENABLED
           value: "false"
     sideCars:
@@ -52,9 +50,9 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
-            # health monitor is disabled by default, refer to driver documentation before enabling it
-            # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
@@ -78,6 +76,8 @@ spec:
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
       # Default value: None
+      # Examples:
+      #  node-role.kubernetes.io/control-plane: ""
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
       #  node-role.kubernetes.io/master: ""
@@ -98,6 +98,13 @@ spec:
       #   effect: "NoSchedule"
     node:
       envs:
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
         #    true: enable SDC approval
@@ -112,21 +119,23 @@ spec:
         # Default value: false
         - name: X_CSI_RENAME_SDC_ENABLED
           value: "false"
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
         # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
         # "prefix" + "worker_node_hostname" should not exceed 31 chars.
         # Default value: none
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
-        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
-        # Allowed values: Any value greater than or equal to 0
-        # Default value: "0"
-        - name: X_CSI_MAX_VOLUMES_PER_NODE
-          value: "1"
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
       # Default value: None
+      # Examples:
+      #  node-role.kubernetes.io/control-plane: ""
       nodeSelector:
       # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
       #  node-role.kubernetes.io/master: ""
@@ -157,13 +166,13 @@ spec:
     - name: application-mobility
       # enable: Enable/Disable app-mobility controller
       enabled: true
-      configVersion: v1.2.0
+      configVersion: v1.3.0
       forceRemoveModule: true
       components:
         - name: application-mobility-controller-manager
           # enable: Enable/Disable application mobility controller-manager
           enabled: true
-          image: quay.io/dell/container-storage-modules/csm-application-mobility-controller:nightly
+          image: REPLACE_CONTROLLER_IMAGE
           imagePullPolicy: Always
           envs:
             # Replica count for application mobility
@@ -180,7 +189,7 @@ spec:
           enabled: true
         # enabled: Enable/Disable Velero
         - name: velero
-          image: velero/velero:v1.10.0
+          image: velero/velero:v1.14.0
           imagePullPolicy: IfNotPresent
           enabled: true
           useVolumeSnapshot: false
@@ -230,8 +239,8 @@ spec:
     - initContainer:
         # initContainer image for the dell velero plugin
         - name: dell-custom-velero-plugin
-          image: dellemc/csm-application-mobility-velero-plugin:v1.0.3
+          image: REPLACE_PLUGIN_IMAGE
           # initContainer image for the configuration provider aws
-          # digest for velero/velero-plugin-for-aws:v1.6.2
+          # digest for velero/velero-plugin-for-aws:v1.10.0
         - name: velero-plugin-for-aws
-          image: velero/velero-plugin-for-aws@sha256:7be1bef8d72f9916e6f0614d1b0a8c9559c8937f3d343780b22441c2efed314e
+          image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
