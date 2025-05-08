@@ -575,9 +575,6 @@ func (step *Step) validateReplicationInstalled(cr csmv1.ContainerStorageModule) 
 	}
 
 	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
-	if err != nil {
-		return err
-	}
 
 	// check replication controllers in cluster
 	if err := checkAllRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, clusterClient.ClusterK8sClient); err != nil {
