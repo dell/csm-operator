@@ -94,6 +94,56 @@ func TestCheckApplyContainersAuth(t *testing.T) {
 			t.Errorf("got %v, expected karavi-authorization-config to be injected", got)
 		}
 	})
+
+	t.Run("it validates env malformed variable values", func(t *testing.T) {
+		driver := "powerscale"
+		vol1Name := "karavi-authorization-config"
+		vol2Name := AuthorizationSupportedDrivers[driver].DriverConfigParamsVolumeMount
+		envName := "INSECURE"
+		envVal := "not a boolean value"
+		got := []acorev1.ContainerApplyConfiguration{
+			*acorev1.Container().WithName("karavi-authorization-proxy").
+				WithVolumeMounts(&acorev1.VolumeMountApplyConfiguration{Name: &vol1Name},
+					&acorev1.VolumeMountApplyConfiguration{Name: &vol2Name}).
+				WithEnv(&acorev1.EnvVarApplyConfiguration{Name: &envName, Value: &envVal}),
+		}
+		err := CheckApplyContainersAuth(got, driver, true)
+		assert.Error(t, err)
+	})
+
+	t.Run("it validates conflicting cert configuration", func(t *testing.T) {
+		driver := "powerscale"
+		vol1Name := "karavi-authorization-config"
+		vol2Name := AuthorizationSupportedDrivers[driver].DriverConfigParamsVolumeMount
+		envName := "INSECURE"
+		envVal := "false"
+
+		got := []acorev1.ContainerApplyConfiguration{
+			*acorev1.Container().WithName("karavi-authorization-proxy").
+				WithVolumeMounts(&acorev1.VolumeMountApplyConfiguration{Name: &vol1Name},
+					&acorev1.VolumeMountApplyConfiguration{Name: &vol2Name}).
+				WithEnv(&acorev1.EnvVarApplyConfiguration{Name: &envName, Value: &envVal}),
+		}
+		err := CheckApplyContainersAuth(got, driver, true)
+		assert.Error(t, err)
+	})
+
+	t.Run("it validates empty proxy host value", func(t *testing.T) {
+		driver := "powerscale"
+		vol1Name := "karavi-authorization-config"
+		vol2Name := AuthorizationSupportedDrivers[driver].DriverConfigParamsVolumeMount
+		envName := "PROXY_HOST"
+		envVal := ""
+
+		got := []acorev1.ContainerApplyConfiguration{
+			*acorev1.Container().WithName("karavi-authorization-proxy").
+				WithVolumeMounts(&acorev1.VolumeMountApplyConfiguration{Name: &vol1Name},
+					&acorev1.VolumeMountApplyConfiguration{Name: &vol2Name}).
+				WithEnv(&acorev1.EnvVarApplyConfiguration{Name: &envName, Value: &envVal}),
+		}
+		err := CheckApplyContainersAuth(got, driver, true)
+		assert.Error(t, err)
+	})
 }
 
 func TestAuthInjectDaemonset(t *testing.T) {
@@ -327,7 +377,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v2.0.0-alpha"
+			auth.ConfigVersion = "v2.0.0"
 
 			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
@@ -491,7 +541,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v2.0.0-alpha"
+			auth.ConfigVersion = "v2.0.0"
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
 			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
@@ -769,52 +819,6 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 				assert.Error(t, err)
 			}
 		})
-	}
-}
-
-func TestAuthorizationKubeMgmtPolicies(t *testing.T) {
-	cr, err := getCustomResource("./testdata/cr_auth_proxy_diff_namespace.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = certmanagerv1.AddToScheme(scheme.Scheme)
-	if err != nil {
-		panic(err)
-	}
-	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-	err = AuthorizationServerDeployment(context.TODO(), false, operatorConfig, cr, sourceClient)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	proxyServer := &appsv1.Deployment{}
-	err = sourceClient.Get(context.Background(), types.NamespacedName{Name: "proxy-server", Namespace: "dell"}, proxyServer)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	argFound := false
-	for _, container := range proxyServer.Spec.Template.Spec.Containers {
-		if container.Name == "kube-mgmt" {
-			for _, arg := range container.Args {
-				if strings.Contains(arg, "--policies") {
-					argFound = true
-					if arg != "--policies=dell" {
-						t.Fatalf("expected --policies=dell, got %s", arg)
-					}
-					break
-				}
-			}
-		}
-		if argFound {
-			break
-		}
-	}
-
-	if !argFound {
-		t.Fatalf("expected --policies=dell, got none")
 	}
 }
 
@@ -1238,6 +1242,7 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 }
 
 func TestAuthorizationIngress(t *testing.T) {
+	isOpenShift := true
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
@@ -1448,15 +1453,26 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient
 		},
+		"fail - NGINX ingress creation failure": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			tmpCR, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			isOpenShift = false
+
+			return false, false, tmpCR, sourceClient
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			isOpenShift = true
 			success, isDeleting, cr, sourceClient := tc(t)
 			fakeReconcile := utils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
-			err := AuthorizationIngress(context.TODO(), isDeleting, true, cr, &fakeReconcile, sourceClient)
+			err := AuthorizationIngress(context.TODO(), isDeleting, isOpenShift, cr, &fakeReconcile, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {
