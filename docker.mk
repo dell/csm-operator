@@ -1,5 +1,5 @@
 # Registry for all images
-REGISTRY ?= docker.io/dellemc
+REGISTRY ?= quay.io/dell/container-storage-modules
 
 # IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
 # This variable is used to construct full image tags for bundle and catalog images.
@@ -16,6 +16,8 @@ CATALOG_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-catalog
 
 # Bundle Version is the semantic version(required by operator-sdk)
 BUNDLE_VERSION ?= 1.9.0
+
+VERSION ?= v1.9.0
 
 # Timestamp local builds
 TIMESTAMP := $(shell  date +%Y%m%d%H%M%S)
