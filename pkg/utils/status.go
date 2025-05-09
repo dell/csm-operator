@@ -60,38 +60,36 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 		Failed:    "0",
 	}
 
-	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
+	clusterClient := GetCluster(ctx, r)
 	if err != nil {
 		return emptyStatus, err
 	}
 
-	for _, cluster := range clusterClients {
-		log.Infof("getting deployment status for cluster: %s", cluster.ClusterID)
-		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
+	log.Infof("getting deployment status for cluster: %s", clusterClient.ClusterID)
+	msg += fmt.Sprintf("error message for %s \n", clusterClient.ClusterID)
 
-		if instance.GetName() == "" || isAuthorizationProxyServer(instance) || instance.GetName() == string(csmv1.ApplicationMobility) {
-			log.Infof("Not a driver instance, will not check deploymentstatus")
-			return emptyStatus, nil
-		}
-
-		err = cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
-			Name:      instance.GetControllerName(),
-			Namespace: instance.GetNamespace(),
-		}, deployment)
-		if err != nil {
-			return emptyStatus, err
-		}
-		log.Infof("Calculating status for deployment: %s", deployment.Name)
-		desired = deployment.Status.Replicas
-		available = deployment.Status.AvailableReplicas
-		ready = deployment.Status.ReadyReplicas
-		numberUnavailable = deployment.Status.UnavailableReplicas
-
-		log.Infow("deployment", "desired", desired)
-		log.Infow("deployment", "numberReady", ready)
-		log.Infow("deployment", "available", available)
-		log.Infow("deployment", "numberUnavailable", numberUnavailable)
+	if instance.GetName() == "" || isAuthorizationProxyServer(instance) || instance.GetName() == string(csmv1.ApplicationMobility) {
+		log.Infof("Not a driver instance, will not check deploymentstatus")
+		return emptyStatus, nil
 	}
+
+	err = clusterClient.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
+		Name:      instance.GetControllerName(),
+		Namespace: instance.GetNamespace(),
+	}, deployment)
+	if err != nil {
+		return emptyStatus, err
+	}
+	log.Infof("Calculating status for deployment: %s", deployment.Name)
+	desired = deployment.Status.Replicas
+	available = deployment.Status.AvailableReplicas
+	ready = deployment.Status.ReadyReplicas
+	numberUnavailable = deployment.Status.UnavailableReplicas
+
+	log.Infow("deployment", "desired", desired)
+	log.Infow("deployment", "numberReady", ready)
+	log.Infow("deployment", "available", available)
+	log.Infow("deployment", "numberUnavailable", numberUnavailable)
 
 	return csmv1.PodStatus{
 		Available: fmt.Sprintf("%d", available),
@@ -110,89 +108,83 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	totalFailedCount := 0
 	totalRunning := int32(0)
 
-	_, clusterClients, err := GetDefaultClusters(ctx, *instance, r)
+	clusterClient := GetCluster(ctx, r)
+	totalRunning = 0
+	log.Infof("\ngetting daemonset status for cluster: %s", clusterClient.ClusterID)
+	msg += fmt.Sprintf("error message for %s \n", clusterClient.ClusterID)
+
+	ds := &appsv1.DaemonSet{}
+
+	nodeName := instance.GetNodeName()
+	namespace := instance.GetNamespace()
+	log.Infof("nodeName: %s, namespace: %s ", nodeName, namespace)
+	err := clusterClient.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
+		Name:      nodeName,
+		Namespace: namespace,
+	}, ds)
 	if err != nil {
 		return 0, csmv1.PodStatus{}, err
 	}
-
-	for _, cluster := range clusterClients {
-		totalRunning = 0
-		log.Infof("\ngetting daemonset status for cluster: %s", cluster.ClusterID)
-		msg += fmt.Sprintf("error message for %s \n", cluster.ClusterID)
-
-		ds := &appsv1.DaemonSet{}
-
-		nodeName := instance.GetNodeName()
-		namespace := instance.GetNamespace()
-		log.Infof("nodeName: %s, namespace: %s ", nodeName, namespace)
-		err := cluster.ClusterCTRLClient.Get(ctx, t1.NamespacedName{
-			Name:      nodeName,
-			Namespace: namespace,
-		}, ds)
-		if err != nil {
-			return 0, csmv1.PodStatus{}, err
-		}
-		failedCount := 0
-		podList := &corev1.PodList{}
-		label := instance.GetName() + "-node"
-		opts := []client.ListOption{
-			client.InNamespace(namespace),
-			client.MatchingLabels{"app": label},
-		}
-
-		log.Infof("Label is %s", label)
-		err = cluster.ClusterCTRLClient.List(ctx, podList, opts...)
-		if err != nil {
-			return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{}, err
-		}
-
-		errMap := make(map[string]string)
-		for _, pod := range podList.Items {
-			log.Infof("daemonset pod %s : %s", pod.Name, pod.Status.Phase)
-			if pod.Status.Phase == corev1.PodPending {
-				failedCount++
-				for _, cs := range pod.Status.ContainerStatuses {
-					if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
-						// message: Back-off pulling image "dellec/csi-isilon:xxxx"
-						// reason: ImagePullBackOff
-						log.Infow("daemonset pod container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
-						shortMsg := strings.Replace(cs.State.Waiting.Message,
-							constants.PodStatusRemoveString, "", 1)
-						errMap[cs.State.Waiting.Reason] = shortMsg
-					}
-					if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
-						log.Infof("daemonset pod container %s : %s", pod.Name, pod.Status.Phase)
-						errMap[cs.State.Waiting.Reason] = constants.PendingCreate
-					}
-				}
-			}
-			// pod can be running even if not all containers are up
-			podReadyCondition := corev1.ConditionFalse
-			for _, condition := range pod.Status.Conditions {
-				if condition.Type == corev1.PodReady {
-					podReadyCondition = condition.Status
-				}
-			}
-
-			if pod.Status.Phase == corev1.PodRunning && podReadyCondition == corev1.ConditionTrue {
-				totalRunning++
-			}
-			if podReadyCondition != corev1.ConditionTrue {
-				log.Infof("daemonset pod: %s is running, but is not ready", pod.Name)
-			}
-		}
-		for k, v := range errMap {
-			msg += k + "=" + v
-		}
-
-		log.Infof("daemonset status available pods %d", totalRunning)
-		log.Infof("daemonset status failedCount pods %d", failedCount)
-		log.Infof("daemonset status desired pods %d", ds.Status.DesiredNumberScheduled)
-
-		totalAvialable += totalRunning
-		totalDesired += ds.Status.DesiredNumberScheduled
-		totalFailedCount += failedCount
+	failedCount := 0
+	podList := &corev1.PodList{}
+	label := instance.GetName() + "-node"
+	opts := []client.ListOption{
+		client.InNamespace(namespace),
+		client.MatchingLabels{"app": label},
 	}
+
+	log.Infof("Label is %s", label)
+	err = clusterClient.ClusterCTRLClient.List(ctx, podList, opts...)
+	if err != nil {
+		return ds.Status.DesiredNumberScheduled, csmv1.PodStatus{}, err
+	}
+
+	errMap := make(map[string]string)
+	for _, pod := range podList.Items {
+		log.Infof("daemonset pod %s : %s", pod.Name, pod.Status.Phase)
+		if pod.Status.Phase == corev1.PodPending {
+			failedCount++
+			for _, cs := range pod.Status.ContainerStatuses {
+				if cs.State.Waiting != nil && cs.State.Waiting.Reason != constants.ContainerCreating {
+					// message: Back-off pulling image "dellec/csi-isilon:xxxx"
+					// reason: ImagePullBackOff
+					log.Infow("daemonset pod container", "message", cs.State.Waiting.Message, constants.Reason, cs.State.Waiting.Reason)
+					shortMsg := strings.Replace(cs.State.Waiting.Message,
+						constants.PodStatusRemoveString, "", 1)
+					errMap[cs.State.Waiting.Reason] = shortMsg
+				}
+				if cs.State.Waiting != nil && cs.State.Waiting.Reason == constants.ContainerCreating {
+					log.Infof("daemonset pod container %s : %s", pod.Name, pod.Status.Phase)
+					errMap[cs.State.Waiting.Reason] = constants.PendingCreate
+				}
+			}
+		}
+		// pod can be running even if not all containers are up
+		podReadyCondition := corev1.ConditionFalse
+		for _, condition := range pod.Status.Conditions {
+			if condition.Type == corev1.PodReady {
+				podReadyCondition = condition.Status
+			}
+		}
+
+		if pod.Status.Phase == corev1.PodRunning && podReadyCondition == corev1.ConditionTrue {
+			totalRunning++
+		}
+		if podReadyCondition != corev1.ConditionTrue {
+			log.Infof("daemonset pod: %s is running, but is not ready", pod.Name)
+		}
+	}
+	for k, v := range errMap {
+		msg += k + "=" + v
+	}
+
+	log.Infof("daemonset status available pods %d", totalRunning)
+	log.Infof("daemonset status failedCount pods %d", failedCount)
+	log.Infof("daemonset status desired pods %d", ds.Status.DesiredNumberScheduled)
+
+	totalAvialable += totalRunning
+	totalDesired += ds.Status.DesiredNumberScheduled
+	totalFailedCount += failedCount
 
 	if totalFailedCount > 0 {
 		err = errors.New(msg)

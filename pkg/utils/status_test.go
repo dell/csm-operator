@@ -196,13 +196,13 @@ func TestGetDaemonSetStatus(t *testing.T) {
 		wantErr          bool
 	}{
 		{
-			name: "Test getDaemonSetStatus when GetDefaultClusters fails",
+			name: "Test getDaemonSetStatus when GetCluster fails",
 			args: args{
 				ctx: context.Background(),
 				instance: createCSM("powerflex", "powerflex", csmv1.PowerFlex, csmv1.Replication, true, []csmv1.ContainerTemplate{
 					{
 						Name: "dell-replication-controller-manager",
-						Envs: []corev1.EnvVar{{Name: "TARGET_CLUSTERS_IDS", Value: "cluster-2"}},
+						Envs: []corev1.EnvVar{{Name: "REPLICATION_CTRL_LOG_LEVEL", Value: "debug"}},
 					},
 				}),
 				r: &FakeReconcileCSM{
