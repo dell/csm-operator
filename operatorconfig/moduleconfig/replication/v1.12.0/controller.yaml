@@ -105,13 +105,13 @@ rules:
     resources:
       - dellcsireplicationgroups
     verbs:
-      - list
-      - update
-      - watch
-      - get
       - create
       - delete
+      - get
+      - list
       - patch
+      - update
+      - watch
   - apiGroups:
       - replication.storage.dell.com
     resources:
