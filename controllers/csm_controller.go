@@ -890,13 +890,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 
 				controller.Rbac.ClusterRole = *clusterRole
-
-				role, err := modules.ReplicationInjectRole(controller.Rbac.Role, cr, operatorConfig)
-				if err != nil {
-					return fmt.Errorf("injecting replication into controller role: %v", err)
-				}
-
-				controller.Rbac.Role = *role
 			}
 		}
 	}

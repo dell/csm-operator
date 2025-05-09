@@ -4,3 +4,6 @@
 - apiGroups: ["replication.storage.dell.com"]
   resources: ["dellcsireplicationgroups/status"]
   verbs: ["update", "get", "patch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
