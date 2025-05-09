@@ -1,4 +1,4 @@
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,9 +52,6 @@ rules:
     resources: ["csinodes"]
     verbs: ["get", "list", "watch", "update"]
     # below for snapshotter
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list", "watch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
     verbs: ["get", "list", "watch"]
@@ -77,19 +74,10 @@ rules:
   - apiGroups: [""]
     resources: ["persistentvolumeclaims/status"]
     verbs: ["update", "patch"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["get", "watch", "list", "delete", "update", "create"]
-    # Permissions for CSIStorageCapacity
+  # Permissions for CSIStorageCapacity
   - apiGroups: ["storage.k8s.io"]
     resources: ["csistoragecapacities"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get"]
-  - apiGroups: ["apps"]
-    resources: ["replicasets"]
-    verbs: ["get"]
   # Permissions for ReplicationReplicator
   - apiGroups: [""]
     resources: ["namespaces"]
@@ -105,6 +93,41 @@ subjects:
     namespace: <DriverDefaultReleaseNamespace>
 roleRef:
   kind: ClusterRole
+  name: <DriverDefaultReleaseName>-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+# Role for Driver-specific Permissions in a Namespace
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-controller
+  namespace: <DriverDefaultReleaseNamespace>
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["update", "patch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get"]
+---
+# RoleBinding for Driver-specific Role
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-controller
+  namespace: <DriverDefaultReleaseNamespace>
+subjects:
+  - kind: ServiceAccount
+    name: <DriverDefaultReleaseName>-controller
+    namespace: <DriverDefaultReleaseNamespace>
+roleRef:
+  kind: Role
   name: <DriverDefaultReleaseName>-controller
   apiGroup: rbac.authorization.k8s.io
 ---

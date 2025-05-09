@@ -51,3 +51,33 @@ func SyncClusterRole(ctx context.Context, clusterRole rbacv1.ClusterRole, client
 
 	return nil
 }
+
+// SyncRole - Syncs a Role
+func SyncRole(ctx context.Context, role rbacv1.Role, client client.Client) error {
+	log := logger.GetLogger(ctx)
+	found := &rbacv1.Role{}
+	err := client.Get(ctx, types.NamespacedName{Name: role.Name, Namespace: role.Namespace}, found)
+	if err != nil && errors.IsNotFound(err) {
+		log.Info("Creating a new Role", "Name", role.Name)
+		err = client.Create(ctx, &role)
+		if err != nil {
+			return err
+		}
+		// we need to return found object
+		err := client.Get(ctx, types.NamespacedName{Name: role.Name, Namespace: role.Namespace}, found)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		log.Info("Unknown error.", "Error", err.Error())
+		return err
+	} else {
+		log.Info("Updating Role", "Name:", role.Name)
+		err = client.Update(ctx, &role)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
