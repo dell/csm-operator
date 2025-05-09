@@ -140,49 +140,6 @@ func TestReplicationInjectClusterRole(t *testing.T) {
 	}
 }
 
-func TestReplicationInjectRole(t *testing.T) {
-	ctx := context.Background()
-
-	tests := map[string]func(t *testing.T) (bool, rbacv1.Role, utils.OperatorConfig, csmv1.ContainerStorageModule){
-		"success - greenfield injection": func(*testing.T) (bool, rbacv1.Role, utils.OperatorConfig, csmv1.ContainerStorageModule) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
-			if err != nil {
-				panic(err)
-			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
-			if err != nil {
-				panic(err)
-			}
-			return true, controllerYAML.Rbac.Role, operatorConfig, customResource
-		},
-		"fail - bad config path": func(*testing.T) (bool, rbacv1.Role, utils.OperatorConfig, csmv1.ContainerStorageModule) {
-			tmpOperatorConfig := operatorConfig
-			tmpOperatorConfig.ConfigDirectory = "bad/path"
-
-			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
-			if err != nil {
-				panic(err)
-			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
-			if err != nil {
-				panic(err)
-			}
-			return false, controllerYAML.Rbac.Role, tmpOperatorConfig, customResource
-		},
-	}
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			success, role, opConfig, cr := tc(t)
-			_, err := ReplicationInjectRole(role, cr, opConfig)
-			if success {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-			}
-		})
-	}
-}
-
 func TestReplicationPreCheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 

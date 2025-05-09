@@ -57,10 +57,21 @@ rules:
     resources:
       - persistentvolumeclaims
     verbs:
+      - create
+      - delete
+      - get
       - list
+      - patch
       - update
       - watch
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims/status
+    verbs:
       - get
+      - patch
+      - update
   - apiGroups:
       - ""
     resources:
@@ -78,6 +89,7 @@ rules:
     resources:
       - pods
     verbs:
+      - get
       - list
       - watch
   - apiGroups:
@@ -85,6 +97,7 @@ rules:
     resources:
       - secrets
     verbs:
+      - get
       - list
       - watch
   - apiGroups:
@@ -121,6 +134,9 @@ rules:
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents"]
     verbs: ["create", "get", "list", "watch", "update", "delete", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list", "watch", "update", "create", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -167,37 +183,6 @@ rules:
       - list
       - update
       - watch
-  - apiGroups:
-      - ""
-    resources:
-      - persistentvolumeclaims
-    verbs:
-      - create
-      - delete
-      - patch
-  - apiGroups:
-      - ""
-    resources:
-      - persistentvolumeclaims/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-    verbs:
-      - get
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    verbs:
-      - get
-  - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshots"]
-    verbs: ["get", "list", "watch", "update", "create", "delete"]
 ---
 apiVersion: v1
 kind: Secret

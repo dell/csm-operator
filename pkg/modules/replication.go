@@ -288,7 +288,7 @@ func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Conta
 		return nil, err
 	}
 
-	buf, err := readConfigFile(replicaModule, cr, op, "clusterrole-rules.yaml")
+	buf, err := readConfigFile(replicaModule, cr, op, "rules.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -301,28 +301,6 @@ func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Conta
 
 	clusterRole.Rules = append(clusterRole.Rules, rules...)
 	return &clusterRole, nil
-}
-
-func ReplicationInjectRole(role rbacv1.Role, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*rbacv1.Role, error) {
-	var err error
-
-	replicaModule, err := getReplicaModule(cr)
-	if err != nil {
-		return nil, err
-	}
-
-	buf, err := readConfigFile(replicaModule, cr, op, "role-rules.yaml")
-	if err != nil {
-		return nil, err
-	}
-
-	var rules []rbacv1.PolicyRule
-	err = yaml.Unmarshal(buf, &rules)
-	if err != nil {
-		return nil, err
-	}
-	role.Rules = append(role.Rules, rules...)
-	return &role, nil
 }
 
 // ReplicationPrecheck  - runs precheck for CSM ReplicationPrecheck

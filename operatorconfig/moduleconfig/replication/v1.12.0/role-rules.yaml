@@ -1,3 +1,0 @@
-- apiGroups: [""]
-  resources: ["configmaps"]
-  verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
