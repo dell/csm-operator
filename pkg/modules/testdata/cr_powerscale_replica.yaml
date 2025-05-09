@@ -26,8 +26,6 @@ spec:
         - name: dell-replication-controller-manager
           image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.12.0
           envs:
-            - name: "TARGET_CLUSTERS_IDS"
-              value: "test-target-cluster-1,test-target-cluster-2"
             - name: "REPLICATION_CTRL_LOG_LEVEL"
               value: "debug"
             - name: "REPLICATION_CTRL_REPLICAS"
