@@ -358,11 +358,6 @@ spec:
           # Allowed values: string
           image: registry.connect.redhat.com/dell-emc/dell-csm-replication-controller-manager@sha256:1dc8249ff67f6f939a97ed3e55c2398ac44ce163c52e0e8d4ca9f2a615a01905
           envs:
-            # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
-            # Set the value to "self" in case of stretched/single cluster configuration
-            # Allowed values: string
-            - name: "TARGET_CLUSTERS_IDS"
-              value: "target-cluster-1"
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
             # Default value: "debug"

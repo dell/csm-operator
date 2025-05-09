@@ -275,7 +275,7 @@ spec:
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
             type: Directory
-         # will be removed if installing on OpenShift
+        # will be removed if installing on OpenShift
         - name: scaleio-path-bin
           hostPath:
             path: /bin/emc/scaleio/

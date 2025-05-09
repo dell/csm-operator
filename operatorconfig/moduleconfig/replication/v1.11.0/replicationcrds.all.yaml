@@ -5,6 +5,8 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
   name: dellcsimigrationgroups.replication.storage.dell.com
+  labels:
+    app.kubernetes.io/managed-by: dell-csm-operator
 spec:
   group: replication.storage.dell.com
   names:
@@ -84,6 +86,8 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
   name: dellcsireplicationgroups.replication.storage.dell.com
+  labels:
+    app.kubernetes.io/managed-by: dell-csm-operator
 spec:
   group: replication.storage.dell.com
   names:
