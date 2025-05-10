@@ -204,12 +204,18 @@ spec:
       #    operator: "Exists"
       #    effect: "NoSchedule"
     initContainers:
-      - image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+      - image: quay.io/dell/storage/powerflex/sdc:4.5.4
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
           - name: MDM
             value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
+          - name: REPO_ADDRESS
+            value: "sftp://0.0.0.0"  #SFTP/private repository address. Format: "protoctol://address"
+          - name: REPO_USER
+            value: "sdcRepoUser"  # provide username to authenticate to the SFTP repo
+          - name: MODULE_SIGCHECK
+            value: "0"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
