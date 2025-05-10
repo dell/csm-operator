@@ -219,6 +219,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: REPO_ADDRESS
+              value: "sftp://0.0.0.0"
+            - name: REPO_USER
+              value: "sdcRepoUser"
+            - name: MODULE_SIGCHECK
+              value: "0"
           volumeMounts:
             - name: vxflexos-config
               mountPath: /vxflexos-config
@@ -258,6 +264,8 @@ spec:
               mountPath: /storage
             - name: udev-d
               mountPath: /rules.d
+            - name: sftp-keys
+              mountPath: /config/
             - name: scaleio-path-opt
               mountPath: /host_drv_cfg_path
             - name: host-opt-emc-path
@@ -302,6 +310,15 @@ spec:
           hostPath:
             path: /etc/udev/rules.d
             type: Directory
+        # will be removed if sftp is not enabled
+        - name: sftp-keys
+          projected:
+            defaultMode: 384
+            sources:
+            - secret:
+                name: sdcrepo-private-secret
+            - secret:
+                name: sdcrepo-public-secret
         - name: os-release
           hostPath:
             path: /etc/os-release
