@@ -219,10 +219,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: REPO_ADDRESS
-              value: "sftp://0.0.0.0"
-            - name: REPO_USER
-              value: "sdcRepoUser"
+            - name: X_CSI_SFTP_REPO_ADDRESS
+              value: "<CSI_SFTP_REPO_ADDRESS>"
+            - name: X_CSI_SFTP_REPO_USER
+              value: "<CSI_SFTP_REPO_USER>"
             - name: MODULE_SIGCHECK
               value: "0"
           volumeMounts:
