@@ -63,6 +63,9 @@ const (
 	// ScaleioBinPath - name of volume that is mounted by the CSI plugin when not running on OCP
 	ScaleioBinPath = "scaleio-path-bin"
 
+	// SftpKeys - name of volume that is mounted for sftp
+	SftpKeys = "sftp-keys"
+
 	// PowerFlexDebug - will be used to control the GOSCALEIO_DEBUG variable
 	PowerFlexDebug string = "<GOSCALEIO_DEBUG>"
 
@@ -504,6 +507,28 @@ func RemoveVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName stri
 	}
 	for c := range podTemplate.Spec.Containers {
 		for i, volMount := range podTemplate.Spec.Containers[c].VolumeMounts {
+			if volMount.Name != nil && *volMount.Name == volumeName {
+				podTemplate.Spec.Containers[c].VolumeMounts = append(podTemplate.Spec.Containers[c].VolumeMounts[0:i], podTemplate.Spec.Containers[c].VolumeMounts[i+1:]...)
+				return nil
+			}
+		}
+	}
+	return nil
+}
+
+func RemoveInitVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName string) error {
+	if configuration == nil {
+		return fmt.Errorf("RemoveVolume called with a nil daemonset")
+	}
+	podTemplate := configuration.Spec.Template
+	for i, vol := range podTemplate.Spec.Volumes {
+		if vol.Name != nil && *vol.Name == volumeName {
+			podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes[0:i], podTemplate.Spec.Volumes[i+1:]...)
+			break
+		}
+	}
+	for c := range podTemplate.Spec.Containers {
+		for i, volMount := range podTemplate.Spec.InitContainers[c].VolumeMounts {
 			if volMount.Name != nil && *volMount.Name == volumeName {
 				podTemplate.Spec.Containers[c].VolumeMounts = append(podTemplate.Spec.Containers[c].VolumeMounts[0:i], podTemplate.Spec.Containers[c].VolumeMounts[i+1:]...)
 				return nil

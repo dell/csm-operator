@@ -804,7 +804,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		for _, env := range cr.Spec.Driver.Node.Envs {
 			if env.Name == "SDC_SFTP_REPO_ENABLED" {
 				if env.Value != "true" {
-					_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, "sftp-keys")
+					_ = drivers.RemoveInitVolume(&node.DaemonSetApplyConfig, drivers.SftpKeys)
 				}
 				break
 			}
