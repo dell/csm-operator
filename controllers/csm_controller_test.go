@@ -90,6 +90,12 @@ var (
 	getCRError    bool
 	getCRErrorStr = "unable to get Clusterrole"
 
+	deleteRoleError    bool
+	deleteRoleErrorStr = "unable to delete Role"
+
+	deleteRoleBindingError    bool
+	deleteRoleBindingErrorStr = "unable to delete Rolebinding"
+
 	updateCRError    bool
 	updateCRErrorStr = "unable to update Clusterrole"
 
@@ -110,6 +116,9 @@ var (
 
 	getSAError    bool
 	getSAErrorStr = "unable to get ServiceAccount"
+
+	deleteControllerSAError    bool
+	deleteControllerSAErrorStr = "unable to get ServiceAccount"
 
 	updateDSError    bool
 	updateDSErrorStr = "unable to update Daemonset"
@@ -803,6 +812,9 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 		{"delete SA error", csm, &deleteSAError, deleteSAErrorStr},
 		{"delete Daemonset error", csm, &deleteDSError, deleteDSErrorStr},
 		{"delete Deployment error", csm, &deleteDeploymentError, deleteDeploymentErrorStr},
+		{"delete controller SA error", csm, &deleteControllerSAError, deleteControllerSAErrorStr},
+		{"delete role error", csm, &deleteRoleError, deleteRoleErrorStr},
+		{"delete role binding error", csm, &deleteRoleBindingError, deleteRoleBindingErrorStr},
 	}
 
 	for _, tt := range removeDriverTests {
@@ -881,6 +893,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"powerflex on openshift - delete mount", powerflexCSM, operatorConfig, ""},
 		{"resiliency module happy path", resiliencyCSM, operatorConfig, ""},
 		{"replication module happy path", replicationCSM, operatorConfig, ""},
+		{"replication module bad op conf", replicationCSM, badOperatorConfig, "failed to deploy replication"},
 	}
 
 	for _, tt := range syncCSMTests {
@@ -2521,6 +2534,9 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		} else if method == "Delete" && deleteSAError {
 			fmt.Printf("[ShouldFail] force Delete ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(deleteSAErrorStr)
+		} else if method == "Delete" && deleteControllerSAError {
+			fmt.Printf("[ShouldFail] force Delete ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
+			return errors.New(deleteControllerSAErrorStr)
 		}
 
 	case *appsv1.DaemonSet:
@@ -2539,7 +2555,18 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 			fmt.Printf("[ShouldFail] force Deployment error for Deployment named %+v\n", deployment.Name)
 			return errors.New(deleteDeploymentErrorStr)
 		}
-
+	case *rbacv1.Role:
+		role := obj.(*rbacv1.Role)
+		if method == "Delete" && deleteRoleError {
+			fmt.Printf("[ShouldFail] force delete Role error for Role named %+v\n", role.Name)
+			return errors.New(deleteRoleErrorStr)
+		}
+	case *rbacv1.RoleBinding:
+		roleBinding := obj.(*rbacv1.RoleBinding)
+		if method == "Delete" && deleteRoleBindingError {
+			fmt.Printf("[ShouldFail] force delete RoleBinding error for RoleBinding named %+v\n", roleBinding.Name)
+			return errors.New(deleteRoleBindingErrorStr)
+		}
 	default:
 	}
 	return nil
