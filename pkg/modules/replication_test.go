@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,6 +28,7 @@ import (
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/kubernetes/scheme"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -252,16 +254,6 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica := tmpCR.Spec.Modules[0]
 			replica.ConfigVersion = "v1.9.0"
 
-			for i, component := range tmpCR.Spec.Modules[0].Components {
-				if component.Name == utils.ReplicationControllerManager {
-					for j, env := range component.Envs {
-						if env.Name == "TARGET_CLUSTERS_IDS" {
-							tmpCR.Spec.Modules[0].Components[i].Envs[j].Value = ""
-						}
-					}
-				}
-			}
-
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
@@ -476,5 +468,79 @@ func TestReplicationConfigmap(t *testing.T) {
 		t.Errorf("ConfigMap was not deleted from the fake client")
 	} else if !k8serrors.IsNotFound(err) {
 		t.Errorf("ConfigMap was not deleted from the fake client: %v", err)
+	}
+}
+
+func TestGetReplicationCrdDeploy(t *testing.T) {
+	realConfig := utils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
+	customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	yaml, err := getReplicationCrdDeploy(realConfig, customResource)
+	assert.NoError(t, err)
+	assert.Contains(t, yaml, "kind: CustomResourceDefinition")
+}
+
+func TestReplicationCrdDeployAndDelete(t *testing.T) {
+	tests := map[string]func(t *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool){
+		"success case": func(_ *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
+			operConfig := utils.OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			}
+			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+			return operConfig, customResource, true
+		},
+		"failure invalid config dir": func(_ *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
+			operConfig := utils.OperatorConfig{
+				ConfigDirectory: "../../DIRDONTEXIST",
+			}
+			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+			return operConfig, customResource, false
+		},
+		"failure case no repl cr": func(_ *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
+			operConfig := utils.OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			}
+			customResource := csmv1.ContainerStorageModule{}
+
+			return operConfig, customResource, false
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			oc, cr, success := tc(t)
+			crd := &apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "CustomResourceDefinition",
+				},
+			}
+			err := apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+
+			fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(crd).Build()
+
+			err = ReplicationCrdDeploy(context.Background(), oc, cr, fakeClient)
+			if success {
+				assert.NoError(t, err)
+				err = DeleteReplicationCrds(context.Background(), oc, cr, fakeClient)
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
 	}
 }

@@ -76,7 +76,7 @@ spec:
         - name: vault
           vaultConfigurations:
             - identifier: vault0
-              address: https://10.0.0.1:8400
+              address: https://vault.default.svc.cluster.local:8400
               role: csm-authorization
               skipCertificateValidation: true
               # clientCertificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates

@@ -15,26 +15,27 @@ package utils
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	admissionregistration "k8s.io/api/admissionregistration/v1"
-	batchv1 "k8s.io/api/batch/v1"
-	networking "k8s.io/api/networking/v1"
-	storagev1 "k8s.io/api/storage/v1"
-	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/stretchr/testify/assert"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	networking "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	storagev1 "k8s.io/api/storage/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -46,6 +47,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/yaml"
 )
 
 func captureOutput(f func()) string {
@@ -1745,6 +1747,310 @@ spec:
 	assert.NotNil(t, err)
 }
 
+// This function is used to test the GetCTRLObject function
+// when yamlUnmarshal returns an error
+func TestGetCTRLObjectWithErrors(t *testing.T) {
+	// Save the original function so we can revert after this test
+	defaultYamlUnmarshal := yamlUnmarshal
+
+	// Define the test case
+	testCases := []struct {
+		name string
+		kind string
+	}{
+		{
+			name: "TypeMeta yaml returns error",
+			kind: "TypeMeta",
+		},
+
+		{
+			name: "ClusterRole yaml returns error",
+			kind: "ClusterRole",
+		},
+		{
+			name: "ClusterRoleBinding yaml returns error",
+			kind: "ClusterRoleBinding",
+		},
+		{
+			name: "Service yaml returns error",
+			kind: "Service",
+		},
+		{
+			name: "ConfigMap yaml returns error",
+			kind: "ConfigMap",
+		},
+		{
+			name: "Deployment yaml returns error",
+			kind: "Deployment",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlStr := "apiVersion: v1\nkind: " + tt.kind + "\nmetadata:\n  name: test\ndata:\n  test-key: test-value\n"
+			expectedErr := "mocking error return for " + tt.kind
+
+			// Set the yamlUnmarshal function to return an error when the kind is tt.kind
+			yamlUnmarshal = func(data []byte, v interface{}) error {
+				vType := reflect.TypeOf(v)
+				fmt.Printf("v kind is: %s \n", vType.Elem().String())
+
+				if vType.Elem().String() == "v1."+tt.kind {
+					return errors.New(expectedErr)
+				}
+				return yaml.Unmarshal(data, v)
+			}
+
+			// Call GetModuleComponentObj
+			_, err := GetCTRLObject([]byte(yamlStr))
+
+			if err == nil {
+				t.Errorf("Expected an error, but got nil instead")
+			}
+
+			// Check if the error message contains the expected substring
+			if !strings.Contains(err.Error(), expectedErr) {
+				t.Errorf("Expected error message to contain %s, but got '%s' instead", expectedErr, err.Error())
+			}
+		})
+	}
+	// Revert back to the original function
+	yamlUnmarshal = defaultYamlUnmarshal
+}
+
+// This function is used to test the GetModuleComponentObj function
+// when yamlUnmarshal returns an error
+func TestGetModuleComponentObjWithErrors(t *testing.T) {
+	// Save the original function so we can revert after this test
+	defaultYamlUnmarshal := yamlUnmarshal
+
+	// Define the test case
+	testCases := []struct {
+		name string
+		kind string
+	}{
+		{
+			name: "TypeMeta yaml returns error",
+			kind: "TypeMeta",
+		},
+		{
+			name: "CustomResourceDefinition yaml returns error",
+			kind: "CustomResourceDefinition",
+		},
+		{
+			name: "ServiceAccount yaml returns error",
+			kind: "ServiceAccount",
+		},
+		{
+			name: "ClusterRole yaml returns error",
+			kind: "ClusterRole",
+		},
+		{
+			name: "ClusterRoleBinding yaml returns error",
+			kind: "ClusterRoleBinding",
+		},
+		{
+			name: "Role yaml returns error",
+			kind: "Role",
+		},
+		{
+			name: "RoleBinding yaml returns error",
+			kind: "RoleBinding",
+		},
+		{
+			name: "Service yaml returns error",
+			kind: "Service",
+		},
+		{
+			name: "PersistentVolumeClaim yaml returns error",
+			kind: "PersistentVolumeClaim",
+		},
+		{
+			name: "Job yaml returns error",
+			kind: "Job",
+		},
+		{
+			name: "IngressClass yaml returns error",
+			kind: "IngressClass",
+		},
+		{
+			name: "Ingress yaml returns error",
+			kind: "Ingress",
+		},
+		{
+			name: "ValidatingWebhookConfiguration yaml returns error",
+			kind: "ValidatingWebhookConfiguration",
+		},
+		{
+			name: "MutatingWebhookConfiguration yaml returns error",
+			kind: "MutatingWebhookConfiguration",
+		},
+		{
+			name: "ConfigMap yaml returns error",
+			kind: "ConfigMap",
+		},
+		{
+			name: "Secret yaml returns error",
+			kind: "Secret",
+		},
+		{
+			name: "Deployment yaml returns error",
+			kind: "Deployment",
+		},
+		{
+			name: "DaemonSet yaml returns error",
+			kind: "DaemonSet",
+		},
+		{
+			name: "BackupStorageLocation yaml returns error",
+			kind: "BackupStorageLocation",
+		},
+		{
+			name: "VolumeSnapshotLocation yaml returns error",
+			kind: "VolumeSnapshotLocation",
+		},
+		{
+			name: "Issuer yaml returns error",
+			kind: "Issuer",
+		},
+		{
+			name: "Certificate yaml returns error",
+			kind: "Certificate",
+		},
+		{
+			name: "StatefulSet yaml returns error",
+			kind: "StatefulSet",
+		},
+		{
+			name: "StorageClass yaml returns error",
+			kind: "StorageClass",
+		},
+		{
+			name: "PersistentVolume yaml returns error",
+			kind: "PersistentVolume",
+		},
+		{
+			name: "Namespace yaml returns error",
+			kind: "Namespace",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlStr := "apiVersion: v1\nkind: " + tt.kind + "\nmetadata:\n  name: test\ndata:\n  test-key: test-value\n"
+			expectedErr := "mocking error return for " + tt.kind
+
+			// Set the yamlUnmarshal function to return an error when the kind is tt.kind
+			yamlUnmarshal = func(data []byte, v interface{}) error {
+				vType := reflect.TypeOf(v)
+				fmt.Printf("v kind is: %s \n", vType.Elem().String())
+
+				if vType.Elem().String() == "v1."+tt.kind {
+					return errors.New(expectedErr)
+				}
+				return yaml.Unmarshal(data, v)
+			}
+
+			// Call GetModuleComponentObj
+			_, err := GetModuleComponentObj([]byte(yamlStr))
+
+			if err == nil {
+				t.Errorf("Expected an error, but got nil instead")
+			}
+
+			// Check if the error message contains the expected substring
+			if !strings.Contains(err.Error(), expectedErr) {
+				t.Errorf("Expected error message to contain %s, but got '%s' instead", expectedErr, err.Error())
+			}
+		})
+	}
+	// Revert back to the original function
+	yamlUnmarshal = defaultYamlUnmarshal
+}
+
+// This function is used to test the GetDriverYaml function
+// when yamlUnmarshal returns an error
+func TestGetDriverYamlWithErrors(t *testing.T) {
+	// Save the original function so we can revert after this test
+	defaultYamlUnmarshal := yamlUnmarshal
+
+	// Define the test case
+	testCases := []struct {
+		name string
+		kind string
+		set  string
+	}{
+		{
+			name: "TypeMeta yaml returns error",
+			kind: "TypeMeta",
+			set:  "Deployment",
+		},
+
+		{
+			name: "ClusterRole yaml returns error",
+			kind: "ClusterRole",
+			set:  "Deployment",
+		},
+		{
+			name: "ClusterRoleBinding yaml returns error",
+			kind: "ClusterRoleBinding",
+			set:  "Deployment",
+		},
+		{
+			name: "ServiceAccount yaml returns error",
+			kind: "ServiceAccount",
+			set:  "Deployment",
+		},
+		{
+			name: "DeploymentApplyConfiguration yaml returns error",
+			kind: "DeploymentApplyConfiguration",
+			set:  "Deployment",
+		},
+		{
+			name: "DaemonSetApplyConfiguration yaml returns error",
+			kind: "DaemonSetApplyConfiguration",
+			set:  "DaemonSet",
+		},
+		{
+			name: "Invalid kind returns error",
+			kind: "Service",
+			set:  "Invalid",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlStr := "apiVersion: v1\nkind: " + tt.kind + "\nmetadata:\n  name: test\ndata:\n  test-key: test-value\n"
+			expectedErr := "mocking error return for " + tt.kind
+			if tt.set == "Invalid" {
+				expectedErr = "unsupported kind " + tt.set
+			}
+
+			// Set the yamlUnmarshal function to return an error when the kind is tt.kind
+			yamlUnmarshal = func(data []byte, v interface{}) error {
+				vType := reflect.TypeOf(v)
+				fmt.Printf("v kind is: %s \n", vType.Elem().String())
+
+				if vType.Elem().String() == "v1."+tt.kind {
+					return errors.New(expectedErr)
+				}
+				return yaml.Unmarshal(data, v)
+			}
+
+			// Call GetModuleComponentObj
+			_, err := GetDriverYaml(yamlStr, tt.set)
+
+			if err == nil {
+				t.Errorf("Expected an error, but got nil instead")
+			}
+
+			// Check if the error message contains the expected substring
+			if !strings.Contains(err.Error(), expectedErr) {
+				t.Errorf("Expected error message to contain %s, but got '%s' instead", expectedErr, err.Error())
+			}
+		})
+	}
+	// Revert back to the original function
+	yamlUnmarshal = defaultYamlUnmarshal
+}
+
 func TestGetDriverYaml(t *testing.T) {
 	// Test case: Valid YAML - DaemonSet
 	// TODO: This string does not cover all elements necessary to build the rbac object.
@@ -2240,11 +2546,31 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 			expectedVersion:  "",
 			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
 		},
+		{
+			name:             "GetModuleDefaultVersion when yamlUnmarshal returns an error",
+			driverConfig:     "v2.13.0",
+			driverType:       csmv1.PowerScale,
+			moduleType:       csmv1.Observability,
+			path:             "../../operatorconfig",
+			expectedVersion:  "",
+			expectedErrorMsg: "mock error from yamlUnmarshal",
+		},
 	}
+
+	// Save the original function so we can revert after each test case
+	defaultYamlUnmarshal := yamlUnmarshal
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
+			if strings.Contains(tt.name, "yamlUnmarshal") {
+				yamlUnmarshal = func(_ []byte, _ interface{}) error {
+					return fmt.Errorf("mock error from yamlUnmarshal")
+				}
+			}
 			version, err := GetModuleDefaultVersion(tt.driverConfig, tt.driverType, tt.moduleType, tt.path)
+			// Revert to the original function
+			yamlUnmarshal = defaultYamlUnmarshal
 			if tt.expectedErrorMsg != "" {
 				if err == nil {
 					t.Errorf("expected error containing %q, but got nil", tt.expectedErrorMsg)
@@ -2372,82 +2698,6 @@ func TestMinVersionCheck(t *testing.T) {
 			if result != tt.expectedResult {
 				t.Errorf("expected result %v, but got %v", tt.expectedResult, result)
 			}
-		})
-	}
-}
-
-func TestGetClusterIDs(t *testing.T) {
-	tests := []struct {
-		name           string
-		replica        csmv1.Module
-		expectedOutput []string
-	}{
-		{
-			name: "valid version",
-			replica: csmv1.Module{
-				Components: []csmv1.ContainerTemplate{
-					{
-						Name: ReplicationControllerManager,
-						Envs: []corev1.EnvVar{
-							{
-								Name:  "TARGET_CLUSTERS_IDS",
-								Value: "cluster1,cluster2",
-							},
-						},
-					},
-				},
-			},
-			expectedOutput: []string{"cluster1", "cluster2"},
-		},
-		{
-			name: "invalid version",
-			replica: csmv1.Module{
-				Components: []csmv1.ContainerTemplate{
-					{
-						Name: ReplicationControllerManager,
-						Envs: []corev1.EnvVar{
-							{
-								Name:  "TARGET_CLUSTERS_IDS",
-								Value: "cluster1,cluster2,cluster3",
-							},
-						},
-					},
-				},
-			},
-			expectedOutput: []string{"cluster1", "cluster2", "cluster3"},
-		},
-		{
-			name: "valid version - nil replica components",
-			replica: csmv1.Module{
-				Components: nil,
-			},
-			expectedOutput: []string{"self"},
-		},
-		{
-			name: "valid version - empty cluster list",
-			replica: csmv1.Module{
-				Components: []csmv1.ContainerTemplate{
-					{
-						Name: ReplicationControllerManager,
-						Envs: []corev1.EnvVar{
-							{
-								Name:  "TARGET_CLUSTERS_IDS",
-								Value: "",
-							},
-						},
-					},
-				},
-			},
-			expectedOutput: []string{"self"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			output := getClusterIDs(ctx, tt.replica)
-
-			assert.Equal(t, output, tt.expectedOutput)
 		})
 	}
 }
@@ -3043,5 +3293,105 @@ func TestReplaceAllApplyCustomEnvs(t *testing.T) {
 	for _, test := range tests {
 		result := ReplaceAllApplyCustomEnvs(test.driverEnv, test.commonEnv, test.nrEnv)
 		assert.Equal(t, test.expectedEnv, result)
+	}
+}
+
+func Test_getUpgradeInfo(t *testing.T) {
+	type args struct {
+		ctx            context.Context
+		operatorConfig OperatorConfig
+		csmCompType    csmv1.ModuleType
+		oldVersion     string
+	}
+	tests := []struct {
+		name        string
+		args        args
+		want        string
+		expectedErr string
+	}{
+		{
+			name: "yamlUnmarshal returns error",
+			args: args{
+				ctx: context.Background(),
+				operatorConfig: OperatorConfig{
+					ConfigDirectory: "../../operatorconfig",
+				},
+				csmCompType: csmv1.Authorization,
+				oldVersion:  "v2.1.0",
+			},
+			want:        "",
+			expectedErr: "mock yamlUnmarshal error",
+		},
+	}
+
+	// Save the original function so we can revert after this test
+	defaultYamlUnmarshal := yamlUnmarshal
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
+			if strings.Contains(tt.name, "yamlUnmarshal") {
+				yamlUnmarshal = func(_ []byte, _ interface{}) error {
+					return fmt.Errorf("mock yamlUnmarshal error")
+				}
+			}
+			got, err := getUpgradeInfo(tt.args.ctx, tt.args.operatorConfig, tt.args.csmCompType, tt.args.oldVersion)
+			// Revert to the original function
+			yamlUnmarshal = defaultYamlUnmarshal
+			if (err != nil) && err.Error() != tt.expectedErr {
+				t.Errorf("getUpgradeInfo() returned error = %v, but expected error to be: %v", err, tt.expectedErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("getUpgradeInfo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getDefaultComponents(t *testing.T) {
+	type args struct {
+		driverType csmv1.DriverType
+		module     csmv1.ModuleType
+		op         OperatorConfig
+	}
+	tests := []struct {
+		name        string
+		args        args
+		want        []csmv1.ContainerTemplate
+		expectedErr string
+	}{
+		{
+			name: "yamlUnmarshal returns error",
+			args: args{
+				driverType: csmv1.PowerFlex,
+				module:     csmv1.Observability,
+				op: OperatorConfig{
+					ConfigDirectory: "../../operatorconfig",
+				},
+			},
+			want:        nil,
+			expectedErr: "failed to unmarshal default-components.yaml for observability: mock yamlUnmarshal error",
+		},
+	}
+	defaultYamlUnmarshal := yamlUnmarshal
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
+			if strings.Contains(tt.name, "yamlUnmarshal") {
+				yamlUnmarshal = func(_ []byte, _ interface{}) error {
+					return fmt.Errorf("mock yamlUnmarshal error")
+				}
+			}
+			got, err := getDefaultComponents(tt.args.driverType, tt.args.module, tt.args.op)
+			// Revert to the original function
+			yamlUnmarshal = defaultYamlUnmarshal
+			if (err != nil) && err.Error() != tt.expectedErr {
+				t.Errorf("getDefaultComponents() returned error = %v, but expected error to be: %v", err, tt.expectedErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getDefaultComponents() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

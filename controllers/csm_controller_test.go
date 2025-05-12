@@ -1721,15 +1721,6 @@ func getReplicaModule() []csmv1.Module {
 				{
 					Name: utils.ReplicationSideCarName,
 				},
-				{
-					Name: utils.ReplicationControllerManager,
-					Envs: []corev1.EnvVar{
-						{
-							Name:  "TARGET_CLUSTERS_IDS",
-							Value: "skip-replication-cluster-check",
-						},
-					},
-				},
 			},
 		},
 	}
@@ -2625,4 +2616,12 @@ func (suite *CSMControllerTestSuite) TestZoneValidation2() {
 
 	err = reconciler.ZoneValidation(ctx, &csm)
 	assert.NotNil(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestReconcileReplicationCRDSReturnError() {
+	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	reconciler := suite.createReconciler()
+	err := reconciler.reconcileReplicationCRDS(ctx, utils.OperatorConfig{}, csm, suite.fakeClient)
+	assert.NotNil(suite.T(), err)
+	assert.ErrorContains(suite.T(), err, "unable to reconcile replication CRDs")
 }
