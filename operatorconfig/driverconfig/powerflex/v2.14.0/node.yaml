@@ -219,12 +219,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: X_CSI_SFTP_REPO_ADDRESS
-              value: "<CSI_SFTP_REPO_ADDRESS>"
-            - name: X_CSI_SFTP_REPO_USER
-              value: "<CSI_SFTP_REPO_USER>"
-            - name: MODULE_SIGCHECK
-              value: "0"
           volumeMounts:
             - name: vxflexos-config
               mountPath: /vxflexos-config
@@ -255,6 +249,12 @@ spec:
               value: "config"
             - name: HOST_DRV_CFG_PATH
               value: /opt/emc/scaleio/sdc/bin
+            - name: X_CSI_SFTP_REPO_ADDRESS
+              value: "<CSI_SFTP_REPO_ADDRESS>"
+            - name: X_CSI_SFTP_REPO_USER
+              value: "<CSI_SFTP_REPO_USER>"
+            - name: MODULE_SIGCHECK
+              value: "0"
           volumeMounts:
             - name: dev
               mountPath: /dev
