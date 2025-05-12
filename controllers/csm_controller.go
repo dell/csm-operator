@@ -917,25 +917,25 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update Roles
-	if err = rbac.SyncRole(ctx, node.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
+	if err = rbac.SyncRole(ctx, node.Rbac.Role, clusterClient.ClusterCTRLClient); err != nil {
 		return err
 	}
 
-	if err = rbac.SyncRole(ctx, controller.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
+	if err = rbac.SyncRole(ctx, controller.Rbac.Role, clusterClient.ClusterCTRLClient); err != nil {
 		return err
 	}
 
 	// Create/Update RoleBinding
-	if err = rbac.SyncRoleBindings(ctx, node.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
+	if err = rbac.SyncRoleBindings(ctx, node.Rbac.RoleBinding, clusterClient.ClusterCTRLClient); err != nil {
 		return err
 	}
 
-	if err = rbac.SyncRoleBindings(ctx, controller.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
+	if err = rbac.SyncRoleBindings(ctx, controller.Rbac.RoleBinding, clusterClient.ClusterCTRLClient); err != nil {
 		return err
 	}
 
 	// Create/Update CSIDriver
-	if err = csidriver.SyncCSIDriver(ctx, *driver, cluster.ClusterCTRLClient); err != nil {
+	if err = csidriver.SyncCSIDriver(ctx, *driver, clusterClient.ClusterCTRLClient); err != nil {
 		return err
 	}
 
