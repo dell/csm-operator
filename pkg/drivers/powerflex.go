@@ -70,10 +70,10 @@ const (
 	PowerFlexShowHTTP string = "<GOSCALEIO_SHOWHTTP>"
 
 	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
-	PowerFlexSftpRepoAddress string = "<CSI_SFTP_REPO_ADDRESS>"
+	PowerFlexSftpRepoAddress string = "<X_CSI_SFTP_REPO_ADDRESS>"
 
 	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
-	PowerFlexSftpRepoUser string = "<CSI_SFTP_REPO_USER>"
+	PowerFlexSftpRepoUser string = "<X_CSI_SFTP_REPO_USER>"
 
 	// PowerFlexSdcRepoEnabled - will be used to control the GOSCALEIO_SHOWHTTP variable
 	PowerFlexSdcRepoEnabled string = "<SDC_SFTP_REPO_ENABLED>"

@@ -252,9 +252,9 @@ spec:
             - name: HOST_DRV_CFG_PATH
               value: /opt/emc/scaleio/sdc/bin
             - name: REPO_ADDRESS
-              value: "<CSI_SFTP_REPO_ADDRESS>"
+              value: "<X_CSI_SFTP_REPO_ADDRESS>"
             - name: REPO_USER
-              value: "<CSI_SFTP_REPO_USER>"
+              value: "<X_CSI_SFTP_REPO_USER>"
             - name: MODULE_SIGCHECK
               value: "0"
           volumeMounts:
