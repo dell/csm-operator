@@ -78,8 +78,10 @@ const (
 	// PowerFlexSdcRepoEnabled - will be used to control the GOSCALEIO_SHOWHTTP variable
 	PowerFlexSdcRepoEnabled string = "<SDC_SFTP_REPO_ENABLED>"
 
+	// PowerFlexSFTPSecretVolumeMount - placeholder for sftp keys secret mount block: @TODO Needs to be refactored to remove mount as key/object
 	PowerFlexSFTPSecretVolumeMount = "            - name: sftp-keys\n              mountPath: /config/"
 
+	// PowerFlexSFTPSecretVolume - placeholder for sftp keys secret mount block
 	PowerFlexSFTPSecretVolume = "        - name: sftp-keys\n          projected:\n            defaultMode: 384\n            sources:\n            - secret:\n                name: sdcsftprepo-private-secret\n            - secret:\n                name: sdcsftprepo-public-secret"
 )
 
@@ -389,10 +391,10 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoUser, sftpRepoUser)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
 
-		if sftpEnabled == "false" {
+		/*if sftpEnabled == "false" {
 			yamlString = strings.ReplaceAll(yamlString, PowerFlexSFTPSecretVolumeMount, "")
 			yamlString = strings.ReplaceAll(yamlString, PowerFlexSFTPSecretVolume, "")
-		}
+		}*/
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
