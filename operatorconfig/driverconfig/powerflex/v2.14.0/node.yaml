@@ -240,8 +240,8 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-               source /data/node_mdms.txt
-               /files/scripts/init.sh
+              source /data/node_mdms.txt
+              /files/scripts/init.sh
           env:
             - name: NODENAME
               valueFrom:
@@ -317,10 +317,10 @@ spec:
           projected:
             defaultMode: 384
             sources:
-            - secret:
-                name: sdcsftprepo-private-secret
-            - secret:
-                name: sdcsftprepo-public-secret
+              - secret:
+                  name: sdcsftprepo-private-secret
+              - secret:
+                  name: sdcsftprepo-public-secret
         - name: os-release
           hostPath:
             path: /etc/os-release
