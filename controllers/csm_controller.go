@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -605,7 +606,7 @@ func (r *ContainerStorageModuleReconciler) addFinalizer(ctx context.Context, ins
 	return r.Update(ctx, instance)
 }
 
-func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx context.Context, newCR *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverConfig *DriverConfig) error {
+func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx context.Context, newCR *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, _ *DriverConfig) error {
 	log := logger.GetLogger(ctx)
 	log.Info("Checking if standalone modules need clean up")
 
@@ -629,22 +630,17 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 
 		// Check if replica needs to be uninstalled
 		if replicaEnabled(oldCR) && !replicaEnabled(newCR) {
-			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
+			clusterClient := utils.GetCluster(ctx, r)
 			if err != nil {
 				return err
 			}
-			for _, cluster := range clusterClients {
-				log.Infow("Deleting Replication controller", "clusterID:", cluster.ClusterID)
-				if err = modules.ReplicationManagerController(ctx, true, operatorConfig, *oldCR, cluster.ClusterCTRLClient); err != nil {
-					return err
-				}
-
-				// also uninstalled drivers in target clusters
-				if cluster.ClusterID != utils.DefaultSourceClusterID {
-					if err = removeDriverReplicaCluster(ctx, cluster, driverConfig); err != nil {
-						return err
-					}
-				}
+			log.Infow("Deleting Replication controller", "clusterID:", clusterClient.ClusterID)
+			if err = modules.ReplicationManagerController(ctx, true, operatorConfig, *oldCR, clusterClient.ClusterCTRLClient); err != nil {
+				return err
+			}
+			log.Infow("Deleting Replication CRDs", "clusterID:", clusterClient)
+			if err = modules.DeleteReplicationCrds(ctx, operatorConfig, *oldCR, clusterClient.ClusterCTRLClient); err != nil {
+				log.Warnf("Failed to delete replication CRDs: %v", err)
 			}
 		}
 		// check if observability needs to be uninstalled
@@ -662,17 +658,14 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 			}
 		}
 		if (oldObservabilityEnabled && !newObservabilityEnabled) || len(components) > 0 {
-			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
-			if err != nil {
+			clusterClient := utils.GetCluster(ctx, r)
+
+			// remove module observability
+			log.Infow("Deleting observability")
+			if err = r.reconcileObservability(ctx, true, operatorConfig, *oldCR, components, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient); err != nil {
 				return err
 			}
-			for _, cluster := range clusterClients {
-				// remove module observability
-				log.Infow("Deleting observability")
-				if err = r.reconcileObservability(ctx, true, operatorConfig, *oldCR, components, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
-					return err
-				}
-			}
+
 		}
 
 		// check if application mobility needs to be uninstalled
@@ -680,17 +673,13 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 		newApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, csmv1.ApplicationMobility)
 
 		if oldApplicationmobilityEnabled && !newApplicationmobilityEnabled {
-			_, clusterClients, err := utils.GetDefaultClusters(ctx, *oldCR, r)
-			if err != nil {
+			clusterClient := utils.GetCluster(ctx, r)
+
+			log.Infow("Deleting application mobility")
+			if err := r.reconcileAppMobility(ctx, true, operatorConfig, *oldCR, clusterClient.ClusterCTRLClient); err != nil {
 				return err
 			}
 
-			for _, cluster := range clusterClients {
-				log.Infow("Deleting application mobility")
-				if err := r.reconcileAppMobility(ctx, true, operatorConfig, *oldCR, cluster.ClusterCTRLClient); err != nil {
-					return err
-				}
-			}
 		}
 	}
 
@@ -740,6 +729,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		log.Infow("Trying Create/Update reverseproxy...")
 		if err := r.reconcileReverseProxyServer(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy reverseproxy proxy server: %v", err)
+		}
+	}
+
+	// Install/update the Replication CRDs
+	if replicationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Replication); replicationEnabled {
+		log.Infow("Create/Update Replication CRDs")
+		if err := r.reconcileReplicationCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
+			return fmt.Errorf("failed to deploy replication CRDs: %v", err)
 		}
 	}
 
@@ -811,10 +808,8 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 	}
 
-	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, cr, r)
-	if err != nil {
-		return err
-	}
+	clusterClient := utils.GetCluster(ctx, r)
+	replicationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Replication)
 
 	for _, m := range cr.Spec.Modules {
 		if m.Enabled {
@@ -883,80 +878,77 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 	}
 
-	for _, cluster := range clusterClients {
-		log.Infof("Starting SYNC for %s cluster", cluster.ClusterID)
-		// Create/Update ServiceAccount
-		if err = serviceaccount.SyncServiceAccount(ctx, node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+	log.Infof("Starting SYNC for %s cluster", clusterClient.ClusterID)
+	// Create/Update ServiceAccount
+	if err = serviceaccount.SyncServiceAccount(ctx, node.Rbac.ServiceAccount, clusterClient.ClusterCTRLClient); err != nil {
+		return err
+	}
+
+	if err = serviceaccount.SyncServiceAccount(ctx, controller.Rbac.ServiceAccount, clusterClient.ClusterCTRLClient); err != nil {
+		return err
+	}
+
+	// Create/Update ClusterRoles
+	if err = rbac.SyncClusterRole(ctx, node.Rbac.ClusterRole, clusterClient.ClusterCTRLClient); err != nil {
+		return err
+	}
+
+	if err = rbac.SyncClusterRole(ctx, controller.Rbac.ClusterRole, clusterClient.ClusterCTRLClient); err != nil {
+		return err
+	}
+
+	// Create/Update ClusterRoleBinding
+	if err = rbac.SyncClusterRoleBindings(ctx, node.Rbac.ClusterRoleBinding, clusterClient.ClusterCTRLClient); err != nil {
+		return err
+	}
+
+	if err = rbac.SyncClusterRoleBindings(ctx, controller.Rbac.ClusterRoleBinding, clusterClient.ClusterCTRLClient); err != nil {
+		return err
+	}
+
+	// Create/Update CSIDriver
+	if err = csidriver.SyncCSIDriver(ctx, *driver, clusterClient.ClusterCTRLClient); err != nil {
+		return err
+	}
+
+	// Create/Update ConfigMap
+	if err = configmap.SyncConfigMap(ctx, *configMap, clusterClient.ClusterCTRLClient); err != nil {
+		return err
+	}
+
+	// Create/Update Deployment
+	if err = deployment.SyncDeployment(ctx, controller.Deployment, clusterClient.ClusterK8sClient, cr.Name); err != nil {
+		return err
+	}
+
+	// Create/Update DeamonSet, except for auth proxy
+	if !authorizationEnabled {
+		if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, clusterClient.ClusterK8sClient, cr.Name); err != nil {
 			return err
 		}
+	}
 
-		if err = serviceaccount.SyncServiceAccount(ctx, controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+	if replicationEnabled {
+		// This will also create the dell-replication-controller namespace.
+		if err = modules.ReplicationManagerController(ctx, false, operatorConfig, cr, clusterClient.ClusterCTRLClient); err != nil {
+			return fmt.Errorf("failed to deploy replication controller: %v", err)
+		}
+
+		// Create ConfigMap if it does not already exist.
+		// ConfigMap requires namespace to be created.
+		_, err = modules.CreateReplicationConfigmap(ctx, cr, operatorConfig, ctrlClient)
+		if err != nil {
+			return fmt.Errorf("injecting replication into replication configmap: %v", err)
+		}
+	}
+
+	// if Observability is enabled, create or update obs components: topology, metrics of PowerScale and PowerFlex
+	if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Observability); observabilityEnabled {
+		log.Infow("Create/Update observability")
+
+		if err = r.reconcileObservability(ctx, false, operatorConfig, cr, nil, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient); err != nil {
 			return err
 		}
-
-		// Create/Update ClusterRoles
-		if err = rbac.SyncClusterRole(ctx, node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
-			return err
-		}
-
-		if err = rbac.SyncClusterRole(ctx, controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
-			return err
-		}
-
-		// Create/Update ClusterRoleBinding
-		if err = rbac.SyncClusterRoleBindings(ctx, node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
-			return err
-		}
-
-		if err = rbac.SyncClusterRoleBindings(ctx, controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
-			return err
-		}
-
-		// Create/Update CSIDriver
-		if err = csidriver.SyncCSIDriver(ctx, *driver, cluster.ClusterCTRLClient); err != nil {
-			return err
-		}
-
-		// Create/Update ConfigMap
-		if err = configmap.SyncConfigMap(ctx, *configMap, cluster.ClusterCTRLClient); err != nil {
-			return err
-		}
-
-		// Create/Update Deployment
-		if err = deployment.SyncDeployment(ctx, controller.Deployment, cluster.ClusterK8sClient, cr.Name); err != nil {
-			return err
-		}
-
-		// Create/Update DeamonSet, except for auth proxy
-		if !authorizationEnabled {
-			if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, cluster.ClusterK8sClient, cr.Name); err != nil {
-				return err
-			}
-		}
-
-		if replicationEnabled {
-			// This will also create the dell-replication-controller namespace.
-			if err = modules.ReplicationManagerController(ctx, false, operatorConfig, cr, cluster.ClusterCTRLClient); err != nil {
-				return fmt.Errorf("failed to deploy replication controller: %v", err)
-			}
-
-			// Create ConfigMap if it does not already exist.
-			// ConfigMap requires namespace to be created.
-			_, err = modules.CreateReplicationConfigmap(ctx, cr, operatorConfig, ctrlClient)
-			if err != nil {
-				return fmt.Errorf("injecting replication into replication configmap: %v", err)
-			}
-		}
-
-		// if Observability is enabled, create or update obs components: topology, metrics of PowerScale and PowerFlex
-		if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Observability); observabilityEnabled {
-			log.Infow("Create/Update observability")
-
-			if err = r.reconcileObservability(ctx, false, operatorConfig, cr, nil, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	return nil
@@ -1137,6 +1129,13 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 	return nil
 }
 
+func (r *ContainerStorageModuleReconciler) reconcileReplicationCRDS(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	if err := modules.ReplicationCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
+		return fmt.Errorf("unable to reconcile replication CRDs: %v", err)
+	}
+	return nil
+}
+
 func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
 	operatorConfig utils.OperatorConfig,
@@ -1203,7 +1202,7 @@ func (r *ContainerStorageModuleReconciler) reconcileReverseProxyServer(ctx conte
 	return nil
 }
 
-func removeDriverReplicaCluster(ctx context.Context, cluster utils.ReplicaCluster, driverConfig *DriverConfig) error {
+func removeDriverFromCluster(ctx context.Context, cluster utils.ClusterConfig, driverConfig *DriverConfig) error {
 	log := logger.GetLogger(ctx)
 	var err error
 
@@ -1297,38 +1296,43 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return nil
 	}
 
-	replicationEnabled, clusterClients, err := utils.GetDefaultClusters(ctx, instance, r)
+	clusterClient := utils.GetCluster(ctx, r)
 	if err != nil {
 		return err
 	}
-	for _, cluster := range clusterClients {
-		if err = removeDriverReplicaCluster(ctx, cluster, driverConfig); err != nil {
+	if err = removeDriverFromCluster(ctx, clusterClient, driverConfig); err != nil {
+		return err
+	}
+	replicationEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.Replication)
+	if replicationEnabled {
+		log.Infow("Deleting Replication controller")
+		if err = modules.ReplicationManagerController(ctx, true, operatorConfig, instance, clusterClient.ClusterCTRLClient); err != nil {
 			return err
 		}
-		if replicationEnabled {
-			log.Infow("Deleting Replication controller")
-			if err = modules.ReplicationManagerController(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
-				return err
-			}
-			log.Infow("Deleting Replication configmap")
-			if err = modules.DeleteReplicationConfigmap(cluster.ClusterCTRLClient); err != nil {
-				return err
-			}
+		log.Infow("Deleting Replication configmap")
+		if err = modules.DeleteReplicationConfigmap(clusterClient.ClusterCTRLClient); err != nil {
+			return err
 		}
 
-		// remove module observability
-		if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.Observability); observabilityEnabled {
-			log.Infow("Deleting observability")
-			if err = r.reconcileObservability(ctx, true, operatorConfig, instance, nil, cluster.ClusterCTRLClient, cluster.ClusterK8sClient); err != nil {
-				return err
-			}
+		log.Infow("Deleting Replication CRDs")
+		if err = modules.DeleteReplicationCrds(ctx, operatorConfig, instance, clusterClient.ClusterCTRLClient); err != nil {
+			// failure here should not block  the deletion of the other components
+			log.Warnf("unable to delete replication CRDs: %v", err)
 		}
+	}
 
-		if instance.GetDriverType() == csmv1.PowerMax && modules.IsReverseProxySidecar() {
-			log.Info("Removing CSI ReverseProxy Service")
-			if err := modules.ReverseProxyStartService(ctx, true, operatorConfig, instance, cluster.ClusterCTRLClient); err != nil {
-				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
-			}
+	// remove module observability
+	if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.Observability); observabilityEnabled {
+		log.Infow("Deleting observability")
+		if err = r.reconcileObservability(ctx, true, operatorConfig, instance, nil, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient); err != nil {
+			return err
+		}
+	}
+
+	if instance.GetDriverType() == csmv1.PowerMax && modules.IsReverseProxySidecar() {
+		log.Info("Removing CSI ReverseProxy Service")
+		if err := modules.ReverseProxyStartService(ctx, true, operatorConfig, instance, clusterClient.ClusterCTRLClient); err != nil {
+			return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
 		}
 	}
 
@@ -1502,7 +1506,9 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 	if configVersionExists {
 		if cr.HasModule(csmv1.AuthorizationServer) {
 			newVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-			if newVersion == "v2.0.0-alpha" {
+			if strings.HasPrefix(oldVersion, "v1.") && strings.HasPrefix(newVersion, "v2.") ||
+				strings.HasPrefix(oldVersion, "v2.") && strings.HasPrefix(newVersion, "v1.") {
+				log.Error("Cannot switch between Authorization v1 and v2")
 				return false, nil
 			}
 			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)

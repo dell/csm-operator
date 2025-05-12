@@ -156,6 +156,10 @@ spec:
         # Examples: 192, 256
         - name: X_CSI_MAX_PATH_LIMIT
           value: "192"
+        # X_CSI_VOL_PREFIX: this parameter specifies the volume prefix used for the names of PersistentVolumes created.
+        # Default value: csivol
+        - name: X_CSI_VOL_PREFIX
+          value: "csivol"
       # nodeSelector: Define node selection constraints for pods of controller deployment.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -240,7 +244,6 @@ spec:
     sideCars:
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
-        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
       - name: registrar
@@ -313,11 +316,6 @@ spec:
           # Allowed values: string
           image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.12.0
           envs:
-            # TARGET_CLUSTERS_IDS: comma separated list of cluster IDs of the targets clusters. DO NOT include the source(wherever CSM Operator is deployed) cluster ID
-            # Set the value to "self" in case of stretched/single cluster configuration
-            # Allowed values: string
-            - name: "TARGET_CLUSTERS_IDS"
-              value: "target-cluster-1"
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
             # Default value: "debug"
