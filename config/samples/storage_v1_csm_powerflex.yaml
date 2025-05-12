@@ -210,9 +210,9 @@ spec:
         envs:
           - name: MDM
             value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
-          - name: X_CSI_SFTP_REPO_ADDRESS
+          - name: REPO_ADDRESS
             value: "sftp://0.0.0.0"  #SFTP/private repository address. Format: "protoctol://address"
-          - name: X_CSI_SFTP_REPO_USER
+          - name: REPO_USER
             value: "sdcRepoUser"  # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
