@@ -251,9 +251,9 @@ spec:
               value: "config"
             - name: HOST_DRV_CFG_PATH
               value: /opt/emc/scaleio/sdc/bin
-            - name: X_CSI_SFTP_REPO_ADDRESS
+            - name: REPO_ADDRESS
               value: "<CSI_SFTP_REPO_ADDRESS>"
-            - name: X_CSI_SFTP_REPO_USER
+            - name: REPO_USER
               value: "<CSI_SFTP_REPO_USER>"
             - name: MODULE_SIGCHECK
               value: "0"
@@ -318,9 +318,9 @@ spec:
             defaultMode: 384
             sources:
             - secret:
-                name: sdcrepo-private-secret
+                name: sdcsftprepo-private-secret
             - secret:
-                name: sdcrepo-public-secret
+                name: sdcsftprepo-public-secret
         - name: os-release
           hostPath:
             path: /etc/os-release
