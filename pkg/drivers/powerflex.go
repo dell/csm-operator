@@ -74,6 +74,9 @@ const (
 
 	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
 	PowerFlexSftpRepoUser string = "<CSI_SFTP_REPO_USER>"
+
+	// PowerFlexSdcRepoEnabled - will be used to control the GOSCALEIO_SHOWHTTP variable
+	PowerFlexSdcRepoEnabled string = "<SDC_SFTP_REPO_ENABLED>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -305,6 +308,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	showHTTP := "false"
 	sftpRepoAddress := "sftp://0.0.0.0"
 	sftpRepoUser := ""
+	sftpEnabled := ""
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -363,6 +367,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				if env.Name == "X_CSI_SFTP_REPO_USER" {
 					sftpRepoUser = env.Value
 				}
+				if env.Name == "SDC_SFTP_REPO_ENABLED" {
+					sftpEnabled = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiSdcEnabled, sdcEnabled)
@@ -376,6 +383,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoAddress, sftpRepoAddress)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoUser, sftpRepoUser)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
