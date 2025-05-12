@@ -284,10 +284,6 @@ metadata:
                   {
                     "envs": [
                       {
-                        "name": "TARGET_CLUSTERS_IDS",
-                        "value": "target-cluster-1"
-                      },
-                      {
                         "name": "REPLICATION_CTRL_LOG_LEVEL",
                         "value": "debug"
                       },
@@ -682,10 +678,6 @@ metadata:
                   },
                   {
                     "envs": [
-                      {
-                        "name": "TARGET_CLUSTERS_IDS",
-                        "value": "target-cluster-1"
-                      },
                       {
                         "name": "REPLICATION_CTRL_LOG_LEVEL",
                         "value": "debug"
@@ -1415,10 +1407,6 @@ metadata:
                   },
                   {
                     "envs": [
-                      {
-                        "name": "TARGET_CLUSTERS_IDS",
-                        "value": "target-cluster-1"
-                      },
                       {
                         "name": "REPLICATION_CTRL_LOG_LEVEL",
                         "value": "debug"
