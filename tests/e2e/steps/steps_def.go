@@ -59,7 +59,7 @@ var (
 		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
 	}
 	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
-	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
+	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "PSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "PSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "PSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "PSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "PSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "PSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "PSCALE_MULTI_AUTH_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSidecarMap     = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleEphemeralVolumeMap = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
@@ -68,7 +68,8 @@ var (
 	pmaxCredMap              = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
 	pmaxSecretMap            = map[string]string{
 		"REPLACE_USERNAME": "PMAX_USER", "REPLACE_PASSWORD": "PMAX_PASS", "REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT",
-		"REPLACE_ZONING_USERNAME": "PMAX_ZONING_USER", "REPLACE_ZONING_PASSWORD": "PMAX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PMAX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PMAX_ZONING_ENDPOINT"}
+		"REPLACE_ZONING_USERNAME": "PMAX_ZONING_USER", "REPLACE_ZONING_PASSWORD": "PMAX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PMAX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PMAX_ZONING_ENDPOINT",
+	}
 	pmaxAuthSidecarMap     = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	pmaxStorageMap         = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_RESOURCE_POOL": "PMAX_POOL_V1", "REPLACE_SERVICE_LEVEL": "PMAX_SERVICE_LEVEL"}
 	pmaxReverseProxyMap    = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
@@ -501,31 +502,27 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 		K8sClient: step.clientSet,
 	}
 
-	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
+	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+
+	// check observability in all clusters
+	if err := checkObservabilityRunningPods(context.TODO(), utils.ObservabilityNamespace, clusterClient.ClusterK8sClient); err != nil {
+		return fmt.Errorf("failed to check for observability installation in %s: %v", clusterClient.ClusterID, err)
+	}
+
+	// check observability's authorization
+	driverType := cr.Spec.Driver.CSIDriverType
+	dpApply, err := getApplyObservabilityDeployment(utils.ObservabilityNamespace, driverType, clusterClient.ClusterCTRLClient)
 	if err != nil {
 		return err
 	}
-	for _, cluster := range clusterClients {
-		// check observability in all clusters
-		if err := checkObservabilityRunningPods(context.TODO(), utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
-			return fmt.Errorf("failed to check for observability installation in %s: %v", cluster.ClusterID, err)
+	if authorizationEnabled, _ := utils.IsModuleEnabled(context.TODO(), *instance, csmv1.Authorization); authorizationEnabled {
+		if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
+			return fmt.Errorf("failed to check for observability authorization installation in %s: %v", clusterClient.ClusterID, err)
 		}
-
-		// check observability's authorization
-		driverType := cr.Spec.Driver.CSIDriverType
-		dpApply, err := getApplyObservabilityDeployment(utils.ObservabilityNamespace, driverType, cluster.ClusterCTRLClient)
-		if err != nil {
-			return err
-		}
-		if authorizationEnabled, _ := utils.IsModuleEnabled(context.TODO(), *instance, csmv1.Authorization); authorizationEnabled {
-			if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
-				return fmt.Errorf("failed to check for observability authorization installation in %s: %v", cluster.ClusterID, err)
-			}
-		} else {
-			for _, cnt := range dpApply.Spec.Template.Spec.Containers {
-				if *cnt.Name == authString {
-					return fmt.Errorf("found observability authorization in deployment: %v, err:%v", dpApply.Name, err)
-				}
+	} else {
+		for _, cnt := range dpApply.Spec.Template.Spec.Containers {
+			if *cnt.Name == authString {
+				return fmt.Errorf("found observability authorization in deployment: %v, err:%v", dpApply.Name, err)
 			}
 		}
 	}
@@ -540,15 +537,11 @@ func (step *Step) validateObservabilityNotInstalled(cr csmv1.ContainerStorageMod
 		K8sClient: step.clientSet,
 	}
 
-	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
-	if err != nil {
-		return err
-	}
-	for _, cluster := range clusterClients {
-		// check observability is not installed
-		if err := checkObservabilityNoRunningPods(context.TODO(), utils.ObservabilityNamespace, cluster.ClusterK8sClient); err != nil {
-			return fmt.Errorf("failed observability installation check %s: %v", cluster.ClusterID, err)
-		}
+	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+
+	// check observability is not installed
+	if err := checkObservabilityNoRunningPods(context.TODO(), utils.ObservabilityNamespace, clusterClient.ClusterK8sClient); err != nil {
+		return fmt.Errorf("failed observability installation check %s: %v", clusterClient.ClusterID, err)
 	}
 
 	return nil
@@ -581,20 +574,16 @@ func (step *Step) validateReplicationInstalled(cr csmv1.ContainerStorageModule) 
 		K8sClient: step.clientSet,
 	}
 
-	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
-	if err != nil {
-		return err
-	}
-	for _, cluster := range clusterClients {
-		// check replication controllers in all clusters
-		if err := checkAllRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
-			return fmt.Errorf("failed to check for  replication controllers installation in %s: %v", cluster.ClusterID, err)
-		}
+	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
 
-		// check driver deployment in all clusters
-		if err := checkAllRunningPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
-			return fmt.Errorf("failed while check for driver installation in %s: %v", cluster.ClusterID, err)
-		}
+	// check replication controllers in cluster
+	if err := checkAllRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, clusterClient.ClusterK8sClient); err != nil {
+		return fmt.Errorf("failed to check for  replication controllers installation in %s: %v", clusterClient.ClusterID, err)
+	}
+
+	// check driver deployment in cluster
+	if err := checkAllRunningPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient); err != nil {
+		return fmt.Errorf("failed while check for driver installation in %s: %v", clusterClient.ClusterID, err)
 	}
 
 	return nil
@@ -607,23 +596,11 @@ func (step *Step) validateReplicationNotInstalled(cr csmv1.ContainerStorageModul
 		K8sClient: step.clientSet,
 	}
 
-	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
-	if err != nil {
-		return err
-	}
-	for _, cluster := range clusterClients {
-		// check replication  controller is not installed
-		if err := checkNoRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, cluster.ClusterK8sClient); err != nil {
-			return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
-		}
+	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
 
-		// check no driver is not installed in target clusters
-		if cluster.ClusterID != utils.DefaultSourceClusterID {
-			if err := checkNoRunningPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
-				return fmt.Errorf("failed replica installation check %s: %v", cluster.ClusterID, err)
-			}
-		}
-
+	// check replication  controller is not installed
+	if err := checkNoRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, clusterClient.ClusterK8sClient); err != nil {
+		return fmt.Errorf("failed replica installation check %s: %v", clusterClient.ClusterID, err)
 	}
 
 	// check that replication sidecar is not in source cluster
@@ -1250,15 +1227,11 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 		K8sClient: step.clientSet,
 	}
 
-	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
-	if err != nil {
-		return err
-	}
-	for _, cluster := range clusterClients {
-		// check AuthorizationProxyServer in all clusters
-		if err := checkAuthorizationProxyServerPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
-			return fmt.Errorf("failed to check for AuthorizationProxyServer installation in %s: %v", cluster.ClusterID, err)
-		}
+	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+
+	// check AuthorizationProxyServer in all clusters
+	if err := checkAuthorizationProxyServerPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient); err != nil {
+		return fmt.Errorf("failed to check for AuthorizationProxyServer installation in %s: %v", clusterClient.ClusterID, err)
 	}
 
 	// provide few seconds for cluster to settle down
@@ -1273,15 +1246,11 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 		K8sClient: step.clientSet,
 	}
 
-	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
-	if err != nil {
-		return err
-	}
-	for _, cluster := range clusterClients {
-		// check AuthorizationProxyServer is not installed
-		if err := checkAuthorizationProxyServerNoRunningPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
-			return fmt.Errorf("failed AuthorizationProxyServer installation check %s: %v", cluster.ClusterID, err)
-		}
+	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+
+	// check AuthorizationProxyServer is not installed
+	if err := checkAuthorizationProxyServerNoRunningPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient); err != nil {
+		return fmt.Errorf("failed AuthorizationProxyServer installation check %s: %v", clusterClient.ClusterID, err)
 	}
 
 	return nil
@@ -1304,14 +1273,10 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 		K8sClient: step.clientSet,
 	}
 
-	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
-	if err != nil {
-		return err
-	}
-	for _, cluster := range clusterClients {
-		if err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient); err != nil {
-			return fmt.Errorf("failed to check for App-mob installation in %s: %v", cluster.ClusterID, err)
-		}
+	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+
+	if err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient); err != nil {
+		return fmt.Errorf("failed to check for App-mob installation in %s: %v", clusterClient.ClusterID, err)
 	}
 
 	// provide few seconds for cluster to settle down
@@ -1960,17 +1925,13 @@ func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStor
 		K8sClient: step.clientSet,
 	}
 
-	_, clusterClients, err := utils.GetDefaultClusters(context.TODO(), cr, &fakeReconcile)
-	if err != nil {
-		return err
-	}
-	for _, cluster := range clusterClients {
-		err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, cluster.ClusterK8sClient)
-		if err == nil {
-			return fmt.Errorf("AM pods found in namespace: %s", cr.Namespace)
-		}
+	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
 
+	err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient)
+	if err == nil {
+		return fmt.Errorf("AM pods found in namespace: %s", cr.Namespace)
 	}
+
 	fmt.Println("All AM pods removed ")
 	return nil
 }
