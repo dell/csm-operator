@@ -17,6 +17,7 @@ CATALOG_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-catalog
 # Bundle Version is the semantic version(required by operator-sdk)
 BUNDLE_VERSION ?= 1.9.0
 
+# Operator Version is the semantic version(required by operator-sdk)
 VERSION ?= v1.9.0
 
 # Timestamp local builds
