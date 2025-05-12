@@ -394,11 +394,6 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoUser, sftpRepoUser)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
 
-		/*if sftpEnabled == "false" {
-			yamlString = strings.ReplaceAll(yamlString, PowerFlexSFTPSecretVolumeMount, "")
-			yamlString = strings.ReplaceAll(yamlString, PowerFlexSFTPSecretVolume, "")
-		}*/
-
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
@@ -527,10 +522,10 @@ func RemoveInitVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName 
 			break
 		}
 	}
-	for c := range podTemplate.Spec.Containers {
+	for c := range podTemplate.Spec.InitContainers {
 		for i, volMount := range podTemplate.Spec.InitContainers[c].VolumeMounts {
 			if volMount.Name != nil && *volMount.Name == volumeName {
-				podTemplate.Spec.Containers[c].VolumeMounts = append(podTemplate.Spec.Containers[c].VolumeMounts[0:i], podTemplate.Spec.Containers[c].VolumeMounts[i+1:]...)
+				podTemplate.Spec.InitContainers[c].VolumeMounts = append(podTemplate.Spec.InitContainers[c].VolumeMounts[0:i], podTemplate.Spec.InitContainers[c].VolumeMounts[i+1:]...)
 				return nil
 			}
 		}
