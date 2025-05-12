@@ -282,6 +282,10 @@ spec:
               value: false
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_MULTI_NAS_FAILURE_THRESHOLD
+              value: "5"
+            - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
+              value: "5m"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
