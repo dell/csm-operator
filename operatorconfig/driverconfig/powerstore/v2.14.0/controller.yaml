@@ -276,6 +276,10 @@ spec:
               value: <X_CSI_NFS_CLIENT_PORT>
             - name: X_CSI_NFS_SERVER_PORT
               value: <X_CSI_NFS_SERVER_PORT>
+            - name: X_CSI_MULTI_NAS_FAILURE_THRESHOLD
+              value: "5"
+            - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
+              value: "5m"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

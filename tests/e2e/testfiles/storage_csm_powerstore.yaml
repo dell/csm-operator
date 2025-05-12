@@ -54,6 +54,18 @@ spec:
         args: ["--monitor-interval=60s"]
     controller:
       envs:
+        # X_CSI_MULTI_NAS_FAILURE_THRESHOLD: Number of consecutive FS creation failures after which a NAS is put into cooldown.
+        # If a NAS is in cooldown, it will not be considered for new FS creation attempts for cooldown period amount of time.
+        # Allowed values: n, where n >= 0
+        # Default value: "5"
+        - name: X_CSI_MULTI_NAS_FAILURE_THRESHOLD
+          value: "5"
+        # X_CSI_MULTI_NAS_COOLDOWN_PERIOD: Duration for which a NAS remains in cooldown once the threshold is reached.
+        # During this period, the NAS will not be considered for new FS creation attempts.
+        # Allowed values: Number followed by unit (s,m,h) e.g. 60s,1m,2m,3m,...,1h etc
+        # Default value: "5m"
+        - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
+          value: "5m"
         # X_CSI_NFS_ACLS: enables setting permissions on NFS mount directory
         # This value will be the default value if a storage class and array config in secret
         # do not contain the NFS ACL (nfsAcls) parameter specified
