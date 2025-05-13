@@ -214,7 +214,7 @@ spec:
           - name: MDM
             value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
           - name: REPO_ADDRESS
-            value: "sftp://0.0.0.0"  #SFTP/private repository address. Format: "protoctol://address"
+            value: "sftp://0.0.0.0"  # SFTP/private repository address. Format: "protoctol://address"
           - name: REPO_USER
             value: "sdcRepoUser"  # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
