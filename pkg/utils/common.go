@@ -16,6 +16,7 @@ import (
 	"context"
 	"sync/atomic"
 
+	"github.com/stretchr/testify/mock"
 	"k8s.io/client-go/kubernetes"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -42,6 +43,7 @@ type FakeReconcileCSM struct {
 
 // MockClient is a mock implementation of the client.Client interface for testing purposes.
 type MockClient struct {
+	mock.Mock
 	crclient.Client
 	GetFunc    func(ctx context.Context, key crclient.ObjectKey, obj crclient.Object, opts ...crclient.GetOption) error
 	CreateFunc func(ctx context.Context, obj crclient.Object, opts ...crclient.CreateOption) error
@@ -87,4 +89,12 @@ func (m *MockClient) Update(ctx context.Context, obj crclient.Object, opts ...cr
 		return m.UpdateFunc(ctx, obj, opts...)
 	}
 	return nil
+}
+
+func (m *MockClient) Delete(ctx context.Context, obj crclient.Object, opts ...crclient.DeleteOption) error {
+	args := m.Called(ctx, obj, opts)
+	if args.Get(0) == nil {
+		return nil
+	}
+	return args.Error(0)
 }

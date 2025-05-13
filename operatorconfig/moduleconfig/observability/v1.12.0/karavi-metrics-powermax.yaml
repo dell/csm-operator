@@ -17,13 +17,7 @@ rules:
     verbs: ["list"]
   - apiGroups: [""]
     resources: ["endpoints"]
-    verbs: ["*"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["list", "watch", "get"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["get", "watch", "list", "delete", "update", "create"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -35,6 +29,33 @@ subjects:
     namespace: karavi
 roleRef:
   kind: ClusterRole
+  name: karavi-metrics-powermax-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: karavi-metrics-powermax-controller
+  namespace: karavi
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["list", "watch", "get"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: karavi-metrics-powermax-controller
+  namespace: karavi
+subjects:
+  - kind: ServiceAccount
+    name: karavi-metrics-powermax-controller
+    namespace: karavi
+roleRef:
+  kind: Role
   name: karavi-metrics-powermax-controller
   apiGroup: rbac.authorization.k8s.io
 ---

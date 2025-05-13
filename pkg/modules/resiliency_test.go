@@ -180,6 +180,9 @@ func TestResiliencyInjectClusterRole(t *testing.T) {
 			}
 			return false, controllerYAML.Rbac.ClusterRole, tmpOperatorConfig, customResource
 		},
+		"failure - getResiliencyModule error": func(*testing.T) (bool, rbacv1.ClusterRole, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+			return false, rbacv1.ClusterRole{}, operatorConfig, csmv1.ContainerStorageModule{}
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -190,6 +193,46 @@ func TestResiliencyInjectClusterRole(t *testing.T) {
 				if newClusterRole == nil {
 					panic(err)
 				}
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestResiliencyInjectRole(t *testing.T) {
+	ctx := context.Background()
+	c := &utils.MockClient{}
+	tests := map[string]func(t *testing.T) (bool, rbacv1.Role, utils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client){
+		"success - greenfield injection": func(*testing.T) (bool, rbacv1.Role, utils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+			if err != nil {
+				panic(err)
+			}
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", c)
+			if err != nil {
+				panic(err)
+			}
+			return true, nodeYAML.Rbac.Role, operatorConfig, customResource, "node.yaml", c
+		},
+		"failure - getResiliencyModule error": func(*testing.T) (bool, rbacv1.Role, utils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+			return false, rbacv1.Role{}, operatorConfig, csmv1.ContainerStorageModule{}, "node.yaml", c
+		},
+		"success - mode is controller": func(*testing.T) (bool, rbacv1.Role, utils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+			return true, rbacv1.Role{}, operatorConfig, csmv1.ContainerStorageModule{}, "node.yaml", c
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, role, opConfig, cr, _, _ := tc(t)
+			newRole, err := ResiliencyInjectRole(role, cr, opConfig, "node")
+			if name == "success - mode is controller" {
+				newRole, err = ResiliencyInjectRole(role, cr, opConfig, "controller")
+			}
+
+			if success {
+				assert.NoError(t, err)
+				assert.NotNil(t, newRole)
 			} else {
 				assert.Error(t, err)
 			}
