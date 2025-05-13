@@ -688,3 +688,92 @@ func TestRemoveVolume(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveInitVolume(t *testing.T) {
+	volumeName := ScaleioBinPath
+	differentVolumeName := "different-volume-name"
+	containerName := "driver"
+	tests := []struct {
+		name          string
+		configuration *v1.DaemonSetApplyConfiguration
+		wantErr       bool
+	}{
+		{
+			name: "Remove init volume and mount",
+			configuration: &v1.DaemonSetApplyConfiguration{
+				Spec: &v1.DaemonSetSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{
+							Volumes: []acorev1.VolumeApplyConfiguration{
+								{
+									Name: &volumeName,
+								},
+							},
+							InitContainers: []acorev1.ContainerApplyConfiguration{
+								{
+									Name: &containerName,
+									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+										{
+											Name: &volumeName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "RemoveVolume called with a daemonset that doesn't include the volume",
+			configuration: &v1.DaemonSetApplyConfiguration{
+				Spec: &v1.DaemonSetSpecApplyConfiguration{
+					Template: &acorev1.PodTemplateSpecApplyConfiguration{
+						Spec: &acorev1.PodSpecApplyConfiguration{
+							Volumes: []acorev1.VolumeApplyConfiguration{
+								{
+									Name: &differentVolumeName,
+								},
+							},
+							InitContainers: []acorev1.ContainerApplyConfiguration{
+								{
+									Name: &containerName,
+									VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+										{
+											Name: &differentVolumeName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:          "RemoveVolume called with nil daemonset",
+			configuration: nil,
+			wantErr:       true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := RemoveInitVolume(tt.configuration, volumeName); (err != nil) != tt.wantErr {
+				t.Errorf("RemoveVolume() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			// check that the volume and volume mount were removed
+			if !tt.wantErr {
+				for i := range tt.configuration.Spec.Template.Spec.Volumes {
+					assert.NotEqual(t, *tt.configuration.Spec.Template.Spec.Volumes[i].Name, volumeName)
+				}
+				for c := range tt.configuration.Spec.Template.Spec.Containers {
+					for i := range tt.configuration.Spec.Template.Spec.Containers[c].VolumeMounts {
+						assert.NotEqual(t, *tt.configuration.Spec.Template.Spec.Containers[c].VolumeMounts[i].Name, volumeName)
+					}
+				}
+			}
+		})
+	}
+}
