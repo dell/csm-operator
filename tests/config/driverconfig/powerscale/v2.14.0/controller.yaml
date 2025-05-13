@@ -17,7 +17,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
-    verbs: ["get", "list", "watch", "create", "delete", "update"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "update"]
@@ -29,58 +29,44 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
-    verbs: ["get", "list", "watch", "update", "patch"]
+    verbs: ["get", "list", "watch", "patch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments/status"]
     verbs: ["patch"]
-  - apiGroups: ["csi.storage.k8s.io"]
-    resources: ["csinodeinfos"]
-    verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["csinodes"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list", "watch"]
     # below for snapshotter
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents"]
-    verbs: ["create", "get", "list", "watch", "update", "delete"]
+    verbs: ["get", "list", "watch", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshots"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshots/status"]
-    verbs: ["update"]
+    verbs: ["update", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents/status"]
-    verbs: ["update"]
+    verbs: ["update", "patch"]
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["create", "list", "watch", "delete"]
     # below for resizer
   - apiGroups: [""]
-    resources: ["persistentvolumes"]
-    verbs: ["update", "patch"]
-  - apiGroups: [""]
     resources: ["persistentvolumeclaims/status"]
-    verbs: ["update", "patch"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["get", "watch", "list", "delete", "update", "create"]
+    verbs: ["patch"]
   # Permissions for CSIStorageCapacity
   - apiGroups: ["storage.k8s.io"]
     resources: ["csistoragecapacities"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Permissions for ReplicationReplicator
   - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get"]
-  - apiGroups: ["apps"]
-    resources: ["replicasets"]
-    verbs: ["get"]
+    resources: ["namespaces"]
+    verbs: ["create", "get", "list", "watch"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -92,6 +78,41 @@ subjects:
     namespace: <DriverDefaultReleaseNamespace>
 roleRef:
   kind: ClusterRole
+  name: <DriverDefaultReleaseName>-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+# Role for Driver-specific Permissions in a Namespace
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-controller
+  namespace: <DriverDefaultReleaseNamespace>
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "pods" ]
+    verbs: [ "update", "patch" ]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [ "coordination.k8s.io" ]
+    resources: [ "leases" ]
+    verbs: [ "get", "watch", "list", "delete", "update", "create" ]
+  - apiGroups: [ "apps" ]
+    resources: [ "replicasets" ]
+    verbs: [ "get" ]
+---
+# RoleBinding for Driver-specific Role
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>-controller
+  namespace: <DriverDefaultReleaseNamespace>
+subjects:
+  - kind: ServiceAccount
+    name: <DriverDefaultReleaseName>-controller
+    namespace: <DriverDefaultReleaseNamespace>
+roleRef:
+  kind: Role
   name: <DriverDefaultReleaseName>-controller
   apiGroup: rbac.authorization.k8s.io
 ---

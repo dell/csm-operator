@@ -2093,6 +2093,27 @@ roleRef:
   name: my-cluster-role
   apiGroup: rbac.authorization.k8s.io
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: my-service
+subjects:
+  - kind: ServiceAccount
+    name: my-service
+roleRef:
+  kind: Role
+  name: cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---  
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -2202,6 +2223,27 @@ spec:
 				Subjects: []rbacv1.Subject{{Kind: "ServiceAccount", Name: "my-service"}},
 				RoleRef:  rbacv1.RoleRef{Kind: "ClusterRole", Name: "my-cluster-role", APIGroup: "rbac.authorization.k8s.io"},
 			},
+			Role: rbacv1.Role{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "Role",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster-role",
+				},
+				Rules: []rbacv1.PolicyRule{{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"get", "watch", "list"}}},
+			},
+			RoleBinding: rbacv1.RoleBinding{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "RoleBinding",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+				Subjects: []rbacv1.Subject{{Kind: "ServiceAccount", Name: "my-service"}},
+				RoleRef:  rbacv1.RoleRef{Kind: "Role", Name: "cluster-role", APIGroup: "rbac.authorization.k8s.io"},
+			},
 		},
 	}
 
@@ -2248,6 +2290,27 @@ roleRef:
   name: my-cluster-role
   apiGroup: rbac.authorization.k8s.io
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: my-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: my-service
+subjects:
+  - kind: ServiceAccount
+    name: my-service
+roleRef:
+  kind: Role
+  name: my-role
+  apiGroup: rbac.authorization.k8s.io
+---  
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -2351,6 +2414,27 @@ spec:
 				Subjects: []rbacv1.Subject{{Kind: "ServiceAccount", Name: "my-service"}},
 				RoleRef:  rbacv1.RoleRef{Kind: "ClusterRole", Name: "my-cluster-role", APIGroup: "rbac.authorization.k8s.io"},
 			},
+			Role: rbacv1.Role{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "Role",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-role",
+				},
+				Rules: []rbacv1.PolicyRule{{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"get", "watch", "list"}}},
+			},
+			RoleBinding: rbacv1.RoleBinding{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "RoleBinding",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+				Subjects: []rbacv1.Subject{{Kind: "ServiceAccount", Name: "my-service"}},
+				RoleRef:  rbacv1.RoleRef{Kind: "Role", Name: "my-role", APIGroup: "rbac.authorization.k8s.io"},
+			},
 		},
 	}
 
@@ -2413,6 +2497,12 @@ spec:
 					`
 
 	_, err = GetDriverYaml(invalidYamlString, "Deployment")
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	// Test case: Invalid kind
+	_, err = GetDriverYaml(`---`, "invalid kind")
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}

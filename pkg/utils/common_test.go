@@ -12,7 +12,15 @@
 
 package utils
 
-import "testing"
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	v1 "k8s.io/api/core/v1"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+)
 
 func TestIncrUpdateCount(t *testing.T) {
 	// Create a new instance of FakeReconcileCSM
@@ -38,4 +46,56 @@ func TestGetUpdateCount(t *testing.T) {
 	if result != 0 {
 		t.Errorf("Expected updateCount to be 0, but got %d", result)
 	}
+}
+
+func TestMockClient_Get(t *testing.T) {
+	mockClient := new(MockClient)
+	mockClient.GetFunc = func(_ context.Context, _ crclient.ObjectKey, _ crclient.Object, _ ...crclient.GetOption) error {
+		return nil
+	}
+
+	ctx := context.TODO()
+	key := crclient.ObjectKey{Name: "test", Namespace: "default"}
+	obj := &v1.Pod{}
+
+	err := mockClient.Get(ctx, key, obj)
+	assert.NoError(t, err)
+}
+
+func TestMockClient_Create(t *testing.T) {
+	mockClient := new(MockClient)
+	mockClient.CreateFunc = func(_ context.Context, _ crclient.Object, _ ...crclient.CreateOption) error {
+		return nil
+	}
+
+	ctx := context.TODO()
+	obj := &v1.Pod{}
+
+	err := mockClient.Create(ctx, obj)
+	assert.NoError(t, err)
+}
+
+func TestMockClient_Update(t *testing.T) {
+	mockClient := new(MockClient)
+	mockClient.UpdateFunc = func(_ context.Context, _ crclient.Object, _ ...crclient.UpdateOption) error {
+		return nil
+	}
+
+	ctx := context.TODO()
+	obj := &v1.Pod{}
+
+	err := mockClient.Update(ctx, obj)
+	assert.NoError(t, err)
+}
+
+func TestMockClient_Delete(t *testing.T) {
+	mockClient := new(MockClient)
+	mockClient.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	ctx := context.TODO()
+	obj := &v1.Pod{}
+
+	err := mockClient.Delete(ctx, obj)
+	assert.NoError(t, err)
+	mockClient.AssertCalled(t, "Delete", ctx, obj, mock.Anything)
 }
