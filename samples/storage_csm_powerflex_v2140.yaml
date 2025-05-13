@@ -174,8 +174,8 @@ spec:
         # Default value: "0"
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "0"
-        # SDC_SFTP_REPO_ENABLED: Enable/Disable SDC SFTP repository
-        - name: SDC_SFTP_REPO_ENABLED
+        # X_CSI_SDC_SFTP_REPO_ENABLED: Enable/Disable SDC SFTP repository
+        - name: X_CSI_SDC_SFTP_REPO_ENABLED
           value: "true"
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes

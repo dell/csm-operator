@@ -116,7 +116,7 @@ var (
 								{Name: "X_CSI_HEALTH_MONITOR_ENABLED", Value: "NEW_HEALTH_MONITOR_NODE"},
 								{Name: "X_CSI_DEBUG", Value: "NEW_DEBUG"},
 								{Name: "X_CSI_RENAME_SDC_PREFIX", Value: "P1"},
-								{Name: "SDC_SFTP_REPO_ENABLED", Value: "true"},
+								{Name: "X_CSI_SDC_SFTP_REPO_ENABLED", Value: "true"},
 								{Name: "REPO_ADDRESS", Value: "sftp://0.0.0.0"},
 								{Name: "REPO_USER", Value: "sftpuser"},
 								{Name: "X_CSI_MAX_VOLUMES_PER_NODE", Value: "100"},

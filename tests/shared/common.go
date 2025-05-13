@@ -131,7 +131,7 @@ func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 		Node: &csmv1.ContainerTemplate{
 			Envs: []corev1.EnvVar{
 				{
-					Name:  "SDC_SFTP_REPO_ENABLED",
+					Name:  "X_CSI_SDC_SFTP_REPO_ENABLED",
 					Value: "false",
 				},
 			},

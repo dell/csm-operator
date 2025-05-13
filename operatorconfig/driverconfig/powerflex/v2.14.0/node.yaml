@@ -124,8 +124,8 @@ spec:
               value: <GOSCALEIO_DEBUG>
             - name: GOSCALEIO_SHOWHTTP
               value: <GOSCALEIO_SHOWHTTP>
-            - name: SDC_SFTP_REPO_ENABLED
-              value: <SDC_SFTP_REPO_ENABLED>
+            - name: X_CSI_SDC_SFTP_REPO_ENABLED
+              value: <X_CSI_SDC_SFTP_REPO_ENABLED>
             - name: X_CSI_POWERFLEX_KUBE_NODE_NAME
               valueFrom:
                 fieldRef:

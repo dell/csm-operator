@@ -79,7 +79,7 @@ const (
 	PowerFlexSftpRepoUser string = "<X_CSI_SFTP_REPO_USER>"
 
 	// PowerFlexSdcRepoEnabled - will be used to control the GOSCALEIO_SHOWHTTP variable
-	PowerFlexSdcRepoEnabled string = "<SDC_SFTP_REPO_ENABLED>"
+	PowerFlexSdcRepoEnabled string = "<X_CSI_SDC_SFTP_REPO_ENABLED>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -370,7 +370,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				if env.Name == "REPO_USER" {
 					sftpRepoUser = env.Value
 				}
-				if env.Name == "SDC_SFTP_REPO_ENABLED" {
+				if env.Name == "X_CSI_SDC_SFTP_REPO_ENABLED" {
 					sftpEnabled = env.Value
 				}
 			}
