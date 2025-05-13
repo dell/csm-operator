@@ -1216,6 +1216,12 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
 
+	// Invalid : Authorization Proxy Server V2 to V1
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ConfigVersion = "v1.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.Nil(suite.T(), err)
+
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
