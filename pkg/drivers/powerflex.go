@@ -507,7 +507,7 @@ func RemoveVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName stri
 
 func RemoveInitVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName string) error {
 	if configuration == nil {
-		return fmt.Errorf("RemoveVolume called with a nil daemonset")
+		return fmt.Errorf("RemoveInitVolume called with a nil daemonset")
 	}
 	podTemplate := configuration.Spec.Template
 	for i, vol := range podTemplate.Spec.Volumes {
