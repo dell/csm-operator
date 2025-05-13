@@ -63,11 +63,23 @@ const (
 	// ScaleioBinPath - name of volume that is mounted by the CSI plugin when not running on OCP
 	ScaleioBinPath = "scaleio-path-bin"
 
+	// SftpKeys - name of volume that is mounted for sftp
+	SftpKeys = "sftp-keys"
+
 	// PowerFlexDebug - will be used to control the GOSCALEIO_DEBUG variable
 	PowerFlexDebug string = "<GOSCALEIO_DEBUG>"
 
 	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
 	PowerFlexShowHTTP string = "<GOSCALEIO_SHOWHTTP>"
+
+	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
+	PowerFlexSftpRepoAddress string = "<X_CSI_SFTP_REPO_ADDRESS>"
+
+	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
+	PowerFlexSftpRepoUser string = "<X_CSI_SFTP_REPO_USER>"
+
+	// PowerFlexSdcRepoEnabled - will be used to control the GOSCALEIO_SHOWHTTP variable
+	PowerFlexSdcRepoEnabled string = "<X_CSI_SDC_SFTP_REPO_ENABLED>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -297,6 +309,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	healthMonitorNode := "false"
 	debug := "false"
 	showHTTP := "false"
+	sftpRepoAddress := "sftp://0.0.0.0"
+	sftpRepoUser := ""
+	sftpEnabled := ""
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -349,6 +364,15 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 					healthMonitorNode = env.Value
 				}
+				if env.Name == "REPO_ADDRESS" {
+					sftpRepoAddress = env.Value
+				}
+				if env.Name == "REPO_USER" {
+					sftpRepoUser = env.Value
+				}
+				if env.Name == "X_CSI_SDC_SFTP_REPO_ENABLED" {
+					sftpEnabled = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiSdcEnabled, sdcEnabled)
@@ -360,6 +384,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoAddress, sftpRepoAddress)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoUser, sftpRepoUser)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
@@ -471,6 +498,28 @@ func RemoveVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName stri
 		for i, volMount := range podTemplate.Spec.Containers[c].VolumeMounts {
 			if volMount.Name != nil && *volMount.Name == volumeName {
 				podTemplate.Spec.Containers[c].VolumeMounts = append(podTemplate.Spec.Containers[c].VolumeMounts[0:i], podTemplate.Spec.Containers[c].VolumeMounts[i+1:]...)
+				return nil
+			}
+		}
+	}
+	return nil
+}
+
+func RemoveInitVolume(configuration *v1.DaemonSetApplyConfiguration, volumeName string) error {
+	if configuration == nil {
+		return fmt.Errorf("RemoveInitVolume called with a nil daemonset")
+	}
+	podTemplate := configuration.Spec.Template
+	for i, vol := range podTemplate.Spec.Volumes {
+		if vol.Name != nil && *vol.Name == volumeName {
+			podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes[0:i], podTemplate.Spec.Volumes[i+1:]...)
+			break
+		}
+	}
+	for c := range podTemplate.Spec.InitContainers {
+		for i, volMount := range podTemplate.Spec.InitContainers[c].VolumeMounts {
+			if volMount.Name != nil && *volMount.Name == volumeName {
+				podTemplate.Spec.InitContainers[c].VolumeMounts = append(podTemplate.Spec.InitContainers[c].VolumeMounts[0:i], podTemplate.Spec.InitContainers[c].VolumeMounts[i+1:]...)
 				return nil
 			}
 		}

@@ -797,6 +797,15 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		if r.Config.IsOpenShift {
 			_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, drivers.ScaleioBinPath)
 		}
+
+		for _, env := range cr.Spec.Driver.Node.Envs {
+			if env.Name == "X_CSI_SDC_SFTP_REPO_ENABLED" {
+				if env.Value != "true" {
+					_ = drivers.RemoveInitVolume(&node.DaemonSetApplyConfig, drivers.SftpKeys)
+				}
+				break
+			}
+		}
 	}
 
 	clusterClient := utils.GetCluster(ctx, r)

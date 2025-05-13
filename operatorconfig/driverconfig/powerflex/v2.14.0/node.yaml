@@ -124,6 +124,8 @@ spec:
               value: <GOSCALEIO_DEBUG>
             - name: GOSCALEIO_SHOWHTTP
               value: <GOSCALEIO_SHOWHTTP>
+            - name: X_CSI_SDC_SFTP_REPO_ENABLED
+              value: <X_CSI_SDC_SFTP_REPO_ENABLED>
             - name: X_CSI_POWERFLEX_KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -180,7 +182,7 @@ spec:
         - name: sdc-monitor
           securityContext:
             privileged: true
-          image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+          image: quay.io/dell/storage/powerflex/sdc:4.5.4
           imagePullPolicy: IfNotPresent
           env:
             - name: HOST_PID
@@ -232,14 +234,14 @@ spec:
         - name: sdc
           securityContext:
             privileged: true
-          image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+          image: quay.io/dell/storage/powerflex/sdc:4.5.4
           imagePullPolicy: IfNotPresent
           command:
             - "/bin/sh"
             - "-c"
             - |
-               source /data/node_mdms.txt
-               /files/scripts/init.sh
+              source /data/node_mdms.txt
+              /files/scripts/init.sh
           env:
             - name: NODENAME
               valueFrom:
@@ -249,6 +251,12 @@ spec:
               value: "config"
             - name: HOST_DRV_CFG_PATH
               value: /opt/emc/scaleio/sdc/bin
+            - name: REPO_ADDRESS
+              value: "<X_CSI_SFTP_REPO_ADDRESS>"
+            - name: REPO_USER
+              value: "<X_CSI_SFTP_REPO_USER>"
+            - name: MODULE_SIGCHECK
+              value: "0"
           volumeMounts:
             - name: dev
               mountPath: /dev
@@ -258,6 +266,8 @@ spec:
               mountPath: /storage
             - name: udev-d
               mountPath: /rules.d
+            - name: sftp-keys
+              mountPath: /config/
             - name: scaleio-path-opt
               mountPath: /host_drv_cfg_path
             - name: host-opt-emc-path
@@ -302,6 +312,15 @@ spec:
           hostPath:
             path: /etc/udev/rules.d
             type: Directory
+        # will be removed if sftp is not enabled
+        - name: sftp-keys
+          projected:
+            defaultMode: 384
+            sources:
+              - secret:
+                  name: sdcsftprepo-private-secret
+              - secret:
+                  name: sdcsftprepo-public-secret
         - name: os-release
           hostPath:
             path: /etc/os-release
