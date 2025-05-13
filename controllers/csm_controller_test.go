@@ -90,6 +90,12 @@ var (
 	getCRError    bool
 	getCRErrorStr = "unable to get Clusterrole"
 
+	deleteRoleError    bool
+	deleteRoleErrorStr = "unable to delete Role"
+
+	deleteRoleBindingError    bool
+	deleteRoleBindingErrorStr = "unable to delete Rolebinding"
+
 	updateCRError    bool
 	updateCRErrorStr = "unable to update Clusterrole"
 
@@ -110,6 +116,9 @@ var (
 
 	getSAError    bool
 	getSAErrorStr = "unable to get ServiceAccount"
+
+	deleteControllerSAError    bool
+	deleteControllerSAErrorStr = "unable to get ServiceAccount"
 
 	updateDSError    bool
 	updateDSErrorStr = "unable to update Daemonset"
@@ -803,6 +812,9 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 		{"delete SA error", csm, &deleteSAError, deleteSAErrorStr},
 		{"delete Daemonset error", csm, &deleteDSError, deleteDSErrorStr},
 		{"delete Deployment error", csm, &deleteDeploymentError, deleteDeploymentErrorStr},
+		{"delete controller SA error", csm, &deleteControllerSAError, deleteControllerSAErrorStr},
+		{"delete role error", csm, &deleteRoleError, deleteRoleErrorStr},
+		{"delete role binding error", csm, &deleteRoleBindingError, deleteRoleBindingErrorStr},
 	}
 
 	for _, tt := range removeDriverTests {
@@ -857,6 +869,14 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	powerflexCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 	suite.makeFakeCSM(csmName, suite.namespace, false, []csmv1.Module{})
 
+	resiliencyCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	resiliencyCSM.Spec.Modules = getResiliencyModule()
+	resiliencyCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	replicationCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	replicationCSM.Spec.Modules = getReplicaModule()
+	replicationCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
 	syncCSMTests := []struct {
 		name        string
 		csm         csmv1.ContainerStorageModule
@@ -871,6 +891,9 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},
 		{"success: deployAsSidecar with secret", reverseProxyWithSecret, operatorConfig, ""},
 		{"powerflex on openshift - delete mount", powerflexCSM, operatorConfig, ""},
+		{"resiliency module happy path", resiliencyCSM, operatorConfig, ""},
+		{"replication module happy path", replicationCSM, operatorConfig, ""},
+		{"replication module bad op conf", replicationCSM, badOperatorConfig, "failed to deploy replication"},
 	}
 
 	for _, tt := range syncCSMTests {
@@ -986,6 +1009,17 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			csm.Spec.Modules = append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...)
 			csm.Annotations[previouslyAppliedCustomResource] = "invalid json"
 			return csm, &[]bool{false}[0], "error unmarshalling old annotation"
+		},
+		"Success - Disable specific components": func(*testing.T) (*csmv1.ContainerStorageModule, *bool, string) {
+			suite.makeFakeCSM(csmName, suite.namespace, false, append(append(getReplicaModule(), getObservabilityModule()...), getAppMob()...))
+			csm := &csmv1.ContainerStorageModule{}
+			key := types.NamespacedName{Namespace: suite.namespace, Name: csmName}
+			err := suite.fakeClient.Get(ctx, key, csm)
+			assert.Nil(suite.T(), err)
+			obs := getObservabilityModule()
+			obs[0].Components[0].Enabled = &[]bool{false}[0]
+			csm.Spec.Modules = append(append(getReplicaModule(), obs...), getAppMob()...)
+			return csm, &[]bool{false}[0], ""
 		},
 	}
 
@@ -1181,6 +1215,12 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleUnsupportedVersion() {
 	csm.Spec.Modules[0].ConfigVersion = "1.0.0"
 	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
 	assert.NotNil(suite.T(), err)
+
+	// Invalid : Authorization Proxy Server V2 to V1
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Modules[0].ConfigVersion = "v1.0.0"
+	err = reconciler.PreChecks(ctx, &csm, operatorConfig)
+	assert.Nil(suite.T(), err)
 
 	// error in Replication
 	csm.Spec.Modules = getReplicaModule()
@@ -1716,7 +1756,7 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.10.0",
+			ConfigVersion: "v1.12.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ReplicationSideCarName,
@@ -1731,7 +1771,7 @@ func getResiliencyModule() []csmv1.Module {
 		{
 			Name:          csmv1.Resiliency,
 			Enabled:       true,
-			ConfigVersion: "v1.11.0",
+			ConfigVersion: "v1.13.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: utils.ResiliencySideCarName,
@@ -2500,6 +2540,9 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 		} else if method == "Delete" && deleteSAError {
 			fmt.Printf("[ShouldFail] force Delete ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
 			return errors.New(deleteSAErrorStr)
+		} else if method == "Delete" && deleteControllerSAError {
+			fmt.Printf("[ShouldFail] force Delete ServiceAccount error for ServiceAccount named %+v\n", sa.Name)
+			return errors.New(deleteControllerSAErrorStr)
 		}
 
 	case *appsv1.DaemonSet:
@@ -2518,7 +2561,18 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 			fmt.Printf("[ShouldFail] force Deployment error for Deployment named %+v\n", deployment.Name)
 			return errors.New(deleteDeploymentErrorStr)
 		}
-
+	case *rbacv1.Role:
+		role := obj.(*rbacv1.Role)
+		if method == "Delete" && deleteRoleError {
+			fmt.Printf("[ShouldFail] force delete Role error for Role named %+v\n", role.Name)
+			return errors.New(deleteRoleErrorStr)
+		}
+	case *rbacv1.RoleBinding:
+		roleBinding := obj.(*rbacv1.RoleBinding)
+		if method == "Delete" && deleteRoleBindingError {
+			fmt.Printf("[ShouldFail] force delete RoleBinding error for RoleBinding named %+v\n", roleBinding.Name)
+			return errors.New(deleteRoleBindingErrorStr)
+		}
 	default:
 	}
 	return nil

@@ -85,6 +85,8 @@ type RbacYAML struct {
 	ServiceAccount     corev1.ServiceAccount
 	ClusterRole        rbacv1.ClusterRole
 	ClusterRoleBinding rbacv1.ClusterRoleBinding
+	Role               rbacv1.Role
+	RoleBinding        rbacv1.RoleBinding
 }
 
 // UpgradePaths a list of versions eligible to upgrade the current version
@@ -696,6 +698,23 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 				return nil, err
 			}
 			rbac.ClusterRoleBinding = crb
+
+		case "Role":
+			var crole rbacv1.Role
+			err := yaml.Unmarshal(raw, &crole)
+			if err != nil {
+				return nil, err
+			}
+			rbac.Role = crole
+
+		case "RoleBinding":
+			var rb rbacv1.RoleBinding
+			err := yaml.Unmarshal(raw, &rb)
+			if err != nil {
+				return nil, err
+			}
+			rbac.RoleBinding = rb
+
 		}
 	}
 
