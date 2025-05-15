@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 
 # Support
 
-For all your support needs or to follow the latest ongoing discussions and updates, join our Slack group. Click [Here](http://del.ly/Slack_request) to request your invite.
+We use GitHub for creating/tracking various [issues](https://github.com/dell/csm/issues/new/choose) such as bugs, feature requests, features, and questions. The following resources are also available.
 
-You can also interact with us on [GitHub](https://github.com/dell/csm) by creating a [GitHub Issue](https://github.com/dell/csm/issues).
+## Documentation
+
+For documentation, please visit [Container Storage Modules documentation](https://dell.github.io/csm-docs/).
