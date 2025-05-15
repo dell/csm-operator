@@ -12,8 +12,7 @@ spec:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       enabled: false
-      # For Auth 2.0, use v2.1.0 as configVersion
-      configVersion: v1.14.0
+      configVersion: v2.2.0
     - name: resiliency
       enabled: false
     - name: replication
