@@ -40,9 +40,7 @@ Dell Container Storage Modules Operator uses Kubernetes CRDs (Custom Resource De
 Dell Container Storage Modules Operator is built using the [operator framework](https://github.com/operator-framework) and runs custom Kubernetes controllers to manage the driver installations. These controllers listen for any create/update/delete request for the respective CRDs and try to reconcile the request.
 
 ## Support
-
-The Dell Container Storage Modules Operator image is available on quay.io and is officially supported by Dell Technologies.
-For any CSM Operator and driver issues, questions or feedback, please follow our [support](./docs/SUPPORT.md) process
+For any issues, questions or feedback, please follow our [support process](https://github.com/dell/csm/blob/main/docs/SUPPORT.md)
 
 ## Documentation
 For more detailed information on the driver, please refer to [Container Storage Modules documentation](https://dell.github.io/csm-docs/).
