@@ -657,33 +657,33 @@ func (step *Step) validateAuthorizationPodsNotInstalled(res Resource, module str
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
-func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
-	// find which map to use for secret values
-	mapValues, err := determineMap(crType)
+func (step *Step) setUpStorageClass(_ Resource, scName, templateFile, crType string) error {
+
+	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+	// if resource exists - delete it
+	if storageClassExists(scName) {
+		err := execCommand("kubectl", "delete", "sc", scName)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to delete storage class: %v", err)
 		}
 	}
 
-	cmd := exec.Command("kubectl", "get", "sc", scName) // #nosec G204
-	err = cmd.Run()
-	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "sc", scName) // #nosec G204
-		err = cmd.Run()
-		if err != nil {
-			return err
-		}
-	}
-	cmd = exec.Command("kubectl", "create", "-f", templateFile) // #nosec G204
-	err = cmd.Run()
+	fileName, err := createTempFile(fileString)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write temp config file: %v", err)
+	}
+	defer func() {
+		_ = os.Remove(fileName)
+	}()
+
+	// create new storage class
+	err = execCommand("kubectl", "create", "-f", fileName)
+	if err != nil {
+		return fmt.Errorf("failed to create storage class with template file %s: %v", templateFile, err)
 	}
 	return nil
 }
@@ -723,93 +723,43 @@ func (step *Step) setUpPowermaxCreds(res Resource, templateFile, crType string) 
 }
 
 func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, crType string) error {
-	mapValues, err := determineMap(crType)
+	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
-	}
-
+	// if resource exists - delete it
 	if configMapExists(namespace, name) {
-		cmd := exec.Command("kubectl", "delete", "configmap", "-n", namespace, name) // #nosec G204
-		err := cmd.Run()
+		err := execCommand("kubectl", "delete", "configmap", "-n", namespace, name)
 		if err != nil {
-			return fmt.Errorf("failed to delete configmap: %s", err.Error())
+			return fmt.Errorf("failed to delete config map: %v", err)
 		}
 	}
 
-	fileArg := "--from-file=config.yaml=" + templateFile
-	cmd := exec.Command("kubectl", "create", "cm", name, "-n", namespace, fileArg) // #nosec G204
-	err = cmd.Run()
+	fileName, err := createTempFile(fileString)
 	if err != nil {
-		return fmt.Errorf("failed to create configmap: %s", err.Error())
+		return fmt.Errorf("failed to write temp config file: %v", err)
+	}
+	defer func() {
+		_ = os.Remove(fileName)
+	}()
+
+	// create new storage class
+	fileArg := "--from-file=config.yaml=" + fileName
+	err = execCommand("kubectl", "create", "cm", name, "-n", namespace, fileArg)
+	if err != nil {
+		return fmt.Errorf("failed to create storage class with template file %s: %v", templateFile, err)
 	}
 	return nil
 }
 
-// TODO: Tech debt.
-// We should refactor all of our template usages over time to use temporary files instead of editing in-line.
-// Once that's done, this method can be removed.
-func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
-	// find which map to use for secret values
-	mapValues, err := determineMap(crType)
+func (step *Step) setUpSecret(_ Resource, templateFile, name, namespace, crType string) error {
+	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
-	}
-
-	// if secret exists- delete it
-	if secretExists(namespace, name) {
-		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
-		if err != nil {
-			return fmt.Errorf("failed to delete secret: %s", err.Error())
-		}
-	}
-
-	// create new secret
-	fileArg := "--from-file=config=" + templateFile
-	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
-	if err != nil {
-		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
-	}
-
-	return nil
-}
-
-func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, crType string) error {
-	// find which map to use for secret values
-	mapValues, err := determineMap(crType)
-	if err != nil {
-		return err
-	}
-
-	// read the template into memory
-	fileContent, err := os.ReadFile(templateFile) // #nosec G304
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return err
-	}
-
-	// Convert the file content to a string
-	fileString := string(fileContent)
-
-	// Replace all fields in temporary (in memory) string
-	for key := range mapValues {
-		fileString = strings.ReplaceAll(fileString, key, os.Getenv(mapValues[key]))
-	}
-
-	// if secret exists- delete it
+	// if secret exists - delete it
 	if secretExists(namespace, name) {
 		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
 		if err != nil {
@@ -821,10 +771,33 @@ func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, c
 	fileArg := "--from-literal=config=" + fileString
 	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
-		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
+		return fmt.Errorf("failed to create secret with template file %s: %v", templateFile, err)
 	}
 
 	return nil
+}
+
+func renderTemplate(crType string, templateFile string) (string, error) {
+	// find which map to use for secret values
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return "", err
+	}
+
+	// read the template into memory
+	fileContent, err := os.ReadFile(templateFile) // #nosec G304
+	if err != nil {
+		return "", fmt.Errorf("error reading template file: %v", err)
+	}
+
+	// Convert the file content to a string
+	fileString := string(fileContent)
+
+	// Replace all fields in temporary (in memory) string
+	for key, val := range mapValues {
+		fileString = strings.ReplaceAll(fileString, key, os.Getenv(val))
+	}
+	return fileString, nil
 }
 
 func (step *Step) restoreTemplate(res Resource, templateFile, crType string) error {
@@ -900,24 +873,21 @@ func determineMap(crType string) (map[string]string, error) {
 }
 
 func secretExists(namespace, name string) bool {
-	cmd := exec.Command("kubectl", "get", "secret", "-n", namespace, name) // #nosec G204
-	err := cmd.Run()
-	if err != nil {
-		return false
-	}
-	return true
+	err := exec.Command("kubectl", "get", "secret", "-n", namespace, name).Run() // #nosec G204
+	return err == nil
 }
 
 func configMapExists(namespace, name string) bool {
-	cmd := exec.Command("kubectl", "get", "configmap", "-n", namespace, name) // #nosec G204
-	err := cmd.Run()
-	if err != nil {
-		return false
-	}
-	return true
+	err := exec.Command("kubectl", "get", "configmap", "-n", namespace, name).Run() // #nosec G204
+	return err == nil
 }
 
-func replaceInFile(old, new, templateFile string) error {
+func storageClassExists(name string) bool {
+	err := exec.Command("kubectl", "get", "storageclass", name).Run() // #nosec G204
+	return err == nil
+}
+
+func replaceInFile(old, new, templateFile string) error { // TODO delete
 	cmdString := "s|" + old + "|" + new + "|g"
 	cmd := exec.Command("sed", "-i", cmdString, templateFile) // #nosec G204
 	err := cmd.Run()
@@ -991,7 +961,7 @@ func (step *Step) runCustomTestSelector(res Resource, testName string) error {
 	return nil
 }
 
-func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile string, crType string) error {
+func (step *Step) setupEphemeralVolumeProperties(_ Resource, templateFile string, crType string) error {
 	mapValues, err := determineMap(crType)
 	if err != nil {
 		return err
@@ -1021,6 +991,15 @@ func randomAlphaNumberic(length int) string {
 	}
 
 	return string(result)
+}
+
+func createTempFile(content string) (string, error) {
+	name := fmt.Sprintf("%s/op-e2e-%s", os.TempDir(), randomAlphaNumberic(8))
+	err := os.WriteFile(name, []byte(content), 0o644)
+	if err != nil {
+		return "", fmt.Errorf("error creating temp file: %v", err)
+	}
+	return name, nil
 }
 
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
