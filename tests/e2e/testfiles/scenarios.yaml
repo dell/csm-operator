@@ -99,12 +99,11 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
-    - "Restore template [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
   customTest:
     - name: Cert CSI
       run:
         - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-isilon.dellemc.com --attr testfiles/powerscale-templates/ephemeral.properties
+        - cert-csi test ephemeral-volume --pods 1 --driver csi-isilon.dellemc.com --attr temp/powerscale-templates/ephemeral.properties
 
 - scenario: "Install PowerScale Driver with first alternate sample file"
   paths:
@@ -353,12 +352,11 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
-    - "Restore template [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
   customTest:
     - name: Cert CSI
       run:
         - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-vxflexos.dellemc.com --attr testfiles/powerflex-templates/ephemeral.properties
+        - cert-csi test ephemeral-volume --pods 1 --driver csi-vxflexos.dellemc.com --attr temp/powerflex-templates/ephemeral.properties
 
 - scenario: "Install PowerFlex Driver with first set of alternate values"
   paths:
@@ -1051,12 +1049,11 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
-    - "Restore template [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
   customTest:
     - name: Cert CSI
       run:
         - cert-csi test provisioning --sc op-e2e-pstore -v 1 -p 1
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-powerstore.dellemc.com --attr testfiles/powerstore-templates/ephemeral.properties --fs ext4
+        - cert-csi test ephemeral-volume --pods 1 --driver csi-powerstore.dellemc.com --attr temp/powerstore-templates/ephemeral.properties --fs ext4
 
 - scenario: "Install PowerStore Driver(With Resiliency)"
   paths:
@@ -1155,12 +1152,11 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [unity] driver from CR [1] is not installed"
-    - "Restore template [testfiles/unity-templates/ephemeral.properties] for [unityEphemeral]"
   customTest:
     - name: Cert CSI
       run:
         - cert-csi test provisioning --sc op-e2e-unity -v 1 -p 1
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-unity.dellemc.com --attr testfiles/unity-templates/ephemeral.properties
+        - cert-csi test ephemeral-volume --pods 1 --driver csi-unity.dellemc.com --attr temp/unity-templates/ephemeral.properties
 
 - scenario: "Install App Mobility (Standalone)"
   paths:
