@@ -239,6 +239,8 @@ spec:
               value: /var/run/csi/csi.sock
             - name: X_CSI_MODE
               value: controller
+            - name: SSL_CERT_DIR
+              value: /certs
             - name: X_CSI_DRIVER_NAME
               value: "csi-powerstore.dellemc.com"
             - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
@@ -258,6 +260,9 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
+            - name: certs
+              mountPath: /certs
+              readOnly: true
             - name: powerstore-config
               mountPath: /powerstore-config
             - name: powerstore-config-params
