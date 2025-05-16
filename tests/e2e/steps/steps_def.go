@@ -686,16 +686,16 @@ func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) err
 		}
 	}
 
-	fileName, err := createTempFile(fileString)
+	filePath, err := writeRenderedFile(templateFile, fileString)
 	if err != nil {
-		return fmt.Errorf("failed to write temp config file: %v", err)
+		return err
 	}
 	defer func() {
-		_ = os.Remove(fileName)
+		_ = os.Remove(filePath)
 	}()
 
 	// create new storage class
-	err = execCommand("kubectl", "create", "-f", fileName)
+	err = execCommand("kubectl", "create", "-f", filePath)
 	if err != nil {
 		return fmt.Errorf("failed to create storage class with template file %s: %v", templateFile, err)
 	}
@@ -750,16 +750,16 @@ func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, cr
 		}
 	}
 
-	fileName, err := createTempFile(fileString)
+	filePath, err := writeRenderedFile(templateFile, fileString)
 	if err != nil {
-		return fmt.Errorf("failed to write temp config file: %v", err)
+		return err
 	}
 	defer func() {
-		_ = os.Remove(fileName)
+		_ = os.Remove(filePath)
 	}()
 
 	// create new storage class
-	fileArg := "--from-file=config.yaml=" + fileName
+	fileArg := "--from-file=config.yaml=" + filePath
 	err = execCommand("kubectl", "create", "cm", name, "-n", namespace, fileArg)
 	if err != nil {
 		return fmt.Errorf("failed to create storage class with template file %s: %v", templateFile, err)
@@ -976,20 +976,19 @@ func (step *Step) runCustomTestSelector(res Resource, testName string) error {
 }
 
 func (step *Step) setupEphemeralVolumeProperties(_ Resource, templateFile string, crType string) error {
-	mapValues, err := determineMap(crType)
-	if err != nil {
-		return err
-	}
 
 	if crType == "pflexEphemeral" {
 		_ = os.Setenv("PFLEX_VOLUME", fmt.Sprintf("k8s-%s", randomAlphaNumberic(10)))
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
+	fileString, err := renderTemplate(crType, templateFile)
+	if err != nil {
+		return err
+	}
+
+	_, err = writeRenderedFile(templateFile, fileString)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -1007,13 +1006,25 @@ func randomAlphaNumberic(length int) string {
 	return string(result)
 }
 
-func createTempFile(content string) (string, error) {
-	name := fmt.Sprintf("%s/op-e2e-%s", os.TempDir(), randomAlphaNumberic(8))
-	err := os.WriteFile(name, []byte(content), 0o644)
+// To not contaminate the source tree with rendered template files,
+// we write all rendered files under the same temp directory, but
+// preserve the subdirectories structure.
+func writeRenderedFile(templatePath, content string) (newPath string, err error) {
+
+	newPath = strings.Replace(templatePath, "testfiles/", "temp/", 1)
+
+	// make sure the base path exist
+	err = os.MkdirAll(filepath.Dir(newPath), 0o755)
+	if err != nil {
+		return "", fmt.Errorf("error creating temp directory %s: %s", filepath.Dir(newPath), err)
+	}
+
+	err = os.WriteFile(newPath, []byte(content), 0o644)
 	if err != nil {
 		return "", fmt.Errorf("error creating temp file: %v", err)
 	}
-	return name, nil
+
+	return newPath, nil
 }
 
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
