@@ -7,7 +7,7 @@
     - "powerstore"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pstore] and template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create storageclass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Set up secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -31,7 +31,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Run [Is NFS Server Running]"
-    - "Create storageclass with name [op-e2e-pstore-sharednfs] and template [testfiles/powerstore-templates/storage-class-sharednfs.yaml] for [pstore]"
+    - "Create storageclass with template [testfiles/powerstore-templates/storage-class-sharednfs.yaml] for [pstore]"
     - "Set up secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -58,7 +58,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pstore] and template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create storageclass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Set up secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -82,7 +82,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pstore] and template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create storageclass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Set up secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -106,7 +106,7 @@
     - "powerstore"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pstore] and template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create storageclass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Set up secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -129,7 +129,7 @@
     - "powerstore"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pstore] and template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create storageclass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Set up secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -156,7 +156,7 @@
     - "unity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-unity] and template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
+    - "Create storageclass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
     - "Set up secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -179,7 +179,7 @@
     - "unity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-unity] and template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
+    - "Create storageclass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
     - "Set up secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -206,7 +206,7 @@
     - "unity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-unity] and template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
+    - "Create storageclass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
     - "Set up secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -230,7 +230,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create storageclass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -253,7 +253,7 @@
     - "powerflex"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create storageclass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -276,7 +276,7 @@
     - "powerflex"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create storageclass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -305,7 +305,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create storageclass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -328,7 +328,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create storageclass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -361,7 +361,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create storageclass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
@@ -391,7 +391,7 @@
     - "powerflex"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create storageclass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -413,7 +413,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create storageclass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -431,7 +431,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Create storageclass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -455,7 +455,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Create storageclass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -479,7 +479,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Create storageclass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -555,7 +555,7 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Create storageclass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -580,7 +580,7 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Create storageclass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -650,7 +650,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Create storageclass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -677,7 +677,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
-    - "Create storageclass with name [op-e2e-isilon] and template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Create storageclass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Set up secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscaleAuth]"
     - "Set up secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
     - "Apply custom resource [2]"
@@ -707,7 +707,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-vxflexos] and template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create storageclass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Set up secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -729,7 +729,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
@@ -754,7 +754,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
@@ -779,7 +779,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmaxUseSecret]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
@@ -803,7 +803,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmaxUseSecret]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_secret.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
@@ -826,7 +826,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmaxUseSecret]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
@@ -854,7 +854,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [powermax] for [pmaxUseSecret]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_secret.yaml] for [pmaxArrayConfig]"
     - "Apply custom resource [1]"
@@ -881,7 +881,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
@@ -906,7 +906,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_with_no_forceRemoveDriver.yaml] for [pmaxArrayConfig]"
@@ -930,7 +930,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
@@ -960,7 +960,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_with_false_forceRemoveDriver.yaml] for [pmaxArrayConfig]"
@@ -992,7 +992,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
@@ -1014,7 +1014,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_observability.yaml] for [pmaxArrayConfig]"
@@ -1044,7 +1044,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powermax] for CR [1]"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
@@ -1085,7 +1085,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powermax] for CR [1]"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml] for [pmaxArrayConfig]"
@@ -1117,7 +1117,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
@@ -1142,7 +1142,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
@@ -1167,7 +1167,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
@@ -1192,7 +1192,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_resiliency.yaml] for [pmaxArrayConfig]"
@@ -1217,7 +1217,7 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
@@ -1244,7 +1244,7 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create storageclass with name [op-e2e-pmax] and template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Create storageclass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up creds with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Set up configMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
     - "Set up creds with template [testfiles/minimal-testfiles/storage_csm_powermax_replica.yaml] for [pmaxArrayConfig]"
