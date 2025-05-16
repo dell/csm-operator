@@ -657,16 +657,30 @@ func (step *Step) validateAuthorizationPodsNotInstalled(res Resource, module str
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
-func (step *Step) setUpStorageClass(_ Resource, scName, templateFile, crType string) error {
+func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) error {
 
 	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
 	}
 
+	// parse resource name out of the spec
+	type NamedResource struct {
+		Metadata struct {
+			Name string `yaml:"name"`
+		} `yaml:"metadata"`
+	}
+	var res NamedResource
+
+	err = yaml.Unmarshal([]byte(fileString), &res)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling template file %s: %v", templateFile, err)
+	}
+	name := res.Metadata.Name
+
 	// if resource exists - delete it
-	if storageClassExists(scName) {
-		err := execCommand("kubectl", "delete", "sc", scName)
+	if storageClassExists(name) {
+		err := execCommand("kubectl", "delete", "sc", name)
 		if err != nil {
 			return fmt.Errorf("failed to delete storage class: %v", err)
 		}
