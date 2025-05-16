@@ -107,6 +107,8 @@ spec:
               value: unix://<KUBELET_CONFIG_DIR>/plugins/csi-powerstore.dellemc.com/csi_sock
             - name: X_CSI_MODE
               value: node
+            - name: SSL_CERT_DIR
+              value: /certs
             - name: X_CSI_POWERSTORE_KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -142,6 +144,9 @@ spec:
             - name: csi-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
               mountPropagation: "Bidirectional"
+            - name: certs
+              mountPath: /certs
+              readOnly: true
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
