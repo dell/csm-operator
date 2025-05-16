@@ -26,10 +26,9 @@ Dell Technologies Container Storage Modules (CSM) Operator is an open-source Kub
 * [Committer Guide](./docs/COMMITTER_GUIDE.md)
 * [Contributing Guide](./docs/CONTRIBUTING.md)
 * [List of Adopters](./docs/ADOPTERS.md)
-* [Support](./docs/SUPPORT.md)
+* [Dell support](https://www.dell.com/support/incidents-online/en-us/contactus/product/container-storage-modules)
 * [Security](./docs/SECURITY.md)
 * [Dell Container Storage Modules Operator](#dell-container-storage-modules-operator)
-* [Support](#support)
 * [Documentation](#documentation)
 
 # Dell Container Storage Modules Operator
@@ -38,11 +37,6 @@ Dell Container Storage Modules Operator is a Kubernetes native application which
 Dell Container Storage Modules Operator uses Kubernetes CRDs (Custom Resource Definitions) to define a manifest that describes the deployment specifications for each driver to be deployed.
 
 Dell Container Storage Modules Operator is built using the [operator framework](https://github.com/operator-framework) and runs custom Kubernetes controllers to manage the driver installations. These controllers listen for any create/update/delete request for the respective CRDs and try to reconcile the request.
-
-## Support
-
-The Dell Container Storage Modules Operator image is available on quay.io and is officially supported by Dell Technologies.
-For any CSM Operator and driver issues, questions or feedback, please follow our [support](./docs/SUPPORT.md) process
 
 ## Documentation
 For more detailed information on the driver, please refer to [Container Storage Modules documentation](https://dell.github.io/csm-docs/).
