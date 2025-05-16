@@ -1603,6 +1603,7 @@
     - name: Cert CSI
       run:
         - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml with TLS (Standalone)"
   paths:
     - "testfiles/storage_csm_powermax_tls.yaml"
