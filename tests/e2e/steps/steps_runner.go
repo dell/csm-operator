@@ -68,12 +68,11 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set \[([^"]*)\] node label$`, step.setNodeLabel)
 	runner.addStep(`^Remove \[([^"]*)\] node label$`, step.removeNodeLabel)
 
-	runner.addStep(`^Set up secret from \[([^"]*)\] in namespace \[([^"]*)\]`, step.setupSecretFromFile)
 	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
-	runner.addStep(`^Set up secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
-	runner.addStep(`^Set up configMap with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpConfigMap)
+	runner.addStep(`^Create Secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
+	runner.addStep(`^Create ConfigMap with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpConfigMap)
 	runner.addStep(`^Create resource with template \[([^"]*)\] for \[([^"]*)\]`, step.createResource)
-	runner.addStep(`^Create storageclass with template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
+	runner.addStep(`^Create StorageClass with template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
 	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
 	runner.addStep(`^Set up ephemeral volume properties \[([^"]*)\] for \[([^"]*)\]`, step.setupEphemeralVolumeProperties)
 

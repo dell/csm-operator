@@ -702,19 +702,6 @@ func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) err
 	return nil
 }
 
-func (step *Step) setupSecretFromFile(res Resource, file, namespace string) error {
-	crBuff, err := os.ReadFile(file) // #nosec G304
-	if err != nil {
-		return fmt.Errorf("failed to read secret data: %v", err)
-	}
-
-	if _, err := kubectl.RunKubectlInput(namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to apply secret from file %s in namespace %s: %v", file, namespace, err)
-	}
-
-	return nil
-}
-
 func (step *Step) createResource(_ Resource, templateFile, crType string) error {
 
 	fileString, err := renderTemplate(crType, templateFile)
