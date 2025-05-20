@@ -108,6 +108,11 @@ var _ = BeforeSuite(func() {
 		}
 	}
 
+	customTag := os.Getenv("ADD_SCENARIO_TAG")
+	if customTag != "" {
+		tagsSpecified = append(tagsSpecified, customTag)
+	}
+
 	By(fmt.Sprint(tagsSpecified))
 
 	By("Reading values file")
