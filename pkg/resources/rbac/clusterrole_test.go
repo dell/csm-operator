@@ -135,6 +135,21 @@ func TestSyncRole(t *testing.T) {
 		},
 	}
 
+	t.Run("Create Role without name", func(t *testing.T) {
+		// fake client
+		client := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
+
+		roleCopy := role
+		roleCopy.ObjectMeta.Name = ""
+		err := SyncRole(ctx, roleCopy, client)
+		assert.NoError(t, err)
+
+		// check that the role was created
+		foundRole := &rbacv1.Role{}
+		err = client.Get(ctx, types.NamespacedName{Name: roleCopy.Name, Namespace: roleCopy.Namespace}, foundRole)
+		assert.ErrorContains(t, err, "roles.rbac.authorization.k8s.io \"\" not found")
+	})
+
 	t.Run("Create new Role", func(t *testing.T) {
 		// fake client
 		client := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
