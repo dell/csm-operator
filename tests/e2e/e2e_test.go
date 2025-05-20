@@ -138,6 +138,13 @@ var _ = BeforeSuite(func() {
 	step.StepRunnerInit(stepRunner, ctrlClient, clientSet)
 
 	beautify = "    "
+
+	// Clean up the temporary test directory to avoid unintended
+	// use of rendered templates from previous test runs.
+	err = os.RemoveAll("temp")
+	if err != nil {
+		framework.Failf("error removing temp directory: %v", err)
+	}
 })
 
 var _ = Describe("[run-e2e-test] E2E Testing", func() {
