@@ -715,23 +715,24 @@ func (step *Step) setupSecretFromFile(res Resource, file, namespace string) erro
 	return nil
 }
 
-func (step *Step) setUpPowermaxCreds(res Resource, templateFile, crType string) error {
-	mapValues, err := determineMap(crType)
+func (step *Step) createResource(_ Resource, templateFile, crType string) error {
+
+	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
-	}
-
-	cmd := exec.Command("kubectl", "apply", "-f", templateFile)
-	err = cmd.Run()
+	filePath, err := writeRenderedFile(templateFile, fileString)
 	if err != nil {
-		return fmt.Errorf("failed to create creds: %s", err.Error())
+		return err
+	}
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
+
+	err = execCommand("kubectl", "apply", "-f", filePath)
+	if err != nil {
+		return fmt.Errorf("failed to apply resource spec file %s: %v", filePath, err)
 	}
 	return nil
 }
@@ -812,21 +813,6 @@ func renderTemplate(crType string, templateFile string) (string, error) {
 		fileString = strings.ReplaceAll(fileString, key, os.Getenv(val))
 	}
 	return fileString, nil
-}
-
-func (step *Step) restoreTemplate(res Resource, templateFile, crType string) error {
-	mapValues, err := determineMap(crType)
-	if err != nil {
-		return err
-	}
-
-	for key := range mapValues {
-		err := replaceInFile(os.Getenv(mapValues[key]), key, templateFile)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func determineMap(crType string) (map[string]string, error) {
