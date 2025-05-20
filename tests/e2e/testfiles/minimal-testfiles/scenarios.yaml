@@ -21,7 +21,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pstore --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-pstore --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerStore Driver with Shared NFS (Minimal, Standalone)"
   paths:
@@ -48,7 +48,7 @@
         - /bin/bash scripts/verify_nfs.sh
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pstore-sharednfs --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-pstore-sharednfs --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerStore Driver (Minimal, With Resiliency)"
   paths:
@@ -120,7 +120,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pstore --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-pstore --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerStore Driver (Minimal, With false forceRemoveDriver)"
   paths:
@@ -147,7 +147,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pstore --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-pstore --chainNumber 2 --chainLength 2
 
 - scenario: "Install Unity Driver (Minimal, Standalone)"
   paths:
@@ -170,7 +170,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-unity --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-unity --chainNumber 2 --chainLength 2
 
 - scenario: "Install Unity Driver (Minimal, With false forceRemoveDriver)"
   paths:
@@ -197,7 +197,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-unity --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-unity --chainNumber 2 --chainLength 2
 
 - scenario: "Install Unity Driver (Minimal, With no forceRemoveDriver)"
   paths:
@@ -220,7 +220,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-unity --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-unity --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver (Minimal, Standalone)"
   paths:
@@ -244,7 +244,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver (Minimal, With no forceRemoveDriver)"
   paths:
@@ -267,7 +267,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver (Minimal, With false forceRemoveDriver)"
   paths:
@@ -294,7 +294,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver (Minimal, With Resiliency)"
   paths:
@@ -381,7 +381,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver (Minimal, With Observability)"
   paths:
@@ -404,7 +404,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerFlex Driver (Minimal, With Observability and Custom Cert for Otel-Collector)"
   paths:
@@ -445,7 +445,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver (Minimal, With no forceRemoveDriver)"
   paths:
@@ -469,7 +469,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver (Minimal, With false forceRemoveDriver)"
   paths:
@@ -497,7 +497,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install PowerScale Driver (Minimal, Standalone), Enable/Disable Resiliency"
   paths:
@@ -696,7 +696,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-isilon --chainNumber 2 --chainLength 2
 
 - scenario: "Install Powerflex Driver (Minimal, With Replication)"
   paths:
@@ -745,7 +745,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml (Minimal, Standalone)"
   paths:
@@ -770,7 +770,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials (Minimal)"
   paths:
@@ -794,7 +794,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml with Mount Credentials (Minimal)"
   paths:
@@ -817,7 +817,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials (Minimal), Enable Observability"
   paths:
@@ -845,7 +845,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config with Mount Credentials (Minimal), Enable Observability"
   paths:
@@ -872,7 +872,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver (Minimal, With no forceRemoveDriver)"
   paths:
@@ -897,7 +897,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml (Minimal, With no forceRemoveDriver)"
   paths:
@@ -921,7 +921,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver (Minimal, With false forceRemoveDriver)"
   paths:
@@ -952,7 +952,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 - scenario: "Install PowerMax Driver without powermax-array-config (Minimal, With false forceRemoveDriver)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax_with_false_forceRemoveDriver.yaml"
@@ -982,7 +982,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver (Minimal, With Observability)"
   paths:
@@ -1066,7 +1066,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 
 - scenario: "Install Powermax Driver without powermax-array-config.yaml (Minimal, With Authorization v2)"
@@ -1107,7 +1107,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test vio --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver (Minimal, Standalone), Enable Resiliency"
   paths:

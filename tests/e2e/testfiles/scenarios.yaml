@@ -1371,7 +1371,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver(Standalone) without powermax-array-config.yaml"
   paths:
@@ -1396,7 +1396,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 - scenario: "Install PowerMax Driver with Mount Credentials"
   paths:
     - "testfiles/storage_csm_powermax_secret.yaml"
@@ -1419,7 +1419,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials without powermax-array-config.yaml"
   paths:
@@ -1443,7 +1443,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials, Enable Observability"
   paths:
@@ -1472,7 +1472,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml with Mount Credentials, Enable Observability"
   paths:
@@ -1500,7 +1500,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials (Sidecar)"
   paths:
@@ -1524,7 +1524,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml with Mount Credentials (Sidecar)"
   paths:
@@ -1548,7 +1548,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials (Sidecar), Enable Observability"
   paths:
@@ -1577,7 +1577,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with TLS (Standalone)"
   paths:
@@ -1602,7 +1602,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml with TLS (Standalone)"
   paths:
@@ -1627,7 +1627,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver(Sidecar)"
   paths:
@@ -1653,7 +1653,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver(Sidecar) without powermax-array-config.yaml"
   paths:
@@ -1679,7 +1679,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with TLS (Sidecar)"
   paths:
@@ -1705,7 +1705,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with TLS (Sidecar) without powermax-array-config.yaml"
   paths:
@@ -1731,7 +1731,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver(With Observability)"
   paths:
@@ -1781,7 +1781,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install Powermax Driver (With Authorization v2)"
   paths:
@@ -1822,7 +1822,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver without powermax-array-config.yaml (With Authorization v2)"
   paths:
@@ -1863,7 +1863,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver with Mount Credentials and Authorization v2"
   paths:
@@ -1903,7 +1903,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver without powermax-array-config.yaml with Mount Credentials and Authorization v2"
   paths:
@@ -1942,7 +1942,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver (With Authorization v2 and Observability)"
   paths:
@@ -1985,7 +1985,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver without powermax-array-config.yaml (With Authorization v2 and Observability)"
   paths:
@@ -2029,7 +2029,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pmax  --chainLength 1 --chainNumber 1
+        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver(Standalone), Enable Resiliency"
   paths:
