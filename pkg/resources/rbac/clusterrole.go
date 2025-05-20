@@ -55,12 +55,18 @@ func SyncClusterRole(ctx context.Context, clusterRole rbacv1.ClusterRole, client
 // SyncRole - Syncs a Role
 func SyncRole(ctx context.Context, role rbacv1.Role, client client.Client) error {
 	log := logger.GetLogger(ctx)
+	if role.Name == "" {
+		log.Info("Role is empty, skipping role creation")
+		return nil
+	}
+
 	found := &rbacv1.Role{}
 	err := client.Get(ctx, types.NamespacedName{Name: role.Name, Namespace: role.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Role", "Name", role.Name)
 		err = client.Create(ctx, &role)
 		if err != nil {
+			log.Errorf("Failed to create Role: %v", err)
 			return err
 		}
 		// we need to return found object
