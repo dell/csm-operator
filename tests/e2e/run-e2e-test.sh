@@ -174,6 +174,7 @@ function usage() {
   echo "  --zoning                                     use to run powerflex zoning tests (requires multiple storage systems)"
   echo "  --minimal                                    use minimal testfiles scenarios"
   echo "  --sharednfs                                  use to run e2e sharednfs suite (pre-requisite, the nodes need to have nfs-server setup)"
+  echo "  --add-tag=<scenario tag>                     use to specify scenarios to run by one of their tags"
   echo
 
   exit 0
@@ -255,6 +256,9 @@ while getopts ":hv-:" optchar; do
       ;;
     scenarios=*)
       SCENARIOS=${OPTARG#*=}
+      ;;
+    add-tag=*)
+      export ADD_SCENARIO_TAG=${OPTARG#*=}
       ;;
     minimal)
       export E2E_SCENARIOS_FILE=testfiles/minimal-testfiles/scenarios.yaml
