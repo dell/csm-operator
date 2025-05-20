@@ -146,7 +146,19 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1]) // #nosec G304
+
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	// If the specified file is a template, assume it was rendered to a temporary file earlier.
+	// Attempt to read the rendered file first. If it doesn't exist, assume the specified file
+	// is not a template and should be applied as-is.
+
+	tempFilePath := getRenderedFilePath(crFilePath)
+	crBuff, err := os.ReadFile(tempFilePath) // #nosec G304
+	if os.IsNotExist(err) {
+		// There is no corresponding rendered file, use crFilePath
+		crBuff, err = os.ReadFile(crFilePath) // #nosec G304
+	}
 	if err != nil {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
@@ -180,7 +192,7 @@ func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr s
 	return step.ctrlClient.Update(context.TODO(), found)
 }
 
-func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string) error {
+func (step *Step) installThirdPartyModule(_ Resource, thirdPartyModule string) error {
 	if thirdPartyModule == "cert-manager" {
 		cmd := exec.Command("kubectl", "apply", "-f", "testfiles/cert-manager-crds.yaml")
 		err := cmd.Run()
@@ -206,7 +218,7 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			cmd1 = exec.Command("kubectl", "delete", "backupstoragelocations.velero.io", "default", "-n", amNamespace) // #nosec G204
 			err1 = cmd1.Run()
 			if err1 != nil {
-				return fmt.Errorf("installation of velero %v failed", err1)
+				return fmt.Errorf("installation of velero failed: %v", err1)
 			}
 		}
 
@@ -216,14 +228,15 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			cmd1 = exec.Command("kubectl", "delete", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace) // #nosec G204
 			err1 = cmd1.Run()
 			if err1 != nil {
-				return fmt.Errorf("installation of velero %v failed", err1)
+				return fmt.Errorf("installation of velero failed: %v", err1)
 			}
 		}
 
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml") // #nosec G204
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace",
+			"-f", getRenderedFilePath("testfiles/application-mobility-templates/velero-values.yaml")) // #nosec G204
 		err2 := cmd2.Run()
 		if err2 != nil {
-			return fmt.Errorf("installation of velero %v failed", err2)
+			return fmt.Errorf("installation of velero failed: %v", err2)
 		}
 	} else if thirdPartyModule == "sample-app" {
 
@@ -979,12 +992,16 @@ func randomAlphaNumberic(length int) string {
 	return string(result)
 }
 
+func getRenderedFilePath(templatePath string) string {
+	return strings.Replace(templatePath, "testfiles/", "temp/", 1)
+}
+
 // To not contaminate the source tree with rendered template files,
 // we write all rendered files under the same temp directory, but
 // preserve the subdirectories structure.
 func writeRenderedFile(templatePath, content string) (newPath string, err error) {
 
-	newPath = strings.Replace(templatePath, "testfiles/", "temp/", 1)
+	newPath = getRenderedFilePath(templatePath)
 
 	// make sure the base path exist
 	err = os.MkdirAll(filepath.Dir(newPath), 0o755)
@@ -1841,24 +1858,21 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 	return nil
 }
 
-// set up AM CR
-func (step *Step) configureAMInstall(res Resource, templateFile string) error {
-	mapValues, err := determineMap("application-mobility")
+// Render the AM CR template into a temporary file with the same name
+func (step *Step) configureAMInstall(_ Resource, templateFile string) error {
+	fileString, err := renderTemplate("application-mobility", templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		if os.Getenv(mapValues[key]) == "" {
-			return fmt.Errorf("env variable %s not set, set in env-e2e-test.sh before continuing", mapValues[key])
-		}
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
+	filePath, err := writeRenderedFile(templateFile, fileString)
+	if err != nil {
+		return err
 	}
+	fmt.Printf("Rendered template %s into %s\n", templateFile, filePath)
 
-	// Calling it here, since configureAMInstall is used to setup each AM test
+	// Setup RH registry authentication secret. Calling it here,
+	// since configureAMInstall is used to setup each AM test.
 	err = setupAMImagePullSecret()
 	if err != nil {
 		return fmt.Errorf("failed to setup RH registry authentication for App Mobility: %v", err)
