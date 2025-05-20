@@ -129,6 +129,20 @@ func ResiliencyInjectRole(role rbacv1.Role, cr csmv1.ContainerStorageModule, op 
 	if err != nil {
 		return nil, err
 	}
+	resiliencyVersion := resiliencyModule.ConfigVersion
+	if resiliencyVersion == "" {
+		resiliencyVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, resiliencyModule.Name, op.ConfigDirectory)
+		if err != nil {
+			return nil, err
+		}
+	}
+	isOldResiliencyVersion, err := utils.MinVersionCheck(resiliencyVersion, "v1.12.0")
+	if err != nil {
+		return nil, err
+	}
+	if isOldResiliencyVersion {
+		return &role, nil
+	}
 	// roleFiles are under moduleConfig for node & controller mode
 	buf, err := readConfigFile(resiliencyModule, cr, op, roleFileName)
 	if err != nil {

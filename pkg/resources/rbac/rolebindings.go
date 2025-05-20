@@ -49,6 +49,11 @@ func SyncClusterRoleBindings(ctx context.Context, rb rbacv1.ClusterRoleBinding, 
 // SyncRoleBindings - Syncs the RoleBindings
 func SyncRoleBindings(ctx context.Context, rb rbacv1.RoleBinding, client client.Client) error {
 	log := logger.GetLogger(ctx)
+	if rb.Name == "" {
+		log.Info("RoleBindings is empty, skipping RoleBindings creation")
+		return nil
+	}
+
 	found := &rbacv1.RoleBinding{}
 	err := client.Get(ctx, types.NamespacedName{Name: rb.Name, Namespace: rb.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
