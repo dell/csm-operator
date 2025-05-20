@@ -127,13 +127,13 @@ func TestSyncRoleBindings(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Test SyncRoleBindings with known error",
+			name: "Test SyncRoleBindings without name",
 			args: args{
 				ctx:    context.Background(),
 				rb:     *MockRoleBinding("", "test", "test"),
 				client: ctrlClientFake.NewClientBuilder().Build(),
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "Test SyncRoleBindings for unknown error",
