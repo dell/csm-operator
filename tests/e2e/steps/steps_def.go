@@ -1881,7 +1881,7 @@ func (step *Step) configureAMInstall(_ Resource, templateFile string) error {
 func setupAMImagePullSecret() error {
 	if os.Getenv("RH_REGISTRY_USERNAME") == "" || os.Getenv("RH_REGISTRY_PASSWORD") == "" {
 		return fmt.Errorf("env variable RH_REGISTRY_USERNAME or RH_REGISTRY_PASSWORD is not set," +
-			" set it in array-info.sh before continuing")
+			" set it in array-info.env before continuing")
 	}
 
 	// Create or update the image pull secret

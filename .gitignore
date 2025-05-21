@@ -27,3 +27,6 @@ __debug_bin*
 *.swp
 *.swo
 *~
+
+# This file contains environment-specific information and should not be committed
+tests/e2e/array-info.env
