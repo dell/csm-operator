@@ -160,6 +160,8 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 			// use of rendered templates from previous tests.
 			err := os.RemoveAll("temp")
 			Expect(err).To(BeNil(), "Failed to clean up temp directory")
+			err = os.MkdirAll("temp", 0o700)
+			Expect(err).To(BeNil(), "Failed to create temp directory")
 
 			for _, stepName := range test.Scenario.Steps {
 				By(fmt.Sprintf("%s Executing  %s", beautify, stepName))
