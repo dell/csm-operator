@@ -16,7 +16,7 @@
 # Set environment variables and options
 ###############################################################################
 export E2E_SCENARIOS_FILE=testfiles/scenarios.yaml
-export ARRAY_INFO_FILE=array-info.sh
+export ARRAY_INFO_FILE=array-info.env
 export GO111MODULE=on
 export ACK_GINKGO_RC=true
 export PROG="${0}"
