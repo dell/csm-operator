@@ -998,7 +998,9 @@ func getRenderedFilePath(templatePath string) string {
 
 // To not contaminate the source tree with rendered template files,
 // we write all rendered files under the same temp directory, but
-// preserve the subdirectories structure.
+// preserve the subdirectories structure. For example, for templatePath
+// "testfiles/powerscale-templates/ephemeral.properties" the rendered file
+// will be written to "temp/powerscale-templates/ephemeral.properties".
 func writeRenderedFile(templatePath, content string) (newPath string, err error) {
 
 	newPath = getRenderedFilePath(templatePath)
@@ -1006,7 +1008,7 @@ func writeRenderedFile(templatePath, content string) (newPath string, err error)
 	// make sure the base path exist
 	err = os.MkdirAll(filepath.Dir(newPath), 0o755)
 	if err != nil {
-		return "", fmt.Errorf("error creating temp directory %s: %s", filepath.Dir(newPath), err)
+		return "", fmt.Errorf("error creating temp directory %s: %v", filepath.Dir(newPath), err)
 	}
 
 	err = os.WriteFile(newPath, []byte(content), 0o644)
