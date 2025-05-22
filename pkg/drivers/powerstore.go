@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -89,20 +90,51 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 		log.Errorw("PreCheckPowerStore failed in version check", "Error", err.Error())
 		return fmt.Errorf("%s %s not supported", csmv1.PowerStore, cr.Spec.Driver.ConfigVersion)
 	}
+
+	// Default values
+	skipCertValid := true
+	certCount := 1
+
+	// Check environment variables from the CR spec
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			switch env.Name {
+			case "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION":
+				certTempCheck, err := strconv.ParseBool(env.Value)
+				if err != nil {
+					return fmt.Errorf("invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: %s (%v)", env.Value, err)
+				}
+				skipCertValid = certTempCheck
+
+			case "CERT_SECRET_COUNT":
+				certTempCount, err := strconv.ParseInt(env.Value, 0, 8)
+				if err != nil {
+					return fmt.Errorf("invalid value for CERT_SECRET_COUNT: %s (%v)", env.Value, err)
+				}
+				certCount = int(certTempCount)
+			}
+		}
+	}
+
 	secrets := []string{config}
+	log.Debugw("preCheck", "secrets", len(secrets), "certCount", certCount, "Namespace", cr.Namespace)
+	if !skipCertValid {
+		for i := 0; i < certCount; i++ {
+			secrets = append(secrets, fmt.Sprintf("%s-certs-%d", cr.Name, i))
+		}
+	}
 
 	for _, name := range secrets {
 		found := &corev1.Secret{}
 		err := ct.Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
 		if err != nil {
-			log.Error(err, "Failed query for secret ", name)
+			log.Error(err, " Failed query for secret ", name, "Namespace", cr.Namespace)
 			if errors.IsNotFound(err) {
 				return fmt.Errorf("failed to find secret %s", name)
 			}
 		}
 	}
 
-	log.Debugw("preCheck", "secrets", len(secrets))
 	return nil
 }
 

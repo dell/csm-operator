@@ -310,6 +310,7 @@ spec:
               mountPath: /var/run/csi
             - name: certs
               mountPath: /certs
+              readOnly: true
             - name: powerstore-config
               mountPath: /powerstore-config
             - name: powerstore-config-params

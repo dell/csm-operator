@@ -202,6 +202,7 @@ spec:
               mountPath: /powerstore-config-params
             - name: certs
               mountPath: /certs
+              readOnly: true
             - name: nfs-powerstore
               mountPath: <X_CSI_NFS_EXPORT_DIRECTORY>
               mountPropagation: "Bidirectional"
