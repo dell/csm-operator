@@ -95,15 +95,15 @@ storage "file" {
 `
 
 	// env variables that align with operator e2e
-	powerflexSecretPath  = "PFLEX_VAULT_STORAGE_PATH"
-	powerflexUsername    = "PFLEX_USER"
-	powerflexPassword    = "PFLEX_PASS"
-	powerscaleSecretPath = "PSCALE_VAULT_STORAGE_PATH"
-	powerscaleUsername   = "PSCALE_USER"
-	powerscalePassword   = "PSCALE_PASS"
-	powermaxSecretPath   = "PMAX_VAULT_STORAGE_PATH"
-	powermaxUsername     = "PMAX_USER"
-	powermaxPassword     = "PMAX_PASS"
+	powerflexSecretPath  = "PFLEX_VAULT_STORAGE_PATH"  // #nosec G101 -- env var, not hardcode
+	powerflexUsername    = "PFLEX_USER"                // #nosec G101 -- env var, not hardcode
+	powerflexPassword    = "PFLEX_PASS"                // #nosec G101 -- env var, not hardcode
+	powerscaleSecretPath = "PSCALE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
+	powerscaleUsername   = "PSCALE_USER"               // #nosec G101 -- env var, not hardcode
+	powerscalePassword   = "PSCALE_PASS"               // #nosec G101 -- env var, not hardcode
+	powermaxSecretPath   = "PMAX_VAULT_STORAGE_PATH"   // #nosec G101 -- env var, not hardcode
+	powermaxUsername     = "PMAX_USER"                 // #nosec G101 -- env var, not hardcode
+	powermaxPassword     = "PMAX_PASS"                 // #nosec G101 -- env var, not hardcode
 
 	// timestamps to create certificates
 	notBefore = time.Now()
@@ -367,7 +367,7 @@ func (s *sequence) writeCertFiles() error {
 	}
 
 	for _, f := range files {
-		if err := os.WriteFile(f.name, f.data, 0644); err != nil {
+		if err := os.WriteFile(f.name, f.data, 0644); err != nil { // #nosec G306 -- this is a test automation tool
 			return err
 		}
 	}
@@ -438,7 +438,7 @@ func (s *sequence) configureValues() error {
 	}
 	k8sHost := b.String()
 
-	err = os.WriteFile(fmt.Sprintf("%s-values.yaml", s.name), []byte(fmt.Sprintf(values, k8sHost, s.name, s.name, s.name, s.name)), 0644)
+	err = os.WriteFile(fmt.Sprintf("%s-values.yaml", s.name), []byte(fmt.Sprintf(values, k8sHost, s.name, s.name, s.name, s.name)), 0644) // #nosec G306 -- this is a test automation tool
 	if err != nil {
 		return err
 	}
@@ -459,7 +459,7 @@ func (s *sequence) installVault() error {
 	}
 
 	b.Reset()
-	cmd = exec.Command("helm", "install", s.name, "hashicorp/vault", "-f", fmt.Sprintf("%s-values.yaml", s.name))
+	cmd = exec.Command("helm", "install", s.name, "hashicorp/vault", "-f", fmt.Sprintf("%s-values.yaml", s.name)) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err = cmd.Run()
@@ -475,7 +475,7 @@ func (s *sequence) waitForVault() error {
 	log.Printf("Waiting for %s to be Ready\n", s.vaultPodName)
 
 	var b bytes.Buffer
-	cmd := exec.Command("kubectl", "wait", "--for=condition=Ready", "--timeout", "5m", s.vaultPodName)
+	cmd := exec.Command("kubectl", "wait", "--for=condition=Ready", "--timeout", "5m", s.vaultPodName) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -490,7 +490,7 @@ func (s *sequence) enableKubernetesAuth() error {
 	log.Printf("Enabling Kubernetes authentication in %s\n", s.name)
 
 	var b bytes.Buffer
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", "vault auth enable kubernetes")
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", "vault auth enable kubernetes") // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -505,8 +505,8 @@ func (s *sequence) configureKubernetesAuth() error {
 	log.Printf("Configuring Kubernetes authentication in %s\n", s.name)
 
 	var b bytes.Buffer
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--",
-		"sh", "-c", `vault write auth/kubernetes/config kubernetes_host="$KUBERNETES_HOST" kubernetes_ca_cert=@/config/ca.crt disable_local_ca_jwt=true`)
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", // #nosec G204 -- this is a test automation tool
+		"sh", "-c", `vault write auth/kubernetes/config kubernetes_host="$KUBERNETES_HOST" kubernetes_ca_cert=@/config/ca.crt disable_local_ca_jwt=true`) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -521,7 +521,7 @@ func (s *sequence) configureVaultPolicy() error {
 	log.Printf("Configuring policy %s\n", s.name)
 
 	var b bytes.Buffer
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", fmt.Sprintf("vault policy write csm-authorization /config/%s-policy.hcl", s.name))
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", fmt.Sprintf("vault policy write csm-authorization /config/%s-policy.hcl", s.name)) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -537,7 +537,7 @@ func (s *sequence) configureVaultRole() error {
 
 	var b bytes.Buffer
 	vaultCmd := fmt.Sprintf("vault write auth/kubernetes/role/csm-authorization token_ttl=60s bound_service_account_names=storage-service bound_service_account_namespaces=%s policies=csm-authorization", s.namespace)
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd)
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -566,7 +566,7 @@ func (s *sequence) writeVaultSecret() error {
 }
 
 func (s *sequence) handleFileConfig(path string) error {
-	b, err := os.ReadFile(path)
+	b, err := os.ReadFile(path) // #nosec G304 -- this is a test automation tool
 	if err != nil {
 		return fmt.Errorf("reading credential config %s: %v", path, err)
 	}
@@ -626,7 +626,7 @@ func (s *sequence) putVaultSecret(path, username, password string) error {
 	log.Printf("Writing secret %s in %s", path, s.name)
 	var b bytes.Buffer
 	vaultCmd := fmt.Sprintf("vault kv put -mount=secret %s password=%s username=%s", path, password, username)
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd)
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
