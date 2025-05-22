@@ -367,7 +367,8 @@ func (s *sequence) writeCertFiles() error {
 	}
 
 	for _, f := range files {
-		if err := os.WriteFile(f.name, f.data, 0644); err != nil { // #nosec G306 -- this is a test automation tool
+		// #nosec G306 -- this is a test automation tool
+		if err := os.WriteFile(f.name, f.data, 0644); err != nil {
 			return err
 		}
 	}
