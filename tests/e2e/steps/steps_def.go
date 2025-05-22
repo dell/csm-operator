@@ -1002,7 +1002,7 @@ func writeRenderedFile(templatePath, content string) (newPath string, err error)
 		return "", fmt.Errorf("error creating temp directory %s: %v", filepath.Dir(newPath), err)
 	}
 
-	err = os.WriteFile(newPath, []byte(content), 0o644)
+	err = os.WriteFile(newPath, []byte(content), 0o644) // #nosec G306 -- this is a test automation tool
 	if err != nil {
 		return "", fmt.Errorf("error creating temp file: %v", err)
 	}
