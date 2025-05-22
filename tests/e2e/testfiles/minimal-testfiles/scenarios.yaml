@@ -21,7 +21,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pstore --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-pstore -v 1 -p 1
 
 - scenario: "Install PowerStore Driver with Shared NFS (Minimal, Standalone)"
   paths:
@@ -48,7 +48,7 @@
         - /bin/bash scripts/verify_nfs.sh
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pstore-sharednfs --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-pstore-sharednfs -v 1 -p 1
 
 - scenario: "Install PowerStore Driver (Minimal, With Resiliency)"
   paths:
@@ -120,7 +120,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pstore --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-pstore -v 1 -p 1
 
 - scenario: "Install PowerStore Driver (Minimal, With false forceRemoveDriver)"
   paths:
@@ -147,7 +147,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-pstore --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-pstore -v 1 -p 1
 
 - scenario: "Install Unity Driver (Minimal, Standalone)"
   paths:
@@ -170,7 +170,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-unity --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-unity -v 1 -p 1
 
 - scenario: "Install Unity Driver (Minimal, With false forceRemoveDriver)"
   paths:
@@ -197,7 +197,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-unity --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-unity -v 1 -p 1
 
 - scenario: "Install Unity Driver (Minimal, With no forceRemoveDriver)"
   paths:
@@ -220,7 +220,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-unity --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-unity -v 1 -p 1
 
 - scenario: "Install PowerFlex Driver (Minimal, Standalone)"
   paths:
@@ -244,7 +244,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
 
 - scenario: "Install PowerFlex Driver (Minimal, With no forceRemoveDriver)"
   paths:
@@ -267,7 +267,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
 
 - scenario: "Install PowerFlex Driver (Minimal, With false forceRemoveDriver)"
   paths:
@@ -294,7 +294,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
 
 - scenario: "Install PowerFlex Driver (Minimal, With Resiliency)"
   paths:
@@ -381,7 +381,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
 
 - scenario: "Install PowerFlex Driver (Minimal, With Observability)"
   paths:
@@ -404,7 +404,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
 
 - scenario: "Install PowerFlex Driver (Minimal, With Observability and Custom Cert for Otel-Collector)"
   paths:
@@ -431,6 +431,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -445,7 +446,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
 
 - scenario: "Install PowerScale Driver (Minimal, With no forceRemoveDriver)"
   paths:
@@ -455,6 +456,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -469,7 +471,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
 
 - scenario: "Install PowerScale Driver (Minimal, With false forceRemoveDriver)"
   paths:
@@ -479,6 +481,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -497,7 +500,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
 
 - scenario: "Install PowerScale Driver (Minimal, Standalone), Enable/Disable Resiliency"
   paths:
@@ -508,6 +511,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -532,6 +536,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -555,6 +560,7 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -580,6 +586,7 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -610,6 +617,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -626,6 +634,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -637,7 +646,6 @@
     - "Disable [observability] module from CR [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is not installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -677,6 +685,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscaleAuth]"
     - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
@@ -696,7 +705,7 @@
   customTest:
     - name: Cert CSI
       run:
-        - cert-csi test provisioning --sc op-e2e-isilon --chainNumber 2 --chainLength 2
+        - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
 
 - scenario: "Install Powerflex Driver (Minimal, With Replication)"
   paths:
