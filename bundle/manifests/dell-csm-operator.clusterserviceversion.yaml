@@ -4513,4 +4513,14 @@ spec:
       name: externalhealthmonitorcontroller
     - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       name: metadataretriever
+    - image: docker.io/nginxinc/nginx-unprivileged:1.27
+      name: nginx
+    - image: docker.io/redis:7.4.1-alpine
+      name: redis
+    - image: docker.io/rediscommander/redis-commander:latest
+      name: redis-commander
+    - image: docker.io/openpolicyagent/opa:latest
+      name: opa
+    - image: docker.io/openpolicyagent/kube-mgmt:8.5.10
+      name: kube-mgmt
   version: 1.9.0
