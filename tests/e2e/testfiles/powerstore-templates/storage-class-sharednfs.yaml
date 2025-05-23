@@ -13,6 +13,6 @@ allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
 allowedTopologies:
   - matchLabelExpressions:
-      - key: "csi-powerstore.dellemc.com/REPLACE_ENDPOINT-iscsi"
+      - key: "csi-powerstore.dellemc.com/REPLACE_ENDPOINT-nfs"
         values:
           - "true"
