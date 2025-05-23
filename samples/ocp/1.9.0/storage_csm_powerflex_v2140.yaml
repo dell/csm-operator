@@ -1,0 +1,461 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: vxflexos
+  namespace: vxflexos
+spec:
+  driver:
+    csiDriverType: "powerflex"
+    csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
+      # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
+      # Allowed values: ReadWriteOnceWithFSType, File , None
+      # Default value: File
+      fSGroupPolicy: "File"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: true
+    configVersion: v2.14.0
+    replicas: 1
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+    common:
+      image: "registry.connect.redhat.com/dell-emc/dell-csm-powerflex@sha256:97d052c3e1703d4f376a8aca967b3e9a7258b2a53099b83a66cadf1d4e4c2b56"
+      imagePullPolicy: IfNotPresent
+      envs:
+        - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
+          value: "false"
+        - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
+          value: "false"
+        # Log level for CSI driver, passed to logrus.
+        # Options are "PANIC", "FATAL", "ERROR", "WARN", "INFO",
+        # "DEBUG", and "TRACE".
+        - name: CSI_LOG_LEVEL
+          value: "INFO"
+        # GOSCALEIO_DEBUG: Enable/disable debug logs from goscaleio library.
+        # Default value: false
+        - name: GOSCALEIO_DEBUG
+          value: "false"
+        # GOSCALEIO_SHOWHTTP: Enable/disable HTTP requests and responses from goscaleio library
+        - name: GOSCALEIO_SHOWHTTP
+          value: "false"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: /var/lib/kubelet
+        - name: KUBELET_CONFIG_DIR
+          value: "/var/lib/kubelet"
+        - name: "CERT_SECRET_COUNT"
+          value: "0"
+        - name: X_CSI_QUOTA_ENABLED
+          value: "false"
+        # CSI driver interface names for NFS deployment without SDC
+        # Multiple interface names should be separated by comma
+        # Ensure to single quote the whole value and double quote each interface name
+        # Examples: 'worker1: "interface1",worker2: "interface2"'
+        # Default value: None, required only when X_CSI_SDC_ENABLED is set to false
+        - name: INTERFACE_NAMES
+          value:
+    sideCars:
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
+        args: ["--volume-name-prefix=csivol"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher@sha256:a399393ff5bd156277c56bae0c08389b1a1b95b7fd6ea44a316ce55e0dd559d7
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:8e66117d3b5e336901fc2ff508b3eb6105f8cf3b70f631e8102441e9562c8875
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer@sha256:2a0b297cc7c4cd376ac7413df339ff2fdaa1ec9d099aed92b5ea1f031ef7f639
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:339a83a86e6e1eead14413fe494b43de8bc48243d146c2810b39dd741d26ca6a
+      - name: csi-metadata-retriever
+        image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:a8412f649ffca3aa72f5c9f5f2c3eb5dac5d742dfa5d3f4e0ef4bd81d72f2956
+        # sdc-monitor is disabled by default, due to high CPU usage
+      - name: sdc-monitor
+        enabled: false
+        image: quay.io/dell/storage/powerflex/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
+        envs:
+          - name: HOST_PID
+            value: "1"
+          - name: MDM
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # do not add mdm value here if it is present in secret
+            # health monitor is disabled by default, refer to driver documentation before enabling it
+            # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
+            # Default monitor-interval: 60s
+      - name: csi-external-health-monitor-controller
+        enabled: false
+        args: ["--monitor-interval=60s"]
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:65d118e955cfa0827d0f727fe161a7469e0e1c6829c347a484130aeb6e45f377
+    # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+    # Configure when the storageCapacity is set as "true"
+    # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+    # - name: provisioner
+    #  args: ["--capacity-poll-interval=5m"]
+
+    controller:
+      envs:
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        # X_CSI_POWERFLEX_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
+        # Allowed Values: x.x.x.x/xx or x.x.x.x
+        # Default Value: None
+        - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+          value:
+      # "controller.nodeSelector" defines what nodes would be selected for pods of controller deployment
+      # Leave as blank to use all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      #  node-role.kubernetes.io/master: ""
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # "controller.tolerations" defines tolerations that would be applied to controller deployment
+      # Leave as blank to install controller on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+    node:
+      envs:
+        # X_CSI_SDC_ENABLED: Enable/Disable SDC
+        # Allowed values:
+        #    true: enable SDC
+        #    false: disable SDC
+        # Default value: true
+        - name: X_CSI_SDC_ENABLED
+          value: "true"
+        # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
+        # Allowed values:
+        #    true: enable SDC approval
+        #    false: disable SDC approval
+        # Default value: false
+        - name: X_CSI_APPROVE_SDC_ENABLED
+          value: "false"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
+        # Allowed values:
+        #   true: enable renaming
+        #   false: disable renaming
+        # Default value: false
+        - name: X_CSI_RENAME_SDC_ENABLED
+          value: "false"
+        # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
+        # "prefix" + "worker_node_hostname" should not exceed 31 chars.
+        # Default value: none
+        # Examples: "rhel-sdc", "sdc-test"
+        - name: X_CSI_RENAME_SDC_PREFIX
+          value: ""
+        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # If value is zero Container Orchestrator shall decide how many volumes of this type can be published by the controller to the node.
+        # This limit is applicable to all the nodes in the cluster for which node label 'maxVxflexosVolumesPerNode' is not set.
+        # Default value: "0"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
+        # X_CSI_SDC_SFTP_REPO_ENABLED: Enable/Disable SDC SFTP repository
+        - name: X_CSI_SDC_SFTP_REPO_ENABLED
+          value: "false"
+      # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
+      # Leave as blank to use all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      #  node-role.kubernetes.io/master: ""
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # "node.tolerations" defines tolerations that would be applied to node daemonset
+      # Leave as blank to install node driver only on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/master taint
+      # - key: "node-role.kubernetes.io/master"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
+      #  - key: "offline.vxflexos.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
+      #  - key: "vxflexos.podmon.storage.dell.com"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
+    initContainers:
+      - image: quay.io/dell/storage/powerflex/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
+        imagePullPolicy: IfNotPresent
+        name: sdc
+        envs:
+          - name: MDM
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
+          - name: REPO_ADDRESS
+            value: "sftp://0.0.0.0"  # SFTP/private repository address. Format: "protocol://address"
+          - name: REPO_USER
+            value: "sdcRepoUser"  # provide username to authenticate to the SFTP repo
+          - name: MODULE_SIGCHECK
+            value: "0"
+  modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enabled: Enable/Disable csm-authorization
+      enabled: false
+      # For PowerFlex Tech-Preview v2.0.0-alpha use v1.11.0 as configVersion.
+      # Do not change the configVersion to v2.0.0-alpha
+      configVersion: v2.2.0
+      components:
+        - name: karavi-authorization-proxy
+          # Use image: registry.connect.redhat.com/dell-emc/dell-csm-authorization-sidecar@sha256:dd8aac3380d1d0664f7bbeb63da36443a57da12f9a26e435f33b8a33bdea4cb9 for Authorization v2.2.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-authorization-sidecar@sha256:dd8aac3380d1d0664f7bbeb63da36443a57da12f9a26e435f33b8a33bdea4cb9
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            # Default value: none
+            - name: "PROXY_HOST"
+              value: "csm-authorization.com"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            # Default value: "true"
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
+    # observability: allows to configure observability
+    - name: observability
+      # enabled: Enable/Disable observability
+      # Default value: false
+      enabled: false
+      configVersion: v1.12.0
+      components:
+        - name: topology
+          # enabled: Enable/Disable topology
+          # Default value: false
+          enabled: false
+          # image: Defines karavi-topology image. This shouldn't be changed
+          # Allowed values: string
+          image: registry.connect.redhat.com/dell-emc/dell-csm-topology@sha256:8c99287c7da6fd122d29cc7b2ae0dec147fd0c666b94a8a99a9b2003ffe68586
+          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
+          envs:
+            # topology log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "TOPOLOGY_LOG_LEVEL"
+              value: "INFO"
+        - name: otel-collector
+          # enabled: Enable/Disable OpenTelemetry Collector
+          # Default value: false
+          enabled: false
+          # image: Defines otel-collector image. This shouldn't be changed
+          # Allowed values: string
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector@sha256:678e01c111ba1695b810db08007dcc847bc571d09f020496329e7e1d39685336
+          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
+          envs:
+            # image of nginx proxy image
+            # Allowed values: string
+            # Default value: "docker.io/nginxinc/nginx-unprivileged@sha256:212f7e44f95a035bc40822d4bba7c0565b6b782cc311fa423cae1568a622aac5"
+            - name: "NGINX_PROXY_IMAGE"
+              value: "docker.io/nginxinc/nginx-unprivileged@sha256:212f7e44f95a035bc40822d4bba7c0565b6b782cc311fa423cae1568a622aac5"
+        # enabled: Enable/Disable cert-manager
+        # Allowed values:
+        #   true: enable deployment of cert-manager
+        #   false: disable deployment of cert-manager only if it's already deployed
+        # Default value: false
+        - name: cert-manager
+          enabled: false
+        - name: metrics-powerflex
+          # enabled: Enable/Disable PowerFlex metrics
+          # Default value: false
+          enabled: false
+          # image: Defines PowerFlex metrics image. This shouldn't be changed
+          image: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powerflex@sha256:55595df2821dc1d45b6326830511435d0c5d88fe5602ca66547ea3548c970477
+          envs:
+            # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_MAX_CONCURRENT_QUERIES"
+              value: "10"
+            # POWERFLEX_SDC_METRICS_ENABLED: enable/disable collection of sdc metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_SDC_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_VOLUME_METRICS_ENABLED: enable/disable collection of volume metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_VOLUME_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_STORAGE_POOL_METRICS_ENABLED: enable/disable collection of storage pool metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_STORAGE_POOL_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_SDC_IO_POLL_FREQUENCY: set polling frequency to get sdc metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_SDC_IO_POLL_FREQUENCY"
+              value: "10"
+            # POWERFLEX_VOLUME_IO_POLL_FREQUENCY: set polling frequency to get volume metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_VOLUME_IO_POLL_FREQUENCY"
+              value: "10"
+            # POWERFLEX_STORAGE_POOL_POLL_FREQUENCY: set polling frequency to get Quota capacity metrics data
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERFLEX_STORAGE_POOL_POLL_FREQUENCY"
+              value: "10"
+            # PowerFlex metrics log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "POWERFLEX_LOG_LEVEL"
+              value: "INFO"
+            # PowerFlex Metrics Output logs in the specified format
+            # Valid values: TEXT, JSON
+            # Default value: "TEXT"
+            - name: "POWERFLEX_LOG_FORMAT"
+              value: "TEXT"
+            # Otel collector address
+            # Allowed values: String
+            # Default value: "otel-collector:55680"
+            - name: "COLLECTOR_ADDRESS"
+              value: "otel-collector:55680"
+    # Replication: allows to configure replication
+    # Replication CRDs must be installed before installing driver
+    - name: replication
+      # enabled: Enable/Disable replication feature
+      # Allowed values:
+      #   true: enable replication feature(install dell-csi-replicator sidecar)
+      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.12.0
+      components:
+        - name: dell-csi-replicator
+          # image: Image to use for dell-csi-replicator. This shouldn't be changed
+          # Allowed values: string
+          # Default value: None
+          image: registry.connect.redhat.com/dell-emc/dell-csm-replicator@sha256:3647b734da48dd44f4b8af9cd56eaba613d59201927420e877ed9eeefe573b32
+          envs:
+            # replicationPrefix: prefix to prepend to storage classes parameters
+            # Allowed values: string
+            # Default value: replication.storage.dell.com
+            - name: "X_CSI_REPLICATION_PREFIX"
+              value: "replication.storage.dell.com"
+            # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+            # Allowed values: string
+            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+              value: "powerflex"
+        - name: dell-replication-controller-manager
+          # image: Defines controller image. This shouldn't be changed
+          # Allowed values: string
+          image: registry.connect.redhat.com/dell-emc/dell-csm-replication-controller-manager@sha256:45ff6eb59f4ac87cd68d4405c07f20e7e34f5a2d33775f33d89b8a3437a06fab
+          envs:
+            # Replication log level
+            # Allowed values: "error", "warn"/"warning", "info", "debug"
+            # Default value: "debug"
+            - name: "REPLICATION_CTRL_LOG_LEVEL"
+              value: "debug"
+            # replicas: Defines number of controller replicas
+            # Allowed values: int
+            # Default value: 1
+            - name: "REPLICATION_CTRL_REPLICAS"
+              value: "1"
+            # retryIntervalMin: Initial retry interval of failed reconcile request.
+            # It doubles with each failure, upto retry-interval-max
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MIN"
+              value: "1s"
+            # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MAX"
+              value: "5m"
+            # DISABLE_PVC_REMAP: Disable PVC remapping for replication in single cluster configuration
+            # Allowed values:
+            #   true: Disable replication feature(install dell-csi-replicator sidecar)
+            #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+            # Default value: false
+            - name: "DISABLE_PVC_REMAP"
+              value: "false"
+            # REPLICATION_ALLOW_PVC_CREATION_ON_TARGET: It Creates PVC on target cluster using replicated PV.
+            # Allowed values:
+            #   true: It creates a PVC on target cluster against replicated PV
+            #   false: simply updates claimref on replicated PV on target cluster without actually creating a PVC
+            # Default value: false
+            - name: "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET"
+              value: "false"
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.13.0
+      components:
+        - name: podmon-controller
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:5c3f5e473b9f3ce5797a61b2466d16d8b9c488e69ee35ac336c424bef8979abc
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--labelvalue=csi-vxflexos"
+            - "--skipArrayConnectionValidation=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityPollRate=5"
+            - "--arrayConnectivityConnectionLossThreshold=3"
+            # Below 3 args should not be modified.
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--mode=controller"
+            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+        - name: podmon-node
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:5c3f5e473b9f3ce5797a61b2466d16d8b9c488e69ee35ac336c424bef8979abc
+          imagePullPolicy: IfNotPresent
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+          args:
+            - "--labelvalue=csi-vxflexos"
+            - "--leaderelection=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityPollRate=5"
+            # Below 3 args should not be modified.
+            - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
+            - "--mode=node"
+            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
