@@ -25,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -235,4 +236,60 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
 	}
 	return yamlString
+}
+
+func getApplyCertVolumePowerstore(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {
+	skipCertValid := true
+	certCount := 1
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION" {
+				b, err := strconv.ParseBool(env.Value)
+				if err != nil {
+					return nil, fmt.Errorf("%s is an invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+				}
+				skipCertValid = b
+			}
+			if env.Name == "CERT_SECRET_COUNT" {
+				d, err := strconv.ParseInt(env.Value, 0, 8)
+				if err != nil {
+					return nil, fmt.Errorf("%s is an invalid value for CERT_SECRET_COUNT: %v", env.Value, err)
+				}
+				certCount = int(d)
+			}
+		}
+	} else {
+		skipCertValid = true
+		certCount = 0
+	}
+
+	name := "certs"
+	volume := acorev1.VolumeApplyConfiguration{
+		Name: &name,
+		VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+			Projected: &acorev1.ProjectedVolumeSourceApplyConfiguration{
+				Sources: []acorev1.VolumeProjectionApplyConfiguration{},
+			},
+		},
+	}
+
+	if !skipCertValid {
+		for i := 0; i < certCount; i++ {
+			localname := fmt.Sprintf("%s-certs-%d", cr.Name, i)
+			value := fmt.Sprintf("cert-%d", i)
+			source := acorev1.SecretProjectionApplyConfiguration{
+				LocalObjectReferenceApplyConfiguration: acorev1.LocalObjectReferenceApplyConfiguration{Name: &localname},
+				Items: []acorev1.KeyToPathApplyConfiguration{
+					{
+						Key:  &value,
+						Path: &value,
+					},
+				},
+			}
+			volume.VolumeSourceApplyConfiguration.Projected.Sources = append(volume.VolumeSourceApplyConfiguration.Projected.Sources, acorev1.VolumeProjectionApplyConfiguration{Secret: &source})
+
+		}
+	}
+
+	return &volume, nil
 }
