@@ -292,11 +292,3 @@ spec:
           hostPath:
             path: <X_CSI_NFS_EXPORT_DIRECTORY>
             type: DirectoryOrCreate
-        - name: certs
-          projected:
-            sources:
-              - secret:
-                  name: <DriverDefaultReleaseName>-certs-0
-                  items:
-                    - key: cert-0
-                      path: cert-0
