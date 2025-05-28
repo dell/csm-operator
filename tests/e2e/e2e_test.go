@@ -108,6 +108,11 @@ var _ = BeforeSuite(func() {
 		}
 	}
 
+	customTag := os.Getenv("ADD_SCENARIO_TAG")
+	if customTag != "" {
+		tagsSpecified = append(tagsSpecified, customTag)
+	}
+
 	By(fmt.Sprint(tagsSpecified))
 
 	By("Reading values file")
@@ -150,6 +155,13 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))
 				continue
 			}
+
+			// Clean up the temporary test directory to avoid unintended
+			// use of rendered templates from previous tests.
+			err := os.RemoveAll("temp")
+			Expect(err).To(BeNil(), "Failed to clean up temp directory")
+			err = os.MkdirAll("temp", 0o700)
+			Expect(err).To(BeNil(), "Failed to create temp directory")
 
 			for _, stepName := range test.Scenario.Steps {
 				By(fmt.Sprintf("%s Executing  %s", beautify, stepName))

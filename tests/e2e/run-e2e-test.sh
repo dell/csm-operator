@@ -1,4 +1,4 @@
-# Copyright © 2022-2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2022-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 # Set environment variables and options
 ###############################################################################
 export E2E_SCENARIOS_FILE=testfiles/scenarios.yaml
-export ARRAY_INFO_FILE=array-info.sh
+export ARRAY_INFO_FILE=array-info.env
 export GO111MODULE=on
 export ACK_GINKGO_RC=true
 export PROG="${0}"
@@ -33,6 +33,8 @@ export APPLICATIONMOBILITY=false
 export ZONING=false
 export SHAREDNFS=false
 
+export INSTALL_VAULT=false
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -44,6 +46,15 @@ PATH=$PATH:$(go env GOPATH)/bin
 ###############################################################################
 function getArrayInfo() {
   source ./$ARRAY_INFO_FILE
+}
+
+function vaultSetupAutomation() {
+  echo "Removing any existing vault installation..."
+  helm delete vault || true
+  echo "Installing vault with all secrets for Authorization tests..."
+  cd ./scripts/vault-automation
+  go run main.go --kubeconfig ~/.kube/config --name vault --env-config
+  cd ../..
 }
 
 function checkForScenariosFile() {
@@ -174,6 +185,8 @@ function usage() {
   echo "  --zoning                                     use to run powerflex zoning tests (requires multiple storage systems)"
   echo "  --minimal                                    use minimal testfiles scenarios"
   echo "  --sharednfs                                  use to run e2e sharednfs suite (pre-requisite, the nodes need to have nfs-server setup)"
+  echo "  --install-vault                              use to install authorization vault instance with secrets for authorization tests"
+  echo "  --add-tag=<scenario tag>                     use to specify scenarios to run by one of their tags"
   echo
 
   exit 0
@@ -256,6 +269,12 @@ while getopts ":hv-:" optchar; do
     scenarios=*)
       SCENARIOS=${OPTARG#*=}
       ;;
+    install-vault)
+      export INSTALL_VAULT=true
+      ;;
+    add-tag=*)
+      export ADD_SCENARIO_TAG=${OPTARG#*=}
+      ;;
     minimal)
       export E2E_SCENARIOS_FILE=testfiles/minimal-testfiles/scenarios.yaml
       ;;
@@ -292,6 +311,9 @@ checkForKaravictl
 if [[ $APPLICATIONMOBILITY == "true" ]]; then
   echo "Checking for dellctl - APPLICATIONMOBILITY"
   checkForDellctl
+fi
+if [[ $INSTALL_VAULT == "true" ]]; then
+  vaultSetupAutomation
 fi
 if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
   echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
