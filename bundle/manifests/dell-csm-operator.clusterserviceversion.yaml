@@ -4443,7 +4443,7 @@ spec:
     - Replication
   links:
     - name: Documentation
-      url: https://dell.github.io/csm-docs/docs/deployment/csmoperator/
+      url: https://dell.github.io/csm-docs
   maintainers:
     - email: container.storage.modules@dell.com
       name: Dell Container Storage Modules
