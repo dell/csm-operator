@@ -34,7 +34,7 @@ Any time changes made to the operator are being checked into the main branch, sa
 ## Prerequisites
 
 - A supported environment where the Dell Container Storage Modules Operator is installed
-- Fill in the `array-info.sh` environment variables (more info below).
+- Fill in the environment variables in `array-info.env` ([more info below](#run)).
 - The following namespaces need to be created beforehand:
   - `dell`
   - `karavi`
@@ -72,9 +72,9 @@ go get github.com/onsi/gomega/...
 
 ### Array Information
 
-For PowerFlex, Unity, PowerScale, PowerStore, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.sh so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
+For PowerFlex, Unity, PowerScale, PowerStore, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.env so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
 
-In the case of end-to-end tests that involve PowerFlex zoning functionality, a second PowerFlex array will be necessary with its credentials provided in e2e/array-info.sh.
+In the case of end-to-end tests that involve PowerFlex zoning functionality, a second PowerFlex array will be necessary with its credentials provided in e2e/array-info.env.
 
 Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
 
@@ -116,7 +116,7 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 
 - Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
-- Set your array information in the `array-info.sh` file.
+- Create a file named `array-info.env` and populate it with your array information. Use `array-info.env.sample` as a template.
 - If you do not have `cert-csi`, `karavictl`, and (for app-mobility and authorization proxy server) `dellctl` accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl`, and they will be added to `/usr/local/bin`
 - Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
 - Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:

@@ -146,7 +146,19 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	crBuff, err := os.ReadFile(res.Scenario.Paths[crNum-1]) // #nosec G304
+
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	// If the specified file is a template, assume it was rendered to a temporary file earlier.
+	// Attempt to read the rendered file first. If it doesn't exist, assume the specified file
+	// is not a template and should be applied as-is.
+
+	tempFilePath := getRenderedFilePath(crFilePath)
+	crBuff, err := os.ReadFile(tempFilePath) // #nosec G304
+	if os.IsNotExist(err) {
+		// There is no corresponding rendered file, use crFilePath
+		crBuff, err = os.ReadFile(crFilePath) // #nosec G304
+	}
 	if err != nil {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
@@ -180,7 +192,7 @@ func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr s
 	return step.ctrlClient.Update(context.TODO(), found)
 }
 
-func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string) error {
+func (step *Step) installThirdPartyModule(_ Resource, thirdPartyModule string) error {
 	if thirdPartyModule == "cert-manager" {
 		cmd := exec.Command("kubectl", "apply", "-f", "testfiles/cert-manager-crds.yaml")
 		err := cmd.Run()
@@ -206,7 +218,7 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			cmd1 = exec.Command("kubectl", "delete", "backupstoragelocations.velero.io", "default", "-n", amNamespace) // #nosec G204
 			err1 = cmd1.Run()
 			if err1 != nil {
-				return fmt.Errorf("installation of velero %v failed", err1)
+				return fmt.Errorf("installation of velero failed: %v", err1)
 			}
 		}
 
@@ -216,14 +228,15 @@ func (step *Step) installThirdPartyModule(res Resource, thirdPartyModule string)
 			cmd1 = exec.Command("kubectl", "delete", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace) // #nosec G204
 			err1 = cmd1.Run()
 			if err1 != nil {
-				return fmt.Errorf("installation of velero %v failed", err1)
+				return fmt.Errorf("installation of velero failed: %v", err1)
 			}
 		}
 
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace", "-f", "testfiles/application-mobility-templates/velero-values.yaml") // #nosec G204
+		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace",
+			"-f", getRenderedFilePath("testfiles/application-mobility-templates/velero-values.yaml")) // #nosec G204
 		err2 := cmd2.Run()
 		if err2 != nil {
-			return fmt.Errorf("installation of velero %v failed", err2)
+			return fmt.Errorf("installation of velero failed: %v", err2)
 		}
 	} else if thirdPartyModule == "sample-app" {
 
@@ -657,159 +670,102 @@ func (step *Step) validateAuthorizationPodsNotInstalled(res Resource, module str
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
-func (step *Step) setUpStorageClass(res Resource, scName, templateFile, crType string) error {
-	// find which map to use for secret values
-	mapValues, err := determineMap(crType)
+func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) error {
+
+	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
+	// parse resource name out of the spec
+	type NamedResource struct {
+		Metadata struct {
+			Name string `yaml:"name"`
+		} `yaml:"metadata"`
+	}
+	var res NamedResource
+
+	err = yaml.Unmarshal([]byte(fileString), &res)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling template file %s: %v", templateFile, err)
+	}
+	name := res.Metadata.Name
+
+	// if resource exists - delete it
+	if storageClassExists(name) {
+		err := execCommand("kubectl", "delete", "sc", name)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to delete storage class: %v", err)
 		}
 	}
 
-	cmd := exec.Command("kubectl", "get", "sc", scName) // #nosec G204
-	err = cmd.Run()
-	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "sc", scName) // #nosec G204
-		err = cmd.Run()
-		if err != nil {
-			return err
-		}
-	}
-	cmd = exec.Command("kubectl", "create", "-f", templateFile) // #nosec G204
-	err = cmd.Run()
+	filePath, err := writeRenderedFile(templateFile, fileString)
 	if err != nil {
 		return err
+	}
+
+	// create new storage class
+	err = execCommand("kubectl", "create", "-f", filePath)
+	if err != nil {
+		return fmt.Errorf("failed to create storage class with template file %s: %v", templateFile, err)
 	}
 	return nil
 }
 
-func (step *Step) setupSecretFromFile(res Resource, file, namespace string) error {
-	crBuff, err := os.ReadFile(file) // #nosec G304
-	if err != nil {
-		return fmt.Errorf("failed to read secret data: %v", err)
-	}
+func (step *Step) createResource(_ Resource, templateFile, crType string) error {
 
-	if _, err := kubectl.RunKubectlInput(namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
-		return fmt.Errorf("failed to apply secret from file %s in namespace %s: %v", file, namespace, err)
-	}
-
-	return nil
-}
-
-func (step *Step) setUpPowermaxCreds(res Resource, templateFile, crType string) error {
-	mapValues, err := determineMap(crType)
+	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
+	filePath, err := writeRenderedFile(templateFile, fileString)
+	if err != nil {
+		return err
 	}
 
-	cmd := exec.Command("kubectl", "apply", "-f", templateFile)
-	err = cmd.Run()
+	err = execCommand("kubectl", "apply", "-f", filePath)
 	if err != nil {
-		return fmt.Errorf("failed to create creds: %s", err.Error())
+		return fmt.Errorf("failed to apply resource spec file %s: %v", filePath, err)
 	}
 	return nil
 }
 
 func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, crType string) error {
-	mapValues, err := determineMap(crType)
+	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
-	}
-
+	// if resource exists - delete it
 	if configMapExists(namespace, name) {
-		cmd := exec.Command("kubectl", "delete", "configmap", "-n", namespace, name) // #nosec G204
-		err := cmd.Run()
+		err := execCommand("kubectl", "delete", "configmap", "-n", namespace, name)
 		if err != nil {
-			return fmt.Errorf("failed to delete configmap: %s", err.Error())
+			return fmt.Errorf("failed to delete config map: %v", err)
 		}
 	}
 
-	fileArg := "--from-file=config.yaml=" + templateFile
-	cmd := exec.Command("kubectl", "create", "cm", name, "-n", namespace, fileArg) // #nosec G204
-	err = cmd.Run()
+	filePath, err := writeRenderedFile(templateFile, fileString)
 	if err != nil {
-		return fmt.Errorf("failed to create configmap: %s", err.Error())
+		return err
+	}
+
+	// create new storage class
+	fileArg := "--from-file=config.yaml=" + filePath
+	err = execCommand("kubectl", "create", "cm", name, "-n", namespace, fileArg)
+	if err != nil {
+		return fmt.Errorf("failed to create storage class with template file %s: %v", templateFile, err)
 	}
 	return nil
 }
 
-// TODO: Tech debt.
-// We should refactor all of our template usages over time to use temporary files instead of editing in-line.
-// Once that's done, this method can be removed.
-func (step *Step) setUpSecret(res Resource, templateFile, name, namespace, crType string) error {
-	// find which map to use for secret values
-	mapValues, err := determineMap(crType)
+func (step *Step) setUpSecret(_ Resource, templateFile, name, namespace, crType string) error {
+	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
-	}
-
-	// if secret exists- delete it
-	if secretExists(namespace, name) {
-		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
-		if err != nil {
-			return fmt.Errorf("failed to delete secret: %s", err.Error())
-		}
-	}
-
-	// create new secret
-	fileArg := "--from-file=config=" + templateFile
-	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
-	if err != nil {
-		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
-	}
-
-	return nil
-}
-
-func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, crType string) error {
-	// find which map to use for secret values
-	mapValues, err := determineMap(crType)
-	if err != nil {
-		return err
-	}
-
-	// read the template into memory
-	fileContent, err := os.ReadFile(templateFile) // #nosec G304
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return err
-	}
-
-	// Convert the file content to a string
-	fileString := string(fileContent)
-
-	// Replace all fields in temporary (in memory) string
-	for key := range mapValues {
-		fileString = strings.ReplaceAll(fileString, key, os.Getenv(mapValues[key]))
-	}
-
-	// if secret exists- delete it
+	// if secret exists - delete it
 	if secretExists(namespace, name) {
 		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
 		if err != nil {
@@ -821,25 +777,33 @@ func (step *Step) setUpTempSecret(res Resource, templateFile, name, namespace, c
 	fileArg := "--from-literal=config=" + fileString
 	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
-		return fmt.Errorf("failed to create secret with template file: %s: %s", templateFile, err.Error())
+		return fmt.Errorf("failed to create secret with template file %s: %v", templateFile, err)
 	}
 
 	return nil
 }
 
-func (step *Step) restoreTemplate(res Resource, templateFile, crType string) error {
+func renderTemplate(crType string, templateFile string) (string, error) {
+	// find which map to use for secret values
 	mapValues, err := determineMap(crType)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(os.Getenv(mapValues[key]), key, templateFile)
-		if err != nil {
-			return err
-		}
+	// read the template into memory
+	fileContent, err := os.ReadFile(templateFile) // #nosec G304
+	if err != nil {
+		return "", fmt.Errorf("error reading template file: %v", err)
 	}
-	return nil
+
+	// Convert the file content to a string
+	fileString := string(fileContent)
+
+	// Replace all fields in temporary (in memory) string
+	for key, val := range mapValues {
+		fileString = strings.ReplaceAll(fileString, key, os.Getenv(val))
+	}
+	return fileString, nil
 }
 
 func determineMap(crType string) (map[string]string, error) {
@@ -900,24 +864,21 @@ func determineMap(crType string) (map[string]string, error) {
 }
 
 func secretExists(namespace, name string) bool {
-	cmd := exec.Command("kubectl", "get", "secret", "-n", namespace, name) // #nosec G204
-	err := cmd.Run()
-	if err != nil {
-		return false
-	}
-	return true
+	err := exec.Command("kubectl", "get", "secret", "-n", namespace, name).Run() // #nosec G204
+	return err == nil
 }
 
 func configMapExists(namespace, name string) bool {
-	cmd := exec.Command("kubectl", "get", "configmap", "-n", namespace, name) // #nosec G204
-	err := cmd.Run()
-	if err != nil {
-		return false
-	}
-	return true
+	err := exec.Command("kubectl", "get", "configmap", "-n", namespace, name).Run() // #nosec G204
+	return err == nil
 }
 
-func replaceInFile(old, new, templateFile string) error {
+func storageClassExists(name string) bool {
+	err := exec.Command("kubectl", "get", "storageclass", name).Run() // #nosec G204
+	return err == nil
+}
+
+func replaceInFile(old, new, templateFile string) error { // TODO delete
 	cmdString := "s|" + old + "|" + new + "|g"
 	cmd := exec.Command("sed", "-i", cmdString, templateFile) // #nosec G204
 	err := cmd.Run()
@@ -991,21 +952,20 @@ func (step *Step) runCustomTestSelector(res Resource, testName string) error {
 	return nil
 }
 
-func (step *Step) setupEphemeralVolumeProperties(res Resource, templateFile string, crType string) error {
-	mapValues, err := determineMap(crType)
-	if err != nil {
-		return err
-	}
+func (step *Step) setupEphemeralVolumeProperties(_ Resource, templateFile string, crType string) error {
 
 	if crType == "pflexEphemeral" {
 		_ = os.Setenv("PFLEX_VOLUME", fmt.Sprintf("k8s-%s", randomAlphaNumberic(10)))
 	}
 
-	for key := range mapValues {
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
+	fileString, err := renderTemplate(crType, templateFile)
+	if err != nil {
+		return err
+	}
+
+	_, err = writeRenderedFile(templateFile, fileString)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -1021,6 +981,33 @@ func randomAlphaNumberic(length int) string {
 	}
 
 	return string(result)
+}
+
+func getRenderedFilePath(templatePath string) string {
+	return strings.Replace(templatePath, "testfiles/", "temp/", 1)
+}
+
+// To not contaminate the source tree with rendered template files,
+// we write all rendered files under the same temp directory, but
+// preserve the subdirectories structure. For example, for templatePath
+// "testfiles/powerscale-templates/ephemeral.properties" the rendered file
+// will be written to "temp/powerscale-templates/ephemeral.properties".
+func writeRenderedFile(templatePath, content string) (newPath string, err error) {
+
+	newPath = getRenderedFilePath(templatePath)
+
+	// make sure the base path exist
+	err = os.MkdirAll(filepath.Dir(newPath), 0o700)
+	if err != nil {
+		return "", fmt.Errorf("error creating temp directory %s: %v", filepath.Dir(newPath), err)
+	}
+
+	err = os.WriteFile(newPath, []byte(content), 0o644) // #nosec G306 -- this is a test automation tool
+	if err != nil {
+		return "", fmt.Errorf("error creating temp file: %v", err)
+	}
+
+	return newPath, nil
 }
 
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
@@ -1512,7 +1499,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644) // #nosec G303, G306
+	err = os.WriteFile("temp/adminToken.yaml", b, 0o644) // #nosec G303, G306
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1520,7 +1507,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// Check for storage
 	fmt.Println("\n=== Checking Storage ===\n ")
 	cmd := exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
+		"--admin-token", "temp/adminToken.yaml",
 		"storage", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	) // #nosec G204
@@ -1553,7 +1540,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 		// Create storage
 		fmt.Println("\n=== Creating Storage ===\n ")
 		cmd = exec.Command("karavictl",
-			"--admin-token", "/tmp/adminToken.yaml",
+			"--admin-token", "temp/adminToken.yaml",
 			"storage", "create",
 			"--type", storageType,
 			"--endpoint", fmt.Sprintf("https://%s", endpoint),
@@ -1574,7 +1561,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// Create Tenant
 	fmt.Println("\n\n=== Creating Tenant ===\n ")
 	cmd = exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
+		"--admin-token", "temp/adminToken.yaml",
 		"tenant", "create",
 		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	) // #nosec G204
@@ -1588,7 +1575,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// By default, assume a role will be created
 	skipCreateRole := false
 	cmd = exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
+		"--admin-token", "temp/adminToken.yaml",
 		"role", "list",
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
 	) // #nosec G204
@@ -1622,7 +1609,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 			quotaLimit = "0"
 		}
 		cmd = exec.Command("karavictl",
-			"--admin-token", "/tmp/adminToken.yaml",
+			"--admin-token", "temp/adminToken.yaml",
 			"role", "create",
 			fmt.Sprintf("--role=%s=%s=%s=%s=%s",
 				roleName, storageType, sysID, pool, quotaLimit),
@@ -1642,7 +1629,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// Bind role
 	fmt.Println("\n\n=== Creating RoleBinding ===\n ")
 	cmd = exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
+		"--admin-token", "temp/adminToken.yaml",
 		"rolebinding", "create",
 		"--tenant", tenantName,
 		"--role", roleName,
@@ -1657,7 +1644,7 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// Generate token
 	fmt.Println("\n\n=== Generating token ===\n ")
 	cmd = exec.Command("karavictl",
-		"--admin-token", "/tmp/adminToken.yaml",
+		"--admin-token", "temp/adminToken.yaml",
 		"generate", "token",
 		"--tenant", tenantName,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
@@ -1672,13 +1659,13 @@ func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost,
 	// Apply token to CSI driver host
 	fmt.Println("\n\n=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0o644) // #nosec G303, G306
+	err = os.WriteFile("temp/token.yaml", b, 0o644) // #nosec G303, G306
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	cmd = exec.Command("kubectl", "apply",
-		"-f", "/tmp/token.yaml",
+		"-f", "temp/token.yaml",
 		"-n", driverNamespace,
 	) // #nosec G204
 	b, err = cmd.CombinedOutput()
@@ -1700,19 +1687,18 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 
 	if driver == "powerflex" {
 		crMap = "pflexAuthCRs"
-		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
 	} else if driver == "powerscale" {
 		crMap = "pscaleAuthCRs"
-		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
 	} else if driver == "powermax" {
 		crMap = "pmaxAuthCRs"
-		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
 	}
 
-	copyFile := exec.Command("cp", templateFile, updatedTemplateFile)
-	b, err := copyFile.CombinedOutput()
+	err := execShell(fmt.Sprintf("mkdir -p temp/authorization-templates && cp %s %s", templateFile, updatedTemplateFile))
 	if err != nil {
-		return fmt.Errorf("failed to copy template file: %v\nErrMessage:\n%s", err, string(b))
+		return fmt.Errorf("failed to copy template file %s to %s: %v", templateFile, updatedTemplateFile, err)
 	}
 
 	// Create Admin Token
@@ -1724,13 +1710,13 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 		"--refresh-token-expiration", fmt.Sprint(30*24*time.Hour),
 		"--access-token-expiration", fmt.Sprint(2*time.Hour),
 	) // #nosec G204
-	b, err = adminTkn.CombinedOutput()
+	b, err := adminTkn.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("/tmp/adminToken.yaml", b, 0o644) // #nosec G303, G306
+	err = os.WriteFile("temp/adminToken.yaml", b, 0o644) // #nosec G303, G306
 	if err != nil {
 		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1776,7 +1762,7 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	fmt.Println("=== Generating token ===\n ")
 	cmd = exec.Command("dellctl",
 		"generate", "token",
-		"--admin-token", "/tmp/adminToken.yaml",
+		"--admin-token", "temp/adminToken.yaml",
 		"--access-token-expiration", fmt.Sprint(10*time.Minute),
 		"--refresh-token-expiration", "48h",
 		"--tenant", csmTenantName,
@@ -1791,13 +1777,13 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("/tmp/token.yaml", b, 0o644) // #nosec G303, G306
+	err = os.WriteFile("temp/token.yaml", b, 0o644) // #nosec G303, G306
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	cmd = exec.Command("kubectl", "apply",
-		"-f", "/tmp/token.yaml",
+		"-f", "temp/token.yaml",
 		"-n", driverNamespace,
 	) // #nosec G204
 	b, err = cmd.CombinedOutput()
@@ -1864,24 +1850,21 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 	return nil
 }
 
-// set up AM CR
-func (step *Step) configureAMInstall(res Resource, templateFile string) error {
-	mapValues, err := determineMap("application-mobility")
+// Render the AM CR template into a temporary file with the same name
+func (step *Step) configureAMInstall(_ Resource, templateFile string) error {
+	fileString, err := renderTemplate("application-mobility", templateFile)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		if os.Getenv(mapValues[key]) == "" {
-			return fmt.Errorf("env variable %s not set, set in env-e2e-test.sh before continuing", mapValues[key])
-		}
-		err := replaceInFile(key, os.Getenv(mapValues[key]), templateFile)
-		if err != nil {
-			return err
-		}
+	filePath, err := writeRenderedFile(templateFile, fileString)
+	if err != nil {
+		return err
 	}
+	fmt.Printf("Rendered template %s into %s\n", templateFile, filePath)
 
-	// Calling it here, since configureAMInstall is used to setup each AM test
+	// Setup RH registry authentication secret. Calling it here,
+	// since configureAMInstall is used to setup each AM test.
 	err = setupAMImagePullSecret()
 	if err != nil {
 		return fmt.Errorf("failed to setup RH registry authentication for App Mobility: %v", err)
@@ -1898,7 +1881,7 @@ func (step *Step) configureAMInstall(res Resource, templateFile string) error {
 func setupAMImagePullSecret() error {
 	if os.Getenv("RH_REGISTRY_USERNAME") == "" || os.Getenv("RH_REGISTRY_PASSWORD") == "" {
 		return fmt.Errorf("env variable RH_REGISTRY_USERNAME or RH_REGISTRY_PASSWORD is not set," +
-			" set it in array-info.sh before continuing")
+			" set it in array-info.env before continuing")
 	}
 
 	// Create or update the image pull secret
@@ -1961,11 +1944,11 @@ func (step *Step) validateCustomResourceDefinition(res Resource, crdName string)
 func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 	updatedTemplateFile := ""
 	if driver == "powerflex" {
-		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
 	} else if driver == "powerscale" {
-		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
 	} else if driver == "powermax" {
-		updatedTemplateFile = "testfiles/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
 	}
 
 	cmd := exec.Command("kubectl", "delete", "-f", updatedTemplateFile)
@@ -1973,12 +1956,6 @@ func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete csm authorization CRs: %v", err)
 	}
-
-	err = os.Remove(updatedTemplateFile)
-	if err != nil {
-		return fmt.Errorf("failed to delete %s file: %v", updatedTemplateFile, err)
-	}
-
 	return nil
 }
 
@@ -1992,7 +1969,7 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 	return nil
 }
 
-func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
+func (step *Step) setUpReverseProxy(_ Resource, namespace string) error {
 	// Check if the revproxy-certs secret exists
 	revproxyExists := false
 	cmd := exec.Command("kubectl", "get", "secret", "revproxy-certs", "-n", namespace) // #nosec G204
@@ -2016,22 +1993,9 @@ func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
 		return nil
 	}
 
-	// Create a temporary directory in the current working directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current working directory: %v", err)
-	}
-
-	tmpDir, err := os.MkdirTemp(cwd, "tls-setup")
-	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %v", err)
-	}
-	fmt.Println("Temporary directory created at:", tmpDir) // Print the path for verification
-	defer os.RemoveAll(tmpDir)                             // Clean up the temporary directory
-
 	// Paths for the key and certificate files
-	keyPath := filepath.Join(tmpDir, "tls.key")
-	crtPath := filepath.Join(tmpDir, "tls.crt")
+	keyPath := "temp/tls.key"
+	crtPath := "temp/tls.crt"
 
 	// Generate TLS key
 	cmd = exec.Command("openssl", "genrsa", "-out", keyPath, "2048") // #nosec G204
@@ -2048,10 +2012,10 @@ func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
 	}
 
 	if _, err := os.Stat(keyPath); os.IsNotExist(err) {
-		return fmt.Errorf("key file does not exist: %v", keyPath)
+		return fmt.Errorf("key file does not exist: %s", keyPath)
 	}
 	if _, err := os.Stat(crtPath); os.IsNotExist(err) {
-		return fmt.Errorf("cert file does not exist: %v", crtPath)
+		return fmt.Errorf("cert file does not exist: %s", crtPath)
 	}
 
 	// Create Kubernetes secret for revproxy-certs if it does not exist
@@ -2076,23 +2040,16 @@ func (step *Step) setUpReverseProxy(res Resource, namespace string) error {
 }
 
 func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
-	// Create a temporary directory
-	tmpDir, err := os.MkdirTemp("", "tls-setup")
-	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %v", err)
-	}
-	fmt.Println("Temporary directory created at:", tmpDir) // Print the path for verification
-	defer os.RemoveAll(tmpDir)                             // Clean up the temporary directory
 
 	// Paths for the key, CSR, and certificate files
-	keyPath := filepath.Join(tmpDir, "tls.key")
-	csrPath := filepath.Join(tmpDir, "tls.csr")
-	crtPath := filepath.Join(tmpDir, "tls.crt")
+	keyPath := "temp/tls.key"
+	csrPath := "temp/tls.csr"
+	crtPath := "temp/tls.crt"
 	sanConfigPath := "testfiles/powermax-templates/san.cnf"
 
 	// Generate TLS key
 	cmd := exec.Command("openssl", "genrsa", "-out", keyPath, "2048") // #nosec G204
-	err = cmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to generate TLS key: %v", err)
 	}
