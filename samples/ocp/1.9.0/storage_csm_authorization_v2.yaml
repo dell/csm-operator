@@ -69,8 +69,8 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
-          redis: docker.io/redis:7.4.1-alpine
-          commander: docker.io/rediscommander/redis-commander:latest
+          redis: docker.io/redis@sha256:c1e88455c85225310bbea54816e9c3f4b5295815e6dbf80c34d40afc6df28275
+          commander: docker.io/rediscommander/redis-commander@sha256:19cd0c49f418779fa2822a0496c5e6516d0c792effc39ed20089e6268477e40a
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
