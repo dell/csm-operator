@@ -8,6 +8,10 @@ spec:
     csiDriverType: "powerflex"
     configVersion: v2.14.0
     forceRemoveDriver: true
+    node:
+      envs:
+        - name: X_CSI_SDC_SFTP_REPO_ENABLED
+          value: "false"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
