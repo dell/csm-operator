@@ -35,6 +35,8 @@ export SHAREDNFS=false
 
 export INSTALL_VAULT=false
 
+export PROXY_HOST="csm-authorization.com"
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -307,7 +309,7 @@ done
 getArrayInfo
 checkForScenariosFile
 checkForCertCsi
-checkForKaravictl
+# checkForKaravictl
 if [[ $APPLICATIONMOBILITY == "true" ]]; then
   echo "Checking for dellctl - APPLICATIONMOBILITY"
   checkForDellctl
@@ -318,6 +320,21 @@ fi
 if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
   echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
   checkForDellctl
+
+  echo "Authorization proxy host: $PROXY_HOST"
+  entryExists=$(cat /etc/hosts | grep $PROXY_HOST | wc -l)
+  if [[ $entryExists != 1 ]]; then
+      echo "Adding authorization host to /etc/hosts file"
+      echo $(hostname --ip-address) $PROXY_HOST >> /etc/hosts
+  fi
 fi
+
+kubectl get crd | grep securitycontextconstraints.security.openshift.io --quiet
+if [ $? -ne 0 ]; then
+  export IS_OPENSHIFT=false
+else
+  export IS_OPENSHIFT=true
+fi
+
 checkForGinkgo
 # runTests
