@@ -17,13 +17,15 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.13.0
+    configVersion: v2.14.0
     # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: 2
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "registry.connect.redhat.com/dell-emc/dell-csm-unity@sha256:1eb514ef41483663d750b45176eb3c791c4c5db2985d510589faccf9fc43df5c"
+      image: "registry.connect.redhat.com/dell-emc/dell-csm-unity@sha256:c1b93c49f535f247c884904c00f8b9be9aacc6fc1133bf0044efee0938407f31"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
@@ -55,6 +57,13 @@ spec:
         # Default value: "info"
         - name: CSI_LOG_LEVEL
           value: info
+        # GOUNITY_DEBUG: Enable/disable debug logs from gounity library.
+        # Default value: false
+        - name: "GOUNITY_DEBUG"
+          value: "false"
+        # GOUNITY_SHOWHTTP: Enable/disable HTTP requests and responses from gounity library.
+        - name: "GOUNITY_SHOWHTTP"
+          value: "false"
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
@@ -89,14 +98,15 @@ spec:
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher@sha256:a399393ff5bd156277c56bae0c08389b1a1b95b7fd6ea44a316ce55e0dd559d7
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:d7138bcc3aa5f267403d45ad4292c95397e421ea17a0035888850f424c7de25d
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:8e66117d3b5e336901fc2ff508b3eb6105f8cf3b70f631e8102441e9562c8875
       - name: resizer
         image: registry.k8s.io/sig-storage/csi-resizer@sha256:2a0b297cc7c4cd376ac7413df339ff2fdaa1ec9d099aed92b5ea1f031ef7f639
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:dd788d79cf4c1b8edee6d9b80b8a1ebfc51a38a365c5be656986b129be9ac784
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:339a83a86e6e1eead14413fe494b43de8bc48243d146c2810b39dd741d26ca6a
       - name: csi-metadata-retriever
         image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:a8412f649ffca3aa72f5c9f5f2c3eb5dac5d742dfa5d3f4e0ef4bd81d72f2956
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Default monitor-interval: 60s
       - name: external-health-monitor
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure when the storageCapacity is set as "true"

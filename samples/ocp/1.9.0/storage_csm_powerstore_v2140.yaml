@@ -32,17 +32,19 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.13.0
+    configVersion: v2.14.0
     # authSecret: This is the secret used to validate the default PowerStore secret used for installation
     # Allowed values: <metadataName specified in the Manifest>-config
     # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
     authSecret: powerstore-config
     # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: 2
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "registry.connect.redhat.com/dell-emc/dell-csm-powerstore@sha256:68c1dc8f5b1b1b2a7eb1fa36943894bc93047c80417334076ac6eb121eb8ec3a"
+      image: "registry.connect.redhat.com/dell-emc/dell-csm-powerstore@sha256:5a7538443a01c6a1a6be4766d2e3d376eec9e564e238282f25ab987229406bb5"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -56,6 +58,10 @@ spec:
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
           value: info
+        # GOPOWERSTORE_DEBUG: Enable/disable debug logs from gopowerstore library.
+        # Default value: false
+        - name: "GOPOWERSTORE_DEBUG"
+          value: "false"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
@@ -64,11 +70,11 @@ spec:
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher@sha256:a399393ff5bd156277c56bae0c08389b1a1b95b7fd6ea44a316ce55e0dd559d7
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:d7138bcc3aa5f267403d45ad4292c95397e421ea17a0035888850f424c7de25d
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:8e66117d3b5e336901fc2ff508b3eb6105f8cf3b70f631e8102441e9562c8875
       - name: resizer
         image: registry.k8s.io/sig-storage/csi-resizer@sha256:2a0b297cc7c4cd376ac7413df339ff2fdaa1ec9d099aed92b5ea1f031ef7f639
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:dd788d79cf4c1b8edee6d9b80b8a1ebfc51a38a365c5be656986b129be9ac784
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:339a83a86e6e1eead14413fe494b43de8bc48243d146c2810b39dd741d26ca6a
       - name: csi-metadata-retriever
         image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:a8412f649ffca3aa72f5c9f5f2c3eb5dac5d742dfa5d3f4e0ef4bd81d72f2956
       # health monitor is disabled by default, refer to driver documentation before enabling it
@@ -84,6 +90,18 @@ spec:
 
     controller:
       envs:
+        # X_CSI_MULTI_NAS_FAILURE_THRESHOLD: Number of consecutive FS creation failures after which a NAS is put into cooldown.
+        # If a NAS is in cooldown, it will not be considered for new FS creation attempts for cooldown period amount of time.
+        # Allowed values: n, where n >= 0
+        # Default value: "5"
+        - name: X_CSI_MULTI_NAS_FAILURE_THRESHOLD
+          value: "5"
+        # X_CSI_MULTI_NAS_COOLDOWN_PERIOD: Duration for which a NAS remains in cooldown once the threshold is reached.
+        # During this period, the NAS will not be considered for new FS creation attempts.
+        # Allowed values: Number followed by unit (s,m,h) e.g. 60s,1m,2m,3m,...,1h etc
+        # Default value: "5m"
+        - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
+          value: "5m"
         # X_CSI_NFS_ACLS: enables setting permissions on NFS mount directory
         # This value will be the default value if a storage class and array config in secret
         # do not contain the NFS ACL (nfsAcls) parameter specified
@@ -183,10 +201,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.12.0
+      configVersion: v1.13.0
       components:
         - name: podmon-controller
-          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:6339e1a99a94d7f84aef6b22a99b287bf87aa42acece5b4fc3a06f9d2d98e72b
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:5c3f5e473b9f3ce5797a61b2466d16d8b9c488e69ee35ac336c424bef8979abc
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -201,7 +219,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:6339e1a99a94d7f84aef6b22a99b287bf87aa42acece5b4fc3a06f9d2d98e72b
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:5c3f5e473b9f3ce5797a61b2466d16d8b9c488e69ee35ac336c424bef8979abc
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.1.0
+      configVersion: v2.2.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -30,17 +30,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-proxy@sha256:ac2beadc372fc94e654d0665a8bec1b450411d28cbace66472178e10a8f28d28
+          proxyService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-proxy@sha256:1a3e53c1758850d26881923ee744b3cfff120daaaff33565c438fcc39d65f2ab
           proxyServiceReplicas: 1
-          tenantService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-tenant@sha256:ec63ee8d53ebacd4b3dbcc0e43ea678e88b4c604a7c6cbebffb9c00ad1ceb05c
+          tenantService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-tenant@sha256:030f1b20442b5df62ee8cce281d40226781478d351ea8fa67477cbb318fcc401
           tenantServiceReplicas: 1
-          roleService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-role@sha256:d8b646b0eeeecb4cfb16bf28cc3e946badea8279118445c980b9e8b6ec9cb6bd
+          roleService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-role@sha256:c874c7c23b55e88e98615172678e63ceb0e534ab11cdaf8949eef16881af64b7
           roleServiceReplicas: 1
-          storageService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-storage@sha256:2011148a509b2c4e8b42e6476eeaa622eb6bd179517cbe94939366212e929abc
+          storageService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-storage@sha256:bdc27c5bacbdaa601272055e8a8a6a482ae20192df50cce004d9b4a0fd131289
           storageServiceReplicas: 1
-          opa: docker.io/openpolicyagent/opa@sha256:aa45afb240037ad19f548cea8c8f1610dc238599dbb79a5f8f3f08a2b8eb90fa
-          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt@sha256:8b9db2e7af5a237a8cea8f090484f29ddc34c88e30a58a6f5617b45ab5420d22
-          authorizationController: registry.connect.redhat.com/dell-emc/dell-csm-authorization-controller@sha256:922af647e4cfffdba2fd95ffeea86c0efe2f7d9c6843b0a0459b533fdca961bc
+          opa: docker.io/openpolicyagent/opa@sha256:2b1c4b231f6dfa6a2baea4af4109203b10cd4b65e836d72f03bfe5d8dfce7095
+          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt@sha256:3a5923a3623ffbf3d8a7d725af4178207b14225fb546a1fd1af0de53b6e47f2c
+          authorizationController: registry.connect.redhat.com/dell-emc/dell-csm-authorization-controller@sha256:45af064da686118a8e5c2711dc00f1969c581bb169c26f5fb7f6f6a6186142fa
           authorizationControllerReplicas: 1
           leaderElection: true
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
@@ -111,4 +111,4 @@ data:
     CONCURRENT_POWERFLEX_REQUESTS: 10
     CONCURRENT_POWERSCALE_REQUESTS: 10
     LOG_LEVEL: debug
-    STORAGE_CAPACITY_POLL_INTERVAL: 5m
+    STORAGE_CAPACITY_POLL_INTERVAL: 30m
