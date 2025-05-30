@@ -85,21 +85,6 @@ function checkForCertCsi() {
   }
 }
 
-function checkForKaravictl() {
-  if [ -v KARAVICTL ]; then
-    stat $KARAVICTL >&/dev/null || {
-      echo "$KARAVICTL is not a valid karavictl binary - exiting"
-      exit 1
-    }
-    cp $KARAVICTL /usr/local/bin/
-  fi
-
-  karavictl --help >&/dev/null || {
-    echo "error:karavictl required but not available - exiting"
-    exit 1
-  }
-}
-
 function checkForDellctl() {
   if [ -v DELLCTL ]; then
     # Check if the file exists and is not the same as the destination
@@ -167,7 +152,6 @@ function usage() {
   echo "  -h                                           print out helptext"
   echo "  -v                                           enable verbose logging"
   echo "  --cert-csi=<path to cert-csi binary>         use to specify cert-csi binary, if not in PATH"
-  echo "  --karavictl=<path to karavictl binary>       use to specify karavictl binary, if not in PATH"
   echo "  --dellctl=<path to dellctl binary>           use to specify dellctl binary, if not in PATH"
   echo "  --kube-cfg=<path to kubeconfig file>         use to specify non-default kubeconfig file"
   echo "  --scenarios=<path to custom scenarios file>  use to specify custom test scenarios file"
@@ -250,13 +234,6 @@ while getopts ":hv-:" optchar; do
     kube-cfg=*)
       KUBECONFIG=${OPTARG#*=}
       ;;
-    karavictl)
-      KARAVICTL="${!OPTIND}"
-      OPTIND=$((OPTIND + 1))
-      ;;
-    karavictl=*)
-      KARAVICTL=${OPTARG#*=}
-      ;;
     dellctl)
       DELLCTL="${!OPTIND}"
       OPTIND=$((OPTIND + 1))
@@ -309,7 +286,6 @@ done
 getArrayInfo
 checkForScenariosFile
 checkForCertCsi
-# checkForKaravictl
 if [[ $APPLICATIONMOBILITY == "true" ]]; then
   echo "Checking for dellctl - APPLICATIONMOBILITY"
   checkForDellctl
