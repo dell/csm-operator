@@ -57,7 +57,7 @@ var (
 		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS",
 		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
 	}
-	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "PSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "PSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "PSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "PSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "PSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "PSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "PSCALE_MULTI_AUTH_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSidecarMap     = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -1395,15 +1395,9 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	address := proxyHost
-	// For v1.9.1 and earlier, use the old address
-	configVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-	isOldVersion, _ := utils.MinVersionCheck(configVersion, "v1.9.1")
-	if isOldVersion {
-		address = "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-	}
-
 	fmt.Printf("Address: %s\n", address)
 
+	configVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
 	switch semver.Major(configVersion) {
 	case "v2":
 		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, configVersion)

@@ -298,7 +298,7 @@ if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
   checkForDellctl
 
   echo "Authorization proxy host: $PROXY_HOST"
-  entryExists=$(cat /etc/hosts | grep $PROXY_HOST | wc -l)
+  export entryExists=$(cat /etc/hosts | grep $PROXY_HOST | wc -l)
   if [[ $entryExists != 1 ]]; then
       echo "Adding authorization host to /etc/hosts file"
       echo $(hostname --ip-address) $PROXY_HOST >> /etc/hosts
