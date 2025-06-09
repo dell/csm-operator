@@ -10,7 +10,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/vmware-tanzu/velero v1.16.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/mod v0.24.0
+	golang.org/x/mod v0.25.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.33.0
 	k8s.io/apiextensions-apiserver v0.33.0
