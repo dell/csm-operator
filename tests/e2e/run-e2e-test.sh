@@ -109,6 +109,14 @@ function checkForGinkgo() {
     exit 1
 fi
 
+function getMasterNodeIP() {
+  export CLUSTER_IP=$(grep server ~/.kube/config | awk '{print $2}' | sed -E "s|https?://([^:/]+).*|\1|")
+  if [[ $IS_OPENSHIFT == "true" ]]; then
+    export CLUSTER_IP=$(nslookup $CLUSTER_IP | awk '/^Address: / { print $2 }')
+  fi
+  echo "Cluster IP: $CLUSTER_IP"
+}
+
 # Uncomment if cert-csi is not in PATH
 # cp $CERT_CSI .
 
@@ -283,6 +291,13 @@ done
 ###############################################################################
 # Check pre-requisites and run tests
 ###############################################################################
+isOCP=$(kubectl get crd | grep securitycontextconstraints.security.openshift.io --quiet)
+if [ $isOCP -ne 0 ]; then
+  export IS_OPENSHIFT=false
+else
+  export IS_OPENSHIFT=true
+fi
+
 getArrayInfo
 checkForScenariosFile
 checkForCertCsi
@@ -296,20 +311,14 @@ fi
 if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
   echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
   checkForDellctl
-
+  
+  getMasterNodeIP
   echo "Authorization proxy host: $PROXY_HOST"
   export entryExists=$(cat /etc/hosts | grep $PROXY_HOST | wc -l)
   if [[ $entryExists != 1 ]]; then
       echo "Adding authorization host to /etc/hosts file"
-      echo $(hostname --ip-address) $PROXY_HOST >> /etc/hosts
+      echo $CLUSTER_IP $PROXY_HOST >> /etc/hosts
   fi
-fi
-
-kubectl get crd | grep securitycontextconstraints.security.openshift.io --quiet
-if [ $? -ne 0 ]; then
-  export IS_OPENSHIFT=false
-else
-  export IS_OPENSHIFT=true
 fi
 
 checkForGinkgo
