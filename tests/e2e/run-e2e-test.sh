@@ -107,7 +107,38 @@ function checkForGinkgo() {
   if ! (go mod vendor && go get github.com/onsi/ginkgo/v2); then
     echo "go mod vendor or go get ginkgo error"
     exit 1
-fi
+  fi
+
+  # Uncomment if cert-csi is not in PATH
+  # cp $CERT_CSI .
+
+  # Uncomment for authorization proxy server
+  #cp $DELLCTL /usr/local/bin/
+
+  PATH=$PATH:$(go env GOPATH)/bin
+
+  OPTS=()
+
+  if [ -z "${GINKGO_OPTS-}" ]; then
+      OPTS=(-v)
+  else
+      read -ra OPTS <<<"-v $GINKGO_OPTS"
+  fi
+
+  pwd
+  ginkgo -mod=mod "${OPTS[@]}"
+
+  rm -f cert-csi
+
+  # Uncomment for authorization proxy server
+  # rm -f /usr/local/bin/dellctl
+
+  # Checking for test status
+  TEST_PASS=$?
+  if [[ $TEST_PASS -ne 0 ]]; then
+    exit 1
+  fi
+}
 
 function getMasterNodeIP() {
   export CLUSTER_IP=$(grep server ~/.kube/config | awk '{print $2}' | sed -E "s|https?://([^:/]+).*|\1|")
@@ -115,37 +146,6 @@ function getMasterNodeIP() {
     export CLUSTER_IP=$(nslookup $CLUSTER_IP | awk '/^Address: / { print $2 }')
   fi
   echo "Cluster IP: $CLUSTER_IP"
-}
-
-# Uncomment if cert-csi is not in PATH
-# cp $CERT_CSI .
-
-# Uncomment for authorization proxy server
-#cp $DELLCTL /usr/local/bin/
-
-PATH=$PATH:$(go env GOPATH)/bin
-
-OPTS=()
-
-if [ -z "${GINKGO_OPTS-}" ]; then
-    OPTS=(-v)
-else
-    read -ra OPTS <<<"-v $GINKGO_OPTS"
-fi
-
-pwd
-ginkgo -mod=mod "${OPTS[@]}"
-
-rm -f cert-csi
-
-# Uncomment for authorization proxy server
-# rm -f /usr/local/bin/dellctl
-
-  # Checking for test status
-  TEST_PASS=$?
-  if [[ $TEST_PASS -ne 0 ]]; then
-    exit 1
-  fi
 }
 
 function usage() {
