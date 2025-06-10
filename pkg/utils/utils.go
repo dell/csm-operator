@@ -22,9 +22,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
+	"go.uber.org/zap"
 	goYAML "gopkg.in/yaml.v3"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -1276,4 +1279,64 @@ func SetContainerImage(objects []crclient.Object, deploymentName, containerName,
 			}
 		}
 	}
+}
+
+// DebounceRetry is a general purpose debouncer and retryer for a function that returns an error
+type DebounceRetry struct {
+	name          string
+	after         time.Duration
+	retryDelay    time.Duration
+	retryAttempts int
+	timers        map[string]*time.Timer
+	lock          sync.Mutex
+	log           *zap.SugaredLogger
+}
+
+// NewDebounceRetry returns a DebounceRetry
+func NewDebounceRetry(name string, log *zap.SugaredLogger, after time.Duration, retryDelay time.Duration, retryAttempts int) *DebounceRetry {
+	return &DebounceRetry{
+		name:   name,
+		after:  after,
+		timers: make(map[string]*time.Timer),
+	}
+}
+
+// Do debounces and retries a function for a CSM name
+func (dr *DebounceRetry) Do(name string, f func() error) <-chan error {
+	ret := make(chan error, 1)
+	go func() {
+		dr.lock.Lock()
+		defer dr.lock.Unlock()
+
+		if timer, ok := dr.timers[name]; ok {
+			timer.Stop()
+		}
+
+		afterF := func() {
+			ret <- dr.retry(f)
+			close(ret)
+		}
+		dr.timers[name] = time.AfterFunc(dr.after, afterF)
+	}()
+	return ret
+}
+
+// Delete removes a timer for a CSM name
+func (dr *DebounceRetry) Delete(name string) {
+	dr.lock.Lock()
+	defer dr.lock.Unlock()
+	delete(dr.timers, name)
+}
+
+func (dr *DebounceRetry) retry(f func() error) error {
+	var err error
+	for i := 0; i < dr.retryAttempts; i++ {
+		dr.log.Infof("Executing %s; Attempt %d", dr.name, i)
+		err = f()
+		if err == nil {
+			return nil
+		}
+		time.Sleep(dr.retryDelay)
+	}
+	return err
 }

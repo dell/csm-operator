@@ -69,6 +69,10 @@ const (
 	K8sMinimumSupportedVersion = "1.28"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
 	K8sMaximumSupportedVersion = "1.30"
+
+	defaultDebounceDelay = 5 * time.Second
+	defaultRetryDelay    = 2 * time.Second
+	defaultRetryAttempts = 5
 )
 
 var (
@@ -307,12 +311,13 @@ func main() {
 	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
 
 	r := &controllers.ContainerStorageModuleReconciler{
-		Client:        mgr.GetClient(),
-		K8sClient:     k8sClient,
-		Log:           log,
-		Scheme:        mgr.GetScheme(),
-		EventRecorder: recorder,
-		Config:        operatorConfig,
+		Client:                    mgr.GetClient(),
+		K8sClient:                 k8sClient,
+		Log:                       log,
+		Scheme:                    mgr.GetScheme(),
+		EventRecorder:             recorder,
+		Config:                    operatorConfig,
+		ContentWatchDebounceRetry: utils.NewDebounceRetry("ContentWatchUpdateStatus", log, defaultDebounceDelay, defaultRetryDelay, defaultRetryAttempts),
 	}
 
 	setupWithManager := getSetupWithManagerFn(r)

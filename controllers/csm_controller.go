@@ -66,13 +66,14 @@ type ContainerStorageModuleReconciler struct {
 	client.Client
 	// k8s client, implements client-go/kubernetes interface, responsible for apply, which
 	// client.Client does not provides
-	K8sClient     kubernetes.Interface
-	Scheme        *runtime.Scheme
-	Log           *zap.SugaredLogger
-	Config        utils.OperatorConfig
-	updateCount   int32
-	trcID         string
-	EventRecorder record.EventRecorder
+	K8sClient                 kubernetes.Interface
+	Scheme                    *runtime.Scheme
+	Log                       *zap.SugaredLogger
+	Config                    utils.OperatorConfig
+	updateCount               int32
+	trcID                     string
+	EventRecorder             record.EventRecorder
+	ContentWatchDebounceRetry *utils.DebounceRetry
 }
 
 // DriverConfig  -
@@ -322,7 +323,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
 		}
 		r.EventRecorder.Event(csm, corev1.EventTypeNormal, csmv1.EventDeleted, "Object finalizer is deleted")
-
+		r.ContentWatchDebounceRetry.Delete(csm.GetName())
 		return ctrl.Result{}, nil
 	}
 
@@ -402,7 +403,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
 	ctx, log := logger.GetNewContextWithLogger(key)
 
-	log.Debugw("deployment modified generation", d.Name, d.Generation, old.Generation)
+	log.Infow("deployment modified generation", d.Name, d.Generation, old.Generation)
 
 	desired := d.Status.Replicas
 	available := d.Status.AvailableReplicas
@@ -419,7 +420,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
 
 	if ns != "" {
-		log.Debugw("csm being modified in handledeployment", "namespace", ns, "name", name)
+		log.Infow("csm being modified in handledeployment", "namespace", ns, "name", name)
 		namespacedName := t1.NamespacedName{
 			Name:      name,
 			Namespace: ns,
@@ -429,6 +430,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		err := r.Client.Get(ctx, namespacedName, csm)
 		if err != nil {
 			log.Error("deployment get csm", "error", err.Error())
+			return
 		}
 
 		newStatus := csm.GetCSMStatus()
@@ -439,9 +441,12 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
 		newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
 
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		ContentWatchDebounceRetryFn := func() error {
+			return utils.UpdateStatus(ctx, csm, r, newStatus)
+		}
+		err = <-r.ContentWatchDebounceRetry.Do(csm.GetName(), ContentWatchDebounceRetryFn)
 		if err != nil {
-			log.Debugw("deployment status ", "pods", err.Error())
+			log.Infow("deployment status ", "pods", err.Error())
 		} else {
 			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
 		}
@@ -475,11 +480,15 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 		err := r.Client.Get(ctx, namespacedName, csm)
 		if err != nil {
 			r.Log.Errorw("daemonset get csm", "error", err.Error())
+			return
 		}
 		log.Infow("csm prev status ", "state", csm.Status)
 		newStatus := csm.GetCSMStatus()
 
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		ContentWatchDebounceRetryFn := func() error {
+			return utils.UpdateStatus(ctx, csm, r, newStatus)
+		}
+		err = <-r.ContentWatchDebounceRetry.Do(csm.GetName(), ContentWatchDebounceRetryFn)
 		state := csm.GetCSMStatus().State
 		stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 		if state != "0" && err != nil {
@@ -528,11 +537,15 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 		err := r.Client.Get(ctx, namespacedName, csm)
 		if err != nil {
 			r.Log.Error("daemonset get csm", "error", err.Error())
+			return
 		}
 
 		log.Infow("csm prev status ", "state", csm.Status)
 		newStatus := csm.GetCSMStatus()
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		ContentWatchDebounceRetryFn := func() error {
+			return utils.UpdateStatus(ctx, csm, r, newStatus)
+		}
+		err = <-r.ContentWatchDebounceRetry.Do(csm.GetName(), ContentWatchDebounceRetryFn)
 		if err != nil {
 			log.Debugw("daemonset status ", "pods", err.Error())
 		} else {
