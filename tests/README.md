@@ -60,8 +60,6 @@ Any time changes made to the operator are being checked into the main branch, sa
   - See [here](https://dell.github.io/csm-docs/docs/support/cert-csi/#download-release-linux) for instructions 
 - Dellctl needs to be installed
   - See [here](https://dell.github.io/csm-docs/docs/support/cli/#installation-instructions) for instructions
-- Karavictl needs to be installed
-  - See [here](https://dell.github.io/csm-docs/docs/deployment/helm/modules/installation/authorization/#install-karavictl) for instructions 
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
 
@@ -117,26 +115,26 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
 - Create a file named `array-info.env` and populate it with your array information. Use `array-info.env.sample` as a template.
-- If you do not have `cert-csi`, `karavictl`, and (for app-mobility and authorization proxy server) `dellctl` accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl`, and they will be added to `/usr/local/bin`
+- If you do not have `cert-csi` and (for app-mobility and authorization proxy server) `dellctl` accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --cert-csi=/path/to/cert-csi`, and they will be added to `/usr/local/bin`
 - Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
 - Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:
 
-You have made changes to `controllers/csm_controller.go` and `pkg/drivers/powerflex.go`, and need run sanity and powerflex test suites. Additionally, you do not have cert-csi or karavictl executables in your PATH:
+You have made changes to `controllers/csm_controller.go` and `pkg/drivers/powerflex.go`, and need run sanity and powerflex test suites. Additionally, you do not have cert-csi executable in your PATH:
 
 ```bash
-run-e2e-test.sh --cert-csi=/path/to/cert-csi --karavictl=/path/to/karavictl --sanity --powerflex
+run-e2e-test.sh --cert-csi=/path/to/cert-csi --sanity --powerflex
 ```
 
-You made some changes to `controllers/csm_controller.go`, and need to run sanity tests. cert-csi and karavictl are already in your PATH:
+You made some changes to `controllers/csm_controller.go`, and need to run sanity tests. cert-csi is already in your PATH:
 
 ```bash
 run-e2e-test.sh --sanity
 ```
 
-You made some changes to `pkg/modules/observability.go`, and need to run observability tests. cert-csi and karavictl are already in your path, but you need to update the karavictl binary with a newer one:
+You made some changes to `pkg/modules/observability.go`, and need to run observability tests. cert-csi is already in your PATH:
 
 ```bash
-run-e2e-test.sh --obs --karavictl=/path/to/karavictl
+run-e2e-test.sh --obs
 ```
 
 ### Scenarios File
