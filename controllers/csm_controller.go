@@ -26,8 +26,10 @@ import (
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
@@ -47,9 +49,7 @@ import (
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	t1 "k8s.io/apimachinery/pkg/types"
-	sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -540,57 +540,41 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	}
 }
 
-// ContentWatch - watch updates on deployment and deamonset
-func (r *ContainerStorageModuleReconciler) ContentWatch() error {
-	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
-
-	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
-	_, err := daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handleDaemonsetUpdate,
-	})
-	if err != nil {
-		return fmt.Errorf("ContentWatch failed adding event handler to daemonsetInformer: %v", err)
-	}
-
-	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
-	_, err = deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handleDeploymentUpdate,
-	})
-	if err != nil {
-		return fmt.Errorf("ContentWatch failed adding event handler to deploymentInformer: %v", err)
-	}
-
-	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
-	_, err = podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handlePodsUpdate,
-	})
-	if err != nil {
-		return fmt.Errorf("ContentWatch failed adding event handler to podsInformer: %v", err)
-	}
-
-	sharedInformerFactory.Start(StopWatch)
-	return nil
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter workqueue.TypedRateLimiter[reconcile.Request], maxReconcilers int) error {
-	/*go func() {
-		err := r.ContentWatch()
-		if err != nil {
-			fmt.Println("ContentWatch failed", err)
-			os.Exit(1)
-		}
-	}()*/
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&csmv1.ContainerStorageModule{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
+		Watches(&corev1.Pod{}, handler.EnqueueRequestsFromMapFunc(enqueuePodRequests)).
 		WithEventFilter(r.ignoreUpdatePredicate()).
 		WithOptions(controller.Options{
 			RateLimiter:             limiter,
 			MaxConcurrentReconciles: maxReconcilers,
 		}).Complete(r)
+}
+
+func enqueuePodRequests(_ context.Context, obj client.Object) []reconcile.Request {
+	pod, ok := obj.(*corev1.Pod)
+	if !ok {
+		return []reconcile.Request{}
+	}
+
+	csm := pod.GetLabels()[constants.CsmLabel]
+	csmNamespace := pod.GetLabels()[constants.CsmNamespaceLabel]
+	if csm == "" || csmNamespace == "" {
+		return []reconcile.Request{}
+
+	}
+
+	return []reconcile.Request{
+		{
+			NamespacedName: types.NamespacedName{
+				Namespace: csmNamespace,
+				Name:      csm,
+			},
+		},
+	}
 }
 
 func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule) error {
