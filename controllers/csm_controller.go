@@ -564,7 +564,6 @@ func enqueuePodRequests(_ context.Context, obj client.Object) []reconcile.Reques
 	csmNamespace := pod.GetLabels()[constants.CsmNamespaceLabel]
 	if csm == "" || csmNamespace == "" {
 		return []reconcile.Request{}
-
 	}
 
 	return []reconcile.Request{
