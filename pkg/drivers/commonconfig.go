@@ -389,6 +389,22 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	}
 
+	crUID := cr.GetUID()
+	bController := true
+	bOwnerDeletion := cr.Spec.Driver.ForceRemoveDriver != nil && !*cr.Spec.Driver.ForceRemoveDriver
+	kind := cr.Kind
+	v1 := "storage.dell.com/v1"
+	nodeYaml.DaemonSetApplyConfig.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
+		{
+			APIVersion:         &v1,
+			Controller:         &bController,
+			BlockOwnerDeletion: &bOwnerDeletion,
+			Kind:               &kind,
+			Name:               &cr.Name,
+			UID:                &crUID,
+		},
+	}
+
 	return &nodeYaml, nil
 }
 
