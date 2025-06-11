@@ -441,10 +441,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
 		newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
 
-		ContentWatchDebounceRetryFn := func() error {
-			return utils.UpdateStatus(ctx, csm, r, newStatus)
-		}
-		err = <-r.ContentWatchDebounceRetry.Do(csm.GetName(), ContentWatchDebounceRetryFn)
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil {
 			log.Infow("deployment status ", "pods", err.Error())
 		} else {
@@ -485,10 +482,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 		log.Infow("csm prev status ", "state", csm.Status)
 		newStatus := csm.GetCSMStatus()
 
-		ContentWatchDebounceRetryFn := func() error {
-			return utils.UpdateStatus(ctx, csm, r, newStatus)
-		}
-		err = <-r.ContentWatchDebounceRetry.Do(csm.GetName(), ContentWatchDebounceRetryFn)
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
 		state := csm.GetCSMStatus().State
 		stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 		if state != "0" && err != nil {
@@ -542,10 +536,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 
 		log.Infow("csm prev status ", "state", csm.Status)
 		newStatus := csm.GetCSMStatus()
-		ContentWatchDebounceRetryFn := func() error {
-			return utils.UpdateStatus(ctx, csm, r, newStatus)
-		}
-		err = <-r.ContentWatchDebounceRetry.Do(csm.GetName(), ContentWatchDebounceRetryFn)
+		err = utils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil {
 			log.Debugw("daemonset status ", "pods", err.Error())
 		} else {
@@ -554,13 +545,45 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	}
 }
 
-// ContentWatch - watch updates on deployment and deamonset
+// ContentWatch - watch updates on deployment, deamonset, and pods.
+// This is used to update the status of the parent CSM.
 func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
 
+	// We define this common update function so that object updates for the same CSM can be debounced.
+	// For example, if a deployment update comes in for CSM "powerflex" and then a pod update comes in
+	// for the same CSM within the ContentWatchDebounceRetry delay period, the CSM status update from the
+	// deployment will be cancelled in favor of the status update from the pod.
+	// Since Kubernetes can send multiple updates within a short period of time, this reduces excessive
+	// CSM status update calls.
+	// The update function that ends up being called is also temporarily retried, using default interval constants in main.go,
+	// to account for the informer not sending an event indicating a stable state.
+	updateFn := func(oldObj interface{}, newObj interface{}) {
+		var name string
+		var fn func(oldObj interface{}, newObj interface{})
+		switch v := oldObj.(type) {
+		case *appsv1.DaemonSet:
+			name = v.Spec.Template.Labels[constants.CsmLabel]
+			fn = r.handleDaemonsetUpdate
+		case *appsv1.Deployment:
+			name = v.Spec.Template.Labels[constants.CsmLabel]
+			fn = r.handleDeploymentUpdate
+		case *corev1.Pod:
+			name = v.GetLabels()[constants.CsmLabel]
+			fn = r.handlePodsUpdate
+		}
+
+		debounceRetryFn := func() error {
+			fn(oldObj, newObj)
+			return nil
+		}
+
+		_ = r.ContentWatchDebounceRetry.Do(name, debounceRetryFn)
+	}
+
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
 	_, err := daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handleDaemonsetUpdate,
+		UpdateFunc: updateFn,
 	})
 	if err != nil {
 		return fmt.Errorf("ContentWatch failed adding event handler to daemonsetInformer: %v", err)
@@ -568,7 +591,7 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
 	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
 	_, err = deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handleDeploymentUpdate,
+		UpdateFunc: updateFn,
 	})
 	if err != nil {
 		return fmt.Errorf("ContentWatch failed adding event handler to deploymentInformer: %v", err)
@@ -576,7 +599,7 @@ func (r *ContainerStorageModuleReconciler) ContentWatch() error {
 
 	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
 	_, err = podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handlePodsUpdate,
+		UpdateFunc: updateFn,
 	})
 	if err != nil {
 		return fmt.Errorf("ContentWatch failed adding event handler to podsInformer: %v", err)

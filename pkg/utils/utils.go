@@ -1310,6 +1310,7 @@ func (dr *DebounceRetry) Do(name string, f func() error) <-chan error {
 
 		if timer, ok := dr.timers[name]; ok {
 			timer.Stop()
+			close(ret)
 		}
 
 		afterF := func() {
