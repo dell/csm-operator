@@ -660,8 +660,9 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 }
 
 func TestAuthorizationServerDeployment(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	type checkFn func(t *testing.T)
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -684,9 +685,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
 
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -699,9 +700,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_vault_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -714,9 +715,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - creating v1": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating v1": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
@@ -729,9 +730,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - creating with default redis storage class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with default redis storage class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_no_redis.yaml")
 			if err != nil {
 				panic(err)
@@ -744,9 +745,42 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with csm ownership": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			if customResource.UID == "" {
+				customResource.UID = "1234567890"
+			}
+
+			tmpCR := customResource
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T) {
+				deployments := []string{"proxy-server", "storage-service", "tenant-service", "role-service"}
+				for _, deployment := range deployments {
+					var deploy appsv1.Deployment
+					err := sourceClient.Get(context.TODO(), types.NamespacedName{Name: deployment, Namespace: "authorization"}, &deploy)
+					if err != nil {
+						t.Fatal(err)
+					}
+					fmt.Println(deploy.Name)
+					fmt.Println(deploy.OwnerReferences)
+					assert.Equal(t, deploy.OwnerReferences[0].Name, "authorization")
+					assert.NotEmpty(t, deploy.OwnerReferences[0].UID)
+				}
+			}
+			return true, false, tmpCR, sourceClient, operatorConfig, checkFn
+		},
+		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -759,9 +793,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"fail - corrupt vault ca": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - corrupt vault ca": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_ca.yaml")
 			if err != nil {
 				panic(err)
@@ -774,9 +808,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"fail - corrupt vault client cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - corrupt vault client cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -789,9 +823,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"fail - corrupt vault client key": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - corrupt vault client key": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_key.yaml")
 			if err != nil {
 				panic(err)
@@ -804,14 +838,17 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, nil
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, isDeleting, cr, sourceClient, op := tc(t)
+			success, isDeleting, cr, sourceClient, op, checkFn := tc(t)
 
 			err := AuthorizationServerDeployment(context.TODO(), isDeleting, op, cr, sourceClient)
+			if checkFn != nil {
+				checkFn(t)
+			}
 			if success {
 				assert.NoError(t, err)
 			} else {
