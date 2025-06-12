@@ -772,10 +772,21 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					fmt.Println(deploy.Name)
-					fmt.Println(deploy.OwnerReferences)
+
 					assert.Equal(t, deploy.OwnerReferences[0].Name, "authorization")
 					assert.NotEmpty(t, deploy.OwnerReferences[0].UID)
+				}
+
+				statefulSets := []string{"redis-csm", "sentinel"}
+				for _, statefulSet := range statefulSets {
+					var sts appsv1.StatefulSet
+					err := sourceClient.Get(context.TODO(), types.NamespacedName{Name: statefulSet, Namespace: "authorization"}, &sts)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					assert.Equal(t, sts.OwnerReferences[0].Name, "authorization")
+					assert.NotEmpty(t, sts.OwnerReferences[0].UID)
 				}
 			}
 			return true, false, tmpCR, sourceClient, operatorConfig, checkFn
