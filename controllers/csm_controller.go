@@ -544,6 +544,7 @@ func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, li
 		For(&csmv1.ContainerStorageModule{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
+		Owns(&appsv1.StatefulSet{}).
 		WithEventFilter(r.ignoreUpdatePredicate()).
 		WithOptions(controller.Options{
 			RateLimiter:             limiter,
