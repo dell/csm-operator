@@ -829,6 +829,13 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: cert-manager-cainjector
   namespace: <NAMESPACE>
   labels:
@@ -884,6 +891,13 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: cert-manager
   namespace: <NAMESPACE>
   labels:
@@ -950,6 +964,13 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: cert-manager-webhook
   namespace: <NAMESPACE>
   labels:

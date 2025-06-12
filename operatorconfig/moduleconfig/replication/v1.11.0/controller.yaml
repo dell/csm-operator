@@ -231,6 +231,13 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID> 
   labels:
     control-plane: controller-manager
   name: dell-replication-controller-manager
