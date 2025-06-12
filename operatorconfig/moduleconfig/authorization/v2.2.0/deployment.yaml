@@ -46,6 +46,13 @@ roleRef:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: proxy-server
   namespace: <NAMESPACE>
   labels:
@@ -131,6 +138,13 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: tenant-service
   namespace: <NAMESPACE>
   labels:
@@ -223,6 +237,13 @@ roleRef:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: role-service
   namespace: <NAMESPACE>
   labels:
@@ -477,6 +498,13 @@ roleRef:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: authorization-controller
   namespace: <NAMESPACE>
   labels:
@@ -546,6 +574,13 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: <AUTHORIZATION_REDIS_NAME>
   namespace: <NAMESPACE>
 spec:
@@ -629,6 +664,13 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: <AUTHORIZATION_REDIS_COMMANDER>
   namespace: <NAMESPACE>
 spec:
@@ -711,6 +753,13 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  ownerReferences:
+  - apiVersion: storage.dell.com/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ContainerStorageModule
+    name: <NAME>
+    uid: <CSM_UID>
   name: <AUTHORIZATION_REDIS_SENTINEL>
   namespace: <NAMESPACE>
 spec:

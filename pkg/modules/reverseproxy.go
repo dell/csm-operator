@@ -300,6 +300,8 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, proxyConfig)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyCSMNameSpace, cr.Namespace)
+	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMUID, string(cr.UID))
 
 	return YamlString, nil
 }
