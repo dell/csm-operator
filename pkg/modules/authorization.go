@@ -39,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	"k8s.io/utils/ptr"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -787,6 +788,18 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
 	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas))
+
+	// set csm ownership
+	deployment.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         cr.APIVersion,
+			Kind:               cr.Kind,
+			Name:               cr.Name,
+			UID:                cr.UID,
+			Controller:         ptr.To[bool](true),
+			BlockOwnerDeletion: ptr.To[bool](true),
+		},
+	}
 
 	// set vault volumes
 
