@@ -27,6 +27,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	metacv1 "k8s.io/client-go/applyconfigurations/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -390,14 +391,13 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 
 	crUID := cr.GetUID()
-	bController := true
 	bOwnerDeletion := cr.Spec.Driver.ForceRemoveDriver != nil && !*cr.Spec.Driver.ForceRemoveDriver
 	kind := cr.Kind
 	v1 := "storage.dell.com/v1"
 	nodeYaml.DaemonSetApplyConfig.OwnerReferences = []metacv1.OwnerReferenceApplyConfiguration{
 		{
 			APIVersion:         &v1,
-			Controller:         &bController,
+			Controller:         ptr.To[bool](true),
 			BlockOwnerDeletion: &bOwnerDeletion,
 			Kind:               &kind,
 			Name:               &cr.Name,
