@@ -48,8 +48,6 @@ const (
 	AuthDeploymentManifest = "deployment.yaml"
 	// AuthIngressManifest -
 	AuthIngressManifest = "ingress.yaml"
-	// AuthCertManagerManifest -
-	AuthCertManagerManifest = "cert-manager.yaml"
 	// AuthNginxIngressManifest -
 	AuthNginxIngressManifest = "nginx-ingress-controller.yaml"
 	// AuthPolicyManifest -
@@ -624,6 +622,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisStorageClass, redisStorageClass)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMUID, string(cr.UID))
 	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 	return YamlString, nil
@@ -1208,6 +1207,7 @@ func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	authNamespace := cr.Namespace
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMUID, string(cr.UID))
 	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 	return YamlString, nil

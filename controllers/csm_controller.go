@@ -26,10 +26,8 @@ import (
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
@@ -546,34 +544,11 @@ func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, li
 		For(&csmv1.ContainerStorageModule{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
-		Watches(&corev1.Pod{}, handler.EnqueueRequestsFromMapFunc(enqueuePodRequests)).
 		WithEventFilter(r.ignoreUpdatePredicate()).
 		WithOptions(controller.Options{
 			RateLimiter:             limiter,
 			MaxConcurrentReconciles: maxReconcilers,
 		}).Complete(r)
-}
-
-func enqueuePodRequests(_ context.Context, obj client.Object) []reconcile.Request {
-	pod, ok := obj.(*corev1.Pod)
-	if !ok {
-		return []reconcile.Request{}
-	}
-
-	csm := pod.GetLabels()[constants.CsmLabel]
-	csmNamespace := pod.GetLabels()[constants.CsmNamespaceLabel]
-	if csm == "" || csmNamespace == "" {
-		return []reconcile.Request{}
-	}
-
-	return []reconcile.Request{
-		{
-			NamespacedName: types.NamespacedName{
-				Namespace: csmNamespace,
-				Name:      csm,
-			},
-		},
-	}
 }
 
 func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule) error {
