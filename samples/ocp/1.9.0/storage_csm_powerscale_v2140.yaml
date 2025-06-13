@@ -156,10 +156,6 @@ spec:
         # Examples: 192, 256
         - name: X_CSI_MAX_PATH_LIMIT
           value: "192"
-        # X_CSI_VOL_PREFIX: this parameter specifies the volume prefix used for the names of PersistentVolumes created.
-        # Default value: csivol
-        - name: X_CSI_VOL_PREFIX
-          value: "csivol"
       # nodeSelector: Define node selection constraints for pods of controller deployment.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -244,6 +240,7 @@ spec:
     sideCars:
       - name: provisioner
         image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
+        args: ["--volume-name-prefix=csivol"]
       - name: attacher
         image: registry.k8s.io/sig-storage/csi-attacher@sha256:a399393ff5bd156277c56bae0c08389b1a1b95b7fd6ea44a316ce55e0dd559d7
       - name: registrar
