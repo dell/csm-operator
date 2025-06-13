@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -99,8 +100,9 @@ func getConfigMap(namespace, configmapName string) *corev1.ConfigMap {
 }
 
 func TestCommonCertManager(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	type checkFn func(t *testing.T)
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -118,9 +120,9 @@ func TestCommonCertManager(t *testing.T) {
 			}
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -129,9 +131,36 @@ func TestCommonCertManager(t *testing.T) {
 			tmpCR := customResource
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with csm ownership": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			if customResource.UID == "" {
+				customResource.UID = "1234567890"
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T) {
+				deployments := []string{"cert-manager", "cert-manager-webhook", "cert-manager-cainjector"}
+				for _, deployment := range deployments {
+					var deploy appsv1.Deployment
+					err := sourceClient.Get(context.TODO(), types.NamespacedName{Name: deployment, Namespace: "authorization"}, &deploy)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					assert.Equal(t, deploy.OwnerReferences[0].Name, "authorization")
+					assert.NotEmpty(t, deploy.OwnerReferences[0].UID)
+				}
+			}
+			return true, false, customResource, sourceClient, operatorConfig, checkFn
+		},
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -142,14 +171,17 @@ func TestCommonCertManager(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, badOperatorConfig
+			return false, false, tmpCR, sourceClient, badOperatorConfig, nil
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, isDeleting, cr, sourceClient, op := tc(t)
+			success, isDeleting, cr, sourceClient, op, checkFn := tc(t)
 
 			err := CommonCertManager(context.TODO(), isDeleting, op, cr, sourceClient)
+			if checkFn != nil {
+				checkFn(t)
+			}
 			if success {
 				assert.NoError(t, err)
 			} else {

@@ -399,6 +399,8 @@ func getReplicaController(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMax, retryMax)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
 	YamlString = strings.ReplaceAll(YamlString, ReplicationCSMNameSpace, cr.Namespace)
+	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMUID, string(cr.UID))
 	YamlString = strings.ReplaceAll(YamlString, DefaultDisablePVCRemapState, disablePVCRemapState)
 	YamlString = strings.ReplaceAll(YamlString, AllowPvcCreationOnTarget, allowPVCCreationOnTarget)
 

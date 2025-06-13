@@ -153,6 +153,10 @@ func TestGetNode(t *testing.T) {
 				if tt.driverName == "powerflex" {
 					assert.Equal(t, true, foundInitMdm)
 				}
+
+				assert.Equal(t, tt.csm.GetName(), *node.DaemonSetApplyConfig.OwnerReferences[0].Name)
+				assert.Equal(t, tt.csm.Kind, *node.DaemonSetApplyConfig.OwnerReferences[0].Kind)
+				assert.True(t, *node.DaemonSetApplyConfig.OwnerReferences[0].Controller)
 			} else {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}

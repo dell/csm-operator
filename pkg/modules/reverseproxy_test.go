@@ -241,8 +241,9 @@ func TestReverseProxyPrecheck(t *testing.T) {
 }
 
 func TestReverseProxyServer(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	type checkFn func(t *testing.T)
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -258,27 +259,27 @@ func TestReverseProxyServer(t *testing.T) {
 			deployAsSidecar = false
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
 
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
 			}
 			deployAsSidecar = false
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - creating as Sidecar": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating as Sidecar": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
 			}
 			deployAsSidecar = true
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - creating with minimal manifest": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with minimal manifest": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -286,18 +287,18 @@ func TestReverseProxyServer(t *testing.T) {
 			tmpCR.Spec.Modules[0].Components = nil
 			deployAsSidecar = false
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"fail - reverseproxy module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - reverseproxy module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
 			if err != nil {
 				panic(err)
 			}
 			deployAsSidecar = false
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - use reverse proxy secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - use reverse proxy secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -310,9 +311,9 @@ func TestReverseProxyServer(t *testing.T) {
 
 			deployAsSidecar = true
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"success - dynamically mount configMap": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - dynamically mount configMap": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -326,9 +327,9 @@ func TestReverseProxyServer(t *testing.T) {
 
 			deployAsSidecar = true
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, nil
 		},
-		"fail - invalid csm version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - invalid csm version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig, checkFn) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -345,13 +346,16 @@ func TestReverseProxyServer(t *testing.T) {
 
 			deployAsSidecar = true
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, nil
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, isDeleting, cr, sourceClient, op := tc(t)
+			success, isDeleting, cr, sourceClient, op, checkFn := tc(t)
 			err := ReverseProxyServer(context.TODO(), isDeleting, op, cr, sourceClient)
+			if checkFn != nil {
+				checkFn(t)
+			}
 			if success {
 				assert.NoError(t, err)
 			} else {
