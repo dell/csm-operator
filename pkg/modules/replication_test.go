@@ -352,6 +352,7 @@ func TestReplicationPreCheck(t *testing.T) {
 }
 
 func TestReplicationManagerController(t *testing.T) {
+	type checkFn func(t *testing.T)
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
