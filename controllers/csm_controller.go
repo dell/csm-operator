@@ -26,8 +26,10 @@ import (
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
@@ -545,11 +547,35 @@ func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, li
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
 		Owns(&appsv1.StatefulSet{}).
+		Watches(&appsv1.Deployment{}, handler.EnqueueRequestsFromMapFunc(enqueueDeploymentRequests)).
 		WithEventFilter(r.ignoreUpdatePredicate()).
 		WithOptions(controller.Options{
 			RateLimiter:             limiter,
 			MaxConcurrentReconciles: maxReconcilers,
 		}).Complete(r)
+}
+
+func enqueueDeploymentRequests(_ context.Context, obj client.Object) []reconcile.Request {
+	deployment, ok := obj.(*appsv1.Deployment)
+	if !ok {
+		return []reconcile.Request{}
+	}
+
+	csm := deployment.Spec.Template.Labels[constants.CsmLabel]
+	csmNamespace := deployment.Spec.Template.Labels[constants.CsmNamespaceLabel]
+	if csm == "" || csmNamespace == "" {
+		return []reconcile.Request{}
+
+	}
+
+	return []reconcile.Request{
+		{
+			NamespacedName: types.NamespacedName{
+				Namespace: csmNamespace,
+				Name:      csm,
+			},
+		},
+	}
 }
 
 func (r *ContainerStorageModuleReconciler) removeFinalizer(ctx context.Context, instance *csmv1.ContainerStorageModule) error {
