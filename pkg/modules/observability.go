@@ -516,6 +516,7 @@ func getPowerScaleMetricsObjects(op utils.OperatorConfig, cr csmv1.ContainerStor
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMUID, string(cr.UID))
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PowerScaleMaxConcurrentQueries, maxConcurrentQueries)
@@ -716,6 +717,7 @@ func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMUID, string(cr.UID))
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexMaxConcurrentQueries, maxConcurrentQueries)
@@ -750,23 +752,10 @@ func getObservabilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, erro
 
 // appendObservabilitySecrets - append secrets from driver namespace including auth secrets, change their namespace to Observability Namespace
 func appendObservabilitySecrets(ctx context.Context, cr csmv1.ContainerStorageModule, objects []client.Object, ctrlClient client.Client, _ kubernetes.Interface) ([]client.Object, error) {
-	driverSecretName := strings.ReplaceAll(defaultSecretsName[cr.GetDriverType()], DriverDefaultReleaseName, cr.Name)
-
-	if cr.Spec.Driver.AuthSecret != "" {
-		driverSecretName = cr.Spec.Driver.AuthSecret
-	}
-
-	driverSecret, err := utils.GetSecret(ctx, driverSecretName, cr.GetNamespace(), ctrlClient)
-	if err != nil {
-		return objects, fmt.Errorf("reading secret [%s] error [%s]", driverSecret, err)
-	}
-
-	newSecret := createObsSecretObj(*driverSecret, utils.ObservabilityNamespace, driverSecret.Name)
-	objects = append(objects, newSecret)
-
 	// authorization secrets
 	if authorizationEnabled, auth := utils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
 		skipCertValid := true
+		var err error
 		for _, env := range auth.Components[0].Envs {
 			if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
 				skipCertValid, err = strconv.ParseBool(env.Value)
@@ -847,6 +836,7 @@ func getIssuerCertServiceObs(op utils.OperatorConfig, obs csmv1.Module, componen
 		yamlString = string(buf)
 	}
 
+	yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, ObservabilityCertificate, certificate)
 	yamlString = strings.ReplaceAll(yamlString, ObservabilityPrivateKey, privateKey)
 	yamlString = strings.ReplaceAll(yamlString, ObservabilitySecretPrefix, ComponentNameToSecretPrefix[componentName])
@@ -1076,6 +1066,7 @@ func getPowerMaxMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorage
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMUID, string(cr.UID))
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, PmaxLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PmaxLogFormat, logFormat)
