@@ -7,7 +7,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: dell-replication-controller-sa
-  namespace: dell-replication-controller
+  namespace: <CSM_NAMESPACE>
 secrets:
   - name: replication-secret
 ---
@@ -181,10 +181,10 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: replication-secret
-  namespace: dell-replication-controller
+  namespace: <CSM_NAMESPACE>
   annotations:
     kubernetes.io/service-account.name: dell-replication-controller-sa
-    kubernetes.io/service-account.namespace: dell-replication-controller
+    kubernetes.io/service-account.namespace: <CSM_NAMESPACE>
 type: kubernetes.io/service-account-token
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -198,7 +198,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: dell-replication-controller-sa
-    namespace: dell-replication-controller
+    namespace: <CSM_NAMESPACE>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -211,7 +211,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: dell-replication-controller-sa
-    namespace: dell-replication-controller
+    namespace: <CSM_NAMESPACE>
 ---
 apiVersion: v1
 kind: Service
@@ -219,7 +219,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: dell-replication-controller-manager-metrics-service
-  namespace: dell-replication-controller
+  namespace: <CSM_NAMESPACE>
 spec:
   ports:
     - name: https
@@ -241,7 +241,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: dell-replication-controller-manager
-  namespace: dell-replication-controller
+  namespace: <CSM_NAMESPACE>
 spec:
   replicas: <REPLICATION_CTRL_REPLICAS>
   selector:

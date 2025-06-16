@@ -465,6 +465,7 @@ func CreateReplicationConfigmap(ctx context.Context, cr csmv1.ContainerStorageMo
 	if err := yaml.Unmarshal(buf, &cm); err != nil {
 		return nil, err
 	}
+	cm.Namespace = cr.Namespace
 
 	// Check if the ConfigMap already exists
 	foundConfigMap := &corev1.ConfigMap{}
