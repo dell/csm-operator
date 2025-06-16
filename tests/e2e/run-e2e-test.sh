@@ -278,7 +278,6 @@ done
 ###############################################################################
 getArrayInfo
 checkForScenariosFile
-checkForCertCsi
 checkForKaravictl
 if [[ $APPLICATIONMOBILITY == "true" ]]; then
   echo "Checking for dellctl - APPLICATIONMOBILITY"
