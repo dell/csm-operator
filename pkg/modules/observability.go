@@ -12,7 +12,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -299,6 +298,7 @@ func getTopology(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]cr
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMUID, string(cr.UID))
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, TopologyLogLevel, logLevel)
 
@@ -376,6 +376,7 @@ func getOtelCollector(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMUID, string(cr.UID))
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorImage, otelCollectorImage)
 	YamlString = strings.ReplaceAll(YamlString, NginxProxyImage, nginxProxyImage)
@@ -408,12 +409,6 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCo
 	}
 	if !foundDp {
 		return fmt.Errorf("could not find deployment obj")
-	}
-
-	// append secret objects
-	powerscaleMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerscaleMetricsObjects, ctrlClient, k8sClient)
-	if err != nil {
-		return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
 	}
 
 	for _, ctrlObj := range powerscaleMetricsObjects {
@@ -618,11 +613,6 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op utils.OperatorCon
 		return fmt.Errorf("could not find deployment obj")
 	}
 
-	powerflexMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerflexMetricsObjects, ctrlClient, k8sClient)
-	if err != nil {
-		return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
-	}
-
 	for _, ctrlObj := range powerflexMetricsObjects {
 		if isDeleting {
 			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
@@ -748,39 +738,6 @@ func getObservabilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, erro
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("could not find observability module")
-}
-
-// appendObservabilitySecrets - append secrets from driver namespace including auth secrets, change their namespace to Observability Namespace
-func appendObservabilitySecrets(ctx context.Context, cr csmv1.ContainerStorageModule, objects []client.Object, ctrlClient client.Client, _ kubernetes.Interface) ([]client.Object, error) {
-	// authorization secrets
-	if authorizationEnabled, auth := utils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
-		skipCertValid := true
-		var err error
-		for _, env := range auth.Components[0].Envs {
-			if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
-				skipCertValid, err = strconv.ParseBool(env.Value)
-				if err != nil {
-					return objects, fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
-				}
-				break
-			}
-		}
-		for _, s := range defaultAuthSecretsName {
-			if s == "proxy-server-root-certificate" && skipCertValid {
-				continue
-			}
-
-			found, err := utils.GetSecret(ctx, s, cr.GetNamespace(), ctrlClient)
-			if err != nil {
-				return objects, fmt.Errorf("reading secret [%s] error [%s]", s, err)
-			}
-			newSecretName := getNewAuthSecretName(cr.GetDriverType(), found.Name)
-			newAuthSecret := createObsSecretObj(*found, utils.ObservabilityNamespace, newSecretName)
-			objects = append(objects, newAuthSecret)
-		}
-	}
-
-	return objects, nil
 }
 
 // createObsSecretObj - Create new Observability Secret Object from driver Secret
@@ -913,11 +870,6 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op utils.OperatorConf
 		if err != nil {
 			return err
 		}
-	}
-
-	powerMaxMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerMaxMetricsObjects, ctrlClient, k8sClient)
-	if err != nil {
-		return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
 	}
 
 	for _, ctrlObj := range powerMaxMetricsObjects {

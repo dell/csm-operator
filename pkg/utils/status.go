@@ -585,7 +585,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	opts := []client.ListOption{
-		client.InNamespace(ObservabilityNamespace),
+		client.InNamespace(instance.Namespace),
 	}
 	deploymentList := &appsv1.DeploymentList{}
 	err := r.GetClient().List(ctx, deploymentList, opts...)
@@ -607,14 +607,14 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 					return false, nil
 				}
 			}
-		case fmt.Sprintf("%s-metrics-%s", ObservabilityNamespace, driverName):
+		case fmt.Sprintf("%s-metrics-%s", instance.Namespace, driverName):
 			if metricsEnabled {
 				if !checkFn(&deployment) {
 					log.Infof("%s component not running in observability deployment", deployment.Name)
 					return false, nil
 				}
 			}
-		case fmt.Sprintf("%s-topology", ObservabilityNamespace):
+		case fmt.Sprintf("%s-topology", instance.Namespace):
 			if topologyEnabled {
 				if !checkFn(&deployment) {
 					log.Infof("%s component not running in observability deployment", deployment.Name)
