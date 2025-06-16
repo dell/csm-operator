@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: karavi-metrics-powerscale-controller
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -29,7 +29,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: karavi-metrics-powerscale-controller
-    namespace: karavi
+    namespace: <CSM_NAMESPACE>
 roleRef:
   kind: ClusterRole
   name: karavi-metrics-powerscale-controller
@@ -42,7 +42,7 @@ metadata:
     app.kubernetes.io/name: karavi-metrics-powerscale
     app.kubernetes.io/instance: karavi
   name: karavi-metrics-powerscale
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 spec:
   type: ClusterIP
   ports:
@@ -57,7 +57,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: karavi-metrics-powerscale-configmap
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 data:
   karavi-metrics-powerscale.yaml: |
     COLLECTOR_ADDR: <COLLECTOR_ADDRESS>
@@ -78,7 +78,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: <DriverDefaultReleaseName>-config-params
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 data:
   driver-config-params.yaml: |
     CSI_LOG_LEVEL: debug
@@ -86,8 +86,15 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  ownerReferences:
+    - apiVersion: storage.dell.com/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ContainerStorageModule
+      name: <NAME>
+      uid: <CSM_UID>
   name: karavi-metrics-powerscale
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
   labels:
     app.kubernetes.io/name: karavi-metrics-powerscale
     app.kubernetes.io/instance: karavi

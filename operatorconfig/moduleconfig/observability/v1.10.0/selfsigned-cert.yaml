@@ -2,7 +2,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: selfsigned-issuer
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 spec:
   selfSigned: {}
 ---
@@ -10,7 +10,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: <OBSERVABILITY_SECRET_PREFIX>
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 spec:
   secretName: <OBSERVABILITY_SECRET_PREFIX>-tls
   duration: 2160h  # 90d

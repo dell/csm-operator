@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: dell-replication-controller-config
-  namespace: dell-replication-controller
+  namespace: <CSM_NAMESPACE>
 data:
   config.yaml: |
     clusterId: ""
