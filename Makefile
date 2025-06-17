@@ -226,7 +226,7 @@ bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and m
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS) --use-image-digests=false
-	operator-sdk bundle validate ./bundle
+	operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
 
 .PHONY: bundle-build
 bundle-build: gen-semver download-csm-common ## Build the bundle image.
