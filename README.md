@@ -26,6 +26,7 @@ Dell Technologies Container Storage Modules (CSM) Operator is an open-source Kub
 * [Committer Guide](./docs/COMMITTER_GUIDE.md)
 * [Contributing Guide](./docs/CONTRIBUTING.md)
 * [List of Adopters](./docs/ADOPTERS.md)
+* [Bundle Validation](./docs/BUNDLE_VALIDATION.md)
 * [Dell support](https://www.dell.com/support/incidents-online/en-us/contactus/product/container-storage-modules)
 * [Security](./docs/SECURITY.md)
 * [Dell Container Storage Modules Operator](#dell-container-storage-modules-operator)
