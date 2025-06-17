@@ -19,6 +19,8 @@ import (
 	"reflect"
 	"time"
 
+	csmv1 "github.com/dell/csm-operator/api/v1"
+
 	"github.com/dell/csm-operator/tests/shared"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -125,9 +127,20 @@ func (f Client) List(ctx context.Context, list client.ObjectList, opts ...client
 		return f.listNodeList(l, labelKey)
 	case *appsv1.DeploymentList:
 		return f.listDeploymentList(ctx, &appsv1.DeploymentList{})
+	case *csmv1.ContainerStorageModuleList:
+		return f.listCsmList(ctx, l)
 	default:
 		return fmt.Errorf("fake client unknown type: %s", reflect.TypeOf(list))
 	}
+}
+
+func (f Client) listCsmList(_ context.Context, list *csmv1.ContainerStorageModuleList) error {
+	for k, v := range f.Objects {
+		if k.Kind == "ContainerStorageModule" {
+			list.Items = append(list.Items, *v.(*csmv1.ContainerStorageModule))
+		}
+	}
+	return nil
 }
 
 func (f Client) listPodList(list *corev1.PodList) error {

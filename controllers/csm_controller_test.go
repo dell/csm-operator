@@ -47,9 +47,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -1280,23 +1278,49 @@ func TestCustom(t *testing.T) {
 }
 
 // test with a csm without a finalizer, reconcile should add it
-func (suite *CSMControllerTestSuite) TestContentWatch() {
-	mgr, err := ctrl.NewManager(&rest.Config{}, ctrl.Options{
-		Scheme: scheme.Scheme,
-	})
+func (suite *CSMControllerTestSuite) TestUpdateCSMStatus() {
+	csm1 := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "powerflex",
+			Namespace: "powerflex",
+		},
+	}
+
+	csm2 := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "authorization",
+			Namespace: "authorization",
+		},
+	}
+
+	err := suite.fakeClient.Create(ctx, &csm1)
 	if err != nil {
 		panic(err)
 	}
 
-	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
-	err = suite.createReconciler().SetupWithManager(mgr, expRateLimiter, 1)
+	err = suite.fakeClient.Create(ctx, &csm2)
 	if err != nil {
 		panic(err)
 	}
-	close(StopWatch)
-	version, err := utils.GetModuleDefaultVersion("v2.12.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
-	assert.NotNil(suite.T(), err)
-	assert.NotNil(suite.T(), version)
+
+	called := false
+	updateFunc := func(ctx context.Context, instance *csmv1.ContainerStorageModule, r utils.ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) error {
+		called = true
+		return nil
+	}
+
+	_, log := logger.GetNewContextWithLogger("0")
+
+	reconciler := &ContainerStorageModuleReconciler{
+		Client: suite.fakeClient,
+		Scheme: scheme.Scheme,
+		Log:    log,
+	}
+
+	go reconciler.updateCSMStatus(ctx, 500*time.Millisecond, updateFunc)
+
+	time.Sleep(1 * time.Second)
+	assert.Equal(suite.T(), called, true)
 }
 
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {

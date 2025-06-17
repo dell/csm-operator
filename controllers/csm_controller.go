@@ -17,7 +17,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -48,9 +47,7 @@ import (
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	t1 "k8s.io/apimachinery/pkg/types"
-	sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -107,6 +104,8 @@ var (
 
 	// StopWatch - watcher stop handle
 	StopWatch = make(chan struct{})
+
+	defaultStatusUpdateInterval = 2 * time.Minute
 )
 
 // +kubebuilder:rbac:groups=storage.dell.com,resources=containerstoragemodules,verbs=get;list;watch;create;update;patch;delete
@@ -541,46 +540,40 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	}
 }
 
-// ContentWatch - watch updates on deployment and deamonset
-func (r *ContainerStorageModuleReconciler) ContentWatch() error {
-	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
+func (r *ContainerStorageModuleReconciler) updateCSMStatus(ctx context.Context, interval time.Duration, updateStatus func(ctx context.Context, instance *csmv1.ContainerStorageModule, r utils.ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) error) {
+	errContextMsg := "updating csm status"
 
-	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
-	_, err := daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handleDaemonsetUpdate,
-	})
-	if err != nil {
-		return fmt.Errorf("ContentWatch failed adding event handler to daemonsetInformer: %v", err)
+	ticker := time.NewTicker(interval)
+	for {
+		select {
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+		case <-ticker.C:
+			list := &csmv1.ContainerStorageModuleList{}
+			err := r.Client.List(context.Background(), list)
+			if err != nil {
+				r.Log.Errorf("%s: listing csm objects: %v", errContextMsg, err)
+				continue
+			}
+
+			for _, csm := range list.Items {
+				csm := &csm
+				go func() {
+					err = updateStatus(context.Background(), csm, r, csm.GetCSMStatus())
+					if err != nil {
+						r.Log.Errorf("%s: %v", errContextMsg, err)
+					}
+				}()
+			}
+		}
 	}
-
-	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
-	_, err = deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handleDeploymentUpdate,
-	})
-	if err != nil {
-		return fmt.Errorf("ContentWatch failed adding event handler to deploymentInformer: %v", err)
-	}
-
-	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
-	_, err = podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handlePodsUpdate,
-	})
-	if err != nil {
-		return fmt.Errorf("ContentWatch failed adding event handler to podsInformer: %v", err)
-	}
-
-	sharedInformerFactory.Start(StopWatch)
-	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter workqueue.TypedRateLimiter[reconcile.Request], maxReconcilers int) error {
 	go func() {
-		err := r.ContentWatch()
-		if err != nil {
-			fmt.Println("ContentWatch failed", err)
-			os.Exit(1)
-		}
+		r.updateCSMStatus(context.Background(), defaultStatusUpdateInterval, utils.UpdateStatus)
 	}()
 
 	return ctrl.NewControllerManagedBy(mgr).
