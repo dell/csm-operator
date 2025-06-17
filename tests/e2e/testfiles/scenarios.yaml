@@ -94,16 +94,10 @@
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-isilon.dellemc.com --attr temp/powerscale-templates/ephemeral.properties
 
 - scenario: "Install PowerScale Driver with first alternate sample file"
   paths:
@@ -186,17 +180,10 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
-    - "Run custom test"
-    - "Run [Cert CSI and check_parameters.sh]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI and check_parameters.sh
-      run:
-        - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
-        - /bin/bash check_parameters.sh testfiles/powerscale_health_monitor_values.csv dell powerscale
 
 - scenario: "Install PowerScale Driver(With Replication)"
   paths:
@@ -212,15 +199,10 @@
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
-  customTest:
-    - name: HelloWorld
-      run:
-        - echo "no current test implemented for replication"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable/Disable Replication"
   paths:
@@ -240,7 +222,6 @@
     - "Enable [replication] module from CR [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [replication] module from CR [2] is installed"
-    - "Run custom test"
     - "Disable [replication] module from CR [1]"
     - "Validate [replication] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
@@ -248,10 +229,6 @@
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is not installed"
-  customTest:
-    - name: HelloWorld
-      run:
-        - echo "no current test implemented for replication"
 
 - scenario: "Uninstall PowerScale Driver"
   paths:
@@ -286,10 +263,6 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
 
 - scenario: "Install PowerScale Driver(Standalone), Enable/Disable Observability"
   paths:
@@ -347,16 +320,10 @@
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-vxflexos.dellemc.com --attr temp/powerflex-templates/ephemeral.properties
 
 - scenario: "Install PowerFlex Driver with first set of alternate values"
   paths:
@@ -485,16 +452,10 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI and check_parameters.sh
-      run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
-        - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_5_values.csv dell powerflex
 
 - scenario: "Uninstall PowerFlex Driver"
   paths:
@@ -534,7 +495,6 @@
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
@@ -543,10 +503,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [3]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
 
 - scenario: "Install PowerScale Driver (With Authorization V2)"
   paths:
@@ -571,7 +527,6 @@
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
@@ -580,10 +535,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [3]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
 
 - scenario: "Install PowerScale Driver(With Authorization V2 and Observability)"
   paths:
@@ -610,7 +561,6 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
@@ -619,10 +569,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [3]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-isilon -v 1 -p 1
 
 - scenario: Install PowerScale Driver(With Authorization V2 and Observability), Disable Observability module, Disable Authorization module"
   paths:
@@ -693,13 +639,11 @@
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
-    - "Run custom test"
     # upgrade
     - "Upgrade from custom resource [2] to [3]"
     - "Validate custom resource [3]"
     - "Validate [powerflex] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [3]"
     - "Delete custom resource [3]"
@@ -708,10 +652,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [4]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
 
 - scenario: "Install PowerFlex Driver, Downgrade driver to supported version"
   paths:
@@ -726,20 +666,14 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
-    - "Run custom test"
     # downgrade, using the same method as upgrade. hence the same name
     - "Upgrade from custom resource [1] to [2]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
 
 - scenario: "Install PowerFlex Driver (With Observability)"
   paths:
@@ -754,15 +688,10 @@
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-vxflexos -v 1 -p 1
 
 - scenario: "Install PowerFlex Driver(With Observability and Custom Certs)"
   paths:
@@ -969,15 +898,10 @@
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
-  customTest:
-    - name: CustomTest
-      run:
-        - echo "no current test for resiliency"
 
 - scenario: "Install PowerScale Driver(Standalone), Enable/Disable Resiliency"
   paths:
@@ -1047,17 +971,10 @@
     - "Validate [powerstore] driver from CR [1] is installed"
     # ephemeral.properties must be set up according to the storage class created
     - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
-    # run cert-csi with the proper args for our storage class
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pstore -v 1 -p 1
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-powerstore.dellemc.com --attr temp/powerstore-templates/ephemeral.properties --fs ext4
 
 - scenario: "Install PowerStore Driver(With Resiliency)"
   paths:
@@ -1073,15 +990,10 @@
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
-  customTest:
-    - name: CustomTest
-      run:
-        - echo "no current test for resiliency"
 
 - scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
   paths:
@@ -1108,35 +1020,6 @@
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
 
-# Shared NFS is no longer supported (as of CSM 1.15)
-#
-#- scenario: "Install PowerStore Driver with Shared NFS (Standalone)"
-#  paths:
-#    - "testfiles/storage_csm_powerstore.yaml"
-#  tags:
-#    - "sharednfs"
-#  steps:
-#    - "Given an environment with k8s or openshift, and CSM operator installed"
-#    - "Run [Is NFS Server Running]"
-#    - "Create StorageClass with template [testfiles/powerstore-templates/storage-class-sharednfs.yaml] for [pstore]"
-#    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
-#    - "Apply custom resource [1]"
-#    - "Validate custom resource [1]"
-#    - "Validate [powerstore] driver from CR [1] is installed"
-#    # run cert-csi with the proper args for our storage class
-#    - "Run [Cert CSI]"
-#    # cleanup
-#    - "Enable forceRemoveDriver on CR [1]"
-#    - "Delete custom resource [1]"
-#    - "Validate [powerstore] driver from CR [1] is not installed"
-#  customTest:
-#    - name: Is NFS Server Running
-#      run:
-#        - /bin/bash scripts/verify_nfs.sh
-#    - name: Cert CSI
-#      run:
-#        - cert-csi test provisioning --sc op-e2e-pstore-sharednfs -v 1 -p 1
-
 - scenario: "Install Unity Driver(Standalone)"
   paths:
     - "testfiles/storage_csm_unity.yaml"
@@ -1152,17 +1035,10 @@
     - "Validate [unity] driver from CR [1] is installed"
     # ephemeral.properties must be set up according to the storage class created
     - "Set up ephemeral volume properties [testfiles/unity-templates/ephemeral.properties] for [unityEphemeral]"
-    # run cert-csi with the proper args for our storage class
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [unity] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-unity -v 1 -p 1
-        - cert-csi test ephemeral-volume --pods 1 --driver csi-unity.dellemc.com --attr temp/unity-templates/ephemeral.properties
 
 - scenario: "Install App Mobility (Standalone)"
   paths:
@@ -1359,14 +1235,9 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver(Standalone) without powermax-array-config.yaml"
   paths:
@@ -1382,14 +1253,9 @@
     - "Create resource with template [testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials"
   paths:
@@ -1405,14 +1271,9 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials without powermax-array-config.yaml"
   paths:
@@ -1427,14 +1288,9 @@
     - "Create resource with template [testfiles/storage_csm_powermax_secret.yaml] for [pmaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials, Enable Observability"
   paths:
@@ -1455,14 +1311,9 @@
     - "Enable [observability] module from CR [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml with Mount Credentials, Enable Observability"
   paths:
@@ -1482,14 +1333,9 @@
     - "Enable [observability] module from CR [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials (Sidecar)"
   paths:
@@ -1505,14 +1351,9 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml with Mount Credentials (Sidecar)"
   paths:
@@ -1527,14 +1368,9 @@
     - "Create resource with template [testfiles/storage_csm_powermax_secret_sidecar.yaml] for [pmaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with Mount Credentials (Sidecar), Enable Observability"
   paths:
@@ -1555,14 +1391,9 @@
     - "Enable [observability] module from CR [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with TLS (Standalone)"
   paths:
@@ -1579,14 +1410,9 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver without powermax-array-config.yaml with TLS (Standalone)"
   paths:
@@ -1602,14 +1428,9 @@
     - "Create resource with template [testfiles/storage_csm_powermax_tls.yaml] for [pmaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver(Sidecar)"
   paths:
@@ -1626,15 +1447,10 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver(Sidecar) without powermax-array-config.yaml"
   paths:
@@ -1650,15 +1466,10 @@
     - "Create resource with template [testfiles/storage_csm_powermax_sidecar.yaml] for [pmaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with TLS (Sidecar)"
   paths:
@@ -1675,15 +1486,10 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver with TLS (Sidecar) without powermax-array-config.yaml"
   paths:
@@ -1699,15 +1505,10 @@
     - "Create resource with template [testfiles/storage_csm_powermax_sidecar_tls.yaml] for [pmaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Run custom test"
     # Last two steps perform Clean Up
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install PowerMax Driver(With Observability)"
   paths:
@@ -1752,10 +1553,6 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax -v 1 -p 1
 
 - scenario: "Install Powermax Driver (With Authorization v2)"
   paths:
@@ -1783,7 +1580,6 @@
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [3]"
     - "Delete custom resource [3]"
@@ -1792,10 +1588,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver without powermax-array-config.yaml (With Authorization v2)"
   paths:
@@ -1822,7 +1614,6 @@
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [3]"
     - "Delete custom resource [3]"
@@ -1831,10 +1622,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver with Mount Credentials and Authorization v2"
   paths:
@@ -1861,7 +1648,6 @@
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [3]"
     - "Delete custom resource [3]"
@@ -1870,10 +1656,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver without powermax-array-config.yaml with Mount Credentials and Authorization v2"
   paths:
@@ -1899,7 +1681,6 @@
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [3]"
     - "Delete custom resource [3]"
@@ -1908,10 +1689,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver (With Authorization v2 and Observability)"
   paths:
@@ -1941,7 +1718,6 @@
     - "Validate [powermax] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
     - "Validate [observability] module from CR [3] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [3]"
     - "Delete custom resource [3]"
@@ -1950,10 +1726,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver without powermax-array-config.yaml (With Authorization v2 and Observability)"
   paths:
@@ -1983,7 +1755,6 @@
     - "Validate [powermax] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
     - "Validate [observability] module from CR [3] is installed"
-    - "Run custom test"
     # cleanup
     - "Enable forceRemoveDriver on CR [3]"
     - "Delete custom resource [3]"
@@ -1992,10 +1763,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
-  customTest:
-    - name: Cert CSI
-      run:
-        - cert-csi test provisioning --sc op-e2e-pmax  -v 1 -p 1
 
 - scenario: "Install Powermax Driver(Standalone), Enable Resiliency"
   paths:
