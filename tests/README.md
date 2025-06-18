@@ -114,7 +114,7 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
 - Create a file named `array-info.env` and populate it with your array information. Use `array-info.env.sample` as a template.
-- If you do not have `dellctl` (for app-mobility and authorization proxy server) accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --dellctl=/path/to/dellctl`, and they will be added to `/usr/local/bin`
+- If you do not have `dellctl` (for app-mobility and authorization proxy server) accessible through your `PATH` variable, pass the path to the executable to the script, like so, `run-e2e-test.sh --dellctl=/path/to/dellctl`, and they will be added to `/usr/local/bin`
 - Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
 - Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:
 

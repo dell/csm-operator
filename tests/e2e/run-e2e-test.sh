@@ -263,12 +263,12 @@ done
 ###############################################################################
 # Check pre-requisites and run tests
 ###############################################################################
-kubectl get crd | grep securitycontextconstraints.security.openshift.io --quiet
-if [ $? -ne 0 ]; then
-  export IS_OPENSHIFT=false
-else
+if kubectl get crd | grep securitycontextconstraints.security.openshift.io &>/dev/null; then
   export IS_OPENSHIFT=true
+else
+  export IS_OPENSHIFT=false
 fi
+echo "IS_OPENSHIFT: $IS_OPENSHIFT"
 
 getArrayInfo
 checkForScenariosFile
