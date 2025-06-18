@@ -1326,6 +1326,7 @@ func (suite *CSMControllerTestSuite) TestUpdateCSMStatusSuccess() {
 		Log:    log,
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
 	go reconciler.updateCSMStatus(ctx, 500*time.Millisecond, updateFunc)
 
 	time.Sleep(1 * time.Second)
@@ -1333,6 +1334,9 @@ func (suite *CSMControllerTestSuite) TestUpdateCSMStatusSuccess() {
 	assert.Equal(suite.T(), csm1Called, true)
 	assert.Equal(suite.T(), csm2Called, true)
 	lock.Unlock()
+
+	cancel()
+	time.Sleep(1 * time.Second)
 }
 
 func (suite *CSMControllerTestSuite) TestUpdateCSMStatusUpdateError() {
