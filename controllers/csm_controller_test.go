@@ -1278,7 +1278,6 @@ func TestCustom(t *testing.T) {
 	suite.Run(t, testSuite)
 }
 
-// test with a csm without a finalizer, reconcile should add it
 func (suite *CSMControllerTestSuite) TestUpdateCSMStatusSuccess() {
 	csm1 := csmv1.ContainerStorageModule{
 		ObjectMeta: metav1.ObjectMeta{
