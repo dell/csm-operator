@@ -1278,7 +1278,7 @@ func TestCustom(t *testing.T) {
 }
 
 // test with a csm without a finalizer, reconcile should add it
-func (suite *CSMControllerTestSuite) TestUpdateCSMStatus() {
+func (suite *CSMControllerTestSuite) TestUpdateCSMStatusSuccess() {
 	csm1 := csmv1.ContainerStorageModule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "powerflex",
@@ -1303,10 +1303,50 @@ func (suite *CSMControllerTestSuite) TestUpdateCSMStatus() {
 		panic(err)
 	}
 
+	csm1Called := false
+	csm2Called := false
+	updateFunc := func(ctx context.Context, instance *csmv1.ContainerStorageModule, r utils.ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) error {
+		switch instance.Name {
+		case "powerflex":
+			csm1Called = true
+		case "authorization":
+			csm2Called = true
+		}
+		return nil
+	}
+
+	_, log := logger.GetNewContextWithLogger("0")
+
+	reconciler := &ContainerStorageModuleReconciler{
+		Client: suite.fakeClient,
+		Scheme: scheme.Scheme,
+		Log:    log,
+	}
+
+	go reconciler.updateCSMStatus(ctx, 500*time.Millisecond, updateFunc)
+
+	time.Sleep(1 * time.Second)
+	assert.Equal(suite.T(), csm1Called, true)
+	assert.Equal(suite.T(), csm2Called, true)
+}
+
+func (suite *CSMControllerTestSuite) TestUpdateCSMStatusUpdateError() {
+	csm := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "powerflex",
+			Namespace: "powerflex",
+		},
+	}
+
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
+
 	called := false
 	updateFunc := func(ctx context.Context, instance *csmv1.ContainerStorageModule, r utils.ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) error {
 		called = true
-		return nil
+		return errors.New("error")
 	}
 
 	_, log := logger.GetNewContextWithLogger("0")

@@ -551,7 +551,7 @@ func (r *ContainerStorageModuleReconciler) updateCSMStatus(ctx context.Context, 
 			return
 		case <-ticker.C:
 			list := &csmv1.ContainerStorageModuleList{}
-			err := r.Client.List(context.Background(), list)
+			err := r.Client.List(ctx, list)
 			if err != nil {
 				r.Log.Errorf("%s: listing csm objects: %v", errContextMsg, err)
 				continue
@@ -560,7 +560,7 @@ func (r *ContainerStorageModuleReconciler) updateCSMStatus(ctx context.Context, 
 			for _, csm := range list.Items {
 				csm := &csm
 				go func() {
-					err = updateStatus(context.Background(), csm, r, csm.GetCSMStatus())
+					err = updateStatus(ctx, csm, r, csm.GetCSMStatus())
 					if err != nil {
 						r.Log.Errorf("%s: %v", errContextMsg, err)
 					}
