@@ -29,7 +29,6 @@ import (
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
-	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -1397,17 +1396,11 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	address := proxyHost
 	fmt.Printf("Address: %s\n", address)
 
-	configVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-	switch semver.Major(configVersion) {
-	case "v2":
-		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, configVersion)
-	default:
-		return fmt.Errorf("authorization major version %s not supported", semver.Major(configVersion))
-	}
+	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName)
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName string) error {
 	var (
 		crMap               = ""
 		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"

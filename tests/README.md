@@ -118,7 +118,7 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
 - Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:
 
-You have made changes to `controllers/csm_controller.go` and `pkg/drivers/powerflex.go`, and need run sanity and powerflex test suites:
+You have made changes to `controllers/csm_controller.go` and `pkg/drivers/powerflex.go`, and need to run sanity and powerflex test suites:
 
 ```bash
 run-e2e-test.sh --sanity --powerflex
