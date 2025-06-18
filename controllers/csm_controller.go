@@ -560,7 +560,7 @@ func (r *ContainerStorageModuleReconciler) updateCSMStatus(ctx context.Context, 
 			for _, csm := range list.Items {
 				csm := &csm
 				go func() {
-					err = updateStatus(ctx, csm, r, csm.GetCSMStatus())
+					err := updateStatus(ctx, csm, r, csm.GetCSMStatus())
 					if err != nil {
 						r.Log.Errorf("%s: %v", errContextMsg, err)
 					}
