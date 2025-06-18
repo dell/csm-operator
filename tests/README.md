@@ -25,7 +25,7 @@ To run unit tests, go to the root directory of this project and run `make <compo
 
 ## E2E Tests
 
-The end-to-end tests test the functionality of the operator as a whole by installing different combinations of drivers and modules, enabling and disabling components, and verifying the installed functionality (using e.g. cert-csi). The E2E tests need to be run from the master node of a Kubernetes cluster. All test scenarios are specified in `tests/e2e/testfiles/scenarios.yaml` and are tagged by which test suite(s) they are a part of -- test suites include a test suite for each driver and module, as well as a `sanity` suite.
+The end-to-end tests test the functionality of the operator as a whole by installing different combinations of drivers and modules, enabling and disabling components, and verifying the installed Container Storage Modules pods successfully start. The E2E tests need to be run from the master node of a Kubernetes cluster. All test scenarios are specified in `tests/e2e/testfiles/scenarios.yaml` and are tagged by which test suite(s) they are a part of -- test suites include a test suite for each driver and module, as well as a `sanity` suite.
 
 Any time changes made to the operator are being checked into the main branch, sanity tests should be run (they should take 20-30 minutes to complete, the very first run may take a few minutes more). In addition, if you have made any driver- or module-specific changes, (any changes in `pkg/drivers`, `pkg/modules`, `operatorconfig/driverconfig`, `operatorconfig/moduleconfig`, etc), please run the E2E tests specific to these components as well.
 
@@ -44,20 +44,18 @@ Any time changes made to the operator are being checked into the main branch, sa
   - (if running sanity, powerscale, or modules suites) `isilon`
   - (if running unity suite) `unity`
   - (if running powermax suite) `powermax`
-  - (if running powerstore suite) `powerstore` 
+  - (if running powerstore suite) `powerstore`
 - For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
 - For auth V2:
   - Vault needs to be installed on cluster
   - edit vaultConfiguration section of testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml to point to your vault instance. For example, if I was running the vault service on the same cluster I was running the tests, I would make the following edit:
-      ```
-        - name: vault
-           vaultConfigurations:
-             - identifier: vault0
-               address: https://vault.default.svc.cluster.local:8400
-      ```
-      where "vault" is the name of the vault service running
-- Cert-CSI needs to be installed  
-  - See [here](https://dell.github.io/csm-docs/docs/support/cert-csi/#download-release-linux) for instructions 
+    ```
+      - name: vault
+         vaultConfigurations:
+           - identifier: vault0
+             address: https://vault.default.svc.cluster.local:8400
+    ```
+    where "vault" is the name of the vault service running
 - Dellctl needs to be installed
   - See [here](https://dell.github.io/csm-docs/docs/support/cli/#installation-instructions) for instructions
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
@@ -81,10 +79,10 @@ Please note that, if tests are stopped in the middle of a run, some files in `te
 If running the Application Mobility e2e tests, (the sanity suite includes a few simple app-mobility tests), further setup must be done:
 
 - have a MinIO object storage setup, with default credentials
-   - At least 2 buckets set up, if instance only has one bucket, set ALT_BUCKET_NAME = BUCKET_NAME
+  - At least 2 buckets set up, if instance only has one bucket, set ALT_BUCKET_NAME = BUCKET_NAME
 - have all required licenses installed in your testing environment
 - have the latest Application Mobility controller and plugin images
-The application-mobility repo has information on all of these pre-requisites up, including a script to install minio.
+  The application-mobility repo has information on all of these pre-requisites up, including a script to install minio.
 
 ### Authorization Proxy Server Prerequisites
 
@@ -95,9 +93,10 @@ If running the Authorization proxy server e2e tests, further setup must be done:
 - the scenario "Install Authorization Proxy Server V2 With Multiple Vaults" requires 2 separate vault instances to be running.
 
 Notes:
-  - Authorization V1 scenarios support PowerFlex and PowerScale
-  - Authorization V2 scenarios only support PowerFlex
-  - Upgrade from Authorization V1 to V2 is not supported. Only V1 to other V1 versions is allowed.
+
+- Authorization V1 scenarios support PowerFlex and PowerScale
+- Authorization V2 scenarios only support PowerFlex
+- Upgrade from Authorization V1 to V2 is not supported. Only V1 to other V1 versions is allowed.
 
 ### Shared NFS Prerequisites
 
@@ -115,23 +114,23 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
 - Create a file named `array-info.env` and populate it with your array information. Use `array-info.env.sample` as a template.
-- If you do not have `cert-csi` and (for app-mobility and authorization proxy server) `dellctl` accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --cert-csi=/path/to/cert-csi`, and they will be added to `/usr/local/bin`
+- If you do not have `dellctl` (for app-mobility and authorization proxy server) accessible through your `PATH` variable, pass the path to each executable to the script, like so, `run-e2e-test.sh --dellctl=/path/to/dellctl`, and they will be added to `/usr/local/bin`
 - Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
 - Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:
 
-You have made changes to `controllers/csm_controller.go` and `pkg/drivers/powerflex.go`, and need run sanity and powerflex test suites. Additionally, you do not have cert-csi executable in your PATH:
+You have made changes to `controllers/csm_controller.go` and `pkg/drivers/powerflex.go`, and need run sanity and powerflex test suites:
 
 ```bash
-run-e2e-test.sh --cert-csi=/path/to/cert-csi --sanity --powerflex
+run-e2e-test.sh --sanity --powerflex
 ```
 
-You made some changes to `controllers/csm_controller.go`, and need to run sanity tests. cert-csi is already in your PATH:
+You made some changes to `controllers/csm_controller.go`, and need to run sanity tests:
 
 ```bash
 run-e2e-test.sh --sanity
 ```
 
-You made some changes to `pkg/modules/observability.go`, and need to run observability tests. cert-csi is already in your PATH:
+You made some changes to `pkg/modules/observability.go`, and need to run observability tests:
 
 ```bash
 run-e2e-test.sh --obs
@@ -142,30 +141,28 @@ run-e2e-test.sh --obs
 An e2e test scenarios file is a yaml file that defines all e2e test scenarios to be run. An excerpt of the file is shown below:
 
 ```yaml
-- scenario: "Install PowerScale Driver(Standalone)"
-  path: "testfiles/storage_csm_powerscale.yaml"
+- scenario: 'Install PowerScale Driver(Standalone)'
+  path: 'testfiles/storage_csm_powerscale.yaml'
   tags:
     - powerscale
     - sanity
   steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Apply custom resources"
-    - "Validate custom resources"
-    - "Validate [powerscale] driver is installed"
-    - "Run custom test"
+    - 'Given an environment with k8s or openshift, and CSM operator installed'
+    - 'Apply custom resources'
+    - 'Validate custom resources'
+    - 'Validate [powerscale] driver is installed'
+    - 'Run custom test'
     # Last two steps perform Clean Up
-    - "Enable forceRemoveDriver on CR"
-    - "Delete resources"
+    - 'Enable forceRemoveDriver on CR'
+    - 'Delete resources'
   customTest:
-
-    - name: Cert CSI # name of custom test to run
+    - name: Hello World # name of custom test to run
       # Provide command-line argument to run. Ginkgo will run the command and return output
       # The command should be accessible from e2e_tes repo.
       # Example:
       #   ./hello_world.sh
-      #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
       run:
-        - cert-csi test vio --sc isilon --chainNumber 2 --chainLength 2
+        - ./hello_world.sh
 ```
 
 Each test has:
@@ -175,10 +172,12 @@ Each test has:
 - `tags`: Each test can belong to one or more groups of tests, specified by tags. To see a list of currently available tags, run `./run-e2e-test.sh -h`.
 - `steps`: Steps to take for the specific scenearios. Please note that all steps above and the ones in this sample file `tests/e2e/testfiles/values.yaml` already have a backend implementation. If you desire to use a different step, see [Develop](#develop) for how to add new E2E Test
 - `customTest`: An array of entrypoints for users to run custom tests against their environment. There are two methods of running custom tests.
-  - You may have `"Run custom test"` as part of your `steps` above if there is *only one custom test in the array of tests*.
-  - You may have `"Run [Test Name]"`as part of your `steps` above to *select a custom test from the array by its name*
+
+  - You may have `"Run custom test"` as part of your `steps` above if there is _only one custom test in the array of tests_.
+  - You may have `"Run [Test Name]"`as part of your `steps` above to _select a custom test from the array by its name_
 
   An object in this array has the following parameters:
+
   - `name`: Name of your custom test
   - `run`: A list of command line arguments that will be run by the e2e test.
 
@@ -191,17 +190,17 @@ Note: Please be mindful when updating upgrade scenarios for Authorization Proxy 
 - Add the new test scenario to the existing values file
 
   ```yaml
-  - scenario: "Install PowerScale Driver(Standalone)"
-    path: "<path-to-cr-for-powerscale-with-auth-disabled>"
+  - scenario: 'Install PowerScale Driver(Standalone)'
+    path: '<path-to-cr-for-powerscale-with-auth-disabled>'
     steps:
-      - "Given an environment with k8s or openshift, and CSM operator installed"
-      - "Apply custom resources"
-      - "Validate custom resources"
-      - "Validate [powerscale] driver is installed"
-      - "Run custom test"
+      - 'Given an environment with k8s or openshift, and CSM operator installed'
+      - 'Apply custom resources'
+      - 'Validate custom resources'
+      - 'Validate [powerscale] driver is installed'
+      - 'Run custom test'
       # Last two steps perform Clean Up
-      - "Enable forceRemoveDriver on CR"
-      - "Delete resources"
+      - 'Enable forceRemoveDriver on CR'
+      - 'Delete resources'
     customTest:
       # name of custom test to run
       name: Cert CSI
@@ -209,82 +208,83 @@ Note: Please be mindful when updating upgrade scenarios for Authorization Proxy 
       # The command should be accessible from e2e test repo.
       # Example:
       #   ./hello_world.sh
-      #   cert-csi test vio --sc <storage class> --chainNumber 2 --chainLength 2
-      run: cert-csi test vio --sc isilon-plain --chainNumber 2 --chainLength 2
+      run: ./hello_world.sh
 
-  - scenario: "Install PowerHello Driver(With a module called World)"
-    path: "<path-to-cr-for-powerhello-with-world-enabled>"
+  - scenario: 'Install PowerHello Driver(With a module called World)'
+    path: '<path-to-cr-for-powerhello-with-world-enabled>'
     steps:
-      - "Given an environment with k8s or openshift, and CSM operator installed"
-      - "Apply custom resources" # fully recycled old step
-      - "Validate custom resources"
-      - "Validate [powerhello] driver is installed" # partially recycled old step
-      - "Validate [world] module is installed"
-      - "Validate Today is Tuesday"  # a new simple step without a backend implementation
-      - "Validate it is [raining], [snowing], [sunny], and [pay-day]"  # a new templated step without a backend implementation
-      - "Run custom test"
+      - 'Given an environment with k8s or openshift, and CSM operator installed'
+      - 'Apply custom resources' # fully recycled old step
+      - 'Validate custom resources'
+      - 'Validate [powerhello] driver is installed' # partially recycled old step
+      - 'Validate [world] module is installed'
+      - 'Validate Today is Tuesday' # a new simple step without a backend implementation
+      - 'Validate it is [raining], [snowing], [sunny], and [pay-day]' # a new templated step without a backend implementation
+      - 'Run custom test'
       # Last two steps perform Clean Up
-      - "Enable forceRemoveDriver on CR"
-      - "Delete resources"
+      - 'Enable forceRemoveDriver on CR'
+      - 'Delete resources'
     customTest:
-      name: "Hello World"
+      name: 'Hello World'
       run: echo HelloWorld
   ```
 
 - Add backend Support: we will cover three case:
 
-   1. `Fully recycled old step`: If the desired steps has already been covered in another test scenario, just copy line for line. You don't need any code change
-   2. `partially recycled old step`: In this case, a very similar test has already been cover. This means there's already an entrypoint in `steps`. You should review the `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go) and trace the implementation function that matches your step. For example  the step `"Validate [world] module is installed"`. The line that  matches this in `StepRunnerInit` is `runner.addStep(`^Validate \[([^"]*)\] module is installed$`, step.validateModuleInstalled)`. The implementation to trace is `step.validateModuleInstalled`. We will review the implementation function in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go) to decide whether or not we need to do anything. Make the code changes if needed.
-   3. `new step`:  New step can be  simple such as `"Validate Today is Tuesday"` or a templated such as `["Validate it is [raining]"](https://example.com)`. The workflow to support these two cases is the same and only varies in the signature of the implementation function. The workflow include:
-        1. Implement steps in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go). Define a function to implement your step. Note that the steps are stateless! If you want to define a function to test a happy path, your function should return nil if no error occurs and error otherwise. However, if you want to test an error path, your function should return nil if you get error and error otherwise. The constraints of all functions in step_def.go is as follows:
-             - must return `error` or `nil`
-             - must take at least one argument. The first one MUST be type `Resource`(even though it may not be used). If your step has any group(a groups is anything in your step enclosed by `[]`), the remaining arguments should be the groups in the order they appear on the steps(from left to right). For example, the two new functions above will can be implemented as shown below:
+  1.  `Fully recycled old step`: If the desired steps has already been covered in another test scenario, just copy line for line. You don't need any code change
+  2.  `partially recycled old step`: In this case, a very similar test has already been cover. This means there's already an entrypoint in `steps`. You should review the `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go) and trace the implementation function that matches your step. For example the step `"Validate [world] module is installed"`. The line that matches this in `StepRunnerInit` is `runner.addStep(`^Validate \[([^"]\*)\] module is installed$`, step.validateModuleInstalled)`. The implementation to trace is `step.validateModuleInstalled`. We will review the implementation function in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go) to decide whether or not we need to do anything. Make the code changes if needed.
+  3.  `new step`: New step can be simple such as `"Validate Today is Tuesday"` or a templated such as `["Validate it is [raining]"](https://example.com)`. The workflow to support these two cases is the same and only varies in the signature of the implementation function. The workflow include:
 
-               ```go
-                // take one argument, res, and return error
-                func (step *Step) isTodayTuesday(res Resource) error {
-                    weekday := time.Now().Weekday()
-                    if weekday != "Tuesday" {
-                        return fmt.Errorf("expected weekday to be Tuesday. Got: %s", weekday)
-                    }
-                    return nil
+      1. Implement steps in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go). Define a function to implement your step. Note that the steps are stateless! If you want to define a function to test a happy path, your function should return nil if no error occurs and error otherwise. However, if you want to test an error path, your function should return nil if you get error and error otherwise. The constraints of all functions in step_def.go is as follows:
+
+         - must return `error` or `nil`
+         - must take at least one argument. The first one MUST be type `Resource`(even though it may not be used). If your step has any group(a groups is anything in your step enclosed by `[]`), the remaining arguments should be the groups in the order they appear on the steps(from left to right). For example, the two new functions above will can be implemented as shown below:
+
+           ```go
+            // take one argument, res, and return error
+            func (step *Step) isTodayTuesday(res Resource) error {
+                weekday := time.Now().Weekday()
+                if weekday != "Tuesday" {
+                    return fmt.Errorf("expected weekday to be Tuesday. Got: %s", weekday)
                 }
-
-                /*
-                    Takes four more arguments for each group as defined here "Validate it is [raining], [snowing], [sunny], and [pay-day]".
-                    Thus function wll be  automatically called with:
-                            checkWeather(Resource{}, "raining", "snowing", "sunny", "pay-day")
-                    Please see "Validate [powerhello] driver is installed" step and the function signature that implemented it
-                */
-                func (step *Step) checkWeather(res Resource, weather1, weather2, weather3, weather4) error {
-                    allValidWeather := true
-                    allValid = allValid && (weather1 =="raining")
-                    allValid = allValid && (weather1 =="snowing")
-                    allValid = allValid && (weather1 =="sunny")
-                    allValid = allValid && (weather1 =="pay-day")
-                    if !allValid {
-                        return fmt.Errorf("not all weather is valid")
-                    }
-
-                    return nil
-                }
-               ```
-
-        2. Register your new steps in `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go). Please pay special attention to the regex and ensure they actually match your new steps. For instance, the new steps we implemented above can be mapped to their steps in the valus file as follows:
-
-            ```go
-            func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kubernetes.Clientset) {
-                step := Step{
-                    ctrlClient: ctrlClient,
-                    clientSet:  clientSet,
-                }
-                // ... old steps
-                runner.addStep(`^Validate Today is Tuesday$`, step.isTodayTuesday)
-                runner.addStep(`^^Validate it is \[([^"]*)\], \[([^"]*)\], \[([^"]*)\], and \[([^"]*)\]$`, step.checkWeather)
+                return nil
             }
-            ```
 
-        3. [Run your E2E](#run). If you get this error `no method for step: <you step>`, it means you either haven't implemented it or there's a problem with your regex.
+            /*
+                Takes four more arguments for each group as defined here "Validate it is [raining], [snowing], [sunny], and [pay-day]".
+                Thus function wll be  automatically called with:
+                        checkWeather(Resource{}, "raining", "snowing", "sunny", "pay-day")
+                Please see "Validate [powerhello] driver is installed" step and the function signature that implemented it
+            */
+            func (step *Step) checkWeather(res Resource, weather1, weather2, weather3, weather4) error {
+                allValidWeather := true
+                allValid = allValid && (weather1 =="raining")
+                allValid = allValid && (weather1 =="snowing")
+                allValid = allValid && (weather1 =="sunny")
+                allValid = allValid && (weather1 =="pay-day")
+                if !allValid {
+                    return fmt.Errorf("not all weather is valid")
+                }
+
+                return nil
+            }
+           ```
+
+      2. Register your new steps in `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go). Please pay special attention to the regex and ensure they actually match your new steps. For instance, the new steps we implemented above can be mapped to their steps in the valus file as follows:
+
+         ```go
+         func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kubernetes.Clientset) {
+             step := Step{
+                 ctrlClient: ctrlClient,
+                 clientSet:  clientSet,
+             }
+             // ... old steps
+             runner.addStep(`^Validate Today is Tuesday$`, step.isTodayTuesday)
+             runner.addStep(`^^Validate it is \[([^"]*)\], \[([^"]*)\], \[([^"]*)\], and \[([^"]*)\]$`, step.checkWeather)
+         }
+         ```
+
+      3. [Run your E2E](#run). If you get this error `no method for step: <you step>`, it means you either haven't implemented it or there's a problem with your regex.
 
 ## Directory Layout
 

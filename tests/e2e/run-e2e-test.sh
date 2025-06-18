@@ -70,21 +70,6 @@ function checkForScenariosFile() {
   }
 }
 
-function checkForCertCsi() {
-  if [ -v CERT_CSI ]; then
-    stat $CERT_CSI >&/dev/null || {
-      echo "error: $CERT_CSI is not a valid cert-csi binary - exiting"
-      exit 1
-    }
-    cp $CERT_CSI /usr/local/bin/
-  fi
-
-  cert-csi --help >&/dev/null || {
-    echo "error: cert-csi required but not available - exiting"
-    exit 1
-  }
-}
-
 function checkForDellctl() {
   if [ -v DELLCTL ]; then
     # Check if the file exists and is not the same as the destination
@@ -109,9 +94,6 @@ function checkForGinkgo() {
     exit 1
   fi
 
-  # Uncomment if cert-csi is not in PATH
-  # cp $CERT_CSI .
-
   # Uncomment for authorization proxy server
   #cp $DELLCTL /usr/local/bin/
 
@@ -127,8 +109,6 @@ function checkForGinkgo() {
 
   pwd
   ginkgo -mod=mod "${OPTS[@]}"
-
-  rm -f cert-csi
 
   # Uncomment for authorization proxy server
   # rm -f /usr/local/bin/dellctl
@@ -159,7 +139,6 @@ function usage() {
   echo "  Optional"
   echo "  -h                                           print out helptext"
   echo "  -v                                           enable verbose logging"
-  echo "  --cert-csi=<path to cert-csi binary>         use to specify cert-csi binary, if not in PATH"
   echo "  --dellctl=<path to dellctl binary>           use to specify dellctl binary, if not in PATH"
   echo "  --kube-cfg=<path to kubeconfig file>         use to specify non-default kubeconfig file"
   echo "  --scenarios=<path to custom scenarios file>  use to specify custom test scenarios file"
@@ -228,13 +207,6 @@ while getopts ":hv-:" optchar; do
       export POWERMAX=true ;;
     zoning)
       export ZONING=true ;;
-    cert-csi)
-      CERT_CSI="${!OPTIND}"
-      OPTIND=$((OPTIND + 1))
-      ;;
-    cert-csi=*)
-      CERT_CSI=${OPTARG#*=}
-      ;;
     kube-cfg)
       KUBECONFIG="${!OPTIND}"
       OPTIND=$((OPTIND + 1))
@@ -300,7 +272,6 @@ fi
 
 getArrayInfo
 checkForScenariosFile
-checkForCertCsi
 if [[ $APPLICATIONMOBILITY == "true" ]]; then
   echo "Checking for dellctl - APPLICATIONMOBILITY"
   checkForDellctl
