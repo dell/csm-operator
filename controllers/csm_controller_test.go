@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -1303,9 +1304,12 @@ func (suite *CSMControllerTestSuite) TestUpdateCSMStatusSuccess() {
 		panic(err)
 	}
 
+	lock := sync.Mutex{}
 	csm1Called := false
 	csm2Called := false
 	updateFunc := func(_ context.Context, instance *csmv1.ContainerStorageModule, _ utils.ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) error {
+		lock.Lock()
+		defer lock.Unlock()
 		switch instance.Name {
 		case "powerflex":
 			csm1Called = true
@@ -1326,8 +1330,10 @@ func (suite *CSMControllerTestSuite) TestUpdateCSMStatusSuccess() {
 	go reconciler.updateCSMStatus(ctx, 500*time.Millisecond, updateFunc)
 
 	time.Sleep(1 * time.Second)
+	lock.Lock()
 	assert.Equal(suite.T(), csm1Called, true)
 	assert.Equal(suite.T(), csm2Called, true)
+	lock.Unlock()
 }
 
 func (suite *CSMControllerTestSuite) TestUpdateCSMStatusUpdateError() {
@@ -1343,8 +1349,11 @@ func (suite *CSMControllerTestSuite) TestUpdateCSMStatusUpdateError() {
 		panic(err)
 	}
 
+	lock := sync.Mutex{}
 	called := false
 	updateFunc := func(_ context.Context, _ *csmv1.ContainerStorageModule, _ utils.ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) error {
+		lock.Lock()
+		defer lock.Unlock()
 		called = true
 		return errors.New("error")
 	}
@@ -1360,7 +1369,9 @@ func (suite *CSMControllerTestSuite) TestUpdateCSMStatusUpdateError() {
 	go reconciler.updateCSMStatus(ctx, 500*time.Millisecond, updateFunc)
 
 	time.Sleep(1 * time.Second)
+	lock.Lock()
 	assert.Equal(suite.T(), called, true)
+	lock.Unlock()
 }
 
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {
