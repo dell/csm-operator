@@ -1305,7 +1305,7 @@ func (suite *CSMControllerTestSuite) TestUpdateCSMStatusSuccess() {
 
 	csm1Called := false
 	csm2Called := false
-	updateFunc := func(ctx context.Context, instance *csmv1.ContainerStorageModule, r utils.ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) error {
+	updateFunc := func(_ context.Context, instance *csmv1.ContainerStorageModule, _ utils.ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) error {
 		switch instance.Name {
 		case "powerflex":
 			csm1Called = true
@@ -1344,7 +1344,7 @@ func (suite *CSMControllerTestSuite) TestUpdateCSMStatusUpdateError() {
 	}
 
 	called := false
-	updateFunc := func(ctx context.Context, instance *csmv1.ContainerStorageModule, r utils.ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) error {
+	updateFunc := func(_ context.Context, _ *csmv1.ContainerStorageModule, _ utils.ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) error {
 		called = true
 		return errors.New("error")
 	}
