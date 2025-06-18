@@ -291,8 +291,8 @@ done
 ###############################################################################
 # Check pre-requisites and run tests
 ###############################################################################
-isOCP=$(kubectl get crd | grep securitycontextconstraints.security.openshift.io --quiet)
-if [ $isOCP -ne 0 ]; then
+kubectl get crd | grep securitycontextconstraints.security.openshift.io --quiet
+if [ $? -ne 0 ]; then
   export IS_OPENSHIFT=false
 else
   export IS_OPENSHIFT=true
