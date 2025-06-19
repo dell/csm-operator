@@ -408,7 +408,7 @@ func TestIsOpenshift(t *testing.T) {
 	var log *zap.SugaredLogger
 	var isOpenShiftResult bool
 	isOpenShiftResult, _ = isOpenShift(log)
-	if ( isOpenShiftResult != false ) {
+	if isOpenShiftResult != false {
 		t.Errorf("IsOpenShift() = %v, want %v", isOpenShiftResult, true)
 	}
 }
